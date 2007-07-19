@@ -1,0 +1,8 @@
+README.txt
+setup.py
+ciscoconfparse/__init__.py
+ciscoconfparse/ciscoconfparse.py
+ciscoconfparse.egg-info/PKG-INFO
+ciscoconfparse.egg-info/SOURCES.txt
+ciscoconfparse.egg-info/dependency_links.txt
+ciscoconfparse.egg-info/top_level.txt
