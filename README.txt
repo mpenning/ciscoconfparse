@@ -62,18 +62,21 @@ The package provides several types of methods:
   1.4  find_blocks( self, blockspec ):
   1.5  find_parents_w_child( self, parentspec, childspec ):
   1.6  find_parents_wo_child( self, parentspec, childspec ):
+  1.7  req_cfgspec_excl_diff( self, linespec, uncfgspec, cfgspec ):
+  1.8  req_cfgspec_all_diff( self, cfgspec ):
 
 
 2.  Query methods returning a list of IOSConfigLine objects.
-  2.1  find_line_objects( self, linespec ):
-  2.2  find_sibling_objects( self, lineobject ):
-  2.3  find_child_objects( self, lineobject):
-  2.4  find_all_child_objects( self, lineobject ):
-  2.5  find_parent_objects( self, lineobject ):
+  2.1  find_line_OBJ( self, linespec ):
+  2.2  find_sibling_OBJ( self, lineobject ):
+  2.3  find_child_OBJ( self, lineobject):
+  2.4  find_all_child_OBJ( self, lineobject ):
+  2.5  find_parent_OBJ( self, lineobject ):
 
 3.  Methods for manipulating IOSConfigLine objects
-  3.1  unique_objects( self, objectlist ):
+  3.1  unique_OBJ( self, objectlist ):
   3.2  objects_to_lines( self, objectlist ):
+  3.3  objects_to_uncfg( self, objectlist, unconflist ):
 
 4.  Query methods on IOSConfigLine objects
   4.1  parent(self):
@@ -84,7 +87,7 @@ The package provides several types of methods:
   4.6  family_endpoint(self):
   4.7  linenum(self):
   4.8  text(self):
-
+  4.9  uncfgtext(self):
 
 
 5.  Methods for parsing the configuration: I won't bother explaining here...
@@ -97,9 +100,21 @@ BASIC USAGE
 from ciscoconfparse import *
 
 parse = CiscoConfParse("/tftpboot/bucksnort.conf")
+
+# Return a list of all ATM interfaces and subinterfaces
 atm_intfs = parse.find_lines("^interface\sATM")
+
+# Return a list of all interfaces with a certain QOS policy
 qos_intfs = parse.find_parents_w_child( "^interf", "service-policy QOS_01" )
+
+# Return a list of all active interfaces (i.e. not shutdown)
 active_intfs = parse.find_parents_wo_child( "^interf", "shutdown" )
+
+
+The examples/ directory in the distribution contains more usage cases, 
+including sample configs to parse.  When enforcing configuration standards,
+the req_cfgspec_excl_diff() method is very useful; examples of its usage are
+included.
 
 
 FAQ
