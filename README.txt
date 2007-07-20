@@ -54,6 +54,7 @@ of the same family.  In fact, 13 and 14 do not belong to a family at all; they
 have no children.
 
 The package provides several types of methods:
+
 1.  Query methods returning a list of text lines.
   1.1  find_lines( self, linespec ):
   1.2  find_children( self, linespec ):
@@ -101,9 +102,17 @@ qos_intfs = parse.find_parents_w_child( "^interf", "service-policy QOS_01" )
 active_intfs = parse.find_parents_wo_child( "^interf", "shutdown" )
 
 
+FAQ
+===
+Q1.  Is there a way to use this module with perl?
+A1.  Yes, I do this myself.  Install thee python package as you normally would
+     and import it into perl with Inline.pm and Inline::Python from CPAN.
+
+
 AUTHOR
 ======
 David Michael Pennington, mike /|at|\ pennington.net
+
 
 THANKS
 ======
