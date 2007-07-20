@@ -1,13 +1,13 @@
 Metadata-Version: 1.0
 Name: ciscoconfparse
-Version: 0.4.7
+Version: 0.4.8
 Summary: Parse through Cisco IOS-style configurations and retrieve portions of the config using a variety of query methods
 Home-page: http://www.pennington.net/py/ciscoconfparse/
 Author: David Michael Pennington
 Author-email: mike /|at|\ pennington.net
 License: GPL
 Description: UNKNOWN
-Keywords: Cisco IOS configuration parser parse
+Keywords: Parse query Cisco IOS configuration
 Platform: UNKNOWN
 Classifier: Development Status :: 4 - Beta
 Classifier: Environment :: Plugins
