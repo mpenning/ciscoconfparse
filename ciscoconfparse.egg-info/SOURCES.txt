@@ -2,9 +2,8 @@ README.txt
 setup.py
 ciscoconfparse/__init__.py
 ciscoconfparse/ciscoconfparse.py
+ciscoconfparse/ciscoconfparse.pyc
 ciscoconfparse.egg-info/PKG-INFO
 ciscoconfparse.egg-info/SOURCES.txt
 ciscoconfparse.egg-info/dependency_links.txt
 ciscoconfparse.egg-info/top_level.txt
-dist/ciscoconfparse-0.4.7-py2.4.egg
-dist/ciscoconfparse-0.4.7.tar.gz

@@ -7,7 +7,7 @@ import os
 ### CiscoConfParse.py
 ### Version 0.41
 
-class CiscoConfigParse(object):
+class CiscoConfParse(object):
    """Parses Cisco IOS configurations and answers queries about the configs"""
    
    def __init__(self, config):
@@ -31,7 +31,7 @@ class CiscoConfigParse(object):
             iosconfig = rgx.split(text)
          self.parse(iosconfig)
       else:
-         print "FATAL: CiscoConfigParse() received an invalid argument\n"
+         print "FATAL: CiscoConfParse() received an invalid argument\n"
          sys.exit(0)
 
    def parse(self, iosconfig):
@@ -48,7 +48,7 @@ class CiscoConfigParse(object):
          indentation.append( len(self.iosconfig[ii]) - len( self.iosconfig[ii].lstrip() ) )
          # Build an IOSConfigLine object for each line, associate with a config dictionary
          lineobject = IOSConfigLine(ii)
-         lineobject.add_text = self.iosconfig[ii]
+         lineobject.add_text(self.iosconfig[ii])
          self.lineObjDict[ii] = lineobject
       ## Walk through the config and look for the "first" child
       for ii in range(len(self.iosconfig)):
@@ -75,11 +75,11 @@ class CiscoConfigParse(object):
       self.mark_family_endpoints( self.allparentobjs, indentation )
       for lineobject in self.allparentobjs:
          if indentation[lineobject.linenum] == 0:
-            self.find_unknown_children( lineobject, self.lineObjDict, indentation )
+            self.id_unknown_children( lineobject, self.lineObjDict, indentation )
             ## this SHOULD find all children in the family...
             candidate_children = lineobject.children
             for child in candidate_children:
-               if self.find_unknown_children( child, self.lineObjDict, indentation ):
+               if self.id_unknown_children( child, self.lineObjDict, indentation ):
                   # Appending any new children to candidate_children as
                   #  we find new children
                   for new in child.children:
@@ -88,12 +88,15 @@ class CiscoConfigParse(object):
       ##  individual lines, instead of a parent / child relationship.  This
       ##  means finding each banner statement, and associating the  subsequent
       ##  lines as children.
-      self.find_banner( "login", indentation )
-      self.find_banner( "motd", indentation )
-      self.find_banner( "exec", indentation )
-      self.find_banner( "incoming", indentation )
+      self.mark_banner( "login", "ios", indentation )
+      self.mark_banner( "motd", "ios", indentation )
+      self.mark_banner( "exec", "ios", indentation )
+      self.mark_banner( "incoming", "ios", indentation )
+      self.mark_banner( "motd", "catos", indentation )
+      self.mark_banner( "telnet", "catos", indentation )
+      self.mark_banner( "lcd", "catos", indentation )
 
-   def find_banner( self, banner_str, indentation ):
+   def mark_banner( self, banner_str, os, indentation ):
       """Identify all multiline entries matching the mlinespec (this is
       typically used for banners).  Associate parent / child relationships, as
       well setting the oldest_ancestor."""
@@ -103,8 +106,15 @@ class CiscoConfigParse(object):
       start_banner = False
       end_banner = False
       ii = 0
+      if os == "ios":
+         prefix = ""
+      elif os == "catos":
+         prefix = "set "
+      else:
+         print "FATAL: mark_banner(): received an invalid value for 'os'"
+	 sys.exit(0)
       while ( start_banner == False ) & ( ii < len(self.iosconfig) ):
-         if re.search("banner\s+"+banner_str+"\s+\^\S+", self.iosconfig[ii] ):
+         if re.search( prefix+"banner\s+"+banner_str+"\s+\^\S+", self.iosconfig[ii] ):
             # Found the start banner at ii
             start_banner = True
             kk = ii + 1
@@ -131,14 +141,14 @@ class CiscoConfigParse(object):
       # Return our success or failure status
       return end_banner
 
-   def find_multiline_entries( self, re_code, indentation ):
+   def fix_multiline_entries( self, re_code, indentation ):
       """Identify all multiline entries matching the mlinespec (this is
       typically used for banners).  Associate parent / child relationships, as
       well setting the oldest_ancestor."""
       ##
       ## Note: I wanted this to work for banners, but have never figured out
       ##       how to make the re_compile code set re_code.group(1).
-      ##       Right now, I'm using find_banner()
+      ##       Right now, I'm using mark_banner()
       ##
       ## re_code should be a lambda function such as:
       ##  re.compile("^banner\slogin\.+?(\^\S*)"
@@ -160,11 +170,11 @@ class CiscoConfigParse(object):
                      self.lineObjDict[mm].add_parent( self.lineObjDict[ii] )
 
 
-   def find_unknown_children( self, lineobject, lineObjDict, indentation ):
+   def id_unknown_children( self, lineobject, lineObjDict, indentation ):
       """Walk through the configuration and look for configuration child lines
       that have not already been identified"""
       found_unknown_child = False
-      for ii in range( lineobject.linenum, self.find_family_endpoint(lineobject, len(self.iosconfig) ) ):
+      for ii in range( lineobject.linenum, self.id_family_endpoint(lineobject, len(self.iosconfig) ) ):
          child_indent = lineobject.child_indent
          if not re.search( "^\s*!", self.iosconfig[ii] ):
             if indentation[ii] == child_indent:
@@ -176,7 +186,7 @@ class CiscoConfigParse(object):
                #   print "Found child: %s" % self.iosconfig[ii]
       return found_unknown_child
 
-   def find_family_endpoint(self, lineobject, last_config_line ):
+   def id_family_endpoint(self, lineobject, last_config_line ):
       """This method can start with any child object, and traces through its parents to the oldest_ancestor.
       When it finds the oldest_ancestor, it looks for the family_endpoint attribute."""
       ii = 0
@@ -484,11 +494,11 @@ class IOSConfigLine(object):
 
 ### TODO: Add unit tests below
 if __name__ == '__main__':
-   parse = CiscoConfigParse("cisco_conf/config_01.conf")
+   parse = CiscoConfParse("../configs/config_01.catos")
    results = parse.find_blocks( "banner" )
    results1 = parse.find_parents_w_child( "policy", "bandwidth" )
    #results2 = parse.find_parents_w_child("interface", "trunk")
    # intersection, union,  & difference all require a "set"
    #results = sorted(set(results2).difference(set(results1)))
-   for line in results1:
+   for line in results:
       print line
