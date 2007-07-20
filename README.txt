@@ -105,8 +105,13 @@ active_intfs = parse.find_parents_wo_child( "^interf", "shutdown" )
 FAQ
 ===
 Q1.  Is there a way to use this module with perl?
-A1.  Yes, I do this myself.  Install thee python package as you normally would
+A1.  Yes, I do this myself.  Install the python package as you normally would
      and import it into perl with Inline.pm and Inline::Python from CPAN.
+
+
+DOWNLOAD
+========
+http://www.python.org/pypi/ciscoconfparse/
 
 
 AUTHOR
