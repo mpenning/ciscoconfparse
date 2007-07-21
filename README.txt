@@ -16,8 +16,8 @@ been considered the domain of screen-scraping.  In conjunction with python's
 sophisticated set-manipulation capabilities, your imagination is the limit.
 
 The package also provides a set of methods to query and manipulate the 
-IOSConfigLine objects themselves.  This gives you a flexible mechanism to 
-build your own custom queries, because the IOSConfigLine objects store all the
+IOSCfgLine objects themselves.  This gives you a flexible mechanism to 
+build your own custom queries, because the IOSCfgLine objects store all the
 parent / child hierarchy in them.
 
 Examples of config family relationships are shown below...
@@ -66,19 +66,19 @@ The package provides several types of methods:
   1.8  req_cfgspec_all_diff( self, cfgspec ):
 
 
-2.  Query methods returning a list of IOSConfigLine objects.
+2.  Query methods returning a list of IOSCfgLine objects.
   2.1  find_line_OBJ( self, linespec ):
   2.2  find_sibling_OBJ( self, lineobject ):
   2.3  find_child_OBJ( self, lineobject):
   2.4  find_all_child_OBJ( self, lineobject ):
   2.5  find_parent_OBJ( self, lineobject ):
 
-3.  Methods for manipulating IOSConfigLine objects
+3.  Methods for manipulating IOSCfgLine objects
   3.1  unique_OBJ( self, objectlist ):
   3.2  objects_to_lines( self, objectlist ):
   3.3  objects_to_uncfg( self, objectlist, unconflist ):
 
-4.  Query methods on IOSConfigLine objects
+4.  Query methods on IOSCfgLine objects
   4.1  parent(self):
   4.2  children(self):
   4.3  has_children(self):
@@ -113,8 +113,11 @@ active_intfs = parse.find_parents_wo_child( "^interf", "shutdown" )
 
 The examples/ directory in the distribution contains more usage cases, 
 including sample configs to parse.  When enforcing configuration standards,
-the req_cfgspec_excl_diff() method is very useful; examples of its usage are
-included.
+the req_cfgspec_excl_diff() method is very useful; this module will accept a
+list or required command entries (confspec) and return a list of diffs to make
+the configuration compliant.  Note that this command ONLY works for global
+configuration commands at the moment; interface-level commands are not supported
+by req_cfgspec_excl_diff() right now.  Examples of its usage are included.
 
 
 FAQ
@@ -145,7 +148,7 @@ COPYRIGHT, LICENSE, and WARRANTY
 ================================
 GNU General Public License, v3
 
-This software is (c) David Michael Pennington.  It can be
+This software is (c) 2007 by David Michael Pennington.  It can be
 reused under the terms of the GPL v3 license provided that proper
 credit for the work of the author is preserved in the form  of this 
 copyright notice and license for this package.
