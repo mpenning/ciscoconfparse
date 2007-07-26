@@ -7,3 +7,16 @@ ciscoconfparse.egg-info/PKG-INFO
 ciscoconfparse.egg-info/SOURCES.txt
 ciscoconfparse.egg-info/dependency_links.txt
 ciscoconfparse.egg-info/top_level.txt
+configs/sample_01.ios
+configs/sample_02.ios
+configs/sample_03.ios
+configs/sample_04.ios
+dist/ciscoconfparse-0.4.7-py2.4.egg
+dist/ciscoconfparse-0.4.7.tar.gz
+dist/ciscoconfparse-0.4.8-py2.4.egg
+dist/ciscoconfparse-0.4.8.tar.gz
+dist/ciscoconfparse-0.4.9-py2.4.egg
+dist/ciscoconfparse-0.4.9.tar.gz
+examples/basic_usage.py
+examples/req_cfgspec_all_diff.py
+examples/req_cfgspec_excl_diff.py
