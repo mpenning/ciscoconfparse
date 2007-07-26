@@ -4,7 +4,26 @@ import sys
 import re
 import os
 
-### CiscoConfParse.py
+""" ciscoconfparse.py - Parse & Query IOS-style configurations
+    Copyright (C) 2007 David Michael Pennington
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+    If you need to contact the author, you can do so by emailing:
+    mike [~at~] pennington [/dot\] net
+"""
+
 
 class CiscoConfParse(object):
    """Parses Cisco IOS configurations and answers queries about the configs"""
