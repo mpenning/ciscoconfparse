@@ -42,7 +42,8 @@ Line14:access-list 101 permit ip any any
            of 02 = 03
            of 04 = 05, 06
            of 09 = 10, 11
- siblings: 05, 06
+ siblings: 02, 04, 07
+           05, 06
            10, 11
  oldest_ancestors: 01, 09
  families: 01, 02, 03, 04, 05, 06, 07
@@ -145,17 +146,22 @@ COPYRIGHT, LICENSE, and WARRANTY
 ================================
 GNU General Public License, v3
 
-This software is (c) David Michael Pennington.  It can be
-reused under the terms of the GPL v3 license provided that proper
-credit for the work of the author is preserved in the form  of this 
-copyright notice and license for this package.
+ciscoconfparse.py - Parse & Query IOS-style configurations
+Copyright (C) 2007 David Michael Pennington
 
-No warranty of any kind is expressed or implied.  By using this software, you 
-are agreeing to assume ALL risks and David M Pennington shall NOT be liable 
-for ANY damages resulting from its use.
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-If you chose to bring legal action against the author, you are automatically 
-granting him the remainder of your lifetime salary, ownership of your 
-retirement plan (you do have one, right??), the deed to your house assuming 
-it isn't a pile of junk, and your perpetual indentured servitude under his 
-direction.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see http://www.gnu.org/licenses/.
+
+If you need to contact the author, you can do so by emailing:
+mike [~at~] pennington [/dot\] net
+

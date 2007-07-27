@@ -633,11 +633,11 @@ if __name__ == '__main__':
                   metavar = "FILENAME" )
    pp.add_option( "-m", dest="method", help="Command for parsing",
                   metavar = "METHOD" )
-   pp.add_option( "-1", dest="arg1", help="Command's first argument", 
+   pp.add_option( "--a1", dest="arg1", help="Command's first argument", 
                 metavar = "ARG" )
-   pp.add_option( "-2", dest="arg2", help="Command's second argument", 
+   pp.add_option( "--a2", dest="arg2", help="Command's second argument", 
                 metavar = "ARG" )
-   pp.add_option( "-3", dest="arg3", help="Command's third argument", 
+   pp.add_option( "--a3", dest="arg3", help="Command's third argument", 
                 metavar = "ARG" )
    (opts, args) = pp.parse_args()
 

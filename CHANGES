@@ -1,3 +1,6 @@
+0.6.3   20070727 - Fixed command-line parsing bug.  Reformatted command-line 
+        args
+
 0.6.2   20070727 - Added command-line functionality for improved 
         interoperability with other languages (and shell-usage if you like).
 
