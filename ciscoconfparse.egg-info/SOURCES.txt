@@ -1,6 +1,12 @@
-README.txt
+CHANGES
+LICENSE
+PKG-INFO
+README
+TODO
+setup.cfg
 setup.py
 ciscoconfparse/__init__.py
+ciscoconfparse/__init__.pyc
 ciscoconfparse/ciscoconfparse.py
 ciscoconfparse/ciscoconfparse.pyc
 ciscoconfparse.egg-info/PKG-INFO
