@@ -1,0 +1,6 @@
+0.6.2   20070727 - Added command-line functionality for improved 
+        interoperability with other languages (and shell-usage if you like).
+
+0.6.1   20070726 - Cosmetic restructuring of code
+
+0.6.0   20070721 - Revised APIs.  Existing APIs should be stable now

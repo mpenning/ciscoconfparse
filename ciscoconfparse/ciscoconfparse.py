@@ -627,11 +627,58 @@ class CiscoPassword(object):
 
 ### TODO: Add unit tests below
 if __name__ == '__main__':
-   parse = CiscoConfParse("../configs/config_01.catos")
-   results = parse.find_blocks( "banner" )
-   results1 = parse.find_parents_w_child( "policy", "bandwidth" )
-   #results2 = parse.find_parents_w_child("interface", "trunk")
-   # intersection, union,  & difference all require a "set"
-   #results = sorted(set(results2).difference(set(results1)))
-   for line in results:
-      print line
+   import optparse
+   pp = optparse.OptionParser()
+   pp.add_option( "-c", dest="config", help="Config file to be parsed",
+                  metavar = "FILENAME" )
+   pp.add_option( "-m", dest="method", help="Command for parsing",
+                  metavar = "METHOD" )
+   pp.add_option( "-1", dest="arg1", help="Command's first argument", 
+                metavar = "ARG" )
+   pp.add_option( "-2", dest="arg2", help="Command's second argument", 
+                metavar = "ARG" )
+   pp.add_option( "-3", dest="arg3", help="Command's third argument", 
+                metavar = "ARG" )
+   (opts, args) = pp.parse_args()
+
+   if opts.method == "find_lines":
+      diff = CiscoConfParse(opts.config).find_lines( opts.arg1 )
+   elif opts.method == "find_children":
+      diff = CiscoConfParse(opts.config).find_children( opts.arg1 )
+   elif opts.method == "find_all_children":
+      diff = CiscoConfParse(opts.config).find_all_children( opts.arg1 )
+   elif opts.method == "find_blocks":
+      diff = CiscoConfParse(opts.config).find_blocks( opts.arg1 )
+   elif opts.method == "find_parents_w_child":
+      diff = CiscoConfParse(opts.config).find_parents_w_child( opts.arg1, 
+             opts.arg2 )
+   elif opts.method == "find_parents_wo_child":
+      diff = CiscoConfParse(opts.config).find_parents_wo_child( opts.arg1, 
+             opts.arg2 )
+   elif opts.method == "req_cfgspec_excl_diff":
+      diff = CiscoConfParse(opts.config).req_cfgspec_excl_diff( opts.arg1,
+             opts.arg2, opts.arg3.split(",") )
+   elif opts.method == "req_cfgspec_all_diff":
+      diff = CiscoConfParse(opts.config).req_cfgspec_all_diff( 
+             opts.arg1.split(",") )
+   elif opts.method.lower() == "help":
+      print "Valid methods and their arguments:"
+      print "   find_lines:             arg1=linespec"
+      print "   find_children:          arg1=linespec"
+      print "   find_all_children:      arg1=linespec"
+      print "   find_blocks:            arg1=linespec"
+      print "   find_parents_w_child:   arg1=parentspec  arg2=childspec"
+      print "   find_parents_wo_child:  arg1=parentspec  arg2=childspec"
+      print "   req_cfgspec_excl_diff:  arg1=linespec    arg2=uncfgspec   arg3=cfgspec"
+      print "   req_cfgspec_all_diff:   arg1=cfgspec"
+      sys.exit(0)
+   else:
+      print "'%s' is an unknown method (-m)." % opts.method
+      sys.exit(0)
+
+   if len(diff) > 0:
+      for line in diff:
+         print line
+   else:
+      sys.exit(0)
+
