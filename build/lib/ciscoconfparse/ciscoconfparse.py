@@ -611,6 +611,7 @@ class CiscoPassword(object):
                0x4b, 0x44, 0x48, 0x53, 0x55, 0x42 )
 
       dp = ""
+      s = 0
       regex = re.compile( "^(..)(.+)" )
       if not ( len(ep) & 1 ):
          result = regex.search( ep )
