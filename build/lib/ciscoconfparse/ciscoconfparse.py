@@ -618,9 +618,15 @@ class CiscoPassword(object):
          for ii in range( 0, len( e ), 2 ):
             # int( blah, 16) assumes blah is base16... cool
             magic  = int( re.search( ".{%s}(..)" % ii, e ).group(1), 16 )
-            newchar = "%c" % ( magic ^ int( xlat[int( s )] ) )
+	    if s <= 25:
+	       # Algorithm appears to be unpublished after s = 25
+               newchar = "%c" % ( magic ^ int( xlat[int( s )] ) )
+	    else:
+	       newchar = "?"
             dp = dp + str( newchar )
             s = s + 1
+      if s > 25:
+         print "WARNING: password decryption failed.  Password too long."
       return dp
 
 
