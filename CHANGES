@@ -1,3 +1,5 @@
+0.6.5   20070728 - Fixed another CiscoPassword bug
+
 0.6.4   20070727 - Added warning if CiscoPassword decryption fails.
 
 0.6.3   20070727 - Fixed command-line parsing bug.  Reformatted command-line 
