@@ -668,6 +668,10 @@ if __name__ == '__main__':
    elif opts.method == "req_cfgspec_all_diff":
       diff = CiscoConfParse(opts.config).req_cfgspec_all_diff( 
              opts.arg1.split(",") )
+   elif opts.method == "decrypt":
+      pp = CiscoPassword()
+      print pp.decrypt( opts.arg1 )
+      sys.exit(1)
    elif opts.method.lower() == "help":
       print "Valid methods and their arguments:"
       print "   find_lines:             arg1=linespec"
@@ -678,6 +682,7 @@ if __name__ == '__main__':
       print "   find_parents_wo_child:  arg1=parentspec  arg2=childspec"
       print "   req_cfgspec_excl_diff:  arg1=linespec    arg2=uncfgspec   arg3=cfgspec"
       print "   req_cfgspec_all_diff:   arg1=cfgspec"
+      print "   decrypt:                arg1=encrypted_passwd"
       sys.exit(0)
    else:
       print "'%s' is an unknown method (-m)." % opts.method
