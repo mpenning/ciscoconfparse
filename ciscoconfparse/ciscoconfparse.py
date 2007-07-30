@@ -256,7 +256,7 @@ class CiscoConfParse(object):
       if len(retval) > 0:
          return retval
       else:
-         return False
+         return None
 
 
 
@@ -272,7 +272,11 @@ class CiscoConfParse(object):
                allobjs.append(child)
          allobjs.append(parent)
       allobjs = self.unique_OBJ( allobjs )
-      return self.objects_to_lines( allobjs )
+      retval = self.objects_to_lines( allobjs )
+      if retval != []:
+         return retval
+      else:
+         return None
 
 
    def find_all_children( self, linespec ):
@@ -286,7 +290,11 @@ class CiscoConfParse(object):
                allobjs.append(child)
          allobjs.append(parent)
       allobjs = self.unique_OBJ( allobjs )
-      return self.objects_to_lines( allobjs )
+      retval = self.objects_to_lines( allobjs )
+      if retval != []:
+         return retval
+      else:
+         return None
 
 
    def find_blocks( self, blockspec ):
@@ -310,7 +318,10 @@ class CiscoConfParse(object):
             dct[this.linenum] = this
       for line in sorted(dct.keys()):
          retval.append(self.ioscfg[line])
-      return retval
+      if retval != []:
+         return retval
+      else:
+         return None
 
 
    def find_parents_w_child( self, parentspec, childspec ):
@@ -329,7 +340,10 @@ class CiscoConfParse(object):
                retval.append( parent )
       retval = self.unique_OBJ( retval )
       retval = self.objects_to_lines( retval )
-      return retval
+      if retval != []:
+         return retval
+      else:
+         return None
 
 
    def find_parents_wo_child( self, parentspec, childspec ):
@@ -352,7 +366,11 @@ class CiscoConfParse(object):
                   ## We found a parent without a child matching the childspec
                   retval.append( parentobj )
       retval = self.objects_to_lines( self.unique_OBJ( retval ) )
-      return retval
+      if retval != []:
+         return retval
+      else:
+         return None
+
 
    def req_cfgspec_excl_diff( self, linespec, uncfgspec, cfgspec ):
       """Accept a regular expression in the form of linespec, and a list of
@@ -388,7 +406,10 @@ class CiscoConfParse(object):
       for line in cfgspec:
          if not skip_cfgspec.has_key(line):
             retval.append( line )
-      return retval
+      if retval != []:
+         return retval
+      else:
+         return None
 
 
    def req_cfgspec_all_diff( self, cfgspec ):
@@ -409,7 +430,10 @@ class CiscoConfParse(object):
       for line in cfgspec:
          if not skip_cfgspec.has_key(line):
             retval.append( line )
-      return retval
+      if retval != []:
+         return retval
+      else:
+         return None
 
 
    ### The methods below are marked SEMI-PRIVATE because they return an object
