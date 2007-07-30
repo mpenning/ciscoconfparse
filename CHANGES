@@ -1,5 +1,5 @@
 0.6.6   20070730 - Added password decryption options to the command-line help
-        menu.  Modified all diff functions to return None if no diffs are found
+        menu.  Modified all diff functions to return False if no diffs are found
 
 0.6.5   20070728 - Fixed another CiscoPassword bug. Added warning if 
         CiscoPassword decryption fails.  Added command-line functionality for 

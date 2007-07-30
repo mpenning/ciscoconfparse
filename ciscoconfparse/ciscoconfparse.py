@@ -256,7 +256,7 @@ class CiscoConfParse(object):
       if len(retval) > 0:
          return retval
       else:
-         return None
+         return False
 
 
 
@@ -276,7 +276,7 @@ class CiscoConfParse(object):
       if retval != []:
          return retval
       else:
-         return None
+         return False
 
 
    def find_all_children( self, linespec ):
@@ -294,7 +294,7 @@ class CiscoConfParse(object):
       if retval != []:
          return retval
       else:
-         return None
+         return False
 
 
    def find_blocks( self, blockspec ):
@@ -321,7 +321,7 @@ class CiscoConfParse(object):
       if retval != []:
          return retval
       else:
-         return None
+         return False
 
 
    def find_parents_w_child( self, parentspec, childspec ):
@@ -343,7 +343,7 @@ class CiscoConfParse(object):
       if retval != []:
          return retval
       else:
-         return None
+         return False
 
 
    def find_parents_wo_child( self, parentspec, childspec ):
@@ -369,7 +369,7 @@ class CiscoConfParse(object):
       if retval != []:
          return retval
       else:
-         return None
+         return False
 
 
    def req_cfgspec_excl_diff( self, linespec, uncfgspec, cfgspec ):
@@ -409,7 +409,7 @@ class CiscoConfParse(object):
       if retval != []:
          return retval
       else:
-         return None
+         return False
 
 
    def req_cfgspec_all_diff( self, cfgspec ):
@@ -433,7 +433,7 @@ class CiscoConfParse(object):
       if retval != []:
          return retval
       else:
-         return None
+         return False
 
 
    ### The methods below are marked SEMI-PRIVATE because they return an object
