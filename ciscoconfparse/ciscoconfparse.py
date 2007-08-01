@@ -273,7 +273,7 @@ class CiscoConfParse(object):
          allobjs.append(parent)
       allobjs = self.unique_OBJ( allobjs )
       retval = self.objects_to_lines( allobjs )
-      if retval != []:
+      if retval.__len__() > 0:
          return retval
       else:
          return False
@@ -291,7 +291,7 @@ class CiscoConfParse(object):
          allobjs.append(parent)
       allobjs = self.unique_OBJ( allobjs )
       retval = self.objects_to_lines( allobjs )
-      if retval != []:
+      if retval.__len__() > 0:
          return retval
       else:
          return False
@@ -318,7 +318,7 @@ class CiscoConfParse(object):
             dct[this.linenum] = this
       for line in sorted(dct.keys()):
          retval.append(self.ioscfg[line])
-      if retval != []:
+      if retval.__len__() > 0:
          return retval
       else:
          return False
@@ -340,7 +340,7 @@ class CiscoConfParse(object):
                retval.append( parent )
       retval = self.unique_OBJ( retval )
       retval = self.objects_to_lines( retval )
-      if retval != []:
+      if retval.__len__() > 0:
          return retval
       else:
          return False
@@ -366,7 +366,7 @@ class CiscoConfParse(object):
                   ## We found a parent without a child matching the childspec
                   retval.append( parentobj )
       retval = self.objects_to_lines( self.unique_OBJ( retval ) )
-      if retval != []:
+      if retval.__len__() > 0:
          return retval
       else:
          return False
@@ -406,7 +406,7 @@ class CiscoConfParse(object):
       for line in cfgspec:
          if not skip_cfgspec.has_key(line):
             retval.append( line )
-      if retval != []:
+      if retval.__len__() > 0:
          return retval
       else:
          return False
@@ -430,7 +430,7 @@ class CiscoConfParse(object):
       for line in cfgspec:
          if not skip_cfgspec.has_key(line):
             retval.append( line )
-      if retval != []:
+      if retval.__len__() > 0:
          return retval
       else:
          return False
