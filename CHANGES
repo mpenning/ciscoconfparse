@@ -1,3 +1,7 @@
+0.6.8   20070802 - Ported fixes to the CiscoPassword class from the 
+        cisco_decrypt package.  Notably, there were crashes when it was called
+	with certain unencrypted passwords.
+
 0.6.7   20070801 - Fixed bug where some methods didn't return False when no 
         diffs were found
 
