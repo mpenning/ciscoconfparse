@@ -1,3 +1,9 @@
+0.7.0   20070803 - Added an optional parameter to the find_lines(), 
+        find_children(), find_all_children(), and find_blocks() methods.  This
+	parameter will allow the user to specify whether he wants an "exact"
+	match or a normal regex match.  Also fixed a bug that broke parsing
+	of configs with an indented line at the very end.
+
 0.6.8   20070802 - Ported fixes to the CiscoPassword class from the 
         cisco_decrypt package.  Notably, there were crashes when it was called
 	with certain unencrypted passwords.

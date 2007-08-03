@@ -57,10 +57,10 @@ have no children.
 The package provides several types of methods:
 
 1.  Query methods returning a list of text lines.
-  1.1  find_lines( self, linespec ):
-  1.2  find_children( self, linespec ):
-  1.3  find_all_children( self, linespec ):
-  1.4  find_blocks( self, blockspec ):
+  1.1  find_lines( self, linespec, exactmatch=False ):
+  1.2  find_children( self, linespec, exactmatch=False ):
+  1.3  find_all_children( self, linespec, exactmatch=False ):
+  1.4  find_blocks( self, blockspec, exactmatch=False ):
   1.5  find_parents_w_child( self, parentspec, childspec ):
   1.6  find_parents_wo_child( self, parentspec, childspec ):
   1.7  req_cfgspec_excl_diff( self, linespec, uncfgspec, cfgspec ):
@@ -103,13 +103,27 @@ from ciscoconfparse import *
 parse = CiscoConfParse("/tftpboot/bucksnort.conf")
 
 # Return a list of all ATM interfaces and subinterfaces
+#
 atm_intfs = parse.find_lines("^interface\sATM")
 
 # Return a list of all interfaces with a certain QOS policy
+#
 qos_intfs = parse.find_parents_w_child( "^interf", "service-policy QOS_01" )
 
 # Return a list of all active interfaces (i.e. not shutdown)
+#
 active_intfs = parse.find_parents_wo_child( "^interf", "shutdown" )
+
+# Find all interfaces that have voice configured, if they are trusting dscp
+# build a new config to trust cos
+#
+newcfg = []
+voice_intfs = parse.find_parents_w_child("^interface", "switchport voice")
+for intf in voice_intfs:
+   famobj = CiscoConfParse( parse.find_children( intf, True ) )
+   if( parse.find_lines("mls qos trust dscp"):
+      newcfg.append(intf)
+      newcfg.append(" mls qos trust cos")
 
 
 The examples/ directory in the distribution contains more usage cases, 
@@ -123,6 +137,14 @@ FAQ
 Q1.  Is there a way to use this module with perl?
 A1.  Yes, I do this myself.  Install the python package as you normally would
      and import it into perl with Inline.pm and Inline::Python from CPAN.
+
+Q2.  When I use find_children("interface GigabitEthernet3/2"), I'm getting all
+     interfaces beginning with 3/2, including 3/21, 3/22, 3/23 and 3/24.  How 
+     can I limit my results?
+A2.  There are two ways... the simplest is to use the 'exactmatch' option...
+     find_children("interface GigabitEthernet3/2", True)
+     Another way is to utilize regex expansion that is native to all methods...
+     find_children("interface GigabitEthernet3/2$")
 
 
 DOWNLOAD
