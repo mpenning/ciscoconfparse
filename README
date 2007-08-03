@@ -121,7 +121,7 @@ newcfg = []
 voice_intfs = parse.find_parents_w_child("^interface", "switchport voice")
 for intf in voice_intfs:
    famobj = CiscoConfParse( parse.find_children( intf, True ) )
-   if( parse.find_lines("mls qos trust dscp"):
+   if( parse.find_lines("mls qos trust dscp") ):
       newcfg.append(intf)
       newcfg.append(" mls qos trust cos")
 
