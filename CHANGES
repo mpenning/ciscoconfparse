@@ -1,3 +1,6 @@
+0.7.5   20070804 - Fixed a bug in the parse() method, which was associating
+        grandchildren as children of the grandparent.   Added unit tests.
+
 0.7.0   20070803 - Added an optional parameter to the find_lines(), 
         find_children(), find_all_children(), and find_blocks() methods.  This
 	parameter will allow the user to specify whether he wants an "exact"
