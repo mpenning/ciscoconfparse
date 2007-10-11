@@ -1,3 +1,4 @@
+* Fix req_cfgspec_all_diff so it can use ignore_ws
 * Add examples for Finding banners, req_cfgspec_excl_diff IN THE README
 * Add examples for checking vty passwords
 * Add IOS / CatOS classification (experimental)
