@@ -46,10 +46,10 @@ class CiscoConfParse(object):
             self.parse(ioscfg)
 	 except IOError:
 	    print "FATAL: CiscoConfParse could not open '%s'" % config
-	    sys.exit(0)
+	    raise RuntimeError
       else:
          print "FATAL: CiscoConfParse() received an invalid argument\n"
-         sys.exit(0)
+	 raise RuntimeError
 
    def parse(self, ioscfg):
       """Iterate over the configuration and generate a linked list of IOS 
@@ -141,7 +141,7 @@ class CiscoConfParse(object):
          prefix = "set "
       else:
          print "FATAL: mark_banner(): received an invalid value for 'os'"
-	 sys.exit(0)
+	 raise RuntimeError
       while ( start_banner == False ) & ( ii < len(self.ioscfg) ):
          if re.search( prefix+"banner\s+"+banner_str+"\s+\^\S+", self.ioscfg[ii] ):
             # Found the start banner at ii
@@ -243,13 +243,13 @@ class CiscoConfParse(object):
 	 #  find a valid family endpoint.  This is bad, there is something 
 	 #  wrong with IOSCfgLine relationships if you get this message.
          print "FATAL: Could not resolve family endpoint while starting from configuration line number %s" % source_linenum
-         sys.exit(0)
+	 raise RuntimeError
       if lineobject.family_endpoint > 0:
          return lineobject.family_endpoint
       else:
          print "FATAL: While considering: '%s'" % self.ioscfg[lineobject.linenum]
          print "       Found invalid family endpoint.  Validate IOSCfgLine relationships"
-         sys.exit(0)
+	 raise RuntimeError
    
 
    def mark_family_endpoints(self, parents, indentation):
@@ -283,10 +283,15 @@ class CiscoConfParse(object):
                if found_endpoint == False:
                   parent.set_family_endpoint( ii )
 
-   def find_lines( self, linespec, exactmatch=False ):
+
+   def find_lines( self, linespec, exactmatch=False, ignore_ws=False ):
       """This method is the equivalent of a simple configuration grep
       (Case-sensitive)."""
       retval = []
+
+      if ignore_ws:
+         linespec = self.build_space_tolerant_regex( linespec )
+
       for line in self.ioscfg:
          if exactmatch == False:
             if re.search( linespec, line ):
@@ -294,16 +299,17 @@ class CiscoConfParse(object):
          else:
             if re.search( "^%s$"% linespec, line ):
                retval.append(line)
-      if len(retval) > 0:
-         return retval
-      else:
-         return False
+      return retval
 
 
 
-   def find_children( self, linespec, exactmatch=False ):
+   def find_children( self, linespec, exactmatch=False, ignore_ws=False ):
       """Returns the parents matching the linespec, and their immediate
       children"""
+
+      if ignore_ws:
+         linespec = self.build_space_tolerant_regex( linespec )
+
       if exactmatch == False:
          parentobjs = self.find_line_OBJ( linespec )
       else:
@@ -317,14 +323,16 @@ class CiscoConfParse(object):
          allobjs.append(parent)
       allobjs = self.unique_OBJ( allobjs )
       retval = self.objects_to_lines( allobjs )
-      if retval.__len__() > 0:
-         return retval
-      else:
-         return False
+
+      return retval
 
 
-   def find_all_children( self, linespec, exactmatch=False ):
+   def find_all_children( self, linespec, exactmatch=False, ignore_ws=False ):
       """Returns the parents matching the linespec, and all children of them."""
+
+      if ignore_ws:
+         linespec = self.build_space_tolerant_regex( linespec )
+
       if exactmatch == False:
          parentobjs = self.find_line_OBJ( linespec )
       else:
@@ -338,18 +346,20 @@ class CiscoConfParse(object):
          allobjs.append(parent)
       allobjs = self.unique_OBJ( allobjs )
       retval = self.objects_to_lines( allobjs )
-      if retval.__len__() > 0:
-         return retval
-      else:
-         return False
+
+      return retval
 
 
-   def find_blocks( self, blockspec, exactmatch=False ):
+   def find_blocks( self, blockspec, exactmatch=False, ignore_ws=False ):
       """Find all siblings of the blockspec, and then find all parents of those
       siblings. Return a list of config lines sorted by line number, lowest
       first.  Note: any children of the siblings should NOT be returned."""
       dct = {}
       retval = []
+
+      if ignore_ws:
+         blockspec = self.build_space_tolerant_regex( blockspec )
+
       # Find lines maching the spec
       if exactmatch == False:
          lines = self.find_line_OBJ( linespec )
@@ -368,15 +378,18 @@ class CiscoConfParse(object):
             dct[this.linenum] = this
       for line in sorted(dct.keys()):
          retval.append(self.ioscfg[line])
-      if retval.__len__() > 0:
-         return retval
-      else:
-         return False
+
+      return retval
 
 
-   def find_parents_w_child( self, parentspec, childspec ):
+   def find_parents_w_child( self, parentspec, childspec, ignore_ws=False ):
       """Parse through all children matching childspec, and return a list of
       parents that matched the parentspec."""
+
+      if ignore_ws:
+         parentspec = self.build_space_tolerant_regex( parentspec )
+         childspec = self.build_space_tolerant_regex( childspec )
+
       retval = []
       childobjs = self.find_line_OBJ( childspec )
       for child in childobjs:
@@ -390,17 +403,20 @@ class CiscoConfParse(object):
                retval.append( parent )
       retval = self.unique_OBJ( retval )
       retval = self.objects_to_lines( retval )
-      if retval.__len__() > 0:
-         return retval
-      else:
-         return False
+
+      return retval
 
 
-   def find_parents_wo_child( self, parentspec, childspec ):
+   def find_parents_wo_child( self, parentspec, childspec, ignore_ws=False ):
       """Parse through all parents matching parentspec, and return a list of
       parents that did NOT have children match the childspec.  For simplicity,
       this method only finds oldest_ancestors without immediate children that
       match."""
+
+      if ignore_ws:
+         parentspec = self.build_space_tolerant_regex( parentspec )
+         childspec = self.build_space_tolerant_regex( childspec )
+
       retval = []
       ## Iterate over all parents, find those with non-matching children
       for parentobj in self.allparentobjs:
@@ -416,10 +432,34 @@ class CiscoConfParse(object):
                   ## We found a parent without a child matching the childspec
                   retval.append( parentobj )
       retval = self.objects_to_lines( self.unique_OBJ( retval ) )
-      if retval.__len__() > 0:
-         return retval
-      else:
-         return False
+
+      return retval
+
+
+   def req_cfgspec_all_diff( self, cfgspec, ignore_ws=False ):
+      """Accept a regular expression in the form of linespec, and a list of
+      required configuration elements.  Return a list of configuration 
+      diffs to make the configuration comply.  ALL other config lines matching
+      the linespec that are NOT listed in the cfgspec will be removed with
+      the uncfgspec regex."""
+
+      if ignore_ws:
+         cfgspec = self.build_space_tolerant_regex( cfgspec )
+
+      skip_cfgspec = {}
+      retval = []
+      matches = self.find_line_OBJ( "[a-zA-Z]" )
+      ## Make a list of unnecessary cfgspec lines
+      for lineobj in matches:
+         for reqline in cfgspec: 
+            if lineobj.text.strip() == reqline.strip():
+	       skip_cfgspec[reqline] = "YES"
+      ## Add items to be configured
+      for line in cfgspec:
+         if not skip_cfgspec.has_key(line):
+            retval.append( line )
+
+      return retval
 
 
    def req_cfgspec_excl_diff( self, linespec, uncfgspec, cfgspec ):
@@ -456,38 +496,25 @@ class CiscoConfParse(object):
       for line in cfgspec:
          if not skip_cfgspec.has_key(line):
             retval.append( line )
-      if retval.__len__() > 0:
-         return retval
-      else:
-         return False
 
-
-   def req_cfgspec_all_diff( self, cfgspec ):
-      """Accept a regular expression in the form of linespec, and a list of
-      required configuration elements.  Return a list of configuration 
-      diffs to make the configuration comply.  ALL other config lines matching
-      the linespec that are NOT listed in the cfgspec will be removed with
-      the uncfgspec regex."""
-      skip_cfgspec = {}
-      retval = []
-      matches = self.find_line_OBJ( "[a-zA-Z]" )
-      ## Make a list of unnecessary cfgspec lines
-      for lineobj in matches:
-         for reqline in cfgspec: 
-            if lineobj.text.strip() == reqline.strip():
-	       skip_cfgspec[reqline] = "YES"
-      ## Add items to be configured
-      for line in cfgspec:
-         if not skip_cfgspec.has_key(line):
-            retval.append( line )
-      if retval.__len__() > 0:
-         return retval
-      else:
-         return False
+      return retval
 
 
    ### The methods below are marked SEMI-PRIVATE because they return an object
    ###  or list of objects instead of the configuration text itself.
+
+   def build_space_tolerant_regex( self, linespec ):
+      """SEMI-PRIVATE: Accept a string, and return a string with all
+      spaces replaced with '\s+'"""
+
+      # Unicode below
+      backslash = '\x5c'
+
+      linespec = re.sub( '\s+', backslash+"s+", linespec )
+
+      return linespec
+
+
    def find_line_OBJ( self, linespec ):
       """SEMI-PRIVATE: Find objects whose text matches the linespec"""
       retval = []
@@ -698,7 +725,6 @@ class CiscoPassword(object):
          for ii in range( 0, len( e ), 2 ):
             # int( blah, 16) assumes blah is base16... cool
             magic  = int( re.search( ".{%s}(..)" % ii, e ).group(1), 16 )
-            print "S = %s" % s
             if s <= 25:
                # Algorithm appears unpublished after s = 25
                newchar = "%c" % ( magic ^ int( xlat[ int( s  ) ] ) )
@@ -764,14 +790,14 @@ if __name__ == '__main__':
       print "   req_cfgspec_excl_diff:  arg1=linespec    arg2=uncfgspec   arg3=cfgspec"
       print "   req_cfgspec_all_diff:   arg1=cfgspec"
       print "   decrypt:                arg1=encrypted_passwd"
-      sys.exit(0)
+      raise RuntimeError
    else:
       print "'%s' is an unknown method (-m)." % opts.method
-      sys.exit(0)
+      raise RuntimeError
 
    if len(diff) > 0:
       for line in diff:
          print line
    else:
-      sys.exit(0)
+      raise RuntimeError
 

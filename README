@@ -54,46 +54,6 @@ Note that 01, 09, 13 and 14 are not considered siblings, nor are they part
 of the same family.  In fact, 13 and 14 do not belong to a family at all; they
 have no children.
 
-The package provides several types of methods:
-
-1.  Query methods returning a list of text lines.
-  1.1  find_lines( self, linespec, exactmatch=False ):
-  1.2  find_children( self, linespec, exactmatch=False ):
-  1.3  find_all_children( self, linespec, exactmatch=False ):
-  1.4  find_blocks( self, blockspec, exactmatch=False ):
-  1.5  find_parents_w_child( self, parentspec, childspec ):
-  1.6  find_parents_wo_child( self, parentspec, childspec ):
-  1.7  req_cfgspec_excl_diff( self, linespec, uncfgspec, cfgspec ):
-  1.8  req_cfgspec_all_diff( self, cfgspec ):
-
-
-2.  Query methods returning a list of IOSConfigLine objects.
-  2.1  find_line_OBJ( self, linespec ):
-  2.2  find_sibling_OBJ( self, lineobject ):
-  2.3  find_child_OBJ( self, lineobject):
-  2.4  find_all_child_OBJ( self, lineobject ):
-  2.5  find_parent_OBJ( self, lineobject ):
-
-3.  Methods for manipulating IOSConfigLine objects
-  3.1  unique_OBJ( self, objectlist ):
-  3.2  objects_to_lines( self, objectlist ):
-  3.3  objects_to_uncfg( self, objectlist, unconflist ):
-
-4.  Query methods on IOSConfigLine objects
-  4.1  parent(self):
-  4.2  children(self):
-  4.3  has_children(self):
-  4.4  child_indent(self):
-  4.5  oldest_ancestor(self):
-  4.6  family_endpoint(self):
-  4.7  linenum(self):
-  4.8  text(self):
-  4.9  uncfgtext(self):
-
-
-5.  Methods for parsing the configuration: I won't bother explaining here...
-    You have the source if you are interested :-).
-
 
 BASIC USAGE
 ===========
@@ -131,25 +91,9 @@ including sample configs to parse.  When enforcing configuration standards,
 the req_cfgspec_excl_diff() method is very useful; examples of its usage are
 included.
 
-
-FAQ
-===
-Q1.  Is there a way to use this module with perl?
-A1.  Yes, I do this myself.  Install the python package as you normally would
-     and import it into perl with Inline.pm and Inline::Python from CPAN.
-
-Q2.  When I use find_children("interface GigabitEthernet3/2"), I'm getting all
-     interfaces beginning with 3/2, including 3/21, 3/22, 3/23 and 3/24.  How 
-     can I limit my results?
-A2.  There are two ways... the simplest is to use the 'exactmatch' option...
-     find_children("interface GigabitEthernet3/2", True)
-     Another way is to utilize regex expansion that is native to all methods...
-     find_children("interface GigabitEthernet3/2$")
-
-
-DOWNLOAD
-========
-http://www.python.org/pypi/ciscoconfparse/
+I have moved all hosting to sourceforge... and I'm using the sourceforge
+wiki for detailed documentation.
+http://ciscoconfparse.wiki.sourceforge.net/
 
 
 AUTHOR

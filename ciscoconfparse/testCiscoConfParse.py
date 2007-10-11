@@ -138,28 +138,32 @@ class knownValues(unittest.TestCase):
    ' encapsulation ppp',
    ]
 
+   c03 = [
+   'set snmp community read-only     myreadonlystring'
+   ]
+
    #--------------------------------
 
    find_lines_Values = ( 
    ( c02, [ "encapsulation", False ], c02_encap ),
    ( c01, [ "interface Serial 1/0", False], c01_intf ),
-   ( c01, [ "interface Serial1/0", True], False ),
+   ( c01, [ "interface Serial1/0", True], [] ),
    )
 
    find_children_Values = ( 
    ( c01, [ "policy-map", False ], c01_pmap_children ),
-   ( c01, [ "policy-map", True ], False),
+   ( c01, [ "policy-map", True ], [] ),
    )
 
    find_all_children_Values = ( 
    ( c01, [ "policy-map", False ], c01_pmap_all_children ),
-   ( c01, [ "policy-map", True ], False),
+   ( c01, [ "policy-map", True ], [] ),
    )
 
    find_parents_w_child_Values = (
    ( c01, [ "interf", "power inline" ], c01_parents_w_child_power ),
    ( c01, [ "interf", " switchport voice" ], c01_parents_w_child_voice ),
-   ( c01, [ "^interface$", "switchport voice" ], False ),
+   ( c01, [ "^interface$", "switchport voice" ], [] ),
    )
 
    find_parents_wo_child_Values = (
@@ -230,6 +234,22 @@ class knownValues(unittest.TestCase):
       self.assertEqual( resultGood, result )
 
 
+   def testValues_ignore_ws(self):
+      resultGood = self.c03
+      cfg = CiscoConfParse( self.c03 )
+      result = cfg.find_lines(
+         'set snmp community read-only myreadonlystring',
+	 ignore_ws = True
+         )
+      self.assertEqual( resultGood, result )
+
+   def testValues_negative_ignore_ws(self):
+      resultGood = []
+      cfg = CiscoConfParse( self.c03 )
+      result = cfg.find_lines(
+         'set snmp community read-only myreadonlystring',
+         )
+      self.assertEqual( resultGood, result )
 
 if __name__ == "__main__":
     unittest.main()

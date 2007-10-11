@@ -1,1 +1,6 @@
+* Add examples for Finding banners, req_cfgspec_excl_diff IN THE README
+* Add examples for checking vty passwords
+* Add IOS / CatOS classification (experimental)
+* Add intelligence to automatically detect whether to "clear" or "no" in the
+  uncfg() method.
 * IOS diffs between two different configs.  Output similarities or differences

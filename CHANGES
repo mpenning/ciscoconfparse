@@ -1,3 +1,13 @@
+0.8.0   20071011 - Removed residual internal debugging from the CiscoPassword
+        class.  Added an 'ignore_ws' options to all public methods, except
+	req_cfgspec_excl_diff; this option will make the method's matches 
+	ignore whitespace differences (useful in some CatOS configurations).  
+	After much deliberation, I have removed the explicit 'False' return 
+	values for methods that do not match; instead I am returning an empty 
+	list (which will test False).  Apologies for breaking any existing 
+	code, but I decided against leaving beta with this behavior.  Removed
+	all sys.exit(0) statements in favor of raising a RuntimeError.
+
 0.7.5   20070804 - Fixed a bug in the parse() method, which was associating
         grandchildren as children of the grandparent.   Added unit tests.
 

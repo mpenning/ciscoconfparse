@@ -1,0 +1,5 @@
+#!
+#snmp
+set snmp community read-only      myreadstring
+set snmp community read-write     mywritestring
+set snmp community read-write-all mywriteallstring
