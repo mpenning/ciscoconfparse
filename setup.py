@@ -3,7 +3,7 @@
 from setuptools import setup
 
 setup(name='ciscoconfparse',
-      version='0.8.0',
+      version='0.8.1',
       description='Parse through Cisco IOS-style configurations and retrieve portions of the config using a variety of query methods',
       author='David Michael Pennington',
       author_email='mike /|at|\ pennington.net',
@@ -13,7 +13,7 @@ setup(name='ciscoconfparse',
       entry_points = "",
       packages= ['ciscoconfparse'],
       classifiers=[
-          'Development Status :: 4 - Beta',
+          'Development Status :: 5 - Production/Stable',
           'Environment :: Plugins',
           'Intended Audience :: Developers',
           'Intended Audience :: System Administrators',

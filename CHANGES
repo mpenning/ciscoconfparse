@@ -1,3 +1,5 @@
+0.8.1   20090719 - Code reorganization.  Fixed a bad RuntimeError.  Promoted to
+        production-quality at this point
 0.8.0   20071011 - Removed residual internal debugging from the CiscoPassword
         class.  Added an 'ignore_ws' options to all public methods, except
 	req_cfgspec_excl_diff; this option will make the method's matches 
