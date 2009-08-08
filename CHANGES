@@ -1,3 +1,4 @@
+0.8.2   20090808 - Fixed a fatal crash in find_blocks()
 0.8.1   20090719 - Code reorganization.  Fixed a bad RuntimeError.  Promoted to
         production-quality at this point
 0.8.0   20071011 - Removed residual internal debugging from the CiscoPassword

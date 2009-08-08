@@ -363,7 +363,7 @@ class CiscoConfParse(object):
 
         # Find lines maching the spec
         if exactmatch == False:
-            lines = self.find_line_OBJ( linespec )
+            lines = self.find_line_OBJ( blockspec )
         else:
             lines = self.find_line_OBJ( "^%s$" % blockspec )
         for line in lines:
