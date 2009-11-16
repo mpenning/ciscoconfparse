@@ -1,3 +1,4 @@
+0.8.3   20091016 - Documentation updates.  PEP8 formatting
 0.8.2   20090808 - Fixed a fatal crash in find_blocks()
 0.8.1   20090719 - Code reorganization.  Fixed a bad RuntimeError.  Promoted to
         production-quality at this point
