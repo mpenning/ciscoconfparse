@@ -30,8 +30,9 @@ class CiscoConfParse(object):
 
     DBGFLAG = False
 
-    def __init__(self, config):
+    def __init__(self, config="", comment="!"):
         """Initialize the class, read the config, and spawn the parser"""
+        self.comment_regex = self.build_comment_regex(comment)
         if type(config) == type(['a', 'b']):
             # we already have a list object, simply call the parser
             ioscfg = config
@@ -74,7 +75,7 @@ class CiscoConfParse(object):
         ## Walk through the config and look for the "first" child
         for ii in range(len(self.ioscfg)):
             # skip any IOS config comments
-            if (not re.search("^\s*!", self.ioscfg[ii])):
+            if (not re.search("^\s*" + self.comment_regex, self.ioscfg[ii])):
                 current_indent = indentation[ii]
                 # Determine if this is the "first" child...
                 #   Note: other children will be orphaned until we walk the
@@ -82,7 +83,8 @@ class CiscoConfParse(object):
                 if ((ii + 1) < len(self.ioscfg)):
                     # Note below that ii is the PARENT's line number
                     if (indentation[ii + 1] > current_indent):
-                        if(not re.search("!", self.ioscfg[ii + 1])):
+                        if(not re.search(self.comment_regex, \
+                            self.ioscfg[ii + 1])):
                             if DBGFLAG or self.DBGFLAG:
                                 print "parse:\n   Attaching CHILD:'%s'\n   " +\
                                     "to 'PARENT:%s'" % \
@@ -161,9 +163,9 @@ class CiscoConfParse(object):
                 ii += 1
         if (start_banner == True):
             while (end_banner == False) & (kk < len(self.ioscfg)):
-                if re.search("^\s*!", self.ioscfg[kk]):
-                    # Note: We are depending on a "!" after the banner... why
-                    #       can't a normal regex work with IOS banners!?
+                if re.search("^\s*" + self.comment_regex, self.ioscfg[kk]):
+                    # Note: We are depending on a comment after the banner... 
+                    #       why can't a normal regex work with IOS banners!?
                     #       Therefore the endpoint is at ( kk - 1)
 
 
@@ -231,7 +233,7 @@ class CiscoConfParse(object):
             self.id_family_endpoint(lineobject, len(self.ioscfg))):
             if DBGFLAG or self.DBGFLAG:
                 print "       C?    : %s" % self.ioscfg[ii]
-            if not re.search("^\s*!", self.ioscfg[ii]):
+            if not re.search("^\s*" + self.comment_regex, self.ioscfg[ii]):
                 if indentation[ii] == parent_indent:
                     more_children = False
                 if (indentation[ii] == child_indent) and more_children:
@@ -285,7 +287,7 @@ class CiscoConfParse(object):
                 last_line = ii
                 ii += 1
                 # reject endpoints in IOS comments
-                if not re.search("^\s*!", self.ioscfg[ii]):
+                if not re.search("^\s*" + self.comment_regex, self.ioscfg[ii]):
                     found_endpoint = False
                     while (not found_endpoint) and (ii < len(indentation)):
                         if indentation[ii] == 0:
@@ -527,11 +529,16 @@ class CiscoConfParse(object):
         spaces replaced with '\s+'"""
 
         # Unicode below
-        backslash = '\x5c'
+        backslash = u'\x5c'
 
         linespec = re.sub('\s+', backslash+"s+", linespec)
 
         return linespec
+
+    def build_comment_regex(self, comment):
+        """PRIVATE: Accept a string, and return a string joined with |"""
+        comment_regex = "|".join(comment)
+        return comment_regex
 
     def find_line_OBJ(self, linespec):
         """SEMI-PRIVATE: Find objects whose text matches the linespec"""
