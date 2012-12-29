@@ -1,3 +1,5 @@
+0.8.5   20121229 - Added custom comment delimiters that were in the 0.8.3a private 
+        build.  Converted the unicode backslash to a true unicode instance.
 0.8.4   20121229 - Add doctests, code maintenance, and more documentation fixes.
         Improved examples/req_cfgspec_all_diff.py and 
         examples/req_cfgspec_excl_diff.py.

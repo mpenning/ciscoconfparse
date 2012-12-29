@@ -30,13 +30,15 @@ class CiscoConfParse(object):
 
     DBGFLAG = False
 
-    def __init__(self, config):
+    def __init__(self, config="", comment="!"):
         """Initialize the class, read the config, and spawn the parser"""
 
         # Dictionary mapping line number to objects
         self.lineObjDict = dict()
         # List of all parent objects
         self.allparentobjs = list()
+        self.comment_delimiter = comment
+        self.comment_regex = self.build_comment_regex(comment)
 
         if isinstance(config, list):
             # we already have a list object, simply call the parser
@@ -58,7 +60,7 @@ class CiscoConfParse(object):
                 " an invalid argument\n")
 
     def __repr__(self):
-        return "<CiscoConfParse: %s lines>" % len(self.ioscfg)
+        return "<CiscoConfParse: %s lines / comment delimiter: '%s'>" % (len(self.ioscfg), self.comment_delimiter)
 
     def parse(self, ioscfg):
         """Iterate over the configuration and generate a linked list of IOS
@@ -73,7 +75,7 @@ class CiscoConfParse(object):
         ...     ] 
         >>> p = CiscoConfParse(config)
         >>> p
-        <CiscoConfParse: 2 lines>
+        <CiscoConfParse: 2 lines / comment delimiter: '!'>
         >>> p.lineObjDict
         {0: <IOSCfgLine # 0 'logging trap debugging' (child_indent: 0 / family_endpoint: 0)>, 1: <IOSCfgLine # 1 'logging 172.28.26.15' (child_indent: 0 / family_endpoint: 0)>}
         >>>
@@ -98,7 +100,7 @@ class CiscoConfParse(object):
         ## Walk through the config and look for the "first" child
         for ii in range(len(self.ioscfg)):
             # skip any IOS config comments
-            if (not re.search("^\s*!", self.ioscfg[ii])):
+            if (not re.search("^\s*" + self.comment_regex, self.ioscfg[ii])):
                 current_indent = indentation[ii]
                 # Determine if this is the "first" child...
                 #   Note: other children will be orphaned until we walk the
@@ -106,7 +108,7 @@ class CiscoConfParse(object):
                 if ((ii+1) < len(self.ioscfg)):
                     # Note below that ii is the PARENT's line number
                     if (indentation[ii+1] > current_indent):
-                        if(not re.search("!", self.ioscfg[ii+1])):
+                        if(not re.search(self.comment_regex, self.ioscfg[ii+1])):
                             if DBGFLAG or self.DBGFLAG:
                                 print "parse:\n   Attaching CHILD:'%s'\n   " +\
                                     "to 'PARENT:%s'" % \
@@ -175,7 +177,7 @@ class CiscoConfParse(object):
         else:
             raise RuntimeError("FATAL: mark_banner(): received " + \
                 "an invalid value for 'os'")
-        while (start_banner == False) & (ii < len(self.ioscfg)):
+        while (start_banner is False) & (ii < len(self.ioscfg)):
             if re.search(prefix+"banner\s+"+banner_str+"\s+\^\S+", \
                 self.ioscfg[ii]):
                 # Found the start banner at ii
@@ -185,7 +187,7 @@ class CiscoConfParse(object):
                 ii += 1
         if (start_banner is True):
             while (end_banner is False) & (kk < len(self.ioscfg)):
-                if re.search("^\s*!", self.ioscfg[kk]):
+                if re.search("^\s*" + self.comment_regex, self.ioscfg[kk]):
                     # Note: We are depending on a "!" after the banner... why
                     #       can't a normal regex work with IOS banners!?
                     #       Therefore the endpoint is at ( kk - 1)
@@ -255,7 +257,7 @@ class CiscoConfParse(object):
             self.id_family_endpoint(lineobject, len(self.ioscfg))):
             if DBGFLAG or self.DBGFLAG:
                 print "       C?    : %s" % self.ioscfg[ii]
-            if not re.search("^\s*!", self.ioscfg[ii]):
+            if not re.search("^\s*" + self.comment_regex, self.ioscfg[ii]):
                 if (indentation[ii]==parent_indent):
                     more_children = False
                 if (indentation[ii]==child_indent) and more_children:
@@ -309,7 +311,7 @@ class CiscoConfParse(object):
                 last_line = ii
                 ii += 1
                 # reject endpoints in IOS comments
-                if not re.search("^\s*!", self.ioscfg[ii]):
+                if not re.search("^\s*" + self.comment_regex, self.ioscfg[ii]):
                     found_endpoint = False
                     while (not found_endpoint) and (ii < len(indentation)):
                         if indentation[ii] == 0:
@@ -589,11 +591,17 @@ class CiscoConfParse(object):
         spaces replaced with '\s+'"""
 
         # Unicode below
-        backslash = '\x5c'
+        backslash = u'\x5c'
 
         linespec = re.sub('\s+', backslash+"s+", linespec)
 
         return linespec
+
+    def build_comment_regex(self, comment):
+        """PRIVATE: Accept a string, and return a string joined with a |"""
+        comment_regex = "|".join(comment)
+        return comment_regex
+
 
     def find_line_OBJ(self, linespec):
         """SEMI-PRIVATE: Find objects whose text matches the linespec"""
