@@ -66,8 +66,8 @@ class CiscoConfParse(object):
         """Iterate over the configuration and generate a linked list of IOS
         commands.
 
-        Example
-        -------
+        **Example**
+
 
         >>> config = [
         ...     'logging trap debugging',
@@ -484,22 +484,23 @@ class CiscoConfParse(object):
         One example use of this method is when you need to enforce routing
         protocol standards, or standards against interface configurations.
 
-        Example
-        -------
+        **Example**
 
-        >>> config = [
-        ...     'logging trap debugging',
-        ...     'logging 172.28.26.15',
-        ...     ] 
-        >>> p = CiscoConfParse(config)
-        >>> required_lines = [
-        ...     "logging 172.28.26.15",
-        ...     "logging 172.16.1.5",
-        ...     ]
-        >>> diffs = p.req_cfgspec_all_diff(required_lines)
-        >>> diffs
-        ['logging 172.16.1.5']
-        >>>
+        .. doctest::
+
+           >>> config = [
+           ...     'logging trap debugging',
+           ...     'logging 172.28.26.15',
+           ...     ] 
+           >>> p = CiscoConfParse(config)
+           >>> required_lines = [
+           ...     "logging 172.28.26.15",
+           ...     "logging 172.16.1.5",
+           ...     ]
+           >>> diffs = p.req_cfgspec_all_diff(required_lines)
+           >>> diffs
+           ['logging 172.16.1.5']
+           >>>
         """
 
         if ignore_ws:
@@ -531,26 +532,27 @@ class CiscoConfParse(object):
         Uses for this method include the need to enforce syslog, acl, or
         aaa standards.
 
-        Example
-        -------
+        **Example**
 
-        >>> config = [
-        ...     'logging trap debugging',
-        ...     'logging 172.28.26.15',
-        ...     ] 
-        >>> p = CiscoConfParse(config)
-        >>> required_lines = [
-        ...     "logging 172.16.1.5",
-        ...     "logging 1.10.20.30",
-        ...     "logging 192.168.1.1",
-        ...     ]
-        >>> linespec = "logging\s+\d+\.\d+\.\d+\.\d+"
-        >>> unconfspec = linespec
-        >>> diffs = p.req_cfgspec_excl_diff(linespec, unconfspec, 
-        ...     required_lines)
-        >>> diffs
-        ['no logging 172.28.26.15', 'logging 172.16.1.5', 'logging 1.10.20.30', 'logging 192.168.1.1']
-        >>>
+        .. doctest::
+
+           >>> config = [
+           ...     'logging trap debugging',
+           ...     'logging 172.28.26.15',
+           ...     ] 
+           >>> p = CiscoConfParse(config)
+           >>> required_lines = [
+           ...     "logging 172.16.1.5",
+           ...     "logging 1.10.20.30",
+           ...     "logging 192.168.1.1",
+           ...     ]
+           >>> linespec = "logging\s+\d+\.\d+\.\d+\.\d+"
+           >>> unconfspec = linespec
+           >>> diffs = p.req_cfgspec_excl_diff(linespec, unconfspec, 
+           ...     required_lines)
+           >>> diffs
+           ['no logging 172.28.26.15', 'logging 172.16.1.5', 'logging 1.10.20.30', 'logging 192.168.1.1']
+           >>>
         """
         violate_objs = list()
         uncfg_objs = list()
@@ -803,7 +805,7 @@ class CiscoPassword(object):
 
     def decrypt(self, ep):
         """Cisco Type 7 password decryption.  Converted from perl code that was
-        written by jbash /|at|\ cisco.com"""
+        written by jbash [~at~] cisco.com"""
 
         xlat = (0x64, 0x73, 0x66, 0x64, 0x3b, 0x6b, 0x66, 0x6f, 0x41, 0x2c,
                     0x2e, 0x69, 0x79, 0x65, 0x77, 0x72, 0x6b, 0x6c, 0x64, 0x4a,
