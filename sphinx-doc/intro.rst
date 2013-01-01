@@ -21,8 +21,8 @@ After ten or more years of network evolutions, other companies may find that the
 
 Audits aren't the only use for ciscoconfparse.  Let's suppose you are working on a design and need a list of dot1q trunks on a switch with more than 400 interfaces.  You can't grep for them because you need the interface names of layer2 trunks, and CiscoWorks makes you throw things.  With ciscoconfparse, it's really this easy...
 
->>> import ciscoconfparse
->>> parse = ciscoconfparse.CiscoConfParse('/tftpboot/largeConfig.conf')
+>>> from ciscoconfparse import CiscoConfParse
+>>> parse = CiscoConfParse('/tftpboot/largeConfig.conf')
 >>> trunks = parse.find_parents_w_child("^interface", "switchport trunk")
 >>> for intf in trunks:
 ...     print intf

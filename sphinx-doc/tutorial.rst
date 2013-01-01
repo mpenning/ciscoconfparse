@@ -1,8 +1,8 @@
-===============================
-:mod:`ciscoconfparse` Tutorial
-===============================
+================================
+:class:`CiscoConfParse` Tutorial
+================================
 
-This is a brief tutorial which will cover the features that most :mod:`ciscoconfparse` users care about.  We make a couple of assumptions throughout this tutorial...
+This is a brief tutorial which will cover the features that most :class:`CiscoConfParse` users care about.  We make a couple of assumptions throughout this tutorial...
 
 - You already know a scripting language like Python or Perl
 - You (naturally) have a basic understanding of Cisco IOS
@@ -10,7 +10,7 @@ This is a brief tutorial which will cover the features that most :mod:`ciscoconf
 Overview
 ----------------------
 
-:mod:`ciscoconfparse` reads in an IOS configuration and breaks it into a list of parent-child relationships.  Used correctly, these relationships can find a lot of useful information in a router or switch configuration.  The concept of IOS parent and child is pretty intuitive, but we'll go through a simple example for clarity.
+:class:`CiscoConfParse` reads in an IOS configuration and breaks it into a list of parent-child relationships.  Used correctly, these relationships can find a lot of useful information in a router or switch configuration.  The concept of IOS parent and child is pretty intuitive, but we'll go through a simple example for clarity.
 
 .. code-block:: none
    :linenos:
@@ -26,7 +26,7 @@ Overview
 
 In the configuration above, Line 1 is a parent, and its children are lines 2, 4, and 7.  Line 2 is also a parent, and it only has one child: line 3.
 
-:mod:`ciscoconfparse` uses these parent-child relationships to build queries.  For instance, you can find a list of all parents with or without a child; or you can find all the configuration elements that are required to reconfigure a certain class-map.
+:class:`CiscoConfParse` uses these parent-child relationships to build queries.  For instance, you can find a list of all parents with or without a child; or you can find all the configuration elements that are required to reconfigure a certain class-map.
 
 This tutorial will run all the queries against a sample configuration, which is shown below.
 
@@ -107,9 +107,9 @@ All the examples below assume you have imported ciscoconfparse at the interprete
 
 .. parsed-literal::
 
-   >>> from ciscoconfparse import *
+   >>> from ciscoconfparse import CiscoConfParse
 
-Try importing ciscoconfparse in the python interpreter now.  If it doesn't work, then you'll need to install ciscoconfparse.
+Try importing `CiscoConfParse` in the python interpreter now.  If it doesn't work, then you'll need to install ciscoconfparse.
 
 If your python installation already has ``easy_install``, you can type ``easy_install -U ciscoconfparse`` as root.  If you don't have ``easy_install`` you will need to download the ciscoconfparse compressed tarball, extract it, and run the following command in the ciscoconfparse directory: ``python ./setup.py install`` as root.
 
@@ -125,7 +125,7 @@ Going forward, I will assume that you know how to use regular expressions; if yo
 
 .. parsed-literal::
 
-   >>> from ciscoconfparse import *
+   >>> from ciscoconfparse import CiscoConfParse
    >>> parse = CiscoConfParse("/tftpboot/bucksnort.conf")
    >>> serial_intfs = parse.find_lines("^interface Serial")
 
@@ -139,7 +139,7 @@ The assuming we use the configuration in the example above, :func:`CiscoConfPars
 Finding parents with a specific child
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The last example was a good start, but if this was all :mod:`ciscoconfparse` could do, then it's easier to use ``grep``.
+The last example was a good start, but if this was all :class:`CiscoConfParse` could do, then it's easier to use ``grep``.
 
 Let's suppose you need to find all interfaces that are configured to use ``service-policy QOS_1`` in the output direction.  We will use :func:`CiscoConfParse.find_parents_w_child` to search the config.
 
@@ -239,7 +239,7 @@ Not all functions support the options above; please consult the API documentatio
 Checking Passwords
 ------------------------------
 
-Sometimes you find yourself wishing you could decrypt vty or console passwords to ensure that they conform to the corporate standard.  :mod:`ciscoconfparse` comes with a :class:`CiscoPassword` class that can decrypt some Cisco IOS type 7 passwords.
+Sometimes you find yourself wishing you could decrypt vty or console passwords to ensure that they conform to the corporate standard.  :class:`CiscoConfParse` comes with a :class:`CiscoPassword` class that can decrypt some Cisco IOS type 7 passwords.
 
 .. NOTE::
 
@@ -262,7 +262,9 @@ We need to ensure that the password on the console is correct.  This is easy wit
 
 .. parsed-literal::
 
-   >>> dp = ciscoconfparse.CiscoPassword()
+
+   >>> from ciscoconfparse import CiscoPassword
+   >>> dp = CiscoPassword()
    >>> decrypted_passwd = dp.decrypt('107D3D232342041E3A')
 
 Result:
@@ -282,13 +284,15 @@ The script below will build a list of serial interfaces, check to see whether th
 
 .. parsed-literal::
 
+   from ciscoconfparse import CiscoConfParse
+
    cfgdiffs = []
 
    parse = CiscoConfParse('/tftpboot/bucksnort.conf')
    ser_intfs = parse.find_lines("^interface Serial")
    for intf in ser_intfs:
       ## Find children of the interface called intf
-      famobj = ciscoconfparse.CiscoConfParse(parse.find_children(intf, exactmatch=True))
+      famobj = CiscoConfParse(parse.find_children(intf, exactmatch=True))
       if(famobj.find_lines("address 1\\.1\\.1")):
          cfgdiffs.append(intf)
          cfgdiffs.append(" mpls ip")

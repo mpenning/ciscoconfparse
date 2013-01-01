@@ -26,48 +26,33 @@ import os
 
 
 class CiscoConfParse(object):
-    """Parses Cisco IOS configurations and answers queries about the configs"""
+    """Parses Cisco IOS configurations and answers queries about the configs
 
-    DBGFLAG = False
+        Parameters
+        ----------
 
-    def __init__(self, config="", comment="!"):
-        """Initialize the class, read the config, and spawn the parser"""
+        config : :py:func:`list` or :py:func:`str`
+             A list of configuration statements, or a configuration file 
+             path to be parsed
+        comment : :py:func:`str`, optional
+             A comment delimiter.  This should only be changed when 
+             parsing non-Cisco IOS configurations, which do not use a ! 
+             as the comment delimiter.  `comment` defaults to '!'
 
-        # Dictionary mapping line number to objects
-        self.lineObjDict = dict()
-        # List of all parent objects
-        self.allparentobjs = list()
-        self.comment_delimiter = comment
-        self.comment_regex = self.build_comment_regex(comment)
+        Returns
+        -------
 
-        if isinstance(config, list):
-            # we already have a list object, simply call the parser
-            ioscfg = config
-            self.parse(ioscfg)
-        elif isinstance(config, str):
-            try:
-                # string - assume a filename... open file, split and parse
-                f = open(config)
-                text = f.read()
-                rgx = re.compile("\r*\n+")
-                ioscfg = rgx.split(text)
-                self.parse(ioscfg)
-            except IOError:
-                print "FATAL: CiscoConfParse could not open '%s'" % config
-                raise RuntimeError
-        else:
-            raise RuntimeError("FATAL: CiscoConfParse() received" + \
-                " an invalid argument\n")
+        CiscoConfParse : :py:func:`object`
+             An instance of a CiscoConfParse object.
 
-    def __repr__(self):
-        return "<CiscoConfParse: %s lines / comment delimiter: '%s'>" % (len(self.ioscfg), self.comment_delimiter)
+        Attributes
+        ----------
 
-    def parse(self, ioscfg):
-        """Iterate over the configuration and generate a linked list of IOS
-        commands.
+        lineObjDict : :py:func:`dict`
+             This contains all :class:`IOSCfgLine` object instances, which are generated from the configuration that is parsed.  The :py:func:`dict` is keyed by an :py:func:`int`, which is the line number of the configuration line.  The value of the :py:func:`dict` is the :class:`IOSCfgLine` instance for that line number.
 
-        **Example**
-
+        Examples
+        --------
 
         >>> config = [
         ...     'logging trap debugging',
@@ -79,6 +64,45 @@ class CiscoConfParse(object):
         >>> p.lineObjDict
         {0: <IOSCfgLine # 0 'logging trap debugging' (child_indent: 0 / family_endpoint: 0)>, 1: <IOSCfgLine # 1 'logging 172.28.26.15' (child_indent: 0 / family_endpoint: 0)>}
         >>>
+    """
+
+    DBGFLAG = False
+
+    def __init__(self, config="", comment="!"):
+        """Initialize the class, read the config, and spawn the parser"""
+
+        # Dictionary mapping line number to objects
+        self.lineObjDict = dict()
+        # List of all parent objects
+        self.allparentobjs = list()
+        self.comment_delimiter = comment
+        self.comment_regex = self._build_comment_regex(comment)
+
+        if isinstance(config, list):
+            # we already have a list object, simply call the parser
+            ioscfg = config
+            self._parse(ioscfg)
+        elif isinstance(config, str):
+            try:
+                # string - assume a filename... open file, split and parse
+                f = open(config)
+                text = f.read()
+                rgx = re.compile("\r*\n+")
+                ioscfg = rgx.split(text)
+                self._parse(ioscfg)
+            except IOError:
+                print "FATAL: CiscoConfParse could not open '%s'" % config
+                raise RuntimeError
+        else:
+            raise RuntimeError("FATAL: CiscoConfParse() received" + \
+                " an invalid argument\n")
+
+    def __repr__(self):
+        return "<CiscoConfParse: %s lines / comment delimiter: '%s'>" % (len(self.ioscfg), self.comment_delimiter)
+
+    def _parse(self, ioscfg):
+        """Iterate over the configuration and generate a linked 
+        structure of IOS commands.
         """
         DBGFLAG = False
         self.ioscfg = ioscfg
@@ -127,21 +151,21 @@ class CiscoConfParse(object):
         ## Look for orphaned children, these SHOULD be indented the same
         ##  number of spaces as the "first" child.  However, we must only
         ##  look inside our "extended family"
-        self.mark_family_endpoints(self.allparentobjs, indentation)
+        self._mark_family_endpoints(self.allparentobjs, indentation)
         for lineobject in self.allparentobjs:
             if (DBGFLAG is True):
                 print "parse: Parent  : %s" % lineobject.text
                 print "parse: Children:\n      %s" % \
-                    self.objects_to_lines(lineobject.children)
+                    self._objects_to_lines(lineobject.children)
             if (indentation[lineobject.linenum]==0):
                 # Look for immediate children
-                self.id_unknown_children(lineobject, indentation)
+                self._id_unknown_children(lineobject, indentation)
                 ## this SHOULD find all other children in the family...
                 candidate_children = list()
                 for child in lineobject.children:
                     candidate_children.append(child)
                 for child in candidate_children:
-                    if self.id_unknown_children(child, indentation):
+                    if self._id_unknown_children(child, indentation):
                         # Appending any new children to candidate_children as
                         #  we find new children
                         for new in child.children:
@@ -150,15 +174,15 @@ class CiscoConfParse(object):
         ##  as individual lines, instead of a parent / child relationship.  i
         ##  This means finding each banner statement, and associating the
         ##  subsequent lines as children.
-        self.mark_banner("login", "ios", indentation)
-        self.mark_banner("motd", "ios", indentation)
-        self.mark_banner("exec", "ios", indentation)
-        self.mark_banner("incoming", "ios", indentation)
-        self.mark_banner("motd", "catos", indentation)
-        self.mark_banner("telnet", "catos", indentation)
-        self.mark_banner("lcd", "catos", indentation)
+        self._mark_banner("login", "ios", indentation)
+        self._mark_banner("motd", "ios", indentation)
+        self._mark_banner("exec", "ios", indentation)
+        self._mark_banner("incoming", "ios", indentation)
+        self._mark_banner("motd", "catos", indentation)
+        self._mark_banner("telnet", "catos", indentation)
+        self._mark_banner("lcd", "catos", indentation)
 
-    def mark_banner(self, banner_str, os, indentation):
+    def _mark_banner(self, banner_str, os, indentation):
         """Identify all multiline entries matching the mlinespec (this is
         typically used for banners).  Associate parent / child relationships,
         as well setting the oldest_ancestor."""
@@ -175,7 +199,7 @@ class CiscoConfParse(object):
         elif os == "catos":
             prefix = "set "
         else:
-            raise RuntimeError("FATAL: mark_banner(): received " + \
+            raise RuntimeError("FATAL: _mark_banner(): received " + \
                 "an invalid value for 'os'")
         while (start_banner is False) & (ii < len(self.ioscfg)):
             if re.search(prefix+"banner\s+"+banner_str+"\s+\^\S+", \
@@ -211,14 +235,14 @@ class CiscoConfParse(object):
         # Return our success or failure status
         return end_banner
 
-    def fix_multiline_entries(self, re_code, indentation):
+    def _fix_multiline_entries(self, re_code, indentation):
         """Identify all multiline entries matching the mlinespec (this is
         typically used for banners).  Associate parent / child relationships,
         as well setting the oldest_ancestor."""
         ##
         ## Note: I wanted this to work for banners, but have never figured out
         ##       how to make the re_compile code set re_code.group(1).
-        ##       Right now, I'm using mark_banner()
+        ##       Right now, I'm using _mark_banner()
         ##
         ## re_code should be a lambda function such as:
         ##  re.compile("^banner\slogin\.+?(\^\S*)"
@@ -242,7 +266,7 @@ class CiscoConfParse(object):
                             self.lineObjDict[mm].add_parent(\
                                 self.lineObjDict[ii])
 
-    def id_unknown_children(self, lineobject, indentation):
+    def _id_unknown_children(self, lineobject, indentation):
         """Walk through the configuration and look for configuration child
         lines that have not already been identified"""
         found_unknown_child = False
@@ -254,7 +278,7 @@ class CiscoConfParse(object):
         if DBGFLAG or self.DBGFLAG:
             print "Parent       : %s" % self.ioscfg[lineobject.linenum]
         for ii in range(lineobject.linenum + 1, \
-            self.id_family_endpoint(lineobject, len(self.ioscfg))):
+            self._id_family_endpoint(lineobject, len(self.ioscfg))):
             if DBGFLAG or self.DBGFLAG:
                 print "       C?    : %s" % self.ioscfg[ii]
             if not re.search("^\s*" + self.comment_regex, self.ioscfg[ii]):
@@ -271,7 +295,7 @@ class CiscoConfParse(object):
                             print "    New child: %s" % self.ioscfg[ii]
         return found_unknown_child
 
-    def id_family_endpoint(self, lineobject, last_cfg_line):
+    def _id_family_endpoint(self, lineobject, last_cfg_line):
         """This method can start with any child object, and traces through its
         parents to the oldest_ancestor.  When it finds the oldest_ancestor, it
         looks for the family_endpoint attribute."""
@@ -295,7 +319,7 @@ class CiscoConfParse(object):
                 "while considering: '%s'  Validate IOSCfgLine relationships" %\
                 self.ioscfg[lineobject.linenum])
 
-    def mark_family_endpoints(self, parents, indentation):
+    def _mark_family_endpoints(self, parents, indentation):
         """Find the endpoint of the config 'family'
         A family starts when a config line with *no* indentation spawns
         'children'. A family ends when there are no more children.  See class
@@ -329,11 +353,28 @@ class CiscoConfParse(object):
 
     def find_lines(self, linespec, exactmatch=False, ignore_ws=False):
         """This method is the equivalent of a simple configuration grep
-        (Case-sensitive)."""
+        (Case-sensitive).
+
+        Parameters
+        ----------
+
+        linespec : :py:func:`str`
+             Text regular expression for the line to be matched
+        exactmatch : :py:func:`bool`
+             boolean that controls whether partial matches are valid
+        ignore_ws : :py:func:`bool`
+             boolean that controls whether whitespace is ignored
+
+        Returns
+        -------
+
+        retval : :py:func:`list`
+            A list of matching configuration lines
+        """
         retval = list()
 
         if ignore_ws:
-            linespec = self.build_space_tolerant_regex(linespec)
+            linespec = self._build_space_tolerant_regex(linespec)
 
         for line in self.ioscfg:
             if exactmatch == False:
@@ -346,46 +387,167 @@ class CiscoConfParse(object):
 
     def find_children(self, linespec, exactmatch=False, ignore_ws=False):
         """Returns the parents matching the linespec, and their immediate
-        children"""
+        children.  This method is different than :meth:`find_all_children`,
+        because :meth:`find_all_children` finds children of children.
+        :meth:`find_children` only finds immediate children.
+
+        Parameters
+        ----------
+
+        linespec : :py:func:`str`
+             Text regular expression for the line to be matched
+        exactmatch : :py:func:`bool`
+             boolean that controls whether partial matches are valid
+        ignore_ws : :py:func:`bool`
+             boolean that controls whether whitespace is ignored
+
+        Returns
+        -------
+
+        retval : :py:func:`list`
+            A list of matching configuration lines
+
+        Examples
+        --------
+
+        Suppose you are interested in finding all immediate children of the 
+        `archive` statements in the following configuration...
+
+        .. code::
+
+           username ddclient password 7 107D3D232342041E3A
+           archive
+            log config
+             logging enable
+             hidekeys
+            path ftp://ns.foo.com//tftpboot/Foo-archive
+           !
+
+        Using the config above, we expect to find the following config lines...
+
+        .. code::
+
+           archive
+            log config
+            path ftp://ns.foo.com//tftpboot/Foo-archive
+
+        We would accomplish this by querying `find_children('^archive')`...
+
+        >>> from ciscoconfparse import CiscoConfParse
+        >>> config = ['username ddclient password 7 107D3D232342041E3A',
+        ...           'archive',
+        ...           ' log config',
+        ...           '  logging enable',
+        ...           '  hidekeys',
+        ...           ' path ftp://ns.foo.com//tftpboot/Foo-archive',
+        ...           '!',
+        ...     ]
+        >>> p = CiscoConfParse(config)
+        >>> p.find_children('^archive')
+        ['archive', ' log config', ' path ftp://ns.foo.com//tftpboot/Foo-archive']
+        >>>
+        """
 
         if ignore_ws:
-            linespec = self.build_space_tolerant_regex(linespec)
+            linespec = self._build_space_tolerant_regex(linespec)
 
         if exactmatch == False:
-            parentobjs = self.find_line_OBJ(linespec)
+            parentobjs = self._find_line_OBJ(linespec)
         else:
-            parentobjs = self.find_line_OBJ("^%s$" % linespec)
+            parentobjs = self._find_line_OBJ("^%s$" % linespec)
         allobjs = list()
         for parent in parentobjs:
-            childobjs = self.find_child_OBJ(parent)
+            childobjs = self._find_child_OBJ(parent)
             if parent.has_children == True:
                 for child in childobjs:
                     allobjs.append(child)
             allobjs.append(parent)
-        allobjs = self.unique_OBJ(allobjs)
-        retval = self.objects_to_lines(allobjs)
+        allobjs = self._unique_OBJ(allobjs)
+        retval = self._objects_to_lines(allobjs)
 
         return retval
 
     def find_all_children(self, linespec, exactmatch=False, ignore_ws=False):
-        """Returns the parents matching the linespec, and all their children"""
+        """Returns the parents matching the linespec, and all their children.  
+        This method is different than :meth:`find_children`, because
+        :meth:`find_all_children` finds children of children.
+        :meth:`find_children` only finds immediate children.
+     
+        Parameters
+        ----------
+
+        linespec : :py:func:`str`
+             Text regular expression for the line to be matched
+        exactmatch : :py:func:`bool`
+             boolean that controls whether partial matches are valid
+        ignore_ws : :py:func:`bool`
+             boolean that controls whether whitespace is ignored
+
+        Returns
+        -------
+
+        retval : :py:func:`list`
+            A list of matching configuration lines
+
+        Examples
+        --------
+
+        Suppose you are interested in finding all `archive` statements in
+        the following configuration...
+
+        .. code::
+
+           username ddclient password 7 107D3D232342041E3A
+           archive
+            log config
+             logging enable
+             hidekeys
+            path ftp://ns.foo.com//tftpboot/Foo-archive
+           !
+
+        Using the config above, we expect to find the following config lines...
+
+        .. code::
+
+           archive
+            log config
+             logging enable
+             hidekeys
+            path ftp://ns.foo.com//tftpboot/Foo-archive
+
+        We would accomplish this by querying `find_all_children('^archive')`...
+
+        >>> from ciscoconfparse import CiscoConfParse
+        >>> config = ['username ddclient password 7 107D3D232342041E3A',
+        ...           'archive',
+        ...           ' log config',
+        ...           '  logging enable',
+        ...           '  hidekeys',
+        ...           ' path ftp://ns.foo.com//tftpboot/Foo-archive',
+        ...           '!',
+        ...     ]
+        >>> p = CiscoConfParse(config)
+        >>> p.find_all_children('^archive')
+        ['archive', ' log config', '  logging enable', '  hidekeys', ' path ftp://ns.foo.com//tftpboot/Foo-archive']
+        >>>
+        """
 
         if ignore_ws:
-            linespec = self.build_space_tolerant_regex(linespec)
+            linespec = self._build_space_tolerant_regex(linespec)
 
         if exactmatch == False:
-            parentobjs = self.find_line_OBJ(linespec)
+            parentobjs = self._find_line_OBJ(linespec)
         else:
-            parentobjs = self.find_line_OBJ("^%s$" % linespec)
+            parentobjs = self._find_line_OBJ("^%s$" % linespec)
         allobjs = list()
         for parent in parentobjs:
-            childobjs = self.find_all_child_OBJ(parent)
+            childobjs = self._find_all_child_OBJ(parent)
             if (parent.has_children is True):
                 for child in childobjs:
                     allobjs.append(child)
             allobjs.append(parent)
-        allobjs = self.unique_OBJ(allobjs)
-        retval = self.objects_to_lines(allobjs)
+        allobjs = self._unique_OBJ(allobjs)
+        retval = self._objects_to_lines(allobjs)
 
         return retval
 
@@ -393,27 +555,112 @@ class CiscoConfParse(object):
         """Find all siblings matching the linespec, then find all parents of
         those siblings. Return a list of config lines sorted by line number,
         lowest first.  Note: any children of the siblings should NOT be
-        returned."""
+        returned.
+
+        Parameters
+        ----------
+
+        linespec : :py:func:`str`
+             Text regular expression for the line to be matched
+        exactmatch : :py:func:`bool`
+             boolean that controls whether partial matches are valid
+        ignore_ws : :py:func:`bool`
+             boolean that controls whether whitespace is ignored
+
+        Returns
+        -------
+
+        retval : :py:func:`list`
+            A list of matching configuration lines
+
+
+        Examples
+        --------
+
+        This example finds `bandwidth percent` statements in following config, 
+        the siblings of those `bandwidth percent` statements, as well
+        as the parent configuration statements required to access them.
+
+        .. code::
+
+           !
+           policy-map EXTERNAL_CBWFQ
+            class IP_PREC_HIGH
+             priority percent 10
+             police cir percent 10
+               conform-action transmit
+               exceed-action drop
+            class IP_PREC_MEDIUM
+             bandwidth percent 50
+             queue-limit 100
+            class class-default
+             bandwidth percent 40
+             queue-limit 100
+           policy-map SHAPE_HEIR
+            class ALL
+             shape average 630000
+             service-policy EXTERNAL_CBWFQ
+           !
+
+        The following config lines should be returned:
+
+        .. code::
+
+           policy-map EXTERNAL_CBWFQ
+            class IP_PREC_MEDIUM
+             bandwidth percent 50
+             queue-limit 100
+            class class-default
+             bandwidth percent 40
+             queue-limit 100
+
+        We do this by quering `find_blocks('bandwidth percent')`...
+
+        >>> from ciscoconfparse import CiscoConfParse
+        >>> config = ['!', 
+        ...           'policy-map EXTERNAL_CBWFQ', 
+        ...           ' class IP_PREC_HIGH', 
+        ...           '  priority percent 10', 
+        ...           '  police cir percent 10', 
+        ...           '    conform-action transmit', 
+        ...           '    exceed-action drop', 
+        ...           ' class IP_PREC_MEDIUM', 
+        ...           '  bandwidth percent 50', 
+        ...           '  queue-limit 100', 
+        ...           ' class class-default', 
+        ...           '  bandwidth percent 40', 
+        ...           '  queue-limit 100', 
+        ...           'policy-map SHAPE_HEIR', 
+        ...           ' class ALL', 
+        ...           '  shape average 630000', 
+        ...           '  service-policy EXTERNAL_CBWFQ', 
+        ...           '!',
+        ...     ]
+        >>> p = CiscoConfParse(config)
+        >>> p.find_blocks('bandwidth percent')
+        ['policy-map EXTERNAL_CBWFQ', ' class IP_PREC_MEDIUM', '  bandwidth percent 50', '  queue-limit 100', ' class class-default', '  bandwidth percent 40', '  queue-limit 100']
+        >>>
+        """
         dct = dict()
         retval = list()
 
         if ignore_ws:
-            linespec = self.build_space_tolerant_regex(linespec)
+            linespec = self._build_space_tolerant_regex(linespec)
 
         # Find lines maching the spec
         if exactmatch == False:
-            lines = self.find_line_OBJ(linespec)
+            lines = self._find_line_OBJ(linespec)
         else:
-            lines = self.find_line_OBJ("^%s$" % linespec)
+            lines = self._find_line_OBJ("^%s$" % linespec)
         for line in lines:
             dct[line.linenum] = line
             # Find the siblings of this line
-            alist = self.find_sibling_OBJ(line)
+            alist = self._find_sibling_OBJ(line)
             for this in alist:
                 dct[this.linenum] = this
         # Find the parents for everything
         for (line, lineobject) in dct.items():
-            alist = self.find_parent_OBJ(lineobject)
+            alist = self._find_parent_OBJ(lineobject)
             for this in alist:
                 dct[this.linenum] = this
         for line in sorted(dct.keys()):
@@ -423,16 +670,93 @@ class CiscoConfParse(object):
 
     def find_parents_w_child(self, parentspec, childspec, ignore_ws=False):
         """Parse through all children matching childspec, and return a list of
-        parents that matched the parentspec."""
+        parents that matched the parentspec.
+
+        Parameters
+        ----------
+
+        parentspec : :py:func:`str`
+             Text regular expression for the line to be matched; this must
+             match the parent's line
+        childspec : :py:func:`str`
+             Text regular expression for the line to be matched; this must
+             match the child's line
+        exactmatch : :py:func:`bool`
+             boolean that controls whether partial matches are valid
+        ignore_ws : :py:func:`bool`
+             boolean that controls whether whitespace is ignored
+
+        Returns
+        -------
+
+        retval : :py:func:`list`
+            A list of matching parent configuration lines
+
+        Examples
+        --------
+
+        This example finds all ports that are members of access vlan 300 
+        in following config...
+
+        .. code::
+
+           !
+           interface FastEthernet0/1
+            switchport access vlan 532
+            spanning-tree vlan 532 cost 3
+           !
+           interface FastEthernet0/2
+            switchport access vlan 300
+            spanning-tree portfast
+           !
+           interface FastEthernet0/2
+            duplex full
+            speed 100
+            switchport access vlan 300
+            spanning-tree portfast
+           !
+
+        The following interfaces should be returned:
+
+        .. code::
+
+           interface FastEthernet0/2
+           interface FastEthernet0/3
+
+        We do this by quering `find_parents_w_child()`; we set our 
+        parent as `^interface` and set the child as 
+        `switchport access vlan 300`.
+
+        >>> config = ['!', 
+        ...           'interface FastEthernet0/1', 
+        ...           ' switchport access vlan 532', 
+        ...           ' spanning-tree vlan 532 cost 3', 
+        ...           '!', 
+        ...           'interface FastEthernet0/2', 
+        ...           ' switchport access vlan 300', 
+        ...           ' spanning-tree portfast', 
+        ...           '!', 
+        ...           'interface FastEthernet0/3', 
+        ...           ' duplex full', 
+        ...           ' speed 100', 
+        ...           ' switchport access vlan 300', 
+        ...           ' spanning-tree portfast', 
+        ...           '!',
+        ...     ]
+        >>> p = CiscoConfParse(config)
+        >>> p.find_parents_w_child('^interface', 'switchport access vlan 300')
+        ['interface FastEthernet0/2', 'interface FastEthernet0/3']
+        >>>
+        """
 
         if ignore_ws:
-            parentspec = self.build_space_tolerant_regex(parentspec)
-            childspec = self.build_space_tolerant_regex(childspec)
+            parentspec = self._build_space_tolerant_regex(parentspec)
+            childspec = self._build_space_tolerant_regex(childspec)
 
         retval = []
-        childobjs = self.find_line_OBJ(childspec)
+        childobjs = self._find_line_OBJ(childspec)
         for child in childobjs:
-            parents = self.find_parent_OBJ(child)
+            parents = self._find_parent_OBJ(child)
             match_parentspec = False
             for parent in parents:
                 if re.search(parentspec, self.ioscfg[parent.linenum]):
@@ -440,8 +764,8 @@ class CiscoConfParse(object):
             if (match_parentspec is True):
                 for parent in parents:
                     retval.append(parent)
-        retval = self.unique_OBJ(retval)
-        retval = self.objects_to_lines(retval)
+        retval = self._unique_OBJ(retval)
+        retval = self._objects_to_lines(retval)
 
         return retval
 
@@ -449,11 +773,89 @@ class CiscoConfParse(object):
         """Parse through all parents matching parentspec, and return a list of
         parents that did NOT have children match the childspec.  For
         simplicity, this method only finds oldest_ancestors without immediate
-        children that match."""
+        children that match.
+
+        Parameters
+        ----------
+
+        parentspec : :py:func:`str`
+             Text regular expression for the line to be matched; this must
+             match the parent's line
+        childspec : :py:func:`str`
+             Text regular expression for the line to be matched; this must
+             match the child's line
+        exactmatch : :py:func:`bool`
+             boolean that controls whether partial matches are valid
+        ignore_ws : :py:func:`bool`
+             boolean that controls whether whitespace is ignored
+
+        Returns
+        -------
+
+        retval : :py:func:`list`
+            A list of matching parent configuration lines
+
+        Examples
+        --------
+
+        This example finds all ports that are autonegotiating in the 
+        following config...
+
+        .. code::
+
+           !
+           interface FastEthernet0/1
+            switchport access vlan 532
+            spanning-tree vlan 532 cost 3
+           !
+           interface FastEthernet0/2
+            switchport access vlan 300
+            spanning-tree portfast
+           !
+           interface FastEthernet0/2
+            duplex full
+            speed 100
+            switchport access vlan 300
+            spanning-tree portfast
+           !
+
+        The following interfaces should be returned:
+
+        .. code::
+
+           interface FastEthernet0/1
+           interface FastEthernet0/2
+
+        We do this by quering `find_parents_wo_child()`; we set our 
+        parent as `^interface` and set the child as `speed\s\d+` (a 
+        regular-expression which matches the word 'speed' followed by
+        an integer).
+
+        >>> config = ['!', 
+        ...           'interface FastEthernet0/1', 
+        ...           ' switchport access vlan 532', 
+        ...           ' spanning-tree vlan 532 cost 3', 
+        ...           '!', 
+        ...           'interface FastEthernet0/2', 
+        ...           ' switchport access vlan 300', 
+        ...           ' spanning-tree portfast', 
+        ...           '!', 
+        ...           'interface FastEthernet0/3', 
+        ...           ' duplex full', 
+        ...           ' speed 100', 
+        ...           ' switchport access vlan 300', 
+        ...           ' spanning-tree portfast', 
+        ...           '!',
+        ...     ]
+        >>> p = CiscoConfParse(config)
+        >>> p.find_parents_wo_child('^interface', 'speed\s\d+')
+        ['interface FastEthernet0/1', 'interface FastEthernet0/2']
+        >>>
+        """
 
         if ignore_ws:
-            parentspec = self.build_space_tolerant_regex(parentspec)
-            childspec = self.build_space_tolerant_regex(childspec)
+            parentspec = self._build_space_tolerant_regex(parentspec)
+            childspec = self._build_space_tolerant_regex(childspec)
 
         retval = list()
         ## Iterate over all parents, find those with non-matching children
@@ -462,7 +864,7 @@ class CiscoConfParse(object):
                 if re.search(parentspec, self.ioscfg[parentobj.linenum]):
                     ## Now determine whether the child matches
                     match_childspec = False
-                    childobjs = self.find_child_OBJ(parentobj)
+                    childobjs = self._find_child_OBJ(parentobj)
                     for childobj in childobjs:
                         if re.search(childspec, self.ioscfg[childobj.linenum]):
                             match_childspec = True
@@ -470,7 +872,7 @@ class CiscoConfParse(object):
                         ## We found a parent without a child matching the
                         ##    childspec
                         retval.append(parentobj)
-        retval = self.objects_to_lines(self.unique_OBJ(retval))
+        retval = self._objects_to_lines(self._unique_OBJ(retval))
 
         return retval
 
@@ -504,11 +906,11 @@ class CiscoConfParse(object):
         """
 
         if ignore_ws:
-            cfgspec = self.build_space_tolerant_regex(cfgspec)
+            cfgspec = self._build_space_tolerant_regex(cfgspec)
 
         skip_cfgspec = dict()
         retval = list()
-        matches = self.find_line_OBJ("[a-zA-Z]")
+        matches = self._find_line_OBJ("[a-zA-Z]")
         ## Make a list of unnecessary cfgspec lines
         for lineobj in matches:
             for reqline in cfgspec:
@@ -558,7 +960,7 @@ class CiscoConfParse(object):
         uncfg_objs = list()
         skip_cfgspec = dict()
         retval = list()
-        matches = self.find_line_OBJ(linespec)
+        matches = self._find_line_OBJ(linespec)
         ## Make a list of lineobject violations
         for lineobj in matches:
             accept_lineobj = False
@@ -573,11 +975,11 @@ class CiscoConfParse(object):
                 lineobj.add_uncfgtext(result.group(0))
         ## Make the list of unconfig objects
         for vobj in violate_objs:
-            parent_objs = self.find_parent_OBJ(vobj)
+            parent_objs = self._find_parent_OBJ(vobj)
             for parent_obj in parent_objs:
                 uncfg_objs.append(parent_obj)
             uncfg_objs.append(vobj)
-        retval = self.objects_to_uncfg(uncfg_objs, violate_objs)
+        retval = self._objects_to_uncfg(uncfg_objs, violate_objs)
         ## Add items to be configured
         for line in cfgspec:
             if not skip_cfgspec.has_key(line):
@@ -588,7 +990,7 @@ class CiscoConfParse(object):
     ### The methods below are marked SEMI-PRIVATE because they return an object
     ###  or list of objects instead of the configuration text itself.
 
-    def build_space_tolerant_regex(self, linespec):
+    def _build_space_tolerant_regex(self, linespec):
         """SEMI-PRIVATE: Accept a string, and return a string with all
         spaces replaced with '\s+'"""
 
@@ -599,13 +1001,13 @@ class CiscoConfParse(object):
 
         return linespec
 
-    def build_comment_regex(self, comment):
-        """PRIVATE: Accept a string, and return a string joined with a |"""
+    def _build_comment_regex(self, comment):
+        """Accept a string, and return a string joined with a |"""
         comment_regex = "|".join(comment)
         return comment_regex
 
 
-    def find_line_OBJ(self, linespec):
+    def _find_line_OBJ(self, linespec):
         """SEMI-PRIVATE: Find objects whose text matches the linespec"""
         retval = list()
         for ii in self.lineObjDict:
@@ -613,34 +1015,34 @@ class CiscoConfParse(object):
                 retval.append(self.lineObjDict[ii])
         return retval
 
-    def find_sibling_OBJ(self, lineobject):
+    def _find_sibling_OBJ(self, lineobject):
         """SEMI-PRIVATE: Takes a singe object and returns a list of sibling
         objects"""
         siblings = lineobject.parent.children
         return siblings
 
-    def find_child_OBJ(self, lineobject):
+    def _find_child_OBJ(self, lineobject):
         """SEMI-PRIVATE: Takes a single object and returns a list of immediate
         children"""
         retval = lineobject.children
         return retval
 
-    def find_all_child_OBJ(self, lineobject):
+    def _find_all_child_OBJ(self, lineobject):
         """SEMI-PRIVATE: Takes a single object and returns a list of
         decendants in all 'children' / 'grandchildren' / etc... after it.
         It should NOT return the children of siblings"""
         retval = lineobject.children
-        retval = self.unique_OBJ(retval)   # sort the list, and get unique
+        retval = self._unique_OBJ(retval)   # sort the list, and get unique
                                            # objects
         for candidate in retval:
             if (len(candidate.children)>0):
                 for child in candidate.children:
                     retval.append(child)
-        retval = self.unique_OBJ(retval)   # ensure there are no duplicates,
+        retval = self._unique_OBJ(retval)   # ensure there are no duplicates,
                                            # belt & suspenders style
         return retval
 
-    def find_parent_OBJ(self, lineobject):
+    def _find_parent_OBJ(self, lineobject):
         """SEMI-PRIVATE: Takes a singe object and returns a list of parent
         objects in the correct order"""
         retval = list()
@@ -648,9 +1050,9 @@ class CiscoConfParse(object):
         while (me.parent!=me):
             retval.append(me.parent)
             me = me.parent
-        return self.unique_OBJ(retval)
+        return self._unique_OBJ(retval)
 
-    def unique_OBJ(self, objectlist):
+    def _unique_OBJ(self, objectlist):
         """SEMI-PRIVATE: Returns a list of unique objects (i.e. with no
         duplicates).
         The returned value is sorted by configuration line number
@@ -663,22 +1065,22 @@ class CiscoConfParse(object):
             retval.append(dct[ii])
         return retval
 
-    def objects_to_lines(self, objectlist):
+    def _objects_to_lines(self, objectlist):
         """SEMI-PRIVATE: Accept a list of objects and return a list of lines.
         NOTE: The lines will NOT be reordered by this method.  Always call
-        unique_OBJ() before this method."""
+        _unique_OBJ() before this method."""
         retval = list()
         for obj in objectlist:
             retval.append(self.ioscfg[obj.linenum])
         return retval
 
-    def objects_to_uncfg(self, objectlist, unconflist):
+    def _objects_to_uncfg(self, objectlist, unconflist):
         # Used by req_cfgspec_excl_diff()
         retval = list()
         unconfdict = dict()
         for unconf in unconflist:
             unconfdict[unconf] = "DEFINED"
-        for obj in self.unique_OBJ(objectlist):
+        for obj in self._unique_OBJ(objectlist):
             if (unconfdict[obj]=="DEFINED"):
                 retval.append(obj.uncfgtext)
             else:

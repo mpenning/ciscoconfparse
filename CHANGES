@@ -1,3 +1,6 @@
+0.9.1   20121231 Improve docs with numpydoc and intersphinx links.  Add
+        more examples / doctests.  Renamed internal CiscoConfParse methods
+        with a leading _ to make Sphinx documentation more intuitive...
 0.9.0   20121230 Add RST documentation into the archives and fix more build 
         issues
 0.8.6   20121230 Fix packaging problems introduced when I switched to a native
