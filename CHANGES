@@ -1,3 +1,4 @@
+0.9.2   20130509 Add find_children_w_parents() method... tidy up unit-tests
 0.9.1   20121231 Improve docs with numpydoc and intersphinx links.  Add
         more examples / doctests.  Renamed internal CiscoConfParse methods
         with a leading _ to make Sphinx documentation more intuitive...

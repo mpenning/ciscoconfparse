@@ -116,6 +116,12 @@ class knownValues(unittest.TestCase):
     'interface GigabitEthernet4/8',
     ]
 
+    c01_children_w_parents_switchport = [
+    ' switchport',
+    ' switchport access vlan 100',
+    ' switchport voice vlan 150',
+    ]
+
 
     c01_req_excl_logging = [
     'no logging 1.1.3.17',
@@ -145,75 +151,86 @@ class knownValues(unittest.TestCase):
     #--------------------------------
 
     find_lines_Values = (
-    ( c02, [ "encapsulation", False ], c02_encap ),
-    ( c01, [ "interface Serial 1/0", False], c01_intf ),
-    ( c01, [ "interface Serial1/0", True], [] ),
+    (c02, ["encapsulation", False ], c02_encap),
+    (c01, ["interface Serial 1/0", False], c01_intf),
+    (c01, ["interface Serial1/0", True], []),
     )
 
     find_children_Values = (
-    ( c01, [ "policy-map", False ], c01_pmap_children ),
-    ( c01, [ "policy-map", True ], [] ),
+    (c01, ["policy-map", False], c01_pmap_children),
+    (c01, ["policy-map", True], []),
     )
 
     find_all_children_Values = (
-    ( c01, [ "policy-map", False ], c01_pmap_all_children ),
-    ( c01, [ "policy-map", True ], [] ),
+    (c01, ["policy-map", False], c01_pmap_all_children),
+    (c01, ["policy-map", True], []),
     )
 
     find_parents_w_child_Values = (
-    ( c01, [ "interf", "power inline" ], c01_parents_w_child_power ),
-    ( c01, [ "interf", " switchport voice" ], c01_parents_w_child_voice ),
-    ( c01, [ "^interface$", "switchport voice" ], [] ),
+    (c01, ["interf", "power inline"], c01_parents_w_child_power),
+    (c01, ["interf", " switchport voice"], c01_parents_w_child_voice),
+    (c01, ["^interface$", "switchport voice"], []),
     )
 
     find_parents_wo_child_Values = (
-    ( c01, [ "interface Gig", "power inline" ], c01_parents_wo_child_power ),
+    (c01, ["interface Gig", "power inline"], c01_parents_wo_child_power),
+    )
+
+    find_children_w_parents_Values = (
+    (c01, ["^interface GigabitEthernet4/1", "switchport"], c01_children_w_parents_switchport),
     )
 
     #--------------------------------
 
     def testValues_find_lines(self):
         for config, args, resultGood in self.find_lines_Values:
-            cfg = CiscoConfParse( config )
-            result = cfg.find_lines( args[0], args[1] )
-            self.assertEqual( resultGood, result )
+            cfg = CiscoConfParse(config)
+            result = cfg.find_lines(args[0], args[1])
+            self.assertEqual(resultGood, result)
 
 
     def testValues_find_children(self):
         ## test find_chidren
         for config, args, resultGood in self.find_children_Values:
-            cfg = CiscoConfParse( config )
-            result = cfg.find_children( args[0], args[1] )
-            self.assertEqual( resultGood, result )
+            cfg = CiscoConfParse(config)
+            result = cfg.find_children(args[0], args[1])
+            self.assertEqual(resultGood, result)
 
 
     def testValues_find_all_children(self):
         ## test find_all_chidren
         for config, args, resultGood in self.find_all_children_Values:
-            cfg = CiscoConfParse( config )
-            result = cfg.find_all_children( args[0], args[1] )
-            self.assertEqual( resultGood, result )
+            cfg = CiscoConfParse(config)
+            result = cfg.find_all_children(args[0], args[1])
+            self.assertEqual(resultGood, result)
 
 
     def testValues_find_parents_w_child(self):
         ## test find_parents_w_child
         for config, args, resultGood in self.find_parents_w_child_Values:
-            cfg = CiscoConfParse( config )
-            result = cfg.find_parents_w_child( args[0], args[1] )
-            self.assertEqual( resultGood, result )
+            cfg = CiscoConfParse(config)
+            result = cfg.find_parents_w_child(args[0], args[1])
+            self.assertEqual(resultGood, result)
 
 
     def testValues_find_parents_wo_child(self):
         ## test find_parents_wo_child
         for config, args, resultGood in self.find_parents_wo_child_Values:
-            cfg = CiscoConfParse( config )
-            result = cfg.find_parents_wo_child( args[0], args[1] )
-            self.assertEqual( resultGood, result )
+            cfg = CiscoConfParse(config)
+            result = cfg.find_parents_wo_child(args[0], args[1])
+            self.assertEqual(resultGood, result)
+
+    def testValues_find_children_w_parents(self):
+        ## test find_children_w_parents
+        for config, args, resultGood in self.find_children_w_parents_Values:
+            cfg = CiscoConfParse(config )
+            result = cfg.find_children_w_parents(args[0], args[1])
+            self.assertEqual(resultGood, result)
 
     def testValues_req_cfgspec_excl_diff(self):
         ## test req_cfgspec_excl_diff
         resultGood = self.c01_req_excl_logging
-        cfg = CiscoConfParse( self.c01 )
+        cfg = CiscoConfParse(self.c01)
         result = cfg.req_cfgspec_excl_diff(
              "^logging\s+",
              "logging\s+\d+\.\d+\.\d+\.\d+",
@@ -223,7 +240,7 @@ class knownValues(unittest.TestCase):
             'logging 1.1.3.6',
             ]
             )
-        self.assertEqual( resultGood, result )
+        self.assertEqual(resultGood, result)
 
 
     def testValues_req_cfgspec_all_diff(self):

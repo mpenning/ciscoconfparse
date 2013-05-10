@@ -5,7 +5,7 @@ import re
 import os
 
 """ ciscoconfparse.py - Parse & Query IOS-style configurations
-     Copyright (C) 2007-2012 David Michael Pennington
+     Copyright (C) 2007-2013 David Michael Pennington
 
      This program is free software: you can redistribute it and/or modify
      it under the terms of the GNU General Public License as published by
@@ -875,6 +875,122 @@ class CiscoConfParse(object):
         retval = self._objects_to_lines(self._unique_OBJ(retval))
 
         return retval
+
+    def find_children_w_parents(self, parentspec, childspec, ignore_ws=False):
+        """Parse through the children of all parents matching parentspec, 
+        and return a list of children that matched the childspec.
+
+        Parameters
+        ----------
+
+        parentspec : :py:func:`str`
+             Text regular expression for the line to be matched; this must
+             match the parent's line
+        childspec : :py:func:`str`
+             Text regular expression for the line to be matched; this must
+             match the child's line
+        exactmatch : :py:func:`bool`
+             boolean that controls whether partial matches are valid
+        ignore_ws : :py:func:`bool`
+             boolean that controls whether whitespace is ignored
+
+        Returns
+        -------
+
+        retval : :py:func:`list`
+            A list of matching child configuration lines
+
+        Examples
+        --------
+
+        This example finds the port-security lines on FastEthernet0/1 in 
+        following config...
+
+        .. code::
+
+           !
+           interface FastEthernet0/1
+            switchport access vlan 532
+            switchport port-security
+            switchport port-security violation protect
+            switchport port-security aging time 5
+            switchport port-security aging type inactivity
+            spanning-tree portfast
+            spanning-tree bpduguard enable
+           !
+           interface FastEthernet0/2
+            switchport access vlan 300
+            spanning-tree portfast
+            spanning-tree bpduguard enable
+           !
+           interface FastEthernet0/2
+            duplex full
+            speed 100
+            switchport access vlan 300
+            spanning-tree portfast
+            spanning-tree bpduguard enable
+           !
+
+        The following lines should be returned:
+
+        .. code::
+
+            switchport port-security
+            switchport port-security violation protect
+            switchport port-security aging time 5
+            switchport port-security aging type inactivity
+
+        We do this by quering `find_children_w_parents()`; we set our 
+        parent as `^interface` and set the child as 
+        `switchport port-security`.
+
+        >>> config = ['!', 
+        ...           'interface FastEthernet0/1', 
+        ...           ' switchport access vlan 532', 
+        ...           ' switchport port-security', 
+        ...           ' switchport port-security violation protect', 
+        ...           ' switchport port-security aging time 5', 
+        ...           ' switchport port-security aging type inactivity', 
+        ...           ' spanning-tree portfast', 
+        ...           ' spanning-tree bpduguard enable', 
+        ...           '!', 
+        ...           'interface FastEthernet0/2', 
+        ...           ' switchport access vlan 300', 
+        ...           ' spanning-tree portfast', 
+        ...           ' spanning-tree bpduguard enable', 
+        ...           '!', 
+        ...           'interface FastEthernet0/3', 
+        ...           ' duplex full', 
+        ...           ' speed 100', 
+        ...           ' switchport access vlan 300', 
+        ...           ' spanning-tree portfast', 
+        ...           ' spanning-tree bpduguard enable', 
+        ...           '!',
+        ...     ]
+        >>> p = CiscoConfParse(config)
+        >>> p.find_children_w_parents('^interface\sFastEthernet0/1', \
+        'port-security')
+        [' switchport port-security', ' switchport port-security violation protect', ' switchport port-security aging time 5', ' switchport port-security aging type inactivity']
+        >>>
+        """
+        if ignore_ws:
+            parentspec = self._build_space_tolerant_regex(parentspec)
+            childspec = self._build_space_tolerant_regex(childspec)
+
+        retval = list()
+        childobjs = self._find_line_OBJ(childspec)
+        for child in childobjs:
+            parents = self._find_parent_OBJ(child)
+            match_parentspec = False
+            for parent in parents:
+                if re.search(parentspec, self.ioscfg[parent.linenum]):
+                    retval.append(child)
+
+        retval = self._unique_OBJ(retval)
+        retval = self._objects_to_lines(retval)
+
+        return retval
+
 
     def req_cfgspec_all_diff(self, cfgspec, ignore_ws=False):
         """
