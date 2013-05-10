@@ -112,19 +112,18 @@ class CiscoConfParse(object):
         self.allparentobjs = list()
         ## Generate a (local) indentation list
         indentation = list()
-        for ii in range(len(self.ioscfg)):
+        for ii, cfg_line in enumerate(self.ioscfg):
             # indentation[ii] is the number of leading spaces in the line
-            indentation.append(len(self.ioscfg[ii]) - \
-                len(self.ioscfg[ii].lstrip()))
+            indentation.append(len(cfg_line) - len(cfg_line.lstrip()))
             # Build an IOSCfgLine object for each line, associate with a
             # config dictionary
             lineobject = IOSCfgLine(ii)
-            lineobject.add_text(self.ioscfg[ii])
+            lineobject.add_text(cfg_line)
             self.lineObjDict[ii] = lineobject
         ## Walk through the config and look for the "first" child
-        for ii in range(len(self.ioscfg)):
+        for ii, cfg_line in enumerate(self.ioscfg):
             # skip any IOS config comments
-            if (not re.search("^\s*" + self.comment_regex, self.ioscfg[ii])):
+            if (not re.search("^\s*" + self.comment_regex, cfg_line)):
                 current_indent = indentation[ii]
                 # Determine if this is the "first" child...
                 #   Note: other children will be orphaned until we walk the
@@ -1161,25 +1160,22 @@ class CiscoConfParse(object):
     def _find_parent_OBJ(self, lineobject):
         """SEMI-PRIVATE: Takes a singe object and returns a list of parent
         objects in the correct order"""
-        retval = list()
+        retval = set([])
         me = lineobject
         while (me.parent!=me):
-            retval.append(me.parent)
+            retval.add(me.parent)
             me = me.parent
-        return self._unique_OBJ(retval)
+        return sorted(retval)
 
     def _unique_OBJ(self, objectlist):
         """SEMI-PRIVATE: Returns a list of unique objects (i.e. with no
         duplicates).
         The returned value is sorted by configuration line number
         (lowest first)"""
-        dct = dict()
-        retval = list()
-        for object in objectlist:
-            dct[object.linenum] = object
-        for ii in sorted(dct.keys()):
-            retval.append(dct[ii])
-        return retval
+        retval = set([])
+        for obj in objectlist:
+            retval.add(obj)
+        return sorted(retval)
 
     def _objects_to_lines(self, objectlist):
         """SEMI-PRIVATE: Accept a list of objects and return a list of lines.
@@ -1250,20 +1246,38 @@ class IOSCfgLine(object):
     def __repr__(self):
         return "<IOSCfgLine # %s '%s' (child_indent: %s / family_endpoint: %s)>" % (self.linenum, self.text, self.child_indent, self.family_endpoint)
 
+    def __eq__(self, val):
+        if (self.linenum==val.linenum):
+            return True
+        return False
+
+    def __gt__(self, val):
+        if (self.linenum>val.linenum):
+            return True
+        return False
+
+    def __lt__(self, val):
+        # Ref: http://stackoverflow.com/a/7152796/667301
+        if (self.linenum<val.linenum):
+            return True
+        return False
+
+    def __hash__(self):
+        # Ref: http://stackoverflow.com/a/7152650/667301
+        return hash(repr(self))
+
     def add_parent(self, parentobj):
         ## In a perfect world, I would check parentobj's type
+        ##     with isinstance(), but I'm not ready to take the perf hit
         self.parent = parentobj
         return True
 
     def add_child(self, childobj, indent):
         ## In a perfect world, I would check childobj's type
+        ##     with isinstance(), but I'm not ready to take the perf hit
         ##
         ## Add the child, unless we already know it
-        already_know_child = False
-        for child in self.children:
-            if child == childobj:
-                already_know_child = True
-        if (already_know_child is False):
+        if not (childobj in self.children):
             self.children.append(childobj)
             self.child_indent = indent
             self.has_children = True
