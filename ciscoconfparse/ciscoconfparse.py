@@ -47,7 +47,7 @@ class CiscoConfParse(object):
         Attributes
         ----------
 
-        lineObjDict : :py:func:`dict`
+        ConfigObjs : :py:func:`dict`
              This contains all :class:`IOSCfgLine` object instances, which are generated from the configuration that is parsed.  The :py:func:`dict` is keyed by an :py:func:`int`, which is the line number of the configuration line.  The value of the :py:func:`dict` is the :class:`IOSCfgLine` instance for that line number.
 
         Examples
@@ -60,7 +60,7 @@ class CiscoConfParse(object):
         >>> p = CiscoConfParse(config)
         >>> p
         <CiscoConfParse: 2 lines / comment delimiter: '!'>
-        >>> p.lineObjDict
+        >>> p.ConfigObjs
         {0: <IOSCfgLine # 0 'logging trap debugging' (child_indent: 0 / family_endpoint: 0)>, 1: <IOSCfgLine # 1 'logging 172.28.26.15' (child_indent: 0 / family_endpoint: 0)>}
         >>>
     """
@@ -71,7 +71,7 @@ class CiscoConfParse(object):
         """Initialize the class, read the config, and spawn the parser"""
 
         # Dictionary mapping line number to objects
-        self.lineObjDict = dict()
+        self.ConfigObjs = dict()
         # List of all parent objects
         self.allparentobjs = list()
         self.comment_delimiter = comment
@@ -106,19 +106,21 @@ class CiscoConfParse(object):
         DBGFLAG = False
         self.ioscfg = ioscfg
         # Dictionary mapping line number to objects
-        self.lineObjDict = dict()
+        self.ConfigObjs = dict()
         # List of all parent objects
         self.allparentobjs = list()
         ## Generate a (local) indentation list
         indentation = list()
         for ii, cfg_line in enumerate(self.ioscfg):
             # indentation[ii] is the number of leading spaces in the line
-            indentation.append(len(cfg_line) - len(cfg_line.lstrip()))
+            indent_level = len(cfg_line) - len(cfg_line.lstrip())
+            indentation.append(indent_level)
             # Build an IOSCfgLine object for each line, associate with a
             # config dictionary
-            lineobject = IOSCfgLine(ii)
-            lineobject.add_text(cfg_line)
-            self.lineObjDict[ii] = lineobject
+            lineobject        = IOSCfgLine(ii)
+            lineobject.text   = cfg_line
+            lineobject.indent = indent_level
+            self.ConfigObjs[ii] = lineobject
         ## Walk through the config and look for the "first" child
         for ii, cfg_line in enumerate(self.ioscfg):
             # skip any IOS config comments
@@ -130,22 +132,21 @@ class CiscoConfParse(object):
                 if ((ii+1) < len(self.ioscfg)):
                     # Note below that ii is the PARENT's line number
                     if (indentation[ii+1] > current_indent):
+                        # higher indentation, so we found a child...
+                        childobj = self.ConfigObjs[ii+1]
                         if(not re.search(self.comment_regex, self.ioscfg[ii+1])):
                             if DBGFLAG or self.DBGFLAG:
                                 print "parse:\n   Attaching CHILD:'%s'\n   " +\
                                     "to 'PARENT:%s'" % \
-                                    (self.lineObjDict[ii + 1].text, \
-                                    self.lineObjDict[ii].text)
+                                    (childobj.text, self.ConfigObjs[ii].text)
                             # Add child to the parent's object
-                            lineobject = self.lineObjDict[ii]
-                            lineobject.add_child(self.lineObjDict[ii+1], \
-                                indentation[ii+1])
+                            lineobject = self.ConfigObjs[ii]
+                            lineobject.add_child(childobj)
                             if (current_indent==0):
                                 lineobject.assert_oldest_ancestor()
                             self.allparentobjs.append(lineobject)
                             # Add parent to the child's object
-                            lineobject = self.lineObjDict[ii+1]
-                            lineobject.add_parent(self.lineObjDict[ii])
+                            childobj.add_parent(self.ConfigObjs[ii])
         ## Look for orphaned children, these SHOULD be indented the same
         ##  number of spaces as the "first" child.  However, we must only
         ##  look inside our "extended family"
@@ -155,7 +156,7 @@ class CiscoConfParse(object):
                 print "parse: Parent  : %s" % lineobject.text
                 print "parse: Children:\n      %s" % \
                     self._objects_to_lines(lineobject.children)
-            if (indentation[lineobject.linenum]==0):
+            if (lineobject.indent==0):
                 # Look for immediate children
                 self._id_unknown_children(lineobject, indentation)
                 ## this SHOULD find all other children in the family...
@@ -220,13 +221,12 @@ class CiscoConfParse(object):
                     #    (kk - 1, self.ioscfg[kk - 1])
                     #
                     # Set oldest_ancestor on the parent
-                    self.lineObjDict[ii].assert_oldest_ancestor()
+                    self.ConfigObjs[ii].assert_oldest_ancestor()
                     for mm in range(ii + 1, (kk)):
                         # Associate parent with the child
-                        self.lineObjDict[ii].add_child(self.lineObjDict[mm], \
-                            indentation[ii])
+                        self.ConfigObjs[ii].add_child(self.ConfigObjs[mm])
                         # Associate child with the parent
-                        self.lineObjDict[mm].add_parent(self.lineObjDict[ii])
+                        self.ConfigObjs[mm].add_parent(self.ConfigObjs[ii])
                     end_banner = True
                 else:
                     kk += 1
@@ -255,21 +255,20 @@ class CiscoConfParse(object):
                     if not (re.search(end_string, ioscfg[kk]) is None):
                         print "found endpoint: %s" % ioscfg[kk]
                         # Set the parent attributes
-                        self.lineObjDict[ii].assert_oldest_ancestor()
+                        self.ConfigObjs[ii].assert_oldest_ancestor()
                         for mm in range(ii + 1, (kk + 1)):
                             # Associate parent with the child
-                            self.lineObjDict[ii].add_child(\
-                                self.lineObjDict[mm], indentation[ii])
+                            self.ConfigObjs[ii].add_child(self.ConfigObjs[mm])
                             # Associate child with the parent
-                            self.lineObjDict[mm].add_parent(\
-                                self.lineObjDict[ii])
+                            self.ConfigObjs[mm].add_parent(\
+                                self.ConfigObjs[ii])
 
     def _id_unknown_children(self, lineobject, indentation):
         """Walk through the configuration and look for configuration child
         lines that have not already been identified"""
         found_unknown_child = False
-        child_indent = lineobject.child_indent
-        parent_indent = indentation[lineobject.linenum]
+        parent_indent = lineobject.indent
+        child_indent  = lineobject.child_indent
         # more_children is False once the parent finds one of his siblings
         more_children = True
         DBGFLAG = False
@@ -285,9 +284,8 @@ class CiscoConfParse(object):
                 if (indentation[ii]==child_indent) and more_children:
                     # we have found a potential orphan... also could be the
                     #  first child
-                    self.lineObjDict[ii].add_parent(lineobject)
-                    found_unknown_child = lineobject.add_child(\
-                        self.lineObjDict[ii], indentation[ii])
+                    self.ConfigObjs[ii].add_parent(lineobject)
+                    found_unknown_child = lineobject.add_child(self.ConfigObjs[ii])
                     if DBGFLAG or self.DBGFLAG:
                         if (found_unknown_child is True):
                             print "    New child: %s" % self.ioscfg[ii]
@@ -325,17 +323,15 @@ class CiscoConfParse(object):
         IOSCfgLine instances"""
         for parent in parents:
             ii = parent.linenum
-            current_indent = indentation[ii]
-            if current_indent == 0:
+            if (parent.indent==0):
                 # we are at the oldest ancestor
                 parent.assert_oldest_ancestor()
                 # start searching for the family endpoint
-                last_line = ii
                 ii += 1
                 # reject endpoints in IOS comments
                 if not re.search("^\s*" + self.comment_regex, self.ioscfg[ii]):
                     found_endpoint = False
-                    while (not found_endpoint) and (ii < len(indentation)):
+                    while (not found_endpoint) and (ii<len(indentation)):
                         if indentation[ii] == 0:
                             found_endpoint = True
                             ## Fixed a bug below... used to set it to ii
@@ -456,8 +452,8 @@ class CiscoConfParse(object):
 
         allobjs = set([])
         for parent in parentobjs:
-            childobjs = self._find_child_OBJ(parent)
             if (parent.has_children is True):
+                childobjs = self._find_child_OBJ(parent)
                 for child in childobjs:
                     allobjs.add(child)
             allobjs.add(parent)
@@ -540,8 +536,8 @@ class CiscoConfParse(object):
             parentobjs = self._find_line_OBJ("^%s$" % linespec)
         allobjs = list()
         for parent in parentobjs:
-            childobjs = self._find_all_child_OBJ(parent)
             if (parent.has_children is True):
+                childobjs = self._find_all_child_OBJ(parent)
                 for child in childobjs:
                     allobjs.append(child)
             allobjs.append(parent)
@@ -646,7 +642,7 @@ class CiscoConfParse(object):
         if ignore_ws:
             linespec = self._build_space_tolerant_regex(linespec)
 
-        # Find lines maching the spec
+        # Find line objects maching the spec
         if (exactmatch is False):
             lines = self._find_line_OBJ(linespec)
         else:
@@ -752,7 +748,7 @@ class CiscoConfParse(object):
             parentspec = self._build_space_tolerant_regex(parentspec)
             childspec = self._build_space_tolerant_regex(childspec)
 
-        retval = []
+        retval = list()
         childobjs = self._find_line_OBJ(childspec)
         for child in childobjs:
             parents = self._find_parent_OBJ(child)
@@ -1129,7 +1125,7 @@ class CiscoConfParse(object):
     def _find_line_OBJ(self, linespec):
         """SEMI-PRIVATE: Find objects whose text matches the linespec"""
         retval = list()
-        for lineobj in self.lineObjDict.values():
+        for lineobj in self.ConfigObjs.values():
             if re.search(linespec, lineobj.text):
                 retval.append(lineobj)
         return retval
@@ -1245,6 +1241,7 @@ class IOSCfgLine(object):
         self.has_children = False
         self.oldest_ancestor = False
         self.family_endpoint = 0
+        self.indent = 0            # Whitespace indentation on the object
 
     def __repr__(self):
         return "<IOSCfgLine # %s '%s' (child_indent: %s / family_endpoint: %s)>" % (self.linenum, self.text, self.child_indent, self.family_endpoint)
@@ -1275,21 +1272,18 @@ class IOSCfgLine(object):
         self.parent = parentobj
         return True
 
-    def add_child(self, childobj, indent):
+    def add_child(self, childobj):
         ## In a perfect world, I would check childobj's type
         ##     with isinstance(), but I'm not ready to take the perf hit
         ##
         ## Add the child, unless we already know it
         if not (childobj in self.children):
             self.children.append(childobj)
-            self.child_indent = indent
+            self.child_indent = childobj.indent
             self.has_children = True
             return True
         else:
             return False
-
-    def add_text(self, text):
-        self.text = text
 
     def add_uncfgtext(self, unconftext):
         ## remove any preceeding "no "
