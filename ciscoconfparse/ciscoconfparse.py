@@ -24,7 +24,6 @@ import os
      mike [~at~] pennington [/dot\] net
 """
 
-
 class CiscoConfParse(object):
     """Parses Cisco IOS configurations and answers queries about the configs
 
@@ -193,9 +192,9 @@ class CiscoConfParse(object):
         start_banner = False
         end_banner = False
         ii = 0
-        if os == "ios":
+        if (os=="ios"):
             prefix = ""
-        elif os == "catos":
+        elif (os=="catos"):
             prefix = "set "
         else:
             raise RuntimeError("FATAL: _mark_banner(): received " + \
@@ -246,10 +245,10 @@ class CiscoConfParse(object):
         ## re_code should be a lambda function such as:
         ##  re.compile("^banner\slogin\.+?(\^\S*)"
         ##  The text in parenthesis will be used as the multiline-end delimiter
-        for ii in range(len(self.ioscfg)):
+        for ii,line in enumerate(self.ioscfg):
             ## submitted code will pass a compiled regular expression
-            result = re_search(self.ioscfg[ii])
-            if re_code.search(self.ioscfg[ii]):
+            result = re_search(line)
+            if re_code.search(line):
                 end_string = result.re_code.group(1)
                 print "Got end_string = %s" % end_string
                 for kk in range((ii + 1), len(self.ioscfg)):
@@ -304,8 +303,8 @@ class CiscoConfParse(object):
             # Find the parent, try again...
             lineobject = lineobject.parent
             ii += 1
-        if ii == last_cfg_line:
-            # You have now searched to the end of the configuration and did not
+        if (ii==last_cfg_line):
+            # FATAL: we searched to the end of the configuration and did not
             #  find a valid family endpoint.  This is bad, there is something
             #  wrong with IOSCfgLine relationships if you get this message.
             raise RuntimeError("FATAL: Could not resolve family " + \
@@ -376,7 +375,7 @@ class CiscoConfParse(object):
             linespec = self._build_space_tolerant_regex(linespec)
 
         for line in self.ioscfg:
-            if exactmatch == False:
+            if (exactmatch is False):
                 if re.search(linespec, line):
                     retval.append(line)
             else:
@@ -450,19 +449,20 @@ class CiscoConfParse(object):
         if ignore_ws:
             linespec = self._build_space_tolerant_regex(linespec)
 
-        if exactmatch == False:
+        if (exactmatch is False):
             parentobjs = self._find_line_OBJ(linespec)
         else:
             parentobjs = self._find_line_OBJ("^%s$" % linespec)
-        allobjs = list()
+
+        allobjs = set([])
         for parent in parentobjs:
             childobjs = self._find_child_OBJ(parent)
-            if parent.has_children == True:
+            if (parent.has_children is True):
                 for child in childobjs:
-                    allobjs.append(child)
-            allobjs.append(parent)
-        allobjs = self._unique_OBJ(allobjs)
-        retval = self._objects_to_lines(allobjs)
+                    allobjs.add(child)
+            allobjs.add(parent)
+        #allobjs = self._unique_OBJ(allobjs)
+        retval = self._objects_to_lines(sorted(allobjs))
 
         return retval
 
@@ -647,7 +647,7 @@ class CiscoConfParse(object):
             linespec = self._build_space_tolerant_regex(linespec)
 
         # Find lines maching the spec
-        if exactmatch == False:
+        if (exactmatch is False):
             lines = self._find_line_OBJ(linespec)
         else:
             lines = self._find_line_OBJ("^%s$" % linespec)
@@ -662,8 +662,8 @@ class CiscoConfParse(object):
             alist = self._find_parent_OBJ(lineobject)
             for this in alist:
                 dct[this.linenum] = this
-        for line in sorted(dct.keys()):
-            retval.append(self.ioscfg[line])
+        for ii in sorted(dct.keys()):
+            retval.append(self.ioscfg[ii])
 
         return retval
 
@@ -758,7 +758,8 @@ class CiscoConfParse(object):
             parents = self._find_parent_OBJ(child)
             match_parentspec = False
             for parent in parents:
-                if re.search(parentspec, self.ioscfg[parent.linenum]):
+                #if re.search(parentspec, self.ioscfg[parent.linenum]):
+                if re.search(parentspec, parent.text):
                     match_parentspec = True
             if (match_parentspec is True):
                 for parent in parents:
@@ -860,12 +861,14 @@ class CiscoConfParse(object):
         ## Iterate over all parents, find those with non-matching children
         for parentobj in self.allparentobjs:
             if (parentobj.oldest_ancestor is True):
-                if re.search(parentspec, self.ioscfg[parentobj.linenum]):
+                #if re.search(parentspec, self.ioscfg[parentobj.linenum]):
+                if re.search(parentspec, parentobj.text):
                     ## Now determine whether the child matches
                     match_childspec = False
                     childobjs = self._find_child_OBJ(parentobj)
                     for childobj in childobjs:
-                        if re.search(childspec, self.ioscfg[childobj.linenum]):
+                        #if re.search(childspec, self.ioscfg[childobj.linenum]):
+                        if re.search(childspec, childobj.text):
                             match_childspec = True
                     if (match_childspec is False):
                         ## We found a parent without a child matching the
@@ -982,7 +985,8 @@ class CiscoConfParse(object):
             parents = self._find_parent_OBJ(child)
             match_parentspec = False
             for parent in parents:
-                if re.search(parentspec, self.ioscfg[parent.linenum]):
+                #if re.search(parentspec, self.ioscfg[parent.linenum]):
+                if re.search(parentspec, parent.text):
                     retval.append(child)
 
         retval = self._unique_OBJ(retval)
@@ -1125,9 +1129,9 @@ class CiscoConfParse(object):
     def _find_line_OBJ(self, linespec):
         """SEMI-PRIVATE: Find objects whose text matches the linespec"""
         retval = list()
-        for ii in self.lineObjDict:
-            if re.search(linespec, self.ioscfg[ii]):
-                retval.append(self.lineObjDict[ii])
+        for lineobj in self.lineObjDict.values():
+            if re.search(linespec, lineobj.text):
+                retval.append(lineobj)
         return retval
 
     def _find_sibling_OBJ(self, lineobject):
@@ -1146,14 +1150,13 @@ class CiscoConfParse(object):
         """SEMI-PRIVATE: Takes a single object and returns a list of
         decendants in all 'children' / 'grandchildren' / etc... after it.
         It should NOT return the children of siblings"""
-        retval = lineobject.children
-        retval = self._unique_OBJ(retval)   # sort the list, and get unique
-                                           # objects
+        # sort the list, and get unique objects
+        retval = self._unique_OBJ(lineobject.children)
         for candidate in retval:
             if (len(candidate.children)>0):
                 for child in candidate.children:
                     retval.append(child)
-        retval = self._unique_OBJ(retval)   # ensure there are no duplicates,
+        retval = self._unique_OBJ(retval)  # ensure there are no duplicates,
                                            # belt & suspenders style
         return retval
 
@@ -1183,7 +1186,7 @@ class CiscoConfParse(object):
         _unique_OBJ() before this method."""
         retval = list()
         for obj in objectlist:
-            retval.append(self.ioscfg[obj.linenum])
+            retval.append(obj.text)
         return retval
 
     def _objects_to_uncfg(self, objectlist, unconflist):
