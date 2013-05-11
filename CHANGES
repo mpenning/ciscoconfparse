@@ -1,3 +1,6 @@
+0.9.3   20130511 Added methods to IOSCfgLine: __eq__(), __hash__(), __lt__(), 
+        __gt__(), as well as simplifying several other methods.  Misc code
+        maintenance...
 0.9.2   20130509 Add find_children_w_parents() method... tidy up unit-tests
 0.9.1   20121231 Improve docs with numpydoc and intersphinx links.  Add
         more examples / doctests.  Renamed internal CiscoConfParse methods
