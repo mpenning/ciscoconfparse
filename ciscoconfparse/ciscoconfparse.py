@@ -90,7 +90,7 @@ class CiscoConfParse(object):
                 ioscfg = rgx.split(text)
                 self._parse(ioscfg)
             except IOError:
-                print "FATAL: CiscoConfParse could not open '%s'" % config
+                print("FATAL: CiscoConfParse could not open '%s'" % config)
                 raise RuntimeError
         else:
             raise RuntimeError("FATAL: CiscoConfParse() received" + \
@@ -136,9 +136,9 @@ class CiscoConfParse(object):
                         childobj = self.ConfigObjs[ii+1]
                         if(not re.search(self.comment_regex, self.ioscfg[ii+1])):
                             if DBGFLAG or self.DBGFLAG:
-                                print "parse:\n   Attaching CHILD:'%s'\n   " +\
+                                print("parse:\n   Attaching CHILD:'%s'\n   " +\
                                     "to 'PARENT:%s'" % \
-                                    (childobj.text, self.ConfigObjs[ii].text)
+                                    (childobj.text, self.ConfigObjs[ii].text))
                             # Add child to the parent's object
                             lineobject = self.ConfigObjs[ii]
                             lineobject.add_child(childobj)
@@ -153,9 +153,9 @@ class CiscoConfParse(object):
         self._mark_family_endpoints(self.allparentobjs, indentation)
         for lineobject in self.allparentobjs:
             if (DBGFLAG is True):
-                print "parse: Parent  : %s" % lineobject.text
-                print "parse: Children:\n      %s" % \
-                    self._objects_to_lines(lineobject.children)
+                print("parse: Parent  : %s" % lineobject.text)
+                print("parse: Children:\n      %s" % \
+                    self._objects_to_lines(lineobject.children))
             if (lineobject.indent==0):
                 # Look for immediate children
                 self._id_unknown_children(lineobject, indentation)
@@ -250,10 +250,10 @@ class CiscoConfParse(object):
             result = re_search(line)
             if re_code.search(line):
                 end_string = result.re_code.group(1)
-                print "Got end_string = %s" % end_string
+                print("Got end_string = %s" % end_string)
                 for kk in range((ii + 1), len(self.ioscfg)):
                     if not (re.search(end_string, ioscfg[kk]) is None):
-                        print "found endpoint: %s" % ioscfg[kk]
+                        print("found endpoint: %s" % ioscfg[kk])
                         # Set the parent attributes
                         self.ConfigObjs[ii].assert_oldest_ancestor()
                         for mm in range(ii + 1, (kk + 1)):
@@ -273,11 +273,11 @@ class CiscoConfParse(object):
         more_children = True
         DBGFLAG = False
         if DBGFLAG or self.DBGFLAG:
-            print "Parent       : %s" % self.ioscfg[lineobject.linenum]
+            print("Parent       : %s" % self.ioscfg[lineobject.linenum])
         for ii in range(lineobject.linenum + 1, \
             self._id_family_endpoint(lineobject, len(self.ioscfg))):
             if DBGFLAG or self.DBGFLAG:
-                print "       C?    : %s" % self.ioscfg[ii]
+                print("       C?    : %s" % self.ioscfg[ii])
             if not re.search("^\s*" + self.comment_regex, self.ioscfg[ii]):
                 if (indentation[ii]==parent_indent):
                     more_children = False
@@ -288,7 +288,7 @@ class CiscoConfParse(object):
                     found_unknown_child = lineobject.add_child(self.ConfigObjs[ii])
                     if DBGFLAG or self.DBGFLAG:
                         if (found_unknown_child is True):
-                            print "    New child: %s" % self.ioscfg[ii]
+                            print("    New child: %s" % self.ioscfg[ii])
         return found_unknown_child
 
     def _id_family_endpoint(self, lineobject, last_cfg_line):
@@ -654,7 +654,7 @@ class CiscoConfParse(object):
             for this in alist:
                 dct[this.linenum] = this
         # Find the parents for everything
-        for (line, lineobject) in dct.items():
+        for (line, lineobject) in list(dct.items()):
             alist = self._find_parent_OBJ(lineobject)
             for this in alist:
                 dct[this.linenum] = this
@@ -1030,10 +1030,11 @@ class CiscoConfParse(object):
         for lineobj in matches:
             for reqline in cfgspec:
                 if lineobj.text.strip() == reqline.strip():
-                    skip_cfgspec[reqline] = "YES"
+                    skip_cfgspec[reqline] = True
         ## Add items to be configured
+        ## TODO: Find a way to add the parent of the missing lines
         for line in cfgspec:
-            if not skip_cfgspec.has_key(line):
+            if not skip_cfgspec.get(line, False):
                 retval.append(line)
 
         return retval
@@ -1078,26 +1079,29 @@ class CiscoConfParse(object):
         matches = self._find_line_OBJ(linespec)
         ## Make a list of lineobject violations
         for lineobj in matches:
+            # Look for config lines to unconfigure
             accept_lineobj = False
             for reqline in cfgspec:
                 if (lineobj.text.strip()==reqline.strip()):
                     accept_lineobj = True
-                    skip_cfgspec[reqline] = "YES"
+                    skip_cfgspec[reqline] = True
             if (accept_lineobj is False):
+                # If a violation is found...
                 violate_objs.append(lineobj)
                 result = re.search(uncfgspec, lineobj.text)
                 # add uncfgtext to the violator's lineobject
                 lineobj.add_uncfgtext(result.group(0))
-        ## Make the list of unconfig objects
+        ## Make the list of unconfig objects, recurse through parents
         for vobj in violate_objs:
             parent_objs = self._find_parent_OBJ(vobj)
             for parent_obj in parent_objs:
                 uncfg_objs.append(parent_obj)
             uncfg_objs.append(vobj)
         retval = self._objects_to_uncfg(uncfg_objs, violate_objs)
-        ## Add items to be configured
+        ## Add missing lines...
+        ## TODO: Find a way to add the parent of the missing lines
         for line in cfgspec:
-            if not skip_cfgspec.has_key(line):
+            if not skip_cfgspec.get(line, False):
                 retval.append(line)
 
         return retval
@@ -1110,7 +1114,7 @@ class CiscoConfParse(object):
         spaces replaced with '\s+'"""
 
         # Unicode below
-        backslash = u'\x5c'
+        backslash = '\x5c'
 
         linespec = re.sub('\s+', backslash+"s+", linespec)
 
@@ -1125,7 +1129,7 @@ class CiscoConfParse(object):
     def _find_line_OBJ(self, linespec):
         """SEMI-PRIVATE: Find objects whose text matches the linespec"""
         retval = list()
-        for lineobj in self.ConfigObjs.values():
+        for lineobj in list(self.ConfigObjs.values()):
             if re.search(linespec, lineobj.text):
                 retval.append(lineobj)
         return retval
@@ -1319,9 +1323,6 @@ class IOSCfgLine(object):
     def linenum(self):
         return self.linenum
 
-    def text(self):
-        return self.text
-
     def uncfgtext(self):
         """unconftext is defined during special method calls.  Do not assume it
         is automatically populated."""
@@ -1362,7 +1363,7 @@ class CiscoPassword(object):
                 dp = dp + str(newchar)
                 s = s + 1
         if s > 25:
-            print "WARNING: password decryption failed."
+            print("WARNING: password decryption failed.")
         return dp
 
 ### TODO: Add unit tests below
@@ -1403,20 +1404,20 @@ if __name__ == '__main__':
                  opts.arg1.split(","))
     elif opts.method == "decrypt":
         pp = CiscoPassword()
-        print pp.decrypt(opts.arg1)
+        print(pp.decrypt(opts.arg1))
         sys.exit(1)
     elif opts.method == "help":
-        print "Valid methods and their arguments:"
-        print "   find_lines:             arg1=linespec"
-        print "   find_children:          arg1=linespec"
-        print "   find_all_children:      arg1=linespec"
-        print "   find_blocks:            arg1=linespec"
-        print "   find_parents_w_child:   arg1=parentspec  arg2=childspec"
-        print "   find_parents_wo_child:  arg1=parentspec  arg2=childspec"
-        print "   req_cfgspec_excl_diff:  arg1=linespec    arg2=uncfgspec" + \
-            "   arg3=cfgspec"
-        print "   req_cfgspec_all_diff:   arg1=cfgspec"
-        print "   decrypt:                arg1=encrypted_passwd"
+        print("Valid methods and their arguments:")
+        print("   find_lines:             arg1=linespec")
+        print("   find_children:          arg1=linespec")
+        print("   find_all_children:      arg1=linespec")
+        print("   find_blocks:            arg1=linespec")
+        print("   find_parents_w_child:   arg1=parentspec  arg2=childspec")
+        print("   find_parents_wo_child:  arg1=parentspec  arg2=childspec")
+        print("   req_cfgspec_excl_diff:  arg1=linespec    arg2=uncfgspec" + \
+            "   arg3=cfgspec")
+        print("   req_cfgspec_all_diff:   arg1=cfgspec")
+        print("   decrypt:                arg1=encrypted_passwd")
         sys.exit(1)
     else:
         import doctest
@@ -1425,7 +1426,7 @@ if __name__ == '__main__':
 
     if len(diff) > 0:
         for line in diff:
-            print line
+            print(line)
     else:
         raise RuntimeError("FATAL: ciscoconfparse was called with unknown" + \
             " parameters")

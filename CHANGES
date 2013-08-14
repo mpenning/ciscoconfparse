@@ -1,3 +1,4 @@
+0.9.4   20130814 Add Python3 compliance; other minor tweaks
 0.9.3   20130511 Added methods to IOSCfgLine: __eq__(), __hash__(), __lt__(), 
         __gt__(), as well as simplifying several other methods.  Misc code
         maintenance...

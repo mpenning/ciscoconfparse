@@ -42,5 +42,5 @@ diffs = p.req_cfgspec_all_diff(required_lines)
 # Note that diffs does *not* include 'logging 172.16.1.5', because it is
 # already configured...
 for line in diffs:
-    print line
+    print(line)
 

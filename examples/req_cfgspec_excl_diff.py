@@ -59,5 +59,5 @@ diffs = p.req_cfgspec_excl_diff(linespec, unconfspec, required_lines)
 # Note that diffs includes a line with 'no logging 172.28.26.15', as well
 # as configuring the requried logging servers...
 for line in diffs:
-   print line
+   print(line)
 
