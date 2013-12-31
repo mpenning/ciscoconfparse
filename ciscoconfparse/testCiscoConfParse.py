@@ -94,6 +94,20 @@ class knownValues(unittest.TestCase):
     '  random-detect',
     ]
 
+    c01_find_gige_no_exactmatch = ['interface GigabitEthernet4/1', 
+    'interface GigabitEthernet4/2', 
+    'interface GigabitEthernet4/3', 
+    'interface GigabitEthernet4/4', 
+    'interface GigabitEthernet4/5', 
+    'interface GigabitEthernet4/6', 
+    'interface GigabitEthernet4/7', 
+    'interface GigabitEthernet4/8']
+
+    c01_intf_no_exactmatch = [
+    'interface GigabitEthernet4/1',
+    'interface GigabitEthernet4/2',
+    ]
+
 
     c01_parents_w_child_power = [
     'interface GigabitEthernet4/1',
@@ -115,6 +129,16 @@ class knownValues(unittest.TestCase):
     'interface GigabitEthernet4/7',
     'interface GigabitEthernet4/8',
     ]
+
+    c01_replace_gige_no_exactmatch = ['interface GigabitEthernet8/1', 
+    'interface GigabitEthernet8/2', 
+    'interface GigabitEthernet8/3', 
+    'interface GigabitEthernet8/4', 
+    'interface GigabitEthernet8/5', 
+    'interface GigabitEthernet8/6', 
+    'interface GigabitEthernet8/7', 
+    'interface GigabitEthernet8/8']
+
 
     c01_children_w_parents_switchport = [
     ' switchport',
@@ -140,6 +164,7 @@ class knownValues(unittest.TestCase):
     ' ip address 1.1.1.1 255.255.255.252',
     ]
 
+    # Expected result from one of the unit tests
     c02_encap = [
     ' encapsulation ppp',
     ]
@@ -148,12 +173,31 @@ class knownValues(unittest.TestCase):
     'set snmp community read-only     myreadonlystring'
     ]
 
-    #--------------------------------
+    ##--------------------------------
+    # Keep tuples of test parameters below the line
+    #
+    #    Format: (config, args, resultGood)
+    #       config    : the configuration to test
+    #       args      : the arguments to pass to the function
+    #       resultGood: passing value
+    
 
     find_lines_Values = (
-    (c02, ["encapsulation", False ], c02_encap),
-    (c01, ["interface Serial 1/0", False], c01_intf),
-    (c01, ["interface Serial1/0", True], []),
+    # Ensure exact matches work regardless of the exactmatch boolean
+        (c01, {'linespec': "interface Serial 1/0", 'exactmatch': False}, c01_intf),
+        (c01, {'linespec': "interface Serial 1/0", 'exactmatch': True}, c01_intf),
+    # Ensure we can find string matches inside an interface config block
+        (c02, {'linespec': "encapsulation", 'exactmatch': False}, c02_encap),
+    # Ensure exactmatch=False catches beginning phrases in the config
+        (c01, {'linespec': "interface GigabitEthernet4/", 'exactmatch': False}, c01_find_gige_no_exactmatch),
+    # Ensure exactmatch=False catches single words in the config
+        (c01, {'linespec': "igabitEthernet", 'exactmatch': False}, c01_find_gige_no_exactmatch),
+    # Negative test: matches are Case-Sensitive
+        (c01, {'linespec': "GigaBitEtherNeT", 'exactmatch': False}, []),
+    # Negative test for exactmatch=True
+        (c01, {'linespec': "interface GigabitEthernet4/", 'exactmatch': True}, []),
+    # Negative test for exactmatch=True and ignore_ws=False
+        (c01, {'linespec': "interface Serial1/0", 'exactmatch': True, 'ignore_ws': False}, []),
     )
 
     find_children_Values = (
@@ -180,12 +224,24 @@ class knownValues(unittest.TestCase):
     (c01, ["^interface GigabitEthernet4/1", "switchport"], c01_children_w_parents_switchport),
     )
 
+    replace_lines_Values = (
+    # Ensure basic replacements work
+        (c01, {'linespec': "interface Serial 1/0", 'replacestr': "interface Serial 2/0"}, 
+            ['interface Serial 2/0']),
+    # Ensure exactmatch rejects substrings
+        (c01, {'linespec': "interface Serial 1/", 'replacestr': "interface Serial 2/", 'exactmatch': True}, 
+            []),
+    # Ensure we make multiple replacements as required
+        (c01, {'linespec': "GigabitEthernet4/", 'replacestr': "GigabitEthernet8/", 'exactmatch': False}, 
+            c01_replace_gige_no_exactmatch),
+    )
+
     #--------------------------------
 
     def testValues_find_lines(self):
         for config, args, resultGood in self.find_lines_Values:
             cfg = CiscoConfParse(config)
-            result = cfg.find_lines(args[0], args[1])
+            result = cfg.find_lines(**args)
             self.assertEqual(resultGood, result)
 
 
@@ -225,6 +281,12 @@ class knownValues(unittest.TestCase):
         for config, args, resultGood in self.find_children_w_parents_Values:
             cfg = CiscoConfParse(config )
             result = cfg.find_children_w_parents(args[0], args[1])
+            self.assertEqual(resultGood, result)
+
+    def testValues_replace_lines(self):
+        for config, args, resultGood in self.replace_lines_Values:
+            cfg = CiscoConfParse(config)
+            result = cfg.replace_lines(**args)
             self.assertEqual(resultGood, result)
 
     def testValues_req_cfgspec_excl_diff(self):

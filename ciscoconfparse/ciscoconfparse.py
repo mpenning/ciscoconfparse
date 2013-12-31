@@ -5,7 +5,7 @@ import re
 import os
 
 """ ciscoconfparse.py - Parse & Query IOS-style configurations
-     Copyright (C) 2007-2013 David Michael Pennington
+     Copyright (C) 2007-2014 David Michael Pennington
 
      This program is free software: you can redistribute it and/or modify
      it under the terms of the GNU General Public License as published by
@@ -104,7 +104,7 @@ class CiscoConfParse(object):
         structure of IOS commands.
         """
         DBGFLAG = False
-        self.ioscfg = ioscfg
+        self.ioscfg = ioscfg   # ioscfg is a text list
         # Dictionary mapping line number to objects
         self.ConfigObjs = dict()
         # List of all parent objects
@@ -990,6 +990,40 @@ class CiscoConfParse(object):
 
         return retval
 
+    def replace_lines(self, linespec, replacestr, exactmatch=False):
+        """This method is a text search and replace (Case-sensitive).
+
+        Parameters
+        ----------
+
+        linespec : :py:func:`str`
+             Text regular expression for the line to be matched
+        replacestr : :py:func:`str`
+             Text used to replace strings matching linespec
+        exactmatch : :py:func:`bool`
+             boolean that controls whether partial matches are valid
+
+        Returns
+        -------
+
+        retval : :py:func:`list`
+            A list of changed configuration lines
+        """
+        retval = list()
+
+        ## Since we are replacing text, we *must* operate on ConfigObjs
+        # TODO: evaluate whether calling a .replace() method on each object 
+        #       is worth the performance penalty of an added method call
+        #for ii, obj in self.ConfigObjs.items():
+        for obj in self._find_line_OBJ(linespec, exactmatch=exactmatch):
+            if (exactmatch is False):
+                obj.text = re.sub(linespec, replacestr, obj.text)
+                retval.append(obj.text)
+            else:
+                obj.text = re.sub("^%s$" % linespec, replacestr, obj.text)
+                retval.append(obj.text)
+        return retval
+
 
     def req_cfgspec_all_diff(self, cfgspec, ignore_ws=False):
         """
@@ -1126,12 +1160,17 @@ class CiscoConfParse(object):
         return comment_regex
 
 
-    def _find_line_OBJ(self, linespec):
+    def _find_line_OBJ(self, linespec, exactmatch=False):
         """SEMI-PRIVATE: Find objects whose text matches the linespec"""
         retval = list()
         for lineobj in list(self.ConfigObjs.values()):
-            if re.search(linespec, lineobj.text):
+            if not exactmatch and re.search(linespec, lineobj.text):
                 retval.append(lineobj)
+            elif exactmatch and re.search("^%s$" % linespec, lineobj.text):
+                retval.append(lineobj)
+            else:
+                # No regexp match case
+                pass
         return retval
 
     def _find_sibling_OBJ(self, lineobject):
@@ -1327,6 +1366,9 @@ class IOSCfgLine(object):
         """unconftext is defined during special method calls.  Do not assume it
         is automatically populated."""
         return self.uncfgtext
+
+    def replace(self, linespec, replacestr):
+        raise NotImplementedError
 
 class CiscoPassword(object):
 
