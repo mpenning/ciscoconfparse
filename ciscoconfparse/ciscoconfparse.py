@@ -990,8 +990,10 @@ class CiscoConfParse(object):
 
         return retval
 
-    def replace_lines(self, linespec, replacestr, exactmatch=False):
-        """This method is a text search and replace (Case-sensitive).
+    def replace_lines(self, linespec, replacestr, excludespec=None, exactmatch=False):
+        """This method is a text search and replace (Case-sensitive).  You can
+        optionally exclude lines from replacement by including a string (or
+        compiled regular expression) in `excludespec`.
 
         Parameters
         ----------
@@ -1000,6 +1002,9 @@ class CiscoConfParse(object):
              Text regular expression for the line to be matched
         replacestr : :py:func:`str`
              Text used to replace strings matching linespec
+        excludespec : :py:func:`str`
+             Text regular expression used to reject lines, which would 
+             otherwise be replaced
         exactmatch : :py:func:`bool`
              boolean that controls whether partial matches are valid
 
@@ -1008,22 +1013,141 @@ class CiscoConfParse(object):
 
         retval : :py:func:`list`
             A list of changed configuration lines
+
+
+        Examples
+        --------
+
+        This example finds statements with `EXTERNAL_CBWFQ` in following 
+        config, and replaces all matching lines (in-place) with `EXTERNAL_QOS`.
+        For the purposes of this example, let's assume that we do *not* want
+        to make changes to any descriptions on the policy.
+
+        .. code::
+
+           !
+           policy-map EXTERNAL_CBWFQ
+            description implement an EXTERNAL_CBWFQ policy
+            class IP_PREC_HIGH
+             priority percent 10
+             police cir percent 10
+               conform-action transmit
+               exceed-action drop
+            class IP_PREC_MEDIUM
+             bandwidth percent 50
+             queue-limit 100
+            class class-default
+             bandwidth percent 40
+             queue-limit 100
+           policy-map SHAPE_HEIR
+            class ALL
+             shape average 630000
+             service-policy EXTERNAL_CBWFQ
+           !
+
+        We do this by calling `replace_lines(linespec='EXTERNAL_CBWFQ', 
+        replacestr='EXTERNAL_QOS', excludespec='description')`...
+
+        >>> from ciscoconfparse import CiscoConfParse
+        >>> config = ['!', 
+        ...           'policy-map EXTERNAL_CBWFQ', 
+        ...           ' description implement an EXTERNAL_CBWFQ policy',
+        ...           ' class IP_PREC_HIGH', 
+        ...           '  priority percent 10', 
+        ...           '  police cir percent 10', 
+        ...           '    conform-action transmit', 
+        ...           '    exceed-action drop', 
+        ...           ' class IP_PREC_MEDIUM', 
+        ...           '  bandwidth percent 50', 
+        ...           '  queue-limit 100', 
+        ...           ' class class-default', 
+        ...           '  bandwidth percent 40', 
+        ...           '  queue-limit 100', 
+        ...           'policy-map SHAPE_HEIR', 
+        ...           ' class ALL', 
+        ...           '  shape average 630000', 
+        ...           '  service-policy EXTERNAL_CBWFQ', 
+        ...           '!',
+        ...     ]
+        >>> p = CiscoConfParse(config)
+        >>> p.replace_lines('EXTERNAL_CBWFQ', 'EXTERNAL_QOS', 'description')
+        ['policy-map EXTERNAL_QOS', '  service-policy EXTERNAL_QOS']
+        >>>
+
+        Now when we call `p.find_blocks('policy-map EXTERNAL_QOS')`, we get the
+        changed configuration, which has the replacements except on the 
+        policy-map's description.
+
+        >>> p.find_blocks('EXTERNAL_QOS')
+        ['policy-map EXTERNAL_QOS', ' description implement an EXTERNAL_CBWFQ policy', ' class IP_PREC_HIGH', ' class IP_PREC_MEDIUM', ' class class-default', 'policy-map SHAPE_HEIR', ' class ALL', '  shape average 630000', '  service-policy EXTERNAL_QOS']
+        >>>
         """
         retval = list()
-
         ## Since we are replacing text, we *must* operate on ConfigObjs
-        # TODO: evaluate whether calling a .replace() method on each object 
-        #       is worth the performance penalty of an added method call
-        #for ii, obj in self.ConfigObjs.items():
         for obj in self._find_line_OBJ(linespec, exactmatch=exactmatch):
-            if (exactmatch is False):
-                obj.text = re.sub(linespec, replacestr, obj.text)
-                retval.append(obj.text)
-            else:
-                obj.text = re.sub("^%s$" % linespec, replacestr, obj.text)
-                retval.append(obj.text)
+
+            if excludespec and re.search(excludespec, obj.text):
+                # Exclude replacements on lines which match excludespec
+                continue
+
+            # FIXME
+            # Due to the way I originally implemented ciscoconfparse as 
+            # a python novice, I also have to *manually* replace the same 
+            # line in self.ioscfg
+            self.ioscfg[obj.linenum] = obj.replace(linespec, replacestr)
+            retval.append(obj.text)
+
         return retval
 
+    def replace_children(self, parentspec, childspec, replacestr, 
+        excludespec=None, exactmatch=False):
+        """Replace lines matching `childspec` within the immediate children of lines which match `parentspec`"""
+        retval = list()
+        ## Since we are replacing text, we *must* operate on ConfigObjs
+        for pobj in self._find_line_OBJ(parentspec, exactmatch=exactmatch):
+            if excludespec and re.search(excludespec, pobj.text):
+                # Exclude replacements on pobj lines which match excludespec
+                continue
+            for cobj in self._find_child_OBJ(pobj):
+                if excludespec and re.search(excludespec, cobj.text):
+                    # Exclude replacements on pobj lines which match excludespec
+                    continue
+                elif re.search(childspec, cobj.text):
+                    # FIXME
+                    # Due to the way I originally implemented ciscoconfparse as 
+                    # a python novice, I also have to *manually* replace the 
+                    # same line in self.ioscfg
+                    self.ioscfg[cobj.linenum] = cobj.replace(childspec, 
+                        replacestr)
+                    retval.append(cobj.text)
+                else:
+                    pass
+        return retval
+
+    def replace_all_children(self, parentspec, childspec, replacestr, 
+        excludespec=None, exactmatch=False):
+        """Replace lines matching `childspec` within all children (recursive) of lines whilch match `parentspec`"""
+        retval = list()
+        ## Since we are replacing text, we *must* operate on ConfigObjs
+        for pobj in self._find_line_OBJ(parentspec, exactmatch=exactmatch):
+            if excludespec and re.search(excludespec, pobj.text):
+                # Exclude replacements on pobj lines which match excludespec
+                continue
+            for cobj in self._find_all_child_OBJ(pobj):
+                if excludespec and re.search(excludespec, cobj.text):
+                    # Exclude replacements on pobj lines which match excludespec
+                    continue
+                elif re.search(childspec, cobj.text):
+                    # FIXME
+                    # Due to the way I originally implemented ciscoconfparse as 
+                    # a python novice, I also have to *manually* replace the 
+                    # same line in self.ioscfg
+                    self.ioscfg[cobj.linenum] = cobj.replace(childspec, 
+                        replacestr)
+                    retval.append(cobj.text)
+                else:
+                    pass
+        return retval
 
     def req_cfgspec_all_diff(self, cfgspec, ignore_ws=False):
         """
@@ -1368,7 +1492,8 @@ class IOSCfgLine(object):
         return self.uncfgtext
 
     def replace(self, linespec, replacestr):
-        raise NotImplementedError
+        self.text = re.sub(linespec, replacestr, self.text)
+        return self.text
 
 class CiscoPassword(object):
 
