@@ -1,3 +1,9 @@
+0.9.7   20140124 Major rewrite, removed support for old python versions.  
+        Ripped out inefficient code I wrote as a python newbie, added more
+        idiomatic structures in various places.  Also added support for 
+        inserting and deleting lines via insert_before(), insert_after(), and
+        insert_after_child()
+0.9.6   20140106 Update copyright to 2014.  Rewrite unit tests
 0.9.5   20131231 Add replace_lines() function, enhance unit tests, 
         added an exactmatch option on _find_line_OBJ().  Updated code 
         copyright to include 2014
