@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 from collections import MutableSequence
 import sys
 import re
@@ -766,7 +764,6 @@ class CiscoConfParse(object):
     def insert_after(self, linespec, insertstr="", exactmatch=False, 
         ignore_ws=False):
         """Find all objects whose text matches linespec, and insert 'insertstr' after those line objects"""
-        print "DAMMIT insert_after '%s', '%s', %s" % (linespec, insertstr, exactmatch)
         objs = self.find_objects(linespec, exactmatch, ignore_ws)
         last_idx = len(objs) - 1
         atomic = False
@@ -782,7 +779,6 @@ class CiscoConfParse(object):
         exactmatch=False, excludespec=None, ignore_ws=False):
         """Find all objects whose text matches linespec and have a child matching childspec, and insert 'insertstr' after those child objects"""
         retval = list()
-        print "DAMMIT", parentspec, childspec, insertstr
         for pobj in self._find_line_OBJ(parentspec, exactmatch=exactmatch):
             if excludespec and re.search(excludespec, pobj.text):
                 # Exclude replacements on pobj lines which match excludespec
@@ -792,7 +788,6 @@ class CiscoConfParse(object):
                     # Exclude replacements on pobj lines which match excludespec
                     continue
                 elif re.search(childspec, cobj.text):
-                    print "INSERTING '%s' after %s" % (insertstr, repr(cobj))
                     retval.append(self.ConfigObjs.insert(cobj.linenum+1, insertstr))
                 else:
                     pass
