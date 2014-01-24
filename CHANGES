@@ -1,3 +1,4 @@
+0.9.8   20140124 Remove debugging info
 0.9.7   20140124 Major rewrite, removed support for old python versions.  
         Ripped out inefficient code I wrote as a python newbie, added more
         idiomatic structures in various places.  Also added support for 
