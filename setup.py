@@ -3,8 +3,8 @@
 from setuptools import setup, find_packages
 
 setup(name='ciscoconfparse',
-      version='0.9.8',
-      description='Parse through Cisco IOS-style configurations and retrieve portions of the config using a variety of query methods',
+      version='0.9.9',
+      description='Parse, Query, Build, and Modify Cisco IOS-style configurations'
       author='David Michael Pennington',
       author_email='mike /|at|\ pennington.net',
       license='GPL',

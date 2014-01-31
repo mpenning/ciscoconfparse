@@ -1,4 +1,7 @@
 from collections import MutableSequence
+from ipaddr import IPv4Network
+from types import TypeType
+from abc import ABCMeta
 import sys
 import re
 import os
@@ -60,20 +63,21 @@ class CiscoConfParse(object):
         >>> p
         <CiscoConfParse: 2 lines / comment delimiter: '!'>
         >>> p.ConfigObjs
-        <ConfigList, comment='!', conf=[<IOSCfgLine # 0 'logging trap debugging' (child_indent: 0 / family_endpoint: 0)>, <IOSCfgLine # 1 'logging 172.28.26.15' (child_indent: 0 / family_endpoint: 0)>]>
+        <ConfigList, comment='!', conf=[<IOSCfgLine # 0 'logging trap debugging'>, <IOSCfgLine # 1 'logging 172.28.26.15'>]>
         >>>
     """
 
-    def __init__(self, config="", comment="!", debug=False):
+    def __init__(self, config="", comment="!", debug=False, factory=False):
         """Initialize the class, read the config, and spawn the parser"""
 
         # all IOSCfgLine object instances...
         self.comment_delimiter = comment
         self.comment_regex = self._build_comment_regex(comment)
+        self.factory = factory
 
         if isinstance(config, list):
             # we already have a list object, simply call the parser
-            self.ConfigObjs = ConfigList(config, comment, debug)
+            self.ConfigObjs = ConfigList(config, comment, debug, factory)
         elif isinstance(config, str):
             # Try opening as a file
             try:
@@ -81,7 +85,8 @@ class CiscoConfParse(object):
                 f = open(config)
                 text = f.read()
                 rgx = re.compile("\r*\n+")
-                self.ConfigObjs = ConfigList(rgx.split(text), comment, debug)
+                self.ConfigObjs = ConfigList(rgx.split(text), comment, debug, 
+                    factory)
             except IOError:
                 print("FATAL: CiscoConfParse could not open '%s'" % config)
                 raise RuntimeError
@@ -748,37 +753,39 @@ class CiscoConfParse(object):
         return retval
 
     def insert_before(self, linespec, insertstr="", exactmatch=False, 
-        ignore_ws=False):
+        ignore_ws=False, atomic=True):
         """Find all objects whose text matches linespec, and insert 'insertstr' before those line objects"""
         objs = self.find_objects(linespec, exactmatch, ignore_ws)
         last_idx = len(objs) - 1
-        atomic = False
+        local_atomic = False & atomic
         for idx, obj in enumerate(objs):
             if idx==last_idx:
-                atomic = True
-            self.ConfigObjs.insert(obj.linenum, insertstr, atomic=atomic)
+                local_atomic = True & atomic
+            self.ConfigObjs.insert(obj.linenum, insertstr, atomic=local_atomic)
 
         ## Return the matching lines
         return sorted(map(str, objs))
 
     def insert_after(self, linespec, insertstr="", exactmatch=False, 
-        ignore_ws=False):
+        ignore_ws=False, atomic=True):
         """Find all objects whose text matches linespec, and insert 'insertstr' after those line objects"""
         objs = self.find_objects(linespec, exactmatch, ignore_ws)
         last_idx = len(objs) - 1
-        atomic = False
+        local_atomic = False & atomic
         for idx, obj in enumerate(objs):
             if idx==last_idx:
-                atomic = True
-            self.ConfigObjs.insert(obj.linenum+1, insertstr, atomic=atomic)
+                local_atomic = True & atomic
+            self.ConfigObjs.insert(obj.linenum+1, insertstr, 
+                atomic=local_atomic)
 
         ## Return the matching lines
         return sorted(map(str, objs))
 
     def insert_after_child(self, parentspec, childspec, insertstr="", 
-        exactmatch=False, excludespec=None, ignore_ws=False):
+        exactmatch=False, excludespec=None, ignore_ws=False, atomic=True):
         """Find all objects whose text matches linespec and have a child matching childspec, and insert 'insertstr' after those child objects"""
         retval = list()
+        modified = False
         for pobj in self._find_line_OBJ(parentspec, exactmatch=exactmatch):
             if excludespec and re.search(excludespec, pobj.text):
                 # Exclude replacements on pobj lines which match excludespec
@@ -788,9 +795,13 @@ class CiscoConfParse(object):
                     # Exclude replacements on pobj lines which match excludespec
                     continue
                 elif re.search(childspec, cobj.text):
-                    retval.append(self.ConfigObjs.insert(cobj.linenum+1, insertstr))
+                    modified = True
+                    retval.append(self.ConfigObjs.insert(cobj.linenum+1, 
+                        insertstr, atomic=False))
                 else:
                     pass
+        if modified:
+            self.ConfigObjs.maintain_obj_sanity()
         return retval
 
     def delete_lines(self, linespec, exactmatch=False, ignore_ws=False):
@@ -1164,13 +1175,16 @@ class CiscoConfParse(object):
 
 class ConfigList(MutableSequence):
     """A custom list to hold IOSCfgLine objects"""
-    def __init__(self, data=None, comment_delimiter='!', debug=False):
+    def __init__(self, data=None, comment_delimiter='!', debug=False, 
+        factory=False):
         super(ConfigList, self).__init__()
 
+        self._list = list()
         self.DBGFLAG = debug
         self.comment_delimiter = comment_delimiter
+        self.factory = factory
         if isinstance(data, list) and (data):
-            self._list = self.parse_text_list(data)
+            self.init_from_text_list(data)
         else:
             self._list = list()
 
@@ -1194,17 +1208,20 @@ class ConfigList(MutableSequence):
         return """<ConfigList, comment='%s', conf=%s>""" % (self.comment_delimiter, self._list)
 
     def _reparse_list(self):
-        self._list = self.parse_text_list([str(obj) for obj in self._list])
+        self._list = self.init_from_text_list([str(obj) for obj in self._list])
 
     def insert(self, ii, val, atomic=True):
 
         if isinstance(val, str):
-            tmpval = IOSCfgLine()
-            tmpval.text = val
+            if self.factory:
+                tmpval = ConfigLineFactory(text)
+            else:
+                tmpval = IOSCfgLine()
+                tmpval.text = val
             val = tmpval
 
         # Check whether the item is a comment
-        if re.search(r'\s*%s' % self.comment_delimiter, val.text):
+        if re.search(r'^\s*%s' % self.comment_delimiter, val.text):
             val.is_comment = True
 
         ## Do insertion here
@@ -1224,28 +1241,34 @@ class ConfigList(MutableSequence):
         list_idx = len(self._list)
         self.insert(list_idx, val, atomic)
 
-    def parse_text_list(self, text_list=[]):
+    def init_from_text_list(self, text_list=[]):
         # Append text lines as IOSCfgLine objects...
-        self._list = list()
-        for line in text_list:
+        tmp = list()
+        for idx, line in enumerate(text_list):
             # Reject empty lines
             if line.strip()=='':
                 continue
-            obj      = IOSCfgLine()
-            obj.text = line
-            obj.indent = len(line) - len(line.lstrip())
-            self.append(obj, atomic=False)
+            if not self.factory:
+                obj          = IOSCfgLine()
+                obj.text     = line
+            else:
+                obj = ConfigLineFactory(line)
 
+            obj.linenum  = idx
+            if re.search(r'^\s*%s' % self.comment_delimiter, line):
+                obj.is_comment = True
+            obj.indent   = len(line) - len(line.lstrip())
+
+            tmp.append(obj)
+
+        self._list = tmp
         self.maintain_obj_sanity()
-        return self._list
+        #return tmp
 
     def maintain_obj_sanity(self):
         ## call maintain_obj_sanity() after we finish inserting new stuff...
-        #self._reset_objects()
 
-        self._reassign_linenums()
-
-        self._link_objects_to_children()
+        self._link_firstchildren_to_parent()
         self._mark_endpoints()
         ## Make adjustments to the IOS banners because these currently show up
         ##  as individual lines, instead of a parent / child relationship.  i
@@ -1259,39 +1282,45 @@ class ConfigList(MutableSequence):
         self._mark_banner("telnet", "catos")
         self._mark_banner("lcd", "catos")
 
+    def iter_no_comments(self, begin_index=0):
+        for idx, obj in enumerate(self._list):
+            if (idx>=begin_index) and (not obj.is_comment):
+                yield obj
 
     def _reassign_linenums(self):
         # Call this after any insertion or deletion
         for idx, obj in enumerate(self._list):
             obj.linenum = idx
 
-    def _link_objects_to_children(self, DBGFLAG=False):
+    def _link_firstchildren_to_parent(self, DBGFLAG=False):
         ## Walk through the config and look for the "first" child
-        ## FIXME, possible breakage in enumerate because of self._len...
-        for ii, obj in enumerate(self._list):
-            if DBGFLAG or self.DBGFLAG:
-                print("_link_objects_to_children: considering: '%s'\n" % repr(obj))
-            line = obj.text
+        for ii, obj in enumerate(self._list[:-1]):
             # skip any IOS config comments
-            if not obj.is_comment:
-                current_indent = obj.indent
-                # Determine if this is the "first" child...
-                #   Note: other children will be orphaned until we walk the
-                #   config again.
-                if ((ii+1) < len(self._list)):
-                    # Note below that ii is the PARENT's line number
-                    if (self._list[ii+1].indent > current_indent):
-                        # higher indentation, so we found a child...
-                        childobj = self._list[ii+1]
-                        if not self._list[ii+1].is_comment:
-                            if DBGFLAG or self.DBGFLAG:
-                                print("parse:\n   Attaching CHILD:'%s'\n   to 'PARENT:%s'" % (childobj, obj))
-                            # Add child to the parent's object
-                            obj.add_child(childobj)
-                            if (current_indent==0):
-                                obj.assert_oldest_ancestor()
-                            # Add parent to the child's object
-                            childobj.add_parent(obj)
+            if obj.is_comment:
+                continue
+            if DBGFLAG or self.DBGFLAG:
+                print("_link_firstchildren_to_parent:\n  finding children of PARENT: %s\n" % repr(obj))
+            line = obj.text
+            parent_indent = obj.indent
+            # Determine if this is the "first" child...
+            #   Note: other children will be orphaned until we walk the
+            #   config again.
+            # Note below that ii is the PARENT's line number
+            candidate_child_obj = self._list[ii+1]
+            if (candidate_child_obj.indent > parent_indent):
+                # higher indentation, so we found a child...
+                if candidate_child_obj.is_comment:
+                    continue
+
+                if DBGFLAG or self.DBGFLAG:
+                    print("       Attaching CHILD Line #%s: '%s'\n   to 'PARENT: %s" % (candidate_child_obj.linenum, candidate_child_obj.text, obj.text))
+
+                # Add child to the parent's object
+                obj.add_child(candidate_child_obj)
+                if (parent_indent==0):
+                    obj.assert_oldest_ancestor()
+                # Add parent to the child's object
+                candidate_child_obj.add_parent(obj)
 
     def _mark_endpoints(self, DBGFLAG=False):
         ## Look for orphaned children, these SHOULD be indented the same
@@ -1300,9 +1329,9 @@ class ConfigList(MutableSequence):
         self._mark_family_endpoints(self.all_parents)
         for obj in self.all_parents:
             if (DBGFLAG is True):
-                print("parse: Parent  : %s" % obj.text)
+                print("parse: Parent  : %s" % repr(obj))
                 print("parse: Children:\n      %s" % \
-                    self._objects_to_lines(obj.children))
+                    [repr(ii) for ii in obj.children])
             if (obj.indent==0):
                 # Look for immediate children
                 self._id_unknown_children(obj)
@@ -1380,48 +1409,48 @@ class ConfigList(MutableSequence):
         more_children = True
 
         if DBGFLAG or self.DBGFLAG:
-            print("Parent       : %s" % self._list[obj.linenum])
-        for ii in range(obj.linenum + 1, \
-            self._id_family_endpoint(obj, len(self._list))):
-            iiobj = self._list[ii]
+            print("_id_unknown_children():")
+            print("Parent       : %s" % obj.verbose)
+        for iiobj in self.iter_no_comments(obj.linenum + 1):
             if DBGFLAG or self.DBGFLAG:
-                print("       C?    : %s" % iiobj)
-            if not iiobj.is_comment:
-                if (iiobj.indent==parent_indent):
-                    more_children = False
-                if (iiobj.indent==child_indent) and more_children:
-                    # we have found a potential orphan... also could be the
-                    #  first child
-                    iiobj.add_parent(obj)
-                    found_unknown_child = obj.add_child(iiobj)
-                    if DBGFLAG or self.DBGFLAG:
-                        if (found_unknown_child is True):
-                            print("    New child: %s" % iiobj)
+                print("   Line #%s is child? '%s'" % (iiobj.linenum, 
+                    iiobj.text))
+
+            if (iiobj.indent==0):
+                # Cannot be a child with no indent
+                return False
+            elif (iiobj.indent==child_indent) and more_children:
+                # we have found a potential orphan... also could be the
+                #  first child
+                iiobj.add_parent(obj)
+                found_unknown_child = obj.add_child(iiobj)
+                if DBGFLAG or self.DBGFLAG:
+                    if (found_unknown_child is True):
+                        print("    YES, adding unknown child to Line #%s" % obj.linenum) 
+            elif (iiobj.indent==parent_indent):
+                more_children = False
         return found_unknown_child
 
-    def _id_family_endpoint(self, obj, last_cfg_line):
+    def _id_family_endpoint(self, obj):
         """This method can start with any child object, and traces through its
         parents to the oldest_ancestor.  When it finds the oldest_ancestor, it
         looks for the family_endpoint attribute."""
-        ii = 0
-        source_linenum = obj.linenum
-        while (ii<last_cfg_line) & (obj.oldest_ancestor is False):
-            # Find the parent, try again...
-            obj = obj.parent
-            ii += 1
-        if (ii==last_cfg_line):
+        for tobj in self.iter_no_comments(obj.linenum):
+            if (tobj.family_endpoint>0) and \
+                (tobj.parent.oldest_ancestor is True):
+                return tobj.family_endpoint
+
+        if (tobj.linenum==self.last_index):
             # FATAL: we searched to the end of the configuration and did not
             #  find a valid family endpoint.  This is bad, there is something
             #  wrong with IOSCfgLine relationships if you get this message.
             raise RuntimeError("FATAL: Could not resolve family " + \
                 "endpoint while starting from configuration line " + \
                 "number %s" % source_linenum)
-        if (obj.family_endpoint>0):
-            return obj.family_endpoint
         else:
-            raise RuntimeError("FATAL: Found invalid family endpoint " + \
-                "while considering: '%s'  Validate IOSCfgLine relationships" %\
-                self._list[obj.linenum])
+            raise RuntimeError("FATAL: Found invalid family_endpoint " + \
+                "while considering: %s. Validate IOSCfgLine relationships" %\
+                repr(obj))
 
     def _mark_family_endpoints(self, parents):
         """Find the endpoint of the config 'family'
@@ -1429,29 +1458,42 @@ class ConfigList(MutableSequence):
         'children'. A family ends when there are no more children.  See class
         IOSCfgLine for an example. This method modifies attributes inside 
         IOSCfgLine instances"""
+        if self.DBGFLAG:
+            print("_mark_family_endpoints:\n  finding children of PARENTS: %s\n" % parents)
         for parent in parents:
-            ii = parent.linenum
-            if (parent.indent==0):
+            if self.DBGFLAG:
+                print("   Finding family_endpoint for: Line #%s: '%s'" % (parent.linenum, parent.text))
+
+            if (parent.indent==0) and parent.has_children:
                 # we are at the oldest ancestor
                 parent.assert_oldest_ancestor()
+
                 # start searching for the family endpoint
-                ii += 1
-                # reject endpoints in IOS comments
-                if not self._list[ii].is_comment:
-                    found_endpoint = False
-                    while (not found_endpoint) and (ii<len(self._list)):
-                        if self._list[ii].indent == 0:
-                            found_endpoint = True
-                            ## Fixed a bug below... used to set it to ii
-                            parent.set_family_endpoint(ii)
-                        else:
-                            ii += 1
+                ## FIXME: MIKE UNINDENTED
+                in_family = False
+                for obj in self.iter_no_comments(parent.linenum):
+                    if in_family and (obj.indent==0):
+                        if self.DBGFLAG:
+                            print("      ID family_endpoint: Line #%s: '%s'" % (lastobj.linenum, lastobj.text))
+                        parent.set_family_endpoint(lastobj.linenum)
+                        in_family = False
+                        break
+                    elif obj.indent>0:
+                        if self.DBGFLAG:
+                            print("      Inside family: Line #%s: '%s'" % (obj.linenum, obj.text))
+                        in_family = True
+                    lastobj = obj
                     # Special case if we cycle through the config and don't
                     # find an endpoint. It usually happens if CiscoConfParse
                     # is called with an array containing a single interface
                     # config stanza and no "end" statement
-                    if (found_endpoint is False):
-                        parent.set_family_endpoint(ii)
+                else:
+                    if self.DBGFLAG:
+                        print("      No family_endpoint for: Line #%s: '%s'" % (parent.linenum, parent.text))
+                if in_family:
+                    if self.DBGFLAG:
+                        print("      ID family_endpoint: Line #%s: %s" % (obj.linenum, obj.text))
+                    parent.set_family_endpoint(self.last_index)
 
     def _fix_multiline_entries(self, re_code):
         """Identify all multiline entries matching the mlinespec (this is
@@ -1492,7 +1534,258 @@ class ConfigList(MutableSequence):
     def all_parents(self):
         return [obj for obj in self._list if obj.has_children]
 
-class IOSCfgLine(object):
+    @property
+    def last_index(self):
+        return (self.__len__()-1)
+
+def ConfigLineFactory(line):
+    ## Inspired by http://code.activestate.com/recipes/576687-maintenance-free-factory-design-pattern/
+    ## Inspired by http://stackoverflow.com/a/456747/667301
+    classes = [j for (i,j) in globals().iteritems() if isinstance(j, TypeType) and issubclass(j, BaseCfgLine)]
+    for cls in classes:
+        if cls.is_object_for(line):
+            inst = cls() # instance of the proper subclass
+            inst.text = line
+            return inst
+    raise ValueError, "Could not find an object for '%s'" % line
+
+class BaseCfgLine(object):
+    __metaclass__ = ABCMeta
+
+    def __init__(self):
+        """Accept an IOS line number and initialize family relationship
+        attributes"""
+        self.linenum = -1
+        self.parent = self
+        self.text = ""
+        self.child_indent = 0
+        self.children = list()
+        self.oldest_ancestor = False
+        self.is_comment = False
+        self.family_endpoint = 0
+        self.indent = 0            # Whitespace indentation on the object
+
+    def __repr__(self):
+        return "<%s # %s '%s'>" % (self.classname, self.linenum, self.text)
+
+
+    def __str__(self):
+        ## If called in a string context, return the config line
+        #return self.text
+        return self.__repr__()
+
+    def __eq__(self, val):
+        return isinstance(val, BaseCfgLine) and (self.hash_arg==val.hash_arg)
+
+    def __gt__(self, val):
+        if (self.linenum>val.linenum):
+            return True
+        return False
+
+    def __lt__(self, val):
+        # Ref: http://stackoverflow.com/a/7152796/667301
+        if (self.linenum<val.linenum):
+            return True
+        return False
+
+    def __hash__(self):
+        return hash(self.hash_arg)
+
+    @property
+    def verbose(self):
+        if self.has_children:
+            return "<%s # %s '%s' (child_indent: %s / len(children): %s / family_endpoint: %s)>" % (self.classname, self.linenum, self.text, self.child_indent, len(self.children), self.family_endpoint) 
+        else:
+            return "<%s # %s '%s' (no_children / family_endpoint: %s)>" % (self.classname, self.linenum, self.text, self.family_endpoint) 
+
+    @property
+    def classname(self):
+        return self.__class__.__name__
+
+    @property
+    def has_children(self):
+        if len(self.children)>0:
+            return True
+        return False
+
+    @property
+    def hash_arg(self):
+        # Just a unique string or each object instance
+        return str(self.linenum)+self.text
+
+    def add_parent(self, parentobj):
+        ## In a perfect world, I would check parentobj's type
+        ##     with isinstance(), but I'm not ready to take the perf hit
+        self.parent = parentobj
+        return True
+
+    def add_child(self, childobj):
+        ## In a perfect world, I would check childobj's type
+        ##     with isinstance(), but I'm not ready to take the perf hit
+        ##
+        ## Add the child, unless we already know it
+        if not (childobj in [self.children]):
+            self.children.append(childobj)
+            self.child_indent = childobj.indent
+            return True
+        else:
+            return False
+
+    def add_uncfgtext(self, unconftext):
+        ## remove any preceeding "no "
+        conftext = re.sub("\s*no\s+", "", unconftext)
+        myindent = self.parent.child_indent
+        self.uncfgtext = myindent * " " + "no " + conftext
+
+    def assert_oldest_ancestor(self):
+        self.oldest_ancestor = True
+
+    def set_family_endpoint(self, endpoint):
+        # SHOULD only be set non-zero on an oldest_ancestor
+        self.family_endpoint = endpoint
+
+    def parent(self):
+        return self.parent
+
+    def children(self):
+        return self.children
+
+    def is_parent(self):
+        return self.has_children
+
+    def child_indent(self):
+        return self.child_indent
+
+    def oldest_ancestor(self):
+        return self.oldest_ancestor
+
+    def family_endpoint(self):
+        return self.family_endpoint
+
+    def linenum(self):
+        return self.linenum
+
+    def uncfgtext(self):
+        """unconftext is defined during special method calls.  Do not assume it
+        is automatically populated."""
+        return self.uncfgtext
+
+    def replace(self, linespec, replacestr):
+        self.text = re.sub(linespec, replacestr, self.text)
+        return self.text
+
+    def re_match(self, regex, group=1):
+        mm = re.search(regex, self.text)
+        if not (mm is None):
+            return mm.group(group)
+        return None
+
+    @classmethod
+    def is_object_for(cls, line=""):
+        return False
+
+class BaseIOSIntfLine(BaseCfgLine):
+    def __init__(self):
+        super(BaseIOSIntfLine, self).__init__()
+        self.ifindex = None    # Optional, for user use
+
+    def __repr__(self):
+        if not self.is_switchport:
+            return "<%s # %s '%s' info: '%s'>" % (self.classname, self.linenum, self.text, self.ipv4_addr_object or "No IPv4")
+        else:
+            return "<%s # %s '%s' info: 'switchport'>" % (self.classname, self.linenum, self.text)
+
+    @classmethod
+    def is_object_for(cls, line="", re=re):
+        return False
+
+    @property
+    def name(self):
+        name = self.re_match(r'^interface\s+(\S+.+)')
+        if not (name is None):
+            return name
+        return ''
+
+    @property
+    def verbose(self):
+        if not self.is_switchport:
+            return "<%s # %s '%s' info: '%s' (child_indent: %s / len(children): %s / family_endpoint: %s)>" % (self.classname, self.linenum, self.text, self.ipv4_addr_object or "No IPv4", self.child_indent, len(self.children), self.family_endpoint) 
+        else:
+            return "<%s # %s '%s' info: 'switchport' (child_indent: %s / len(children): %s / family_endpoint: %s)>" % (self.classname, self.linenum, self.text, self.child_indent, len(self.children), self.family_endpoint) 
+
+    @property
+    def ip_address(self):
+        return self.ipv4_address
+
+    @property
+    def ipv4_address(self):
+        for obj in self.children:
+            addr = obj.re_match(r'^\s+ip\s+address\s+(\S+)\s+\S+\s*$')
+            if not (addr is None):
+                return addr
+        return ''
+
+    @property
+    def netmask(self):
+        for obj in self.children:
+            mask = obj.re_match(r'^\s+ip\s+address\s+\S+\s+(\S+)\s*$')
+            if not (mask is None):
+                return mask
+        return ''
+
+    @property
+    def vrf(self):
+        for obj in self.children:
+            vrf = obj.re_match(r'^\s*ip\svrf\sforwarding\s(\S+)$')
+            if not (vrf is None):
+                return vrf
+        return ''
+
+    @property
+    def ipv4_addr_object(self):
+        try:
+            return IPv4Network('%s/%s' % (self.ipv4_address, self.netmask))
+        except:
+            return None
+
+    @property
+    def is_shutdown(self):
+        for obj in self.children:
+            shutdown = obj.re_match(r'^\s*(shut\S*)\s*$')
+            if not (shutdown is None):
+                return True
+        return False
+
+    @property
+    def is_switchport(self):
+        for obj in self.children:
+            switchport = obj.re_match(r'^\s*(switchport\S*)\s*$')
+            if not (switchport is None):
+                return True
+        return False
+
+    @property
+    def is_vrf(self):
+        for obj in self.children:
+            vrf = obj.re_match(r'^\s*ip\svrf\sforwarding\s(\S+)$')
+            if not (vrf is None):
+                return True
+        return False
+
+
+class IOSIntfLine(BaseIOSIntfLine):
+    def __init__(self):
+        """Accept an IOS line number and initialize family relationship
+        attributes"""
+        super(IOSIntfLine, self).__init__()
+
+    @classmethod
+    def is_object_for(cls, line="", re=re):
+        if re.search('^interface\s+\S+', line):
+            return True
+        return False
+
+class IOSCfgLine(BaseCfgLine):
     """Manage IOS Config line parent / child relationships"""
     ### Example of family relationships
     ###
@@ -1523,114 +1816,17 @@ class IOSCfgLine(object):
     #           09, 10, 11
     # family_endpoints: 07, 11
     #
-
     def __init__(self):
         """Accept an IOS line number and initialize family relationship
         attributes"""
-        self.linenum = -1
-        self.parent = self
-        self.text = ""
-        self.child_indent = 0
-        self.children = list()
-        self.has_children = False
-        self.oldest_ancestor = False
-        self.is_comment = False
-        self.family_endpoint = 0
-        self.indent = 0            # Whitespace indentation on the object
+        super(IOSCfgLine, self).__init__()
 
-    def __repr__(self):
-        return "<IOSCfgLine # %s '%s' (child_indent: %s / family_endpoint: %s)>" % (self.linenum, self.text, self.child_indent, self.family_endpoint)
-
-    def __str__(self):
-        ## If called in a string context, return the config line
-        return self.text
-
-    def __eq__(self, val):
-        return isinstance(val, IOSCfgLine) and (self.hash_arg==val.hash_arg)
-
-    def __gt__(self, val):
-        if (self.linenum>val.linenum):
-            return True
-        return False
-
-    def __lt__(self, val):
-        # Ref: http://stackoverflow.com/a/7152796/667301
-        if (self.linenum<val.linenum):
-            return True
-        return False
-
-    def __hash__(self):
-        return hash(self.hash_arg)
-
-    @property
-    def hash_arg(self):
-        # Just a unique string or each object instance
-        return str(self.linenum)+self.text
-
-    def add_parent(self, parentobj):
-        ## In a perfect world, I would check parentobj's type
-        ##     with isinstance(), but I'm not ready to take the perf hit
-        self.parent = parentobj
+    @classmethod
+    def is_object_for(cls, line="", re=re):
+        ## Default object, for now
         return True
 
-    def add_child(self, childobj):
-        ## In a perfect world, I would check childobj's type
-        ##     with isinstance(), but I'm not ready to take the perf hit
-        ##
-        ## Add the child, unless we already know it
-        if not (childobj in self.children):
-            self.children.append(childobj)
-            self.child_indent = childobj.indent
-            self.has_children = True
-            return True
-        else:
-            return False
 
-    def add_uncfgtext(self, unconftext):
-        ## remove any preceeding "no "
-        conftext = re.sub("\s*no\s+", "", unconftext)
-        myindent = self.parent.child_indent
-        self.uncfgtext = myindent * " " + "no " + conftext
-
-    def assert_oldest_ancestor(self):
-        self.oldest_ancestor = True
-
-    def set_family_endpoint(self, endpoint):
-        # SHOULD only be set non-zero on an oldest_ancestor
-        self.family_endpoint = endpoint
-
-    def parent(self):
-        return self.parent
-
-    def children(self):
-        return self.children
-
-    def has_children(self):
-        return self.has_children
-
-    def is_parent(self):
-        return self.has_children
-
-    def child_indent(self):
-        return self.child_indent
-
-    def oldest_ancestor(self):
-        return self.oldest_ancestor
-
-    def family_endpoint(self):
-        return self.family_endpoint
-
-    def linenum(self):
-        return self.linenum
-
-    def uncfgtext(self):
-        """unconftext is defined during special method calls.  Do not assume it
-        is automatically populated."""
-        return self.uncfgtext
-
-    def replace(self, linespec, replacestr):
-        self.text = re.sub(linespec, replacestr, self.text)
-        return self.text
 
 class CiscoPassword(object):
 
