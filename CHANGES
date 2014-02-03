@@ -1,3 +1,5 @@
+0.9.10  20140131 Bugfixes and more performance improvements.  Doubled
+        number of unit tests. Added alpha-quality code in another module.
 0.9.9   20140131 Major insert() / append() performance improvements.   Add
         optional interface-aware config line factory objects.  Add abstract base
         classes.  Add atomic options to insert_before(), insert_after(), etc...
