@@ -1,16 +1,6 @@
-from collections import MutableSequence
-from types import TypeType
 from abc import ABCMeta
 import re
 import os
-
-### ipaddr is optional, and Apache License 2.0 is compatible with GPLv3 per
-###   the ASL web page: http://www.apache.org/licenses/GPL-compatibility.html
-try:
-    from ipaddr import IPv4Network, IPv6Network
-except ImportError:
-    # I raise an ImportError below ipaddr is required
-    pass
 
 """ ciscoconfparse.py - Parse, Query, Build, and Modify IOS-style configurations
      Copyright (C) 2007-2014 David Michael Pennington
@@ -59,11 +49,7 @@ class BaseCfgLine(object):
 
 
     def __str__(self):
-        ## If called in a string context, return the config line
-        # TODO: make this return __repr__ one day, 
-        #     but it breaks a lot of stuff now
         return self.__repr__()
-        #return self.text
 
     def __eq__(self, val):
         return isinstance(val, BaseCfgLine) and \
@@ -128,12 +114,14 @@ class BaseCfgLine(object):
         self.confobj._bootstrap_from_text()
 
     def add_parent(self, parentobj):
+        """Add a reference to parentobj, on this object"""
         ## In a perfect world, I would check parentobj's type
         ##     with isinstance(), but I'm not ready to take the perf hit
         self.parent = parentobj
         return True
 
     def add_child(self, childobj):
+        """Add references to childobj, on this object"""
         ## In a perfect world, I would check childobj's type
         ##     with isinstance(), but I'm not ready to take the perf hit
         ##
@@ -156,12 +144,12 @@ class BaseCfgLine(object):
     def insert_before(self, insertstr, atomic=True):
         ## BaseCfgLine.insert_before(), insert a single line before this object
         local_atomic=atomic
-        return self.confobj.insert(self.linenum-1, insertstr, atomic=local_atomic)
+        return self.confobj.insert(self.linenum, insertstr, atomic=local_atomic)
 
     def insert_after(self, insertstr, atomic=True):
         ## BaseCfgLine.insert_after(), insert a single line after this object
         local_atomic=atomic
-        return self.confobj.insert(self.linenum, insertstr, atomic=local_atomic)
+        return self.confobj.insert(self.linenum+1, insertstr, atomic=local_atomic)
 
     def replace(self, linespec, replacestr, atomic=True):
         # This is a little slower than calling BaseCfgLine.re_sub directly...

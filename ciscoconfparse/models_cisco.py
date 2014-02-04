@@ -1,7 +1,4 @@
-from collections import MutableSequence
-from types import TypeType
 from copy import deepcopy
-from abc import ABCMeta
 import re
 import os
 
@@ -12,7 +9,7 @@ from ccp_abc import BaseCfgLine
 try:
     from ipaddr import IPv4Network, IPv6Network
 except ImportError:
-    # I raise an ImportError below ipaddr is required
+    # I raise an ImportError elsewhere if ipaddr is required
     pass
 
 """ ciscoconfparse.py - Parse, Query, Build, and Modify IOS-style configurations
@@ -41,8 +38,10 @@ except ImportError:
 
 # Valid method name substitutions:
 #    switchport -> switch
+#    spanningtree -> stp
 #    interfce -> intf
 #    address -> addr
+#    default -> def
 
 class BaseIOSIntfLine(BaseCfgLine):
     def __init__(self):
@@ -78,7 +77,7 @@ class BaseIOSIntfLine(BaseCfgLine):
     ##-------------  Basic interface properties
 
     @property
-    def is_interface(self):
+    def is_intf(self):
         # Includes subinterfaces
         intf_regex = r'^interface\s+(\S+.+)'
         if self.re_match(intf_regex):
@@ -115,7 +114,7 @@ class BaseIOSIntfLine(BaseCfgLine):
 
     @property
     def name(self):
-        if not self.is_interface:
+        if not self.is_intf:
             return ''
         intf_regex = r'^interface\s+(\S+.+)'
         name = self.re_match(intf_regex)
@@ -674,7 +673,46 @@ class IOSIntfLine(BaseIOSIntfLine):
             return True
         return False
 
+##
+##-------------  IOS Interface Globals
+##
 
+class IOSInterfaceGlobal(BaseCfgLine):
+    def __init__(self):
+        super(IOSInterfaceGlobal, self).__init__()
+    def __repr__(self):
+        return "<%s # %s '%s'>" % (self.classname, self.linenum, 
+            self.text)
+
+    @classmethod
+    def is_object_for(cls, line="", re=re):
+        if re.search('^(no\s+cdp\s+run)|(logging\s+event\s+link-status\s+global)|(spanning-tree\sportfast\sdefault)|(spanning-tree\sportfast\sbpduguard\sdefault)', line):
+            return True
+        return False
+
+    @property
+    def has_cdp_disabled(self):
+        if self.re_search('^no\s+cdp\s+run\s*'):
+            return True
+        return False
+
+    @property
+    def has_intf_logging_def(self):
+        if self.re_search('^logging\s+event\s+link-status\s+global'):
+            return True
+        return False
+
+    @property
+    def has_stp_portfast_def(self):
+        if self.re_search('^spanning-tree\sportfast\sdefault'):
+            return True
+        return False
+
+    @property
+    def has_stp_portfast_bpduguard_def(self):
+        if self.re_search('^spanning-tree\sportfast\sbpduguard\sdefault'):
+            return True
+        return False
 
 ##
 ##-------------  IOS Hostname Line

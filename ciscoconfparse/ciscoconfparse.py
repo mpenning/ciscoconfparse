@@ -1,14 +1,13 @@
 from operator import methodcaller, attrgetter
 from collections import MutableSequence
-from sys import exit, modules
 from types import TypeType
 from copy import deepcopy
-from abc import ABCMeta
+from sys import modules
 import re
 import os
 
 from models_cisco import IOSHostnameLine, IOSRouteLine, IOSIntfLine
-from models_cisco import IOSAccessLine
+from models_cisco import IOSAccessLine, IOSInterfaceGlobal
 from models_cisco import IOSCfgLine
 
 ### ipaddr is optional, and Apache License 2.0 is compatible with GPLv3 per
@@ -1614,7 +1613,7 @@ def ConfigLineFactory(line, syntax='ios'):
 
     ## Manual and simple
     classes = [IOSIntfLine, IOSRouteLine, IOSAccessLine,
-        IOSHostnameLine, IOSCfgLine]  # This is simple
+        IOSHostnameLine, IOSInterfaceGlobal, IOSCfgLine]  # This is simple
     for cls in classes:
         if cls.is_object_for(line):
             inst = cls() # instance of the proper subclass
