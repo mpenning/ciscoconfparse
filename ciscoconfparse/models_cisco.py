@@ -44,8 +44,8 @@ except ImportError:
 #    default -> def
 
 class BaseIOSIntfLine(BaseCfgLine):
-    def __init__(self):
-        super(BaseIOSIntfLine, self).__init__()
+    def __init__(self, *args, **kwargs):
+        super(BaseIOSIntfLine, self).__init__(*args, **kwargs)
         self.ifindex = None    # Optional, for user use
 
     def __repr__(self):
@@ -661,10 +661,10 @@ class BaseIOSIntfLine(BaseCfgLine):
 
 class IOSIntfLine(BaseIOSIntfLine):
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         """Accept an IOS line number and initialize family relationship
         attributes"""
-        super(IOSIntfLine, self).__init__()
+        super(IOSIntfLine, self).__init__(*args, **kwargs)
 
     @classmethod
     def is_object_for(cls, line="", re=re):
@@ -678,8 +678,8 @@ class IOSIntfLine(BaseIOSIntfLine):
 ##
 
 class IOSInterfaceGlobal(BaseCfgLine):
-    def __init__(self):
-        super(IOSInterfaceGlobal, self).__init__()
+    def __init__(self, *args, **kwargs):
+        super(IOSInterfaceGlobal, self).__init__(*args, **kwargs)
     def __repr__(self):
         return "<%s # %s '%s'>" % (self.classname, self.linenum, 
             self.text)
@@ -719,8 +719,8 @@ class IOSInterfaceGlobal(BaseCfgLine):
 ##
 
 class IOSHostnameLine(BaseCfgLine):
-    def __init__(self):
-        super(IOSHostnameLine, self).__init__()
+    def __init__(self, *args, **kwargs):
+        super(IOSHostnameLine, self).__init__(*args, **kwargs)
     def __repr__(self):
         return "<%s # %s '%s'>" % (self.classname, self.linenum, 
             self.hostname)
@@ -742,8 +742,8 @@ class IOSHostnameLine(BaseCfgLine):
 ##
 
 class IOSAccessLine(BaseCfgLine):
-    def __init__(self):
-        super(IOSAccessLine, self).__init__()
+    def __init__(self, *args, **kwargs):
+        super(IOSAccessLine, self).__init__(*args, **kwargs)
     def __repr__(self):
         return "<%s # %s '%s' info: '%s'>" % (self.classname, self.linenum, self.name, self.range_str)
 
@@ -813,8 +813,8 @@ class IOSAccessLine(BaseCfgLine):
 ##
 
 class BaseIOSRouteLine(BaseCfgLine):
-    def __init__(self):
-        super(BaseIOSRouteLine, self).__init__()
+    def __init__(self, *args, **kwargs):
+        super(BaseIOSRouteLine, self).__init__(*args, **kwargs)
 
     def __repr__(self):
         return "<%s # %s '%s' info: '%s'>" % (self.classname, self.linenum, self.network_object, self.routeinfo)
@@ -865,8 +865,8 @@ class BaseIOSRouteLine(BaseCfgLine):
 ##
 
 class IOSRouteLine(BaseIOSRouteLine):
-    def __init__(self):
-        super(IOSRouteLine, self).__init__()
+    def __init__(self, *args, **kwargs):
+        super(IOSRouteLine, self).__init__(*args, **kwargs)
 
     @classmethod
     def is_object_for(cls, line="", re=re):
@@ -976,10 +976,10 @@ class IOSCfgLine(BaseCfgLine):
     #           09, 10, 11
     # family_endpoints: 07, 11
     #
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         """Accept an IOS line number and initialize family relationship
         attributes"""
-        super(IOSCfgLine, self).__init__()
+        super(IOSCfgLine, self).__init__(*args, **kwargs)
 
     @classmethod
     def is_object_for(cls, line="", re=re):

@@ -1,5 +1,8 @@
+### Version updates:
+# - Update sphinx-doc/conf.py
+# - Update setup.py
+# - CHANGES
 cd sphinx-doc/; make html
 cd ..
-python setup.py sdist
-python setup.py register
-python setup.py sdist upload
+## On my system, with ~/.pypirc
+python setup.py sdist; python setup.py register; python setup.py sdist upload

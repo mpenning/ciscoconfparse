@@ -89,7 +89,6 @@ class CiscoConfParse(object):
 
         # all IOSCfgLine object instances...
         self.comment_delimiter = comment
-        self.comment_regex = self._build_comment_regex(comment)
         self.factory = factory
         self.ConfigObjs = None
 
@@ -926,7 +925,7 @@ class CiscoConfParse(object):
             if excludespec and excludespec_re.search(obj.text):
                 # Exclude replacements on lines which match excludespec
                 continue
-            retval.append(obj.re_sub(linespec, replacestr, atomic=False))
+            retval.append(obj.re_sub(linespec, replacestr))
 
         if self.factory and atomic:
             self.ConfigObjs._reassign_linenums()
@@ -951,7 +950,7 @@ class CiscoConfParse(object):
                     # Exclude replacements on pobj lines which match excludespec
                     continue
                 elif childspec_re.search(cobj.text):
-                    retval.append(cobj.re_sub(childspec, replacestr, atomic=False))
+                    retval.append(cobj.re_sub(childspec, replacestr))
                 else:
                     pass
 
@@ -977,7 +976,7 @@ class CiscoConfParse(object):
                     # Exclude replacements on pobj lines which match excludespec
                     continue
                 elif childspec_re.search(cobj.text):
-                    retval.append(cobj.re_sub(childspec, replacestr, atomic=False))
+                    retval.append(cobj.re_sub(childspec, replacestr))
                 else:
                     pass
 
@@ -1115,12 +1114,6 @@ class CiscoConfParse(object):
 
         return linespec
 
-    def _build_comment_regex(self, comment):
-        """Accept a string, and return a string joined with a |"""
-        comment_regex = "|".join(comment)
-        return comment_regex
-
-
     def _find_line_OBJ(self, linespec, exactmatch=False):
         """SEMI-PRIVATE: Find objects whose text matches the linespec"""
         ## NOTE TO SELF: do not remove _find_line_OBJ(); used by Cisco employees
@@ -1248,31 +1241,27 @@ class IOSConfigList(MutableSequence):
 
         if isinstance(val, str):
             if self.factory:
-                tmpval = ConfigLineFactory(val)
+                obj = ConfigLineFactory(text=val, 
+                    comment_delimiter=self.comment_delimiter)
             else:
-                tmpval = IOSCfgLine()
-                tmpval.text = val
-            val = tmpval
-
-        # Check whether the item is a comment
-        if re.search(r'^\s*%s' % self.comment_delimiter, val.text):
-            val.is_comment = True
+                obj = IOSCfgLine(text=val, 
+                    comment_delimiter=self.comment_delimiter)
 
         ## Do insertion here
-        self._list.insert(ii, val)
+        self._list.insert(ii, obj)
 
         ### This is an aborted attempt to add children without having
         ###  to reparse the whole list
         #
         ## if it's indented more than the previous obj, add as a parent
-        #if (ii>0) and (val.indent>self._list[ii-1].indent):
+        #if (ii>0) and (obj.indent>self._list[ii-1].indent):
         #    parent_obj = self._list[ii-1]
         #    if (parent_obj.indent==0) and (not parent_obj.oldest_ancestor):
         #        print "   %s is now oldest ancestor" % parent_obj
         #        parent_obj.oldest_ancestor = True
-        #    print "  ADDING %s as child of %s" % (val, parent_obj)
-        #    parent_obj.children.insert(0, val)
-        #    val.add_parent(parent_obj)
+        #    print "  ADDING %s as child of %s" % (obj, parent_obj)
+        #    parent_obj.children.insert(0, obj)
+        #    obj.add_parent(parent_obj)
 
         ## Set atomic True, if this is just a single insert, without
         ##    a lot of lines coming after it
@@ -1297,15 +1286,12 @@ class IOSConfigList(MutableSequence):
             if line.strip()=='':
                 continue
             if not self.factory:
-                obj          = IOSCfgLine()
-                obj.text     = line
+                obj          = IOSCfgLine(line, self.comment_delimiter)
             else:
-                obj = ConfigLineFactory(line)
+                obj = ConfigLineFactory(line, self.comment_delimiter)
 
             obj.confobj  = self
             obj.linenum  = idx
-            if re.search(r'^\s*%s' % self.comment_delimiter, line):
-                obj.is_comment = True
             obj.indent   = len(line) - len(line.lstrip())
 
             tmp.append(obj)
@@ -1607,7 +1593,7 @@ class CiscoPassword(object):
             print("WARNING: password decryption failed.")
         return dp
 
-def ConfigLineFactory(line, syntax='ios'):
+def ConfigLineFactory(text="", comment_delimiter="!", syntax='ios'):
     # Complicted & Buggy
     #classes = [j for (i,j) in globals().iteritems() if isinstance(j, TypeType) and issubclass(j, BaseCfgLine)]
 
@@ -1615,9 +1601,9 @@ def ConfigLineFactory(line, syntax='ios'):
     classes = [IOSIntfLine, IOSRouteLine, IOSAccessLine,
         IOSHostnameLine, IOSInterfaceGlobal, IOSCfgLine]  # This is simple
     for cls in classes:
-        if cls.is_object_for(line):
-            inst = cls() # instance of the proper subclass
-            inst.text = line
+        if cls.is_object_for(text):
+            inst = cls(text=text, 
+                comment_delimiter=comment_delimiter) # instance of the proper subclass
             return inst
     raise ValueError, "Could not find an object for '%s'" % line
 

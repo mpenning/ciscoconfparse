@@ -1,3 +1,4 @@
+0.9.12  20140208 Fixed bug in ccp_abc.py; reworked comment detection; performance improvements
 0.9.11  20140204 Bugfixes
 0.9.10  20140203 Bugfixes and more performance improvements.  Doubled
         number of unit tests. Added alpha-quality code in another module.

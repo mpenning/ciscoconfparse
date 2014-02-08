@@ -31,18 +31,21 @@ import os
 class BaseCfgLine(object):
     __metaclass__ = ABCMeta
 
-    def __init__(self):
+    def __init__(self, text="", comment_delimiter="!"):
         """Accept an IOS line number and initialize family relationship
         attributes"""
+        self.comment_delimiter = comment_delimiter
+        self.text = text
         self.linenum = -1
         self.parent = self
-        self.text = ""
         self.child_indent = 0
+        self.is_comment = None
         self.children = list()
         self.oldest_ancestor = False
-        self.is_comment = False
         self.indent = 0            # Whitespace indentation on the object
         self.confobj = None        # Reference to the list object which owns it
+
+        self.set_comment_bool()
 
     def __repr__(self):
         return "<%s # %s '%s'>" % (self.classname, self.linenum, self.text)
@@ -69,6 +72,18 @@ class BaseCfgLine(object):
 
     def __hash__(self):
         return hash(self.hash_arg)
+
+    def set_comment_bool(self):
+        retval = None
+        ## Use this instead of a regex... nontrivial speed enhancement
+        tmp = self.text.lstrip()
+        if len(tmp)>0 and \
+            (self.comment_delimiter==tmp[len(self.comment_delimiter)-1]):
+            retval = True
+        else:
+            retval = False
+        self.is_comment = retval
+        return retval
 
     @property
     def family_endpoint(self):
@@ -113,6 +128,11 @@ class BaseCfgLine(object):
         #     (which is very slow)
         self.confobj._bootstrap_from_text()
 
+    def _list_reassign_linenums(self):
+        # Call this when I want to reparse everything
+        #     (which is very slow)
+        self.confobj._reassign_linenums()
+
     def add_parent(self, parentobj):
         """Add a reference to parentobj, on this object"""
         ## In a perfect world, I would check parentobj's type
@@ -141,28 +161,38 @@ class BaseCfgLine(object):
         myindent = self.parent.child_indent
         self.uncfgtext = myindent * " " + "no " + conftext
 
+    def delete(self):
+        """Delete this object"""
+        del self.confobj._list[self.linenum]
+        self._list_reassign_linenums()
+
     def insert_before(self, insertstr, atomic=True):
         ## BaseCfgLine.insert_before(), insert a single line before this object
         local_atomic=atomic
-        return self.confobj.insert(self.linenum, insertstr, atomic=local_atomic)
+        retval = self.confobj.insert(self.linenum, insertstr, atomic=local_atomic)
+        return retval
 
     def insert_after(self, insertstr, atomic=True):
         ## BaseCfgLine.insert_after(), insert a single line after this object
         local_atomic=atomic
-        return self.confobj.insert(self.linenum+1, insertstr, atomic=local_atomic)
+        retval = self.confobj.insert(self.linenum+1, insertstr, atomic=local_atomic)
+        return retval
 
     def replace(self, linespec, replacestr, atomic=True):
         # This is a little slower than calling BaseCfgLine.re_sub directly...
         return self.re_sub(linespec, replacestr, atomic)
 
-    def re_sub(self, regex, replacergx, atomic=True):
+    #def re_sub(self, regex, replacergx, atomic=True):
+    def re_sub(self, regex, replacergx):
+        # When replacing objects, check whether they should be deleted, or whether
+        #   they are a comment
         retval = re.sub(regex, replacergx, self.text)
+        # Delete empty lines
+        if retval.strip()=='':
+            self.delete()
+            return
         self.text = retval
-        if atomic:
-            # We might need to reparse from scratch to 
-            #    ensure all objects are parsed 
-            #    correctly after the text substitution
-            self._list_bootstrap()
+        self.set_comment_bool()
         return retval
 
     def re_match(self, regex, group=1):
