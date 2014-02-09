@@ -4,3 +4,4 @@ hg clone https://bitbucket.org/mpenning/ciscoconfparse
 
 # Push to the archive (this is only for me)...
 hg push https://mpenning@bitbucket.org/mpenning/ciscoconfparse
+hg push git+ssh://git@github.com:mpenning/ciscoconfparse.git
