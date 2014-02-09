@@ -1,3 +1,7 @@
+==============
+ciscoconfparse
+==============
+
 DOCS
 ====
 The latest copy of the docs are archived here:
@@ -31,3 +35,15 @@ THANKS
 Thanks to David Muir Sharnoff for his suggestion about making a special case 
 for IOS banners. Thanks to Alan Cownie for his API suggestions. Thanks to 
 everyone in advance for their bug reports and patience. Sola Dei Gloria.
+
+Travis CI
+---------
+
+I use the `Travis CI project <https://travis-ci.org>`_ to continuously test ciscoconfparse on Python versions 2.6 through 3.3.
+
+Click the image below for details; the current build status is:
+
+.. image:: https://travis-ci.org/mpenning/ciscoconfparse.png?branch=master
+   :align: center
+   :target: https://travis-ci.org/mpenning/ciscoconfparse
+

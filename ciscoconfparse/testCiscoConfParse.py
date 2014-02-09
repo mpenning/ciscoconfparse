@@ -849,8 +849,6 @@ class knownValues(unittest.TestCase):
             result_correct.text = 'interface Serial 1/0'
             result_correct.classname = 'IOSIntfLine'
             result_correct.ipv4_addr_object = IPv4Network('1.1.1.1/30')
-            # test against IOSIntfLine().__hash__()
-            result_correct.__hash__.return_value = 2261524786178781963
 
             cfg = CiscoConfParse(self.c01, factory=True)
             # this test finds the IOSIntfLine instance for 'Serial 1/0'
@@ -861,9 +859,6 @@ class knownValues(unittest.TestCase):
             self.assertEqual(result_correct.classname, test_result.classname)
             self.assertEqual(result_correct.ipv4_addr_object, 
                 test_result.ipv4_addr_object)
-            # __hash__() is the ultimate test of object equality
-            self.assertEqual(result_correct.__hash__(), 
-                test_result.__hash__())
 
     def testValues_IOSIntfLine_find_objects_factory_02(self):
         """test whether find_objects() returns correct IOSIntfLine objects and tests IOSIntfLine methods"""
@@ -874,8 +869,6 @@ class knownValues(unittest.TestCase):
             result_correct01.text = 'interface Serial 2/0'
             result_correct01.classname = 'IOSIntfLine'
             result_correct01.ipv4_addr_object = IPv4Network('1.1.1.1/30')
-            # test against IOSIntfLine().__hash__()
-            result_correct01.__hash__.return_value = 2849777240809937111
 
             result_correct02 = self.c01_insert_serial_replace
 
@@ -894,9 +887,6 @@ class knownValues(unittest.TestCase):
             self.assertEqual(result_correct01.classname, test_result01.classname)
             self.assertEqual(result_correct01.ipv4_addr_object, 
                 test_result01.ipv4_addr_object)
-            # __hash__() is the ultimate test of object equality
-            self.assertEqual(result_correct01.__hash__(), 
-                test_result01.__hash__())
 
             # Ensure the text configs are exactly what we wanted
             self.assertEqual(result_correct02, test_result02)
