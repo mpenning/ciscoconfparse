@@ -1,3 +1,5 @@
+0.9.14  20140209 Support for Travis CI.  Fix Travis CI build failures on
+        Python3.3 (due to how __hash__() is computed).
 0.9.13  20140209 Fixed Python3 compatibility, which broke a few builds ago.  
         Including ipaddr-py (patched for Python3) until versions of Python3 
         typically include it (right now, Debian 7.3 has Python3.2 without
