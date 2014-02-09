@@ -326,7 +326,7 @@ class BaseIOSIntfLine(BaseCfgLine):
                     return None
             else:
                 return None
-        raise ValueError, "FATAL: %s.in_ipv4_subnet() requires string arguments"
+        raise ValueError("FATAL: %s.in_ipv4_subnet() requires string arguments")
 
     @property
     def has_manual_disable_icmp_unreachables(self):

@@ -180,7 +180,7 @@ class BaseCfgLine(object):
 
     def replace(self, linespec, replacestr, atomic=True):
         # This is a little slower than calling BaseCfgLine.re_sub directly...
-        return self.re_sub(linespec, replacestr, atomic)
+        return self.re_sub(linespec, replacestr)
 
     #def re_sub(self, regex, replacergx, atomic=True):
     def re_sub(self, regex, replacergx):

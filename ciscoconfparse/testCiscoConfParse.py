@@ -513,26 +513,26 @@ class knownValues(unittest.TestCase):
             test_result = cfg.find_children_w_parents(**args)
             self.assertEqual(result_correct, test_result)
 
-    def testValues01_replace_lines(self):
+    def testValues_replace_lines_01(self):
         # We have to parse multiple times because of replacements
         for config, args, result_correct in self.replace_lines_Values01:
             cfg = CiscoConfParse(config)
             test_result = cfg.replace_lines(**args)
             self.assertEqual(result_correct, test_result)
 
-    def testValues02_replace_lines(self):
+    def testValues_replace_lines_02(self):
         for config, args, result_correct in self.replace_lines_Values02:
             cfg = CiscoConfParse(config)
             test_result = cfg.replace_lines(**args)
             self.assertEqual(result_correct, test_result)
 
-    def testValues03_replace_lines(self):
+    def testValues_replace_lines_03(self):
         for config, args, result_correct in self.replace_lines_Values03:
             cfg = CiscoConfParse(config)
             test_result = cfg.replace_lines(**args)
             self.assertEqual(result_correct, test_result)
 
-    def testValues01_replace_children(self):
+    def testValues_replace_children_01(self):
         # We have to parse multiple times because of replacements
         for config, args, result_correct in self.replace_children_Values:
             cfg = CiscoConfParse(config)
@@ -618,21 +618,37 @@ class knownValues(unittest.TestCase):
         test_result = cfg.find_objects('^interface')
         self.assertEqual(result_correct, test_result)
 
-    def testValues_replace_lines_01(self):
-        result_correct = ['interface GigabitEthernet0/1',
-            'interface GigabitEthernet0/2',
-            'interface GigabitEthernet0/3',
-            'interface GigabitEthernet0/4',
-            'interface GigabitEthernet0/5',
-            'interface GigabitEthernet0/6',
-            'interface GigabitEthernet0/7',
-            'interface GigabitEthernet0/8',
+    def testValues_find_objects_replace_01(self):
+        ## test whether find_objects we can correctly replace object values
+        ##    using native IOSCfgLine object methods
+        config01 = ['!',
+            'boot system flash slot0:c2600-adventerprisek9-mz.124-21a.bin',
+            'boot system flash bootflash:c2600-adventerprisek9-mz.124-21a.bin',
+            '!',
+            'interface Ethernet0/0',
+            ' ip address 172.16.1.253 255.255.255.0',
+            '!',
+            'ip route 0.0.0.0 0.0.0.0 172.16.1.254',
+            '!',
+            'end',
             ]
-
-        cfg = CiscoConfParse(self.c01, factory=False)
-        test_result = cfg.replace_lines('interface GigabitEthernet4', 
-            'interface GigabitEthernet0')
+        result_correct = ['!',
+            '! old boot image flash slot0:c2600-adventerprisek9-mz.124-21a.bin',
+            '! old boot image flash bootflash:c2600-adventerprisek9-mz.124-21a.bin',
+            '!',
+            'interface Ethernet0/0',
+            ' ip address 172.16.1.253 255.255.255.0',
+            '!',
+            'ip route 0.0.0.0 0.0.0.0 172.16.1.254',
+            '!',
+            'end',
+            ]
+        cfg = CiscoConfParse(config01)
+        for obj in cfg.find_objects('boot system'):
+            obj.replace('boot system', '! old boot image')
+        test_result = cfg.ioscfg
         self.assertEqual(result_correct, test_result)
+
 
     def testValues_insert_after_atomic_01(self):
         """We expect insert_after(atomic=True) to correctly parse children"""

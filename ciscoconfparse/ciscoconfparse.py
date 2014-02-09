@@ -1,6 +1,5 @@
 from operator import methodcaller, attrgetter
 from collections import MutableSequence
-from types import TypeType
 from copy import deepcopy
 from sys import modules
 import re
@@ -85,7 +84,7 @@ class CiscoConfParse(object):
         # re: modules usage... thank you Delnan
         # http://stackoverflow.com/a/5027393
         if (factory is True) and (bool(modules.get('ipaddr', False)) is False):
-            raise ImportError, "Could not import ipaddr module.  ciscoconfparse.CiscoConfParse only requires the ipaddr module when called with factory=True."
+            raise ImportError("Could not import ipaddr module.  ciscoconfparse.CiscoConfParse only requires the ipaddr module when called with factory=True.")
 
         # all IOSCfgLine object instances...
         self.comment_delimiter = comment
@@ -161,10 +160,10 @@ class CiscoConfParse(object):
 
         if (exactmatch is False):
             # Return the lines in self.ioscfg, which match linespec
-            return filter(re.compile(linespec).search, self.ioscfg)
+            return list(filter(re.compile(linespec).search, self.ioscfg))
         else:
             # Return the lines in self.ioscfg, which match (exactly) linespec
-            return filter(re.compile("^%s$" % linespec).search, self.ioscfg)
+            return list(filter(re.compile("^%s$" % linespec).search, self.ioscfg))
 
 
     def find_children(self, linespec, exactmatch=False, ignore_ws=False):
@@ -244,7 +243,7 @@ class CiscoConfParse(object):
                 allobjs.update(set(parent.children))
             allobjs.add(parent)
 
-        return map(attrgetter('text'), sorted(allobjs))
+        return list(map(attrgetter('text'), sorted(allobjs)))
 
     def find_all_children(self, linespec, exactmatch=False, ignore_ws=False):
         """Returns the parents matching the linespec, and all their children.  
@@ -324,7 +323,7 @@ class CiscoConfParse(object):
             if (parent.has_children is True):
                 allobjs.update(set(self._find_all_child_OBJ(parent)))
             allobjs.add(parent)
-        return map(attrgetter('text'), sorted(allobjs))
+        return list(map(attrgetter('text'), sorted(allobjs)))
 
     def find_blocks(self, linespec, exactmatch=False, ignore_ws=False):
         """Find all siblings matching the linespec, then find all parents of
@@ -440,7 +439,7 @@ class CiscoConfParse(object):
             for pobj in lineobject.all_parents:
                 tmp.add(pobj)
 
-        return map(attrgetter('text'), sorted(tmp))
+        return list(map(attrgetter('text'), sorted(tmp)))
 
     def find_parents_w_child(self, parentspec, childspec, ignore_ws=False):
         """Parse through all children matching childspec, and return a list of
@@ -539,7 +538,7 @@ class CiscoConfParse(object):
             if (match_parentspec is True):
                 for parent in parents:
                     retval.add(parent)
-        return map(attrgetter('text'), sorted(retval))
+        return list(map(attrgetter('text'), sorted(retval)))
 
     def find_parents_wo_child(self, parentspec, childspec, ignore_ws=False):
         """Parse through all parents matching parentspec, and return a list of
@@ -643,7 +642,7 @@ class CiscoConfParse(object):
                 ##    childspec
                 retval.add(parentobj)
 
-        return map(attrgetter('text'), sorted(retval))
+        return list(map(attrgetter('text'), sorted(retval)))
 
     def find_children_w_parents(self, parentspec, childspec, ignore_ws=False):
         """Parse through the children of all parents matching parentspec, 
@@ -757,7 +756,7 @@ class CiscoConfParse(object):
                 if re.search(parentspec, parent.text):
                     retval.add(child)
 
-        return map(attrgetter('text'), sorted(retval))
+        return list(map(attrgetter('text'), sorted(retval)))
 
     def insert_before(self, linespec, insertstr="", exactmatch=False, 
         ignore_ws=False, atomic=True):
@@ -771,7 +770,7 @@ class CiscoConfParse(object):
             self.ConfigObjs.insert(obj.linenum, insertstr, atomic=local_atomic)
 
         ## Return the matching lines
-        return map(attrgetter('text'), sorted(objs))
+        return list(map(attrgetter('text'), sorted(objs)))
 
     def insert_after(self, linespec, insertstr="", exactmatch=False, 
         ignore_ws=False, atomic=True):
@@ -786,7 +785,7 @@ class CiscoConfParse(object):
                 atomic=local_atomic)
 
         ## Return the matching lines
-        return map(attrgetter('text'), sorted(objs))
+        return list(map(attrgetter('text'), sorted(objs)))
 
     def insert_after_child(self, parentspec, childspec, insertstr="", 
         exactmatch=False, excludespec=None, ignore_ws=False, atomic=True):
@@ -1136,7 +1135,7 @@ class CiscoConfParse(object):
         elif exactmatch:
             # Return objects whose text attribute matches linespec exactly
             linespec_re = re.compile("^%s$" % linespec)
-        return filter(lambda obj: linespec_re.search(obj.text), self.ConfigObjs)
+        return list(filter(lambda obj: linespec_re.search(obj.text), self.ConfigObjs))
 
     def _find_sibling_OBJ(self, lineobject):
         """SEMI-PRIVATE: Takes a singe object and returns a list of sibling
@@ -1235,7 +1234,7 @@ class IOSConfigList(MutableSequence):
 
     def _bootstrap_from_text(self):
         ## reparse all objects from their text attributes... this is *very* slow
-        self._list = self._bootstrap_obj_init(map(attrgetter('text'), self._list))
+        self._list = self._bootstrap_obj_init(list(map(attrgetter('text'), self._list)))
 
     def insert(self, ii, val, atomic=True):
 
@@ -1605,7 +1604,7 @@ def ConfigLineFactory(text="", comment_delimiter="!", syntax='ios'):
             inst = cls(text=text, 
                 comment_delimiter=comment_delimiter) # instance of the proper subclass
             return inst
-    raise ValueError, "Could not find an object for '%s'" % line
+    raise ValueError("Could not find an object for '%s'" % line)
 
 ### TODO: Add unit tests below
 if __name__ == '__main__':
