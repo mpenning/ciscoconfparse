@@ -1,3 +1,4 @@
+0.9.15  20140210 Updated README.rst with inline example
 0.9.14  20140209 Support for Travis CI.  Fix Travis CI build failures on
         Python3.3 (due to how __hash__() is computed).
 0.9.13  20140209 Fixed Python3 compatibility, which broke a few builds ago.  
