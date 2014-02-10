@@ -1,0 +1,17 @@
+[ui]
+username = mpenning
+
+[git]
+intree=1
+
+[paths]
+default = https://mpenning@bitbucket.org/mpenning/ciscoconfparse
+git = git+ssh://git@github.com:mpenning/ciscoconfparse.git
+
+[hooks]
+outgoing = hg push git+ssh://git@github.com:mpenning/ciscoconfparse.git
+
+[extensions]
+hgext.convert =
+hgext.bookmarks =
+hggit =
