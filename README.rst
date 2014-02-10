@@ -18,8 +18,8 @@ ciscoconfparse
    :target: https://pypi.python.org/pypi/ciscoconfparse
    :alt: Downloads
 
-Introduction: what is ciscoconfparse?
--------------------------------------
+Introduction: What is ciscoconfparse?
+=====================================
 
 ciscoconfparse_ parses, queries, builds, or modifies Cisco IOS 
 configurations.
@@ -69,19 +69,19 @@ modest script...
 
 
 Pre-requisites
---------------
+==============
 
 ciscoconfparse_ needs only Python to run. It works with Python versions 2.6, 
 2.7 and 3.2+ on Linux and Windows.  If you're inclined to run under a 
 virtualenv_, it's been heavily tested in that environment as well.
 
 Docs
-----
+====
 
 The latest copy of the docs are `archived on the web <http://www.pennington.net/py/ciscoconfparse/>`_
 
 Installing
-----------
+==========
 
 The best way to get ciscoconfparse is with setuptools_ or pip_.  If you 
 already have setuptools_, you can install as usual:
@@ -119,7 +119,7 @@ or `bitbucket repo`_:
 
 
 FAQ
----
+===
 
 - Q1: Is there a way to use this module with perl?
 - A1: Yes, I do this myself. Install the python package as you normally would and import it into perl with ``Inline.pm`` and ``Inline::Python`` from CPAN.
@@ -127,8 +127,8 @@ FAQ
 - Q2: When I use ``find_children("interface GigabitEthernet3/2")``, I'm getting all interfaces beginning with 3/2, including 3/21, 3/22, 3/23 and 3/24. How can I limit my results?
 - A2. There are two ways... the simplest is to use the 'exactmatch' option...  ``find_children("interface GigabitEthernet3/2", exactmatch=True)``. Another way is to utilize regex expansion that is native to many methods... ``find_children("interface GigabitEthernet3/2$")``
 
-Travis CI
----------
+Testing
+=======
 
 I use the `Travis CI project <https://travis-ci.org>`_ to continuously test ciscoconfparse on Python versions 2.6 through 3.3.
 
@@ -140,7 +140,7 @@ Click the image below for details; the current build status is:
    :alt: Travis CI Status
 
 Author and Thanks
------------------
+=================
 
 ciscoconfparse_ was written by David Michael Pennington (mike [~at~] 
 pennington [/dot\] net).
