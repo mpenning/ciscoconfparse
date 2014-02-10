@@ -2,6 +2,22 @@
 ciscoconfparse
 ==============
 
+.. image:: https://travis-ci.org/mpenning/ciscoconfparse.png?branch=master
+   :target: https://travis-ci.org/mpenning/ciscoconfparse
+   :alt: Travis CI Status
+
+.. image:: https://pypip.in/v/ciscoconfparse/badge.png
+   :target: https://pypi.python.org/pypi/ciscoconfparse
+   :alt: Version
+
+.. image:: https://pypip.in/license/PYPI_PKG_NAME/badge.png
+   :target: https://pypi.python.org/pypi/PYPI_PKG_NAME/
+   :alt: License
+
+.. image:: https://pypip.in/d/ciscoconfparse/badge.png
+   :target: https://pypi.python.org/pypi/ciscoconfparse
+   :alt: Downloads
+
 Introduction: what is ciscoconfparse?
 -------------------------------------
 
@@ -121,6 +137,7 @@ Click the image below for details; the current build status is:
 .. image:: https://travis-ci.org/mpenning/ciscoconfparse.png?branch=master
    :align: center
    :target: https://travis-ci.org/mpenning/ciscoconfparse
+   :alt: Travis CI Status
 
 Author and Thanks
 -----------------
