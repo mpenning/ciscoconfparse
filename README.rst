@@ -10,8 +10,8 @@ ciscoconfparse
    :target: https://pypi.python.org/pypi/ciscoconfparse
    :alt: Version
 
-.. image:: https://pypip.in/license/PYPI_PKG_NAME/badge.png
-   :target: https://pypi.python.org/pypi/PYPI_PKG_NAME/
+.. image:: https://pypip.in/license/ciscoconfparse/badge.png
+   :target: https://pypi.python.org/pypi/ciscoconfparse/
    :alt: License
 
 .. image:: https://pypip.in/d/ciscoconfparse/badge.png
