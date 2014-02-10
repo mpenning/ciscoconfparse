@@ -3,7 +3,11 @@
 # - Update setup.py
 # - Update .travis.yml
 # - CHANGES
-cd sphinx-doc/; make html
-cd ..
+cd sphinx-doc/; make html; cd ..
+hg push https://mpenning@bitbucket.org/mpenning/ciscoconfparse
 ## On my system, with ~/.pypirc
 python setup.py sdist; python setup.py register; python setup.py sdist upload
+## Clean up repo after build
+rm -rf ciscoconfparse/*pyc; rm -rf build/ ciscoconfparse.e*
+## Now push to github (triggers Travis CI on the new egg)
+hg push git+ssh://git@github.com:mpenning/ciscoconfparse.git
