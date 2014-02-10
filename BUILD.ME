@@ -4,29 +4,15 @@
 # - Update .travis.yml
 # - CHANGES
 # - create .hg/.hgrc
-
-[ui]
-username = mpenning
-
-[git]
-intree=1
-
-[paths]
-default = https://mpenning@bitbucket.org/mpenning/ciscoconfparse
-git = git+ssh://git@github.com:mpenning/ciscoconfparse.git
-
-[hooks]
-outgoing = hg push git+ssh://git@github.com:mpenning/ciscoconfparse.git
-
-[extensions]
-hgext.convert =
-hgext.bookmarks =
-hggit =
+cp .hgrc .hg/
 # Make docs
 cd sphinx-doc/; make html; cd ..
-hg push git+ssh://git@github.com:mpenning/ciscoconfparse.git
+# Push to bitbucket
+hg bookmark -f master
 hg push https://mpenning@bitbucket.org/mpenning/ciscoconfparse
 ## On my system, with ~/.pypirc
 python setup.py sdist; python setup.py register; python setup.py sdist upload
 ## Clean up repo after build
 rm -rf ciscoconfparse/*pyc; rm -rf dist/ ciscoconfparse.egg-info/
+# Push to github
+hg push git+ssh://git@github.com:mpenning/ciscoconfparse.git
