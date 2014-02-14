@@ -1,3 +1,6 @@
+0.9.16  20140212 Fix bug in ccp_abc.insert_before() and insert_after().  Made
+        updates to README.rst.  Ripped out linenum references in various
+        insert methods
 0.9.15  20140210 Updated README.rst with inline example
 0.9.14  20140209 Support for Travis CI.  Fix Travis CI build failures on
         Python3.3 (due to how __hash__() is computed).
