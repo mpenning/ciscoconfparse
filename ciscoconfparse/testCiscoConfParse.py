@@ -468,6 +468,83 @@ class knownValues(unittest.TestCase):
 
     #--------------------------------
 
+    def testValues_parent_child_parsing_01(self):
+        cfg = CiscoConfParse(self.c01)
+        parent_intf = {
+            # Line 13's parent should be 11, etc...
+            13: 11,
+            16: 15,
+            17: 15,
+            18: 15,
+            19: 15,
+            22: 21,
+            23: 21,
+            24: 21,
+            25: 21,
+        }
+        for obj in cfg.find_objects(''):
+            result_correct = parent_intf.get(obj.linenum, False)
+            if result_correct:
+                test_result = obj.parent.linenum
+                ## Does this object parent's line number match?
+                self.assertEqual(result_correct, test_result)
+
+    def testValues_parent_child_parsing_02(self):
+        cfg = CiscoConfParse(self.c01)
+        # Expected child / parent line numbers before the insert
+        parent_intf_before = {
+            # Line 11 is Serial1/0, child is line 13
+            13: 11,
+            # Line 15 is GigabitEthernet4/1
+            16: 15,
+            17: 15,
+            18: 15,
+            19: 15,
+            # Line 21 is GigabitEthernet4/2
+            22: 21,
+            23: 21,
+            24: 21,
+            25: 21,
+        }
+        # Expected child / parent line numbers after the insert
+
+        # Validate line numbers *before* inserting
+        for obj in cfg.find_objects(''):
+            result_correct = parent_intf_before.get(obj.linenum, False)
+            if result_correct:
+                test_result = obj.parent.linenum
+                ## Does this object parent's line number match?
+                self.assertEqual(result_correct, test_result)
+
+        # Insert lines here...
+        for intf_obj in cfg.find_objects('^interface\sGigabitEthernet'):
+            # Configured with an access vlan...
+            if ' switchport access vlan 100' in set(map(attrgetter('text'), intf_obj.children)):
+                intf_obj.insert_after(' spanning-tree portfast')
+        cfg.atomic()
+
+        parent_intf_after = {
+            # Line 11 is Serial1/0, child is line 13
+            13: 11,
+            # Line 15 is GigabitEthernet4/1
+            16: 15,
+            17: 15,
+            18: 15,
+            19: 15,
+            # Line 22 is GigabitEthernet4/2
+            23: 22,
+            24: 22,
+            25: 22,
+            26: 22,
+        }
+        # Validate line numbers *after* inserting
+        for obj in cfg.find_objects(''):
+            result_correct = parent_intf_after.get(obj.linenum, False)
+            if result_correct:
+                test_result = obj.parent.linenum
+                ## Does this object parent's line number match?
+                self.assertEqual(result_correct, test_result)
+
     def testValues_find_lines(self):
         for config, args, result_correct in self.find_lines_Values:
             cfg = CiscoConfParse(config)
