@@ -767,7 +767,8 @@ class CiscoConfParse(object):
         for idx, obj in enumerate(objs):
             if (idx==last_idx):
                 local_atomic = True & atomic
-            self.ConfigObjs.insert(obj.linenum, insertstr, atomic=local_atomic)
+            self.ConfigObjs.insert_before(obj, insertstr, 
+                atomic=local_atomic)
 
         ## Return the matching lines
         return list(map(attrgetter('text'), sorted(objs)))
@@ -781,7 +782,7 @@ class CiscoConfParse(object):
         for idx, obj in enumerate(objs):
             if idx==last_idx:
                 local_atomic = True & atomic
-            self.ConfigObjs.insert(obj.linenum+1, insertstr, 
+            self.ConfigObjs.insert(obj, insertstr, 
                 atomic=local_atomic)
 
         ## Return the matching lines
@@ -802,7 +803,7 @@ class CiscoConfParse(object):
                     continue
                 elif re.search(childspec, cobj.text):
                     modified = True
-                    retval.append(self.ConfigObjs.insert(cobj.linenum+1, 
+                    retval.append(self.ConfigObjs.insert(cobj, 
                         insertstr, atomic=False))
                 else:
                     pass
@@ -927,7 +928,7 @@ class CiscoConfParse(object):
             retval.append(obj.re_sub(linespec, replacestr))
 
         if self.factory and atomic:
-            self.ConfigObjs._reassign_linenums()
+            #self.ConfigObjs._reassign_linenums()
             self.ConfigObjs._bootstrap_from_text()
 
         return retval
@@ -1125,7 +1126,7 @@ class CiscoConfParse(object):
         #    elif exactmatch and re.search("^%s$" % linespec, lineobj.text):
         #        retval.append(lineobj)
         #    else:
-        #        # No regexp match case
+                # No regexp match case
         #        pass
         #return retval
 
@@ -1233,10 +1234,14 @@ class IOSConfigList(MutableSequence):
         return """<IOSConfigList, comment='%s', conf=%s>""" % (self.comment_delimiter, self._list)
 
     def _bootstrap_from_text(self):
+        ## Ultimate goal: get rid of all reparsing from text... it's very slow
         ## reparse all objects from their text attributes... this is *very* slow
         self._list = self._bootstrap_obj_init(list(map(attrgetter('text'), self._list)))
 
-    def insert(self, ii, val, atomic=True):
+    def insert_before(self, robj, val, atomic=True):
+        ## Insert something before robj
+        if isinstance(robj, str):
+            raise ValueError
 
         if isinstance(val, str):
             if self.factory:
@@ -1246,24 +1251,11 @@ class IOSConfigList(MutableSequence):
                 obj = IOSCfgLine(text=val, 
                     comment_delimiter=self.comment_delimiter)
 
-        ## Do insertion here
-        self._list.insert(ii, obj)
+        ii = self._list.index(robj)
+        if not (ii is None):
+            ## Do insertion here
+            self._list.insert(ii, obj)
 
-        ### This is an aborted attempt to add children without having
-        ###  to reparse the whole list
-        #
-        ## if it's indented more than the previous obj, add as a parent
-        #if (ii>0) and (obj.indent>self._list[ii-1].indent):
-        #    parent_obj = self._list[ii-1]
-        #    if (parent_obj.indent==0) and (not parent_obj.oldest_ancestor):
-        #        print "   %s is now oldest ancestor" % parent_obj
-        #        parent_obj.oldest_ancestor = True
-        #    print "  ADDING %s as child of %s" % (obj, parent_obj)
-        #    parent_obj.children.insert(0, obj)
-        #    obj.add_parent(parent_obj)
-
-        ## Set atomic True, if this is just a single insert, without
-        ##    a lot of lines coming after it
         if atomic:
             # Reparse the whole config as a text list
             #     this also calls maintain_obj_sanity()
@@ -1271,6 +1263,36 @@ class IOSConfigList(MutableSequence):
         else:
             ## Just renumber lines...
             self._reassign_linenums()
+
+    def insert(self, robj, val, atomic=True):
+        ## Insert something after robj
+        if isinstance(robj, str):
+            raise ValueError
+
+        if isinstance(val, str):
+            if self.factory:
+                obj = ConfigLineFactory(text=val, 
+                    comment_delimiter=self.comment_delimiter)
+            else:
+                obj = IOSCfgLine(text=val, 
+                    comment_delimiter=self.comment_delimiter)
+
+        ## FIXME: This shouldn't be required
+        self._reassign_linenums()
+
+        ii = self._list.index(robj)
+        if not (ii is None):
+            ## Do insertion here
+            self._list.insert(ii+1, obj)
+
+        if atomic:
+            # Reparse the whole config as a text list
+            #     this also calls maintain_obj_sanity()
+            self._bootstrap_from_text()
+        else:
+            ## Just renumber lines...
+            self._reassign_linenums()
+
 
     def append(self, val, atomic=True):
         list_idx = len(self._list)

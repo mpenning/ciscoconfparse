@@ -48,7 +48,11 @@ class BaseCfgLine(object):
         self.set_comment_bool()
 
     def __repr__(self):
-        return "<%s # %s '%s'>" % (self.classname, self.linenum, self.text)
+        if not self.is_child:
+            return "<%s # %s '%s' - id %s>" % (self.classname, self.linenum, self.text, id(self))
+        else:
+            return "<%s # %s '%s' (parent's line # %s)>" % (self.classname, 
+                self.linenum, self.text, self.parent.linenum)
 
 
     def __str__(self):
@@ -123,11 +127,6 @@ class BaseCfgLine(object):
         # Just a unique string or each object instance
         return str(self.linenum)+self.text
 
-    def _list_bootstrap(self):
-        # Call this when I want to reparse everything
-        #     (which is very slow)
-        self.confobj._bootstrap_from_text()
-
     def _list_reassign_linenums(self):
         # Call this when I want to reparse everything
         #     (which is very slow)
@@ -166,16 +165,17 @@ class BaseCfgLine(object):
         del self.confobj._list[self.linenum]
         self._list_reassign_linenums()
 
-    def insert_before(self, insertstr, atomic=True):
+    def insert_before(self, insertstr):
+        """insert_after() *must* be a non-atomic action; manually call atomic() after looping through the config objects"""
         ## BaseCfgLine.insert_before(), insert a single line before this object
-        local_atomic=atomic
-        retval = self.confobj.insert(self.linenum, insertstr, atomic=local_atomic)
+        retval = self.confobj.insert_before(self, insertstr, atomic=False)
         return retval
 
-    def insert_after(self, insertstr, atomic=True):
+    def insert_after(self, insertstr):
+        """insert_after() *must* be a non-atomic action; manually call atomic() after looping through the config objects"""
         ## BaseCfgLine.insert_after(), insert a single line after this object
-        local_atomic=atomic
-        retval = self.confobj.insert(self.linenum+1, insertstr, atomic=local_atomic)
+        local_atomic=False
+        retval = self.confobj.insert(self, insertstr, atomic=False)
         return retval
 
     def replace(self, linespec, replacestr, atomic=True):
@@ -249,6 +249,10 @@ class BaseCfgLine(object):
     @property
     def is_parent(self):
         return bool(self.has_children)
+
+    @property
+    def is_child(self):
+        return not bool(self.parent==self)
 
     @property
     def siblings(self):
