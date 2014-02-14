@@ -15,6 +15,6 @@ hg push https://mpenning@bitbucket.org/mpenning/ciscoconfparse
 ## On my system, with ~/.pypirc
 python setup.py sdist; python setup.py register; python setup.py sdist upload
 ## Clean up repo after build
-rm -rf ciscoconfparse/*pyc; rm -rf dist/ ciscoconfparse.egg-info/
+rm -rf ciscoconfparse/*pyc; rm -rf dist/ ciscoconfparse.egg-info/ setuptools*
 # Push to github
 hg push git+ssh://git@github.com:mpenning/ciscoconfparse.git
