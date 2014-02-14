@@ -63,7 +63,7 @@ modest script...
               ' storm-control multicast level 0.5 0.3')
 
    ## Write the new configuration
-   with open('edge-6509.conf.new') as newconf:
+   with open('edge-6509.conf.new', 'w') as newconf:
        for line in parse.ioscfg:
            newconf.write(line+'\n')
 
