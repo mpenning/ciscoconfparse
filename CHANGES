@@ -1,3 +1,5 @@
+0.9.17  20140215 Updated README.rst, add MANIFEST.in and requirements.txt.
+        Several new object-oriented methods added.
 0.9.16  20140212 Fix bug in ccp_abc.insert_before() and insert_after().  Made
         updates to README.rst.  Ripped out linenum references in various
         insert methods
