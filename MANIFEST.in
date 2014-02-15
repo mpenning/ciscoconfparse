@@ -1,0 +1,16 @@
+include LICENSE
+include CHANGES
+include MANIFEST.in
+include README.rst
+include requirements.txt
+
+recursive-include ciscoconfparse *
+
+recursive-exclude * __pycache__
+recursive-exclude * *.py[co]
+recursive-exclude * *.orig
+recursive-exclude * BUILD.ME
+recursive-exclude * BITBUCKET_HG
+recursive-exclude * .hgrc
+recursive-exclude .hg *
+recursive-exclude sphinx-doc *
