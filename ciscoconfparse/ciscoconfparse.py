@@ -104,11 +104,12 @@ class CiscoConfParse(object):
                 self.ConfigObjs = IOSConfigList(rgx.split(text), comment, debug, 
                     factory)
             except IOError:
-                print("FATAL: CiscoConfParse could not open '%s'" % config)
+                print("[FATAL] CiscoConfParse could not open '%s'" % config)
                 raise RuntimeError
         else:
-            raise RuntimeError("FATAL: CiscoConfParse() received" + \
+            raise RuntimeError("[FATAL] CiscoConfParse() received" + \
                 " an invalid argument\n")
+        self.ConfigObjs.CiscoConfParse = self
 
     def __repr__(self):
         return "<CiscoConfParse: %s lines / comment delimiter: '%s' / factory: %s>" % (len(self.ConfigObjs), self.comment_delimiter, self.factory)
@@ -123,14 +124,21 @@ class CiscoConfParse(object):
     def objs(self):
         return self.ConfigObjs
 
-
     def atomic(self):
         """Call this to manually fix up ConfigObjs relationships after non-atomic insertions / deletions"""
         self.ConfigObjs._bootstrap_from_text()
 
+    def commit(self):
+        """Alias for calling the atomic() method"""
+        self.atomic()
+
     def find_objects(self, linespec, exactmatch=False, ignore_ws=False):
         if ignore_ws:
             linespec = self._build_space_tolerant_regex(linespec)
+        #tmp = IOSConfigList()
+        #tmp.CiscoConfParse = self
+        #for obj in self._find_line_OBJ(linespec, exactmatch):
+        #    tmp._list.append(obj)
         return self._find_line_OBJ(linespec, exactmatch)
 
     def find_lines(self, linespec, exactmatch=False, ignore_ws=False):
@@ -758,6 +766,9 @@ class CiscoConfParse(object):
 
         return list(map(attrgetter('text'), sorted(retval)))
 
+    def has_line_with(self, linespec):
+        return self.ConfigObjs.has_line_with(linespec)
+
     def insert_before(self, linespec, insertstr="", exactmatch=False, 
         ignore_ws=False, atomic=True):
         """Find all objects whose text matches linespec, and insert 'insertstr' before those line objects"""
@@ -782,7 +793,7 @@ class CiscoConfParse(object):
         for idx, obj in enumerate(objs):
             if idx==last_idx:
                 local_atomic = True & atomic
-            self.ConfigObjs.insert(obj, insertstr, 
+            self.ConfigObjs.insert_after(obj, insertstr, 
                 atomic=local_atomic)
 
         ## Return the matching lines
@@ -803,7 +814,7 @@ class CiscoConfParse(object):
                     continue
                 elif re.search(childspec, cobj.text):
                     modified = True
-                    retval.append(self.ConfigObjs.insert(cobj, 
+                    retval.append(self.ConfigObjs.insert_after(cobj, 
                         insertstr, atomic=False))
                 else:
                     pass
@@ -820,6 +831,10 @@ class CiscoConfParse(object):
             #if idx==last_idx:
             #    atomic = True
             del self.ConfigObjs[obj.linenum]
+
+    def prepend_line(self, linespec):
+        self.ConfigObjs.insert(0, linespec)
+        return self.ConfigObjs[0]
 
     def replace_lines(self, linespec, replacestr, excludespec=None, exactmatch=False,
         atomic=True):
@@ -1101,6 +1116,12 @@ class CiscoConfParse(object):
 
         return retval
 
+    def save_as(self, filepath):
+        with open(filepath, 'w') as newconf:
+            for line in self.ioscfg:
+                newconf.write(line+os.linesep)
+
+
     ### The methods below are marked SEMI-PRIVATE because they return an object
     ###  or iterable of objects instead of the configuration text itself.
     def _build_space_tolerant_regex(self, linespec):
@@ -1206,6 +1227,7 @@ class IOSConfigList(MutableSequence):
         super(IOSConfigList, self).__init__()
 
         self._list = list()
+        self.CiscoConfParse = None
         self.DBGFLAG = debug
         self.comment_delimiter = comment_delimiter
         self.factory = factory
@@ -1230,6 +1252,16 @@ class IOSConfigList(MutableSequence):
     def __str__(self):
         return self.__repr__()
 
+    def __enter__(self):
+        # Add support for with statements...
+        # FIXME: *with* statements dont work
+        for obj in self._list:
+            yield obj
+
+    def __exit__(self, *args, **kwargs):
+        # FIXME: *with* statements dont work
+        self._list[0].confobj.CiscoConfParse.atomic()
+
     def __repr__(self):
         return """<IOSConfigList, comment='%s', conf=%s>""" % (self.comment_delimiter, self._list)
 
@@ -1237,6 +1269,9 @@ class IOSConfigList(MutableSequence):
         ## Ultimate goal: get rid of all reparsing from text... it's very slow
         ## reparse all objects from their text attributes... this is *very* slow
         self._list = self._bootstrap_obj_init(list(map(attrgetter('text'), self._list)))
+
+    def has_line_with(self, linespec):
+        return bool(filter(methodcaller('re_search', linespec), self._list))
 
     def insert_before(self, robj, val, atomic=True):
         ## Insert something before robj
@@ -1264,7 +1299,7 @@ class IOSConfigList(MutableSequence):
             ## Just renumber lines...
             self._reassign_linenums()
 
-    def insert(self, robj, val, atomic=True):
+    def insert_after(self, robj, val, atomic=True):
         ## Insert something after robj
         if isinstance(robj, str):
             raise ValueError
@@ -1284,6 +1319,26 @@ class IOSConfigList(MutableSequence):
         if not (ii is None):
             ## Do insertion here
             self._list.insert(ii+1, obj)
+
+        if atomic:
+            # Reparse the whole config as a text list
+            #     this also calls maintain_obj_sanity()
+            self._bootstrap_from_text()
+        else:
+            ## Just renumber lines...
+            self._reassign_linenums()
+
+    def insert(self, ii, val, atomic=True):
+        ## Insert something at index ii
+        if isinstance(val, str):
+            if self.factory:
+                obj = ConfigLineFactory(text=val, 
+                    comment_delimiter=self.comment_delimiter)
+            else:
+                obj = IOSCfgLine(text=val, 
+                    comment_delimiter=self.comment_delimiter)
+
+        self._list.insert(ii, obj)
 
         if atomic:
             # Reparse the whole config as a text list
@@ -1361,7 +1416,7 @@ class IOSConfigList(MutableSequence):
                 parent_indent = obj.indent
 
             if DBGFLAG or self.DBGFLAG:
-                print("_link_firstchildren_to_parent:\n  finding children of PARENT: %s\n" % repr(obj))
+                print("[DEBUG] _link_firstchildren_to_parent():\n  finding children of PARENT: %s\n" % repr(obj))
 
             # Determine if this is the "first" child...
             #   Note: other children will be orphaned until we walk the
@@ -1371,7 +1426,7 @@ class IOSConfigList(MutableSequence):
 
                 if DBGFLAG or self.DBGFLAG:
                     ## Ignore pylint warnings here
-                    print("       Attaching CHILD Line #%s: '%s'\n   to 'PARENT: %s" % (obj.linenum, obj.text, parent_obj.text))
+                    print("[DEBUG]       Attaching CHILD Line #%s: '%s'\n   to 'PARENT: %s" % (obj.linenum, obj.text, parent_obj.text))
 
                 # Add child to the parent's object
                 parent_obj.add_child(obj)
@@ -1391,8 +1446,8 @@ class IOSConfigList(MutableSequence):
 
         for obj in self.all_parents:
             if (DBGFLAG is True):
-                print("_find_orphans: Parent  : %s" % repr(obj))
-                print("_find_orphans: Children:\n      %s" % \
+                print("[DEBUG] _find_orphans: Parent  : %s" % repr(obj))
+                print("[DEBUG] _find_orphans: Children:\n      %s" % \
                     [repr(ii) for ii in obj.children])
 
             if (obj.oldest_ancestor is True):
@@ -1472,13 +1527,13 @@ class IOSConfigList(MutableSequence):
         more_children = True
 
         if DBGFLAG or self.DBGFLAG:
-            print("_id_unknown_children():")
-            print("Parent       : %s" % obj.verbose)
+            print("[DEBUG] _id_unknown_children():")
+            print("[DEBUG] Parent       : %s" % obj.verbose)
 
         ## If I want to catch all child comments, use iter_with_comments()
         for iiobj in self.iter_no_comments(obj.linenum + 1):
             if DBGFLAG or self.DBGFLAG:
-                print("   Line #%s is child? '%s'" % (iiobj.linenum, 
+                print("[DEBUG]   Line #%s is child? '%s'" % (iiobj.linenum, 
                     iiobj.text))
 
             if (iiobj.indent==0):
@@ -1492,7 +1547,7 @@ class IOSConfigList(MutableSequence):
                 found_unknown_child = obj.add_child(iiobj)
                 if DBGFLAG or self.DBGFLAG:
                     if (found_unknown_child is True):
-                        print("    YES, adding unknown child to Line #%s" % obj.linenum) 
+                        print("[DEBUG]   YES, adding unknown child to Line #%s" % obj.linenum) 
 
             elif (iiobj.indent==parent_indent):
                 return found_unknown_child
@@ -1527,11 +1582,11 @@ class IOSConfigList(MutableSequence):
         IOSCfgLine for an example. This method modifies attributes inside 
         IOSCfgLine instances"""
         if self.DBGFLAG:
-            print("_mark_family_endpoints:\n  finding children of PARENTS: %s\n" % parents)
+            print("[DEBUG] _mark_family_endpoints:\n  finding children of PARENTS: %s\n" % parents)
         lastobj = self # so pylint won't complain
         for parent in parents:
             if self.DBGFLAG:
-                print("   Finding family_endpoint for: Line #%s: '%s'" % (parent.linenum, parent.text))
+                print("[DEBUG]   Finding family_endpoint for: Line #%s: '%s'" % (parent.linenum, parent.text))
 
             if (parent.indent==0) and parent.has_children:
                 # we are at the oldest ancestor
@@ -1543,12 +1598,12 @@ class IOSConfigList(MutableSequence):
                     if in_family and (obj.indent==0):
                         if self.DBGFLAG:
                             # Ignore pylint warnings here
-                            print("      ID family_endpoint: Line #%s: '%s'" % (lastobj.linenum, lastobj.text))
+                            print("[DEBUG]      ID family_endpoint: Line #%s: '%s'" % (lastobj.linenum, lastobj.text))
                         in_family = False
                         break
                     elif obj.indent>0:
                         if self.DBGFLAG:
-                            print("      Inside family: Line #%s: '%s'" % (obj.linenum, obj.text))
+                            print("[DEBUG]      Inside family: Line #%s: '%s'" % (obj.linenum, obj.text))
                         in_family = True
                     lastobj = obj
                     # Special case if we cycle through the config and don't
@@ -1557,10 +1612,10 @@ class IOSConfigList(MutableSequence):
                     # config stanza and no "end" statement
                 else:
                     if self.DBGFLAG:
-                        print("      No family_endpoint for: Line #%s: '%s'" % (parent.linenum, parent.text))
+                        print("[DEBUG]      No family_endpoint for: Line #%s: '%s'" % (parent.linenum, parent.text))
                 if in_family:
                     if self.DBGFLAG:
-                        print("      ID family_endpoint: Line #%s: %s" % (obj.linenum, obj.text))
+                        print("[DEBUG]      ID family_endpoint: Line #%s: %s" % (obj.linenum, obj.text))
 
     @property
     def text_lines(self):
@@ -1611,7 +1666,7 @@ class CiscoPassword(object):
                 dp = dp + str(newchar)
                 s = s + 1
         if s > 25:
-            print("WARNING: password decryption failed.")
+            print("[DEBUG] WARNING: password decryption failed.")
         return dp
 
 def ConfigLineFactory(text="", comment_delimiter="!", syntax='ios'):
