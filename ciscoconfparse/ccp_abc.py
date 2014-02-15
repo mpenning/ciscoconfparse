@@ -1,3 +1,4 @@
+from operator import methodcaller, attrgetter
 from abc import ABCMeta
 import re
 import os
@@ -49,9 +50,9 @@ class BaseCfgLine(object):
 
     def __repr__(self):
         if not self.is_child:
-            return "<%s # %s '%s' - id %s>" % (self.classname, self.linenum, self.text, id(self))
+            return "<%s # %s '%s'>" % (self.classname, self.linenum, self.text)
         else:
-            return "<%s # %s '%s' (parent's line # %s)>" % (self.classname, 
+            return "<%s # %s '%s' (parent is # %s)>" % (self.classname, 
                 self.linenum, self.text, self.parent.linenum)
 
 
@@ -60,7 +61,6 @@ class BaseCfgLine(object):
 
     def __eq__(self, val):
         return isinstance(val, BaseCfgLine) and \
-            (self.classname==val.classname) and \
             (self.hash_arg==val.hash_arg)
 
     def __gt__(self, val):
@@ -165,24 +165,44 @@ class BaseCfgLine(object):
         del self.confobj._list[self.linenum]
         self._list_reassign_linenums()
 
+    def delete_children_matching(self, linespec):
+        cobjs = filter(methodcaller('re_search', linespec), self.children)
+        retval = map(attrgetter('text'), cobjs)
+        # Delete the children
+        map(methodcaller('delete'), cobjs)
+        return retval
+
+    def has_child_with(self, linespec):
+        return bool(filter(methodcaller('re_search', linespec), self.children))
+
     def insert_before(self, insertstr):
-        """insert_after() *must* be a non-atomic action; manually call atomic() after looping through the config objects"""
+        """insert_before()"""
         ## BaseCfgLine.insert_before(), insert a single line before this object
-        retval = self.confobj.insert_before(self, insertstr, atomic=False)
+        local_atomic=False
+        retval = self.confobj.insert_before(self, insertstr, atomic=local_atomic)
         return retval
 
     def insert_after(self, insertstr):
-        """insert_after() *must* be a non-atomic action; manually call atomic() after looping through the config objects"""
+        """insert_after()"""
         ## BaseCfgLine.insert_after(), insert a single line after this object
         local_atomic=False
-        retval = self.confobj.insert(self, insertstr, atomic=False)
+        retval = self.confobj.insert_after(self, insertstr, atomic=local_atomic)
+        return retval
+
+    def append_to_family(self, insertstr):
+        """append_to_family()"""
+        ## BaseCfgLine.append_to_family(), insert a single line after this 
+        ##  object's children
+        local_atomic=False
+        last_child = self.children[-1]
+        retval = self.confobj.insert_after(last_child, insertstr, 
+            atomic=local_atomic)
         return retval
 
     def replace(self, linespec, replacestr, atomic=True):
         # This is a little slower than calling BaseCfgLine.re_sub directly...
         return self.re_sub(linespec, replacestr)
 
-    #def re_sub(self, regex, replacergx, atomic=True):
     def re_sub(self, regex, replacergx):
         # When replacing objects, check whether they should be deleted, or whether
         #   they are a comment
@@ -202,6 +222,7 @@ class BaseCfgLine(object):
         return None
 
     def re_search(self, regex):
+        ## TODO: use re.escape(regex) on all regex, instead of bare regex
         mm = re.search(regex, self.text)
         if not (mm is None):
             return self.text
