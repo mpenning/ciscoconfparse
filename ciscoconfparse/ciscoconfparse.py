@@ -37,6 +37,9 @@ except ImportError:
      mike [~at~] pennington [/dot\] net
 """
 
+version_tuple = (0,9,18)
+version = '.'.join(map(str, version_tuple))
+
 class CiscoConfParse(object):
     """Parses Cisco IOS configurations and answers queries about the configs
 
@@ -422,6 +425,9 @@ class CiscoConfParse(object):
         >>> p.find_blocks('bandwidth percent')
         ['policy-map EXTERNAL_CBWFQ', ' class IP_PREC_MEDIUM', '  bandwidth percent 50', '  queue-limit 100', ' class class-default', '  bandwidth percent 40', '  queue-limit 100']
         >>>
+        >>> p.find_blocks(' class class-default')
+        ['policy-map EXTERNAL_CBWFQ', ' class IP_PREC_HIGH', ' class IP_PREC_MEDIUM', ' class class-default']
+        >>>
         """
         tmp = set([])
         retval = list()
@@ -765,6 +771,16 @@ class CiscoConfParse(object):
                     retval.add(child)
 
         return list(map(attrgetter('text'), sorted(retval)))
+
+    def find_lineage(self, linespec, exactmatch=False):
+        """Iterate through to the oldest ancestor of this object, and return
+        a list of all ancestors / children in the direct line.  Cousins or
+        aunts / uncles are *not* returned.  Note, all children
+        of this object are returned."""
+        tmp = self.find_objects(linespec, exactmatch=exactmatch)
+        if len(tmp)>1:
+            raise ValueError, "linespec must be unique"
+        return [obj.text for obj in tmp[0].lineage]
 
     def has_line_with(self, linespec):
         return self.ConfigObjs.has_line_with(linespec)

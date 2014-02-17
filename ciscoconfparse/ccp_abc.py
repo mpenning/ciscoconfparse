@@ -113,6 +113,15 @@ class BaseCfgLine(object):
         return sorted(retval)
 
     @property
+    def all_children(self):
+        retval = set([])
+        if self.has_children:
+            for child in self.children:
+                retval.add(child)
+                retval.update(child.all_children)
+        return sorted(retval)
+
+    @property
     def classname(self):
         return self.__class__.__name__
 
@@ -266,6 +275,18 @@ class BaseCfgLine(object):
     def build_reset_string(self):
         # For subclass APIs
         raise NotImplementedError
+
+    @property
+    def lineage(self):
+        """Iterate through to the oldest ancestor of this object, and return
+        a list of all ancestors / children in the direct line.  Cousins or
+        aunts / uncles are *not* returned.  Note: all children of this 
+        object are returned."""
+        retval = self.all_parents
+        retval.append(self)
+        if self.children:
+            retval.extend(self.all_children)
+        return sorted(retval)
 
     @property
     def is_parent(self):
