@@ -6,8 +6,8 @@ ciscoconfparse
    :target: https://travis-ci.org/mpenning/ciscoconfparse
    :alt: Travis CI Status
 
-.. image:: https://pypip.in/v/ciscoconfparse/badge.png
-   :target: https://pypi.python.org/pypi/ciscoconfparse
+.. image:: https://badge.fury.io/py/ciscoconfparse.png
+   :target: http://badge.fury.io/py/ciscoconfparse
    :alt: Version
 
 .. image:: https://pypip.in/license/ciscoconfparse/badge.png
