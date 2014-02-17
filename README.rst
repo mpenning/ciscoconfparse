@@ -25,7 +25,7 @@ ciscoconfparse
 Introduction: What is ciscoconfparse?
 =====================================
 
-ciscoconfparse_ parses, queries, builds, or modifies Cisco IOS 
+ciscoconfparse_ parses, audits, queries, builds, and modifies Cisco IOS 
 configurations.
 
 Usage: A contrived config audit
