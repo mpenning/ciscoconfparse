@@ -7,14 +7,14 @@ def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 setup(name='ciscoconfparse',
-      version='0.9.17',
-      description='Parse, Query, Build, and Modify Cisco IOS-style configurations',
+      version='0.9.18',
+      description='Parse, Audit, Query, Build, and Modify Cisco IOS-style configurations',
       url='http://www.pennington.net/py/ciscoconfparse/',
       author='David Michael Pennington',
       author_email='mike /|at|\ pennington.net',
       license='GPL',
       platforms='any',
-      keywords='Parse query Cisco IOS configuration',
+      keywords='Parse audit query modify Cisco IOS configuration',
       entry_points = "",
       long_description=read('README.rst'),
       include_package_data=True,

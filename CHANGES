@@ -1,3 +1,6 @@
+0.9.18  20140217 Updated README.rst.  Added new IOSCfgLine.lineage() &
+        CiscoConfParse.lineage() methods (experimental at this point).
+        Added IOSCfgLine.all_children. "President's Day holiday release"
 0.9.17  20140215 Updated README.rst, add MANIFEST.in and requirements.txt.
         Several new object-oriented methods added.
 0.9.16  20140212 Fix bug in ccp_abc.insert_before() and insert_after().  Made
