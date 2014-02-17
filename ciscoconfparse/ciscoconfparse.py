@@ -37,7 +37,7 @@ except ImportError:
      mike [~at~] pennington [/dot\] net
 """
 
-version_tuple = (0,9,18)
+version_tuple = (0,9,19)
 version = '.'.join(map(str, version_tuple))
 
 class CiscoConfParse(object):
@@ -779,7 +779,7 @@ class CiscoConfParse(object):
         of this object are returned."""
         tmp = self.find_objects(linespec, exactmatch=exactmatch)
         if len(tmp)>1:
-            raise ValueError, "linespec must be unique"
+            raise ValueError("linespec must be unique")
         return [obj.text for obj in tmp[0].lineage]
 
     def has_line_with(self, linespec):
