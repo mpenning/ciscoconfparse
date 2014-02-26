@@ -1,3 +1,7 @@
+0.9.20  20140226 Updated README with other Cisco IOS configuration resources.  
+        Fixed problems in models_cisco; improved / added docstrings. Improve
+        build workflow.
+0.9.19  20140217 Fixed Python3 build issue in 0.9.18
 0.9.18  20140217 Updated README.rst.  Added new IOSCfgLine.lineage() &
         CiscoConfParse.lineage() methods (experimental at this point).
         Added IOSCfgLine.all_children. "President's Day holiday release"
