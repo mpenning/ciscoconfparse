@@ -7,7 +7,7 @@ ciscoconfparse
    :alt: Travis CI Status
 
 .. image:: https://badge.fury.io/py/ciscoconfparse.png
-   :target: http://badge.fury.io/py/ciscoconfparse
+   :target: https://pypi.python.org/pypi/ciscoconfparse/
    :alt: Version
 
 .. image:: https://pypip.in/license/ciscoconfparse/badge.png
@@ -246,6 +246,7 @@ Other Resources
 
  * `Dive into Python3`_ is a good way to learn Python
  * `Team CYMRU`_ has a `Secure IOS Template`_, which is especially useful for external-facing routers / switches
+ * `Cisco's Guide to hardening IOS devices`_
 
 
 .. _`Bug-Tracker-and-Support`:
@@ -362,3 +363,5 @@ Special thanks:
 .. _`Team CYMRU`: http://www.team-cymru.org/
 
 .. _`Cisco TAC`: http://cisco.com/go/support
+
+.. _`Cisco's Guide to hardening IOS devices`: http://www.cisco.com/c/en/us/support/docs/ip/access-lists/13608-21.html
