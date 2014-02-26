@@ -298,34 +298,38 @@ class BaseIOSIntfLine(BaseCfgLine):
 
     @property
     def ipv4_addr(self):
-        retval = self.re_match_iter_typed(r'^\s+ip\s+address\s+(\S+)\s+\S+\s*$', 
+        """Return a string with the interface's IPv4 address, or '' if there is none"""
+        retval = self.re_match_iter_typed(r'^\s+ip\s+address\s+(\d+\.\d+\.\d+\.\d+)\s+\d+\.\d+\.\d+\.\d+\s*$', 
             result_type=str, default='')
         return retval
 
     @property
     def ipv4_netmask(self):
-        retval = self.re_match_iter_typed(r'^\s+ip\s+address\s+\S+\s+(\S+)\s*$',
+        """Return a string with the interface's IPv4 netmask, or '' if there is none"""
+        retval = self.re_match_iter_typed(r'^\s+ip\s+address\s+\d+\.\d+\.\d+\.\d+\s+(\d+\.\d+\.\d+\.\d+)\s*$',
             result_type=str, default='')
         return retval
 
     @property
     def ipv4_masklength(self):
+        """Return an integer with the interface's IPv4 mask length, or 0 if there is no IP address on the interace"""
         ipv4_addr_object = self.ipv4_addr_object
         if ipv4_addr_object:
-            return ipv4_addr_object
+            return ipv4_addr_object.prefixlen
         return 0
 
     def in_ipv4_subnet(self, network='', mask=''):
+        """Accept two string arguments for network and netmask, and return a boolean for whether this interface is within the requested subnet.  Return None if there is no address on the interface"""
         if isinstance(network, str) and isinstance(mask, str):
             if self.ipv4_addr:
                 try:
                     # Return a boolean for whether the interface is in that network and mask
                     return self.ipv4_addr_object in IPv4Network('%s/%s' % (network, mask))
                 except:
-                    return None
+                    raise ValueError("FATAL: %s.in_ipv4_subnet() could not convert network='%s', mask='%s' to an address" % (self.__class__.__name__, network, mask))
             else:
                 return None
-        raise ValueError("FATAL: %s.in_ipv4_subnet() requires string arguments")
+        raise ValueError("FATAL: %s.in_ipv4_subnet() requires string arguments" % self.__class__.__name__)
 
     @property
     def has_manual_disable_icmp_unreachables(self):
@@ -373,14 +377,14 @@ class BaseIOSIntfLine(BaseCfgLine):
 
     @property
     def manual_arp_timeout(self):
-        """Return the current ARP timeout, if default return 0"""
+        """Return an integer with the current interface ARP timeout, if there isn't one set, return 0.  If there is no IP address, return -1"""
         ## NOTE: I have no intention of checking self.is_shutdown here
         ##     People should be able to check the sanity of interfaces
         ##     before they put them into production
 
         ## Interface must have an IP addr to respond
         if (self.ipv4_addr==''):
-            return False
+            return -1
 
         ## By default, Cisco IOS defaults to 4 hour arp timers
         ## By default, Nexus defaults to 15 minute arp timers
@@ -452,6 +456,7 @@ class BaseIOSIntfLine(BaseCfgLine):
 
     @property
     def access_vlan(self):
+        """Return an integer with the access vlan number.  Return 0, if the port has no explicit vlan configured."""
         retval = self.re_match_iter_typed(r'^\s*switchport\s+access\s+vlan\s+(\d+)$',
             result_type=int, default=0)
         return retval
@@ -676,9 +681,9 @@ class IOSIntfLine(BaseIOSIntfLine):
 ##-------------  IOS Interface Globals
 ##
 
-class IOSInterfaceGlobal(BaseCfgLine):
+class IOSGlobal(BaseCfgLine):
     def __init__(self, *args, **kwargs):
-        super(IOSInterfaceGlobal, self).__init__(*args, **kwargs)
+        super(IOSGlobal, self).__init__(*args, **kwargs)
     def __repr__(self):
         return "<%s # %s '%s'>" % (self.classname, self.linenum, 
             self.text)
@@ -710,6 +715,12 @@ class IOSInterfaceGlobal(BaseCfgLine):
     @property
     def has_stp_portfast_bpduguard_def(self):
         if self.re_search('^spanning-tree\sportfast\sbpduguard\sdefault'):
+            return True
+        return False
+
+    @property
+    def has_stp_mode_rapidpvst(self):
+        if self.re_search('^spanning-tree\smode\srapid-pvst'):
             return True
         return False
 
