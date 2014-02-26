@@ -2,11 +2,12 @@ from operator import methodcaller, attrgetter
 from collections import MutableSequence
 from copy import deepcopy
 from sys import modules
+import time
 import re
 import os
 
 from models_cisco import IOSHostnameLine, IOSRouteLine, IOSIntfLine
-from models_cisco import IOSAccessLine, IOSInterfaceGlobal
+from models_cisco import IOSAccessLine, IOSGlobal
 from models_cisco import IOSCfgLine
 
 ### ipaddr is optional, and Apache License 2.0 is compatible with GPLv3 per
@@ -37,8 +38,14 @@ except ImportError:
      mike [~at~] pennington [/dot\] net
 """
 
-version_tuple = (0,9,19)
-version = '.'.join(map(str, version_tuple))
+## Docstring props: http://stackoverflow.com/a/1523456/667301
+__version_tuple__ = (0,9,20)
+__version__ = '.'.join(map(str, __version_tuple__))
+__email__ = "mike /at\ pennington [dot] net"
+__author__ = "David Michael Pennington <%s>" % __email__
+__copyright__ = u'2007-%s, %s' % (time.strftime('%Y'), __author__)
+__license__ = "GPL"
+__status__ = "Production"
 
 class CiscoConfParse(object):
     """Parses Cisco IOS configurations and answers queries about the configs
@@ -1691,7 +1698,7 @@ def ConfigLineFactory(text="", comment_delimiter="!", syntax='ios'):
 
     ## Manual and simple
     classes = [IOSIntfLine, IOSRouteLine, IOSAccessLine,
-        IOSHostnameLine, IOSInterfaceGlobal, IOSCfgLine]  # This is simple
+        IOSHostnameLine, IOSGlobal, IOSCfgLine]  # This is simple
     for cls in classes:
         if cls.is_object_for(text):
             inst = cls(text=text, 
