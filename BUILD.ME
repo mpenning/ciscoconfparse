@@ -2,18 +2,17 @@
 # - Update ciscoconfparse.version_tuple
 # - Update .travis.yml
 # - CHANGES
-# - create .hg/.hgrc
-cp .hgrc .hg/
 # Commit all changes
 hg commit ...
-# Make docs
-cd sphinx-doc/; make html; cd ..
-# Push to bitbucket
-hg bookmark -f master
-hg push https://mpenning@bitbucket.org/mpenning/ciscoconfparse
-## On my system, with ~/.pypirc
+# Optional: Make docs
+#cd sphinx-doc/; make html; cd ..
 python setup.py sdist; python setup.py register; python setup.py sdist upload
 ## Clean up repo after build
 rm -rf ciscoconfparse/*pyc; rm -rf dist/ ciscoconfparse.egg-info/ setuptools*
+# Push to bitbucket
+cp .hgrc .hg/
+hg bookmark -f master
+hg push https://mpenning@bitbucket.org/mpenning/ciscoconfparse
+## On my system, with ~/.pypirc
 # Push to github
 hg push git+ssh://git@github.com:mpenning/ciscoconfparse.git
