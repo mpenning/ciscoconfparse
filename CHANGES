@@ -1,3 +1,5 @@
+0.9.21  20140226 Fix Python3.2 build (note to self... u'' isn't supported until
+        Python3.3).
 0.9.20  20140226 Updated README with other Cisco IOS configuration resources.  
         Fixed problems in models_cisco; improved / added docstrings. Improve
         build workflow.
