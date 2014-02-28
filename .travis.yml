@@ -1,6 +1,6 @@
 language: python
 install:
-  - pip install -q ciscoconfparse==0.9.21
+  - pip install -q ciscoconfparse==0.9.22
 python:
   - "2.6"
   - "2.7"
