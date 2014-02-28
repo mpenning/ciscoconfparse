@@ -376,6 +376,48 @@ class BaseIOSIntfLine(BaseCfgLine):
         return retval
 
     @property
+    def has_ip_pim_sparse_mode(self):
+        ## NOTE: I have no intention of checking self.is_shutdown here
+        ##     People should be able to check the sanity of interfaces
+        ##     before they put them into production
+
+        ## Interface must have an IP addr to run PIM
+        if (self.ipv4_addr==''):
+            return False
+
+        retval = self.re_match_iter_typed(r'^\s*ip\spim\sdense-mode\s*$)\s*$',
+            result_type=bool, default=False)
+        return retval
+
+    @property
+    def has_ip_pim_sparse_mode(self):
+        ## NOTE: I have no intention of checking self.is_shutdown here
+        ##     People should be able to check the sanity of interfaces
+        ##     before they put them into production
+
+        ## Interface must have an IP addr to run PIM
+        if (self.ipv4_addr==''):
+            return False
+
+        retval = self.re_match_iter_typed(r'^\s*ip\spim\ssparse-mode\s*$)\s*$',
+            result_type=bool, default=False)
+        return retval
+
+    @property
+    def has_ip_pim_sparsedense_mode(self):
+        ## NOTE: I have no intention of checking self.is_shutdown here
+        ##     People should be able to check the sanity of interfaces
+        ##     before they put them into production
+
+        ## Interface must have an IP addr to run PIM
+        if (self.ipv4_addr==''):
+            return False
+
+        retval = self.re_match_iter_typed(r'^\s*ip\spim\ssparse-dense-mode\s*$)\s*$',
+            result_type=bool, default=False)
+        return retval
+
+    @property
     def manual_arp_timeout(self):
         """Return an integer with the current interface ARP timeout, if there isn't one set, return 0.  If there is no IP address, return -1"""
         ## NOTE: I have no intention of checking self.is_shutdown here
@@ -520,7 +562,7 @@ class BaseIOSIntfLine(BaseCfgLine):
         ## For API simplicity, I always assume there is only one hsrp 
         ##     group on the interface
         retval = self.re_match_iter_typed(r'^\s*standby\s+(\d+)\s+ip\s+\S+',
-            result_type=int, default=0)
+            result_type=int, default=-1)
         return retval
 
     @property
