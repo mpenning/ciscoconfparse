@@ -1,3 +1,5 @@
+0.9.23  20140305 Modify ipv4_addr_object default value in models_cisco; 
+        move ipaddr module to a local folder
 0.9.22  20140228 Add PIM interface support in models_cisco (still alpha at 
         this point)
 0.9.21  20140226 Fix Python3.2 build (note to self... u'' isn't supported until
