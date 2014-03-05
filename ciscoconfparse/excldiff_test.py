@@ -20,10 +20,10 @@ required_lines = [
     ' passive-interface default',
     ' no passive-interface TenGigabitEthernet1/49',
     ' no passive-interface Vlan500',
-    #' auto-cost reference-bandwidth 100000'
+    ' auto-cost reference-bandwidth 1000000'
     ]
 # lines matching linespec are enforced
-linespec = "router ospf 102|ispf|passive-interface.+?|auto-cost.+?"
+linespec = "router ospf 102|ispf|passive-interface.+?|auto-cost\sreference.+?"
 
 unconfspec = linespec
 diffs = p.req_cfgspec_excl_diff(linespec, unconfspec, required_lines)
