@@ -7,7 +7,7 @@ import re
 import os
 
 from models_cisco import IOSHostnameLine, IOSRouteLine, IOSIntfLine
-from models_cisco import IOSAccessLine, IOSGlobal
+from models_cisco import IOSAccessLine, IOSIntfGlobal
 from models_cisco import IOSCfgLine
 
 ### ipaddr is optional, and Apache License 2.0 is compatible with GPLv3 per
@@ -39,7 +39,7 @@ except ImportError:
 """
 
 ## Docstring props: http://stackoverflow.com/a/1523456/667301
-__version_tuple__ = (0,9,22)
+__version_tuple__ = (0,9,23)
 __version__ = '.'.join(map(str, __version_tuple__))
 __email__ = "mike /at\ pennington [dot] net"
 __author__ = "David Michael Pennington <{0}>".format(__email__)
@@ -94,7 +94,8 @@ class CiscoConfParse(object):
         # re: modules usage... thank you Delnan
         # http://stackoverflow.com/a/5027393
         if (factory is True) and (bool(modules.get('ipaddr', False)) is False):
-            raise ImportError("Could not import ipaddr module.  ciscoconfparse.CiscoConfParse only requires the ipaddr module when called with factory=True.")
+            from local.ipaddr import IPv4Network, IPv6Network
+            #raise ImportError("Could not import ipaddr module.  ciscoconfparse.CiscoConfParse only requires the ipaddr module when called with factory=True.")
 
         # all IOSCfgLine object instances...
         self.comment_delimiter = comment
@@ -1698,7 +1699,7 @@ def ConfigLineFactory(text="", comment_delimiter="!", syntax='ios'):
 
     ## Manual and simple
     classes = [IOSIntfLine, IOSRouteLine, IOSAccessLine,
-        IOSHostnameLine, IOSGlobal, IOSCfgLine]  # This is simple
+        IOSHostnameLine, IOSIntfGlobal, IOSCfgLine]  # This is simple
     for cls in classes:
         if cls.is_object_for(text):
             inst = cls(text=text, 
