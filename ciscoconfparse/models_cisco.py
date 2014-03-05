@@ -46,10 +46,16 @@ class BaseIOSIntfLine(BaseCfgLine):
     def __init__(self, *args, **kwargs):
         super(BaseIOSIntfLine, self).__init__(*args, **kwargs)
         self.ifindex = None    # Optional, for user use
+        self.default_ipv4_addr_object = IPv4Network('127.0.0.1/32')
 
     def __repr__(self):
         if not self.is_switchport:
-            return "<%s # %s '%s' info: '%s'>" % (self.classname, self.linenum, self.name, self.ipv4_addr_object or "No IPv4")
+            if self.ipv4_addr_object==self.default_ipv4_addr_object:
+                addr = "No IPv4"
+            else:
+                addr = self.ipv4_addr_object
+            return "<%s # %s '%s' info: '%s'>" % (self.classname, 
+                self.linenum, self.name, addr)
         else:
             return "<%s # %s '%s' info: 'switchport'>" % (self.classname, self.linenum, self.name)
 
@@ -175,10 +181,11 @@ class BaseIOSIntfLine(BaseCfgLine):
 
     @property
     def ipv4_addr_object(self):
+        """Return an object representing the address on this interface; if there is no address, return IPv4Network('127.0.0.1/32')"""
         try:
             return IPv4Network('%s/%s' % (self.ipv4_addr, self.ipv4_netmask))
         except:
-            return None
+            return self.default_ipv4_addr_object
 
     @property
     def ipv4_network_object(self):
@@ -314,7 +321,7 @@ class BaseIOSIntfLine(BaseCfgLine):
     def ipv4_masklength(self):
         """Return an integer with the interface's IPv4 mask length, or 0 if there is no IP address on the interace"""
         ipv4_addr_object = self.ipv4_addr_object
-        if ipv4_addr_object:
+        if ipv4_addr_object!=self.default_ipv4_addr_object:
             return ipv4_addr_object.prefixlen
         return 0
 
@@ -723,9 +730,9 @@ class IOSIntfLine(BaseIOSIntfLine):
 ##-------------  IOS Interface Globals
 ##
 
-class IOSGlobal(BaseCfgLine):
+class IOSIntfGlobal(BaseCfgLine):
     def __init__(self, *args, **kwargs):
-        super(IOSGlobal, self).__init__(*args, **kwargs)
+        super(IOSIntfGlobal, self).__init__(*args, **kwargs)
     def __repr__(self):
         return "<%s # %s '%s'>" % (self.classname, self.linenum, 
             self.text)
