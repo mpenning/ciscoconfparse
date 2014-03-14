@@ -328,7 +328,7 @@ class BaseIOSIntfLine(BaseCfgLine):
     def in_ipv4_subnet(self, network='', mask=''):
         """Accept two string arguments for network and netmask, and return a boolean for whether this interface is within the requested subnet.  Return None if there is no address on the interface"""
         if isinstance(network, str) and isinstance(mask, str):
-            if self.ipv4_addr:
+            if not (str(self.ipv4_addr_object.ip)=="127.0.0.1"):
                 try:
                     # Return a boolean for whether the interface is in that network and mask
                     return self.ipv4_addr_object in IPv4Network('%s/%s' % (network, mask))
@@ -337,6 +337,15 @@ class BaseIOSIntfLine(BaseCfgLine):
             else:
                 return None
         raise ValueError("FATAL: %s.in_ipv4_subnet() requires string arguments" % self.__class__.__name__)
+
+    def in_ipv4_subnets(self, subnets=None):
+        """Accept a set or list of ipaddr.IPv4Network objects, and return a boolean for whether this interface is within the requested subnets."""
+        if (subnets is None):
+            raise ValueError("A python list or set of ipaddr.IPv4Network objects must be supplied")
+        for subnet in subnets:
+            if (self.ipv4_addr_object in subnet):
+                return True
+        return False
 
     @property
     def has_manual_disable_icmp_unreachables(self):
