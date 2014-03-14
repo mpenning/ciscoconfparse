@@ -4,7 +4,11 @@ from itertools import repeat
 from mock import Mock, patch
 from copy import deepcopy
 import unittest
+import sys
 import re
+import os
+os.path.append(os.getcwd())
+
 
 from ciscoconfparse import *
 from local.ipaddr import IPv4Network
