@@ -7,11 +7,9 @@ import unittest
 import sys
 import re
 import os
-sys.path.append(os.getcwd())
 
-
+from ipaddr import IPv4Network
 from ciscoconfparse import *
-from local.ipaddr import IPv4Network
 
 class knownValues(unittest.TestCase):
 
