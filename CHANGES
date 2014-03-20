@@ -1,3 +1,5 @@
+0.9.25  20140319 Improve speed in find_blocks(), as requested by Github 
+        Issue #1.  Minor change to improve Travis CI builds
 0.9.24  20140313 Fix broken Travis CI builds (because of where I moved the ipaddr module).  Added new functionality
         in models_cisco (still alpha code at this point)
 0.9.23  20140305 Modify ipv4_addr_object default value in models_cisco; 
