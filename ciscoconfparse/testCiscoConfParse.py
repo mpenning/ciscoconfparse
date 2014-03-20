@@ -7,7 +7,7 @@ import unittest
 import sys
 import re
 import os
-os.path.append(os.getcwd())
+sys.path.append(os.getcwd())
 
 
 from ciscoconfparse import *
