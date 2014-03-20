@@ -39,7 +39,7 @@ except ImportError:
 """
 
 ## Docstring props: http://stackoverflow.com/a/1523456/667301
-__version_tuple__ = (0,9,24)
+__version_tuple__ = (0,9,25)
 __version__ = '.'.join(map(str, __version_tuple__))
 __email__ = "mike /at\ pennington [dot] net"
 __author__ = "David Michael Pennington <{0}>".format(__email__)
@@ -457,9 +457,11 @@ class CiscoConfParse(object):
                 tmp.add(sib_obj)
 
         # Find the parents for everything
-        for lineobject in deepcopy(tmp):
+        pobjs = set([])
+        for lineobject in tmp:
             for pobj in lineobject.all_parents:
-                tmp.add(pobj)
+                pobjs.add(pobj)
+        tmp.update(pobjs)
 
         return list(map(attrgetter('text'), sorted(tmp)))
 
