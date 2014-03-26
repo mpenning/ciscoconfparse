@@ -40,7 +40,7 @@ except ImportError:
 """
 
 ## Docstring props: http://stackoverflow.com/a/1523456/667301
-__version_tuple__ = (0,9,26)
+__version_tuple__ = (0,9,27)
 __version__ = '.'.join(map(str, __version_tuple__))
 __email__ = "mike /at\ pennington [dot] net"
 __author__ = "David Michael Pennington <{0}>".format(__email__)
@@ -860,8 +860,14 @@ class CiscoConfParse(object):
             del self.ConfigObjs[obj.linenum]
 
     def prepend_line(self, linespec):
+        """Unconditionally insert linespec (a text line) at the top of the configuration"""
         self.ConfigObjs.insert(0, linespec)
         return self.ConfigObjs[0]
+
+    def append_line(self, linespec):
+        """Unconditionally insert linespec (a text line) at the end of the configuration"""
+        retval = self.ConfigObjs.append(linespec)
+        return self.ConfigObjs[-1]
 
     def replace_lines(self, linespec, replacestr, excludespec=None, exactmatch=False,
         atomic=True):
