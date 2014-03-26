@@ -1,3 +1,4 @@
+0.9.27  20140326 Added a new append_line() method to ciscoconfparse.
 0.9.26  20140319  Finally caved and left my copy of ipaddr that's modified to
         work with python3 in ciscoconfparse/ipaddr.py, where Travis can find it
 0.9.25  20140319 Improve speed in find_blocks(), as requested by Github 
