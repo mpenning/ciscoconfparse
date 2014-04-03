@@ -112,7 +112,7 @@ class CiscoConfParse(object):
                 # string - assume a filename... open file, split and parse
                 f = open(config)
                 text = f.read()
-                rgx = re.compile("\r*\n+")
+                rgx = re.compile("[\r\n]+")
                 self.ConfigObjs = IOSConfigList(rgx.split(text), comment, debug, 
                     factory)
             except IOError:
@@ -1391,8 +1391,9 @@ class IOSConfigList(MutableSequence):
         # Append text lines as IOSCfgLine objects...
         tmp = list()
         for idx, line in enumerate(text_list):
-            # Reject empty lines
-            if line.strip()=='':
+            # Reject empty lines but keep lines that are potentially just whitespace
+            # e.g. in banners
+            if line.strip("\r\n")=='':
                 continue
             if not self.factory:
                 obj          = IOSCfgLine(line, self.comment_delimiter)
@@ -1508,6 +1509,10 @@ class IOSConfigList(MutableSequence):
         ##         delimiter
         start_banner = False
         end_banner = False
+        
+        ### not sure if this is a sane default but it matches assumptions below
+        banner_delimiter = self.comment_delimiter
+        
         ii = 0
         if (os=="ios"):
             prefix = ""
@@ -1516,18 +1521,29 @@ class IOSConfigList(MutableSequence):
         else:
             raise RuntimeError("FATAL: _mark_banner(): received " + \
                 "an invalid value for 'os'")
+        
+        matchpattern = prefix + "banner\s+" + banner_str+"\s+(\^*\S)"
+        
         while (start_banner is False) & (ii < len(self._list)):
-            if re.search(prefix+"banner\s+"+banner_str+"\s+\^\S+", \
-                self._list[ii].text):
-                # Found the start banner at ii
-                start_banner = True
-                kk = ii + 1
-            else:
-                ii += 1
+            matchobject = re.match(matchpattern, self._list[ii].text)
+            if matchobject:
+              ### escape any leading ^
+              if matchobject.group(1)[0] == "^":
+                banner_delimiter = "\{0}".format(matchobject.group(1))
+              else:
+                banner_delimiter = matchobject.group(1)
 
+              kk = ii + 1
+              start_banner = True
+
+            else:
+              ii += 1
+
+        
         if (start_banner is True):
             while (end_banner is False) & (kk < len(self._list)):
-                if  self._list[kk].is_comment:
+                ### .match searches from beginning so no need to ^-ify
+                if re.match(banner_delimiter,self._list[kk].text):
                     # Note: We are depending on a "!" after the banner... why
                     #       can't a normal regex work with IOS banners!?
                     #       Therefore the endpoint is at ( kk - 1)
