@@ -112,7 +112,7 @@ class CiscoConfParse(object):
                 # string - assume a filename... open file, split and parse
                 f = open(config)
                 text = f.read()
-                rgx = re.compile("\r*\n+")
+                rgx = re.compile("[\r\n]+")
                 self.ConfigObjs = IOSConfigList(rgx.split(text), comment, debug, 
                     factory)
             except IOError:
