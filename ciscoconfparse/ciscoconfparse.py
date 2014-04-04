@@ -40,7 +40,7 @@ except ImportError:
 """
 
 ## Docstring props: http://stackoverflow.com/a/1523456/667301
-__version_tuple__ = (0,9,29)
+__version_tuple__ = (0,9,30)
 __version__ = '.'.join(map(str, __version_tuple__))
 __email__ = "mike /at\ pennington [dot] net"
 __author__ = "David Michael Pennington <{0}>".format(__email__)
@@ -90,7 +90,7 @@ class CiscoConfParse(object):
     """
 
     def __init__(self, config="", comment="!", debug=False, factory=False, 
-        linesplit_rgx=r"\r*\n+"):
+        linesplit_rgx=r"\r*\n+", ignore_blank_lines=True):
         """Initialize the class, read the config, and spawn the parser"""
 
         # re: modules usage... thank you Delnan
@@ -106,7 +106,11 @@ class CiscoConfParse(object):
 
         if isinstance(config, list):
             # we already have a list object, simply call the parser
-            self.ConfigObjs = IOSConfigList(config, comment, debug, factory)
+            self.ConfigObjs = IOSConfigList(data=config, 
+                comment_delimiter=comment, 
+                debug=debug, 
+                factory=factory, 
+                ignore_blank_lines=ignore_blank_lines)
         elif isinstance(config, str):
             # Try opening as a file
             try:
@@ -114,8 +118,11 @@ class CiscoConfParse(object):
                 f = open(config)
                 text = f.read()
                 rgx = re.compile(linesplit_rgx)
-                self.ConfigObjs = IOSConfigList(rgx.split(text), comment, debug, 
-                    factory)
+                self.ConfigObjs = IOSConfigList(rgx.split(text), 
+                    comment_delimiter=comment, 
+                    debug=debug,
+                    factory=factory,
+                    ignore_blank_lines=ignore_blank_lines)
             except IOError:
                 print("[FATAL] CiscoConfParse could not open '%s'" % config)
                 raise RuntimeError
@@ -1257,7 +1264,7 @@ class CiscoConfParse(object):
 class IOSConfigList(MutableSequence):
     """A custom list to hold IOSCfgLine objects"""
     def __init__(self, data=None, comment_delimiter='!', debug=False, 
-        factory=False):
+        factory=False, ignore_blank_lines=True):
         super(IOSConfigList, self).__init__()
 
         self._list = list()
@@ -1265,6 +1272,8 @@ class IOSConfigList(MutableSequence):
         self.DBGFLAG = debug
         self.comment_delimiter = comment_delimiter
         self.factory = factory
+        self.ignore_blank_lines = ignore_blank_lines
+
         if isinstance(data, list) and (data):
             self._bootstrap_obj_init(data)
         else:
@@ -1393,7 +1402,7 @@ class IOSConfigList(MutableSequence):
         tmp = list()
         for idx, line in enumerate(text_list):
             # Reject empty lines
-            if line.strip()=='':
+            if self.ignore_blank_lines and line.strip()=='':
                 continue
             if not self.factory:
                 obj          = IOSCfgLine(line, self.comment_delimiter)
@@ -1535,8 +1544,8 @@ class IOSConfigList(MutableSequence):
 
 
                     ## Debugging only...
-                    # print "found endpoint: line %s, text %s" % \
-                    #    (kk - 1, self.ioscfg[kk - 1])
+                    if (DBGFLAG is True):
+                        print("[DEBUG] _mark_banner: found endpoint - line %s, text %s" % (kk - 1, self.ioscfg[kk - 1]))
                     #
                     # Set oldest_ancestor on the parent
                     self._list[ii].oldest_ancestor = True
