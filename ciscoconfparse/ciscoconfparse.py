@@ -40,7 +40,7 @@ except ImportError:
 """
 
 ## Docstring props: http://stackoverflow.com/a/1523456/667301
-__version_tuple__ = (0,9,28)
+__version_tuple__ = (0,9,29)
 __version__ = '.'.join(map(str, __version_tuple__))
 __email__ = "mike /at\ pennington [dot] net"
 __author__ = "David Michael Pennington <{0}>".format(__email__)
@@ -113,7 +113,7 @@ class CiscoConfParse(object):
                 # string - assume a filename... open file, split and parse
                 f = open(config)
                 text = f.read()
-                rgx = re.compile(linespit_rgx)
+                rgx = re.compile(linesplit_rgx)
                 self.ConfigObjs = IOSConfigList(rgx.split(text), comment, debug, 
                     factory)
             except IOError:
