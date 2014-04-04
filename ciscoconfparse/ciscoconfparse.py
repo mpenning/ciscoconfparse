@@ -90,7 +90,7 @@ class CiscoConfParse(object):
     """
 
     def __init__(self, config="", comment="!", debug=False, factory=False, 
-        linesplit_rgx=r"\r*\n+"):
+        linesplit_rgx=r"\r*\n+", stripchars=None):
         """Initialize the class, read the config, and spawn the parser"""
 
         # re: modules usage... thank you Delnan
@@ -103,10 +103,11 @@ class CiscoConfParse(object):
         self.comment_delimiter = comment
         self.factory = factory
         self.ConfigObjs = None
+        self.stripchars = stripchars
 
         if isinstance(config, list):
             # we already have a list object, simply call the parser
-            self.ConfigObjs = IOSConfigList(config, comment, debug, factory)
+            self.ConfigObjs = IOSConfigList(config, comment, debug, factory, stripchars)
         elif isinstance(config, str):
             # Try opening as a file
             try:
@@ -115,7 +116,7 @@ class CiscoConfParse(object):
                 text = f.read()
                 rgx = re.compile(linesplit_rgx)
                 self.ConfigObjs = IOSConfigList(rgx.split(text), comment, debug, 
-                    factory)
+                    factory, stripchars)
             except IOError:
                 print("[FATAL] CiscoConfParse could not open '%s'" % config)
                 raise RuntimeError
@@ -1257,7 +1258,7 @@ class CiscoConfParse(object):
 class IOSConfigList(MutableSequence):
     """A custom list to hold IOSCfgLine objects"""
     def __init__(self, data=None, comment_delimiter='!', debug=False, 
-        factory=False):
+        factory=False, stripchars=None):
         super(IOSConfigList, self).__init__()
 
         self._list = list()
@@ -1265,6 +1266,8 @@ class IOSConfigList(MutableSequence):
         self.DBGFLAG = debug
         self.comment_delimiter = comment_delimiter
         self.factory = factory
+        self.stripchars = stripchars
+
         if isinstance(data, list) and (data):
             self._bootstrap_obj_init(data)
         else:
@@ -1392,8 +1395,8 @@ class IOSConfigList(MutableSequence):
         # Append text lines as IOSCfgLine objects...
         tmp = list()
         for idx, line in enumerate(text_list):
-            # Reject empty lines
-            if line.strip()=='':
+            # Reject empty (according to self.stripchars) lines
+            if line.strip(self.stripchars)=='':
                 continue
             if not self.factory:
                 obj          = IOSCfgLine(line, self.comment_delimiter)
@@ -1510,6 +1513,10 @@ class IOSConfigList(MutableSequence):
         start_banner = False
         end_banner = False
         ii = 0
+
+        ### not sure if this is a sane default but it matches assumptions below
+        banner_delimiter = self.comment_delimiter
+
         if (os=="ios"):
             prefix = ""
         elif (os=="catos"):
@@ -1517,18 +1524,29 @@ class IOSConfigList(MutableSequence):
         else:
             raise RuntimeError("FATAL: _mark_banner(): received " + \
                 "an invalid value for 'os'")
+
+        matchpattern = prefix + "banner\s+" + banner_str+"\s+(\^*\S)"
+
         while (start_banner is False) & (ii < len(self._list)):
-            if re.search(prefix+"banner\s+"+banner_str+"\s+\^\S+", \
-                self._list[ii].text):
-                # Found the start banner at ii
-                start_banner = True
-                kk = ii + 1
+
+            matchobject = re.match(matchpattern, self._list[ii].text)
+            if matchobject:
+              ### escape any leading ^
+              if matchobject.group(1)[0] == "^":
+                banner_delimiter = "\{0}".format(matchobject.group(1))
+              else:
+                banner_delimiter = matchobject.group(1)
+
+              kk = ii + 1
+              start_banner = True
+
             else:
-                ii += 1
+              ii += 1
 
         if (start_banner is True):
             while (end_banner is False) & (kk < len(self._list)):
-                if  self._list[kk].is_comment:
+                ### .match searches from beginning so no need to ^-ify
+                if re.match(banner_delimiter,self._list[kk].text):
                     # Note: We are depending on a "!" after the banner... why
                     #       can't a normal regex work with IOS banners!?
                     #       Therefore the endpoint is at ( kk - 1)
