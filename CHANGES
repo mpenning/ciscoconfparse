@@ -1,4 +1,6 @@
-0.9.28  20140404 Fix typo in CiscoConfParse()
+0.9.30  20140404 Add ignore_blank_lines option in CiscoConfParse() for Github 
+        Issue #3
+0.9.29  20140404 Fix typo in CiscoConfParse()
 0.9.28  20140403 Added new linesplit_rgx option in CiscoConfParse() to help
         user who filed Github Issue #2; no defaults were changed.  Added 
         Python 3.4 in .travis.yml in hopes of testing against Python 3.4
