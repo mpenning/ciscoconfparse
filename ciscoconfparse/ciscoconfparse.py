@@ -40,7 +40,7 @@ except ImportError:
 """
 
 ## Docstring props: http://stackoverflow.com/a/1523456/667301
-__version_tuple__ = (0,9,30)
+__version_tuple__ = (0,9,31)
 __version__ = '.'.join(map(str, __version_tuple__))
 __email__ = "mike /at\ pennington [dot] net"
 __author__ = "David Michael Pennington <{0}>".format(__email__)
@@ -1544,7 +1544,7 @@ class IOSConfigList(MutableSequence):
 
 
                     ## Debugging only...
-                    if (DBGFLAG is True):
+                    if (self.DBGFLAG is True):
                         print("[DEBUG] _mark_banner: found endpoint - line %s, text %s" % (kk - 1, self.ioscfg[kk - 1]))
                     #
                     # Set oldest_ancestor on the parent
