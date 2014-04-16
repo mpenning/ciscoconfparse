@@ -1,7 +1,7 @@
 language: python
 install:
   - pip install -r requirements.txt
-  - pip install -q ciscoconfparse==0.9.30
+  - pip install -q ciscoconfparse==0.9.31
 python:
   - "2.6"
   - "2.7"

@@ -1,3 +1,4 @@
+0.9.31  20140415 Fix DBGFLAG issue in CiscoConfParse() for Github Issue #5
 0.9.30  20140404 Add ignore_blank_lines option in CiscoConfParse() for Github 
         Issue #3
 0.9.29  20140404 Fix typo in CiscoConfParse()
