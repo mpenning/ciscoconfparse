@@ -62,11 +62,10 @@ You should follow the following steps.
     !
     end
 
+All the interfaces in the configuration need to be changed.
+
 
 #) Next, we build this script to read and change the config: ::
-
-    # required if running Python 2.6...
-    from __future__ import with_statement
 
     from ciscoconfparse import CiscoConfParse
 
@@ -94,11 +93,10 @@ You should follow the following steps.
     parse = CiscoConfParse('short.conf')
 
     ## Add a new switchport at the bottom of the config...
-    obj = parse.find_objects('^end').pop()  # Find the last object in the config
-    obj.insert_before('interface FastEthernet0/4')
-    obj.insert_before(' switchport')
-    obj.insert_before(' switchport mode access')
-    obj.insert_before('!')
+    parse.append_line('interface FastEthernet0/4')
+    parse.append_line(' switchport')
+    parse.append_line(' switchport mode access')
+    parse.append_line('!')
     parse.commit()     # commit() **must** be called before searching again
 
     ## Search and standardize the interfaces...
@@ -183,7 +181,7 @@ already have setuptools_, you can install as usual:
 ::
 
       # Substitute whatever ciscoconfparse version you like...
-      easy_install -U ciscoconfparse==0.9.17
+      easy_install -U ciscoconfparse==0.9.32
 
 Alternatively you can install with pip_:
 
