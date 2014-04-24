@@ -40,7 +40,7 @@ except ImportError:
 """
 
 ## Docstring props: http://stackoverflow.com/a/1523456/667301
-__version_tuple__ = (0,9,31)
+__version_tuple__ = (0,9,32)
 __version__ = '.'.join(map(str, __version_tuple__))
 __email__ = "mike /at\ pennington [dot] net"
 __author__ = "David Michael Pennington <{0}>".format(__email__)
@@ -1519,6 +1519,7 @@ class IOSConfigList(MutableSequence):
         start_banner = False
         end_banner = False
         ii = 0
+        kk = 0
         if (os=="ios"):
             prefix = ""
         elif (os=="catos"):
@@ -1526,12 +1527,17 @@ class IOSConfigList(MutableSequence):
         else:
             raise RuntimeError("FATAL: _mark_banner(): received " + \
                 "an invalid value for 'os'")
+
+        rr = re.compile(r'{0}banner\s+{1}\s+\S*'.format(prefix, banner_str))
         while (start_banner is False) & (ii < len(self._list)):
-            if re.search(prefix+"banner\s+"+banner_str+"\s+\^\S+", \
-                self._list[ii].text):
+            if rr.search(self._list[ii].text):
                 # Found the start banner at ii
-                start_banner = True
+                ## Debugging only...
                 kk = ii + 1
+                if (self.DBGFLAG is True):
+                    print("[DEBUG] _mark_banner: found start_banner - line %s, text %s" % (ii, self._list[ii].text))
+                start_banner = True
+                break
             else:
                 ii += 1
 
@@ -1545,7 +1551,7 @@ class IOSConfigList(MutableSequence):
 
                     ## Debugging only...
                     if (self.DBGFLAG is True):
-                        print("[DEBUG] _mark_banner: found endpoint - line %s, text %s" % (kk - 1, self.ioscfg[kk - 1]))
+                        print("[DEBUG] _mark_banner: found endpoint - line %s, text %s" % (kk - 1, self._list[kk-1].text))
                     #
                     # Set oldest_ancestor on the parent
                     self._list[ii].oldest_ancestor = True
