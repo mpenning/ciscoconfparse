@@ -208,13 +208,17 @@ class BaseCfgLine(object):
             atomic=local_atomic)
         return retval
 
-    def replace(self, linespec, replacestr, atomic=True):
+    def replace(self, linespec, replacestr, ignore_rgx=None):
         # This is a little slower than calling BaseCfgLine.re_sub directly...
-        return self.re_sub(linespec, replacestr)
+        return self.re_sub(linespec, replacestr, ignore_rgx)
 
-    def re_sub(self, regex, replacergx):
-        # When replacing objects, check whether they should be deleted, or whether
-        #   they are a comment
+    def re_sub(self, regex, replacergx, ignore_rgx=None):
+        # When replacing objects, check whether they should be deleted, or 
+        #   whether they are a comment
+
+        if ignore_rgx and re.search(ignore_rgx, self.text):
+            return self.text
+
         retval = re.sub(regex, replacergx, self.text)
         # Delete empty lines
         if retval.strip()=='':
