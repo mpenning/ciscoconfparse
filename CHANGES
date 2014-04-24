@@ -1,3 +1,7 @@
+0.9.32  20140422 Fix banner parent-child relationships for Github Issue #4.  
+        Improve parsing speed with pre-compiled regex in _mark_banner().  
+        Update example in README.rst.  Add new ignore_rgx option to the 
+        re_sub() line-object method.
 0.9.31  20140415 Fix DBGFLAG issue in CiscoConfParse() for Github Issue #5
 0.9.30  20140404 Add ignore_blank_lines option in CiscoConfParse() for Github 
         Issue #3
