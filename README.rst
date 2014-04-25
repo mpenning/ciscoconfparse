@@ -41,7 +41,7 @@ configurations which conform to the following criteria:
 
 You should follow the following steps.
 
-#) Assume that you start with the following Cisco IOS configuration saved as ``short.conf``: ::
+#) Assume that you start with the following Cisco IOS configuration saved as ``short.conf`` (All the interfaces need to be changed, to correctly conform): ::
 
     !
     interface FastEthernet0/1
@@ -62,7 +62,7 @@ You should follow the following steps.
     !
     end
 
-All the interfaces in the configuration need to be changed.
+
 
 
 #) Next, we build this script to read and change the config: ::
@@ -181,7 +181,7 @@ already have setuptools_, you can install as usual:
 ::
 
       # Substitute whatever ciscoconfparse version you like...
-      easy_install -U ciscoconfparse==0.9.32
+      easy_install -U ciscoconfparse==0.9.33
 
 Alternatively you can install with pip_:
 
