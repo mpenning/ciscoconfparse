@@ -226,6 +226,21 @@ class knownValues(unittest.TestCase):
             'alias exec showthang show ip route vrf THANG',
             ]
 
+        self.c01_banner = [
+            '!',
+            'interface GigabitEthernet4/8',
+            ' switchport',
+            ' switchport access vlan 110',
+            '!',
+            'banner login ^C'
+            'This is a router, and you cannot have it.',
+            'Log off now while you still can type. I break the fingers',
+            'of all tresspassers.',
+            '^C',
+            '!',
+            'alias exec showthang show ip route vrf THANG',
+            ]
+
         self.c01_intf = [
             'interface Serial 1/0',
             ]
@@ -469,6 +484,22 @@ class knownValues(unittest.TestCase):
         )
 
     #--------------------------------
+
+    def testValues_banner_child_parsing_01(self):
+        """Associate banner lines as parent / child"""
+        cfg = CiscoConfParse(self.c01_banner)
+        parent_intf = {
+            # Line 6's parent should be 5, etc...
+            6: 5,
+            7: 5,
+            8: 5,
+        }
+        for obj in cfg.find_objects(''):
+            result_correct = parent_intf.get(obj.linenum, False)
+            if result_correct:
+                test_result = obj.parent.linenum
+                ## Does this object parent's line number match?
+                self.assertEqual(result_correct, test_result)
 
     def testValues_parent_child_parsing_01(self):
         cfg = CiscoConfParse(self.c01)
