@@ -1,3 +1,4 @@
+0.9.33  20140425 Add unit test for banner parsing coverage
 0.9.32  20140422 Fix banner parent-child relationships for Github Issue #4.  
         Improve parsing speed with pre-compiled regex in _mark_banner().  
         Update example in README.rst.  Add new ignore_rgx option to the 
