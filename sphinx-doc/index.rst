@@ -8,7 +8,7 @@ Contents:
 
    intro.rst
    tutorial.rst
-   ciscoconfparse.rst
+   api.rst
 
 Indices and tables
 ==================
