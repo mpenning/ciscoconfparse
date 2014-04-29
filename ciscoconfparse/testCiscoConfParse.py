@@ -374,6 +374,19 @@ class knownValues(unittest.TestCase):
             'set snmp community read-only     myreadonlystring'
             ]
 
+        self.c04 = [
+            '!',
+            'interface Serial1/0',
+            ' encapsulation ppp',
+            ' ip address 1.1.1.1 255.255.255.252',
+            ' no ip proxy-arp',
+            '!',
+            'interface Serial1/1',
+            ' encapsulation ppp',
+            ' ip address 1.1.1.5 255.255.255.252',
+            '!',
+            ]
+
         ##--------------------------------
         # Keep tuples of test parameters below the line
         #
@@ -729,8 +742,7 @@ class knownValues(unittest.TestCase):
         self.assertEqual(result_correct, test_result)
 
     def testValues_find_objects_replace_01(self):
-        ## test whether find_objects we can correctly replace object values
-        ##    using native IOSCfgLine object methods
+        """test whether find_objects we can correctly replace object values using native IOSCfgLine object methods"""
         config01 = ['!',
             'boot system flash slot0:c2600-adventerprisek9-mz.124-21a.bin',
             'boot system flash bootflash:c2600-adventerprisek9-mz.124-21a.bin',
@@ -756,6 +768,15 @@ class knownValues(unittest.TestCase):
         cfg = CiscoConfParse(config01)
         for obj in cfg.find_objects('boot system'):
             obj.replace('boot system', '! old boot image')
+        test_result = cfg.ioscfg
+        self.assertEqual(result_correct, test_result)
+
+    def testValues_find_objects_delete_01(self):
+        """Test whether IOSCfgLine.delete() recurses through children correctly"""
+        result_correct = ['!', '!', '!']
+        cfg = CiscoConfParse(self.c04)
+        for intf in cfg.find_objects(r'^interface'):
+            intf.delete(recurse=True)  # recurse=True is the default
         test_result = cfg.ioscfg
         self.assertEqual(result_correct, test_result)
 
