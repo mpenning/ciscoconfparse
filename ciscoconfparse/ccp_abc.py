@@ -169,8 +169,11 @@ class BaseCfgLine(object):
         myindent = self.parent.child_indent
         self.uncfgtext = myindent * " " + "no " + conftext
 
-    def delete(self):
+    def delete(self, recurse=True):
         """Delete this object"""
+        if recurse:
+            for child in self.children:
+                child.delete()
         del self.confobj._list[self.linenum]
         self._list_reassign_linenums()
 
