@@ -40,7 +40,7 @@ except ImportError:
 """
 
 ## Docstring props: http://stackoverflow.com/a/1523456/667301
-__version_tuple__ = (0,9,33)
+__version_tuple__ = (0,9,34)
 __version__ = '.'.join(map(str, __version_tuple__))
 __email__ = "mike /at\ pennington [dot] net"
 __author__ = "David Michael Pennington <{0}>".format(__email__)
@@ -54,38 +54,58 @@ class CiscoConfParse(object):
         Parameters
         ----------
 
-        config : :py:func:`list` or :py:func:`str`
+        config : list or str
              A list of configuration statements, or a configuration file 
              path to be parsed
-        comment : :py:func:`str`, optional
+        comment : str, optional
              A comment delimiter.  This should only be changed when 
              parsing non-Cisco IOS configurations, which do not use a ! 
-             as the comment delimiter.  `comment` defaults to '!'
+             as the comment delimiter.  ``comment`` defaults to '!'
+        debug : boolean
+             ``debug`` defaults to False, and should be kept that way unless
+             you're working on a very tricky config parsing problem.  Debug 
+             output is not particularly friendly
+        linesplit_rgx : str
+             ``linesplit_rgx`` is used when parsing configuration files to find
+             where new configuration lines are.  It is best to leave this as the
+             default, unless you're working on a system that uses unusual line 
+             terminations (for instance something besides Unix, OSX, or Windows)
+        ignore_blank_lines : boolean
+             ``ignore_blank_lines`` defaults to True; when this is set True,
+             ciscoconfparse ignores blank configuration lines.  You might want
+             to set ``ignore_blank_lines`` to False if you intentionally use
+             blank lines in your configuration (ref: Github Issue #2).
 
         Returns
         -------
 
-        CiscoConfParse : :py:func:`object`
+        CiscoConfParse : object instance
              An instance of a CiscoConfParse object.
 
         Attributes
         ----------
 
-        ConfigObjs : :py:func:`dict`
-             This contains all :class:`IOSCfgLine` object instances, which are generated from the configuration that is parsed.  The :py:func:`dict` is keyed by an :py:func:`int`, which is the line number of the configuration line.  The value of the :py:func:`dict` is the :class:`IOSCfgLine` instance for that line number.
+        ConfigObjs : :class:`IOSConfigList`
+             ``ConfigObjs`` is a customized python list, which contains all parsed :class:`models_cisco.IOSCfgLine` instances.
 
         Examples
         --------
+
+        This example illustrates how to parse a simple Cisco IOS configuration
+        into a variable called ``parse``.  This example also illustrates what
+        the ``ConfigObjs`` attribute contains.
 
         >>> config = [
         ...     'logging trap debugging',
         ...     'logging 172.28.26.15',
         ...     ] 
-        >>> p = CiscoConfParse(config)
-        >>> p
+        >>> parse = CiscoConfParse(config)
+        >>> parse
         <CiscoConfParse: 2 lines / comment delimiter: '!' / factory: False>
-        >>> p.ConfigObjs
+        >>> parse.ConfigObjs
         <IOSConfigList, comment='!', conf=[<IOSCfgLine # 0 'logging trap debugging'>, <IOSCfgLine # 1 'logging 172.28.26.15'>]>
+        >>> parse.ioscfg
+        ['logging trap debugging', 'logging 172.28.26.15']
         >>>
     """
 
@@ -145,14 +165,59 @@ class CiscoConfParse(object):
         return self.ConfigObjs
 
     def atomic(self):
-        """Call this to manually fix up ConfigObjs relationships after non-atomic insertions / deletions"""
+        """Call :func:`atomic` to manually fix up ConfigObjs relationships after modifying a parsed configuration.  This is slow; try to batch calls to ``atomic()``."""
         self.ConfigObjs._bootstrap_from_text()
 
     def commit(self):
-        """Alias for calling the atomic() method"""
+        """Alias for calling the :func:`atomic` method"""
         self.atomic()
 
     def find_objects(self, linespec, exactmatch=False, ignore_ws=False):
+        """Find all ``IOSCfgLine`` objects whose text matches ``linespec`` and return the ``IOSCfgLine`` objects in a python list.  :func:`find_objects` is similar to :func:`find_lines`; however, the former returns a list of ``IOSCfgLine`` objects, while the latter returns a list of text configuration statements.  Going forward, I strongly encourage people to start using :func:`find_objects` instead of :func:`find_lines`.
+
+        Parameters
+        ----------
+
+        linespec : str
+             A string or python regular expression, which should be matched
+        exactmatch : boolean
+             Defaults to False.  When set True, this option requires 
+             ``linespec`` match the whole configuration line, instead of a 
+             portion of the configuration line.
+        ignore_ws : boolean
+             boolean that controls whether whitespace is ignored.  Default is
+             False.
+
+        Returns
+        -------
+
+        retval : list
+            A list of matching :class:`IOSCfgLine` objects
+
+        Examples
+        --------
+
+        This example illustrates the difference between :func:`find_objects` and
+        :func:`find_lines`.
+
+        >>> config = [
+        ...     '!',
+        ...     'interface Serial1/0',
+        ...     ' ip address 1.1.1.1 255.255.255.252',
+        ...     '!',
+        ...     'interface Serial1/1',
+        ...     ' ip address 1.1.1.5 255.255.255.252',
+        ...     '!',
+        ...     ]
+        >>> parse = CiscoConfParse(config)
+        >>>
+        >>> parse.find_objects(r'^interface')
+        [<IOSCfgLine # 1 'interface Serial1/0'>, <IOSCfgLine # 4 'interface Serial1/1'>]
+        >>>
+        >>> parse.find_lines(r'^interface')
+        ['interface Serial1/0', 'interface Serial1/1']
+        >>>
+        """
         if ignore_ws:
             linespec = self._build_space_tolerant_regex(linespec)
         #tmp = IOSConfigList()
@@ -168,17 +233,20 @@ class CiscoConfParse(object):
         Parameters
         ----------
 
-        linespec : :py:func:`str`
+        linespec : str
              Text regular expression for the line to be matched
-        exactmatch : :py:func:`bool`
-             boolean that controls whether partial matches are valid
-        ignore_ws : :py:func:`bool`
-             boolean that controls whether whitespace is ignored
+        exactmatch : boolean
+             Defaults to False.  When set True, this option requires 
+             ``linespec`` match the whole configuration line, instead of a 
+             portion of the configuration line.
+        ignore_ws : boolean
+             boolean that controls whether whitespace is ignored.  Default is
+             False.
 
         Returns
         -------
 
-        retval : :py:func:`list`
+        retval : list
             A list of matching configuration lines
         """
         retval = list()
@@ -192,7 +260,6 @@ class CiscoConfParse(object):
         else:
             # Return the lines in self.ioscfg, which match (exactly) linespec
             return list(filter(re.compile("^%s$" % linespec).search, self.ioscfg))
-
 
     def find_children(self, linespec, exactmatch=False, ignore_ws=False):
         """Returns the parents matching the linespec, and their immediate
@@ -1262,7 +1329,34 @@ class CiscoConfParse(object):
 
 
 class IOSConfigList(MutableSequence):
-    """A custom list to hold IOSCfgLine objects"""
+    """A custom list to hold :class:`models_cisco.IOSCfgLine` objects.  Most 
+       people will never need to use this class directly.
+
+       Parameters
+       ----------
+
+       data : list
+            A list of parsed :class:`models_cisco.IOSCfgLine` objects
+       comment : str, optional
+            A comment delimiter.  This should only be changed when 
+            parsing non-Cisco IOS configurations, which do not use a ! 
+            as the comment delimiter.  ``comment`` defaults to '!'
+       debug : boolean
+            ``debug`` defaults to False, and should be kept that way unless
+            you're working on a very tricky config parsing problem.  Debug 
+            output is not particularly friendly
+       ignore_blank_lines : boolean
+            ``ignore_blank_lines`` defaults to True; when this is set True,
+            ciscoconfparse ignores blank configuration lines.  You might want
+            to set ``ignore_blank_lines`` to False if you intentionally use
+            blank lines in your configuration (ref: Github Issue #2).
+
+       Returns
+       -------
+
+       IOSConfigList : object instance
+            An instance of a IOSConfigList object.
+    """
     def __init__(self, data=None, comment_delimiter='!', debug=False, 
         factory=False, ignore_blank_lines=True):
         super(IOSConfigList, self).__init__()
