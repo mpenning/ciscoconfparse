@@ -13,7 +13,11 @@
 
 import sys, os
 import time
-sys.path.insert(0,"../ciscoconfparse")
+# Relative import path referenced to this sphinx-doc directory
+sys.path.insert(0, os.path.join(os.path.abspath(os.path.dirname(__file__)), 
+    "..", "ciscoconfparse"))
+
+import ciscoconfparse
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -87,7 +91,7 @@ exclude_trees = ['_build']
 #show_authors = False
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
+pygments_style = 'tango'
 
 # A list of ignored prefixes for module index sorting.
 #modindex_common_prefix = []
@@ -98,7 +102,7 @@ pygments_style = 'sphinx'
 # The theme to use for HTML and HTML Help pages.  Major themes that come with
 # Sphinx are currently 'default' and 'sphinxdoc'.
 # Consider using https://github.com/kellycreativetech/proBlue in the future
-html_theme = 'agogo'
+html_theme = 'sphinxdoc'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
