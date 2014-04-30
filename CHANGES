@@ -1,3 +1,4 @@
+0.9.35  20140430 Update docstrings with more examples.  Improve doc Makefile
 0.9.34  20140429 Update IOSCfgLine objects with a recursive delete, which
         will automatically delete children if the parent is deleted.  First 
         steps toward a long-overdue documentation update.  A lot more is left to
