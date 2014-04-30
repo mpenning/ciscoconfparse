@@ -170,7 +170,8 @@ class BaseCfgLine(object):
         self.uncfgtext = myindent * " " + "no " + conftext
 
     def delete(self, recurse=True):
-        """Delete this object"""
+        """Delete this object.  By default, if a parent object is deleted, the child objects are also deleted; this happens because ``recurse`` defaults True.
+        """
         if recurse:
             for child in self.children:
                 child.delete()
@@ -212,10 +213,109 @@ class BaseCfgLine(object):
         return retval
 
     def replace(self, linespec, replacestr, ignore_rgx=None):
+        """Replace all strings matching ``linespec`` with ``replacestr`` in the :class:`models_cisco.IOSCfgLine` object; however, if the :class:`models_cisco.IOSCfgLine` text matches ``ignore_rgx``, then the text is *not* replaced.  The ``replace()`` method is simply an alias to the ``re_sub()`` method.
+
+        Parameters
+        ----------
+
+        linespec : str
+             A string or python regular expression, which should be matched
+        replacestr : str
+             A string or python regular expression, which should replace the
+             text matched by ``linespec``.
+        ignore_rgx : str
+             A string or python regular expression; the replacement is skipped
+             if :class:`models_cisco.IOSCfgLine` text matches ``ignore_rgx``.
+             ``ignore_rgx`` defaults to None, which means no lines matching
+             ``linespec`` are skipped.
+             
+
+        Returns
+        -------
+
+        retval : str
+            The new text after replacement
+
+        Examples
+        --------
+
+        This example illustrates how you can replace ``Serial1`` with ``Serial0``...
+
+        >>> config = [
+        ...     '!',
+        ...     'interface Serial1/0',
+        ...     ' ip address 1.1.1.1 255.255.255.252',
+        ...     '!',
+        ...     'interface Serial1/1',
+        ...     ' ip address 1.1.1.5 255.255.255.252',
+        ...     '!',
+        ...     ]
+        >>> parse = CiscoConfParse(config)
+        >>>
+        >>> for obj in parse.find_objects('Serial'):
+        ...     print "OLD", obj.text
+        ...     obj.replace(r'Serial1', r'Serial0')
+        ...     print "  NEW", obj.text
+        OLD interface Serial1/0
+          NEW interface Serial0/0
+        OLD interface Serial1/1
+          NEW interface Serial0/1
+        >>>
+        """
+
         # This is a little slower than calling BaseCfgLine.re_sub directly...
         return self.re_sub(linespec, replacestr, ignore_rgx)
 
     def re_sub(self, regex, replacergx, ignore_rgx=None):
+        """Replace all strings matching ``linespec`` with ``replacestr`` in the :class:`models_cisco.IOSCfgLine` object; however, if the :class:`models_cisco.IOSCfgLine` text matches ``ignore_rgx``, then the text is *not* replaced.
+
+        Parameters
+        ----------
+
+        linespec : str, required
+             A string or python regular expression, which should be matched
+        replacestr : str, required
+             A string or python regular expression, which should replace the
+             text matched by ``linespec``.
+        ignore_rgx : str, optional
+             A string or python regular expression; the replacement is skipped
+             if :class:`models_cisco.IOSCfgLine` text matches ``ignore_rgx``.
+             ``ignore_rgx`` defaults to None, which means no lines matching
+             ``linespec`` are skipped.
+             
+
+        Returns
+        -------
+
+        retval : str
+            The new text after replacement
+
+        Examples
+        --------
+
+        This example illustrates how you can replace ``Serial1`` with ``Serial0``...
+
+        >>> config = [
+        ...     '!',
+        ...     'interface Serial1/0',
+        ...     ' ip address 1.1.1.1 255.255.255.252',
+        ...     '!',
+        ...     'interface Serial1/1',
+        ...     ' ip address 1.1.1.5 255.255.255.252',
+        ...     '!',
+        ...     ]
+        >>> parse = CiscoConfParse(config)
+        >>>
+        >>> for obj in parse.find_objects('Serial'):
+        ...     print "OLD", obj.text
+        ...     obj.re_sub(r'Serial1', r'Serial0')
+        ...     print "  NEW", obj.text
+        OLD interface Serial1/0
+          NEW interface Serial0/0
+        OLD interface Serial1/1
+          NEW interface Serial0/1
+        >>>
+        """
         # When replacing objects, check whether they should be deleted, or 
         #   whether they are a comment
 
@@ -232,6 +332,50 @@ class BaseCfgLine(object):
         return retval
 
     def re_match(self, regex, group=1):
+        """Use ``regex`` to search the :class:`models_cisco.IOSCfgLine` text and return the regular expression group, at the integer index.
+
+        Parameters
+        ----------
+
+        regex : str, required
+             A string or python regular expression, which should be matched.  
+             This regular expression should contain parenthesis, which bound a 
+             match group.
+        group : int, optional
+             An integer which specifies the desired group to be returned.
+             ``group`` defaults to 1.
+
+        Returns
+        -------
+
+        retval : str
+            The text matched by the regular expression group; if there is no
+            match, None is returned.
+
+        Examples
+        --------
+
+        This example illustrates how you can store the mask of the interface
+        with the address "1.1.1.5" in a variable called ``netmask``.
+
+        >>> config = [
+        ...     '!',
+        ...     'interface Serial1/0',
+        ...     ' ip address 1.1.1.1 255.255.255.252',
+        ...     '!',
+        ...     'interface Serial1/1',
+        ...     ' ip address 1.1.1.5 255.255.255.252',
+        ...     '!',
+        ...     ]
+        >>> parse = CiscoConfParse(config)
+        >>>
+        >>> for obj in parse.find_objects(r'ip\saddress'):
+        ...     netmask = obj.re_match(r'1\.1\.1\.5\s(\S+)')
+        >>>
+        >>> print "The netmask is", netmask
+        The netmask is 255.255.255.252
+        >>>
+        """
         mm = re.search(regex, self.text)
         if not (mm is None):
             return mm.group(group)
