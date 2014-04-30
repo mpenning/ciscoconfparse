@@ -35,6 +35,18 @@ html:
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
 
+wwwhtml:
+	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
+	cd $(BUILDDIR)/html; sudo cp -a * /var/www/; cd ../..
+	@echo
+	@echo "Build finished. The HTML pages are in /var/www/."
+
+wwwclean:
+	sudo rm -rf /var/www/*
+	-rm -rf $(BUILDDIR)/*
+	@echo
+	@echo "The HTML pages in /var/www/ have been cleaned."
+
 dirhtml:
 	$(SPHINXBUILD) -b dirhtml $(ALLSPHINXOPTS) $(BUILDDIR)/dirhtml
 	@echo
