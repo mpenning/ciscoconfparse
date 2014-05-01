@@ -1,3 +1,9 @@
+1.0.0   20140430 Significant documentation overhaul.  Add documentation of
+        new IOSCfgLine methods introduced in 0.9.10, as well as making the 
+        documentation more friendly to mobile devices; substitute the 
+        sphinx_bootstrap_theme instead of the sphinxdoc theme.  Add line 
+        highlights in code examples which hopefully make complex examples more 
+        clear.
 0.9.35  20140430 Update docstrings with more examples.  Improve doc Makefile
 0.9.34  20140429 Update IOSCfgLine objects with a recursive delete, which
         will automatically delete children if the parent is deleted.  First 
@@ -47,7 +53,8 @@
         Including ipaddr-py (patched for Python3) until versions of Python3 
         typically include it (right now, Debian 7.3 has Python3.2 without
         ipaddr-py)
-0.9.12  20140208 Fixed bug in ccp_abc.py; reworked comment detection; performance improvements
+0.9.12  20140208 Fixed bug in ccp_abc.py; reworked comment detection; 
+        performance improvements
 0.9.11  20140204 Bugfixes
 0.9.10  20140203 Bugfixes and more performance improvements.  Doubled
         number of unit tests. Added alpha-quality code in another module.
