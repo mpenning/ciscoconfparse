@@ -7,6 +7,7 @@ Contents:
    :maxdepth: 4
 
    intro.rst
+   history.rst
    tutorial.rst
    api.rst
 

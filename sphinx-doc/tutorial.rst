@@ -241,11 +241,11 @@ Checking Passwords
 
 Sometimes you find yourself wishing you could decrypt vty or console passwords to ensure that they conform to the corporate standard.  :class:`CiscoConfParse` comes with a :class:`CiscoPassword` class that can decrypt some Cisco IOS type 7 passwords.
 
-.. NOTE::
+.. note::
 
    Cisco IOS Type 7 passwords were never meant to be secure; these passwords only protect against shoulder-surfing.  When you add users and enable passwords to your router, be sure to use Cisco IOS Type 5 passwords; these are much more secure and cannot be decrypted.
 
-.. NOTE::
+.. warning::
 
    :class:`CiscoPassword` also cannot decrypt all Type 7 passwords.  If the passwords exceed a certain length, the algorithm I have ceases to work.  An error is printed to the console when this happens.  In a future version of the script I will raise a python error when this happens.
 
