@@ -40,7 +40,7 @@ except ImportError:
 """
 
 ## Docstring props: http://stackoverflow.com/a/1523456/667301
-__version_tuple__ = (0,9,35)
+__version_tuple__ = (1,0,0)
 __version__ = '.'.join(map(str, __version_tuple__))
 __email__ = "mike /at\ pennington [dot] net"
 __author__ = "David Michael Pennington <{0}>".format(__email__)
@@ -86,27 +86,32 @@ class CiscoConfParse(object):
         ----------
 
         ConfigObjs : :class:`IOSConfigList`
-             ``ConfigObjs`` is a customized python list, which contains all parsed :class:`models_cisco.IOSCfgLine` instances.
+             ``ConfigObjs`` is a customized python list, which contains all 
+             parsed :class:`models_cisco.IOSCfgLine` instances.
 
         Examples
         --------
 
         This example illustrates how to parse a simple Cisco IOS configuration
-        into a variable called ``parse``.  This example also illustrates what
-        the ``ConfigObjs`` attribute contains.
+        with :class:`ciscoconfparse.CiscoConfParse` into a variable called 
+        ``parse``.  This example also illustrates what the ``ConfigObjs`` 
+        and ``ioscfg`` attributes contain.
 
-        >>> config = [
-        ...     'logging trap debugging',
-        ...     'logging 172.28.26.15',
-        ...     ] 
-        >>> parse = CiscoConfParse(config)
-        >>> parse
-        <CiscoConfParse: 2 lines / comment delimiter: '!' / factory: False>
-        >>> parse.ConfigObjs
-        <IOSConfigList, comment='!', conf=[<IOSCfgLine # 0 'logging trap debugging'>, <IOSCfgLine # 1 'logging 172.28.26.15'>]>
-        >>> parse.ioscfg
-        ['logging trap debugging', 'logging 172.28.26.15']
-        >>>
+        .. code-block:: python
+           :emphasize-lines: 5
+
+           >>> config = [
+           ...     'logging trap debugging',
+           ...     'logging 172.28.26.15',
+           ...     ] 
+           >>> parse = CiscoConfParse(config)
+           >>> parse
+           <CiscoConfParse: 2 lines / comment delimiter: '!' / factory: False>
+           >>> parse.ConfigObjs
+           <IOSConfigList, comment='!', conf=[<IOSCfgLine # 0 'logging trap debugging'>, <IOSCfgLine # 1 'logging 172.28.26.15'>]>
+           >>> parse.ioscfg
+           ['logging trap debugging', 'logging 172.28.26.15']
+           >>>
     """
 
     def __init__(self, config="", comment="!", debug=False, factory=False, 
@@ -165,11 +170,36 @@ class CiscoConfParse(object):
         return self.ConfigObjs
 
     def atomic(self):
-        """Call :func:`atomic` to manually fix up ConfigObjs relationships after modifying a parsed configuration.  This is slow; try to batch calls to ``atomic()``."""
+        """Call :func:`atomic` to manually fix up ``ConfigObjs`` relationships 
+        after modifying a parsed configuration.  This method is slow; try to 
+        batch calls to ``atomic()`` if possible.
+
+        .. warning::
+
+           If you modify a configuration after parsing it with 
+           :class:`ciscoconfparse.CiscoConfParse`, you *must* call 
+           :func:`commit` or :func:`atomic` before searching the configuration
+           again with methods such as :func:`find_objects` or 
+           :func:`find_lines`.  Failure to call :func:`commit` or 
+           :func:`atomic` on config modifications could lead to unexpected 
+           search results.
+        """
         self.ConfigObjs._bootstrap_from_text()
 
     def commit(self):
-        """Alias for calling the :func:`atomic` method"""
+        """Alias for calling the :func:`atomic` method.  This method is slow;
+        try to batch calls to ``commit()`` if possible.
+
+        .. warning::
+
+           If you modify a configuration after parsing it with 
+           :class:`ciscoconfparse.CiscoConfParse`, you *must* call 
+           :func:`commit` or :func:`atomic` before searching the configuration
+           again with methods such as :func:`find_objects` or 
+           :func:`find_lines`.  Failure to call :func:`commit` or 
+           :func:`atomic` on config modifications could lead to unexpected 
+           search results.
+        """
         self.atomic()
 
     def find_objects(self, linespec, exactmatch=False, ignore_ws=False):
@@ -197,26 +227,30 @@ class CiscoConfParse(object):
         Examples
         --------
 
+
         This example illustrates the difference between :func:`find_objects` and
         :func:`find_lines`.
 
-        >>> config = [
-        ...     '!',
-        ...     'interface Serial1/0',
-        ...     ' ip address 1.1.1.1 255.255.255.252',
-        ...     '!',
-        ...     'interface Serial1/1',
-        ...     ' ip address 1.1.1.5 255.255.255.252',
-        ...     '!',
-        ...     ]
-        >>> parse = CiscoConfParse(config)
-        >>>
-        >>> parse.find_objects(r'^interface')
-        [<IOSCfgLine # 1 'interface Serial1/0'>, <IOSCfgLine # 4 'interface Serial1/1'>]
-        >>>
-        >>> parse.find_lines(r'^interface')
-        ['interface Serial1/0', 'interface Serial1/1']
-        >>>
+        .. code-block:: python
+           :emphasize-lines: 12,15
+
+           >>> config = [
+           ...     '!',
+           ...     'interface Serial1/0',
+           ...     ' ip address 1.1.1.1 255.255.255.252',
+           ...     '!',
+           ...     'interface Serial1/1',
+           ...     ' ip address 1.1.1.5 255.255.255.252',
+           ...     '!',
+           ...     ]
+           >>> parse = CiscoConfParse(config)
+           >>>
+           >>> parse.find_objects(r'^interface')
+           [<IOSCfgLine # 1 'interface Serial1/0'>, <IOSCfgLine # 4 'interface Serial1/1'>]
+           >>>
+           >>> parse.find_lines(r'^interface')
+           ['interface Serial1/0', 'interface Serial1/1']
+           >>>
         """
         if ignore_ws:
             linespec = self._build_space_tolerant_regex(linespec)
@@ -309,19 +343,22 @@ class CiscoConfParse(object):
 
         We would accomplish this by querying `find_children('^archive')`...
 
-        >>> from ciscoconfparse import CiscoConfParse
-        >>> config = ['username ddclient password 7 107D3D232342041E3A',
-        ...           'archive',
-        ...           ' log config',
-        ...           '  logging enable',
-        ...           '  hidekeys',
-        ...           ' path ftp://ns.foo.com//tftpboot/Foo-archive',
-        ...           '!',
-        ...     ]
-        >>> p = CiscoConfParse(config)
-        >>> p.find_children('^archive')
-        ['archive', ' log config', ' path ftp://ns.foo.com//tftpboot/Foo-archive']
-        >>>
+        .. code-block:: python
+           :emphasize-lines: 11
+
+           >>> from ciscoconfparse import CiscoConfParse
+           >>> config = ['username ddclient password 7 107D3D232342041E3A',
+           ...           'archive',
+           ...           ' log config',
+           ...           '  logging enable',
+           ...           '  hidekeys',
+           ...           ' path ftp://ns.foo.com//tftpboot/Foo-archive',
+           ...           '!',
+           ...     ]
+           >>> p = CiscoConfParse(config)
+           >>> p.find_children('^archive')
+           ['archive', ' log config', ' path ftp://ns.foo.com//tftpboot/Foo-archive']
+           >>>
         """
 
         if ignore_ws:
@@ -390,19 +427,22 @@ class CiscoConfParse(object):
 
         We would accomplish this by querying `find_all_children('^archive')`...
 
-        >>> from ciscoconfparse import CiscoConfParse
-        >>> config = ['username ddclient password 7 107D3D232342041E3A',
-        ...           'archive',
-        ...           ' log config',
-        ...           '  logging enable',
-        ...           '  hidekeys',
-        ...           ' path ftp://ns.foo.com//tftpboot/Foo-archive',
-        ...           '!',
-        ...     ]
-        >>> p = CiscoConfParse(config)
-        >>> p.find_all_children('^archive')
-        ['archive', ' log config', '  logging enable', '  hidekeys', ' path ftp://ns.foo.com//tftpboot/Foo-archive']
-        >>>
+        .. code-block:: python
+           :emphasize-lines: 11
+
+           >>> from ciscoconfparse import CiscoConfParse
+           >>> config = ['username ddclient password 7 107D3D232342041E3A',
+           ...           'archive',
+           ...           ' log config',
+           ...           '  logging enable',
+           ...           '  hidekeys',
+           ...           ' path ftp://ns.foo.com//tftpboot/Foo-archive',
+           ...           '!',
+           ...     ]
+           >>> p = CiscoConfParse(config)
+           >>> p.find_all_children('^archive')
+           ['archive', ' log config', '  logging enable', '  hidekeys', ' path ftp://ns.foo.com//tftpboot/Foo-archive']
+           >>>
         """
 
         if ignore_ws:
@@ -485,33 +525,36 @@ class CiscoConfParse(object):
 
         We do this by quering `find_blocks('bandwidth percent')`...
 
-        >>> from ciscoconfparse import CiscoConfParse
-        >>> config = ['!', 
-        ...           'policy-map EXTERNAL_CBWFQ', 
-        ...           ' class IP_PREC_HIGH', 
-        ...           '  priority percent 10', 
-        ...           '  police cir percent 10', 
-        ...           '    conform-action transmit', 
-        ...           '    exceed-action drop', 
-        ...           ' class IP_PREC_MEDIUM', 
-        ...           '  bandwidth percent 50', 
-        ...           '  queue-limit 100', 
-        ...           ' class class-default', 
-        ...           '  bandwidth percent 40', 
-        ...           '  queue-limit 100', 
-        ...           'policy-map SHAPE_HEIR', 
-        ...           ' class ALL', 
-        ...           '  shape average 630000', 
-        ...           '  service-policy EXTERNAL_CBWFQ', 
-        ...           '!',
-        ...     ]
-        >>> p = CiscoConfParse(config)
-        >>> p.find_blocks('bandwidth percent')
-        ['policy-map EXTERNAL_CBWFQ', ' class IP_PREC_MEDIUM', '  bandwidth percent 50', '  queue-limit 100', ' class class-default', '  bandwidth percent 40', '  queue-limit 100']
-        >>>
-        >>> p.find_blocks(' class class-default')
-        ['policy-map EXTERNAL_CBWFQ', ' class IP_PREC_HIGH', ' class IP_PREC_MEDIUM', ' class class-default']
-        >>>
+        .. code-block:: python
+           :emphasize-lines: 22,25
+
+           >>> from ciscoconfparse import CiscoConfParse
+           >>> config = ['!', 
+           ...           'policy-map EXTERNAL_CBWFQ', 
+           ...           ' class IP_PREC_HIGH', 
+           ...           '  priority percent 10', 
+           ...           '  police cir percent 10', 
+           ...           '    conform-action transmit', 
+           ...           '    exceed-action drop', 
+           ...           ' class IP_PREC_MEDIUM', 
+           ...           '  bandwidth percent 50', 
+           ...           '  queue-limit 100', 
+           ...           ' class class-default', 
+           ...           '  bandwidth percent 40', 
+           ...           '  queue-limit 100', 
+           ...           'policy-map SHAPE_HEIR', 
+           ...           ' class ALL', 
+           ...           '  shape average 630000', 
+           ...           '  service-policy EXTERNAL_CBWFQ', 
+           ...           '!',
+           ...     ]
+           >>> p = CiscoConfParse(config)
+           >>> p.find_blocks('bandwidth percent')
+           ['policy-map EXTERNAL_CBWFQ', ' class IP_PREC_MEDIUM', '  bandwidth percent 50', '  queue-limit 100', ' class class-default', '  bandwidth percent 40', '  queue-limit 100']
+           >>>
+           >>> p.find_blocks(' class class-default')
+           ['policy-map EXTERNAL_CBWFQ', ' class IP_PREC_HIGH', ' class IP_PREC_MEDIUM', ' class class-default']
+           >>>
         """
         tmp = set([])
         retval = list()
@@ -600,26 +643,29 @@ class CiscoConfParse(object):
         parent as `^interface` and set the child as 
         `switchport access vlan 300`.
 
-        >>> config = ['!', 
-        ...           'interface FastEthernet0/1', 
-        ...           ' switchport access vlan 532', 
-        ...           ' spanning-tree vlan 532 cost 3', 
-        ...           '!', 
-        ...           'interface FastEthernet0/2', 
-        ...           ' switchport access vlan 300', 
-        ...           ' spanning-tree portfast', 
-        ...           '!', 
-        ...           'interface FastEthernet0/3', 
-        ...           ' duplex full', 
-        ...           ' speed 100', 
-        ...           ' switchport access vlan 300', 
-        ...           ' spanning-tree portfast', 
-        ...           '!',
-        ...     ]
-        >>> p = CiscoConfParse(config)
-        >>> p.find_parents_w_child('^interface', 'switchport access vlan 300')
-        ['interface FastEthernet0/2', 'interface FastEthernet0/3']
-        >>>
+        .. code-block:: python
+           :emphasize-lines: 18
+
+           >>> config = ['!', 
+           ...           'interface FastEthernet0/1', 
+           ...           ' switchport access vlan 532', 
+           ...           ' spanning-tree vlan 532 cost 3', 
+           ...           '!', 
+           ...           'interface FastEthernet0/2', 
+           ...           ' switchport access vlan 300', 
+           ...           ' spanning-tree portfast', 
+           ...           '!', 
+           ...           'interface FastEthernet0/3', 
+           ...           ' duplex full', 
+           ...           ' speed 100', 
+           ...           ' switchport access vlan 300', 
+           ...           ' spanning-tree portfast', 
+           ...           '!',
+           ...     ]
+           >>> p = CiscoConfParse(config)
+           >>> p.find_parents_w_child('^interface', 'switchport access vlan 300')
+           ['interface FastEthernet0/2', 'interface FastEthernet0/3']
+           >>>
         """
 
         if ignore_ws:
@@ -702,26 +748,29 @@ class CiscoConfParse(object):
         regular-expression which matches the word 'speed' followed by
         an integer).
 
-        >>> config = ['!', 
-        ...           'interface FastEthernet0/1', 
-        ...           ' switchport access vlan 532', 
-        ...           ' spanning-tree vlan 532 cost 3', 
-        ...           '!', 
-        ...           'interface FastEthernet0/2', 
-        ...           ' switchport access vlan 300', 
-        ...           ' spanning-tree portfast', 
-        ...           '!', 
-        ...           'interface FastEthernet0/3', 
-        ...           ' duplex full', 
-        ...           ' speed 100', 
-        ...           ' switchport access vlan 300', 
-        ...           ' spanning-tree portfast', 
-        ...           '!',
-        ...     ]
-        >>> p = CiscoConfParse(config)
-        >>> p.find_parents_wo_child('^interface', 'speed\s\d+')
-        ['interface FastEthernet0/1', 'interface FastEthernet0/2']
-        >>>
+        .. code-block:: python
+           :emphasize-lines: 18
+
+           >>> config = ['!', 
+           ...           'interface FastEthernet0/1', 
+           ...           ' switchport access vlan 532', 
+           ...           ' spanning-tree vlan 532 cost 3', 
+           ...           '!', 
+           ...           'interface FastEthernet0/2', 
+           ...           ' switchport access vlan 300', 
+           ...           ' spanning-tree portfast', 
+           ...           '!', 
+           ...           'interface FastEthernet0/3', 
+           ...           ' duplex full', 
+           ...           ' speed 100', 
+           ...           ' switchport access vlan 300', 
+           ...           ' spanning-tree portfast', 
+           ...           '!',
+           ...     ]
+           >>> p = CiscoConfParse(config)
+           >>> p.find_parents_wo_child('^interface', 'speed\s\d+')
+           ['interface FastEthernet0/1', 'interface FastEthernet0/2']
+           >>>
         """
 
         if ignore_ws:
@@ -812,34 +861,37 @@ class CiscoConfParse(object):
         parent as `^interface` and set the child as 
         `switchport port-security`.
 
-        >>> config = ['!', 
-        ...           'interface FastEthernet0/1', 
-        ...           ' switchport access vlan 532', 
-        ...           ' switchport port-security', 
-        ...           ' switchport port-security violation protect', 
-        ...           ' switchport port-security aging time 5', 
-        ...           ' switchport port-security aging type inactivity', 
-        ...           ' spanning-tree portfast', 
-        ...           ' spanning-tree bpduguard enable', 
-        ...           '!', 
-        ...           'interface FastEthernet0/2', 
-        ...           ' switchport access vlan 300', 
-        ...           ' spanning-tree portfast', 
-        ...           ' spanning-tree bpduguard enable', 
-        ...           '!', 
-        ...           'interface FastEthernet0/3', 
-        ...           ' duplex full', 
-        ...           ' speed 100', 
-        ...           ' switchport access vlan 300', 
-        ...           ' spanning-tree portfast', 
-        ...           ' spanning-tree bpduguard enable', 
-        ...           '!',
-        ...     ]
-        >>> p = CiscoConfParse(config)
-        >>> p.find_children_w_parents('^interface\sFastEthernet0/1', \
-        'port-security')
-        [' switchport port-security', ' switchport port-security violation protect', ' switchport port-security aging time 5', ' switchport port-security aging type inactivity']
-        >>>
+        .. code-block:: python
+           :emphasize-lines: 25
+
+           >>> config = ['!', 
+           ...           'interface FastEthernet0/1', 
+           ...           ' switchport access vlan 532', 
+           ...           ' switchport port-security', 
+           ...           ' switchport port-security violation protect', 
+           ...           ' switchport port-security aging time 5', 
+           ...           ' switchport port-security aging type inactivity', 
+           ...           ' spanning-tree portfast', 
+           ...           ' spanning-tree bpduguard enable', 
+           ...           '!', 
+           ...           'interface FastEthernet0/2', 
+           ...           ' switchport access vlan 300', 
+           ...           ' spanning-tree portfast', 
+           ...           ' spanning-tree bpduguard enable', 
+           ...           '!', 
+           ...           'interface FastEthernet0/3', 
+           ...           ' duplex full', 
+           ...           ' speed 100', 
+           ...           ' switchport access vlan 300', 
+           ...           ' spanning-tree portfast', 
+           ...           ' spanning-tree bpduguard enable', 
+           ...           '!',
+           ...     ]
+           >>> p = CiscoConfParse(config)
+           >>> p.find_children_w_parents('^interface\sFastEthernet0/1', \
+           'port-security')
+           [' switchport port-security', ' switchport port-security violation protect', ' switchport port-security aging time 5', ' switchport port-security aging type inactivity']
+           >>>
         """
         if ignore_ws:
             parentspec = self._build_space_tolerant_regex(parentspec)
@@ -1005,31 +1057,34 @@ class CiscoConfParse(object):
         We do this by calling `replace_lines(linespec='EXTERNAL_CBWFQ', 
         replacestr='EXTERNAL_QOS', excludespec='description')`...
 
-        >>> from ciscoconfparse import CiscoConfParse
-        >>> config = ['!', 
-        ...           'policy-map EXTERNAL_CBWFQ', 
-        ...           ' description implement an EXTERNAL_CBWFQ policy',
-        ...           ' class IP_PREC_HIGH', 
-        ...           '  priority percent 10', 
-        ...           '  police cir percent 10', 
-        ...           '    conform-action transmit', 
-        ...           '    exceed-action drop', 
-        ...           ' class IP_PREC_MEDIUM', 
-        ...           '  bandwidth percent 50', 
-        ...           '  queue-limit 100', 
-        ...           ' class class-default', 
-        ...           '  bandwidth percent 40', 
-        ...           '  queue-limit 100', 
-        ...           'policy-map SHAPE_HEIR', 
-        ...           ' class ALL', 
-        ...           '  shape average 630000', 
-        ...           '  service-policy EXTERNAL_CBWFQ', 
-        ...           '!',
-        ...     ]
-        >>> p = CiscoConfParse(config)
-        >>> p.replace_lines('EXTERNAL_CBWFQ', 'EXTERNAL_QOS', 'description')
-        ['policy-map EXTERNAL_QOS', '  service-policy EXTERNAL_QOS']
-        >>>
+        .. code-block:: python
+           :emphasize-lines: 23
+
+           >>> from ciscoconfparse import CiscoConfParse
+           >>> config = ['!', 
+           ...           'policy-map EXTERNAL_CBWFQ', 
+           ...           ' description implement an EXTERNAL_CBWFQ policy',
+           ...           ' class IP_PREC_HIGH', 
+           ...           '  priority percent 10', 
+           ...           '  police cir percent 10', 
+           ...           '    conform-action transmit', 
+           ...           '    exceed-action drop', 
+           ...           ' class IP_PREC_MEDIUM', 
+           ...           '  bandwidth percent 50', 
+           ...           '  queue-limit 100', 
+           ...           ' class class-default', 
+           ...           '  bandwidth percent 40', 
+           ...           '  queue-limit 100', 
+           ...           'policy-map SHAPE_HEIR', 
+           ...           ' class ALL', 
+           ...           '  shape average 630000', 
+           ...           '  service-policy EXTERNAL_CBWFQ', 
+           ...           '!',
+           ...     ]
+           >>> p = CiscoConfParse(config)
+           >>> p.replace_lines('EXTERNAL_CBWFQ', 'EXTERNAL_QOS', 'description')
+           ['policy-map EXTERNAL_QOS', '  service-policy EXTERNAL_QOS']
+           >>>
 
         Now when we call `p.find_blocks('policy-map EXTERNAL_QOS')`, we get the
         changed configuration, which has the replacements except on the 
@@ -1225,6 +1280,9 @@ class CiscoConfParse(object):
         return retval
 
     def save_as(self, filepath):
+        """Save a text copy of the configuration at ``filepath``; this
+        method uses the OperatingSystem's native line separators (such as
+        ``\\r\\n`` in Windows)."""
         with open(filepath, 'w') as newconf:
             for line in self.ioscfg:
                 newconf.write(line+os.linesep)
