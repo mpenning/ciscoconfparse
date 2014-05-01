@@ -179,6 +179,59 @@ class BaseCfgLine(object):
         self._list_reassign_linenums()
 
     def delete_children_matching(self, linespec):
+        """Delete any child :class:`models_cisco.IOSCfgLine` objects which match
+        ``linespec``.
+
+        Parameters
+        ----------
+
+        linespec : str, required
+             A string or python regular expression, which should be matched.  
+
+        Returns
+        -------
+
+        retval : list
+            A list of :class:`IOSCfgLine` objects which were deleted.
+
+        Examples
+        --------
+
+        This example illustrates how you can use 
+        :func:`delete_children_matching` to delete any description on an 
+        interface.
+
+        .. code-block:: python
+           :emphasize-lines: 15
+
+           >>> config = [
+           ...     '!',
+           ...     'interface Serial1/0',
+           ...     ' description Some lame description',
+           ...     ' ip address 1.1.1.1 255.255.255.252',
+           ...     '!',
+           ...     'interface Serial1/1',
+           ...     ' description Another lame description',
+           ...     ' ip address 1.1.1.5 255.255.255.252',
+           ...     '!',
+           ...     ]
+           >>> parse = CiscoConfParse(config)
+           >>>
+           >>> for obj in parse.find_objects(r'^interface'):
+           ...     obj.delete_children_matching(r'description')
+           >>>
+           >>> for line in parse.ioscfg:
+           ...     print line
+           ...
+           !
+           interface Serial1/0
+            ip address 1.1.1.1 255.255.255.252
+           !
+           interface Serial1/1
+            ip address 1.1.1.5 255.255.255.252
+           !
+           >>>
+        """
         cobjs = filter(methodcaller('re_search', linespec), self.children)
         retval = map(attrgetter('text'), cobjs)
         # Delete the children
@@ -203,7 +256,59 @@ class BaseCfgLine(object):
         return retval
 
     def append_to_family(self, insertstr):
-        """append_to_family()"""
+        """Append an :class:`models_cisco.IOSCfgLine` object with ``insertstr``
+        to the bottom of the current configuration family.
+
+        Parameters
+        ----------
+
+        insertstr : str, required
+             A string which contains the text configuration to be apppended.
+
+        Returns
+        -------
+
+        retval : str
+            The text matched by the regular expression group; if there is no
+            match, None is returned.
+
+        Examples
+        --------
+
+        This example illustrates how you can use 
+        :func:`append_to_family` to add a ``carrier-delay`` to each interface.
+
+        .. code-block:: python
+           :emphasize-lines: 13
+
+           >>> config = [
+           ...     '!',
+           ...     'interface Serial1/0',
+           ...     ' ip address 1.1.1.1 255.255.255.252',
+           ...     '!',
+           ...     'interface Serial1/1',
+           ...     ' ip address 1.1.1.5 255.255.255.252',
+           ...     '!',
+           ...     ]
+           >>> parse = CiscoConfParse(config)
+           >>>
+           >>> for obj in parse.find_objects(r'^interface'):
+           ...     obj.append_to_family(' carrier-delay msec 500')
+           >>>
+           >>> for line in parse.ioscfg:
+           ...     print line
+           ...
+           !
+           interface Serial1/0
+            ip address 1.1.1.1 255.255.255.252
+            carrier-delay msec 500
+           !
+           interface Serial1/1
+            ip address 1.1.1.5 255.255.255.252
+            carrier-delay msec 500
+           !
+           >>>
+        """
         ## BaseCfgLine.append_to_family(), insert a single line after this 
         ##  object's children
         local_atomic=False
@@ -218,12 +323,12 @@ class BaseCfgLine(object):
         Parameters
         ----------
 
-        linespec : str
+        linespec : str, required
              A string or python regular expression, which should be matched
-        replacestr : str
+        replacestr : str, required
              A string or python regular expression, which should replace the
              text matched by ``linespec``.
-        ignore_rgx : str
+        ignore_rgx : str, optional
              A string or python regular expression; the replacement is skipped
              if :class:`models_cisco.IOSCfgLine` text matches ``ignore_rgx``.
              ``ignore_rgx`` defaults to None, which means no lines matching
@@ -239,28 +344,32 @@ class BaseCfgLine(object):
         Examples
         --------
 
-        This example illustrates how you can replace ``Serial1`` with ``Serial0``...
+        This example illustrates how you can use :func:`replace` to replace 
+        ``Serial1`` with ``Serial0`` in a configuration...
 
-        >>> config = [
-        ...     '!',
-        ...     'interface Serial1/0',
-        ...     ' ip address 1.1.1.1 255.255.255.252',
-        ...     '!',
-        ...     'interface Serial1/1',
-        ...     ' ip address 1.1.1.5 255.255.255.252',
-        ...     '!',
-        ...     ]
-        >>> parse = CiscoConfParse(config)
-        >>>
-        >>> for obj in parse.find_objects('Serial'):
-        ...     print "OLD", obj.text
-        ...     obj.replace(r'Serial1', r'Serial0')
-        ...     print "  NEW", obj.text
-        OLD interface Serial1/0
-          NEW interface Serial0/0
-        OLD interface Serial1/1
-          NEW interface Serial0/1
-        >>>
+        .. code-block:: python
+           :emphasize-lines: 14
+
+           >>> config = [
+           ...     '!',
+           ...     'interface Serial1/0',
+           ...     ' ip address 1.1.1.1 255.255.255.252',
+           ...     '!',
+           ...     'interface Serial1/1',
+           ...     ' ip address 1.1.1.5 255.255.255.252',
+           ...     '!',
+           ...     ]
+           >>> parse = CiscoConfParse(config)
+           >>>
+           >>> for obj in parse.find_objects('Serial'):
+           ...     print "OLD", obj.text
+           ...     obj.replace(r'Serial1', r'Serial0')
+           ...     print "  NEW", obj.text
+           OLD interface Serial1/0
+             NEW interface Serial0/0
+           OLD interface Serial1/1
+             NEW interface Serial0/1
+           >>>
         """
 
         # This is a little slower than calling BaseCfgLine.re_sub directly...
@@ -293,28 +402,32 @@ class BaseCfgLine(object):
         Examples
         --------
 
-        This example illustrates how you can replace ``Serial1`` with ``Serial0``...
+        This example illustrates how you can use :func:`re_sub` to replace 
+        ``Serial1`` with ``Serial0`` in a configuration...
 
-        >>> config = [
-        ...     '!',
-        ...     'interface Serial1/0',
-        ...     ' ip address 1.1.1.1 255.255.255.252',
-        ...     '!',
-        ...     'interface Serial1/1',
-        ...     ' ip address 1.1.1.5 255.255.255.252',
-        ...     '!',
-        ...     ]
-        >>> parse = CiscoConfParse(config)
-        >>>
-        >>> for obj in parse.find_objects('Serial'):
-        ...     print "OLD", obj.text
-        ...     obj.re_sub(r'Serial1', r'Serial0')
-        ...     print "  NEW", obj.text
-        OLD interface Serial1/0
-          NEW interface Serial0/0
-        OLD interface Serial1/1
-          NEW interface Serial0/1
-        >>>
+        .. code-block:: python
+           :emphasize-lines: 14
+
+           >>> config = [
+           ...     '!',
+           ...     'interface Serial1/0',
+           ...     ' ip address 1.1.1.1 255.255.255.252',
+           ...     '!',
+           ...     'interface Serial1/1',
+           ...     ' ip address 1.1.1.5 255.255.255.252',
+           ...     '!',
+           ...     ]
+           >>> parse = CiscoConfParse(config)
+           >>>
+           >>> for obj in parse.find_objects('Serial'):
+           ...     print "OLD", obj.text
+           ...     obj.re_sub(r'Serial1', r'Serial0')
+           ...     print "  NEW", obj.text
+           OLD interface Serial1/0
+             NEW interface Serial0/0
+           OLD interface Serial1/1
+             NEW interface Serial0/1
+           >>>
         """
         # When replacing objects, check whether they should be deleted, or 
         #   whether they are a comment
@@ -355,26 +468,30 @@ class BaseCfgLine(object):
         Examples
         --------
 
-        This example illustrates how you can store the mask of the interface
-        with the address "1.1.1.5" in a variable called ``netmask``.
+        This example illustrates how you can use :func:`re_match` to store the 
+        mask of the interface which owns "1.1.1.5" in a variable called 
+        ``netmask``.
 
-        >>> config = [
-        ...     '!',
-        ...     'interface Serial1/0',
-        ...     ' ip address 1.1.1.1 255.255.255.252',
-        ...     '!',
-        ...     'interface Serial1/1',
-        ...     ' ip address 1.1.1.5 255.255.255.252',
-        ...     '!',
-        ...     ]
-        >>> parse = CiscoConfParse(config)
-        >>>
-        >>> for obj in parse.find_objects(r'ip\saddress'):
-        ...     netmask = obj.re_match(r'1\.1\.1\.5\s(\S+)')
-        >>>
-        >>> print "The netmask is", netmask
-        The netmask is 255.255.255.252
-        >>>
+        .. code-block:: python
+           :emphasize-lines: 13
+
+           >>> config = [
+           ...     '!',
+           ...     'interface Serial1/0',
+           ...     ' ip address 1.1.1.1 255.255.255.252',
+           ...     '!',
+           ...     'interface Serial1/1',
+           ...     ' ip address 1.1.1.5 255.255.255.252',
+           ...     '!',
+           ...     ]
+           >>> parse = CiscoConfParse(config)
+           >>>
+           >>> for obj in parse.find_objects(r'ip\saddress'):
+           ...     netmask = obj.re_match(r'1\.1\.1\.5\s(\S+)')
+           >>>
+           >>> print "The netmask is", netmask
+           The netmask is 255.255.255.252
+           >>>
         """
         mm = re.search(regex, self.text)
         if not (mm is None):
@@ -396,6 +513,67 @@ class BaseCfgLine(object):
         return retval
 
     def re_match_typed(self, regex, group=1, result_type=str, default=''):
+        """Use ``regex`` to search the :class:`models_cisco.IOSCfgLine` text and return the contents of the regular expression group, at the integer index, cast as ``result_type``; if there is no match, ``default`` is returned.
+
+        Parameters
+        ----------
+
+        regex : str, required
+             A string or python regular expression, which should be matched.  
+             This regular expression should contain parenthesis, which bound a 
+             match group.
+        group : int, optional
+             An integer which specifies the desired group to be returned.
+             ``group`` defaults to 1.
+        result_type : type, optional
+             A python type (typically one of: ``str``, ``int``, or ``float``).               All returned values are cast as ``result_type``, which defaults 
+             to ``str``.
+        default : optional
+             The default value to be returned, if there is no match.
+
+        Returns
+        -------
+
+        retval : ``result_type``
+            The text matched by the regular expression group; if there is no
+            match, ``default`` is returned.  All values are cast as 
+            ``result_type``.
+
+        Examples
+        --------
+
+        This example illustrates how you can use :func:`re_match_typed` to 
+        build an association between an interface name, and its numerical slot
+        value.  The name will be cast as :py:func:`str`, and the slot will be
+        cast as :py:func:`int`.
+
+        .. code-block:: python
+           :emphasize-lines: 14,15,16,17,18
+
+           >>> config = [
+           ...     '!',
+           ...     'interface Serial1/0',
+           ...     ' ip address 1.1.1.1 255.255.255.252',
+           ...     '!',
+           ...     'interface Serial2/0',
+           ...     ' ip address 1.1.1.5 255.255.255.252',
+           ...     '!',
+           ...     ]
+           >>> parse = CiscoConfParse(config)
+           >>>
+           >>> slots = dict()
+           >>> for obj in parse.find_objects(r'^interface'):
+           ...     name = obj.re_match_typed(regex=r'^interface\s(\S+)',
+           ...         default='UNKNOWN')
+           ...     slot = obj.re_match_typed(regex=r'Serial(\d+)',
+           ...         result_type=int,
+           ...         default=-1)
+           ...     print "Interface {0} is in slot {1}".format(name, slot)
+           ...
+           Interface Serial1/0 is in slot 1
+           Interface Serial2/0 is in slot 2
+           >>>
+        """
         mm = re.search(regex, self.text)
         if not (mm is None):
             return result_type(mm.group(group)) or result_type(default)
