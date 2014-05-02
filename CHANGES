@@ -1,3 +1,5 @@
+1.0.1   20140501 More documentation improvements.  Fix problem with experimental
+        IOSCfgLine factory feature.
 1.0.0   20140430 Significant documentation overhaul.  Add documentation of
         new IOSCfgLine methods introduced in 0.9.10, as well as making the 
         documentation more friendly to mobile devices; substitute the 
