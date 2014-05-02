@@ -298,7 +298,7 @@ The script below will build a list of serial interfaces, check to see whether th
 
    for intf in parse.find_objects("^interface Serial"):
       ## Search children of the interface for 1.1.1
-      if (intf.re_search_children(r"ip\saddress\s1\\.1\\.1")):
+      if (intf.re_search_children(r"ip\saddress\s1\.1\.1")):
          cfgdiffs.append_line("!")
          cfgdiffs.append_line(intf.text)
          cfgdiffs.append_line(" mpls ip")
