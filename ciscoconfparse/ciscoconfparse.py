@@ -11,6 +11,9 @@ from models_cisco import IOSHostnameLine, IOSRouteLine, IOSIntfLine
 from models_cisco import IOSAccessLine, IOSIntfGlobal
 from models_cisco import IOSCfgLine
 
+# Relative import path referenced to this directory
+sys.path.insert(0, os.path.join(os.path.abspath(os.path.dirname(__file__)),
+    "local_py"))
 ### ipaddr is optional, and Apache License 2.0 is compatible with GPLv3 per
 ###   the ASL web page: http://www.apache.org/licenses/GPL-compatibility.html
 try:
@@ -40,7 +43,7 @@ except ImportError:
 """
 
 ## Docstring props: http://stackoverflow.com/a/1523456/667301
-__version_tuple__ = (1,0,0)
+__version_tuple__ = (1,0,1)
 __version__ = '.'.join(map(str, __version_tuple__))
 __email__ = "mike /at\ pennington [dot] net"
 __author__ = "David Michael Pennington <{0}>".format(__email__)
@@ -85,15 +88,15 @@ class CiscoConfParse(object):
         Attributes
         ----------
 
-        ConfigObjs : :class:`IOSConfigList`
+        ConfigObjs : :class:`~ciscoconfparse.IOSConfigList`
              ``ConfigObjs`` is a customized python list, which contains all 
-             parsed :class:`models_cisco.IOSCfgLine` instances.
+             parsed :class:`~models_cisco.IOSCfgLine` instances.
 
         Examples
         --------
 
         This example illustrates how to parse a simple Cisco IOS configuration
-        with :class:`ciscoconfparse.CiscoConfParse` into a variable called 
+        with :class:`~ciscoconfparse.CiscoConfParse` into a variable called 
         ``parse``.  This example also illustrates what the ``ConfigObjs`` 
         and ``ioscfg`` attributes contain.
 
@@ -121,7 +124,7 @@ class CiscoConfParse(object):
         # re: modules usage... thank you Delnan
         # http://stackoverflow.com/a/5027393
         if (factory is True) and (bool(modules.get('ipaddr', False)) is False):
-            from local.ipaddr import IPv4Network, IPv6Network
+            from ipaddr import IPv4Network, IPv6Network
             #raise ImportError("Could not import ipaddr module.  ciscoconfparse.CiscoConfParse only requires the ipaddr module when called with factory=True.")
 
         # all IOSCfgLine object instances...
@@ -170,40 +173,49 @@ class CiscoConfParse(object):
         return self.ConfigObjs
 
     def atomic(self):
-        """Call :func:`atomic` to manually fix up ``ConfigObjs`` relationships 
+        """Call :func:`~ciscoconfparse.CiscoConfParse.atomic` to manually fix 
+        up ``ConfigObjs`` relationships 
         after modifying a parsed configuration.  This method is slow; try to 
-        batch calls to ``atomic()`` if possible.
+        batch calls to :func:`~ciscoconfparse.CiscoConfParse.atomic()` if 
+        possible.
 
         .. warning::
 
            If you modify a configuration after parsing it with 
-           :class:`ciscoconfparse.CiscoConfParse`, you *must* call 
-           :func:`commit` or :func:`atomic` before searching the configuration
-           again with methods such as :func:`find_objects` or 
-           :func:`find_lines`.  Failure to call :func:`commit` or 
-           :func:`atomic` on config modifications could lead to unexpected 
-           search results.
+           :class:`~ciscoconfparse.CiscoConfParse`, you *must* call 
+           :func:`~ciscoconfparse.CiscoConfParse.commit` or 
+           :func:`~ciscoconfparse.CiscoConfParse.atomic` before searching 
+           the configuration again with methods such as 
+           :func:`~ciscoconfparse.CiscoConfParse.find_objects` or 
+           :func:`~ciscoconfparse.CiscoConfParse.find_lines`.  Failure to 
+           call :func:`~ciscoconfparse.CiscoConfParse.commit` or 
+           :func:`~ciscoconfparse.CiscoConfParse.atomic` on config 
+           modifications could lead to unexpected search results.
         """
         self.ConfigObjs._bootstrap_from_text()
 
     def commit(self):
-        """Alias for calling the :func:`atomic` method.  This method is slow;
-        try to batch calls to ``commit()`` if possible.
+        """Alias for calling the :func:`~ciscoconfparse.CiscoConfParse.atomic` 
+        method.  This method is slow; try to batch calls to 
+        :func:`~ciscoconfparse.CiscoConfParse.commit()` if possible.
 
         .. warning::
 
            If you modify a configuration after parsing it with 
-           :class:`ciscoconfparse.CiscoConfParse`, you *must* call 
-           :func:`commit` or :func:`atomic` before searching the configuration
-           again with methods such as :func:`find_objects` or 
-           :func:`find_lines`.  Failure to call :func:`commit` or 
-           :func:`atomic` on config modifications could lead to unexpected 
-           search results.
+           :class:`~ciscoconfparse.CiscoConfParse`, you *must* call 
+           :func:`~ciscoconfparse.CiscoConfParse.commit` or 
+           :func:`~ciscoconfparse.CiscoConfParse.atomic` before searching 
+           the configuration again with methods such as 
+           :func:`~ciscoconfparse.CiscoConfParse.find_objects` or 
+           :func:`~ciscoconfparse.CiscoConfParse.find_lines`.  Failure to 
+           call :func:`~ciscoconfparse.CiscoConfParse.commit` or 
+           :func:`~ciscoconfparse.CiscoConfParse.atomic` on config 
+           modifications could lead to unexpected search results.
         """
         self.atomic()
 
     def find_objects(self, linespec, exactmatch=False, ignore_ws=False):
-        """Find all ``IOSCfgLine`` objects whose text matches ``linespec`` and return the ``IOSCfgLine`` objects in a python list.  :func:`find_objects` is similar to :func:`find_lines`; however, the former returns a list of ``IOSCfgLine`` objects, while the latter returns a list of text configuration statements.  Going forward, I strongly encourage people to start using :func:`find_objects` instead of :func:`find_lines`.
+        """Find all :class:`~models_cisco.IOSCfgLine` objects whose text matches ``linespec`` and return the :class:`~models_cisco.IOSCfgLine` objects in a python list.  :func:`~ciscoconfparse.CiscoConfParse.find_objects` is similar to :func:`find_lines`; however, the former returns a list of :class:`~models_cisco.IOSCfgLine` objects, while the latter returns a list of text configuration statements.  Going forward, I strongly encourage people to start using :func:`~ciscoconfparse.CiscoConfParse.find_objects` instead of :func:`~ciscoconfparse.CiscoConfParse.find_lines`.
 
         Parameters
         ----------
@@ -222,14 +234,15 @@ class CiscoConfParse(object):
         -------
 
         retval : list
-            A list of matching :class:`IOSCfgLine` objects
+            A list of matching :class:`~ciscoconfparse.IOSCfgLine` objects
 
         Examples
         --------
 
 
-        This example illustrates the difference between :func:`find_objects` and
-        :func:`find_lines`.
+        This example illustrates the difference between 
+        :func:`~ciscoconfparse.CiscoConfParse.find_objects` and 
+        :func:`~ciscoconfparse.CiscoConfParse.find_lines`.
 
         .. code-block:: python
            :emphasize-lines: 12,15
@@ -1387,14 +1400,14 @@ class CiscoConfParse(object):
 
 
 class IOSConfigList(MutableSequence):
-    """A custom list to hold :class:`models_cisco.IOSCfgLine` objects.  Most 
+    """A custom list to hold :class:`~models_cisco.IOSCfgLine` objects.  Most 
        people will never need to use this class directly.
 
        Parameters
        ----------
 
        data : list
-            A list of parsed :class:`models_cisco.IOSCfgLine` objects
+            A list of parsed :class:`~models_cisco.IOSCfgLine` objects
        comment : str, optional
             A comment delimiter.  This should only be changed when 
             parsing non-Cisco IOS configurations, which do not use a ! 
@@ -1779,9 +1792,9 @@ class IOSConfigList(MutableSequence):
     def _mark_family_endpoints(self, parents):
         """Find the endpoint of the config 'family'
         A family starts when a config line with *no* indentation spawns
-        'children'. A family ends when there are no more children.  See class
-        IOSCfgLine for an example. This method modifies attributes inside 
-        IOSCfgLine instances"""
+        'children'. A family ends when there are no more children.  See 
+        :class:`~models_cisco.IOSCfgLine` for an example. This method modifies 
+        attributes inside :class:`~models_cisco.IOSCfgLine` instances"""
         if self.DBGFLAG:
             print("[DEBUG] _mark_family_endpoints:\n  finding children of PARENTS: %s\n" % parents)
         lastobj = self # so pylint won't complain
