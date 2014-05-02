@@ -12,7 +12,7 @@ ciscoconfparse parses through Cisco IOS-style configurations.  It can:
 
 The package will process an IOS-style config and break it into a set of linked 
 parent / child relationships; each configuration line is stored in a different 
-:class:`models_cisco.IOSCfgLine` object.
+:class:`~models_cisco.IOSCfgLine` object.
 
 Then you issue queries against these relationships using a familiar family 
 syntax model. Queries can either be in the form of a simple string, or you can 
@@ -21,9 +21,9 @@ the ability to find all parents that have or do not have children matching a
 certain criteria.
 
 The package also provides a set of methods to query and manipulate the 
-:class:`models_cisco.IOSCfgLine` objects themselves. This gives you a flexible 
+:class:`~models_cisco.IOSCfgLine` objects themselves. This gives you a flexible 
 mechanism to build your own custom queries, because the 
-:class:`models_cisco.IOSCfgLine` objects store all the parent / child 
+:class:`~models_cisco.IOSCfgLine` objects store all the parent / child 
 hierarchy in them.
 
 What is ciscoconfparse good for?
