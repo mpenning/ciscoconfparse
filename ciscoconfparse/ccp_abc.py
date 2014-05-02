@@ -179,8 +179,8 @@ class BaseCfgLine(object):
         self._list_reassign_linenums()
 
     def delete_children_matching(self, linespec):
-        """Delete any child :class:`models_cisco.IOSCfgLine` objects which match
-        ``linespec``.
+        """Delete any child :class:`~models_cisco.IOSCfgLine` objects which 
+        match ``linespec``.
 
         Parameters
         ----------
@@ -192,14 +192,15 @@ class BaseCfgLine(object):
         -------
 
         retval : list
-            A list of :class:`IOSCfgLine` objects which were deleted.
+            A list of :class:`~models_cisco.IOSCfgLine` objects which were 
+            deleted.
 
         Examples
         --------
 
         This example illustrates how you can use 
-        :func:`delete_children_matching` to delete any description on an 
-        interface.
+        :func:`~ccp_abc.delete_children_matching` to delete any description 
+        on an interface.
 
         .. code-block:: python
            :emphasize-lines: 15
@@ -256,7 +257,7 @@ class BaseCfgLine(object):
         return retval
 
     def append_to_family(self, insertstr):
-        """Append an :class:`models_cisco.IOSCfgLine` object with ``insertstr``
+        """Append an :class:`~models_cisco.IOSCfgLine` object with ``insertstr``
         to the bottom of the current configuration family.
 
         Parameters
@@ -276,7 +277,8 @@ class BaseCfgLine(object):
         --------
 
         This example illustrates how you can use 
-        :func:`append_to_family` to add a ``carrier-delay`` to each interface.
+        :func:`~ccp_abc.append_to_family` to add a 
+        ``carrier-delay`` to each interface.
 
         .. code-block:: python
            :emphasize-lines: 13
@@ -318,7 +320,7 @@ class BaseCfgLine(object):
         return retval
 
     def replace(self, linespec, replacestr, ignore_rgx=None):
-        """Replace all strings matching ``linespec`` with ``replacestr`` in the :class:`models_cisco.IOSCfgLine` object; however, if the :class:`models_cisco.IOSCfgLine` text matches ``ignore_rgx``, then the text is *not* replaced.  The ``replace()`` method is simply an alias to the ``re_sub()`` method.
+        """Replace all strings matching ``linespec`` with ``replacestr`` in the :class:`~models_cisco.IOSCfgLine` object; however, if the :class:`~models_cisco.IOSCfgLine` text matches ``ignore_rgx``, then the text is *not* replaced.  The ``replace()`` method is simply an alias to the ``re_sub()`` method.
 
         Parameters
         ----------
@@ -330,7 +332,7 @@ class BaseCfgLine(object):
              text matched by ``linespec``.
         ignore_rgx : str, optional
              A string or python regular expression; the replacement is skipped
-             if :class:`models_cisco.IOSCfgLine` text matches ``ignore_rgx``.
+             if :class:`~models_cisco.IOSCfgLine` text matches ``ignore_rgx``.
              ``ignore_rgx`` defaults to None, which means no lines matching
              ``linespec`` are skipped.
              
@@ -344,8 +346,8 @@ class BaseCfgLine(object):
         Examples
         --------
 
-        This example illustrates how you can use :func:`replace` to replace 
-        ``Serial1`` with ``Serial0`` in a configuration...
+        This example illustrates how you can use :func:`~ccp_abc.replace` to 
+        replace ``Serial1`` with ``Serial0`` in a configuration...
 
         .. code-block:: python
            :emphasize-lines: 14
@@ -376,7 +378,7 @@ class BaseCfgLine(object):
         return self.re_sub(linespec, replacestr, ignore_rgx)
 
     def re_sub(self, regex, replacergx, ignore_rgx=None):
-        """Replace all strings matching ``linespec`` with ``replacestr`` in the :class:`models_cisco.IOSCfgLine` object; however, if the :class:`models_cisco.IOSCfgLine` text matches ``ignore_rgx``, then the text is *not* replaced.
+        """Replace all strings matching ``linespec`` with ``replacestr`` in the :class:`~models_cisco.IOSCfgLine` object; however, if the :class:`~models_cisco.IOSCfgLine` text matches ``ignore_rgx``, then the text is *not* replaced.
 
         Parameters
         ----------
@@ -388,7 +390,7 @@ class BaseCfgLine(object):
              text matched by ``linespec``.
         ignore_rgx : str, optional
              A string or python regular expression; the replacement is skipped
-             if :class:`models_cisco.IOSCfgLine` text matches ``ignore_rgx``.
+             if :class:`~models_cisco.IOSCfgLine` text matches ``ignore_rgx``.
              ``ignore_rgx`` defaults to None, which means no lines matching
              ``linespec`` are skipped.
              
@@ -402,8 +404,8 @@ class BaseCfgLine(object):
         Examples
         --------
 
-        This example illustrates how you can use :func:`re_sub` to replace 
-        ``Serial1`` with ``Serial0`` in a configuration...
+        This example illustrates how you can use :func:`~ccp_abc.re_sub` to 
+        replace ``Serial1`` with ``Serial0`` in a configuration...
 
         .. code-block:: python
            :emphasize-lines: 14
@@ -445,7 +447,7 @@ class BaseCfgLine(object):
         return retval
 
     def re_match(self, regex, group=1):
-        """Use ``regex`` to search the :class:`models_cisco.IOSCfgLine` text and return the regular expression group, at the integer index.
+        """Use ``regex`` to search the :class:`~models_cisco.IOSCfgLine` text and return the regular expression group, at the integer index.
 
         Parameters
         ----------
@@ -468,9 +470,9 @@ class BaseCfgLine(object):
         Examples
         --------
 
-        This example illustrates how you can use :func:`re_match` to store the 
-        mask of the interface which owns "1.1.1.5" in a variable called 
-        ``netmask``.
+        This example illustrates how you can use :func:`~ccp_abc.re_match` to 
+        store the mask of the interface which owns "1.1.1.5" in a variable 
+        called ``netmask``.
 
         .. code-block:: python
            :emphasize-lines: 13
@@ -499,6 +501,22 @@ class BaseCfgLine(object):
         return None
 
     def re_search(self, regex):
+        """Use ``regex`` to search this :class:`~models_cisco.IOSCfgLine`'s
+        text.
+
+        Parameters
+        ----------
+
+        regex : str, required
+             A string or python regular expression, which should be matched.  
+
+        Returns
+        -------
+
+        retval : str
+            The :class:`~models_cisco.IOSCfgLine` text which matched.  If 
+            there is no match, None is returned.
+        """
         ## TODO: use re.escape(regex) on all regex, instead of bare regex
         mm = re.search(regex, self.text)
         if not (mm is None):
@@ -506,6 +524,22 @@ class BaseCfgLine(object):
         return None
 
     def re_search_children(self, regex):
+        """Use ``regex`` to search the text contained in the children of 
+        this :class:`~models_cisco.IOSCfgLine`.
+
+        Parameters
+        ----------
+
+        regex : str, required
+             A string or python regular expression, which should be matched.  
+
+        Returns
+        -------
+
+        retval : list
+            A list of matching :class:`~models_cisco.IOSCfgLine`s which 
+            matched.  If there is no match, None is returned.
+        """
         retval = list()
         for cobj in self.children:
             if cobj.re_search(regex):
@@ -513,7 +547,10 @@ class BaseCfgLine(object):
         return retval
 
     def re_match_typed(self, regex, group=1, result_type=str, default=''):
-        """Use ``regex`` to search the :class:`models_cisco.IOSCfgLine` text and return the contents of the regular expression group, at the integer index, cast as ``result_type``; if there is no match, ``default`` is returned.
+        """Use ``regex`` to search the :class:`~models_cisco.IOSCfgLine` text 
+        and return the contents of the regular expression group, at the 
+        integer index, cast as ``result_type``; if there is no match, 
+        ``default`` is returned.
 
         Parameters
         ----------
@@ -542,10 +579,12 @@ class BaseCfgLine(object):
         Examples
         --------
 
-        This example illustrates how you can use :func:`re_match_typed` to 
-        build an association between an interface name, and its numerical slot
-        value.  The name will be cast as :py:func:`str`, and the slot will be
-        cast as :py:func:`int`.
+        .. TODO figure out how to make subclasses of this use the proper class name when using :func:.  I'm not sure how inheritance works with sphinx class naming...
+
+        This example illustrates how you can use 
+        :func:`re_match_typed` to build an association between an 
+        interface name, and its numerical slot value.  The name will be cast 
+        as :py:func:`str`, and the slot will be cast as :py:func:`int`.
 
         .. code-block:: python
            :emphasize-lines: 14,15,16,17,18
