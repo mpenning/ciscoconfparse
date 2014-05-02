@@ -181,7 +181,7 @@ already have setuptools_, you can install as usual:
 ::
 
       # Substitute whatever ciscoconfparse version you like...
-      easy_install -U ciscoconfparse==0.9.33
+      easy_install -U ciscoconfparse==1.0.1
 
 Alternatively you can install with pip_:
 
