@@ -1,10 +1,8 @@
 .. _api_IOSCfgLine:
 
-.. module:: models_cisco
-
 IOSCfgLine Object
 -----------------
 
-.. autoclass:: IOSCfgLine
+.. autoclass:: models_cisco.IOSCfgLine
       :members:
       :inherited-members:

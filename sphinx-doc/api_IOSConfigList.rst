@@ -1,11 +1,9 @@
 .. _api_IOSConfigList:
 
-.. module:: ciscoconfparse
-
 IOSConfigList Object
 --------------------
 
-.. autoclass:: IOSConfigList
+.. autoclass:: ciscoconfparse.IOSConfigList
       :members:
       :inherited-members:
 

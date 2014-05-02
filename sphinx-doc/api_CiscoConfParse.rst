@@ -1,11 +1,9 @@
 .. _api_CiscoConfParse:
 
-.. module:: ciscoconfparse
-
 CiscoConfParse Object
 ---------------------
 
-.. autoclass:: CiscoConfParse
+.. autoclass:: ciscoconfparse.CiscoConfParse
       :members:
       :undoc-members:
       :inherited-members:
