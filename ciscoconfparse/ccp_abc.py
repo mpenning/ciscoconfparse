@@ -265,6 +265,8 @@ class BaseCfgLine(object):
 
         insertstr : str, required
              A string which contains the text configuration to be apppended.
+        default : str, optional
+             A string which contains the text default value
 
         Returns
         -------
@@ -320,7 +322,11 @@ class BaseCfgLine(object):
         return retval
 
     def replace(self, linespec, replacestr, ignore_rgx=None):
-        """Replace all strings matching ``linespec`` with ``replacestr`` in the :class:`~models_cisco.IOSCfgLine` object; however, if the :class:`~models_cisco.IOSCfgLine` text matches ``ignore_rgx``, then the text is *not* replaced.  The ``replace()`` method is simply an alias to the ``re_sub()`` method.
+        """Replace all strings matching ``linespec`` with ``replacestr`` in 
+        the :class:`~models_cisco.IOSCfgLine` object; however, if the 
+        :class:`~models_cisco.IOSCfgLine` text matches ``ignore_rgx``, then 
+        the text is *not* replaced.  The ``replace()`` method is simply an 
+        alias to the ``re_sub()`` method.
 
         Parameters
         ----------
@@ -346,8 +352,9 @@ class BaseCfgLine(object):
         Examples
         --------
 
-        This example illustrates how you can use :func:`~ccp_abc.replace` to 
-        replace ``Serial1`` with ``Serial0`` in a configuration...
+        This example illustrates how you can use 
+        :func:`~models_cisco.IOSCfgLine.replace` to replace ``Serial1`` with 
+        ``Serial0`` in a configuration...
 
         .. code-block:: python
            :emphasize-lines: 14
@@ -404,8 +411,9 @@ class BaseCfgLine(object):
         Examples
         --------
 
-        This example illustrates how you can use :func:`~ccp_abc.re_sub` to 
-        replace ``Serial1`` with ``Serial0`` in a configuration...
+        This example illustrates how you can use 
+        :func:`~models_cisco.IOSCfgLine.re_sub` to replace ``Serial1`` with 
+        ``Serial0`` in a configuration...
 
         .. code-block:: python
            :emphasize-lines: 14
@@ -446,7 +454,7 @@ class BaseCfgLine(object):
         self.set_comment_bool()
         return retval
 
-    def re_match(self, regex, group=1):
+    def re_match(self, regex, group=1, default=""):
         """Use ``regex`` to search the :class:`~models_cisco.IOSCfgLine` text and return the regular expression group, at the integer index.
 
         Parameters
@@ -459,20 +467,23 @@ class BaseCfgLine(object):
         group : int, optional
              An integer which specifies the desired group to be returned.
              ``group`` defaults to 1.
+        default : optional
+             The default value to be returned, if there is no match.  By default
+             an empty string is returned if there is no match.
 
         Returns
         -------
 
         retval : str
             The text matched by the regular expression group; if there is no
-            match, None is returned.
+            match, ``default`` is returned.
 
         Examples
         --------
 
-        This example illustrates how you can use :func:`~ccp_abc.re_match` to 
-        store the mask of the interface which owns "1.1.1.5" in a variable 
-        called ``netmask``.
+        This example illustrates how you can use 
+        :func:`~models_cisco.IOSCfgLine..re_match` to store the mask of the 
+        interface which owns "1.1.1.5" in a variable called ``netmask``.
 
         .. code-block:: python
            :emphasize-lines: 13
@@ -498,9 +509,9 @@ class BaseCfgLine(object):
         mm = re.search(regex, self.text)
         if not (mm is None):
             return mm.group(group)
-        return None
+        return default
 
-    def re_search(self, regex):
+    def re_search(self, regex, default=""):
         """Use ``regex`` to search this :class:`~models_cisco.IOSCfgLine`'s
         text.
 
@@ -509,19 +520,22 @@ class BaseCfgLine(object):
 
         regex : str, required
              A string or python regular expression, which should be matched.  
+        default : optional
+             A value which is returned if :func:`~ccp_abc.re_search()` doesn't 
+             find a match while looking for ``regex``.
 
         Returns
         -------
 
         retval : str
             The :class:`~models_cisco.IOSCfgLine` text which matched.  If 
-            there is no match, None is returned.
+            there is no match, ``default`` is returned.
         """
         ## TODO: use re.escape(regex) on all regex, instead of bare regex
         mm = re.search(regex, self.text)
         if not (mm is None):
             return self.text
-        return None
+        return default
 
     def re_search_children(self, regex):
         """Use ``regex`` to search the text contained in the children of 
@@ -538,7 +552,8 @@ class BaseCfgLine(object):
 
         retval : list
             A list of matching :class:`~models_cisco.IOSCfgLine`s which 
-            matched.  If there is no match, None is returned.
+            matched.  If there is no match, an empty :py:func:`list` is 
+            returned.
         """
         retval = list()
         for cobj in self.children:
@@ -579,12 +594,11 @@ class BaseCfgLine(object):
         Examples
         --------
 
-        .. TODO figure out how to make subclasses of this use the proper class name when using :func:.  I'm not sure how inheritance works with sphinx class naming...
-
         This example illustrates how you can use 
-        :func:`re_match_typed` to build an association between an 
-        interface name, and its numerical slot value.  The name will be cast 
-        as :py:func:`str`, and the slot will be cast as :py:func:`int`.
+        :func:`~models_cisco.IOSCfgLine.re_match_typed` to build an 
+        association between an interface name, and its numerical slot value.  
+        The name will be cast as :py:func:`str`, and the slot will be cast as 
+        :py:func:`int`.
 
         .. code-block:: python
            :emphasize-lines: 14,15,16,17,18

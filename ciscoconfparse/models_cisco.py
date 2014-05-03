@@ -123,9 +123,7 @@ class BaseIOSIntfLine(BaseCfgLine):
             return ''
         intf_regex = r'^interface\s+(\S+.+)'
         name = self.re_match(intf_regex)
-        if not (name is None):
-            return name
-        return ''
+        return name
 
 
     @property
@@ -1015,36 +1013,58 @@ class IOSRouteLine(BaseIOSRouteLine):
 
 class IOSCfgLine(BaseCfgLine):
     """An object for a parsed IOS-style configuration line.  
-       :class:`~models_cisco.IOSCfgLine` objects contain references to other 
-       parent and child :class:`~models_cisco.IOSCfgLine` objects.
+    :class:`~models_cisco.IOSCfgLine` objects contain references to other 
+    parent and child :class:`~models_cisco.IOSCfgLine` objects.
 
-       .. note::
+    .. note::
 
-          Originally, :class:`~models_cisco.IOSCfgLine` objects were intended 
-          for advanced ciscoconfparse users.  As of ciscoconfparse 
-          version 0.9.10, all users are strongly encouraged to prefer the 
-          methods directly on :class:`~models_cisco.IOSCfgLine` objects.  
-          Ultimately, if you write scripts which call methods on 
-          :class:`~models_cisco.IOSCfgLine` objects, your scripts will be much 
-          more efficient than if you stick strictly to the classic 
-          :class:`~ciscoconfparse.CiscoConfParse` methods.
+       Originally, :class:`~models_cisco.IOSCfgLine` objects were only 
+       intended for advanced ciscoconfparse users.  As of ciscoconfparse 
+       version 0.9.10, *all users* are strongly encouraged to prefer the 
+       methods directly on :class:`~models_cisco.IOSCfgLine` objects.  
+       Ultimately, if you write scripts which call methods on 
+       :class:`~models_cisco.IOSCfgLine` objects, your scripts will be much 
+       more efficient than if you stick strictly to the classic 
+       :class:`~ciscoconfparse.CiscoConfParse` methods.
 
-       Parameters
-       ----------
+    Parameters
+    ----------
 
-       text : str, required
-            A string containing a text copy of the IOS configuration line.
-            :class:`~ciscoconfparse.CiscoConfParse` will automatically identify 
-            the parent and children (if any) when it parses the configuration. 
-       comment_delimiter : str, required
-            A string which is considered a comment for the configuration 
-            format.  Since this is for Cisco IOS-style configurations, it 
-            defaults to ``!``.
+    text : str, required
+         A string containing a text copy of the IOS configuration line.
+         :class:`~ciscoconfparse.CiscoConfParse` will automatically identify 
+         the parent and children (if any) when it parses the configuration. 
+    comment_delimiter : str, required
+         A string which is considered a comment for the configuration 
+         format.  Since this is for Cisco IOS-style configurations, it 
+         defaults to ``!``.
 
-       Returns
-       -------
 
-       retval : an instance of :class:`~models_cisco.IOSCfgLine`.
+    Returns
+    -------
+
+    retval : an instance of :class:`~models_cisco.IOSCfgLine`.
+
+    Attributes
+    ----------
+
+    text     : str
+         A string containing the parsed IOS configuration statement
+    linenum  : int
+         The line number of this configuration statement in the original config;
+         default is -1 when first initialized.
+    parent : :class:`~models_cisco.IOSCfgLine()`
+         The parent of this object; defaults to ``self``.
+    children : list
+         A list of ``IOSCfgLine()`` objects which are children of this object.
+    child_indent : int
+         An integer with the indentation of this object's children
+    indent : int
+         An integer with the indentation of this object's ``text``
+    oldest_ancestor : boolean
+         A boolean indicating whether this is the oldest ancestor in a family
+    is_comment : boolean
+         A boolean indicating whether this is a comment
     """
     ### Example of family relationships
     ###
