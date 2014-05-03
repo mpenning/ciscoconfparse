@@ -17,8 +17,9 @@ import time
 sys.path.insert(0, os.path.join(os.path.abspath(os.path.dirname(__file__)), 
     "..", "ciscoconfparse"))
 
+from sphinx.ext.autodoc import AttributeDocumenter, ClassLevelDocumenter
 import sphinx_bootstrap_theme
-import ciscoconfparse
+import ciscoconfparse, ccp_abc
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -30,8 +31,12 @@ import ciscoconfparse
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest', 
-    'sphinx.ext.intersphinx', 'numpydoc']
+    'sphinx.ext.intersphinx', 'sphinx.ext.autosummary', 'numpydoc']
 intersphinx_mapping = {'python':('http://docs.python.org/2.6', None)}
+
+# Kill errors... thank you daveydave400
+#   http://stackoverflow.com/a/15210813/667301
+numpydoc_show_class_members = False
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
