@@ -7,11 +7,11 @@ Contents:
    :maxdepth: 4
 
    intro
-   new_in_1_0_0
    history
    installation
    tutorial
    legacy_syntax
+   license_copyright
    api
 
 Indices and tables
