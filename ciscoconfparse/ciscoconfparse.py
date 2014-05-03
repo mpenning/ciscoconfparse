@@ -11,9 +11,6 @@ from models_cisco import IOSHostnameLine, IOSRouteLine, IOSIntfLine
 from models_cisco import IOSAccessLine, IOSIntfGlobal
 from models_cisco import IOSCfgLine
 
-# Relative import path referenced to this directory
-sys.path.insert(0, os.path.join(os.path.abspath(os.path.dirname(__file__)),
-    "local_py"))
 ### ipaddr is optional, and Apache License 2.0 is compatible with GPLv3 per
 ###   the ASL web page: http://www.apache.org/licenses/GPL-compatibility.html
 try:
@@ -124,6 +121,8 @@ class CiscoConfParse(object):
         # re: modules usage... thank you Delnan
         # http://stackoverflow.com/a/5027393
         if (factory is True) and (bool(modules.get('ipaddr', False)) is False):
+            # Relative import path referenced to this directory
+            sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)), "local_py"))
             from ipaddr import IPv4Network, IPv6Network
             #raise ImportError("Could not import ipaddr module.  ciscoconfparse.CiscoConfParse only requires the ipaddr module when called with factory=True.")
 
