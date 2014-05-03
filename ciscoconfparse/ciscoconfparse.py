@@ -79,15 +79,20 @@ class CiscoConfParse(object):
         Returns
         -------
 
-        CiscoConfParse : object instance
+        retval : :class:`~ciscoconfparse.CiscoConfParse` instance
              An instance of a CiscoConfParse object.
 
         Attributes
         ----------
 
+        comment_delimiter : str
+             A string containing the comment-delimiter
         ConfigObjs : :class:`~ciscoconfparse.IOSConfigList`
-             ``ConfigObjs`` is a customized python list, which contains all 
-             parsed :class:`~models_cisco.IOSCfgLine` instances.
+             A custom list, which contains all parsed :class:`~models_cisco.IOSCfgLine` instances.
+        all_parents : list
+             A list of all parent :class:`~models_cisco.IOSCfgLine` instances.
+        last_index : int
+             An integer with the last index in ``ConfigObjs``
 
         Examples
         --------
@@ -164,11 +169,13 @@ class CiscoConfParse(object):
 
     @property
     def ioscfg(self):
+        """A list containing all text configuration statements"""
         ## I keep this here to emulate the legacy ciscoconfparse behavior
         return [obj.text for obj in self.ConfigObjs]
 
     @property
     def objs(self):
+        """An alias to the ``ConfigObjs`` attribute"""
         return self.ConfigObjs
 
     def atomic(self):
@@ -214,7 +221,16 @@ class CiscoConfParse(object):
         self.atomic()
 
     def find_objects(self, linespec, exactmatch=False, ignore_ws=False):
-        """Find all :class:`~models_cisco.IOSCfgLine` objects whose text matches ``linespec`` and return the :class:`~models_cisco.IOSCfgLine` objects in a python list.  :func:`~ciscoconfparse.CiscoConfParse.find_objects` is similar to :func:`find_lines`; however, the former returns a list of :class:`~models_cisco.IOSCfgLine` objects, while the latter returns a list of text configuration statements.  Going forward, I strongly encourage people to start using :func:`~ciscoconfparse.CiscoConfParse.find_objects` instead of :func:`~ciscoconfparse.CiscoConfParse.find_lines`.
+        """Find all :class:`~models_cisco.IOSCfgLine` objects whose text 
+        matches ``linespec`` and return the :class:`~models_cisco.IOSCfgLine` 
+        objects in a python list.  
+        :func:`~ciscoconfparse.CiscoConfParse.find_objects` is similar to 
+        :func:`~ciscoconfparse.CiscoConfParse.find_lines`; however, the former 
+        returns a list of :class:`~models_cisco.IOSCfgLine` objects, while the 
+        latter returns a list of text configuration statements.  Going 
+        forward, I strongly encourage people to start using 
+        :func:`~ciscoconfparse.CiscoConfParse.find_objects` instead of 
+        :func:`~ciscoconfparse.CiscoConfParse.find_lines`.
 
         Parameters
         ----------
@@ -316,17 +332,17 @@ class CiscoConfParse(object):
         Parameters
         ----------
 
-        linespec : :py:func:`str`
+        linespec : str, required
              Text regular expression for the line to be matched
-        exactmatch : :py:func:`bool`
+        exactmatch : boolean, optional
              boolean that controls whether partial matches are valid
-        ignore_ws : :py:func:`bool`
+        ignore_ws : boolean, optional
              boolean that controls whether whitespace is ignored
 
         Returns
         -------
 
-        retval : :py:func:`list`
+        retval : list
             A list of matching configuration lines
 
         Examples
@@ -398,17 +414,17 @@ class CiscoConfParse(object):
         Parameters
         ----------
 
-        linespec : :py:func:`str`
+        linespec : str, required
              Text regular expression for the line to be matched
-        exactmatch : :py:func:`bool`
+        exactmatch : bool, optional
              boolean that controls whether partial matches are valid
-        ignore_ws : :py:func:`bool`
+        ignore_ws : bool, optional
              boolean that controls whether whitespace is ignored
 
         Returns
         -------
 
-        retval : :py:func:`list`
+        retval : list
             A list of matching configuration lines
 
         Examples
@@ -481,17 +497,17 @@ class CiscoConfParse(object):
         Parameters
         ----------
 
-        linespec : :py:func:`str`
+        linespec : str, required
              Text regular expression for the line to be matched
-        exactmatch : :py:func:`bool`
+        exactmatch : boolean, optional
              boolean that controls whether partial matches are valid
-        ignore_ws : :py:func:`bool`
+        ignore_ws : boolean, optional
              boolean that controls whether whitespace is ignored
 
         Returns
         -------
 
-        retval : :py:func:`list`
+        retval : list
             A list of matching configuration lines
 
 
@@ -603,21 +619,21 @@ class CiscoConfParse(object):
         Parameters
         ----------
 
-        parentspec : :py:func:`str`
+        parentspec : str, required
              Text regular expression for the line to be matched; this must
              match the parent's line
-        childspec : :py:func:`str`
+        childspec : str, required
              Text regular expression for the line to be matched; this must
              match the child's line
-        exactmatch : :py:func:`bool`
+        exactmatch : boolean, optional
              boolean that controls whether partial matches are valid
-        ignore_ws : :py:func:`bool`
+        ignore_ws : boolean, optional
              boolean that controls whether whitespace is ignored
 
         Returns
         -------
 
-        retval : :py:func:`list`
+        retval : list
             A list of matching parent configuration lines
 
         Examples
@@ -707,21 +723,21 @@ class CiscoConfParse(object):
         Parameters
         ----------
 
-        parentspec : :py:func:`str`
+        parentspec : str, required
              Text regular expression for the line to be matched; this must
              match the parent's line
-        childspec : :py:func:`str`
+        childspec : str, required
              Text regular expression for the line to be matched; this must
              match the child's line
-        exactmatch : :py:func:`bool`
+        exactmatch : boolean, optional
              boolean that controls whether partial matches are valid
-        ignore_ws : :py:func:`bool`
+        ignore_ws : boolean, optional
              boolean that controls whether whitespace is ignored
 
         Returns
         -------
 
-        retval : :py:func:`list`
+        retval : list
             A list of matching parent configuration lines
 
         Examples
@@ -812,21 +828,21 @@ class CiscoConfParse(object):
         Parameters
         ----------
 
-        parentspec : :py:func:`str`
+        parentspec : str, required
              Text regular expression for the line to be matched; this must
              match the parent's line
-        childspec : :py:func:`str`
+        childspec : str, required
              Text regular expression for the line to be matched; this must
              match the child's line
-        exactmatch : :py:func:`bool`
+        exactmatch : boolean, optional
              boolean that controls whether partial matches are valid
-        ignore_ws : :py:func:`bool`
+        ignore_ws : boolean, optional
              boolean that controls whether whitespace is ignored
 
         Returns
         -------
 
-        retval : :py:func:`list`
+        retval : list
             A list of matching child configuration lines
 
         Examples
@@ -1004,7 +1020,22 @@ class CiscoConfParse(object):
         return self.ConfigObjs[0]
 
     def append_line(self, linespec):
-        """Unconditionally insert linespec (a text line) at the end of the configuration"""
+        """Unconditionally insert ``linespec`` (a text line) at the end of the 
+        configuration
+
+        Parameters
+        ----------
+
+        linespec : str, required
+             Text IOS configuration line
+
+        Returns
+        -------
+
+        retval : :class:`~models_cisco.IOSCfgLine()` instance
+            The parsed :class:`~models_cisco.IOSCfgLine` instance
+
+        """
         retval = self.ConfigObjs.append(linespec)
         return self.ConfigObjs[-1]
 
@@ -1017,22 +1048,23 @@ class CiscoConfParse(object):
         Parameters
         ----------
 
-        linespec : :py:func:`str`
+        linespec : str, required
              Text regular expression for the line to be matched
-        replacestr : :py:func:`str`
+        replacestr : str, required
              Text used to replace strings matching linespec
-        excludespec : :py:func:`str`
+        excludespec : str, optional
              Text regular expression used to reject lines, which would 
-             otherwise be replaced
-        exactmatch : :py:func:`bool`
+             otherwise be replaced.  Default value of ``excludespec`` is None,
+             which means nothing is excluded
+        exactmatch : boolean, optional
              boolean that controls whether partial matches are valid
-        atomic : :py:func:`bool`
+        atomic : boolean, optional
              boolean that controls whether the config is reparsed after replacement (default True)
 
         Returns
         -------
 
-        retval : :py:func:`list`
+        retval : list
             A list of changed configuration lines
 
 
@@ -1125,7 +1157,34 @@ class CiscoConfParse(object):
 
     def replace_children(self, parentspec, childspec, replacestr, 
         excludespec=None, exactmatch=False, atomic=True):
-        """Replace lines matching `childspec` within the immediate children of lines which match `parentspec`"""
+        """Replace lines matching `childspec` within the immediate children of lines which match `parentspec`
+
+        Parameters
+        ----------
+
+        parentspec : str
+             Text IOS configuration line
+        childspec : str
+             Text IOS configuration line, or regular expression
+        replacestr : str
+             Text IOS configuration, which should replace text matching 
+             ``childspec``.
+        excludespec : str
+             A regular expression, which indicates ``childspec`` lines which 
+             *must* be skipped.  If ``excludespec`` is None, no lines will
+             be excluded.
+        exactmatch : boolean
+             Defaults to False.  When set True, this option requires 
+             ``linespec`` match the whole configuration line, instead of a 
+             portion of the configuration line.
+
+        Returns
+        -------
+
+        retval : list
+            A list of changed :class:`~models_cisco.IOSCfgLine` instances.
+
+        """
         retval = list()
         ## Since we are replacing text, we *must* operate on ConfigObjs
         childspec_re   = re.compile(childspec)
@@ -1424,8 +1483,8 @@ class IOSConfigList(MutableSequence):
        Returns
        -------
 
-       IOSConfigList : object instance
-            An instance of a IOSConfigList object.
+       retval : :class:`~ciscoconfparse.IOSConfigList` instance
+            An instance of an :class:`~ciscoconfparse.IOSConfigList` object.
     """
     def __init__(self, data=None, comment_delimiter='!', debug=False, 
         factory=False, ignore_blank_lines=True):
@@ -1829,10 +1888,6 @@ class IOSConfigList(MutableSequence):
                 if in_family:
                     if self.DBGFLAG:
                         print("[DEBUG]      ID family_endpoint: Line #%s: %s" % (obj.linenum, obj.text))
-
-    @property
-    def text_lines(self):
-        return [str(obj) for obj in self._list] 
 
     @property
     def all_parents(self):
