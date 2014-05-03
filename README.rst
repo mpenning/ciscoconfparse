@@ -28,138 +28,10 @@ Introduction: What is ciscoconfparse?
 ciscoconfparse_ parses, audits, queries, builds, and modifies Cisco IOS 
 configurations.
 
-Usage: A contrived config audit
-===============================
-
-Suppose you have a large switched network and
-need to run audits on your configurations; assume you need to build 
-configurations which conform to the following criteria:
-
-* Access switchports *must* be configured with ``storm-control``
-* Trunk ports *must not* have port-security
-* Timestamps must be enabled on logging and debug messages
-
-You should follow the following steps.
-
-#) Assume that you start with the following Cisco IOS configuration saved as ``short.conf`` (All the interfaces need to be changed, to correctly conform): ::
-
-    !
-    interface FastEthernet0/1
-     switchport mode access
-     switchport access vlan 532
-    !
-    interface FastEthernet0/2
-     switchport mode trunk
-     switchport trunk allowed 300,532
-     switchport nonegotiate
-     switchport port-security maximum 2
-     switchport port-security violation restrict
-     switchport port-security
-    !
-    interface FastEthernet0/3
-     switchport mode access
-     switchport access vlan 300
-    !
-    end
-
-
-
-
-#) Next, we build this script to read and change the config: ::
-
-    from ciscoconfparse import CiscoConfParse
-
-    def standardize_intfs(parse):
-
-        ## Search all switch interfaces and modify them
-        #
-        # r'^interface.+?thernet' is a regular expression, for ethernet intfs
-        for intf in parse.find_objects(r'^interface.+?thernet'):
-
-            has_stormcontrol = intf.has_child_with(r' storm-control broadcast')
-            is_switchport_access = intf.has_child_with(r'switchport mode access')
-            is_switchport_trunk = intf.has_child_with(r'switchport mode trunk')
-
-            ## Add missing features
-            if is_switchport_access and (not has_stormcontrol):
-                intf.append_to_family(' storm-control action trap')
-                intf.append_to_family(' storm-control broadcast level 0.4 0.3')
-
-            ## Remove dot1q trunk misconfiguration...
-            elif is_switchport_trunk:
-                intf.delete_children_matching('port-security')
-
-    ## Parse the config
-    parse = CiscoConfParse('short.conf')
-
-    ## Add a new switchport at the bottom of the config...
-    parse.append_line('interface FastEthernet0/4')
-    parse.append_line(' switchport')
-    parse.append_line(' switchport mode access')
-    parse.append_line('!')
-    parse.commit()     # commit() **must** be called before searching again
-
-    ## Search and standardize the interfaces...
-    standardize_intfs(parse)
-    parse.commit()     # commit() **must** be called before searching again
-
-    ## I'm illustrating regular expression usage in has_line_with()
-    if not parse.has_line_with(r'^service\stimestamp'):
-        ## prepend_line() adds a line at the top of the configuration
-        parse.prepend_line('service timestamps debug datetime msec localtime show-timezone')
-        parse.prepend_line('service timestamps log datetime msec localtime show-timezone')
-
-    ## Write the new configuration
-    parse.save_as('short.conf.new')
-
-Normally, `regular expressions`_ should be used in ``.has_child_with()``; 
-however, you can technically get away with the bare strings that I used in 
-``standardize_intfs()`` in some cases.  That said, `regular expressions`_ are 
-more powerful, and reliable when searching text.  Usage of 
-the ``has_line_with()`` and ``find_objects()`` methods illustrate regular 
-expression syntax.
-
-#) After the script runs, the new configuration (``short.conf.new``) looks like this: ::
-
-    service timestamps log datetime msec localtime show-timezone
-    service timestamps debug datetime msec localtime show-timezone
-    !
-    interface FastEthernet0/1
-     switchport mode access
-     switchport access vlan 532
-     storm-control broadcast level 0.4 0.3
-     storm-control action trap
-    !
-    interface FastEthernet0/2
-     switchport mode trunk
-     switchport trunk allowed 300,532
-     switchport nonegotiate
-    !
-    interface FastEthernet0/3
-     switchport mode access
-     switchport access vlan 300
-     storm-control broadcast level 0.4 0.3
-     storm-control action trap
-    !
-    interface FastEthernet0/4
-     switchport
-     switchport mode access
-     storm-control broadcast level 0.4 0.3
-     storm-control action trap
-    !
-    end
-
-The script:
-
- * *Added* a switchport named FastEthernet0/4
- * *Added* storm-control to Fa0/1, Fa0/3, and Fa0/4
- * *Removed* port-security from Fa0/2
- * *Added* timestamps to logs and debug messages
-
 Docs
 ====
 
-The latest copy of the docs_ are `archived on the web <http://www.pennington.net/py/ciscoconfparse/>`_
+The latest copy of the docs are `archived on the web <http://www.pennington.net/py/ciscoconfparse/>`_
 
 .. _Pre-Requisites:
 
@@ -229,7 +101,7 @@ FAQ
 
 #) *QUESTION*: I want to use ciscoconfparse_ with Python3; is that safe?  *ANSWER*: As long as you're using Python 3.2 or higher, it's safe. I test every release against Python 3.2+.
 
-#) *QUESTION*: The example in this ``README.rst`` file looks different than what I'm used to seeing.  Did you change something?  *ANSWER*: Yes, starting around ciscoconfparse_ v0.9.10 I introducted more methods directly on ``IOSConfigLine`` objects; going forward, these methods are the preferred way to use ciscoconfparse_, although the sphinx docs_ on my website haven't been updated yet.  Please start using the new methods shown in the example, since they're faster, and you type much less code this way.  Eventually I'm going to deprecate the original style ciscoconfparse_ methods, but that's not going to happen yet.
+#) *QUESTION*: Some of the code in the documentation looks different than what I'm used to seeing.  Did you change something?  *ANSWER*: Yes, starting around ciscoconfparse_ v0.9.10 I introducted more methods directly on ``IOSConfigLine()`` objects; going forward, these methods are the preferred way to use ciscoconfparse_.  Please start using the new methods shown in the example, since they're faster, and you type much less code this way.
 
 #) *QUESTION*: ciscoconfparse_ saved me a lot of time, I want to give money.  Do you have a donation link?  *ANSWER*:  I love getting emails like this; helping people get their jobs done is why I wrote the module.  However, I'm not accepting donations.
 
@@ -245,7 +117,6 @@ Other Resources
  * `Dive into Python3`_ is a good way to learn Python
  * `Team CYMRU`_ has a `Secure IOS Template`_, which is especially useful for external-facing routers / switches
  * `Cisco's Guide to hardening IOS devices`_
-
 
 .. _`Bug-Tracker-and-Support`:
 

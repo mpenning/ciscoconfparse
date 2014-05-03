@@ -4,6 +4,7 @@ Introduction
 
 Overview
 ---------
+
 ciscoconfparse parses through Cisco IOS-style configurations.  It can:
 
 - Retrieve portions of the configuration
@@ -28,9 +29,19 @@ hierarchy in them.
 
 What is ciscoconfparse good for?
 ----------------------------------
-After several network evolutions, you may have a tangled mess of conflicting or misconfigured Cisco devices.  Misconfigurations of proxy-arp, FHRP timers, routing protocols, duplicated subnets, cdp, console passwords, or aaa schemes have a measurable affect on uptime and beg for a tool to audit them. However, manually scrubbing configurations is a long and error-prone process.
 
-Audits aren't the only use for ciscoconfparse.  Let's suppose you are working on a design and need a list of dot1q trunks on a switch with more than 400 interfaces.  You can't grep for them because you need the interface names of layer2 trunks.  With ciscoconfparse, it's really this easy...
+After several network evolutions, you may have a tangled mess of conflicting or 
+misconfigured Cisco devices.  Misconfigurations of proxy-arp, static routes, 
+FHRP timers, routing protocols, duplicated subnets, cdp, console passwords, or 
+aaa schemes have a measurable affect on uptime and beg for a tool to audit them.
+However, manually scrubbing configurations is a long and error-prone process.
+
+Audits aren't the only use for ciscoconfparse.  Let's suppose you are working 
+on a design and need a list of dot1q trunks on a switch with more than 400 
+interfaces.  You can't grep for them because you need the interface names of 
+layer2 trunks; the interface name is stored on one line, and the trunk 
+configuration is stored somewhere below the interface name.  With 
+ciscoconfparse, it's really this easy...
 
 .. sourcecode:: python
 
@@ -47,7 +58,30 @@ Audits aren't the only use for ciscoconfparse.  Let's suppose you are working on
    interface GigabitEthernet 5/10
    <and so on...>
 
-So you may be saying, that all sounds great, but I have no idea what you did with that code up there.  If so, don't worry... There is a tutorial following this intro.  For more depth, I highly recommend `Dive into Python`_ and `Dive into Python3`_.
+So you may be saying, that all sounds great, but I have no idea what you did 
+with that code up there.  If so, don't worry... There is a tutorial following 
+this intro.  For more depth, I highly recommend `Dive into Python`_ and 
+`Dive into Python3`_.
+
+What's new in version 1.0.0
+---------------------------
+
+I wrote :mod:`ciscoconfparse` seven years ago as literally my first Python 
+project; through the years, my understanding of Python improved, and I also 
+found many missing features along the way. Some of these features, like 
+changing a configuration after it was parsed, required non-trivial changes to 
+the whole project.
+
+Starting in version 0.9, I initiated a major rewrite; several important 
+changes were made:
+
+- Python3 compatibility; Python2.4 deprecation
+- Major improvement in config parsing speed
+- Much better unit-test coverage
+- Too many bugfixes to count
+- New feature - :mod:`ciscoconfparse` inserts, deletes and appends config lines
+- Rearchitected the library, with an eye towards more future improvements
+- Revisions in scripting flow.  All users are encouraged to use :class:`~models_cisco.IOSCfgLine()` objects whenever possible.  Typically, you'll start by matching them with :func:`~ciscoconfparse.CiscoConfParse.find_objects()`.  Working directly with :class:`~models_cisco.IOSCfgLine()` objects makes your scripts less complicated and it also makes them faster than using legacy :mod:`ciscoconfparse` syntax.
 
 .. _`Dive into Python`: http://www.diveintopython.net/
 .. _`Dive into Python3`: http://www.diveintopython3.net/
