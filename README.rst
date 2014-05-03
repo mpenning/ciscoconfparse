@@ -281,10 +281,6 @@ ciscoconfparse_ is developed with mercurial_, and pushed to bitbucket_.
 `hg-git`_ keeps `github repo`_ and bitbucket_ in sync, so it shouldn't 
 matter if you just want to fork the `github repo`_.
 
-Due to real-life time limitations, the docs_ are getting behind the bitbucket_
-repo.  Even if you think your Python isn't good enough to contribute directly, 
-I also value thoughtful improvements to the docs_.
-
 .. _Unit-Tests:
 
 Unit-Tests

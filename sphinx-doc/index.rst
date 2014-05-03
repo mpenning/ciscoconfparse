@@ -6,10 +6,13 @@ Contents:
 .. toctree::
    :maxdepth: 4
 
-   intro.rst
-   history.rst
-   tutorial.rst
-   api.rst
+   intro
+   new_in_1_0_0
+   history
+   installation
+   tutorial
+   legacy_syntax
+   api
 
 Indices and tables
 ==================
