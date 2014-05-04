@@ -1,3 +1,5 @@
+1.0.4   20140504 Add new find_objects_w_child() and find_objects_wo_child()
+        methods.  Add more documentation.
 1.0.3   20140503 Removed all examples in README.rst, and expanded those in the
         web documentation.  More non-trivial doc updates
 1.0.2   20140502 Even more documentation improvements.  Changed default value
