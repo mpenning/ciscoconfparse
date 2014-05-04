@@ -40,7 +40,7 @@ except ImportError:
 """
 
 ## Docstring props: http://stackoverflow.com/a/1523456/667301
-__version_tuple__ = (1,0,3)
+__version_tuple__ = (1,0,4)
 __version__ = '.'.join(map(str, __version_tuple__))
 __email__ = "mike /at\ pennington [dot] net"
 __author__ = "David Michael Pennington <{0}>".format(__email__)
@@ -388,7 +388,6 @@ class CiscoConfParse(object):
            ['archive', ' log config', ' path ftp://ns.foo.com//tftpboot/Foo-archive']
            >>>
         """
-
         if ignore_ws:
             linespec = self._build_space_tolerant_regex(linespec)
 
@@ -612,9 +611,107 @@ class CiscoConfParse(object):
 
         return list(map(attrgetter('text'), sorted(tmp)))
 
+    def find_objects_w_child(self, parentspec, childspec, ignore_ws=False):
+        """Return a list of parent :class:`~models_cisco.IOSCfgLine` objects, 
+        which matched the ``parentspec`` and whose children match ``childspec``.
+        Only the parent :class:`~models_cisco.IOSCfgLine` objects will be 
+        returned.
+
+        Parameters
+        ----------
+
+        parentspec : str, required
+             Text regular expression for the :class:`~models_cisco.IOSCfgLine`
+             object to be matched; this must match the parent's line
+        childspec : str, required
+             Text regular expression for the line to be matched; this must
+             match the child's line
+        ignore_ws : boolean, optional
+             boolean that controls whether whitespace is ignored
+
+        Returns
+        -------
+
+        retval : list
+            A list of matching parent :class:`~models_cisco.IOSCfgLine` objects
+
+        Examples
+        --------
+
+        This example uses :func:`~ciscoconfparse.find_objects_w_child()` to 
+        find all ports that are members of access vlan 300 in following 
+        config...
+
+        .. code::
+
+           !
+           interface FastEthernet0/1
+            switchport access vlan 532
+            spanning-tree vlan 532 cost 3
+           !
+           interface FastEthernet0/2
+            switchport access vlan 300
+            spanning-tree portfast
+           !
+           interface FastEthernet0/2
+            duplex full
+            speed 100
+            switchport access vlan 300
+            spanning-tree portfast
+           !
+
+        The following interfaces should be returned:
+
+        .. code::
+
+           interface FastEthernet0/2
+           interface FastEthernet0/3
+
+        We do this by quering `find_objects_w_child()`; we set our 
+        parent as `^interface` and set the child as `switchport access 
+        vlan 300`.
+
+        .. code-block:: python
+           :emphasize-lines: 18
+
+           >>> config = ['!', 
+           ...           'interface FastEthernet0/1', 
+           ...           ' switchport access vlan 532', 
+           ...           ' spanning-tree vlan 532 cost 3', 
+           ...           '!', 
+           ...           'interface FastEthernet0/2', 
+           ...           ' switchport access vlan 300', 
+           ...           ' spanning-tree portfast', 
+           ...           '!', 
+           ...           'interface FastEthernet0/3', 
+           ...           ' duplex full', 
+           ...           ' speed 100', 
+           ...           ' switchport access vlan 300', 
+           ...           ' spanning-tree portfast', 
+           ...           '!',
+           ...     ]
+           >>> p = CiscoConfParse(config)
+           >>> p.find_objects_w_child('^interface', 
+           ...     'switchport access vlan 300')
+           ...
+           [<IOSCfgLine # 5 'interface FastEthernet0/2'>, <IOSCfgLine # 9 'interface FastEthernet0/3'>]
+           >>>
+        """
+
+        if ignore_ws:
+            parentspec = self._build_space_tolerant_regex(parentspec)
+            childspec = self._build_space_tolerant_regex(childspec)
+
+        retval = list()
+        for obj in self.find_objects(parentspec):
+            if obj.re_search_children(childspec):
+                retval.append(obj)
+        return retval
+
     def find_parents_w_child(self, parentspec, childspec, ignore_ws=False):
         """Parse through all children matching childspec, and return a list of
-        parents that matched the parentspec.
+        parents that matched the parentspec.  Only the parent lines will be
+        returned.
 
         Parameters
         ----------
@@ -625,8 +722,6 @@ class CiscoConfParse(object):
         childspec : str, required
              Text regular expression for the line to be matched; this must
              match the child's line
-        exactmatch : boolean, optional
-             boolean that controls whether partial matches are valid
         ignore_ws : boolean, optional
              boolean that controls whether whitespace is ignored
 
@@ -695,24 +790,122 @@ class CiscoConfParse(object):
            ['interface FastEthernet0/2', 'interface FastEthernet0/3']
            >>>
         """
+        tmp = self.find_objects_w_child(parentspec, childspec, 
+            ignore_ws=ignore_ws)
+        return list(map(attrgetter('text'), tmp))
 
+    def find_objects_wo_child(self, parentspec, childspec, ignore_ws=False):
+        """Return a list of parent :class:`~models_cisco.IOSCfgLine` objects, 
+        which matched the ``parentspec`` and whose children did not match 
+        ``childspec``.  Only the parent :class:`~models_cisco.IOSCfgLine` 
+        objects will be returned.  For simplicity, this method only finds 
+        oldest_ancestors without immediate children that match.
+
+        Parameters
+        ----------
+
+        parentspec : str, required
+             Text regular expression for the :class:`~models_cisco.IOSCfgLine`
+             object to be matched; this must match the parent's line
+        childspec : str, required
+             Text regular expression for the line to be matched; this must
+             match the child's line
+        ignore_ws : boolean, optional
+             boolean that controls whether whitespace is ignored
+
+        Returns
+        -------
+
+        retval : list
+            A list of matching parent configuration lines
+
+        Examples
+        --------
+
+        This example finds all ports that are autonegotiating in the 
+        following config...
+
+        .. code::
+
+           !
+           interface FastEthernet0/1
+            switchport access vlan 532
+            spanning-tree vlan 532 cost 3
+           !
+           interface FastEthernet0/2
+            switchport access vlan 300
+            spanning-tree portfast
+           !
+           interface FastEthernet0/2
+            duplex full
+            speed 100
+            switchport access vlan 300
+            spanning-tree portfast
+           !
+
+        The following interfaces should be returned:
+
+        .. code::
+
+           interface FastEthernet0/1
+           interface FastEthernet0/2
+
+        We do this by quering `find_objects_wo_child()`; we set our 
+        parent as `^interface` and set the child as `speed\s\d+` (a 
+        regular-expression which matches the word 'speed' followed by
+        an integer).
+
+        .. code-block:: python
+           :emphasize-lines: 18
+
+           >>> config = ['!', 
+           ...           'interface FastEthernet0/1', 
+           ...           ' switchport access vlan 532', 
+           ...           ' spanning-tree vlan 532 cost 3', 
+           ...           '!', 
+           ...           'interface FastEthernet0/2', 
+           ...           ' switchport access vlan 300', 
+           ...           ' spanning-tree portfast', 
+           ...           '!', 
+           ...           'interface FastEthernet0/3', 
+           ...           ' duplex full', 
+           ...           ' speed 100', 
+           ...           ' switchport access vlan 300', 
+           ...           ' spanning-tree portfast', 
+           ...           '!',
+           ...     ]
+           >>> p = CiscoConfParse(config)
+           >>> p.find_objects_wo_child(r'^interface', r'speed\s\d+')
+           [<IOSCfgLine # 1 'interface FastEthernet0/1'>, <IOSCfgLine # 5 'interface FastEthernet0/2'>]
+           >>>
+        """
+
+#        if ignore_ws:
+#            parentspec = self._build_space_tolerant_regex(parentspec)
+#            childspec = self._build_space_tolerant_regex(childspec)
+#
+#        retval = set([])
+#        ## Iterate over all parents, find those with non-matching children
+#        for parentobj in [obj for obj in self.ConfigObjs.all_parents \
+#            if (obj.oldest_ancestor and obj.re_search(parentspec))]:
+#
+#            match_childspec = False
+#            for childobj in parentobj.children:
+#                if childobj.re_search(childspec):
+#                    match_childspec = True
+#            if (match_childspec is False):
+#                ## We found a parent without a child matching the
+#                ##    childspec
+#                retval.add(parentobj)
         if ignore_ws:
             parentspec = self._build_space_tolerant_regex(parentspec)
             childspec = self._build_space_tolerant_regex(childspec)
 
-        retval = set([])
-        childobjs = self._find_line_OBJ(childspec)
-        parentspec_re = re.compile(parentspec)
-        for child in childobjs:
-            parents = child.all_parents
-            match_parentspec = False
-            for parent in parents:
-                if parentspec_re.search(parent.text):
-                    match_parentspec = True
-            if (match_parentspec is True):
-                for parent in parents:
-                    retval.add(parent)
-        return list(map(attrgetter('text'), sorted(retval)))
+        retval = list()
+        for obj in self.find_objects(parentspec):
+            if not obj.re_search_children(childspec):
+                retval.append(obj)
+        return retval
 
     def find_parents_wo_child(self, parentspec, childspec, ignore_ws=False):
         """Parse through all parents matching parentspec, and return a list of
@@ -800,26 +993,9 @@ class CiscoConfParse(object):
            ['interface FastEthernet0/1', 'interface FastEthernet0/2']
            >>>
         """
-
-        if ignore_ws:
-            parentspec = self._build_space_tolerant_regex(parentspec)
-            childspec = self._build_space_tolerant_regex(childspec)
-
-        retval = set([])
-        ## Iterate over all parents, find those with non-matching children
-        for parentobj in [obj for obj in self.ConfigObjs.all_parents \
-            if (obj.oldest_ancestor and obj.re_search(parentspec))]:
-
-            match_childspec = False
-            for childobj in parentobj.children:
-                if childobj.re_search(childspec):
-                    match_childspec = True
-            if (match_childspec is False):
-                ## We found a parent without a child matching the
-                ##    childspec
-                retval.add(parentobj)
-
-        return list(map(attrgetter('text'), sorted(retval)))
+        tmp = self.find_objects_wo_child(parentspec, childspec, 
+            ignore_ws=ignore_ws)
+        return list(map(attrgetter('text'), tmp))
 
     def find_children_w_parents(self, parentspec, childspec, ignore_ws=False):
         """Parse through the children of all parents matching parentspec, 
@@ -968,7 +1144,9 @@ class CiscoConfParse(object):
 
     def insert_after(self, linespec, insertstr="", exactmatch=False, 
         ignore_ws=False, atomic=True):
-        """Find all objects whose text matches linespec, and insert 'insertstr' after those line objects"""
+        """Find all :class:`~models_cisco.IOSCfgLine` objects whose text 
+        matches ``linespec``, and insert ``insertstr`` after those line 
+        objects"""
         objs = self.find_objects(linespec, exactmatch, ignore_ws)
         last_idx = len(objs) - 1
         local_atomic = False & atomic
@@ -983,7 +1161,10 @@ class CiscoConfParse(object):
 
     def insert_after_child(self, parentspec, childspec, insertstr="", 
         exactmatch=False, excludespec=None, ignore_ws=False, atomic=True):
-        """Find all objects whose text matches linespec and have a child matching childspec, and insert 'insertstr' after those child objects"""
+        """Find all :class:`~models_cisco.IOSCfgLine` objects whose text 
+        matches ``linespec`` and have a child matching ``childspec``, and 
+        insert an :class:`~models_cisco.IOSCfgLine` object for ``insertstr`` 
+        after those child objects."""
         retval = list()
         modified = False
         for pobj in self._find_line_OBJ(parentspec, exactmatch=exactmatch):
@@ -1005,7 +1186,8 @@ class CiscoConfParse(object):
         return retval
 
     def delete_lines(self, linespec, exactmatch=False, ignore_ws=False):
-        """Find all objects whose text matches linespec, and delete it"""
+        """Find all :class:`~models_cisco.IOSCfgLine` objects whose text 
+        matches linespec, and delete the object"""
         objs = self.find_objects(linespec, exactmatch, ignore_ws)
         last_idx = len(objs) - 1
         #atomic = False
@@ -1015,7 +1197,8 @@ class CiscoConfParse(object):
             del self.ConfigObjs[obj.linenum]
 
     def prepend_line(self, linespec):
-        """Unconditionally insert linespec (a text line) at the top of the configuration"""
+        """Unconditionally insert an :class:`~models_cisco.IOSCfgLine` object
+        for ``linespec`` (a text line) at the top of the configuration"""
         self.ConfigObjs.insert(0, linespec)
         return self.ConfigObjs[0]
 
@@ -1039,8 +1222,8 @@ class CiscoConfParse(object):
         retval = self.ConfigObjs.append(linespec)
         return self.ConfigObjs[-1]
 
-    def replace_lines(self, linespec, replacestr, excludespec=None, exactmatch=False,
-        atomic=True):
+    def replace_lines(self, linespec, replacestr, excludespec=None, 
+        exactmatch=False, atomic=True):
         """This method is a text search and replace (Case-sensitive).  You can
         optionally exclude lines from replacement by including a string (or
         compiled regular expression) in `excludespec`.
