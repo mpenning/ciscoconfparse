@@ -1,5 +1,5 @@
-A Contrived Configuration Audit
-===============================
+Example Usage: A Contrived Configuration Audit
+==============================================
 
 Suppose you have a large switched network and need to run audits on your 
 configurations; assume you need to build configurations which conform to the 
@@ -125,9 +125,9 @@ After the script runs, the new configuration (``short.conf.new``) looks like thi
 
 The script:
 
- * *Added* a switchport named FastEthernet0/4
- * *Added* storm-control to Fa0/1, Fa0/3, and Fa0/4
- * *Removed* port-security from Fa0/2
- * *Added* timestamps to logs and debug messages
+ * *Added* an access switchport: ``interface FastEthernet0/4``
+ * *Added* ``storm-control`` to Fa0/1, Fa0/3, and Fa0/4
+ * *Removed* ``port-security`` from Fa0/2
+ * *Added* ``timestamps`` to logs and debug messages
 
 .. _`regular expressions`: https://docs.python.org/2/howto/regex.html

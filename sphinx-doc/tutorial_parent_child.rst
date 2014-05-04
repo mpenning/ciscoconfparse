@@ -123,8 +123,8 @@ This tutorial will run all the queries against a sample configuration, which is 
     match protocol tcp
    !
 
-Finding interface names that match a substring
-----------------------------------------------
+Example Usage: Finding interface names that match a substring
+-------------------------------------------------------------
 
 The following script will load a configuration file from 
 ``/tftpboot/bucksnort.conf`` and use 
@@ -172,11 +172,14 @@ Going forward, I will assume that you know how to use regular expressions; if
 you would like to know more about regular expressions, O'Reilly's 
 `Mastering Regular Expressions <http://www.amazon.com/Mastering-Regular-Expressions-Jeffrey-Friedl/dp/0596528124/>`_ book is very good.
 
-Finding parents with a specific child
--------------------------------------
+Example Usage: Finding parents with a specific child
+----------------------------------------------------
 
 Suppose we need to find interfaces with the ``QOS_1`` service-policy applied
 outbound...
+
+Method 1: for-loop to iterate over objects and search children
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
    :emphasize-lines: 2,5
@@ -196,6 +199,9 @@ the qos policy.  It's worth mentioning that Python also has something called a
 `list-comprehension`_, which makes the script for this task a little more 
 compact...
 
+Method 2: `list-comprehension`_ to iterate over objects and search children
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 .. code-block:: python
    :emphasize-lines: 2,3
 
@@ -206,8 +212,68 @@ compact...
    >>> qos_intfs
    [<IOSCfgLine # 18 'interface Serial1/1'>]
 
-You can choose either method to accomplish your task... sometimes a 
-`list-comprehension`_ is a better fit.  Other times, you may want a bare 
-for-loop.
+Method 3: :func:`~ciscoconfparse.CiscoConfParse.find_objects_w_child()`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+   :emphasize-lines: 2,3
+
+   >>> parse = CiscoConfParse("/tftpboot/bucksnort.conf")
+   >>> qos_intfs = parse.find_objects_w_child(parentspec=r"^interf", \
+   ...     childspec=r"service-policy\soutput\sQOS_1")
+   ...
+   >>> qos_intfs
+   [<IOSCfgLine # 18 'interface Serial1/1'>]
+
+You can choose any of these methods to accomplish your task... 
+some might question why we cover the first two methods when 
+:func:`~ciscoconfparse.CiscoConfParse.find_objects_w_child()` solves 
+the problem completely.  In this case, they have a point; however, 
+:func:`~ciscoconfparse.CiscoConfParse.find_objects_w_child()` is much slower 
+when you have more than one child line to inspect per interface, because 
+:func:`~ciscoconfparse.CiscoConfParse.find_objects_w_child()` performs a 
+line-by-line search of the whole configuration line each time it is called.  
+By contrast, Method 1 is more efficient because you could simply call 
+:func:`~models_cisco.IOSCfgLine.re_search_children()` multiple times for each 
+interface object.  :func:`~models_cisco.IOSCfgLine.re_search_children()`
+only searches the child lines of that :func:`~models_cisco.IOSCfgLine`
+interface object.
+
+Example Usage: Finding parents *without* a specific child
+---------------------------------------------------------
+
+Let's suppose you wanted a list of all interfaces that have CDP enabled; this implies a couple of things:
+
+1.  CDP has not been disabled globally with ``no cdp run``
+2.  The interfaces in question are not configured with ``no cdp enable``
+
+:func:`~ciscoconfparse.CiscoConfParse.find_objects_wo_child` is a function to 
+find parents without a specific child; it requires arguments similar to 
+:func:`~ciscoconfparse.CiscoConfParse.find_objects_w_child`:
+
+- The first argument is a regular expression to match the parents
+- The second argument is a regular expression to match the child's *exclusion*
+
+Since we need to find parents that do not have ``no cdp enable``, we will use 
+:func:`~ciscoconfparse.CiscoConfParse.find_objects_wo_child` for this query.  
+Note that the script below makes use of a special property of python lists... 
+empty lists test False in Python; thus, we can 
+use ``if not bool(parse.find_objects(r'no cdp run'))`` to ensure that CDP is 
+running globally on this device.
+
+.. code-block:: python
+   :emphasize-lines: 2-4
+
+   >>> parse = CiscoConfParse("/tftpboot/bucksnort.conf")
+   >>> if not bool(parse.find_objects(r'no cdp run')):
+   ...     cdp_intfs = parse.find_objects_wo_child(r'^interface', 
+   ...         r'no cdp enable')
+
+Results:
+
+.. code-block:: python
+
+   >>> cdp_intfs
+   [<IOSCfgLine # 14 'interface Serial1/0'>, <IOSCfgLine # 18 'interface Serial1/1'>, <IOSCfgLine # 23 'interface Serial1/2'>]
 
 .. _`list-comprehension`: https://docs.python.org/2/tutorial/datastructures.html#list-comprehensions

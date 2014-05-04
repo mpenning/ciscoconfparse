@@ -1,5 +1,5 @@
-Build diffs
-===========
+Example Usage: Build configuration diffs
+========================================
 
 Let's suppose we need to find all serial interfaces in a certain address range 
 and configure them for the MPLS LDP protocol.  We will assume that all serial 
