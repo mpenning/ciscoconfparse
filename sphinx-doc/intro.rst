@@ -5,15 +5,22 @@ Introduction
 Overview
 ---------
 
-ciscoconfparse parses through Cisco IOS-style configurations.  It can:
+ciscoconfparse is a Python_ library, which parses through Cisco IOS-style 
+configurations.  It can:
 
+- Audit existing router / switch / firewall / wlc configurations
 - Retrieve portions of the configuration
 - Modify existing configurations
 - Build new configurations
 
-The package will process an IOS-style config and break it into a set of linked 
+The library examines an IOS-style config and breaks it into a set of linked 
 parent / child relationships; each configuration line is stored in a different 
 :class:`~models_cisco.IOSCfgLine` object.
+
+.. image:: _static/ciscoconfparse_overview.png
+   :width: 600px
+   :alt: ciscoconfparse overview
+   :align: left
 
 Then you issue queries against these relationships using a familiar family 
 syntax model. Queries can either be in the form of a simple string, or you can 
@@ -86,3 +93,4 @@ changes were made:
 .. _`Dive into Python`: http://www.diveintopython.net/
 .. _`Dive into Python3`: http://www.diveintopython3.net/
 .. _`regular expressions`: https://docs.python.org/2/howto/regex.html
+.. _Python: http://python.org/
