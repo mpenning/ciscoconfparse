@@ -13,14 +13,17 @@ configurations.  It can:
 - Modify existing configurations
 - Build new configurations
 
+
 The library examines an IOS-style config and breaks it into a set of linked 
 parent / child relationships; each configuration line is stored in a different 
 :class:`~models_cisco.IOSCfgLine` object.
 
-.. image:: _static/ciscoconfparse_overview.png
+.. figure:: _static/ciscoconfparse_overview.png
    :width: 600px
    :alt: ciscoconfparse overview
    :align: left
+
+   Figure 1, An Example of Parent-line / Child-line relationships
 
 Then you issue queries against these relationships using a familiar family 
 syntax model. Queries can either be in the form of a simple string, or you can 
@@ -33,6 +36,15 @@ The package also provides a set of methods to query and manipulate the
 mechanism to build your own custom queries, because the 
 :class:`~models_cisco.IOSCfgLine` objects store all the parent / child 
 hierarchy in them.
+
+|br|
+|br|
+|br|
+|br|
+|br|
+|br|
+|br|
+|br|
 
 What is ciscoconfparse good for?
 ----------------------------------
@@ -94,3 +106,7 @@ changes were made:
 .. _`Dive into Python3`: http://www.diveintopython3.net/
 .. _`regular expressions`: https://docs.python.org/2/howto/regex.html
 .. _Python: http://python.org/
+
+.. |br| raw:: html
+
+   <br>
