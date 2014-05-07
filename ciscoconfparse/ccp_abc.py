@@ -551,7 +551,7 @@ class BaseCfgLine(object):
         -------
 
         retval : list
-            A list of matching :class:`~models_cisco.IOSCfgLine`s which 
+            A list of matching :class:`~models_cisco.IOSCfgLine` objects which 
             matched.  If there is no match, an empty :py:func:`list` is 
             returned.
         """

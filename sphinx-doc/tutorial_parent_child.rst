@@ -83,6 +83,40 @@ instance, if you found an :class:`~models_cisco.IOSCfgLine` object with
 children, you can search the children directly from the parent by using 
 :func:`~models_cisco.IOSCfgLine.re_search_children()`.
 
+Example: Retrieving text from an :class:`~models_cisco.IOSCfgLine` object
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This example:
+
+- Parses through a configuration
+- Finds an :class:`~models_cisco.IOSCfgLine` object with :func:`~ciscoconfparse.CiscoConfParse.find_objects()`
+- Retrieves the configuration text from that object (highlighted in yellow)
+
+.. code-block:: python
+   :emphasize-lines: 9
+
+   >>> from ciscoconfparse import CiscoConfParse
+   >>> parse = CiscoConfParse([
+   ...     '!',
+   ...     'interface Serial1/0', 
+   ...     ' ip address 1.1.1.5 255.255.255.252'
+   ...     ])
+   >>> for obj in parse.find_objects(r"interface"):
+   ...     print "Object:", obj
+   ...     print "Config text:", obj.text
+   ...
+   Object: <IOSCfgLine # 1 'interface Serial1/0'>
+   Config text: interface Serial1/0
+   >>>
+   >>> quit()
+   [mpenning@tsunami ~]$
+
+In the example, ``obj.text`` refers to the :class:`~models_cisco.IOSCfgLine` 
+``text`` attribute, which retrieves the text of the original IOS configuration 
+statement.
+
+
+
 Baseline configuration for these examples
 -----------------------------------------
 
