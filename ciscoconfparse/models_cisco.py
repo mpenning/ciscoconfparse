@@ -179,7 +179,7 @@ class BaseIOSIntfLine(BaseCfgLine):
 
     @property
     def ipv4_addr_object(self):
-        """Return an object representing the address on this interface; if there is no address, return IPv4Network('127.0.0.1/32')"""
+        """Return an IPv4Network object representing the address on this interface; if there is no address, return IPv4Network('127.0.0.1/32')"""
         try:
             return IPv4Network('%s/%s' % (self.ipv4_addr, self.ipv4_netmask))
         except:
@@ -187,6 +187,7 @@ class BaseIOSIntfLine(BaseCfgLine):
 
     @property
     def ipv4_network_object(self):
+        """Return an IPv4Network object representing the subnet on this interface; if there is no address, return IPv4Network('127.0.0.1/32')"""
         return self.ip_network_object
 
     @property
@@ -194,7 +195,7 @@ class BaseIOSIntfLine(BaseCfgLine):
         try:
             return IPv4Network('%s/%s' % (self.ipv4_addr, self.ipv4_netmask)).network
         except:
-            return None
+            return self.default_ipv4_addr_object
 
 
     @property
