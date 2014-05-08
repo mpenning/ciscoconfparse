@@ -1,3 +1,5 @@
+1.0.7   20140507 Add build automation improvements.  Modify default value for 
+        ipv4_network_object()
 1.0.6   20140506 Improve docs
 1.0.5   20140506 Improve docs
 1.0.4   20140504 Add new find_objects_w_child() and find_objects_wo_child()
