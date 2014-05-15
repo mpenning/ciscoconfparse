@@ -3,7 +3,7 @@ from fabric.api import run, local, cd, lcd, put, settings
 #     http://docs.fabfile.org/en/latest/api/core/operations.html
 
 def deploy_ccp_docs(ccp_doc_root="public_html/py/ciscoconfparse",
-    ccp_bundle_name="ccp.tar.gz"):
+    ccp_bundle_name="ccp.tar.gz", doc_host=""):
 
     with lcd('sphinx-doc'):
         local('make html')  # local command
@@ -14,7 +14,7 @@ def deploy_ccp_docs(ccp_doc_root="public_html/py/ciscoconfparse",
     with lcd('sphinx-doc'):
         local('make clean')
 
-    with settings(host_string="chestnut.he.net"):
+    with settings(host_string=doc_host):
         # scp file to server
         put(local_path="~/{0}".format(ccp_bundle_name), 
             remote_path=ccp_bundle_name)
@@ -25,4 +25,5 @@ def deploy_ccp_docs(ccp_doc_root="public_html/py/ciscoconfparse",
             run("rm {0}".format(ccp_bundle_name))
 
 if __name__=="__main__":
-    deploy_ccp_docs()
+    doc_host = raw_input("Documentation host: ")
+    deploy_ccp_docs(doc_host=doc_host.strip())
