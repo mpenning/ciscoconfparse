@@ -40,7 +40,7 @@ except ImportError:
 """
 
 ## Docstring props: http://stackoverflow.com/a/1523456/667301
-__version_tuple__ = (1,0,7)
+__version_tuple__ = (1,1,0)
 __version__ = '.'.join(map(str, __version_tuple__))
 __email__ = "mike /at\ pennington [dot] net"
 __author__ = "David Michael Pennington <{0}>".format(__email__)
@@ -129,7 +129,6 @@ class CiscoConfParse(object):
             # Relative import path referenced to this directory
             sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)), "local_py"))
             from ipaddr import IPv4Network, IPv6Network
-            #raise ImportError("Could not import ipaddr module.  ciscoconfparse.CiscoConfParse only requires the ipaddr module when called with factory=True.")
 
         # all IOSCfgLine object instances...
         self.comment_delimiter = comment
@@ -1875,7 +1874,7 @@ class IOSConfigList(MutableSequence):
 
                 if DBGFLAG or self.DBGFLAG:
                     ## Ignore pylint warnings here
-                    print("[DEBUG]       Attaching CHILD Line #%s: '%s'\n   to 'PARENT: %s" % (obj.linenum, obj.text, parent_obj.text))
+                    print("[DEBUG]       Attaching CHILD: %s\n   to 'PARENT: %s" % (obj, parent_obj))
 
                 # Add child to the parent's object
                 parent_obj.add_child(obj)
@@ -1903,15 +1902,13 @@ class IOSConfigList(MutableSequence):
                 # Look for immediate children
                 self._id_unknown_children(obj)
                 ## this SHOULD find all other children in the family...
-                candidate_children = list()
-                for cobj in obj.children:
-                    candidate_children.append(cobj)
+                candidate_children = list(obj.children)
                 for cobj in candidate_children:
                     if self._id_unknown_children(cobj):
                         # Appending any new children to candidate_children as
                         #  we find new children
-                        for new in cobj.children:
-                            candidate_children.append(new)
+                        for newobj in cobj.children:
+                            candidate_children.append(newobj)
 
     def _mark_banner(self, banner_str, os):
         """Identify all multiline entries matching the mlinespec (this is
@@ -1924,7 +1921,6 @@ class IOSConfigList(MutableSequence):
         ##         delimiter
         start_banner = False
         end_banner = False
-        ii = 0
         kk = 0
         if (os=="ios"):
             prefix = ""
@@ -1935,21 +1931,21 @@ class IOSConfigList(MutableSequence):
                 "an invalid value for 'os'")
 
         rr = re.compile(r'{0}banner\s+{1}\s+\S*'.format(prefix, banner_str))
-        while (start_banner is False) & (ii < len(self._list)):
-            if rr.search(self._list[ii].text):
+        length = len(self._list)
+        for ii, obj in enumerate(self._list):
+            if rr.search(obj.text):
                 # Found the start banner at ii
                 ## Debugging only...
-                kk = ii + 1
                 if (self.DBGFLAG is True):
-                    print("[DEBUG] _mark_banner: found start_banner - line %s, text %s" % (ii, self._list[ii].text))
+                    print("[DEBUG] _mark_banner: found start_banner %s" % (ii))
                 start_banner = True
                 break
-            else:
-                ii += 1
 
         if (start_banner is True):
-            while (end_banner is False) & (kk < len(self._list)):
-                if  self._list[kk].is_comment:
+            for kk in xrange(ii+1, length):
+                parentobj = self._list[ii]
+                childobj  = self._list[kk]
+                if  childobj.is_comment:
                     # Note: We are depending on a "!" after the banner... why
                     #       can't a normal regex work with IOS banners!?
                     #       Therefore the endpoint is at ( kk - 1)
@@ -1957,18 +1953,20 @@ class IOSConfigList(MutableSequence):
 
                     ## Debugging only...
                     if (self.DBGFLAG is True):
-                        print("[DEBUG] _mark_banner: found endpoint - line %s, text %s" % (kk - 1, self._list[kk-1].text))
+                        print("[DEBUG] _mark_banner: found endpoint %s" % (self._list[kk-1].text))
                     #
                     # Set oldest_ancestor on the parent
-                    self._list[ii].oldest_ancestor = True
-                    for mm in range(ii + 1, (kk)):
+                    parentobj.oldest_ancestor = True
+
+                    # Associate all lines between ii and kk to the parent
+                    for mm in xrange(ii + 1, kk):
+                        obj = self._list[mm]
                         # Associate parent with the child
-                        self._list[ii].add_child(self._list[mm])
+                        parentobj.add_child(obj)
                         # Associate child with the parent
-                        self._list[mm].add_parent(self._list[ii])
+                        obj.add_parent(parentobj)
                     end_banner = True
-                else:
-                    kk += 1
+                    break
         # Return our success or failure status
         return end_banner
 
@@ -1978,8 +1976,6 @@ class IOSConfigList(MutableSequence):
         found_unknown_child = False
         parent_indent = obj.indent
         child_indent  = obj.child_indent
-        # more_children is False once the parent finds one of his siblings
-        more_children = True
 
         if DBGFLAG or self.DBGFLAG:
             print("[DEBUG] _id_unknown_children():")
@@ -1987,23 +1983,16 @@ class IOSConfigList(MutableSequence):
 
         ## If I want to catch all child comments, use iter_with_comments()
         for iiobj in self.iter_no_comments(obj.linenum + 1):
-            if DBGFLAG or self.DBGFLAG:
-                print("[DEBUG]   Line #%s is child? '%s'" % (iiobj.linenum, 
-                    iiobj.text))
-
             if (iiobj.indent==0):
                 # Cannot be a child with no indent
                 return False
-
-            elif (iiobj.indent==child_indent) and more_children:
+            elif (iiobj.indent==child_indent):
                 # we have found a potential orphan... also could be the
                 #  first child
                 iiobj.add_parent(obj)
                 found_unknown_child = obj.add_child(iiobj)
-                if DBGFLAG or self.DBGFLAG:
-                    if (found_unknown_child is True):
-                        print("[DEBUG]   YES, adding unknown child to Line #%s" % obj.linenum) 
-
+                if (DBGFLAG or self.DBGFLAG) and (found_unknown_child is True):
+                        print("[DEBUG]   Found unknown child: %s" % iiobj)
             elif (iiobj.indent==parent_indent):
                 return found_unknown_child
 
@@ -2036,12 +2025,13 @@ class IOSConfigList(MutableSequence):
         'children'. A family ends when there are no more children.  See 
         :class:`~models_cisco.IOSCfgLine` for an example. This method modifies 
         attributes inside :class:`~models_cisco.IOSCfgLine` instances"""
-        if self.DBGFLAG:
+        DBGFLAG = self.DBGFLAG
+        if DBGFLAG:
             print("[DEBUG] _mark_family_endpoints:\n  finding children of PARENTS: %s\n" % parents)
         lastobj = self # so pylint won't complain
         for parent in parents:
-            if self.DBGFLAG:
-                print("[DEBUG]   Finding family_endpoint for: Line #%s: '%s'" % (parent.linenum, parent.text))
+            if DBGFLAG:
+                print("[DEBUG]   Finding family_endpoint for: %s" % (parent))
 
             if (parent.indent==0) and parent.has_children:
                 # we are at the oldest ancestor
@@ -2051,14 +2041,14 @@ class IOSConfigList(MutableSequence):
                 in_family = False
                 for obj in self.iter_no_comments(parent.linenum):
                     if in_family and (obj.indent==0):
-                        if self.DBGFLAG:
+                        if DBGFLAG:
                             # Ignore pylint warnings here
-                            print("[DEBUG]      ID family_endpoint: Line #%s: '%s'" % (lastobj.linenum, lastobj.text))
+                            print("[DEBUG]      ID family_endpoint: %s" % (lastobj))
                         in_family = False
                         break
                     elif obj.indent>0:
-                        if self.DBGFLAG:
-                            print("[DEBUG]      Inside family: Line #%s: '%s'" % (obj.linenum, obj.text))
+                        if DBGFLAG:
+                            print("[DEBUG]      Descendant: %s" % (obj))
                         in_family = True
                     lastobj = obj
                     # Special case if we cycle through the config and don't
@@ -2066,10 +2056,10 @@ class IOSConfigList(MutableSequence):
                     # is called with an array containing a single interface
                     # config stanza and no "end" statement
                 else:
-                    if self.DBGFLAG:
+                    if DBGFLAG:
                         print("[DEBUG]      No family_endpoint for: Line #%s: '%s'" % (parent.linenum, parent.text))
                 if in_family:
-                    if self.DBGFLAG:
+                    if DBGFLAG:
                         print("[DEBUG]      ID family_endpoint: Line #%s: %s" % (obj.linenum, obj.text))
 
     @property
