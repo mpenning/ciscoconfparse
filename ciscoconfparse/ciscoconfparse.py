@@ -40,7 +40,7 @@ except ImportError:
 """
 
 ## Docstring props: http://stackoverflow.com/a/1523456/667301
-__version_tuple__ = (1,1,0)
+__version_tuple__ = (1,1,1)
 __version__ = '.'.join(map(str, __version_tuple__))
 __email__ = "mike /at\ pennington [dot] net"
 __author__ = "David Michael Pennington <{0}>".format(__email__)
@@ -1942,7 +1942,7 @@ class IOSConfigList(MutableSequence):
                 break
 
         if (start_banner is True):
-            for kk in xrange(ii+1, length):
+            for kk in range(ii+1, length):
                 parentobj = self._list[ii]
                 childobj  = self._list[kk]
                 if  childobj.is_comment:
@@ -1959,7 +1959,7 @@ class IOSConfigList(MutableSequence):
                     parentobj.oldest_ancestor = True
 
                     # Associate all lines between ii and kk to the parent
-                    for mm in xrange(ii + 1, kk):
+                    for mm in range(ii + 1, kk):
                         obj = self._list[mm]
                         # Associate parent with the child
                         parentobj.add_child(obj)
