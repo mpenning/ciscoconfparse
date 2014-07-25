@@ -20,7 +20,9 @@ setup(name='ciscoconfparse',
       entry_points = "",
       long_description=read('README.rst'),
       include_package_data=True,
-      packages = find_packages(),
+      #packages=find_packages(),
+      packages=['ciscoconfparse']
+      zip_safe=False,
       setup_requires=["setuptools_hg"],  # setuptools_hg must be installed as a python module
       classifiers=[
           'Development Status :: 5 - Production/Stable',
