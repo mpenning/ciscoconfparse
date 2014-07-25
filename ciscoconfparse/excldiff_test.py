@@ -28,4 +28,4 @@ linespec = "router ospf 102|ispf|passive-interface.+?|auto-cost\sreference.+?"
 unconfspec = linespec
 diffs = p.req_cfgspec_excl_diff(linespec, unconfspec, required_lines)
 
-print diffs
+print(diffs)
