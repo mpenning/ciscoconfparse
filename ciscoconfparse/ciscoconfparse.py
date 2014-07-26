@@ -7,14 +7,23 @@ import sys
 import re
 import os
 
-from models_cisco import IOSHostnameLine, IOSRouteLine, IOSIntfLine
-from models_cisco import IOSAccessLine, IOSIntfGlobal
-from models_cisco import IOSCfgLine
+if sys.version_info[0]==2:
+    from models_cisco import IOSHostnameLine, IOSRouteLine, IOSIntfLine
+    from models_cisco import IOSAccessLine, IOSIntfGlobal
+    from models_cisco import IOSCfgLine
+else:
+    from .models_cisco import IOSHostnameLine, IOSRouteLine, IOSIntfLine
+    from .models_cisco import IOSAccessLine, IOSIntfGlobal
+    from .models_cisco import IOSCfgLine
+
 
 ### ipaddr is optional, and Apache License 2.0 is compatible with GPLv3 per
 ###   the ASL web page: http://www.apache.org/licenses/GPL-compatibility.html
 try:
-    from ipaddr import IPv4Network, IPv6Network
+    if sys.version_info[0]==2:
+        from ipaddr import IPv4Network, IPv6Network
+    else:
+        from .ipaddr import IPv4Network, IPv6Network
 except ImportError:
     # I raise an ImportError below ipaddr is required
     pass
