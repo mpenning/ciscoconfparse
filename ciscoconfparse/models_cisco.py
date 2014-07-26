@@ -1,12 +1,20 @@
+import sys
 import re
 import os
 
 
-from ccp_abc import BaseCfgLine
+if sys.version_info[0]==2:
+    from ccp_abc import BaseCfgLine
+else:
+    from .ccp_abc import BaseCfgLine
+
 ### ipaddr is optional, and Apache License 2.0 is compatible with GPLv3 per
 ###   the ASL web page: http://www.apache.org/licenses/GPL-compatibility.html
 try:
-    from ipaddr import IPv4Network, IPv6Network
+    if sys.version_info[0]==2:
+        from ipaddr import IPv4Network, IPv6Network
+    else:
+        from .ipaddr import IPv4Network, IPv6Network
 except ImportError:
     # I raise an ImportError elsewhere if ipaddr is required
     pass
