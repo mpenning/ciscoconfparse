@@ -9,7 +9,7 @@ import re
 import os
 
 # Relative import path referenced to this directory
-sys.path.insert(0, os.path.join(os.path.abspath(os.path.dirname(__file__)),
+sys.path.insert(1, os.path.join(os.path.abspath(os.path.dirname(__file__)),
     "local_py"))
 from ipaddr import IPv4Network
 from ciscoconfparse import *
