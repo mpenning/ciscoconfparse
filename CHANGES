@@ -1,3 +1,5 @@
+1.1.2   20140515 Fix Python3 packaging (related to missing PEP366 compliance),
+        more relative ipaddr imports
 1.1.1   20140515 Fix Python3 breakage due to xrange
 1.1.0   20140514 Improve parsing speed.  Simplify debugging logs.
 1.0.7   20140507 Add build automation improvements.  Modify default value for 
