@@ -7,23 +7,17 @@ import sys
 import re
 import os
 
-if sys.version_info[0]==2:
-    from models_cisco import IOSHostnameLine, IOSRouteLine, IOSIntfLine
-    from models_cisco import IOSAccessLine, IOSIntfGlobal
-    from models_cisco import IOSCfgLine
-else:
-    from .models_cisco import IOSHostnameLine, IOSRouteLine, IOSIntfLine
-    from .models_cisco import IOSAccessLine, IOSIntfGlobal
-    from .models_cisco import IOSCfgLine
+from models_cisco import IOSHostnameLine, IOSRouteLine, IOSIntfLine
+from models_cisco import IOSAccessLine, IOSIntfGlobal
+from models_cisco import IOSCfgLine
 
 
 ### ipaddr is optional, and Apache License 2.0 is compatible with GPLv3 per
 ###   the ASL web page: http://www.apache.org/licenses/GPL-compatibility.html
 try:
-    if sys.version_info[0]==2:
-        from ipaddr import IPv4Network, IPv6Network
-    else:
-        from .ipaddr import IPv4Network, IPv6Network
+    sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)),
+        "local_py"))
+    from ipaddr import IPv4Network, IPv6Network
 except ImportError:
     # I raise an ImportError below ipaddr is required
     pass
@@ -49,7 +43,7 @@ except ImportError:
 """
 
 ## Docstring props: http://stackoverflow.com/a/1523456/667301
-__version_tuple__ = (1,1,1)
+__version_tuple__ = (1,1,2)
 __version__ = '.'.join(map(str, __version_tuple__))
 __email__ = "mike /at\ pennington [dot] net"
 __author__ = "David Michael Pennington <{0}>".format(__email__)
