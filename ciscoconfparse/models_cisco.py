@@ -2,19 +2,14 @@ import sys
 import re
 import os
 
-
-if sys.version_info[0]==2:
-    from ccp_abc import BaseCfgLine
-else:
-    from .ccp_abc import BaseCfgLine
+from ccp_abc import BaseCfgLine
 
 ### ipaddr is optional, and Apache License 2.0 is compatible with GPLv3 per
 ###   the ASL web page: http://www.apache.org/licenses/GPL-compatibility.html
 try:
-    if sys.version_info[0]==2:
-        from ipaddr import IPv4Network, IPv6Network
-    else:
-        from .ipaddr import IPv4Network, IPv6Network
+    sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)),
+        "local_py"))
+    from ipaddr import IPv4Network, IPv6Network
 except ImportError:
     # I raise an ImportError elsewhere if ipaddr is required
     pass
