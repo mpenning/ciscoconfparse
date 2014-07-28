@@ -53,13 +53,19 @@ already have setuptools_, you can install as usual:
 ::
 
       # Substitute whatever ciscoconfparse version you like...
-      easy_install -U ciscoconfparse==1.0.1
+      easy_install -U ciscoconfparse==1.1.2
 
-Alternatively you can install with pip_:
+Alternatively you can install into Python2.x with pip_:
 
 ::
 
       pip install ciscoconfparse
+
+Use ``pip3`` for Python3.x...
+
+::
+
+      pip3 install ciscoconfparse
 
 Otherwise `download it from PyPi <https://pypi.python.org/pypi/ciscoconfparse>`_, extract it and run the ``setup.py`` script:
 
@@ -70,16 +76,18 @@ Otherwise `download it from PyPi <https://pypi.python.org/pypi/ciscoconfparse>`_
 If you're interested in the source, you can always pull from the `github repo`_
 or `bitbucket repo`_:
 
-- From bitbucket_:
-  ::
-
-      hg init
-      hg clone https://bitbucket.org/mpenning/ciscoconfparse
 
 - From github_:
   ::
 
       git clone git://github.com//mpenning/ciscoconfparse
+
+
+- From bitbucket_:
+  ::
+
+      hg init
+      hg clone https://bitbucket.org/mpenning/ciscoconfparse
 
 
 .. _`License and Copyright`:
@@ -127,7 +135,7 @@ ciscoconfparse Support
 ----------------------
 
 Please report any suggestions, bug reports, or annoyances with 
-ciscoconfparse_ through the `bitbucket bug tracker`_.
+ciscoconfparse_ through the `github bug tracker`_.
 
 Python Support
 --------------
@@ -201,7 +209,7 @@ Special thanks:
 
 .. _mercurial: http://mercurial.selenic.com/
 
-.. _`bitbucket bug tracker`: https://bitbucket.org/mpenning/ciscoconfparse/issues
+.. _`github bug tracker`: https://github.com/mpenning/ciscoconfparse/issues
 
 .. _`hg-git`: http://hg-git.github.io/
 
