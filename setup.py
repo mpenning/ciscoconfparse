@@ -3,14 +3,15 @@ import os
 
 from setuptools import setup, find_packages
 import sys
-sys.path.insert(0,os.getcwd()+'/ciscoconfparse')
+CURRENT_PATH=os.getcwd()+'/src'
+sys.path.insert(0,CURRENT_PATH)
 
 def read(fname):
     # Dynamically generate setup(long_description)
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 setup(name='ciscoconfparse',
-      version=__import__("ciscoconfparse").__version__,
+      version=__import__("ciscoconfparse").ciscoconfparse.__version__,
       description='Parse, Audit, Query, Build, and Modify Cisco IOS-style configurations',
       url='http://www.pennington.net/py/ciscoconfparse/',
       author='David Michael Pennington',
