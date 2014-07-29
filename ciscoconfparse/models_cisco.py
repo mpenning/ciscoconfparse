@@ -454,7 +454,7 @@ class BaseIOSIntfLine(BaseCfgLine):
 
     @property
     def is_switchport(self):
-        retval = self.re_match_iter_typed(r'^\s*(switchport)\s*$',
+        retval = self.re_match_iter_typed(r'^\s*(switchport)\s*',
             result_type=bool, default=False)
         return retval
 
