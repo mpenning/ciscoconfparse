@@ -45,6 +45,7 @@ class BaseCfgLine(object):
         self.oldest_ancestor = False
         self.indent = 0            # Whitespace indentation on the object
         self.confobj = None        # Reference to the list object which owns it
+        self.hash_arg = None
 
         self.set_comment_bool()
 
@@ -60,8 +61,16 @@ class BaseCfgLine(object):
         return self.__repr__()
 
     def __eq__(self, val):
-        return isinstance(val, BaseCfgLine) and \
-            (self.hash_arg==val.hash_arg)
+        # OLD and slow code:
+        #return isinstance(val, BaseCfgLine) and \
+        #    (self.hash_arg)==(val.hash_arg)
+        try:
+            ##   try / except is much faster than isinstance();
+            ##   I added hash_arg() inline below for speed... whenever I change
+            ##   hash_arg(), I *must* change this
+            return (str(self.linenum)+self.text)==(str(val.linenum)+val.text)
+        except:
+            return False
 
     def __gt__(self, val):
         if (self.linenum>val.linenum):
@@ -76,6 +85,10 @@ class BaseCfgLine(object):
 
     def __hash__(self):
         return hash(self.hash_arg)
+
+    def hash_arg(self):
+        # Just a unique string or each object instance
+        return str(self.linenum)+self.text
 
     def set_comment_bool(self):
         retval = None
@@ -131,10 +144,6 @@ class BaseCfgLine(object):
             return True
         return False
 
-    @property
-    def hash_arg(self):
-        # Just a unique string or each object instance
-        return str(self.linenum)+self.text
 
     def _list_reassign_linenums(self):
         # Call this when I want to reparse everything
