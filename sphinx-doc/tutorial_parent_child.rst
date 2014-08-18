@@ -11,6 +11,8 @@ relationships can reveal a lot of useful information.  The concept of IOS
 parent and child is pretty intuitive, but we'll go through a simple example 
 for clarity.
 
+.. note:: CiscoConfParse assumes the configuration is in the *exact format* used by Cisco IOS devices.
+
 Line 1 is a parent:
 
 .. code-block:: none
