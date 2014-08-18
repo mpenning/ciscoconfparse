@@ -165,7 +165,7 @@ matter if you just want to fork the `github repo`_.
 Unit-Tests
 ==========
 
-I use the `Travis CI project <https://travis-ci.org>`_ to continuously test ciscoconfparse on Python versions 2.6 through 3.3.
+I use the `Travis CI project <https://travis-ci.org>`_ to continuously test ciscoconfparse on Python versions 2.6 through 3.4.
 
 Click the image below for details; the current build status is:
 
