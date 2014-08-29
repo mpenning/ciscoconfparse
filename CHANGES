@@ -1,4 +1,5 @@
-1.1.4   20140818 Major speed improvement when parsing large configurations (~35% faster)
+1.1.5   20140829 Add IOS Interface object functions in models_cisco to parse port number, interface type, etc. Added the "Huge Ugly Warning" to models_cisco.  I also removed an unnecessary isinstance() in ccp_abc to improve performance.
+1.1.4   20140818 Major speed improvement when parsing large configurations (~45% faster)
 1.1.3   20140729 Fix is_switchport parsing
 1.1.2   20140515 Fix Python3 packaging (related to missing PEP366 compliance),
         more relative ipaddr imports
