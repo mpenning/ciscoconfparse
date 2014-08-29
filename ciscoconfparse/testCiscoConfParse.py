@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from operator import attrgetter
 from itertools import repeat
 from mock import Mock, patch
 from copy import deepcopy
@@ -11,8 +12,9 @@ import os
 # Relative import path referenced to this directory
 sys.path.insert(1, os.path.join(os.path.abspath(os.path.dirname(__file__)),
     "local_py"))
+from models_cisco import IOSCfgLine, IOSIntfLine
+from ciscoconfparse import CiscoConfParse
 from ipaddr import IPv4Network
-from ciscoconfparse import *
 
 class knownValues(unittest.TestCase):
 
