@@ -4,6 +4,14 @@ import os
 
 from ccp_abc import BaseCfgLine
 
+### HUGE UGLY WARNING:
+###   Anything in models_cisco.py could change at any time, until I remove this
+###   warning.  I have good reason to believe that these methods are stable and 
+###   function correctly, but I've been wrong before.  There are no unit tests
+###   for this functionality yet, so I consider all this code alpha quality. 
+###
+###   Use models_cisco.py at your own risk.  You have been warned :-)
+
 ### ipaddr is optional, and Apache License 2.0 is compatible with GPLv3 per
 ###   the ASL web page: http://www.apache.org/licenses/GPL-compatibility.html
 try:
@@ -122,12 +130,38 @@ class BaseIOSIntfLine(BaseCfgLine):
 
     @property
     def name(self):
+        """Return a string, such as 'GigabitEthernet0/1'"""
         if not self.is_intf:
             return ''
-        intf_regex = r'^interface\s+(\S+.+)'
+        intf_regex = r'^interface\s+(\S+.+)\s*$'
         name = self.re_match(intf_regex)
         return name
 
+    @property
+    def port(self):
+        """Return the interface's port number"""
+        return self.ordinal_list[-1]
+
+    @property
+    def port_type(self):
+        """Return Loopback, ATM, GigabitEthernet, Virtual-Template, etc..."""
+        port_type_regex = r'^interface\s+([A-Za-z\-]+)'
+        return self.re_match(port_type_regex, group=1, default='')
+
+    @property
+    def ordinal_list(self):
+        """Return a list of numbers representing card, slot, port for this interface.  If you call ordinal_list on GigabitEthernet2/25.100, you'll get this python list of integers: [2, 25].  If you call ordinal_list on GigabitEthernet2/0/25.100 you'll get this python list of integers: [2, 0, 25].  This method strips all subinterface information in the returned value.
+
+        ..warning:: ordinal_list should silently fail (returning an empty python list) if the interface doesn't parse correctly"""
+        if not self.is_intf:
+            return []
+        else:
+            intf_regex = r'^interface\s+[A-Za-z\-]+(\d+.*?)(\.\d+)*(\s\S+)*\s*$'
+            intf_number = self.re_match(intf_regex, group=1, default='')
+            if intf_number:
+                return [int(ii) for ii in intf_number.split('/')]
+            else:
+                return []
 
     @property
     def description(self):
@@ -329,6 +363,7 @@ class BaseIOSIntfLine(BaseCfgLine):
 
     def in_ipv4_subnet(self, network='', mask=''):
         """Accept two string arguments for network and netmask, and return a boolean for whether this interface is within the requested subnet.  Return None if there is no address on the interface"""
+        ## FIXME: get rid of isinstance() here
         if isinstance(network, str) and isinstance(mask, str):
             if not (str(self.ipv4_addr_object.ip)=="127.0.0.1"):
                 try:
