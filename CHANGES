@@ -1,3 +1,4 @@
+1.1.7   20140902 Fix TravisCI failures
 1.1.6   20140902 Replace ipaddr.IPv4Network with ccp_util.IPv4Obj for more consistency.  Started adding unittests for models_cisco functionality.  Added local_py/ipaddress.py
 1.1.5   20140829 Add IOS Interface object functions in models_cisco to parse port number, interface type, etc. Added the "Huge Ugly Warning" to models_cisco.  I also removed an unnecessary isinstance() in ccp_abc to improve performance.
 1.1.4   20140818 Major speed improvement when parsing large configurations (~45% faster than some previous CiscoConfParse versions)
