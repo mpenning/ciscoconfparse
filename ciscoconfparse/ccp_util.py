@@ -8,21 +8,25 @@ try:
     else:
         from ipaddress import IPv4Network, IPv6Network, IPv4Address, IPv6Address
 except:
-    ## Try to load the local version for Python2...
+    sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)), "local_py"))
     # re: modules usage... thank you Delnan
     # http://stackoverflow.com/a/5027393
     if (sys.version_info[0]<3) and \
         (bool(sys.modules.get('ipaddr', False)) is False):
         # Relative import path referenced to this directory
-        sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)), "local_py"))
         from ipaddr import IPv4Network, IPv6Network, IPv4Address, IPv6Address
+    elif (sys.version_info[0]==3) and \
+        (bool(sys.modules.get('ipaddress', False)) is False):
+        # Relative import path referenced to this directory
+        from ipaddress import IPv4Network, IPv6Network, IPv4Address, IPv6Address
 
-
-## Emulate the old behavior of ipaddr.IPv4Network in Python2...
+## Emulate the old behavior of ipaddr.IPv4Network in Python2, which can use
+##    IPv4Network with a host address.  Google removed that in Python3's 
+##    ipaddress.py module
 class IPv4Obj(object):
     def __init__(self, arg='127.0.0.1/32', strict=False):
         self.arg = arg
-        mm = re.search(r'(\d+\.\d+\.\d+\.\d+)', arg)
+        mm = re.search(r'^(\d+\.\d+\.\d+\.\d+)', arg)
         assert (not (mm is None))
         self.network_object = IPv4Network(arg, strict=strict)
         self.ip_object = IPv4Address(mm.group(1))
@@ -48,11 +52,11 @@ class IPv4Obj(object):
         return self.network_object.__iter__()
 
     def __next__(self):
-        ## For Python3
+        ## For Python3 iteration...
         return self.network_object.next()
 
     def next(self):
-        ## For Python2
+        ## For Python2 iteration...
         return self.network_object.next()
 
     @property
@@ -89,7 +93,3 @@ class IPv4Obj(object):
     @property
     def numhosts(self):
         return self.network_object.numhosts
-
-    #@property
-    #def _version(self):
-    #    return self.network_object._version
