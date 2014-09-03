@@ -12,16 +12,6 @@ from models_cisco import IOSAccessLine, IOSIntfGlobal
 from models_cisco import IOSCfgLine
 
 
-### ipaddr is optional, and Apache License 2.0 is compatible with GPLv3 per
-###   the ASL web page: http://www.apache.org/licenses/GPL-compatibility.html
-try:
-    sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)),
-        "local_py"))
-    from ipaddr import IPv4Network, IPv6Network
-except ImportError:
-    # I raise an ImportError below ipaddr is required
-    pass
-
 """ ciscoconfparse.py - Parse, Query, Build, and Modify IOS-style configurations
      Copyright (C) 2007-2014 David Michael Pennington
 
@@ -43,7 +33,7 @@ except ImportError:
 """
 
 ## Docstring props: http://stackoverflow.com/a/1523456/667301
-__version_tuple__ = (1,1,5)
+__version_tuple__ = (1,1,6)
 __version__ = '.'.join(map(str, __version_tuple__))
 __email__ = "mike /at\ pennington [dot] net"
 __author__ = "David Michael Pennington <{0}>".format(__email__)
@@ -125,13 +115,6 @@ class CiscoConfParse(object):
     def __init__(self, config="", comment="!", debug=False, factory=False, 
         linesplit_rgx=r"\r*\n+", ignore_blank_lines=True):
         """Initialize the class, read the config, and spawn the parser"""
-
-        # re: modules usage... thank you Delnan
-        # http://stackoverflow.com/a/5027393
-        if (factory is True) and (bool(modules.get('ipaddr', False)) is False):
-            # Relative import path referenced to this directory
-            sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)), "local_py"))
-            from ipaddr import IPv4Network, IPv6Network
 
         # all IOSCfgLine object instances...
         self.comment_delimiter = comment
