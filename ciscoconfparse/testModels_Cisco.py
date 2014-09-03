@@ -24,6 +24,8 @@ class knownValues(unittest.TestCase):
             'errdisable recovery cause bpduguard',
             'errdisable recovery interval 400',
             '!',
+            'aaa new-model',
+            '!',
             'ip vrf TEST_100_001',
             ' route-target 100:1',
             ' rd 100:1',
@@ -1001,6 +1003,35 @@ class knownValues(unittest.TestCase):
         for intf_obj in cfg.find_objects('^interface'):
             test_result[intf_obj.text] = intf_obj.has_no_ip_proxyarp
         self.assertEqual(result_correct, test_result)
+
+###
+### ------ AAA Tests --------
+###
+
+    def testVal_IOSAaaLoginAuthenticationLine(self):
+        line = 'aaa authentication login default group tacacs+ local-case'
+        cfg = CiscoConfParse([line], factory=True)
+        obj = cfg.ConfigObjs[0]
+        self.assertEqual('tacacs+', obj.group)
+        self.assertEqual('default', obj.list_name)
+        self.assertEqual(['local-case'], obj.methods)
+
+    def testVal_IOSAaaEnableAuthenticationLine(self):
+        line = 'aaa authentication enable default group tacacs+ enable'
+        cfg = CiscoConfParse([line], factory=True)
+        obj = cfg.ConfigObjs[0]
+        self.assertEqual('tacacs+', obj.group)
+        self.assertEqual('default', obj.list_name)
+        self.assertEqual(['enable'], obj.methods)
+
+    def testVal_IOSAaaCommandsAuthorizationLine(self):
+        line = 'aaa authorization commands 15 default group tacacs+ local'
+        cfg = CiscoConfParse([line], factory=True)
+        obj = cfg.ConfigObjs[0]
+        self.assertEqual(15, obj.level)
+        self.assertEqual('tacacs+', obj.group)
+        self.assertEqual('default', obj.list_name)
+        self.assertEqual(['local'], obj.methods)
 
 
 if __name__ == "__main__":
