@@ -637,9 +637,11 @@ class BaseIOSIntfLine(IOSCfgLine):
 
     ##-------------  EoMPLS
 
+    @property
     def has_xconnect(self):
         return bool(self.xconnect_vc)
 
+    @property
     def xconnect_vc(self):
         retval = self.re_match_iter_typed(r'^\s*xconnect\s+\S+\s+(\d+)\s+\S+',
             result_type=int, default=0)
@@ -890,6 +892,7 @@ class IOSIntfGlobal(BaseCfgLine):
             return True
         return False
 
+
 ##
 ##-------------  IOS Hostname Line
 ##
@@ -1117,3 +1120,79 @@ class IOSRouteLine(BaseIOSRouteLine):
             group=2, result_type=str, default='')
         return retval
 
+################################
+################################ Groups ###############################
+################################
+
+##
+##-------------  IOS TACACS+ Group
+##
+class IOSTacPlusGroup(object):
+    def __init__(self):
+        pass
+
+##
+##-------------  IOS AAA Lines
+##
+
+class IOSAaaLoginAuthenticationLine(BaseCfgLine):
+    def __init__(self, *args, **kwargs):
+        super(IOSAaaLoginAuthenticationLine, self).__init__(*args, **kwargs)
+
+        regex = r'^aaa\sauthentication\slogin\s(\S+)\sgroup\s(\S+)(.+?)$'
+        self.category = 'login authentication'
+        self.list_name = self.re_match_typed(regex, group=1, result_type=str, 
+            default='')
+        self.group = self.re_match_typed(regex, group=2, result_type=str, 
+            default='')
+        methods_str = self.re_match_typed(regex, group=3, result_type=str, 
+            default='')
+        self.methods = methods_str.strip().split('\s')
+
+    @classmethod
+    def is_object_for(cls, line="", re=re):
+        if re.search(r'^aaa\sauthentication\slogin', line):
+            return True
+        return False
+
+class IOSAaaEnableAuthenticationLine(BaseCfgLine):
+    def __init__(self, *args, **kwargs):
+        super(IOSAaaEnableAuthenticationLine, self).__init__(*args, **kwargs)
+
+        regex = r'^aaa\sauthentication\senable\s(\S+)\sgroup\s(\S+)(.+?)$'
+        self.category = 'enable authentication'
+        self.list_name = self.re_match_typed(regex, group=1, result_type=str, 
+            default='')
+        self.group = self.re_match_typed(regex, group=2, result_type=str, 
+            default='')
+        methods_str = self.re_match_typed(regex, group=3, result_type=str, 
+            default='')
+        self.methods = methods_str.strip().split('\s')
+
+    @classmethod
+    def is_object_for(cls, line="", re=re):
+        if re.search(r'^aaa\sauthentication\senable', line):
+            return True
+        return False
+
+class IOSAaaCommandsAuthorizationLine(BaseCfgLine):
+    def __init__(self, *args, **kwargs):
+        super(IOSAaaCommandsAuthorizationLine, self).__init__(*args, **kwargs)
+
+        regex = r'^aaa\sauthorization\scommands\s(\d+)\s(\S+)\sgroup\s(\S+)(.+?)$'
+        self.category = 'commands authorization'
+        self.level = self.re_match_typed(regex, group=1, result_type=int, 
+            default=0)
+        self.list_name = self.re_match_typed(regex, group=2, result_type=str, 
+            default='')
+        self.group = self.re_match_typed(regex, group=3, result_type=str, 
+            default='')
+        methods_str = self.re_match_typed(regex, group=4, result_type=str, 
+            default='')
+        self.methods = methods_str.strip().split('\s')
+
+    @classmethod
+    def is_object_for(cls, line="", re=re):
+        if re.search(r'^aaa\sauthorization\scommands', line):
+            return True
+        return False
