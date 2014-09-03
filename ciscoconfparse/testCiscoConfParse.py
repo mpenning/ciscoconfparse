@@ -9,12 +9,10 @@ import sys
 import re
 import os
 
-# Relative import path referenced to this directory
-sys.path.insert(1, os.path.join(os.path.abspath(os.path.dirname(__file__)),
-    "local_py"))
+
 from models_cisco import IOSCfgLine, IOSIntfLine
 from ciscoconfparse import CiscoConfParse
-from ipaddr import IPv4Network
+from ccp_util import IPv4Obj
 
 class knownValues(unittest.TestCase):
 
@@ -984,7 +982,8 @@ class knownValues(unittest.TestCase):
             result_correct.linenum = 11
             result_correct.text = 'interface Serial 1/0'
             result_correct.classname = 'IOSIntfLine'
-            result_correct.ipv4_addr_object = IPv4Network('1.1.1.1/30')
+            result_correct.ipv4_addr_object = IPv4Obj('1.1.1.1/30', 
+                strict=False)
 
             cfg = CiscoConfParse(self.c01, factory=True)
             # this test finds the IOSIntfLine instance for 'Serial 1/0'
@@ -1004,7 +1003,8 @@ class knownValues(unittest.TestCase):
             result_correct01.linenum = 12
             result_correct01.text = 'interface Serial 2/0'
             result_correct01.classname = 'IOSIntfLine'
-            result_correct01.ipv4_addr_object = IPv4Network('1.1.1.1/30')
+            result_correct01.ipv4_addr_object = IPv4Obj('1.1.1.1/30', 
+                strict=False)
 
             result_correct02 = self.c01_insert_serial_replace
 
