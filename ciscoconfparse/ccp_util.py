@@ -53,11 +53,11 @@ class IPv4Obj(object):
 
     def __next__(self):
         ## For Python3 iteration...
-        return self.network_object.next()
+        return self.network_object.__next__()
 
     def next(self):
         ## For Python2 iteration...
-        return self.network_object.next()
+        return self.network_object.__next__()
 
     @property
     def ip(self):
