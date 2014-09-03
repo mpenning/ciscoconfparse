@@ -3,6 +3,7 @@ import re
 import os
 
 from ccp_abc import BaseCfgLine
+from ccp_util import IPv4Obj
 
 ### HUGE UGLY WARNING:
 ###   Anything in models_cisco.py could change at any time, until I remove this
@@ -11,16 +12,6 @@ from ccp_abc import BaseCfgLine
 ###   for this functionality yet, so I consider all this code alpha quality. 
 ###
 ###   Use models_cisco.py at your own risk.  You have been warned :-)
-
-### ipaddr is optional, and Apache License 2.0 is compatible with GPLv3 per
-###   the ASL web page: http://www.apache.org/licenses/GPL-compatibility.html
-try:
-    sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)),
-        "local_py"))
-    from ipaddr import IPv4Network, IPv6Network
-except ImportError:
-    # I raise an ImportError elsewhere if ipaddr is required
-    pass
 
 """ ciscoconfparse.py - Parse, Query, Build, and Modify IOS-style configurations
      Copyright (C) 2007-2014 David Michael Pennington
@@ -43,6 +34,112 @@ except ImportError:
 """
 
 ##
+##-------------  IOS Configuration line object
+##
+
+
+class IOSCfgLine(BaseCfgLine):
+    """An object for a parsed IOS-style configuration line.  
+    :class:`~models_cisco.IOSCfgLine` objects contain references to other 
+    parent and child :class:`~models_cisco.IOSCfgLine` objects.
+
+    .. note::
+
+       Originally, :class:`~models_cisco.IOSCfgLine` objects were only 
+       intended for advanced ciscoconfparse users.  As of ciscoconfparse 
+       version 0.9.10, *all users* are strongly encouraged to prefer the 
+       methods directly on :class:`~models_cisco.IOSCfgLine` objects.  
+       Ultimately, if you write scripts which call methods on 
+       :class:`~models_cisco.IOSCfgLine` objects, your scripts will be much 
+       more efficient than if you stick strictly to the classic 
+       :class:`~ciscoconfparse.CiscoConfParse` methods.
+
+    Parameters
+    ----------
+
+    text : str, required
+         A string containing a text copy of the IOS configuration line.
+         :class:`~ciscoconfparse.CiscoConfParse` will automatically identify 
+         the parent and children (if any) when it parses the configuration. 
+    comment_delimiter : str, required
+         A string which is considered a comment for the configuration 
+         format.  Since this is for Cisco IOS-style configurations, it 
+         defaults to ``!``.
+
+
+    Returns
+    -------
+
+    retval : an instance of :class:`~models_cisco.IOSCfgLine`.
+
+    Attributes
+    ----------
+
+    text     : str
+         A string containing the parsed IOS configuration statement
+    linenum  : int
+         The line number of this configuration statement in the original config;
+         default is -1 when first initialized.
+    parent : :class:`~models_cisco.IOSCfgLine()`
+         The parent of this object; defaults to ``self``.
+    children : list
+         A list of ``IOSCfgLine()`` objects which are children of this object.
+    child_indent : int
+         An integer with the indentation of this object's children
+    indent : int
+         An integer with the indentation of this object's ``text``
+    oldest_ancestor : boolean
+         A boolean indicating whether this is the oldest ancestor in a family
+    is_comment : boolean
+         A boolean indicating whether this is a comment
+    """
+    def __init__(self, *args, **kwargs):
+        """Accept an IOS line number and initialize family relationship
+        attributes"""
+        super(IOSCfgLine, self).__init__(*args, **kwargs)
+
+    @classmethod
+    def is_object_for(cls, line="", re=re):
+        ## Default object, for now
+        return True
+
+    @property
+    def is_intf(self):
+        # Includes subinterfaces
+        intf_regex = r'^interface\s+(\S+.+)'
+        if self.re_match(intf_regex):
+            return True
+        return False
+
+    @property
+    def is_subintf(self):
+        intf_regex = r'^interface\s+(\S+?\.\d+)'
+        if self.re_match(intf_regex):
+            return True
+        return False
+
+    @property
+    def is_virtual_intf(self):
+        intf_regex = r'^interface\s+(Loopback|Tunnel|Dialer|Virtual-Template|Port-Channel)'
+        if self.re_match(intf_regex):
+            return True
+        return False
+
+    @property
+    def is_loopback_intf(self):
+        intf_regex = r'^interface\s+(\Soopback)'
+        if self.re_match(intf_regex):
+            return True
+        return False
+
+    @property
+    def is_ethernet_intf(self):
+        intf_regex = r'^interface\s+(.*?\Sthernet)'
+        if self.re_match(intf_regex):
+            return True
+        return False
+
+##
 ##-------------  IOS Interface ABC
 ##
 
@@ -53,11 +150,12 @@ except ImportError:
 #    address -> addr
 #    default -> def
 
-class BaseIOSIntfLine(BaseCfgLine):
+class BaseIOSIntfLine(IOSCfgLine):
     def __init__(self, *args, **kwargs):
         super(BaseIOSIntfLine, self).__init__(*args, **kwargs)
         self.ifindex = None    # Optional, for user use
-        self.default_ipv4_addr_object = IPv4Network('127.0.0.1/32')
+        self.default_ipv4_addr_object = IPv4Obj('127.0.0.1/32', 
+            strict=False)
 
     def __repr__(self):
         if not self.is_switchport:
@@ -92,49 +190,15 @@ class BaseIOSIntfLine(BaseCfgLine):
 
     ##-------------  Basic interface properties
 
-    @property
-    def is_intf(self):
-        # Includes subinterfaces
-        intf_regex = r'^interface\s+(\S+.+)'
-        if self.re_match(intf_regex):
-            return True
-        return False
 
-    @property
-    def is_subinterface(self):
-        intf_regex = r'^interface\s+(\S+?\.\d+)'
-        if self.re_match(intf_regex):
-            return True
-        return False
-
-    @property
-    def is_virtual(self):
-        intf_regex = r'^interface\s+(Loopback|Tunnel|Dialer|Virtual-Template|Port-Channel)'
-        if self.re_match(intf_regex):
-            return True
-        return False
-
-    @property
-    def is_loopback(self):
-        intf_regex = r'^interface\s+(\Soopback)'
-        if self.re_match(intf_regex):
-            return True
-        return False
-
-    @property
-    def is_ethernet(self):
-        intf_regex = r'^interface\s+(.*?\Sthernet)'
-        if self.re_match(intf_regex):
-            return True
-        return False
 
     @property
     def name(self):
         """Return a string, such as 'GigabitEthernet0/1'"""
         if not self.is_intf:
             return ''
-        intf_regex = r'^interface\s+(\S+.+)\s*$'
-        name = self.re_match(intf_regex)
+        intf_regex = r'^interface\s+(\S+[0-9\/\.\s]+)\s*'
+        name = self.re_match(intf_regex).strip()
         return name
 
     @property
@@ -156,7 +220,7 @@ class BaseIOSIntfLine(BaseCfgLine):
         if not self.is_intf:
             return []
         else:
-            intf_regex = r'^interface\s+[A-Za-z\-]+(\d+.*?)(\.\d+)*(\s\S+)*\s*$'
+            intf_regex = r'^interface\s+[A-Za-z\-]+\s*(\d+.*?)(\.\d+)*(\s\S+)*\s*$'
             intf_number = self.re_match(intf_regex, group=1, default='')
             if intf_number:
                 return [int(ii) for ii in intf_number.split('/')]
@@ -202,7 +266,7 @@ class BaseIOSIntfLine(BaseCfgLine):
 
     @property
     def manual_encapsulation(self):
-        retval = self.re_match_iter_typed(r'^\s*encapsulation\s+(\S.+)$',
+        retval = self.re_match_iter_typed(r'^\s*encapsulation\s+(\S+)',
             result_type=str, default='')
         return retval
 
@@ -216,30 +280,39 @@ class BaseIOSIntfLine(BaseCfgLine):
 
     @property
     def ipv4_addr_object(self):
-        """Return an IPv4Network object representing the address on this interface; if there is no address, return IPv4Network('127.0.0.1/32')"""
+        """Return a ccp_util.IPv4Obj object representing the address on this interface; if there is no address, return IPv4Obj('127.0.0.1/32')"""
         try:
-            return IPv4Network('%s/%s' % (self.ipv4_addr, self.ipv4_netmask))
+            return IPv4Obj('%s/%s' % (self.ipv4_addr, self.ipv4_netmask))
         except:
             return self.default_ipv4_addr_object
 
     @property
     def ipv4_network_object(self):
-        """Return an IPv4Network object representing the subnet on this interface; if there is no address, return IPv4Network('127.0.0.1/32')"""
+        """Return an ccp_util.IPv4Obj object representing the subnet on this interface; if there is no address, return ccp_util.IPv4Obj('127.0.0.1/32')"""
         return self.ip_network_object
 
     @property
     def ip_network_object(self):
         try:
-            return IPv4Network('%s/%s' % (self.ipv4_addr, self.ipv4_netmask)).network
+            return IPv4Obj('%s/%s' % (self.ipv4_addr, self.ipv4_netmask), 
+                strict=False).network
+        except AttributeError:
+            return IPv4Obj('%s/%s' % (self.ipv4_addr, self.ipv4_netmask), 
+                strict=False).network_address
         except:
             return self.default_ipv4_addr_object
 
 
     @property
     def has_autonegotiation(self):
-        if self.has_manual_speed or self.has_manual_duplex:
+        if not self.is_ethernet_intf:
             return False
-        return True
+        elif self.is_ethernet_intf and (self.has_manual_speed or self.has_manual_duplex):
+            return False
+        elif self.is_ethernet_intf:
+            return True
+        else:
+            raise ValueError
 
     @property
     def has_manual_speed(self):
@@ -361,31 +434,29 @@ class BaseIOSIntfLine(BaseCfgLine):
             return ipv4_addr_object.prefixlen
         return 0
 
-    def in_ipv4_subnet(self, network='', mask=''):
+    def in_ipv4_subnet(self, ipv4network=IPv4Obj('0.0.0.0/32', strict=False)):
         """Accept two string arguments for network and netmask, and return a boolean for whether this interface is within the requested subnet.  Return None if there is no address on the interface"""
-        ## FIXME: get rid of isinstance() here
-        if isinstance(network, str) and isinstance(mask, str):
-            if not (str(self.ipv4_addr_object.ip)=="127.0.0.1"):
-                try:
-                    # Return a boolean for whether the interface is in that network and mask
-                    return self.ipv4_addr_object in IPv4Network('%s/%s' % (network, mask))
-                except:
-                    raise ValueError("FATAL: %s.in_ipv4_subnet() could not convert network='%s', mask='%s' to an address" % (self.__class__.__name__, network, mask))
-            else:
-                return None
-        raise ValueError("FATAL: %s.in_ipv4_subnet() requires string arguments" % self.__class__.__name__)
+        if not (str(self.ipv4_addr_object.ip)=="127.0.0.1"):
+            try:
+                # Return a boolean for whether the interface is in that network and mask
+                return self.ipv4_addr_object in ipv4network
+            except:
+                raise ValueError("FATAL: %s.in_ipv4_subnet(ipv4network={0}) is an invalid arg".format(ipv4network))
+        else:
+            return None
 
     def in_ipv4_subnets(self, subnets=None):
-        """Accept a set or list of ipaddr.IPv4Network objects, and return a boolean for whether this interface is within the requested subnets."""
+        """Accept a set or list of ccp_util.IPv4Obj objects, and return a boolean for whether this interface is within the requested subnets."""
         if (subnets is None):
-            raise ValueError("A python list or set of ipaddr.IPv4Network objects must be supplied")
+            raise ValueError("A python list or set of ccp_util.IPv4Obj objects must be supplied")
         for subnet in subnets:
+            tmp = self.in_ipv4_subnet(ipv4network=subnet)
             if (self.ipv4_addr_object in subnet):
-                return True
-        return False
+                return tmp
+        return tmp
 
     @property
-    def has_manual_disable_icmp_unreachables(self):
+    def has_no_icmp_unreachables(self):
         ## NOTE: I have no intention of checking self.is_shutdown here
         ##     People should be able to check the sanity of interfaces
         ##     before they put them into production
@@ -399,7 +470,7 @@ class BaseIOSIntfLine(BaseCfgLine):
         return retval
 
     @property
-    def has_manual_disable_icmp_redirects(self):
+    def has_no_icmp_redirects(self):
         ## NOTE: I have no intention of checking self.is_shutdown here
         ##     People should be able to check the sanity of interfaces
         ##     before they put them into production
@@ -413,7 +484,7 @@ class BaseIOSIntfLine(BaseCfgLine):
         return retval
 
     @property
-    def has_manual_disable_proxy_arp(self):
+    def has_no_ip_proxyarp(self):
         ## NOTE: I have no intention of checking self.is_shutdown here
         ##     People should be able to check the sanity of interfaces
         ##     before they put them into production
@@ -429,7 +500,7 @@ class BaseIOSIntfLine(BaseCfgLine):
         return retval
 
     @property
-    def has_ip_pim_sparse_mode(self):
+    def has_ip_pim_dense_mode(self):
         ## NOTE: I have no intention of checking self.is_shutdown here
         ##     People should be able to check the sanity of interfaces
         ##     before they put them into production
@@ -530,7 +601,7 @@ class BaseIOSIntfLine(BaseCfgLine):
     def has_switch_stormcontrol(self):
         if not self.is_switchport:
             return False
-        retval = self.re_match_iter_typed(r'^\s*(switchport\sport-security)\s*$',
+        retval = self.re_match_iter_typed(r'^\s*(storm-control)\s*$',
             result_type=bool, default=False)
         return retval
 
@@ -1016,7 +1087,8 @@ class IOSRouteLine(BaseIOSRouteLine):
     def network_object(self):
         try:
             if self.address_family=='ip':
-                return IPv4Network('%s/%s' % (self.network, self.netmask))
+                return IPv4Obj('%s/%s' % (self.network, self.netmask), 
+                    strict=False)
             elif self.address_family=='ipv6':
                 return IPv6Network('%s/%s' % (self.network, self.netmask))
         except:
@@ -1045,101 +1117,3 @@ class IOSRouteLine(BaseIOSRouteLine):
             group=2, result_type=str, default='')
         return retval
 
-##
-##-------------  IOS Configuration line object
-##
-
-
-class IOSCfgLine(BaseCfgLine):
-    """An object for a parsed IOS-style configuration line.  
-    :class:`~models_cisco.IOSCfgLine` objects contain references to other 
-    parent and child :class:`~models_cisco.IOSCfgLine` objects.
-
-    .. note::
-
-       Originally, :class:`~models_cisco.IOSCfgLine` objects were only 
-       intended for advanced ciscoconfparse users.  As of ciscoconfparse 
-       version 0.9.10, *all users* are strongly encouraged to prefer the 
-       methods directly on :class:`~models_cisco.IOSCfgLine` objects.  
-       Ultimately, if you write scripts which call methods on 
-       :class:`~models_cisco.IOSCfgLine` objects, your scripts will be much 
-       more efficient than if you stick strictly to the classic 
-       :class:`~ciscoconfparse.CiscoConfParse` methods.
-
-    Parameters
-    ----------
-
-    text : str, required
-         A string containing a text copy of the IOS configuration line.
-         :class:`~ciscoconfparse.CiscoConfParse` will automatically identify 
-         the parent and children (if any) when it parses the configuration. 
-    comment_delimiter : str, required
-         A string which is considered a comment for the configuration 
-         format.  Since this is for Cisco IOS-style configurations, it 
-         defaults to ``!``.
-
-
-    Returns
-    -------
-
-    retval : an instance of :class:`~models_cisco.IOSCfgLine`.
-
-    Attributes
-    ----------
-
-    text     : str
-         A string containing the parsed IOS configuration statement
-    linenum  : int
-         The line number of this configuration statement in the original config;
-         default is -1 when first initialized.
-    parent : :class:`~models_cisco.IOSCfgLine()`
-         The parent of this object; defaults to ``self``.
-    children : list
-         A list of ``IOSCfgLine()`` objects which are children of this object.
-    child_indent : int
-         An integer with the indentation of this object's children
-    indent : int
-         An integer with the indentation of this object's ``text``
-    oldest_ancestor : boolean
-         A boolean indicating whether this is the oldest ancestor in a family
-    is_comment : boolean
-         A boolean indicating whether this is a comment
-    """
-    ### Example of family relationships
-    ###
-    #Line01:policy-map QOS_1
-    #Line02: class GOLD
-    #Line03:  priority percent 10
-    #Line04: class SILVER
-    #Line05:  bandwidth 30
-    #Line06:  random-detect
-    #Line07: class default
-    #Line08:!
-    #Line09:interface Serial 1/0
-    #Line10: encapsulation ppp
-    #Line11: ip address 1.1.1.1 255.255.255.252
-    #Line12:!
-    #Line13:access-list 101 deny tcp any any eq 25 log
-    #Line14:access-list 101 permit ip any any
-    #
-    # parents: 01, 02, 04, 09
-    # children: of 01 = 02, 04, 07
-    #           of 02 = 03
-    #           of 04 = 05, 06
-    #           of 09 = 10, 11
-    # siblings: 05 and 06
-    #           10 and 11
-    # oldest_ancestors: 01, 09
-    # families: 01, 02, 03, 04, 05, 06, 07
-    #           09, 10, 11
-    # family_endpoints: 07, 11
-    #
-    def __init__(self, *args, **kwargs):
-        """Accept an IOS line number and initialize family relationship
-        attributes"""
-        super(IOSCfgLine, self).__init__(*args, **kwargs)
-
-    @classmethod
-    def is_object_for(cls, line="", re=re):
-        ## Default object, for now
-        return True
