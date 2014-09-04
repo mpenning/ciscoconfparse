@@ -852,6 +852,8 @@ class IOSIntfLine(BaseIOSIntfLine):
 class IOSIntfGlobal(BaseCfgLine):
     def __init__(self, *args, **kwargs):
         super(IOSIntfGlobal, self).__init__(*args, **kwargs)
+        self.feature = 'interface global'
+
     def __repr__(self):
         return "<%s # %s '%s'>" % (self.classname, self.linenum, 
             self.text)
@@ -900,6 +902,8 @@ class IOSIntfGlobal(BaseCfgLine):
 class IOSHostnameLine(BaseCfgLine):
     def __init__(self, *args, **kwargs):
         super(IOSHostnameLine, self).__init__(*args, **kwargs)
+        self.feature = 'hostname'
+
     def __repr__(self):
         return "<%s # %s '%s'>" % (self.classname, self.linenum, 
             self.hostname)
@@ -923,6 +927,7 @@ class IOSHostnameLine(BaseCfgLine):
 class IOSAccessLine(BaseCfgLine):
     def __init__(self, *args, **kwargs):
         super(IOSAccessLine, self).__init__(*args, **kwargs)
+        self.feature = 'access line'
     def __repr__(self):
         return "<%s # %s '%s' info: '%s'>" % (self.classname, self.linenum, self.name, self.range_str)
 
@@ -1046,6 +1051,10 @@ class BaseIOSRouteLine(BaseCfgLine):
 class IOSRouteLine(BaseIOSRouteLine):
     def __init__(self, *args, **kwargs):
         super(IOSRouteLine, self).__init__(*args, **kwargs)
+        if 'ipv6' in self.text:
+            self.feature = 'ipv6 route'
+        else:
+            self.feature = 'ip route'
 
     @classmethod
     def is_object_for(cls, line="", re=re):
@@ -1138,9 +1147,9 @@ class IOSTacPlusGroup(object):
 class IOSAaaLoginAuthenticationLine(BaseCfgLine):
     def __init__(self, *args, **kwargs):
         super(IOSAaaLoginAuthenticationLine, self).__init__(*args, **kwargs)
+        self.feature = 'aaa authentication login'
 
         regex = r'^aaa\sauthentication\slogin\s(\S+)\sgroup\s(\S+)(.+?)$'
-        self.category = 'login authentication'
         self.list_name = self.re_match_typed(regex, group=1, result_type=str, 
             default='')
         self.group = self.re_match_typed(regex, group=2, result_type=str, 
@@ -1158,9 +1167,9 @@ class IOSAaaLoginAuthenticationLine(BaseCfgLine):
 class IOSAaaEnableAuthenticationLine(BaseCfgLine):
     def __init__(self, *args, **kwargs):
         super(IOSAaaEnableAuthenticationLine, self).__init__(*args, **kwargs)
+        self.feature = 'aaa authentication enable'
 
         regex = r'^aaa\sauthentication\senable\s(\S+)\sgroup\s(\S+)(.+?)$'
-        self.category = 'enable authentication'
         self.list_name = self.re_match_typed(regex, group=1, result_type=str, 
             default='')
         self.group = self.re_match_typed(regex, group=2, result_type=str, 
@@ -1178,9 +1187,9 @@ class IOSAaaEnableAuthenticationLine(BaseCfgLine):
 class IOSAaaCommandsAuthorizationLine(BaseCfgLine):
     def __init__(self, *args, **kwargs):
         super(IOSAaaCommandsAuthorizationLine, self).__init__(*args, **kwargs)
+        self.feature = 'aaa authorization commands'
 
         regex = r'^aaa\sauthorization\scommands\s(\d+)\s(\S+)\sgroup\s(\S+)(.+?)$'
-        self.category = 'commands authorization'
         self.level = self.re_match_typed(regex, group=1, result_type=int, 
             default=0)
         self.list_name = self.re_match_typed(regex, group=2, result_type=str, 
@@ -1194,5 +1203,45 @@ class IOSAaaCommandsAuthorizationLine(BaseCfgLine):
     @classmethod
     def is_object_for(cls, line="", re=re):
         if re.search(r'^aaa\sauthorization\scommands', line):
+            return True
+        return False
+
+class IOSAaaCommandsAccountingLine(BaseCfgLine):
+    def __init__(self, *args, **kwargs):
+        super(IOSAaaCommandsAccountingLine, self).__init__(*args, **kwargs)
+        self.feature = 'aaa accounting commands'
+
+        regex = r'^aaa\saccounting\scommands\s(\d+)\s(\S+)\s(none|stop\-only|start\-stop)\sgroup\s(\S+)$'
+        self.level = self.re_match_typed(regex, group=1, result_type=int, 
+            default=0)
+        self.list_name = self.re_match_typed(regex, group=2, result_type=str, 
+            default='')
+        self.record_type = self.re_match_typed(regex, group=3, result_type=str,
+            default='')
+        self.group = self.re_match_typed(regex, group=4, result_type=str, 
+            default='')
+
+    @classmethod
+    def is_object_for(cls, line="", re=re):
+        if re.search(r'^aaa\saccounting\scommands', line):
+            return True
+        return False
+
+class IOSAaaExecAccountingLine(BaseCfgLine):
+    def __init__(self, *args, **kwargs):
+        super(IOSAaaExecAccountingLine, self).__init__(*args, **kwargs)
+        self.feature = 'aaa accounting exec'
+
+        regex = r'^aaa\saccounting\sexec\s(\S+)\s(none|stop\-only|start\-stop)\sgroup\s(\S+)$'
+        self.list_name = self.re_match_typed(regex, group=1, result_type=str, 
+            default='')
+        self.record_type = self.re_match_typed(regex, group=2, result_type=str,
+            default='')
+        self.group = self.re_match_typed(regex, group=3, result_type=str, 
+            default='')
+
+    @classmethod
+    def is_object_for(cls, line="", re=re):
+        if re.search(r'^aaa\saccounting\sexec', line):
             return True
         return False
