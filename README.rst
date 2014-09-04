@@ -53,19 +53,19 @@ already have setuptools_, you can install as usual:
 ::
 
       # Substitute whatever ciscoconfparse version you like...
-      easy_install -U ciscoconfparse==1.1.2
+      easy_install -U ciscoconfparse==1.1.9
 
 Alternatively you can install into Python2.x with pip_:
 
 ::
 
-      pip install ciscoconfparse
+      pip install --upgrade ciscoconfparse
 
 Use ``pip3`` for Python3.x...
 
 ::
 
-      pip3 install ciscoconfparse
+      pip3 install --upgrade ciscoconfparse
 
 Otherwise `download it from PyPi <https://pypi.python.org/pypi/ciscoconfparse>`_, extract it and run the ``setup.py`` script:
 
@@ -100,7 +100,7 @@ ciscoconfparse_ is licensed GPLv3_; Copyright `David Michael Pennington`_,
 
 The `ipaddr`_ module is distributed with ciscoconfparse_ to facilitate unit
 tests. `ipaddr`_ uses the `ASF License 2.0`_; `ipaddr`_ is part of the Python
-standard library, starting in Python 3.3.
+standard library, starting in Python 3.3 (it's called ``ipaddress`` in Python3).
 
 .. _FAQ:
 
