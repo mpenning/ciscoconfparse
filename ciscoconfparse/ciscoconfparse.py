@@ -12,6 +12,8 @@ from models_cisco import IOSAccessLine, IOSIntfGlobal
 from models_cisco import IOSAaaLoginAuthenticationLine
 from models_cisco import IOSAaaEnableAuthenticationLine
 from models_cisco import IOSAaaCommandsAuthorizationLine
+from models_cisco import IOSAaaCommandsAccountingLine
+from models_cisco import IOSAaaExecAccountingLine
 from models_cisco import IOSCfgLine
 
 
@@ -36,7 +38,7 @@ from models_cisco import IOSCfgLine
 """
 
 ## Docstring props: http://stackoverflow.com/a/1523456/667301
-__version_tuple__ = (1,1,8)
+__version_tuple__ = (1,1,9)
 __version__ = '.'.join(map(str, __version_tuple__))
 __email__ = "mike /at\ pennington [dot] net"
 __author__ = "David Michael Pennington <{0}>".format(__email__)
@@ -2106,7 +2108,8 @@ def ConfigLineFactory(text="", comment_delimiter="!", syntax='ios'):
     ## Manual and simple
     classes = [IOSIntfLine, IOSRouteLine, IOSAccessLine, 
         IOSAaaLoginAuthenticationLine, IOSAaaEnableAuthenticationLine,
-        IOSAaaCommandsAuthorizationLine,
+        IOSAaaCommandsAuthorizationLine, IOSAaaCommandsAccountingLine,
+        IOSAaaExecAccountingLine,
         IOSHostnameLine, IOSIntfGlobal, IOSCfgLine]  # This is simple
     for cls in classes:
         if cls.is_object_for(text):
