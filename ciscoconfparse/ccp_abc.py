@@ -45,6 +45,9 @@ class BaseCfgLine(object):
         self.oldest_ancestor = False
         self.indent = 0            # Whitespace indentation on the object
         self.confobj = None        # Reference to the list object which owns it
+        self.feature   = ''        # Major feature description
+        self.feature_param1 = ''   # Parameter1 of the feature
+        self.feature_param2 = ''   # Parameter2 of the feature (if req'd)
         self.hash_arg = None
 
         self.set_comment_bool()

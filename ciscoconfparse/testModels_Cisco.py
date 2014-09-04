@@ -1033,6 +1033,23 @@ class knownValues(unittest.TestCase):
         self.assertEqual('default', obj.list_name)
         self.assertEqual(['local'], obj.methods)
 
+    def testVal_IOSAaaCommandsAccountingLine(self):
+        line = 'aaa accounting commands 15 default start-stop group tacacs+'
+        cfg = CiscoConfParse([line], factory=True)
+        obj = cfg.ConfigObjs[0]
+        self.assertEqual(15, obj.level)
+        self.assertEqual('tacacs+', obj.group)
+        self.assertEqual('default', obj.list_name)
+        self.assertEqual('start-stop', obj.record_type)
+
+    def testVal_IOSAaaExecAccountingLine(self):
+        line = 'aaa accounting exec default start-stop group tacacs+'
+        cfg = CiscoConfParse([line], factory=True)
+        obj = cfg.ConfigObjs[0]
+        self.assertEqual('tacacs+', obj.group)
+        self.assertEqual('default', obj.list_name)
+        self.assertEqual('start-stop', obj.record_type)
+
 
 if __name__ == "__main__":
      unittest.main()
