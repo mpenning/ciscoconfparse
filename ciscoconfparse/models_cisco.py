@@ -1136,9 +1136,44 @@ class IOSRouteLine(BaseIOSRouteLine):
 ##
 ##-------------  IOS TACACS+ Group
 ##
-class IOSTacPlusGroup(object):
-    def __init__(self):
-        pass
+class IOSAaaGroupServerLine(BaseCfgLine):
+    def __init__(self, *args, **kwargs):
+        super(IOSAaaGroupServerLine, self).__init__(*args, **kwargs)
+        self.feature = 'aaa group server'
+
+        regex = r'^aaa\sgroup\sserver\s(\S+)\s(\S+)$'
+        self.protocol = self.re_match_typed(regex, group=1, result_type=str,
+            default='')
+        self.group = self.re_match_typed(regex, group=2, result_type=str,
+            default='')
+
+
+    @classmethod
+    def is_object_for(cls, line="", re=re):
+        if re.search(r'^aaa\sgroup\sserver', line):
+            return True
+        return False
+
+    @property
+    def vrf(self):
+        return self.re_match_iter_typed(r'^\s+ip\s+vrf\s+forwarding\s+(\S+)',
+            group=1, result_type=str, default='')
+
+    @property
+    def source_interface(self):
+        return self.re_match_iter_typed(r'^\s+ip\s+tacacs\s+source-interface\s+(\S.+?\S)\s*$',
+            group=1, result_type=str, default='')
+
+    @property
+    def server_private(self, re=re):
+        retval = set([])
+        rgx_priv = re.compile('^\s+server-private\s+(\S+)\s')
+        for cobj in self.children:
+            mm = rgx_priv.search(cobj.text)
+            if not (mm is None):
+                retval.add(mm.group(1))  # This is the server's ip
+        return retval
+
 
 ##
 ##-------------  IOS AAA Lines
