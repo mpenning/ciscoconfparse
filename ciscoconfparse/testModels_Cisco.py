@@ -1050,6 +1050,23 @@ class knownValues(unittest.TestCase):
         self.assertEqual('default', obj.list_name)
         self.assertEqual('start-stop', obj.record_type)
 
+    def testVal_IOSAaaGroupServerLine(self):
+        lines = ['!',
+            'aaa group server tacacs+ TACACS_01',
+            ' server-private 192.0.2.10 key cisco',
+            ' server-private 192.0.2.11 key cisco',
+            ' ip vrf forwarding VRF_001',
+            ' ip tacacs source-interface FastEthernet0/48',
+            '!',
+        ]
+        cfg = CiscoConfParse(lines, factory=True)
+        obj = cfg.ConfigObjs[1]
+        self.assertEqual('TACACS_01', obj.group)
+        self.assertEqual('tacacs+', obj.protocol)
+        self.assertEqual(set(['192.0.2.10', '192.0.2.11']), obj.server_private)
+        self.assertEqual('VRF_001', obj.vrf)
+        self.assertEqual('FastEthernet0/48', obj.source_interface)
+
 
 if __name__ == "__main__":
      unittest.main()
