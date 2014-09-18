@@ -23,6 +23,8 @@ import os
      mike [~at~] pennington [/dot\] net
 """
 
+### TODO: Implement a findall function which matches a regex and returns a list
+
 
 ##
 ##-------------  Config Line ABC
