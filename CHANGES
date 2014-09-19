@@ -1,3 +1,4 @@
+1.1.12  20140919 Enhance support for ccp_util.IPv4Obj, add Cisco ASA parsing in models_asa
 1.1.11  20140918 Fix Github Issue #9
 1.1.10  20140905 Enhance AAA parsing in models_cisco
 1.1.9   20140904 Enhance AAA parsing in models_cisco
