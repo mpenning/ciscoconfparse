@@ -3,7 +3,9 @@ from abc import ABCMeta
 import re
 import os
 
-""" ciscoconfparse.py - Parse, Query, Build, and Modify IOS-style configurations
+from ccp_util import IPv4Obj
+
+""" ccp_abc.py - Parse, Query, Build, and Modify IOS-style configurations
      Copyright (C) 2007-2014 David Michael Pennington
 
      This program is free software: you can redistribute it and/or modify
@@ -592,7 +594,7 @@ class BaseCfgLine(object):
              An integer which specifies the desired group to be returned.
              ``group`` defaults to 1.
         result_type : type, optional
-             A python type (typically one of: ``str``, ``int``, or ``float``).               All returned values are cast as ``result_type``, which defaults 
+             A type (typically one of: ``str``, ``int``, ``float``, or ``IPv4Obj``).         All returned values are cast as ``result_type``, which defaults 
              to ``str``.
         default : optional
              The default value to be returned, if there is no match.
@@ -640,6 +642,7 @@ class BaseCfgLine(object):
            Interface Serial1/0 is in slot 1
            Interface Serial2/0 is in slot 2
            >>>
+
         """
         mm = re.search(regex, self.text)
         if not (mm is None):
@@ -647,6 +650,59 @@ class BaseCfgLine(object):
         return result_type(default)
 
     def re_match_iter_typed(self, regex, group=1, result_type=str, default=''):
+        """Use ``regex`` to search the :class:`~models_cisco.IOSCfgLine` text 
+        and return the contents of the regular expression group, at the 
+        integer index, cast as ``result_type``; if there is no match, 
+        ``default`` is returned.
+
+        Parameters
+        ----------
+
+        regex : str, required
+             A string or python regular expression, which should be matched.  
+             This regular expression should contain parenthesis, which bound a 
+             match group.
+        group : int, optional
+             An integer which specifies the desired group to be returned.
+             ``group`` defaults to 1.
+        result_type : type, optional
+             A type (typically one of: ``str``, ``int``, ``float``, or ``IPv4Obj``).         All returned values are cast as ``result_type``, which defaults 
+             to ``str``.
+        default : optional
+             The default value to be returned, if there is no match.
+
+        Returns
+        -------
+
+        retval : ``result_type``
+            The text matched by the regular expression group; if there is no
+            match, ``default`` is returned.  All values are cast as 
+            ``result_type``.
+
+        Examples
+        --------
+
+        This example illustrates how you can use 
+        :func:`~models_cisco.IOSCfgLine.re_match_iter_typed` to build an 
+        :func:`~ccp_util.IPv4Obj` address object for each interface.
+
+           >>> config = [
+           ...     '!',
+           ...     'interface Serial1/0',
+           ...     ' ip address 1.1.1.1 255.255.255.252',
+           ...     '!',
+           ...     'interface Serial2/0',
+           ...     ' ip address 1.1.1.5 255.255.255.252',
+           ...     '!',
+           ...     ]
+           >>> parse = CiscoConfParse(config)
+           >>> re.compile(r'^\s+ip\saddress\s(\S+\s+\S+)')
+           >>> for obj in parse.find_objects(r'interface\s\S+'):
+           ...     print obj.text, obj.re_match_iter_typed(r'ip\saddress\s(\S+\s+\S+)')
+           interface Serial1/0 <IPv4Obj 1.1.1.1/30>
+           interface Serial2/0 <IPv4Obj 1.1.1.5/30>
+           >>>
+        """
         ## iterate through children, and return the matching value 
         ##  (cast as result_type) from the first child.text that matches regex
 
