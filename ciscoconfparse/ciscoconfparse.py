@@ -17,6 +17,8 @@ from models_cisco import IOSAaaExecAccountingLine
 from models_cisco import IOSAaaGroupServerLine
 from models_cisco import IOSCfgLine
 
+from models_asa import ASACfgLine
+
 
 """ ciscoconfparse.py - Parse, Query, Build, and Modify IOS-style configurations
      Copyright (C) 2007-2014 David Michael Pennington
@@ -119,33 +121,38 @@ class CiscoConfParse(object):
     """
 
     def __init__(self, config="", comment="!", debug=False, factory=False, 
-        linesplit_rgx=r"\r*\n+", ignore_blank_lines=True):
+        linesplit_rgx=r"\r*\n+", ignore_blank_lines=True, syntax='ios'):
         """Initialize the class, read the config, and spawn the parser"""
 
         # all IOSCfgLine object instances...
         self.comment_delimiter = comment
         self.factory = factory
         self.ConfigObjs = None
+        self.syntax = syntax
 
         if isinstance(config, list):
-            # we already have a list object, simply call the parser
-            self.ConfigObjs = IOSConfigList(data=config, 
-                comment_delimiter=comment, 
-                debug=debug, 
-                factory=factory, 
-                ignore_blank_lines=ignore_blank_lines)
+            if syntax=='ios':
+                # we already have a list object, simply call the parser
+                self.ConfigObjs = IOSConfigList(data=config, 
+                    comment_delimiter=comment, 
+                    debug=debug, 
+                    factory=factory, 
+                    ignore_blank_lines=ignore_blank_lines,
+                    syntax='ios')
         elif isinstance(config, str):
             # Try opening as a file
             try:
-                # string - assume a filename... open file, split and parse
-                f = open(config)
-                text = f.read()
-                rgx = re.compile(linesplit_rgx)
-                self.ConfigObjs = IOSConfigList(rgx.split(text), 
-                    comment_delimiter=comment, 
-                    debug=debug,
-                    factory=factory,
-                    ignore_blank_lines=ignore_blank_lines)
+                if syntax=='ios':
+                    # string - assume a filename... open file, split and parse
+                    f = open(config)
+                    text = f.read()
+                    rgx = re.compile(linesplit_rgx)
+                    self.ConfigObjs = IOSConfigList(rgx.split(text), 
+                        comment_delimiter=comment, 
+                        debug=debug,
+                        factory=factory,
+                        ignore_blank_lines=ignore_blank_lines,
+                        syntax='ios')
             except IOError:
                 print("[FATAL] CiscoConfParse could not open '%s'" % config)
                 raise RuntimeError
@@ -1661,7 +1668,7 @@ class IOSConfigList(MutableSequence):
             An instance of an :class:`~ciscoconfparse.IOSConfigList` object.
     """
     def __init__(self, data=None, comment_delimiter='!', debug=False, 
-        factory=False, ignore_blank_lines=True):
+        factory=False, ignore_blank_lines=True, syntax='ios'):
         super(IOSConfigList, self).__init__()
 
         self._list = list()
@@ -1670,6 +1677,7 @@ class IOSConfigList(MutableSequence):
         self.comment_delimiter = comment_delimiter
         self.factory = factory
         self.ignore_blank_lines = ignore_blank_lines
+        self.syntax = syntax
 
         if isinstance(data, list) and (data):
             self._bootstrap_obj_init(data)
@@ -1721,8 +1729,9 @@ class IOSConfigList(MutableSequence):
         if isinstance(val, str):
             if self.factory:
                 obj = ConfigLineFactory(text=val, 
-                    comment_delimiter=self.comment_delimiter)
-            else:
+                    comment_delimiter=self.comment_delimiter, 
+                    syntax=self.syntax)
+            elif self.syntax=='ios':
                 obj = IOSCfgLine(text=val, 
                     comment_delimiter=self.comment_delimiter)
 
@@ -1747,8 +1756,9 @@ class IOSConfigList(MutableSequence):
         if isinstance(val, str):
             if self.factory:
                 obj = ConfigLineFactory(text=val, 
-                    comment_delimiter=self.comment_delimiter)
-            else:
+                    comment_delimiter=self.comment_delimiter,
+                    syntax=self.syntax)
+            elif self.syntax=='ios':
                 obj = IOSCfgLine(text=val, 
                     comment_delimiter=self.comment_delimiter)
 
@@ -1773,8 +1783,9 @@ class IOSConfigList(MutableSequence):
         if isinstance(val, str):
             if self.factory:
                 obj = ConfigLineFactory(text=val, 
-                    comment_delimiter=self.comment_delimiter)
-            else:
+                    comment_delimiter=self.comment_delimiter,
+                    syntax=self.syntax)
+            elif self.syntax=='ios':
                 obj = IOSCfgLine(text=val, 
                     comment_delimiter=self.comment_delimiter)
 
@@ -1803,8 +1814,9 @@ class IOSConfigList(MutableSequence):
                 continue
             if not self.factory:
                 obj          = IOSCfgLine(line, self.comment_delimiter)
-            else:
-                obj = ConfigLineFactory(line, self.comment_delimiter)
+            elif self.syntax=='ios':
+                obj = ConfigLineFactory(line, self.comment_delimiter, 
+                    syntax='ios')
 
             obj.confobj  = self
             obj.linenum  = idx
@@ -2107,11 +2119,14 @@ def ConfigLineFactory(text="", comment_delimiter="!", syntax='ios'):
     #classes = [j for (i,j) in globals().iteritems() if isinstance(j, TypeType) and issubclass(j, BaseCfgLine)]
 
     ## Manual and simple
-    classes = [IOSIntfLine, IOSRouteLine, IOSAccessLine, 
-        IOSAaaLoginAuthenticationLine, IOSAaaEnableAuthenticationLine,
-        IOSAaaCommandsAuthorizationLine, IOSAaaCommandsAccountingLine,
-        IOSAaaExecAccountingLine, IOSAaaGroupServerLine,
-        IOSHostnameLine, IOSIntfGlobal, IOSCfgLine]  # This is simple
+    if syntax=='ios':
+        classes = [IOSIntfLine, IOSRouteLine, IOSAccessLine, 
+            IOSAaaLoginAuthenticationLine, IOSAaaEnableAuthenticationLine,
+            IOSAaaCommandsAuthorizationLine, IOSAaaCommandsAccountingLine,
+            IOSAaaExecAccountingLine, IOSAaaGroupServerLine,
+            IOSHostnameLine, IOSIntfGlobal, IOSCfgLine]  # This is simple
+    elif syntax=='asa':
+        classes = [ASACfgLine]
     for cls in classes:
         if cls.is_object_for(text):
             inst = cls(text=text, 
