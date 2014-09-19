@@ -41,7 +41,6 @@ except:
      mike [~at~] pennington [/dot\] net
 """
 
-
 RGX_IPV4ADDR = re.compile(r'^(\d+\.\d+\.\d+\.\d+)')
 RGX_IPV4ADDR_NETMASK = re.compile(r'(\d+\.\d+\.\d+\.\d+)\s+(\d+\.\d+\.\d+\.\d+)')
 
@@ -49,8 +48,11 @@ RGX_IPV4ADDR_NETMASK = re.compile(r'(\d+\.\d+\.\d+\.\d+)\s+(\d+\.\d+\.\d+\.\d+)'
 ##    IPv4Network with a host address.  Google removed that in Python3's 
 ##    ipaddress.py module
 class IPv4Obj(object):
-    def __init__(self, arg='127.0.0.1/32', strict=False, 
-        RGX_IPV4ADDR=RGX_IPV4ADDR, RGX_IPV4ADDR_NETMASK=RGX_IPV4ADDR_NETMASK):
+    def __init__(self, arg='127.0.0.1/32', strict=False):
+
+        RGX_IPV4ADDR = re.compile(r'^(\d+\.\d+\.\d+\.\d+)')
+        RGX_IPV4ADDR_NETMASK = re.compile(r'(\d+\.\d+\.\d+\.\d+)\s+(\d+\.\d+\.\d+\.\d+)')
+
         arg = RGX_IPV4ADDR_NETMASK.sub(r'\1/\2', arg) # mangle IOS: 'addr mask'
         self.arg = arg
         mm = RGX_IPV4ADDR.search(arg)
