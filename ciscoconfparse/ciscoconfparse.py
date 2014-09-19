@@ -1841,9 +1841,9 @@ class IOSConfigList(MutableSequence):
                 continue
             if not self.factory:
                 obj          = IOSCfgLine(line, self.comment_delimiter)
-            elif self.syntax=='asa':
+            elif self.syntax=='ios':
                 obj = ConfigLineFactory(line, self.comment_delimiter, 
-                    syntax='asa')
+                    syntax='ios')
 
             obj.confobj  = self
             obj.linenum  = idx
