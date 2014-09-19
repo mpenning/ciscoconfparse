@@ -120,7 +120,7 @@ class CiscoConfParse(object):
            ...     ] 
            >>> parse = CiscoConfParse(config)
            >>> parse
-           <CiscoConfParse: 2 lines / comment delimiter: '!' / factory: False>
+           <CiscoConfParse: 2 lines / syntax: ios / comment delimiter: '!' / factory: False>
            >>> parse.ConfigObjs
            <IOSConfigList, comment='!', conf=[<IOSCfgLine # 0 'logging trap debugging'>, <IOSCfgLine # 1 'logging 172.28.26.15'>]>
            >>> parse.ioscfg
@@ -189,7 +189,7 @@ class CiscoConfParse(object):
         self.ConfigObjs.CiscoConfParse = self
 
     def __repr__(self):
-        return "<CiscoConfParse: %s lines / comment delimiter: '%s' / factory: %s>" % (len(self.ConfigObjs), self.comment_delimiter, self.factory)
+        return "<CiscoConfParse: %s lines / syntax: %s / comment delimiter: '%s' / factory: %s>" % (len(self.ConfigObjs), self.syntax, self.comment_delimiter, self.factory)
 
 
     @property
@@ -2143,6 +2143,7 @@ class ASAConfigList(MutableSequence):
         self.ignore_blank_lines = ignore_blank_lines
         self.syntax = syntax
 
+
         if isinstance(data, list) and (data):
             self._bootstrap_obj_init(data)
         else:
@@ -2537,6 +2538,21 @@ class ASAConfigList(MutableSequence):
     @property
     def last_index(self):
         return (self.__len__()-1)
+
+
+    ###
+    ### ASA-specific stuff here...
+    ###
+    @property
+    def names(self):
+        """Return a dictionary of name to address mappings"""
+        retval = dict()
+        name_rgx = r'^\s*name\s+(\d+\.\d+\.\d+\.\d+)\s+(\S+)'
+        for obj in self.CiscoConfParse.find_objects(name_rgx):
+            addr = obj.re_match_typed(name_rgx, group=1, result_type=str)
+            name = obj.re_match_typed(name_rgx, group=2, result_type=str)
+            retval[name] = addr
+        return retval
 
 class CiscoPassword(object):
 
