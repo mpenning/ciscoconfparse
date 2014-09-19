@@ -149,7 +149,7 @@ class CiscoConfParse(object):
                     syntax='ios')
             elif syntax=='asa':
                 # we already have a list object, simply call the parser
-                self.ConfigObjs = IOSConfigList(data=config, 
+                self.ConfigObjs = ASAConfigList(data=config, 
                     comment_delimiter=comment, 
                     debug=debug, 
                     factory=factory, 
