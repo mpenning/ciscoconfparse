@@ -2,6 +2,7 @@ import sys
 import re
 import os
 
+from protocol_values import ASA_TCP_PORTS, ASA_UDP_PORTS
 
 try:
     if sys.version_info[0]<3:
@@ -22,7 +23,7 @@ except:
         from ipaddress import IPv4Network, IPv6Network, IPv4Address, IPv6Address
 
 """ ccp_util.py - Parse, Query, Build, and Modify IOS-style configurations
-     Copyright (C) 2007-2014 David Michael Pennington
+     Copyright (C) 2014 David Michael Pennington
 
      This program is free software: you can redistribute it and/or modify
      it under the terms of the GNU General Public License as published by
@@ -122,3 +123,55 @@ class IPv4Obj(object):
     @property
     def numhosts(self):
         return self.network_object.numhosts
+
+class L4Object(object):
+    """Object for Transport-layer protocols; the object ensures that logical operators (such as le, gt, eq, and ne) are parsed correctly, as well as mapping service names to port numbers"""
+    def __init__(self, protocol='', port_spec='', syntax=''):
+        self.protocol = protocol
+        self.port_list = list()
+        self.syntax = syntax
+
+        try:
+            port_spec = port_spec.strip()
+        except:
+            port_spec = port_spec
+
+        if syntax=='asa':
+            if protocol=='tcp':
+                ports = ASA_TCP_PORTS
+            elif protocol=='udp':
+                ports = ASA_UDP_PORTS
+            else:
+                raise NotImplementedError, "'{0}' is not supported: '{0}'".format(protocol)
+        else:
+            raise NotImplementedError, "This syntax is unknown: '{0}'".format(syntax)
+
+        if 'eq ' in port_spec:
+            port_str = re.split('\s+', port_spec)[-1]
+            self.port_list = [int(ports.get(port_str, port_str))]
+        elif re.search(r'^\S+$', port_spec):
+            # Technically, 'eq ' is optional...
+            self.port_list = [int(ports.get(port_spec, port_spec))]
+        elif 'range ' in port_spec:
+            port_tmp = re.split('\s+', port_spec)[1:]
+            self.port_list = range(int(ports.get(port_tmp[0], port_tmp[0])), 
+                int(ports.get(port_tmp[1], port_tmp[1])) + 1)
+        elif 'lt ' in port_spec:
+            port_str = re.split('\s+', port_spec)[-1]
+            self.port_list = range(1, int(ports.get(port_str, port_str)))
+        elif 'gt ' in port_spec:
+            port_str = re.split('\s+', port_spec)[-1]
+            self.port_list = range(int(ports.get(port_str, port_str)) + 1, 65535)
+        elif 'neq ' in port_spec:
+            port_str = re.split('\s+', port_spec)[-1]
+            tmp = set(range(1, 65535))
+            tmp.remove(int(port_str))
+            self.port_list = sorted(tmp)
+
+    def __eq__(self, val):
+        if (self.protocol==val.protocol) and (self.port_list==val.port_list):
+            return True
+        return False
+
+    def __repr__(self):
+        return "<L4Object {0} {1}>".format(self.protocol, self.port_list)
