@@ -2,19 +2,21 @@ import sys
 import re
 import os
 
+from protocol_values import ASA_TCP_PORTS, ASA_UDP_PORTS
 from ccp_abc import BaseCfgLine
+from ccp_util import L4Object
 from ccp_util import IPv4Obj
 
 ### HUGE UGLY WARNING:
 ###   Anything in models_asa.py could change at any time, until I remove this
-###   warning.  I have good reason to believe that these methods are stable and 
+###   warning.  I have good reason to believe that these methods 
 ###   function correctly, but I've been wrong before.  There are no unit tests
 ###   for this functionality yet, so I consider all this code alpha quality. 
 ###
 ###   Use models_asa.py at your own risk.  You have been warned :-)
 
 """ models_asa.py - Parse, Query, Build, and Modify IOS-style configurations
-     Copyright (C) 2007-2014 David Michael Pennington
+     Copyright (C) 2014 David Michael Pennington
 
      This program is free software: you can redistribute it and/or modify
      it under the terms of the GNU General Public License as published by
@@ -419,7 +421,7 @@ class ASAObjNetwork(ASACfgLine):
         return False
 
 ##
-##-------------  ASA object network
+##-------------  ASA object service
 ##
 
 class ASAObjService(ASACfgLine):
@@ -447,12 +449,37 @@ class ASAObjGroupNetwork(ASACfgLine):
         attributes"""
         super(ASAObjGroupNetwork, self).__init__(*args, **kwargs)
 
+        self.name = self.re_match_typed(r'^object-group\s+network\s+(\S+)', group=1, 
+            result_type=str)
+
     @classmethod
     def is_object_for(cls, line="", re=re):
         obj_group_regex = r'^object-group\s+network\s+(\S+)'
         if re.search(obj_group_regex, line):
             return True
         return False
+
+    @property
+    def networks(self):
+        """Return a list of IPv4Obj objects which represent the address space allowed by
+        This object-group"""
+        retval = list()
+        names = self.confobj.names
+        for obj in self.children:
+            if 'network-object host ' in obj.text:
+                host_str = obj.re_match_typed(r'^\s*network-object\s+host\s+(\S+)', 
+                    group=1, result_type=str)
+                retval.append(IPv4Obj(names.get(host_str, host_str)))
+            elif 'network-object ' in obj.text:
+                network_str = obj.re_match_typed(r'^\s*network-object\s+(\S+)', 
+                    group=1, result_type=str)
+                netmask_str = obj.re_match_typed(r'^\s*network-object\s+\S+\s+(\d+\.\d+\.\d+\.\d+)', 
+                    group=1, result_type=str)
+                retval.append(IPv4Obj('{0} {1}'.format(names.get(network_str, 
+                    network_str), netmask_str)))
+            else:
+                raise NotImplementedError, "Cannot parse '{0}'".format(obj.text)
+        return retval
 
 ##
 ##-------------  ASA object-group service
@@ -461,9 +488,22 @@ class ASAObjGroupNetwork(ASACfgLine):
 class ASAObjGroupService(ASACfgLine):
 
     def __init__(self, *args, **kwargs):
-        """Accept an ASA line number and initialize family relationship
-        attributes"""
+        """Accept an ASA line number and initialize family relationship 
+            attributes"""
         super(ASAObjGroupService, self).__init__(*args, **kwargs)
+
+        self.protocol_type = self.re_match_typed(r'^object-group\s+service\s+\S+(\s+.+)*$',
+            group=1, default='', result_type=str).strip()
+        self.name = self.re_match_typed(r'^object-group\s+service\s+(\S+)',
+            group=1, default='', result_type=str)
+        ## If *no protocol* is specified in the object-group statement, the 
+        ##   object-group can be used for both source or destination ports 
+        ##   at the same time.  Thus L4Objects_are_directional is True if we
+        ##   do not specify a protocol in the 'object-group service' line
+        if (self.protocol_type==''):
+            self.L4Objects_are_directional = True
+        else:
+            self.L4Objects_are_directional = False
 
     @classmethod
     def is_object_for(cls, line="", re=re):
@@ -471,6 +511,55 @@ class ASAObjGroupService(ASACfgLine):
         if re.search(obj_group_regex, line):
             return True
         return False
+
+    def __repr__(self):
+        return "<ASAObjGroupService {0} protocol: {1}>".format(self.name, self.protocol_type)
+
+    @property
+    def ports(self):
+        """Return a list of objects which represent the protocol and ports allowed by this object-group"""
+        retval = list()
+        ## TODO: implement processing for group-objects (which obviously 
+        ##    involves iteration
+        #GROUP_OBJ_REGEX = r'^\s*group-object\s+(\S+)'
+        SERVICE_OBJ_REGEX = r'^\s*service-object\s+(tcp|udp|tcp-udp)\s+(\S+)\s+(\S+)'
+        PORT_OBJ_REGEX = r'^\s*port-object\s+(eq|range)\s+(\S.+)'
+        for obj in self.children:
+            if 'service-object ' in obj.text:
+                protocol = obj.re_match_typed(SERVICE_OBJ_REGEX, 
+                    group=1, result_type=str)
+                src_dst = obj.re_match_typed(SERVICE_OBJ_REGEX, 
+                    group=2, result_type=str)
+                port = obj.re_match_typed(SERVICE_OBJ_REGEX, 
+                    group=3, result_type=str)
+
+                if protocol=='tcp-udp':
+                    retval.append(L4Object(protocol='tcp', 
+                        port_spec=port, syntax='asa'))
+                    retval.append(L4Object(protocol='udp', 
+                        port_spec=port, syntax='asa'))
+                else:
+                    retval.append(L4Object(protocol=protocol, 
+                        port_spec=port, syntax='asa'))
+
+            elif 'port-object ' in obj.text:
+                op = obj.re_match_typed(PORT_OBJ_REGEX, 
+                    group=1, result_type=str)
+                port = obj.re_match_typed(PORT_OBJ_REGEX, 
+                    group=2, result_type=str)
+
+                port_spec="{0} {1}".format(op, port)
+                if self.protocol_type=='tcp-udp':
+                    retval.append(L4Object(protocol='tcp', 
+                        port_spec=port_spec, syntax='asa'))
+                    retval.append(L4Object(protocol='udp', 
+                        port_spec=port_spec, syntax='asa'))
+                else:
+                    retval.append(L4Object(protocol=self.protocol_type, 
+                        port_spec=port_spec, syntax='asa'))
+            else:
+                raise NotImplementedError, "Cannot parse '{0}'".format(obj.text)
+        return retval
 
 ##
 ##-------------  ASA Interface Object
