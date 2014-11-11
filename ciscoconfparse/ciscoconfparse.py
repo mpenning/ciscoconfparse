@@ -146,7 +146,8 @@ class CiscoConfParse(object):
                     debug=debug, 
                     factory=factory, 
                     ignore_blank_lines=ignore_blank_lines,
-                    syntax='ios')
+                    syntax='ios',
+                    CiscoConfParse=self)
             elif syntax=='asa':
                 # we already have a list object, simply call the parser
                 self.ConfigObjs = ASAConfigList(data=config, 
@@ -154,7 +155,8 @@ class CiscoConfParse(object):
                     debug=debug, 
                     factory=factory, 
                     ignore_blank_lines=ignore_blank_lines,
-                    syntax='asa')
+                    syntax='asa',
+                    CiscoConfParse=self)
         elif isinstance(config, str):
             # Try opening as a file
             try:
@@ -168,7 +170,8 @@ class CiscoConfParse(object):
                         debug=debug,
                         factory=factory,
                         ignore_blank_lines=ignore_blank_lines,
-                        syntax='ios')
+                        syntax='ios',
+                        CiscoConfParse=self)
                 elif syntax=='asa':
                     # string - assume a filename... open file, split and parse
                     f = open(config)
@@ -179,7 +182,8 @@ class CiscoConfParse(object):
                         debug=debug,
                         factory=factory,
                         ignore_blank_lines=ignore_blank_lines,
-                        syntax='asa')
+                        syntax='asa',
+                        CiscoConfParse=self)
             except IOError:
                 print("[FATAL] CiscoConfParse could not open '%s'" % config)
                 raise RuntimeError
@@ -1695,11 +1699,11 @@ class IOSConfigList(MutableSequence):
             An instance of an :class:`~ciscoconfparse.IOSConfigList` object.
     """
     def __init__(self, data=None, comment_delimiter='!', debug=False, 
-        factory=False, ignore_blank_lines=True, syntax='ios'):
+        factory=False, ignore_blank_lines=True, syntax='ios', CiscoConfParse=None):
         super(IOSConfigList, self).__init__()
 
         self._list = list()
-        self.CiscoConfParse = None
+        self.CiscoConfParse = CiscoConfParse
         self.DBGFLAG = debug
         self.comment_delimiter = comment_delimiter
         self.factory = factory
@@ -2132,11 +2136,11 @@ class ASAConfigList(MutableSequence):
             An instance of an :class:`~ciscoconfparse.ASAConfigList` object.
     """
     def __init__(self, data=None, comment_delimiter='!', debug=False, 
-        factory=False, ignore_blank_lines=True, syntax='asa'):
+        factory=False, ignore_blank_lines=True, syntax='asa', CiscoConfParse=None):
         super(ASAConfigList, self).__init__()
 
         self._list = list()
-        self.CiscoConfParse = None
+        self.CiscoConfParse = CiscoConfParse
         self.DBGFLAG = debug
         self.comment_delimiter = comment_delimiter
         self.factory = factory
@@ -2298,17 +2302,20 @@ class ASAConfigList(MutableSequence):
 
         self._link_firstchildren_to_parent()
         self._find_orphans()
+
         ## Make adjustments to the IOS banners because these currently show up
         ##  as individual lines, instead of a parent / child relationship.
         ##  This means finding each banner statement, and associating the
         ##  subsequent lines as children.
-        self._mark_banner("login", "ios")
-        self._mark_banner("motd", "ios")
-        self._mark_banner("exec", "ios")
-        self._mark_banner("incoming", "ios")
-        self._mark_banner("motd", "catos")
-        self._mark_banner("telnet", "catos")
-        self._mark_banner("lcd", "catos")
+        #
+        # ASA-banners should not need a special-case...
+        #self._mark_banner("login", "ios")
+        #self._mark_banner("motd", "ios")
+        #self._mark_banner("exec", "ios")
+        #self._mark_banner("asdm", "ios")
+
+        ###
+        ### ASA-specific post-processing here...
 
     def iter_with_comments(self, begin_index=0):
         for idx, obj in enumerate(self._list):
@@ -2561,11 +2568,15 @@ class CiscoPassword(object):
 
     def decrypt(self, ep):
         """Cisco Type 7 password decryption.  Converted from perl code that was
-        written by jbash [~at~] cisco.com"""
+        written by jbash [~at~] cisco.com; enhancements suggested by 
+        rucjain [~at~] cisco.com"""
 
         xlat = (0x64, 0x73, 0x66, 0x64, 0x3b, 0x6b, 0x66, 0x6f, 0x41, 0x2c,
-                    0x2e, 0x69, 0x79, 0x65, 0x77, 0x72, 0x6b, 0x6c, 0x64, 0x4a,
-                    0x4b, 0x44, 0x48, 0x53, 0x55, 0x42)
+               0x2e, 0x69, 0x79, 0x65, 0x77, 0x72, 0x6b, 0x6c, 0x64, 0x4a,
+               0x4b, 0x44, 0x48, 0x53, 0x55, 0x42, 0x73, 0x67, 0x76, 0x63,
+               0x61, 0x36, 0x39, 0x38, 0x33, 0x34, 0x6e, 0x63, 0x78, 0x76,
+               0x39, 0x38, 0x37, 0x33, 0x32, 0x35, 0x34, 0x6b, 0x3b, 0x66,
+               0x67, 0x38, 0x37)
 
         dp = ""
         regex = re.compile("^(..)(.+)")
@@ -2581,15 +2592,12 @@ class CiscoPassword(object):
             for ii in range(0, len(e), 2):
                 # int( blah, 16) assumes blah is base16... cool
                 magic = int(re.search(".{%s}(..)" % ii, e).group(1), 16)
-                if s <= 25:
-                    # Algorithm appears unpublished after s = 25
-                    newchar = "%c" % (magic ^ int(xlat[int(s)]))
-                else:
-                    newchar = "?"
+                # Wrap around after 53 chars...
+                newchar = "%c" % (magic ^ int(xlat[int(s%53)]))
                 dp = dp + str(newchar)
                 s = s + 1
-        if s > 25:
-            print("[DEBUG] WARNING: password decryption failed.")
+        #if s > 53:
+        #    print("[DEBUG] WARNING: password decryption failed.")
         return dp
 
 def ConfigLineFactory(text="", comment_delimiter="!", syntax='ios'):
