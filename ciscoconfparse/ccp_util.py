@@ -142,9 +142,9 @@ class L4Object(object):
             elif protocol=='udp':
                 ports = ASA_UDP_PORTS
             else:
-                raise NotImplementedError, "'{0}' is not supported: '{0}'".format(protocol)
+                raise NotImplementedError("'{0}' is not supported: '{0}'".format(protocol))
         else:
-            raise NotImplementedError, "This syntax is unknown: '{0}'".format(syntax)
+            raise NotImplementedError("This syntax is unknown: '{0}'".format(syntax))
 
         if 'eq ' in port_spec:
             port_str = re.split('\s+', port_spec)[-1]
