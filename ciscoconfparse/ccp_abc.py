@@ -6,7 +6,7 @@ import os
 from ccp_util import IPv4Obj
 
 """ ccp_abc.py - Parse, Query, Build, and Modify IOS-style configurations
-     Copyright (C) 2007-2014 David Michael Pennington
+     Copyright (C) 2014 David Michael Pennington
 
      This program is free software: you can redistribute it and/or modify
      it under the terms of the GNU General Public License as published by
@@ -646,7 +646,10 @@ class BaseCfgLine(object):
         """
         mm = re.search(regex, self.text)
         if not (mm is None):
-            return result_type(mm.group(group)) or result_type(default)
+            if not (mm.group(group) is None):
+                return result_type(mm.group(group))
+            else:
+                return result_type(default)
         return result_type(default)
 
     def re_match_iter_typed(self, regex, group=1, result_type=str, default=''):
