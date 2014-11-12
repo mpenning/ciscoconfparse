@@ -1,5 +1,6 @@
 #!/bin/sh
 
+# Change into your virtualenv before running the script
 python testCiscoConfParse.py
 sleep 1
 python testCcp_Util.py
