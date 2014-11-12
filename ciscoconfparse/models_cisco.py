@@ -70,7 +70,7 @@ class IOSCfgLine(BaseCfgLine):
     Returns
     -------
 
-    retval : an instance of :class:`~models_cisco.IOSCfgLine`.
+    An instance of :class:`~models_cisco.IOSCfgLine`.
 
     Attributes
     ----------

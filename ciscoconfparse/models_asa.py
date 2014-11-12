@@ -72,7 +72,7 @@ class ASACfgLine(BaseCfgLine):
     Returns
     -------
 
-    retval : an instance of :class:`~models_asa.ASACfgLine`.
+    an instance of :class:`~models_asa.ASACfgLine`.
 
     Attributes
     ----------
