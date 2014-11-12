@@ -88,7 +88,7 @@ class CiscoConfParse(object):
         Returns
         -------
 
-        retval : :class:`~ciscoconfparse.CiscoConfParse` instance
+        :class:`~ciscoconfparse.CiscoConfParse` instance
              An instance of a CiscoConfParse object.
 
         Attributes
@@ -277,7 +277,7 @@ class CiscoConfParse(object):
         Returns
         -------
 
-        retval : list
+        list
             A list of matching :class:`~ciscoconfparse.IOSCfgLine` objects
 
         Examples
@@ -337,7 +337,7 @@ class CiscoConfParse(object):
         Returns
         -------
 
-        retval : list
+        list
             A list of matching configuration lines
         """
         retval = list()
@@ -371,7 +371,7 @@ class CiscoConfParse(object):
         Returns
         -------
 
-        retval : list
+        list
             A list of matching configuration lines
 
         Examples
@@ -452,7 +452,7 @@ class CiscoConfParse(object):
         Returns
         -------
 
-        retval : list
+        list
             A list of matching configuration lines
 
         Examples
@@ -535,7 +535,7 @@ class CiscoConfParse(object):
         Returns
         -------
 
-        retval : list
+        list
             A list of matching configuration lines
 
 
@@ -661,7 +661,7 @@ class CiscoConfParse(object):
         Returns
         -------
 
-        retval : list
+        list
             A list of matching parent :class:`~models_cisco.IOSCfgLine` objects
 
         Examples
@@ -757,7 +757,7 @@ class CiscoConfParse(object):
         Returns
         -------
 
-        retval : list
+        list
             A list of matching parent configuration lines
 
         Examples
@@ -845,7 +845,7 @@ class CiscoConfParse(object):
         Returns
         -------
 
-        retval : list
+        list
             A list of matching parent configuration lines
 
         Examples
@@ -959,7 +959,7 @@ class CiscoConfParse(object):
         Returns
         -------
 
-        retval : list
+        list
             A list of matching parent configuration lines
 
         Examples
@@ -1047,7 +1047,7 @@ class CiscoConfParse(object):
         Returns
         -------
 
-        retval : list
+        list
             A list of matching child configuration lines
 
         Examples
@@ -1244,7 +1244,7 @@ class CiscoConfParse(object):
         Returns
         -------
 
-        retval : :class:`~models_cisco.IOSCfgLine()` instance
+        :class:`~models_cisco.IOSCfgLine()` instance
             The parsed :class:`~models_cisco.IOSCfgLine` instance
 
         """
@@ -1276,7 +1276,7 @@ class CiscoConfParse(object):
         Returns
         -------
 
-        retval : list
+        list
             A list of changed configuration lines
 
 
@@ -1393,7 +1393,7 @@ class CiscoConfParse(object):
         Returns
         -------
 
-        retval : list
+        list
             A list of changed :class:`~models_cisco.IOSCfgLine` instances.
 
         """
@@ -1695,7 +1695,7 @@ class IOSConfigList(MutableSequence):
        Returns
        -------
 
-       retval : :class:`~ciscoconfparse.IOSConfigList` instance
+       :class:`~ciscoconfparse.IOSConfigList` instance
             An instance of an :class:`~ciscoconfparse.IOSConfigList` object.
     """
     def __init__(self, data=None, comment_delimiter='!', debug=False, 
@@ -2132,7 +2132,7 @@ class ASAConfigList(MutableSequence):
        Returns
        -------
 
-       retval : :class:`~ciscoconfparse.ASAConfigList` instance
+       :class:`~ciscoconfparse.ASAConfigList` instance
             An instance of an :class:`~ciscoconfparse.ASAConfigList` object.
     """
     def __init__(self, data=None, comment_delimiter='!', debug=False, 

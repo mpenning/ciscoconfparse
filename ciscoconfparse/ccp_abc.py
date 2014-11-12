@@ -207,7 +207,7 @@ class BaseCfgLine(object):
         Returns
         -------
 
-        retval : list
+        list
             A list of :class:`~models_cisco.IOSCfgLine` objects which were 
             deleted.
 
@@ -287,7 +287,7 @@ class BaseCfgLine(object):
         Returns
         -------
 
-        retval : str
+        str
             The text matched by the regular expression group; if there is no
             match, None is returned.
 
@@ -362,7 +362,7 @@ class BaseCfgLine(object):
         Returns
         -------
 
-        retval : str
+        str
             The new text after replacement
 
         Examples
@@ -421,7 +421,7 @@ class BaseCfgLine(object):
         Returns
         -------
 
-        retval : str
+        str
             The new text after replacement
 
         Examples
@@ -490,7 +490,7 @@ class BaseCfgLine(object):
         Returns
         -------
 
-        retval : str
+        str
             The text matched by the regular expression group; if there is no
             match, ``default`` is returned.
 
@@ -543,7 +543,7 @@ class BaseCfgLine(object):
         Returns
         -------
 
-        retval : str
+        str
             The :class:`~models_cisco.IOSCfgLine` text which matched.  If 
             there is no match, ``default`` is returned.
         """
@@ -566,7 +566,7 @@ class BaseCfgLine(object):
         Returns
         -------
 
-        retval : list
+        list
             A list of matching :class:`~models_cisco.IOSCfgLine` objects which 
             matched.  If there is no match, an empty :py:func:`list` is 
             returned.
@@ -602,7 +602,7 @@ class BaseCfgLine(object):
         Returns
         -------
 
-        retval : ``result_type``
+        ``result_type``
             The text matched by the regular expression group; if there is no
             match, ``default`` is returned.  All values are cast as 
             ``result_type``.
@@ -677,7 +677,7 @@ class BaseCfgLine(object):
         Returns
         -------
 
-        retval : ``result_type``
+        ``result_type``
             The text matched by the regular expression group; if there is no
             match, ``default`` is returned.  All values are cast as 
             ``result_type``.
