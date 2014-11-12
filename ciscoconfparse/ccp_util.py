@@ -77,19 +77,17 @@ class IPv4Obj(object):
     def __gt__(self, val):
         try:
             val_prefixlen = int(getattr(val, 'prefixlen'))
-            val_packed = str(getattr(getattr(val, 'network_object'), 'packed'))
-            val_decimal = int(val_packed.encode('hex'), 16)
+            val_nobj = getattr(val, 'network_object')
 
             self_prefixlen = self.network_object.prefixlen
-            self_packed = str(self.network_object.packed)
-            self_decimal = int(self_packed.encode('hex'), 16)
+            self_nobj = self.network_object
             if (self.network_object.prefixlen<val_prefixlen):
                 # Sort shorter masks as higher...
                 return True
             elif (self.network_object.prefixlen>val_prefixlen):
                 return False
-            elif (self_decimal>val_decimal):
-                # If masks are equal, sort larger numbers as higher
+            elif (self_nobj>val_nobj):
+                # If masks are equal, rely on Google's sorting...
                 return True
             return False
         except:
@@ -99,19 +97,17 @@ class IPv4Obj(object):
     def __lt__(self, val):
         try:
             val_prefixlen = int(getattr(val, 'prefixlen'))
-            val_packed = str(getattr(getattr(val, 'network_object'), 'packed'))
-            val_decimal = int(val_packed.encode('hex'), 16)
+            val_nobj = getattr(val, 'network_object')
 
             self_prefixlen = self.network_object.prefixlen
-            self_packed = str(self.network_object.packed)
-            self_decimal = int(self_packed.encode('hex'), 16)
+            self_nobj = self.network_object
             if (self.network_object.prefixlen>val_prefixlen):
                 # Sort shorter masks as lower...
                 return True
             elif (self.network_object.prefixlen<val_prefixlen):
                 return False
-            elif (self_decimal<val_decimal):
-                # If masks are equal, sort lower numbers as lower
+            elif (self_nobj<val_nobj):
+                # If masks are equal, rely on Google's sorting...
                 return True
             return False
         except:
