@@ -478,7 +478,8 @@ class ASAObjGroupNetwork(ASACfgLine):
                 retval.append(IPv4Obj('{0} {1}'.format(names.get(network_str, 
                     network_str), netmask_str)))
             else:
-                raise NotImplementedError("Cannot parse '{0}'".format(obj.text))
+                #raise NotImplementedError("Cannot parse '{0}'".format(obj.text))
+                print("ASAObjGroupNetwork Cannot parse '{0}'".format(obj.text))
         return retval
 
 ##
@@ -558,7 +559,8 @@ class ASAObjGroupService(ASACfgLine):
                     retval.append(L4Object(protocol=self.protocol_type, 
                         port_spec=port_spec, syntax='asa'))
             else:
-                raise NotImplementedError("Cannot parse '{0}'".format(obj.text))
+                #raise NotImplementedError("Cannot parse '{0}'".format(obj.text))
+                print("ASAObjGroupService Cannot parse '{0}'".format(obj.text))
         return retval
 
 ##
