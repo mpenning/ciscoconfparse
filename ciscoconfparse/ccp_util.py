@@ -74,6 +74,50 @@ class IPv4Obj(object):
             errmsg = "{0} cannot compare itself to '{1}'".format(self.__repr__(), val)
             raise ValueError(errmsg)
 
+    def __gt__(self, val):
+        try:
+            val_prefixlen = int(getattr(val, 'prefixlen'))
+            val_packed = str(getattr(getattr(val, 'network_object'), 'packed'))
+            val_decimal = int(val_packed.encode('hex'), 16)
+
+            self_prefixlen = self.network_object.prefixlen
+            self_packed = str(self.network_object.packed)
+            self_decimal = int(self_packed.encode('hex'), 16)
+            if (self.network_object.prefixlen<val_prefixlen):
+                # Sort shorter masks as higher...
+                return True
+            elif (self.network_object.prefixlen>val_prefixlen):
+                return False
+            elif (self_decimal>val_decimal):
+                # If masks are equal, sort larger numbers as higher
+                return True
+            return False
+        except:
+            errmsg = "{0} cannot compare itself to '{1}'".format(self.__repr__(), val)
+            raise ValueError(errmsg)
+
+    def __lt__(self, val):
+        try:
+            val_prefixlen = int(getattr(val, 'prefixlen'))
+            val_packed = str(getattr(getattr(val, 'network_object'), 'packed'))
+            val_decimal = int(val_packed.encode('hex'), 16)
+
+            self_prefixlen = self.network_object.prefixlen
+            self_packed = str(self.network_object.packed)
+            self_decimal = int(self_packed.encode('hex'), 16)
+            if (self.network_object.prefixlen>val_prefixlen):
+                # Sort shorter masks as lower...
+                return True
+            elif (self.network_object.prefixlen<val_prefixlen):
+                return False
+            elif (self_decimal<val_decimal):
+                # If masks are equal, sort lower numbers as lower
+                return True
+            return False
+        except:
+            errmsg = "{0} cannot compare itself to '{1}'".format(self.__repr__(), val)
+            raise ValueError(errmsg)
+
     def __hash__(self):
         # Python3 needs __hash__()
         return hash(str(self.ip_object))+hash(str(self.prefixlen))
