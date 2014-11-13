@@ -13,7 +13,7 @@ def read(fname):
 setup(name='ciscoconfparse',
       # TODO: Fix automagic version parsing
       #version=__import__("ciscoconfparse").__version__,
-      version="1.1.15",
+      version="1.1.16",
       description='Parse, Audit, Query, Build, and Modify Cisco IOS-style configurations',
       url='http://www.pennington.net/py/ciscoconfparse/',
       author='David Michael Pennington',
