@@ -462,14 +462,20 @@ class ASAObjGroupNetwork(ASACfgLine):
                 retval.append(IPv4Obj('{0} {1}'.format(names.get(network_str, 
                     network_str), netmask_str)))
             elif 'group-object ' in obj.text:
-                pass
+                name = obj.re_match_typed(r'^\s*group-object\s+(\S+)', group=1, 
+                    result_type=str)
+                group_nets = self.confobj.object_group_network.get(name, None)
+                if name==self.name:
+                    ## Throw an error when importing self
+                    raise ValueError("FATAL: Cannot recurse through group-object {0} in object-group network {1}".format(name, self.name))
+                if (group_nets is None):
+                    raise ValueError("FATAL: Cannot find group-object named {0}".format(name))
+                else:
+                    retval.extend(group_nets.networks)
             elif 'description ' in obj.text:
-                pass
-            elif 'group-object ' in obj.text:
                 pass
             else:
                 raise NotImplementedError("Cannot parse '{0}'".format(obj.text))
-                #print("ASAObjGroupNetwork Cannot parse '{0}'".format(obj.text))
         return retval
 
 ##
@@ -549,14 +555,20 @@ class ASAObjGroupService(ASACfgLine):
                     retval.append(L4Object(protocol=self.protocol_type, 
                         port_spec=port_spec, syntax='asa'))
             elif 'group-object ' in obj.text:
-                pass
+                name = obj.re_match_typed(r'^\s*group-object\s+(\S+)', group=1, 
+                    result_type=str)
+                group_ports = self.confobj.object_group_service.get(name, None)
+                if name==self.name:
+                    ## Throw an error when importing self
+                    raise ValueError("FATAL: Cannot recurse through group-object {0} in object-group service {1}".format(name, self.name))
+                if (group_ports is None):
+                    raise ValueError("FATAL: Cannot find group-object named {0}".format(name))
+                else:
+                    retval.extend(group_ports.ports)
             elif 'description ' in obj.text:
-                pass
-            elif 'group-object ' in obj.text:
                 pass
             else:
                 raise NotImplementedError("Cannot parse '{0}'".format(obj.text))
-                #print("ASAObjGroupService Cannot parse '{0}'".format(obj.text))
         return retval
 
 ##
