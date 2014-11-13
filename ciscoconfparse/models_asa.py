@@ -56,44 +56,28 @@ class ASACfgLine(BaseCfgLine):
        more efficient than if you stick strictly to the classic 
        :class:`~ciscoconfparse.CiscoConfParse` methods.
 
-    Parameters
-    ----------
-
-    text : str, required
-         A string containing a text copy of the ASA configuration line.
-         :class:`~ciscoconfparse.CiscoConfParse` will automatically identify 
-         the parent and children (if any) when it parses the configuration. 
-    comment_delimiter : str, required
-         A string which is considered a comment for the configuration 
-         format.  Since this is for Cisco ASA-style configurations, it 
-         defaults to ``!``.
+    Args:
+        text (str): A string containing a text copy of the ASA configuration line.
+             :class:`~ciscoconfparse.CiscoConfParse` will automatically identify 
+             the parent and children (if any) when it parses the configuration. 
+        comment_delimiter (str): A string which is considered a comment for the configuration 
+             format.  Since this is for Cisco ASA-style configurations, it 
+             defaults to ``!``.
 
 
-    Returns
-    -------
+    Returns:
+        an instance of :class:`~models_asa.ASACfgLine`.
 
-    an instance of :class:`~models_asa.ASACfgLine`.
-
-    Attributes
-    ----------
-
-    text     : str
-         A string containing the parsed ASA configuration statement
-    linenum  : int
-         The line number of this configuration statement in the original config;
-         default is -1 when first initialized.
-    parent : :class:`~models_asa.ASACfgLine()`
-         The parent of this object; defaults to ``self``.
-    children : list
-         A list of ``ASACfgLine()`` objects which are children of this object.
-    child_indent : int
-         An integer with the indentation of this object's children
-    indent : int
-         An integer with the indentation of this object's ``text``
-    oldest_ancestor : boolean
-         A boolean indicating whether this is the oldest ancestor in a family
-    is_comment : boolean
-         A boolean indicating whether this is a comment
+    Attributes:
+        text     (str): A string containing the parsed ASA configuration statement
+        linenum  (int): The line number of this configuration statement in the original config;
+             default is -1 when first initialized.
+        parent (:class:`~models_asa.ASACfgLine()`): The parent of this object; defaults to ``self``.
+        children (list): A list of ``ASACfgLine()`` objects which are children of this object.
+        child_indent (int): An integer with the indentation of this object's children
+        indent (int): An integer with the indentation of this object's ``text``
+        oldest_ancestor (bool): A boolean indicating whether this is the oldest ancestor in a family
+        is_comment (bool): A boolean indicating whether this is a comment
     """
     def __init__(self, *args, **kwargs):
         """Accept an ASA line number and initialize family relationship
@@ -477,9 +461,13 @@ class ASAObjGroupNetwork(ASACfgLine):
                     group=1, result_type=str)
                 retval.append(IPv4Obj('{0} {1}'.format(names.get(network_str, 
                     network_str), netmask_str)))
+            elif 'description ' in obj.text:
+                pass
+            elif 'group-object ' in obj.text:
+                pass
             else:
-                #raise NotImplementedError("Cannot parse '{0}'".format(obj.text))
-                print("ASAObjGroupNetwork Cannot parse '{0}'".format(obj.text))
+                raise NotImplementedError("Cannot parse '{0}'".format(obj.text))
+                #print("ASAObjGroupNetwork Cannot parse '{0}'".format(obj.text))
         return retval
 
 ##
@@ -558,9 +546,13 @@ class ASAObjGroupService(ASACfgLine):
                 else:
                     retval.append(L4Object(protocol=self.protocol_type, 
                         port_spec=port_spec, syntax='asa'))
+            elif 'description ' in obj.text:
+                pass
+            elif 'group-object ' in obj.text:
+                pass
             else:
-                #raise NotImplementedError("Cannot parse '{0}'".format(obj.text))
-                print("ASAObjGroupService Cannot parse '{0}'".format(obj.text))
+                raise NotImplementedError("Cannot parse '{0}'".format(obj.text))
+                #print("ASAObjGroupService Cannot parse '{0}'".format(obj.text))
         return retval
 
 ##
