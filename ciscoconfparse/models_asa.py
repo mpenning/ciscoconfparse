@@ -426,6 +426,9 @@ class ASAObjService(ASACfgLine):
 ##-------------  ASA object-group network
 ##
 
+_RE_NETHOST = re.compile(r'^\s*network-object\s+host\s+(\S+)')
+_RE_NETWORK1 = re.compile(r'^\s*network-object\s+(\S+)')
+_RE_NETWORK2 = re.compile(r'^\s*network-object\s+\S+\s+(\d+\.\d+\.\d+\.\d+)')
 class ASAObjGroupNetwork(ASACfgLine):
 
     def __init__(self, *args, **kwargs):
@@ -451,16 +454,15 @@ class ASAObjGroupNetwork(ASACfgLine):
         names = self.confobj.names
         for obj in self.children:
             if 'network-object host ' in obj.text:
-                host_str = obj.re_match_typed(r'^\s*network-object\s+host\s+(\S+)', 
-                    group=1, result_type=str)
+                host_str = obj.re_match_typed(_RE_NETHOST, group=1, result_type=str)
                 retval.append(IPv4Obj(names.get(host_str, host_str)))
             elif 'network-object ' in obj.text:
-                network_str = obj.re_match_typed(r'^\s*network-object\s+(\S+)', 
-                    group=1, result_type=str)
-                netmask_str = obj.re_match_typed(r'^\s*network-object\s+\S+\s+(\d+\.\d+\.\d+\.\d+)', 
-                    group=1, result_type=str)
+                network_str = obj.re_match_typed(_RE_NETWORK1, group=1, result_type=str)
+                netmask_str = obj.re_match_typed(_RE_NETWORK2, group=1, result_type=str)
                 retval.append(IPv4Obj('{0} {1}'.format(names.get(network_str, 
                     network_str), netmask_str)))
+            elif 'group-object ' in obj.text:
+                pass
             elif 'description ' in obj.text:
                 pass
             elif 'group-object ' in obj.text:
@@ -546,6 +548,8 @@ class ASAObjGroupService(ASACfgLine):
                 else:
                     retval.append(L4Object(protocol=self.protocol_type, 
                         port_spec=port_spec, syntax='asa'))
+            elif 'group-object ' in obj.text:
+                pass
             elif 'description ' in obj.text:
                 pass
             elif 'group-object ' in obj.text:
