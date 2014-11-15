@@ -68,9 +68,6 @@ class BaseCfgLine(object):
         return self.__repr__()
 
     def __eq__(self, val):
-        # OLD and slow code:
-        #return isinstance(val, BaseCfgLine) and \
-        #    (self.hash_arg)==(val.hash_arg)
         try:
             ##   try / except is much faster than isinstance();
             ##   I added hash_arg() inline below for speed... whenever I change
