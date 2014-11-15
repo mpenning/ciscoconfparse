@@ -65,24 +65,20 @@ class CiscoConfParse(object):
         """Initialize CiscoConfParse.
 
            Kwargs:
-               config (list or str): A list of configuration statements, or a configuration file path to be parsed
-               comment (str): A comment delimiter.  This should only be changed when parsing non-Cisco IOS configurations, which do not use a !  as the comment delimiter.  ``comment`` defaults to '!'
-               debug (bool): ``debug`` defaults to False, and should be kept that way unless you're working on a very tricky config parsing problem.  Debug output is not particularly friendly
-               linesplit_rgx (str): ``linesplit_rgx`` is used when parsing configuration files to find where new configuration lines are.  It is best to leave this as the default, unless you're working on a system that uses unusual line terminations (for instance something besides Unix, OSX, or Windows)
-               ignore_blank_lines (bool): ``ignore_blank_lines`` defaults to True; when this is set True, ciscoconfparse ignores blank configuration lines.  You might want to set ``ignore_blank_lines`` to False if you intentionally use blank lines in your configuration (ref: Github Issue #2).
+               - config (list or str): A list of configuration statements, or a configuration file path to be parsed
+               - comment (str): A comment delimiter.  This should only be changed when parsing non-Cisco IOS configurations, which do not use a !  as the comment delimiter.  ``comment`` defaults to '!'
+               - debug (bool): ``debug`` defaults to False, and should be kept that way unless you're working on a very tricky config parsing problem.  Debug output is not particularly friendly
+               - linesplit_rgx (str): ``linesplit_rgx`` is used when parsing configuration files to find where new configuration lines are.  It is best to leave this as the default, unless you're working on a system that uses unusual line terminations (for instance something besides Unix, OSX, or Windows)
+               - ignore_blank_lines (bool): ``ignore_blank_lines`` defaults to True; when this is set True, ciscoconfparse ignores blank configuration lines.  You might want to set ``ignore_blank_lines`` to False if you intentionally use blank lines in your configuration (ref: Github Issue #2).
 
            Returns:
-               An instance of a :class:`~ciscoconfparse.CiscoConfParse` object
+               - An instance of a :class:`~ciscoconfparse.CiscoConfParse` object
 
            Attributes:
-               comment_delimiter : str
-                    A string containing the comment-delimiter
-               ConfigObjs : :class:`~ciscoconfparse.IOSConfigList`
-                    A custom list, which contains all parsed :class:`~models_cisco.IOSCfgLine` instances.
-               all_parents : list
-                    A list of all parent :class:`~models_cisco.IOSCfgLine` instances.
-               last_index : int
-                    An integer with the last index in ``ConfigObjs``
+               - comment_delimiter (str): A string containing the comment-delimiter
+               - ConfigObjs (:class:`~ciscoconfparse.IOSConfigList`) : A custom list, which contains all parsed :class:`~models_cisco.IOSCfgLine` instances.
+               - all_parents (list) : A list of all parent :class:`~models_cisco.IOSCfgLine` instances.
+               - last_index (int) : An integer with the last index in ``ConfigObjs``
 
            This example illustrates how to parse a simple Cisco IOS configuration
            with :class:`~ciscoconfparse.CiscoConfParse` into a variable called 
@@ -104,6 +100,7 @@ class CiscoConfParse(object):
               >>> parse.ioscfg
               ['logging trap debugging', 'logging 172.28.26.15']
               >>>
+
         """
 
         # all IOSCfgLine object instances...
@@ -236,13 +233,13 @@ class CiscoConfParse(object):
         :func:`~ciscoconfparse.CiscoConfParse.find_lines`.
 
         Args:
-            linespec (str): A string or python regular expression, which should be matched
+            - linespec (str): A string or python regular expression, which should be matched
         Kwargs:
-            exactmatch (bool): Defaults to False.  When set True, this option requires ``linespec`` match the whole configuration line, instead of a portion of the configuration line.
-            ignore_ws (bool): boolean that controls whether whitespace is ignored.  Default is False.
+            - exactmatch (bool): Defaults to False.  When set True, this option requires ``linespec`` match the whole configuration line, instead of a portion of the configuration line.
+            - ignore_ws (bool): boolean that controls whether whitespace is ignored.  Default is False.
 
         Returns:
-            list.  A list of matching :class:`~ciscoconfparse.IOSCfgLine` objects
+            - list.  A list of matching :class:`~ciscoconfparse.IOSCfgLine` objects
 
         This example illustrates the difference between 
         :func:`~ciscoconfparse.CiscoConfParse.find_objects` and 
@@ -268,6 +265,7 @@ class CiscoConfParse(object):
            >>> parse.find_lines(r'^interface')
            ['interface Serial1/0', 'interface Serial1/1']
            >>>
+
         """
         if ignore_ws:
             linespec = self._build_space_tolerant_regex(linespec)
@@ -282,14 +280,14 @@ class CiscoConfParse(object):
         (Case-sensitive).
 
         Args:
-            linespec (str): Text regular expression for the line to be matched
+            - linespec (str): Text regular expression for the line to be matched
 
         Kwargs:
-            exactmatch (bool): Defaults to False.  When set True, this option requires ``linespec`` match the whole configuration line, instead of a portion of the configuration line.
-            ignore_ws (bool): boolean that controls whether whitespace is ignored.  Default is False.
+            - exactmatch (bool): Defaults to False.  When set True, this option requires ``linespec`` match the whole configuration line, instead of a portion of the configuration line.
+            - ignore_ws (bool): boolean that controls whether whitespace is ignored.  Default is False.
 
         Returns:
-            list.  A list of matching configuration lines
+            - list.  A list of matching configuration lines
         """
         retval = list()
 
@@ -310,13 +308,13 @@ class CiscoConfParse(object):
         :meth:`find_children` only finds immediate children.
 
         Args:
-            linespec (str): Text regular expression for the line to be matched
+            - linespec (str): Text regular expression for the line to be matched
         Kwargs:
-            exactmatch (bool): boolean that controls whether partial matches are valid
-            ignore_ws (bool): boolean that controls whether whitespace is ignored
+            - exactmatch (bool): boolean that controls whether partial matches are valid
+            - ignore_ws (bool): boolean that controls whether whitespace is ignored
 
         Returns:
-            list.  A list of matching configuration lines
+            - list.  A list of matching configuration lines
 
         Suppose you are interested in finding all immediate children of the 
         `archive` statements in the following configuration...
@@ -381,13 +379,13 @@ class CiscoConfParse(object):
         :meth:`find_children` only finds immediate children.
      
         Args:
-            linespec (str): Text regular expression for the line to be matched
+            - linespec (str): Text regular expression for the line to be matched
         Kwargs:
-            exactmatch (bool): boolean that controls whether partial matches are valid
-            ignore_ws (bool): boolean that controls whether whitespace is ignored
+            - exactmatch (bool): boolean that controls whether partial matches are valid
+            - ignore_ws (bool): boolean that controls whether whitespace is ignored
 
         Returns:
-            list.  A list of matching configuration lines
+            - list.  A list of matching configuration lines
 
         Suppose you are interested in finding all `archive` statements in
         the following configuration...
@@ -454,13 +452,13 @@ class CiscoConfParse(object):
         returned.
 
         Args:
-            linespec (str): Text regular expression for the line to be matched
+            - linespec (str): Text regular expression for the line to be matched
         Kwargs:
-            exactmatch (bool): boolean that controls whether partial matches are valid
-            ignore_ws (bool): boolean that controls whether whitespace is ignored
+            - exactmatch (bool): boolean that controls whether partial matches are valid
+            - ignore_ws (bool): boolean that controls whether whitespace is ignored
 
         Returns:
-            list.  A list of matching configuration lines
+            - list.  A list of matching configuration lines
 
 
         This example finds `bandwidth percent` statements in following config, 
@@ -532,6 +530,7 @@ class CiscoConfParse(object):
            >>> p.find_blocks(' class class-default')
            ['policy-map EXTERNAL_CBWFQ', ' class IP_PREC_HIGH', ' class IP_PREC_MEDIUM', ' class class-default']
            >>>
+
         """
         tmp = set([])
         retval = list()
@@ -568,13 +567,13 @@ class CiscoConfParse(object):
         returned.
 
         Args:
-            parentspec (str): Text regular expression for the :class:`~models_cisco.IOSCfgLine` object to be matched; this must match the parent's line
-            childspec (str): Text regular expression for the line to be matched; this must match the child's line
+            - parentspec (str): Text regular expression for the :class:`~models_cisco.IOSCfgLine` object to be matched; this must match the parent's line
+            - childspec (str): Text regular expression for the line to be matched; this must match the child's line
         Kwargs:
-            ignore_ws (bool): boolean that controls whether whitespace is ignored
+            - ignore_ws (bool): boolean that controls whether whitespace is ignored
 
         Returns:
-            list.  A list of matching parent :class:`~models_cisco.IOSCfgLine` objects
+            - list.  A list of matching parent :class:`~models_cisco.IOSCfgLine` objects
 
         This example uses :func:`~ciscoconfparse.find_objects_w_child()` to 
         find all ports that are members of access vlan 300 in following 
@@ -652,13 +651,13 @@ class CiscoConfParse(object):
         returned.
 
         Args:
-            parentspec (str): Text regular expression for the line to be matched; this must match the parent's line
-            childspec (str): Text regular expression for the line to be matched; this must match the child's line
+            - parentspec (str): Text regular expression for the line to be matched; this must match the parent's line
+            - childspec (str): Text regular expression for the line to be matched; this must match the child's line
         Kwargs:
-            ignore_ws (bool): boolean that controls whether whitespace is ignored
+            - ignore_ws (bool): boolean that controls whether whitespace is ignored
 
         Returns:
-            list.  A list of matching parent configuration lines
+            - list.  A list of matching parent configuration lines
 
         This example finds all ports that are members of access vlan 300 
         in following config...
@@ -715,6 +714,7 @@ class CiscoConfParse(object):
            >>> p.find_parents_w_child('^interface', 'switchport access vlan 300')
            ['interface FastEthernet0/2', 'interface FastEthernet0/3']
            >>>
+
         """
         tmp = self.find_objects_w_child(parentspec, childspec, 
             ignore_ws=ignore_ws)
@@ -724,13 +724,13 @@ class CiscoConfParse(object):
         """Return a list of parent :class:`~models_cisco.IOSCfgLine` objects, which matched the ``parentspec`` and whose children did not match ``childspec``.  Only the parent :class:`~models_cisco.IOSCfgLine` objects will be returned.  For simplicity, this method only finds oldest_ancestors without immediate children that match.
 
         Args:
-            parentspec (str): Text regular expression for the :class:`~models_cisco.IOSCfgLine` object to be matched; this must match the parent's line
-            childspec (str): Text regular expression for the line to be matched; this must match the child's line
+            - parentspec (str): Text regular expression for the :class:`~models_cisco.IOSCfgLine` object to be matched; this must match the parent's line
+            - childspec (str): Text regular expression for the line to be matched; this must match the child's line
         Kwargs:
-            ignore_ws (bool): boolean that controls whether whitespace is ignored
+            - ignore_ws (bool): boolean that controls whether whitespace is ignored
 
         Returns:
-            list.  A list of matching parent configuration lines
+            - list.  A list of matching parent configuration lines
 
         This example finds all ports that are autonegotiating in the following config...
 
@@ -803,13 +803,13 @@ class CiscoConfParse(object):
         """Parse through all parents matching parentspec, and return a list of parents that did NOT have children match the childspec.  For simplicity, this method only finds oldest_ancestors without immediate children that match.
 
         Args:
-            parentspec (str): Text regular expression for the line to be matched; this must match the parent's line
-            childspec (str): Text regular expression for the line to be matched; this must match the child's line
+            - parentspec (str): Text regular expression for the line to be matched; this must match the parent's line
+            - childspec (str): Text regular expression for the line to be matched; this must match the child's line
         Kwargs:
-            ignore_ws (bool): boolean that controls whether whitespace is ignored
+            - ignore_ws (bool): boolean that controls whether whitespace is ignored
 
         Returns:
-            list.  A list of matching parent configuration lines
+            - list.  A list of matching parent configuration lines
 
         This example finds all ports that are autonegotiating in the 
         following config...
@@ -867,6 +867,7 @@ class CiscoConfParse(object):
            >>> p.find_parents_wo_child('^interface', 'speed\s\d+')
            ['interface FastEthernet0/1', 'interface FastEthernet0/2']
            >>>
+
         """
         tmp = self.find_objects_wo_child(parentspec, childspec, 
             ignore_ws=ignore_ws)
@@ -877,14 +878,14 @@ class CiscoConfParse(object):
         and return a list of children that matched the childspec.
 
         Args:
-            parentspec (str): Text regular expression for the line to be matched; this must match the parent's line
-            childspec (str): Text regular expression for the line to be matched; this must match the child's line
+            - parentspec (str): Text regular expression for the line to be matched; this must match the parent's line
+            - childspec (str): Text regular expression for the line to be matched; this must match the child's line
 
         Kwargs:
-            ignore_ws (bool): boolean that controls whether whitespace is ignored 
+            - ignore_ws (bool): boolean that controls whether whitespace is ignored 
 
         Returns:
-            list.  A list of matching child configuration lines
+            - list.  A list of matching child configuration lines
 
         This example finds the port-security lines on FastEthernet0/1 in 
         following config...
@@ -958,6 +959,7 @@ class CiscoConfParse(object):
            'port-security')
            [' switchport port-security', ' switchport port-security violation protect', ' switchport port-security aging time 5', ' switchport port-security aging type inactivity']
            >>>
+
         """
         if ignore_ws:
             parentspec = self._build_space_tolerant_regex(parentspec)
@@ -1069,10 +1071,10 @@ class CiscoConfParse(object):
         configuration
 
         Args:
-            linespec (str): Text IOS configuration line
+            - linespec (str): Text IOS configuration line
 
         Returns:
-            The parsed :class:`~models_cisco.IOSCfgLine` instance
+            - The parsed :class:`~models_cisco.IOSCfgLine` instance
 
         """
         retval = self.ConfigObjs.append(linespec)
@@ -1085,16 +1087,16 @@ class CiscoConfParse(object):
         compiled regular expression) in `excludespec`.
 
         Args:
-            linespec (str): Text regular expression for the line to be matched
-            replacestr (str): Text used to replace strings matching linespec
+            - linespec (str): Text regular expression for the line to be matched
+            - replacestr (str): Text used to replace strings matching linespec
 
         Kwargs:
-            excludespec (str): Text regular expression used to reject lines, which would otherwise be replaced.  Default value of ``excludespec`` is None, which means nothing is excluded
-            exactmatch (bool): boolean that controls whether partial matches are valid
-            atomic (bool): boolean that controls whether the config is reparsed after replacement (default True)
+            - excludespec (str): Text regular expression used to reject lines, which would otherwise be replaced.  Default value of ``excludespec`` is None, which means nothing is excluded
+            - exactmatch (bool): boolean that controls whether partial matches are valid
+            - atomic (bool): boolean that controls whether the config is reparsed after replacement (default True)
 
         Returns:
-            list. A list of changed configuration lines
+            - list. A list of changed configuration lines
 
         This example finds statements with `EXTERNAL_CBWFQ` in following 
         config, and replaces all matching lines (in-place) with `EXTERNAL_QOS`.
@@ -1185,16 +1187,16 @@ class CiscoConfParse(object):
         """Replace lines matching `childspec` within the immediate children of lines which match `parentspec`
 
         Args:
-            parentspec (str): Text IOS configuration line
-            childspec (str): Text IOS configuration line, or regular expression
-            replacestr (str): Text IOS configuration, which should replace text matching ``childspec``.
+            - parentspec (str): Text IOS configuration line
+            - childspec (str): Text IOS configuration line, or regular expression
+            - replacestr (str): Text IOS configuration, which should replace text matching ``childspec``.
 
         Kwargs:
-            excludespec (str): A regular expression, which indicates ``childspec`` lines which *must* be skipped.  If ``excludespec`` is None, no lines will be excluded.
-            exactmatch (bool): Defaults to False.  When set True, this option requires ``linespec`` match the whole configuration line, instead of a portion of the configuration line.
+            - excludespec (str): A regular expression, which indicates ``childspec`` lines which *must* be skipped.  If ``excludespec`` is None, no lines will be excluded.
+            - exactmatch (bool): Defaults to False.  When set True, this option requires ``linespec`` match the whole configuration line, instead of a portion of the configuration line.
 
         Returns:
-            list.  A list of changed :class:`~models_cisco.IOSCfgLine` instances.
+            - list.  A list of changed :class:`~models_cisco.IOSCfgLine` instances.
 
         """
         retval = list()
@@ -1467,13 +1469,13 @@ class IOSConfigList(MutableSequence):
         """Initialize the class.
 
         Kwargs:
-            data (list): A list of parsed :class:`~models_cisco.IOSCfgLine` objects
-            comment (str): A comment delimiter.  This should only be changed when parsing non-Cisco IOS configurations, which do not use a !  as the comment delimiter.  ``comment`` defaults to '!'
-            debug (bool): ``debug`` defaults to False, and should be kept that way unless you're working on a very tricky config parsing problem.  Debug output is not particularly friendly
-            ignore_blank_lines (bool): ``ignore_blank_lines`` defaults to True; when this is set True, ciscoconfparse ignores blank configuration lines.  You might want to set ``ignore_blank_lines`` to False if you intentionally use blank lines in your configuration (ref: Github Issue #2).
+            - data (list): A list of parsed :class:`~models_cisco.IOSCfgLine` objects
+            - comment (str): A comment delimiter.  This should only be changed when parsing non-Cisco IOS configurations, which do not use a !  as the comment delimiter.  ``comment`` defaults to '!'
+            - debug (bool): ``debug`` defaults to False, and should be kept that way unless you're working on a very tricky config parsing problem.  Debug output is not particularly friendly
+            - ignore_blank_lines (bool): ``ignore_blank_lines`` defaults to True; when this is set True, ciscoconfparse ignores blank configuration lines.  You might want to set ``ignore_blank_lines`` to False if you intentionally use blank lines in your configuration (ref: Github Issue #2).
 
         Returns:
-           An instance of an :class:`~ciscoconfparse.IOSConfigList` object.
+           - An instance of an :class:`~ciscoconfparse.IOSConfigList` object.
 
         """
 
@@ -1894,18 +1896,18 @@ class ASAConfigList(MutableSequence):
         """Initialize the class.
 
         Kwargs:
-            data (list): A list of parsed :class:`~models_asa.ASACfgLine` objects
-            comment (str): A comment delimiter.  This should only be changed when parsing non-Cisco IOS configurations, which do not use a !  as the comment delimiter.  ``comment`` defaults to '!'
-            debug (bool): ``debug`` defaults to False, and should be kept that way unless you're working on a very tricky config parsing problem.  Debug output is not particularly friendly
-            ignore_blank_lines (bool): ``ignore_blank_lines`` defaults to True; when this is set True, ciscoconfparse ignores blank configuration lines.  You might want to set ``ignore_blank_lines`` to False if you intentionally use blank lines in your configuration.
+            - data (list): A list of parsed :class:`~models_asa.ASACfgLine` objects
+            - comment (str): A comment delimiter.  This should only be changed when parsing non-Cisco IOS configurations, which do not use a !  as the comment delimiter.  ``comment`` defaults to '!'
+            - debug (bool): ``debug`` defaults to False, and should be kept that way unless you're working on a very tricky config parsing problem.  Debug output is not particularly friendly
+            - ignore_blank_lines (bool): ``ignore_blank_lines`` defaults to True; when this is set True, ciscoconfparse ignores blank configuration lines.  You might want to set ``ignore_blank_lines`` to False if you intentionally use blank lines in your configuration.
  
         Returns:
-            An instance of an :class:`~ciscoconfparse.ASAConfigList` object.
+            - An instance of an :class:`~ciscoconfparse.ASAConfigList` object.
  
         Attributes:
-            names (dict): A Python dictionary, which maps a Cisco ASA name to a string representing the address
-            object_group_network (dict): A Python dictionary, which maps a Cisco ASA object-group network name to the :class:`~models_asa.ASAObjNetwork` object
-            object_group_service (dict): A Python dictionary, which maps a Cisco ASA object-group service name to the :class:`~models_asa.ASAObjService` object
+            - names (dict): A Python dictionary, which maps a Cisco ASA name to a string representing the address
+            - object_group_network (dict): A Python dictionary, which maps a Cisco ASA object-group network name to the :class:`~models_asa.ASAObjNetwork` object
+            - object_group_service (dict): A Python dictionary, which maps a Cisco ASA object-group service name to the :class:`~models_asa.ASAObjService` object
         """
         super(ASAConfigList, self).__init__()
 
