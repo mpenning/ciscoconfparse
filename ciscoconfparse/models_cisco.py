@@ -55,16 +55,12 @@ class IOSCfgLine(BaseCfgLine):
        :class:`~ciscoconfparse.CiscoConfParse` methods.
 
     Args:
-        text (str): A string containing a text copy of the IOS configuration line.
-            :class:`~ciscoconfparse.CiscoConfParse` will automatically identify 
-            the parent and children (if any) when it parses the configuration. 
-        comment_delimiter (str): A string which is considered a comment for the configuration 
-            format.  Since this is for Cisco IOS-style configurations, it 
-            defaults to ``!``.
+        - text (str): A string containing a text copy of the IOS configuration line.  :class:`~ciscoconfparse.CiscoConfParse` will automatically identify the parent and children (if any) when it parses the configuration. 
+        - comment_delimiter (str): A string which is considered a comment for the configuration format.  Since this is for Cisco IOS-style configurations, it defaults to ``!``.
 
 
     Returns:
-        An instance of :class:`~models_cisco.IOSCfgLine`.
+        - An instance of :class:`~models_cisco.IOSCfgLine`.
 
     Attributes:
         text     (str): A string containing the parsed IOS configuration statement
