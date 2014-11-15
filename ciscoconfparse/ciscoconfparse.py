@@ -1621,7 +1621,7 @@ class IOSConfigList(MutableSequence):
             if self.ignore_blank_lines and line.strip()=='':
                 continue
             if not self.factory:
-                obj          = IOSCfgLine(line, self.comment_delimiter)
+                obj = IOSCfgLine(line, self.comment_delimiter)
             elif self.syntax=='ios':
                 obj = ConfigLineFactory(line, self.comment_delimiter, 
                     syntax='ios')
