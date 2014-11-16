@@ -58,20 +58,18 @@ class IOSCfgLine(BaseCfgLine):
         - text (str): A string containing a text copy of the IOS configuration line.  :class:`~ciscoconfparse.CiscoConfParse` will automatically identify the parent and children (if any) when it parses the configuration. 
         - comment_delimiter (str): A string which is considered a comment for the configuration format.  Since this is for Cisco IOS-style configurations, it defaults to ``!``.
 
+    Attributes:
+        - text     (str): A string containing the parsed IOS configuration statement
+        - linenum  (int): The line number of this configuration statement in the original config; default is -1 when first initialized.
+        - parent (:class:`~models_cisco.IOSCfgLine()`): The parent of this object; defaults to ``self``.
+        - children (list): A list of ``IOSCfgLine()`` objects which are children of this object.
+        - child_indent (int): An integer with the indentation of this object's children
+        - indent (int): An integer with the indentation of this object's ``text`` oldest_ancestor (bool): A boolean indicating whether this is the oldest ancestor in a family
+        - is_comment (bool): A boolean indicating whether this is a comment
 
     Returns:
         - An instance of :class:`~models_cisco.IOSCfgLine`.
 
-    Attributes:
-        text     (str): A string containing the parsed IOS configuration statement
-        linenum  (int): The line number of this configuration statement in the original config;
-            default is -1 when first initialized.
-        parent (:class:`~models_cisco.IOSCfgLine()`): The parent of this object; defaults to ``self``.
-        children (list): A list of ``IOSCfgLine()`` objects which are children of this object.
-        child_indent (int): An integer with the indentation of this object's children
-        indent (int): An integer with the indentation of this object's ``text``
-        oldest_ancestor (bool): A boolean indicating whether this is the oldest ancestor in a family
-        is_comment (bool): A boolean indicating whether this is a comment
     """
     def __init__(self, *args, **kwargs):
         """Accept an IOS line number and initialize family relationship
