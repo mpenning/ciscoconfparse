@@ -71,14 +71,14 @@ class CiscoConfParse(object):
                - linesplit_rgx (str): ``linesplit_rgx`` is used when parsing configuration files to find where new configuration lines are.  It is best to leave this as the default, unless you're working on a system that uses unusual line terminations (for instance something besides Unix, OSX, or Windows)
                - ignore_blank_lines (bool): ``ignore_blank_lines`` defaults to True; when this is set True, ciscoconfparse ignores blank configuration lines.  You might want to set ``ignore_blank_lines`` to False if you intentionally use blank lines in your configuration (ref: Github Issue #2).
 
-           Returns:
-               - An instance of a :class:`~ciscoconfparse.CiscoConfParse` object
-
            Attributes:
                - comment_delimiter (str): A string containing the comment-delimiter
                - ConfigObjs (:class:`~ciscoconfparse.IOSConfigList`) : A custom list, which contains all parsed :class:`~models_cisco.IOSCfgLine` instances.
                - all_parents (list) : A list of all parent :class:`~models_cisco.IOSCfgLine` instances.
                - last_index (int) : An integer with the last index in ``ConfigObjs``
+           Returns:
+               - An instance of a :class:`~ciscoconfparse.CiscoConfParse` object
+
 
            This example illustrates how to parse a simple Cisco IOS configuration
            with :class:`~ciscoconfparse.CiscoConfParse` into a variable called 
@@ -1900,14 +1900,15 @@ class ASAConfigList(MutableSequence):
             - comment (str): A comment delimiter.  This should only be changed when parsing non-Cisco IOS configurations, which do not use a !  as the comment delimiter.  ``comment`` defaults to '!'
             - debug (bool): ``debug`` defaults to False, and should be kept that way unless you're working on a very tricky config parsing problem.  Debug output is not particularly friendly
             - ignore_blank_lines (bool): ``ignore_blank_lines`` defaults to True; when this is set True, ciscoconfparse ignores blank configuration lines.  You might want to set ``ignore_blank_lines`` to False if you intentionally use blank lines in your configuration.
- 
-        Returns:
-            - An instance of an :class:`~ciscoconfparse.ASAConfigList` object.
- 
+
         Attributes:
             - names (dict): A Python dictionary, which maps a Cisco ASA name to a string representing the address
             - object_group_network (dict): A Python dictionary, which maps a Cisco ASA object-group network name to the :class:`~models_asa.ASAObjNetwork` object
             - object_group_service (dict): A Python dictionary, which maps a Cisco ASA object-group service name to the :class:`~models_asa.ASAObjService` object
+ 
+        Returns:
+            - An instance of an :class:`~ciscoconfparse.ASAConfigList` object.
+ 
         """
         super(ASAConfigList, self).__init__()
 

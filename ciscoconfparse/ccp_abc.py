@@ -559,9 +559,7 @@ class BaseCfgLine(object):
         ``default`` is returned.
 
         Args:
-            regex (str): A string or python regular expression, which should be matched.  
-                 This regular expression should contain parenthesis, which bound a 
-                 match group.
+            - regex (str): A string or python regular expression, which should be matched.  This regular expression should contain parenthesis, which bound a match group.
         Kwargs:
             - group (int): An integer which specifies the desired group to be returned.  ``group`` defaults to 1.
             - result_type (type): A type (typically one of: ``str``, ``int``, ``float``, or ``IPv4Obj``).         All returned values are cast as ``result_type``, which defaults to ``str``.
