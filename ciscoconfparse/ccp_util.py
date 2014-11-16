@@ -49,6 +49,26 @@ RGX_IPV4ADDR_NETMASK = re.compile(r'(\d+\.\d+\.\d+\.\d+)\s+(\d+\.\d+\.\d+\.\d+)'
 ##    IPv4Network with a host address.  Google removed that in Python3's 
 ##    ipaddress.py module
 class IPv4Obj(object):
+    """An object to represent IPv4 addresses and IPv4Networks.  When :class:`~ccp_util.IPv4Obj` objects are compared or sorted, shorter masks are greater than longer masks. After comparing mask length, numerically higher IP addresses are greater than numerically lower IP addresses.
+
+    Kwargs:
+        - arg (str): A string containing an IPv4 address, and optionally a netmask or masklength.  The following address/netmask formats are supported: "10.1.1.1/24", "10.1.1.1 255.255.255.0", "10.1.1.1/255.255.255.0"
+
+    Attributes:
+        - network_object : An IPv4Network object
+        - ip_object  : An IPAddress object
+        - ip : An IPAddress object
+        - network (str): A string representing the network address
+        - netmask (str): A string representing the netmask
+        - prefixlen (int): An integer representing the length of the netmask
+        - broadcast (str): A string representing the broadcast address
+        - hostmask (str): A string representing the hostmask
+        - numhosts (int): An integer representing the number of hosts contained in the network
+
+    Returns:
+        an instance of :class:`~ccp_util.IPv4Obj`.
+
+    """
     def __init__(self, arg='127.0.0.1/32', strict=False):
 
         RGX_IPV4ADDR = re.compile(r'^(\d+\.\d+\.\d+\.\d+)')
@@ -132,10 +152,6 @@ class IPv4Obj(object):
     @property
     def ip(self):
         return self.ip_object
-
-    @property
-    def network(self):
-        return self.network_object.network
 
     @property
     def netmask(self):
