@@ -34,7 +34,7 @@ except:
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest', 
-    'sphinx.ext.intersphinx', 'sphinx.ext.autosummary', 'numpydoc']
+    'sphinx.ext.intersphinx', 'sphinx.ext.autosummary',]
 intersphinx_mapping = {'python':('http://docs.python.org/2.6', None)}
 
 # Kill errors... thank you daveydave400
