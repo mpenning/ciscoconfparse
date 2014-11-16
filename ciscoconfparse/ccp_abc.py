@@ -553,16 +553,16 @@ class BaseCfgLine(object):
         return result_type(default)
 
     def re_match_iter_typed(self, regex, group=1, result_type=str, default=''):
-        """Use ``regex`` to search the :class:`~models_cisco.IOSCfgLine` text 
-        and return the contents of the regular expression group, at the 
-        integer index, cast as ``result_type``; if there is no match, 
-        ``default`` is returned.
+        """Use ``regex`` to search the children of 
+        :class:`~models_cisco.IOSCfgLine` text and return the contents of 
+        the regular expression group, at the integer index, cast as 
+        ``result_type``; if there is no match, ``default`` is returned.
 
         Args:
-            - regex (str): A string or python regular expression, which should be matched.  This regular expression should contain parenthesis, which bound a match group.
+            - regex (str): A string or python compiled regular expression, which should be matched.  This regular expression should contain parenthesis, which bound a match group.
         Kwargs:
             - group (int): An integer which specifies the desired group to be returned.  ``group`` defaults to 1.
-            - result_type (type): A type (typically one of: ``str``, ``int``, ``float``, or ``IPv4Obj``).         All returned values are cast as ``result_type``, which defaults to ``str``.
+            - result_type (type): A type (typically one of: ``str``, ``int``, ``float``, or :class:`~ccp_util.IPv4Obj`).         All returned values are cast as ``result_type``, which defaults to ``str``.
             - default (any): The default value to be returned, if there is no match.
 
         Returns:
@@ -572,6 +572,8 @@ class BaseCfgLine(object):
         :func:`~models_cisco.IOSCfgLine.re_match_iter_typed` to build an 
         :func:`~ccp_util.IPv4Obj` address object for each interface.
 
+           >>> from ciscoconfparse import CiscoConfParse
+           >>> from ciscoconfparse.ccp_util import IPv4Obj
            >>> config = [
            ...     '!',
            ...     'interface Serial1/0',
@@ -582,9 +584,10 @@ class BaseCfgLine(object):
            ...     '!',
            ...     ]
            >>> parse = CiscoConfParse(config)
-           >>> re.compile(r'^\s+ip\saddress\s(\S+\s+\S+)')
-           >>> for obj in parse.find_objects(r'interface\s\S+'):
-           ...     print obj.text, obj.re_match_iter_typed(r'ip\saddress\s(\S+\s+\S+)')
+           >>> INTF_RE = re.compile(r'interface\s\S+')
+           >>> ADDR_RE = re.compile(r'ip\saddress\s(\S+\s+\S+)')
+           >>> for obj in parse.find_objects(INTF_RE):
+           ...     print obj.text, obj.re_match_iter_typed(ADDR_RE, result_type=IPv4Obj)
            interface Serial1/0 <IPv4Obj 1.1.1.1/30>
            interface Serial2/0 <IPv4Obj 1.1.1.5/30>
            >>>
