@@ -1,4 +1,5 @@
-1.1.19  20141115 Fix for Read the Docs publication
+1.1.20  20141116 Remove numpydoc
+1.1.19  20141116 Fix for Read the Docs publication
 1.1.18  20141115 Doc reformating; remove duplicated ccp_util.IPv4Obj method
 1.1.17  20141113 More doc reformating; add recursion for ASA group-objects on object-groups
 1.1.16  20141113 Reformat docs; improve ASAConfigList()
