@@ -18,8 +18,11 @@ sys.path.insert(0, os.path.join(os.path.abspath(os.path.dirname(__file__)),
     "..", "ciscoconfparse"))
 
 from sphinx.ext.autodoc import AttributeDocumenter, ClassLevelDocumenter
-import sphinx_bootstrap_theme
 import ciscoconfparse, ccp_abc
+try:
+    import sphinx_bootstrap_theme
+except:
+    pass
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -108,8 +111,11 @@ pygments_style = 'tango'
 # The theme to use for HTML and HTML Help pages.  Major themes that come with
 # Sphinx are currently 'default' and 'sphinxdoc'.
 # Consider using https://github.com/kellycreativetech/proBlue in the future
-html_theme = 'bootstrap'
-html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
+if sys.modules.get('bootstrap', False):
+    html_theme = 'bootstrap'
+    html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
+else:
+    html_theme = 'default'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
