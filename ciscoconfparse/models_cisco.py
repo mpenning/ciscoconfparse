@@ -105,7 +105,7 @@ class IOSCfgLine(BaseCfgLine):
            ...     ' no ip address',
            ...     '!',
            ...     'interface ATM2/0.100 point-to-point',
-           ...     ' ip address 1.1.1.4 255.255.255.252',
+           ...     ' ip address 1.1.1.5 255.255.255.252',
            ...     ' pvc 0/100',
            ...     '  vbr-nrt 704 704',
            ...     '!',
@@ -146,7 +146,7 @@ class IOSCfgLine(BaseCfgLine):
            ...     ' no ip address',
            ...     '!',
            ...     'interface ATM2/0.100 point-to-point',
-           ...     ' ip address 1.1.1.4 255.255.255.252',
+           ...     ' ip address 1.1.1.5 255.255.255.252',
            ...     ' pvc 0/100',
            ...     '  vbr-nrt 704 704',
            ...     '!',
@@ -181,6 +181,42 @@ class IOSCfgLine(BaseCfgLine):
 
     @property
     def is_ethernet_intf(self):
+        """Returns a boolean (True or False) to answer whether this 
+        :class:`~models_cisco.IOSCfgLine` is an ethernet interface.
+        Any ethernet interface (10M through 10G) is considered an ethernet
+        interface.
+
+        Returns:
+            - bool.
+
+        This example illustrates use of the method.
+
+        .. code-block:: python
+           :emphasize-lines: 17,20
+
+           >>> config = [
+           ...     '!',
+           ...     'interface FastEthernet1/0',
+           ...     ' ip address 1.1.1.1 255.255.255.252',
+           ...     '!',
+           ...     'interface ATM2/0',
+           ...     ' no ip address',
+           ...     '!',
+           ...     'interface ATM2/0.100 point-to-point',
+           ...     ' ip address 1.1.1.5 255.255.255.252',
+           ...     ' pvc 0/100',
+           ...     '  vbr-nrt 704 704',
+           ...     '!',
+           ...     ]
+           >>> parse = CiscoConfParse(config)
+           >>> obj = parse.find_objects('^interface\sFast')[0]
+           >>> obj.is_ethernet_intf
+           True
+           >>> obj = parse.find_objects('^interface\sATM')[0]
+           >>> obj.is_ethernet_intf
+           False
+           >>>
+        """
         intf_regex = r'^interface\s+(.*?\Sthernet)'
         if self.re_match(intf_regex):
             return True
@@ -407,6 +443,42 @@ class BaseIOSIntfLine(IOSCfgLine):
     def manual_mtu(self):
         ## Due to the diverse platform defaults, this should be the
         ##    only mtu information I plan to support
+        """Returns a integer value for the manual MTU configured on an
+        :class:`~models_cisco.IOSIntfLine` object.  Interfaces without a
+        manual MTU configuration return 0.
+
+        Returns:
+            - integer.
+
+        This example illustrates use of the method.
+
+        .. code-block:: python
+           :emphasize-lines: 17,20
+
+           >>> config = [
+           ...     '!',
+           ...     'interface FastEthernet1/0',
+           ...     ' ip address 1.1.1.1 255.255.255.252',
+           ...     '!',
+           ...     'interface ATM2/0',
+           ...     ' mtu 4470',
+           ...     ' no ip address',
+           ...     '!',
+           ...     'interface ATM2/0.100 point-to-point',
+           ...     ' ip address 1.1.1.5 255.255.255.252',
+           ...     ' pvc 0/100',
+           ...     '  vbr-nrt 704 704',
+           ...     '!',
+           ...     ]
+           >>> parse = CiscoConfParse(config)
+           >>> obj = parse.find_objects('^interface\sFast')[0]
+           >>> obj.manual_mtu
+           0
+           >>> obj = parse.find_objects('^interface\sATM')[0]
+           >>> obj.manual_mtu
+           4470
+           >>>
+        """
         retval = self.re_match_iter_typed(r'^\s*mtu\s+(\d+)$',
             result_type=int, default=0)
         return retval
