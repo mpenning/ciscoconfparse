@@ -84,6 +84,41 @@ class IOSCfgLine(BaseCfgLine):
     @property
     def is_intf(self):
         # Includes subinterfaces
+        """Returns a boolean (True or False) to answer whether this 
+        :class:`~models_cisco.IOSCfgLine` is an interface; subinterfaces
+        also return True.
+
+        Returns:
+            - bool.
+
+        This example illustrates use of the method.
+
+        .. code-block:: python
+           :emphasize-lines: 17,20
+
+           >>> config = [
+           ...     '!',
+           ...     'interface Serial1/0',
+           ...     ' ip address 1.1.1.1 255.255.255.252',
+           ...     '!',
+           ...     'interface ATM2/0',
+           ...     ' no ip address',
+           ...     '!',
+           ...     'interface ATM2/0.100 point-to-point',
+           ...     ' ip address 1.1.1.4 255.255.255.252',
+           ...     ' pvc 0/100',
+           ...     '  vbr-nrt 704 704',
+           ...     '!',
+           ...     ]
+           >>> parse = CiscoConfParse(config)
+           >>> obj = parse.find_objects('^interface\sSerial')[0]
+           >>> obj.is_intf
+           True
+           >>> obj = parse.find_objects('^interface\sATM')[0]
+           >>> obj.is_intf
+           True
+           >>>
+        """
         intf_regex = r'^interface\s+(\S+.+)'
         if self.re_match(intf_regex):
             return True
@@ -91,6 +126,40 @@ class IOSCfgLine(BaseCfgLine):
 
     @property
     def is_subintf(self):
+        """Returns a boolean (True or False) to answer whether this 
+        :class:`~models_cisco.IOSCfgLine` is a subinterface.
+
+        Returns:
+            - bool.
+
+        This example illustrates use of the method.
+
+        .. code-block:: python
+           :emphasize-lines: 17,20
+
+           >>> config = [
+           ...     '!',
+           ...     'interface Serial1/0',
+           ...     ' ip address 1.1.1.1 255.255.255.252',
+           ...     '!',
+           ...     'interface ATM2/0',
+           ...     ' no ip address',
+           ...     '!',
+           ...     'interface ATM2/0.100 point-to-point',
+           ...     ' ip address 1.1.1.4 255.255.255.252',
+           ...     ' pvc 0/100',
+           ...     '  vbr-nrt 704 704',
+           ...     '!',
+           ...     ]
+           >>> parse = CiscoConfParse(config)
+           >>> obj = parse.find_objects('^interface\sSerial')[0]
+           >>> obj.is_subintf
+           False
+           >>> obj = parse.find_objects('^interface\sATM')[0]
+           >>> obj.is_subintf
+           True
+           >>>
+        """
         intf_regex = r'^interface\s+(\S+?\.\d+)'
         if self.re_match(intf_regex):
             return True
