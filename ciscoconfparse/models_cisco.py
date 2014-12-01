@@ -245,7 +245,9 @@ class BaseIOSIntfLine(IOSCfgLine):
             if self.ipv4_addr_object==self.default_ipv4_addr_object:
                 addr = "No IPv4"
             else:
-                addr = self.ipv4_addr_object
+                ip = str(self.ipv4_addr_object.ip)
+                prefixlen = str(self.ipv4_addr_object.prefixlen)
+                addr = "{0}/{1}".format(ip, prefixlen)
             return "<%s # %s '%s' info: '%s'>" % (self.classname, 
                 self.linenum, self.name, addr)
         else:
@@ -453,7 +455,7 @@ class BaseIOSIntfLine(IOSCfgLine):
         This example illustrates use of the method.
 
         .. code-block:: python
-           :emphasize-lines: 17,20
+           :emphasize-lines: 18,21
 
            >>> config = [
            ...     '!',
@@ -470,7 +472,7 @@ class BaseIOSIntfLine(IOSCfgLine):
            ...     '  vbr-nrt 704 704',
            ...     '!',
            ...     ]
-           >>> parse = CiscoConfParse(config)
+           >>> parse = CiscoConfParse(config, factory=True)
            >>> obj = parse.find_objects('^interface\sFast')[0]
            >>> obj.manual_mtu
            0
@@ -554,7 +556,43 @@ class BaseIOSIntfLine(IOSCfgLine):
         return 0
 
     def in_ipv4_subnet(self, ipv4network=IPv4Obj('0.0.0.0/32', strict=False)):
-        """Accept two string arguments for network and netmask, and return a boolean for whether this interface is within the requested subnet.  Return None if there is no address on the interface"""
+        """Accept an argument for the :class:`~ccp_util.IPv4Obj` to be 
+        considered, and return a boolean for whether this interface is within 
+        the requested :class:`~ccp_util.IPv4Obj`.
+        
+        Return None if there is no address on the interface
+
+        This example illustrates use of the method.
+
+        .. code-block:: python
+           :emphasize-lines: 21,23
+
+           >>> from ciscoconfparse.ccp_util import IPv4Obj
+           >>> from ciscoconfparse import CiscoConfParse
+           >>> config = [
+           ...     '!',
+           ...     'interface Serial1/0',
+           ...     ' ip address 1.1.1.1 255.255.255.252',
+           ...     '!',
+           ...     'interface ATM2/0',
+           ...     ' no ip address',
+           ...     '!',
+           ...     'interface ATM2/0.100 point-to-point',
+           ...     ' ip address 1.1.1.5 255.255.255.252',
+           ...     ' pvc 0/100',
+           ...     '  vbr-nrt 704 704',
+           ...     '!',
+           ...     ]
+           >>> parse = CiscoConfParse(config, factory=True)
+           >>> obj = parse.find_objects('^interface\sSerial')[0]
+           >>> obj
+           <IOSIntfLine # 1 'Serial1/0' info: '1.1.1.1/30'>
+           >>> obj.in_ipv4_subnet(IPv4Obj('1.1.1.0/24', strict=False))
+           True
+           >>> obj.in_ipv4_subnet(IPv4Obj('2.1.1.0/24', strict=False))
+           False
+           >>>
+        """
         if not (str(self.ipv4_addr_object.ip)=="127.0.0.1"):
             try:
                 # Return a boolean for whether the interface is in that network and mask
@@ -954,7 +992,12 @@ class IOSIntfLine(BaseIOSIntfLine):
 
     def __init__(self, *args, **kwargs):
         """Accept an IOS line number and initialize family relationship
-        attributes"""
+        attributes
+        .. warning::
+           All :class:`~models_cisco.IOSIntfLine` methods are still considered
+           beta-quality, until this notice is removed.  The behavior of APIs 
+           on this object could change at any time.
+        """
         super(IOSIntfLine, self).__init__(*args, **kwargs)
 
     @classmethod
