@@ -301,7 +301,10 @@ class BaseIOSIntfLine(IOSCfgLine):
     def ordinal_list(self):
         """Return a list of numbers representing card, slot, port for this interface.  If you call ordinal_list on GigabitEthernet2/25.100, you'll get this python list of integers: [2, 25].  If you call ordinal_list on GigabitEthernet2/0/25.100 you'll get this python list of integers: [2, 0, 25].  This method strips all subinterface information in the returned value.
 
-        ..warning:: ordinal_list should silently fail (returning an empty python list) if the interface doesn't parse correctly"""
+        .. warning::
+
+           ordinal_list should silently fail (returning an empty python list) if the interface doesn't parse correctly
+        """
         if not self.is_intf:
             return []
         else:
@@ -559,8 +562,12 @@ class BaseIOSIntfLine(IOSCfgLine):
         """Accept an argument for the :class:`~ccp_util.IPv4Obj` to be 
         considered, and return a boolean for whether this interface is within 
         the requested :class:`~ccp_util.IPv4Obj`.
-        
-        Return None if there is no address on the interface
+
+       Kwargs:
+           - ipv4network (:class:`~ccp_util.IPv4Obj`): An object to compare against IP addresses configured on this :class:`~models_cisco.IOSIntfLine` object.
+
+        Returns:
+            - bool if there is an ip address, or None if there is no ip address.
 
         This example illustrates use of the method.
 
@@ -645,6 +652,32 @@ class BaseIOSIntfLine(IOSCfgLine):
         ## NOTE: I have no intention of checking self.is_shutdown here
         ##     People should be able to check the sanity of interfaces
         ##     before they put them into production
+        """Return a boolean for whether no ip proxy-arp is configured on the 
+        interface.
+
+        Returns:
+            - bool.
+
+        This example illustrates use of the method.
+
+        .. code-block:: python
+           :emphasize-lines: 12
+
+           >>> from ciscoconfparse.ccp_util import IPv4Obj
+           >>> from ciscoconfparse import CiscoConfParse
+           >>> config = [
+           ...     '!',
+           ...     'interface FastEthernet1/0',
+           ...     ' ip address 1.1.1.1 255.255.255.252',
+           ...     ' no ip proxy-arp',
+           ...     '!',
+           ...     ]
+           >>> parse = CiscoConfParse(config, factory=True)
+           >>> obj = parse.find_objects('^interface\sFast')[0]
+           >>> obj.has_no_ip_proxyarp
+           True
+           >>>
+        """
 
         ## Interface must have an IP addr to respond
         if (self.ipv4_addr==''):
@@ -652,6 +685,7 @@ class BaseIOSIntfLine(IOSCfgLine):
 
         ## By default, Cisco IOS answers proxy-arp
         ## By default, Nexus disables proxy-arp
+        ## By default, IOS-XR disables proxy-arp
         retval = self.re_match_iter_typed(r'^\s*no\sip\s(proxy-arp)\s*$',
             result_type=bool, default=False)
         return retval
@@ -993,10 +1027,10 @@ class IOSIntfLine(BaseIOSIntfLine):
     def __init__(self, *args, **kwargs):
         """Accept an IOS line number and initialize family relationship
         attributes
+
         .. warning::
-           All :class:`~models_cisco.IOSIntfLine` methods are still considered
-           beta-quality, until this notice is removed.  The behavior of APIs 
-           on this object could change at any time.
+
+          All :class:`~models_cisco.IOSIntfLine` methods are still considered beta-quality, until this notice is removed.  The behavior of APIs on this object could change at any time.
         """
         super(IOSIntfLine, self).__init__(*args, **kwargs)
 
