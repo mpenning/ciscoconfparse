@@ -563,7 +563,7 @@ class BaseIOSIntfLine(IOSCfgLine):
         considered, and return a boolean for whether this interface is within 
         the requested :class:`~ccp_util.IPv4Obj`.
 
-       Kwargs:
+        Kwargs:
            - ipv4network (:class:`~ccp_util.IPv4Obj`): An object to compare against IP addresses configured on this :class:`~models_cisco.IOSIntfLine` object.
 
         Returns:
