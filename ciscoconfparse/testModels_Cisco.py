@@ -264,19 +264,19 @@ class knownValues(unittest.TestCase):
     def testVal_IOSIntfLine_ordinal_list(self):
         cfg = CiscoConfParse(self.c01, factory=True)
         result_correct = {
-            'interface Serial 1/0': [1, 0],
-            'interface Serial 1/1': [1, 1],
-            'interface GigabitEthernet4/1': [4, 1],
-            'interface GigabitEthernet4/2': [4, 2],
-            'interface GigabitEthernet4/3': [4, 3],
-            'interface GigabitEthernet4/4': [4, 4],
-            'interface GigabitEthernet4/5': [4, 5],
-            'interface GigabitEthernet4/6': [4, 6],
-            'interface GigabitEthernet4/7': [4, 7],
-            'interface GigabitEthernet4/8.120': [4, 8],
-            'interface ATM5/0/0': [5, 0, 0],
-            'interface ATM5/0/0.32 point-to-point': [5, 0, 0],
-            'interface ATM5/0/1': [5, 0, 1],
+            'interface Serial 1/0': (1, 0),
+            'interface Serial 1/1': (1, 1),
+            'interface GigabitEthernet4/1': (4, 1),
+            'interface GigabitEthernet4/2': (4, 2),
+            'interface GigabitEthernet4/3': (4, 3),
+            'interface GigabitEthernet4/4': (4, 4),
+            'interface GigabitEthernet4/5': (4, 5),
+            'interface GigabitEthernet4/6': (4, 6),
+            'interface GigabitEthernet4/7': (4, 7),
+            'interface GigabitEthernet4/8.120': (4, 8),
+            'interface ATM5/0/0': (5, 0, 0),
+            'interface ATM5/0/0.32 point-to-point': (5, 0, 0),
+            'interface ATM5/0/1': (5, 0, 1),
         }
         test_result = dict()
         ## Parse all interface objects in self.c01 and check ordinal_list

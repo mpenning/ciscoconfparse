@@ -427,7 +427,10 @@ class BaseIOSIntfLine(IOSCfgLine):
 
     @property
     def ordinal_list(self):
-        """Return a list of numbers representing card, slot, port for this interface.  If you call ordinal_list on GigabitEthernet2/25.100, you'll get this python list of integers: [2, 25].  If you call ordinal_list on GigabitEthernet2/0/25.100 you'll get this python list of integers: [2, 0, 25].  This method strips all subinterface information in the returned value.
+        """Return a tuple of numbers representing card, slot, port for this interface.  If you call ordinal_list on GigabitEthernet2/25.100, you'll get this python tuple of integers: (2, 25).  If you call ordinal_list on GigabitEthernet2/0/25.100 you'll get this python list of integers: (2, 0, 25).  This method strips all subinterface information in the returned value.
+
+        Returns:
+            - tuple.  A tuple of port numbers as integers.
 
         .. warning::
 
@@ -455,21 +458,21 @@ class BaseIOSIntfLine(IOSCfgLine):
            >>> parse = CiscoConfParse(config, factory=True)
            >>> obj = parse.find_objects('^interface\sFast')[0]
            >>> obj.ordinal_list
-           [1, 0]
+           (1, 0)
            >>> obj = parse.find_objects('^interface\sATM')[0]
            >>> obj.ordinal_list
-           [2, 0]
+           (2, 0)
            >>>
         """
         if not self.is_intf:
-            return []
+            return ()
         else:
             intf_regex = r'^interface\s+[A-Za-z\-]+\s*(\d+.*?)(\.\d+)*(\s\S+)*\s*$'
             intf_number = self.re_match(intf_regex, group=1, default='')
             if intf_number:
-                return [int(ii) for ii in intf_number.split('/')]
+                return tuple([int(ii) for ii in intf_number.split('/')])
             else:
-                return []
+                return ()
 
     @property
     def description(self):
