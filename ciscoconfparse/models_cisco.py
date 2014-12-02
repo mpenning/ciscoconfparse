@@ -183,7 +183,7 @@ class IOSCfgLine(BaseCfgLine):
         This example illustrates use of the method.
 
         .. code-block:: python
-           :emphasize-lines: 12,15
+           :emphasize-lines: 11,14
 
            >>> config = [
            ...     '!',
@@ -221,7 +221,7 @@ class IOSCfgLine(BaseCfgLine):
         This example illustrates use of the method.
 
         .. code-block:: python
-           :emphasize-lines: 18,21
+           :emphasize-lines: 17,20
 
            >>> config = [
            ...     '!',
@@ -316,7 +316,7 @@ class BaseIOSIntfLine(IOSCfgLine):
         This example illustrates use of the method.
 
         .. code-block:: python
-           :emphasize-lines: 18,21,24
+           :emphasize-lines: 17,20,23
 
            >>> config = [
            ...     '!',
@@ -360,7 +360,7 @@ class BaseIOSIntfLine(IOSCfgLine):
         This example illustrates use of the method.
 
         .. code-block:: python
-           :emphasize-lines: 18,21
+           :emphasize-lines: 17,20
 
            >>> config = [
            ...     '!',
@@ -397,7 +397,7 @@ class BaseIOSIntfLine(IOSCfgLine):
         This example illustrates use of the method.
 
         .. code-block:: python
-           :emphasize-lines: 18,21
+           :emphasize-lines: 17,20
 
            >>> config = [
            ...     '!',
@@ -436,7 +436,7 @@ class BaseIOSIntfLine(IOSCfgLine):
         This example illustrates use of the method.
 
         .. code-block:: python
-           :emphasize-lines: 18,21
+           :emphasize-lines: 17,20
 
            >>> config = [
            ...     '!',
