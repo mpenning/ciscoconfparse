@@ -174,6 +174,35 @@ class IOSCfgLine(BaseCfgLine):
 
     @property
     def is_loopback_intf(self):
+        """Returns a boolean (True or False) to answer whether this 
+        :class:`~models_cisco.IOSCfgLine` is a loopback interface.
+
+        Returns:
+            - bool.
+
+        This example illustrates use of the method.
+
+        .. code-block:: python
+           :emphasize-lines: 12,15
+
+           >>> config = [
+           ...     '!',
+           ...     'interface FastEthernet1/0',
+           ...     ' ip address 1.1.1.1 255.255.255.252',
+           ...     '!',
+           ...     'interface Loopback0',
+           ...     ' ip address 1.1.1.5 255.255.255.255',
+           ...     '!',
+           ...     ]
+           >>> parse = CiscoConfParse(config)
+           >>> obj = parse.find_objects('^interface\sFast')[0]
+           >>> obj.is_loopback_intf
+           False
+           >>> obj = parse.find_objects('^interface\sLoop')[0]
+           >>> obj.is_loopback_intf
+           True
+           >>>
+        """
         intf_regex = r'^interface\s+(\Soopback)'
         if self.re_match(intf_regex):
             return True
@@ -192,7 +221,7 @@ class IOSCfgLine(BaseCfgLine):
         This example illustrates use of the method.
 
         .. code-block:: python
-           :emphasize-lines: 17,20
+           :emphasize-lines: 18,21
 
            >>> config = [
            ...     '!',
@@ -279,7 +308,42 @@ class BaseIOSIntfLine(IOSCfgLine):
 
     @property
     def name(self):
-        """Return a string, such as 'GigabitEthernet0/1'"""
+        """Return the interface name as a string, such as 'GigabitEthernet0/1'
+
+        Returns:
+            - str.  The interface name as a string, or '' if the object is not an interface.
+
+        This example illustrates use of the method.
+
+        .. code-block:: python
+           :emphasize-lines: 18,21,24
+
+           >>> config = [
+           ...     '!',
+           ...     'interface FastEthernet1/0',
+           ...     ' ip address 1.1.1.1 255.255.255.252',
+           ...     '!',
+           ...     'interface ATM2/0',
+           ...     ' no ip address',
+           ...     '!',
+           ...     'interface ATM2/0.100 point-to-point',
+           ...     ' ip address 1.1.1.5 255.255.255.252',
+           ...     ' pvc 0/100',
+           ...     '  vbr-nrt 704 704',
+           ...     '!',
+           ...     ]
+           >>> parse = CiscoConfParse(config, factory=True)
+           >>> obj = parse.find_objects('^interface\sFast')[0]
+           >>> obj.name
+           'FastEthernet1/0'
+           >>> obj = parse.find_objects('^interface\sATM')[0]
+           >>> obj.name
+           'ATM2/0'
+           >>> obj = parse.find_objects('^interface\sATM')[1]
+           >>> obj.name
+           'ATM2/0.100'
+           >>>
+        """
         if not self.is_intf:
             return ''
         intf_regex = r'^interface\s+(\S+[0-9\/\.\s]+)\s*'
@@ -288,12 +352,76 @@ class BaseIOSIntfLine(IOSCfgLine):
 
     @property
     def port(self):
-        """Return the interface's port number"""
+        """Return the interface's port number
+
+        Returns:
+            - int.  The interface number.
+
+        This example illustrates use of the method.
+
+        .. code-block:: python
+           :emphasize-lines: 18,21
+
+           >>> config = [
+           ...     '!',
+           ...     'interface FastEthernet1/0',
+           ...     ' ip address 1.1.1.1 255.255.255.252',
+           ...     '!',
+           ...     'interface ATM2/0',
+           ...     ' no ip address',
+           ...     '!',
+           ...     'interface ATM2/0.100 point-to-point',
+           ...     ' ip address 1.1.1.5 255.255.255.252',
+           ...     ' pvc 0/100',
+           ...     '  vbr-nrt 704 704',
+           ...     '!',
+           ...     ]
+           >>> parse = CiscoConfParse(config, factory=True)
+           >>> obj = parse.find_objects('^interface\sFast')[0]
+           >>> obj.port
+           0
+           >>> obj = parse.find_objects('^interface\sATM')[0]
+           >>> obj.port
+           0
+           >>>
+        """
         return self.ordinal_list[-1]
 
     @property
     def port_type(self):
-        """Return Loopback, ATM, GigabitEthernet, Virtual-Template, etc..."""
+        """Return Loopback, ATM, GigabitEthernet, Virtual-Template, etc...
+
+        Returns:
+            - str.  The port type.
+
+        This example illustrates use of the method.
+
+        .. code-block:: python
+           :emphasize-lines: 18,21
+
+           >>> config = [
+           ...     '!',
+           ...     'interface FastEthernet1/0',
+           ...     ' ip address 1.1.1.1 255.255.255.252',
+           ...     '!',
+           ...     'interface ATM2/0',
+           ...     ' no ip address',
+           ...     '!',
+           ...     'interface ATM2/0.100 point-to-point',
+           ...     ' ip address 1.1.1.5 255.255.255.252',
+           ...     ' pvc 0/100',
+           ...     '  vbr-nrt 704 704',
+           ...     '!',
+           ...     ]
+           >>> parse = CiscoConfParse(config, factory=True)
+           >>> obj = parse.find_objects('^interface\sFast')[0]
+           >>> obj.port_type
+           'FastEthernet'
+           >>> obj = parse.find_objects('^interface\sATM')[0]
+           >>> obj.port_type
+           'ATM'
+           >>>
+        """
         port_type_regex = r'^interface\s+([A-Za-z\-]+)'
         return self.re_match(port_type_regex, group=1, default='')
 
@@ -304,6 +432,34 @@ class BaseIOSIntfLine(IOSCfgLine):
         .. warning::
 
            ordinal_list should silently fail (returning an empty python list) if the interface doesn't parse correctly
+
+        This example illustrates use of the method.
+
+        .. code-block:: python
+           :emphasize-lines: 18,21
+
+           >>> config = [
+           ...     '!',
+           ...     'interface FastEthernet1/0',
+           ...     ' ip address 1.1.1.1 255.255.255.252',
+           ...     '!',
+           ...     'interface ATM2/0',
+           ...     ' no ip address',
+           ...     '!',
+           ...     'interface ATM2/0.100 point-to-point',
+           ...     ' ip address 1.1.1.5 255.255.255.252',
+           ...     ' pvc 0/100',
+           ...     '  vbr-nrt 704 704',
+           ...     '!',
+           ...     ]
+           >>> parse = CiscoConfParse(config, factory=True)
+           >>> obj = parse.find_objects('^interface\sFast')[0]
+           >>> obj.ordinal_list
+           [1, 0]
+           >>> obj = parse.find_objects('^interface\sATM')[0]
+           >>> obj.ordinal_list
+           [2, 0]
+           >>>
         """
         if not self.is_intf:
             return []
@@ -317,6 +473,9 @@ class BaseIOSIntfLine(IOSCfgLine):
 
     @property
     def description(self):
+        """Return the current interface description string.
+
+        """
         retval = self.re_match_iter_typed(r'^\s*description\s+(\S.+)$',
             result_type=str, default='')
         return retval
