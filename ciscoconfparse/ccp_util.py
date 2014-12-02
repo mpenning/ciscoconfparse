@@ -66,7 +66,7 @@ class IPv4Obj(object):
         - numhosts (int): An integer representing the number of hosts contained in the network
 
     Returns:
-        an instance of :class:`~ccp_util.IPv4Obj`.
+        - an instance of :class:`~ccp_util.IPv4Obj`.
 
     """
     def __init__(self, arg='127.0.0.1/32', strict=False):
