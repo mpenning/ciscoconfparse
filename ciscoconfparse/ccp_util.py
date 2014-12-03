@@ -86,12 +86,11 @@ class IPv4Obj(object):
         return """<IPv4Obj {0}/{1}>""".format(str(self.ip_object), self.prefixlen)
     def __eq__(self, val):
         try:
-            val_addr_str = str(getattr(val, 'ip', str(val)))
-            if (str(self.ip_object)==val_addr_str):
+            if self.network_object==val.network_object:
                 return True
             return False
-        except:
-            errmsg = "{0} cannot compare itself to '{1}'".format(self.__repr__(), val)
+        except (Exception) as e:
+            errmsg = "'{0}' cannot compare itself to '{1}': {2}".format(self.__repr__(), val, e)
             raise ValueError(errmsg)
 
     def __gt__(self, val):
@@ -134,6 +133,23 @@ class IPv4Obj(object):
             errmsg = "{0} cannot compare itself to '{1}'".format(self.__repr__(), val)
             raise ValueError(errmsg)
 
+    def __contains__(self, val):
+        # Used for "foo in bar"... python calls bar.__contains__(foo)
+        try:
+            if (self.network_object.prefixlen==0):
+                return True
+            elif self.network_object.prefixlen>val.network_object.prefixlen:
+                # obvious shortcut... if this object's mask is longer than
+                #    val, this object cannot contain val
+                return False
+            else:
+                #return (val.network in self.network)
+                return (self.network<=val.network) and \
+                    (self.broadcast>=val.broadcast)
+
+        except (Exception) as e:
+            raise ValueError("Could not check whether '{0}' is contained in '{1}': {2}".format(val, self, e))
+
     def __hash__(self):
         # Python3 needs __hash__()
         return hash(str(self.ip_object))+hash(str(self.prefixlen))
@@ -163,7 +179,10 @@ class IPv4Obj(object):
 
     @property
     def broadcast(self):
-        return self.network_object.broadcast
+        if sys.version_info[0]<3:
+            return self.network_object.broadcast
+        else:
+            return self.network_object.broadcast_address
 
     @property
     def network(self):
