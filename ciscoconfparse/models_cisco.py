@@ -543,13 +543,11 @@ class BaseIOSIntfLine(IOSCfgLine):
 
     @property
     def ip_network_object(self):
+        # Simplified on 2014-12-02
         try:
-            return IPv4Obj('%s/%s' % (self.ipv4_addr, self.ipv4_netmask), 
-                strict=False).network
-        except AttributeError:
-            return IPv4Obj('%s/%s' % (self.ipv4_addr, self.ipv4_netmask), 
-                strict=False).network_address
-        except:
+            return IPv4Obj('{0}/{1}'.format(self.ipv4_addr, self.ipv4_netmask), 
+                strict=False)
+        except (Exception) as e:
             return self.default_ipv4_addr_object
 
 
@@ -764,10 +762,11 @@ class BaseIOSIntfLine(IOSCfgLine):
         """
         if not (str(self.ipv4_addr_object.ip)=="127.0.0.1"):
             try:
-                # Return a boolean for whether the interface is in that network and mask
-                return self.ipv4_addr_object in ipv4network
-            except:
-                raise ValueError("FATAL: %s.in_ipv4_subnet(ipv4network={0}) is an invalid arg".format(ipv4network))
+                # Return a boolean for whether the interface is in that 
+                #    network and mask
+                return self.ipv4_network_object in ipv4network
+            except (Exception) as e:
+                raise ValueError("FATAL: %s.in_ipv4_subnet(ipv4network={0}) is an invalid arg: {1}".format(ipv4network, e))
         else:
             return None
 
