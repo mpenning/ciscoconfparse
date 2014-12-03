@@ -111,7 +111,7 @@ pygments_style = 'tango'
 # The theme to use for HTML and HTML Help pages.  Major themes that come with
 # Sphinx are currently 'default' and 'sphinxdoc'.
 # Consider using https://github.com/kellycreativetech/proBlue in the future
-if sys.modules.get('bootstrap', False):
+if sys.modules.get('sphinx_bootstrap_theme', False):
     html_theme = 'bootstrap'
     html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
 else:
