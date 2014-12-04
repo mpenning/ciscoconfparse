@@ -10,6 +10,7 @@ python setup.py sdist; python setup.py register; python setup.py sdist upload
 ## Clean up repo after build
 rm -rf ciscoconfparse/*pyc; rm -rf dist/ ciscoconfparse.egg-info/ setuptools*
 rm -rf ciscoconfparse/ciscoconfparse.egg-info/
+rm -rf .eggs/
 # Push docs
 python deploy_docs.py
 # Push to bitbucket
