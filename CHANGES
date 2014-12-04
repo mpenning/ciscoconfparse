@@ -1,4 +1,5 @@
-1.1.21  20141116 Major bugfixes in IPv4Obj, convert results from ordinal_list() from a python list to a python tuple
+1.1.22  20141204 More bugfixes in ccp_util.IPv4Obj(); IPv4Obj should mostly be stable and reliable now.  Added solid unit test coverage for IPv4Obj()
+1.1.21  20141203 Major bugfixes in IPv4Obj, convert results from ordinal_list() from a python list to a python tuple
 1.1.20  20141116 Remove numpydoc
 1.1.19  20141116 Fix for Read the Docs publication
 1.1.18  20141115 Doc reformating; remove duplicated ccp_util.IPv4Obj method
