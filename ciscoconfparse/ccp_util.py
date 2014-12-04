@@ -167,18 +167,22 @@ class IPv4Obj(object):
 
     @property
     def ip(self):
+        """Returns the address as an IPv4Address object."""
         return self.ip_object
 
     @property
     def netmask(self):
+        """Returns the network mask as an IPv4Address object."""
         return self.network_object.netmask
 
     @property
     def prefixlen(self):
+        """Returns the length of the network mask as an integer."""
         return self.network_object.prefixlen
 
     @property
     def broadcast(self):
+        """Returns the broadcast address as an IPv4Address object."""
         if sys.version_info[0]<3:
             return self.network_object.broadcast
         else:
@@ -186,18 +190,65 @@ class IPv4Obj(object):
 
     @property
     def network(self):
+        """Returns an IPv4Network object, which represents this network.
+        """
         if sys.version_info[0]<3:
             return self.network_object.network
         else:
-            return self.network_object.network_address
+            ## The ipaddress module returns an "IPAddress" object in Python3...
+            return IPv4Network('{0}'.format(self.network_object.compressed))
 
     @property
     def hostmask(self):
+        """Returns the host mask as an IPv4Address object."""
         return self.network_object.hostmask
 
     @property
+    def version(self):
+        """Returns the version of the object as an integer.  i.e. 4"""
+        return 4
+
+    @property
     def numhosts(self):
-        return self.network_object.numhosts
+        """Returns the total number of IP addresses in this network, including broadcast and the "subnet zero" address"""
+        if sys.version_info[0]<3:
+            return self.network_object.numhosts
+        else:
+            return 2**(32-self.network_object.prefixlen)
+
+    @property
+    def as_decimal(self):
+        """Returns the IP address as a decimal integer"""
+        num_strings = str(self.ip).split('.')
+        num_strings.reverse()  # reverse the order
+        return sum([int(num)*(256**idx) for idx, num in enumerate(num_strings)])
+
+    @property
+    def as_binary_tuple(self):
+        """Returns the IP address as a tuple of zero-padded binary strings"""
+        return tuple(['{0:08b}'.format(int(num)) for num in \
+            str(self.ip).split('.')])
+
+    @property
+    def as_hex_tuple(self):
+        """Returns the IP address as a tuple of zero-padded hex strings"""
+        return tuple(['{0:02x}'.format(int(num)) for num in \
+            str(self.ip).split('.')])
+
+    @property
+    def is_multicast(self):
+        """Returns a boolean for whether this is a multicast address"""
+        return self.network_object.is_multicast
+
+    @property
+    def is_private(self):
+        """Returns a boolean for whether this is a private address"""
+        return self.network_object.is_private
+
+    @property
+    def is_reserved(self):
+        """Returns a boolean for whether this is a reserved address"""
+        return self.network_object.is_reserved
 
 class L4Object(object):
     """Object for Transport-layer protocols; the object ensures that logical operators (such as le, gt, eq, and ne) are parsed correctly, as well as mapping service names to port numbers"""
