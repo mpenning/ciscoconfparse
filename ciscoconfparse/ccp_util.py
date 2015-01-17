@@ -23,7 +23,7 @@ except:
         from ipaddress import IPv4Network, IPv6Network, IPv4Address, IPv6Address
 
 """ ccp_util.py - Parse, Query, Build, and Modify IOS-style configurations
-     Copyright (C) 2014 David Michael Pennington
+     Copyright (C) 2014-2015 David Michael Pennington
 
      This program is free software: you can redistribute it and/or modify
      it under the terms of the GNU General Public License as published by
