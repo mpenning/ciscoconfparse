@@ -90,6 +90,19 @@ class BaseCfgLine(object):
     def __hash__(self):
         return hash(self.hash_arg)
 
+    def __getitem__(self, key):
+        split = self.text.split()
+        if isinstance(key, slice):
+            return ' '.join([split[x] for x in xrange(*key.indices(len(split)))])
+        elif isinstance(key, int):
+            if key < 0:
+                key += len(split)
+            if key >= len(split):
+                raise IndexError('Index out of range')
+            return split[key]
+        else:
+            raise TypeError('Line indicies must be integers')
+
     def hash_arg(self):
         # Just a unique string or each object instance
         return str(self.linenum)+self.text
