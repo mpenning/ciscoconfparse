@@ -2,7 +2,7 @@ License and Copyright
 =====================
 
 ciscoconfparse_ is licensed GPLv3_; Copyright `David Michael Pennington`_,
-2007-2014.
+2007-2015.
 
 The `ipaddr`_ module is distributed with ciscoconfparse_ to facilitate unit
 tests. `ipaddr`_ uses the `ASF License 2.0`_; `ipaddr`_ is part of the Python
