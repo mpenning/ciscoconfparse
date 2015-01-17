@@ -1,3 +1,4 @@
+1.1.23  20150117 Update copyrights to 2015, use list comprehension in re_search_children() to increase speed
 1.1.22  20141204 More bugfixes in ccp_util.IPv4Obj(); IPv4Obj should mostly be stable and reliable now.  Added solid unit test coverage for IPv4Obj()
 1.1.21  20141203 Major bugfixes in IPv4Obj, convert results from ordinal_list() from a python list to a python tuple
 1.1.20  20141116 Remove numpydoc
