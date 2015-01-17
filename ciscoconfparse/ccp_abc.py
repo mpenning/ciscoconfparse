@@ -6,7 +6,7 @@ import os
 from ccp_util import IPv4Obj
 
 """ ccp_abc.py - Parse, Query, Build, and Modify IOS-style configurations
-     Copyright (C) 2014 David Michael Pennington
+     Copyright (C) 2014-2015 David Michael Pennington
 
      This program is free software: you can redistribute it and/or modify
      it under the terms of the GNU General Public License as published by
@@ -488,11 +488,7 @@ class BaseCfgLine(object):
             - list.  A list of matching :class:`~models_cisco.IOSCfgLine` objects which matched.  If there is no match, an empty :py:func:`list` is returned.
 
         """
-        retval = list()
-        for cobj in self.children:
-            if cobj.re_search(regex):
-                retval.append(cobj)
-        return retval
+        return [cobj for cobj in self.children if cobj.re_search(regex)]
 
     def re_match_typed(self, regex, group=1, result_type=str, default=''):
         """Use ``regex`` to search the :class:`~models_cisco.IOSCfgLine` text 

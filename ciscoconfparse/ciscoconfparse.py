@@ -29,7 +29,7 @@ from models_asa import ASAName
 
 
 """ ciscoconfparse.py - Parse, Query, Build, and Modify IOS-style configurations
-     Copyright (C) 2007-2014 David Michael Pennington
+     Copyright (C) 2007-2015 David Michael Pennington
 
      This program is free software: you can redistribute it and/or modify
      it under the terms of the GNU General Public License as published by
