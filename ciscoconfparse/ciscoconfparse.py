@@ -29,7 +29,7 @@ from models_asa import ASAName
 
 
 """ ciscoconfparse.py - Parse, Query, Build, and Modify IOS-style configurations
-     Copyright (C) 2007-2014 David Michael Pennington
+     Copyright (C) 2007-2015 David Michael Pennington
 
      This program is free software: you can redistribute it and/or modify
      it under the terms of the GNU General Public License as published by
@@ -49,7 +49,7 @@ from models_asa import ASAName
 """
 
 ## Docstring props: http://stackoverflow.com/a/1523456/667301
-__version_tuple__ = (1,1,22)
+__version_tuple__ = (1,1,23)
 __version__ = '.'.join(map(str, __version_tuple__))
 __email__ = "mike /at\ pennington [dot] net"
 __author__ = "David Michael Pennington <{0}>".format(__email__)
