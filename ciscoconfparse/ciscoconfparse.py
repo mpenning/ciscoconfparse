@@ -1618,7 +1618,8 @@ class IOSConfigList(MutableSequence):
         """Accept a text list and format into proper objects"""
         # Append text lines as IOSCfgLine objects...
         tmp = list()
-        for idx, line in enumerate(text_list):
+        idx = 0
+        for line in text_list:
             # Reject empty lines
             if self.ignore_blank_lines and line.strip()=='':
                 continue
@@ -1633,6 +1634,7 @@ class IOSConfigList(MutableSequence):
             obj.indent   = len(line) - len(line.lstrip())
 
             tmp.append(obj)
+            idx += 1
 
         self._list = tmp
         self.maintain_obj_sanity()
