@@ -103,6 +103,10 @@ class BaseCfgLine(object):
         return retval
 
     @property
+    def dna(self):
+        return self.classname
+
+    @property
     def family_endpoint(self):
         if self.children==[]:
             return 0
