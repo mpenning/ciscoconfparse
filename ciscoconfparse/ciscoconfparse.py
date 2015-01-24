@@ -2140,35 +2140,12 @@ class ASAConfigList(MutableSequence):
         list_idx = len(self._list)
         self.insert(list_idx, val, atomic)
 
-    def _bootstrap_obj_init(self, text_list=[]):
-        """Accept a text list and format into proper objects"""
-        # Append text lines as IOSCfgLine objects...
-        tmp = list()
-        for idx, line in enumerate(text_list):
-            # Reject empty lines
-            if self.ignore_blank_lines and line.strip()=='':
-                continue
-            if not self.factory:
-                obj          = ASACfgLine(line, self.comment_delimiter)
-            elif self.syntax=='asa':
-                obj = ConfigLineFactory(line, self.comment_delimiter, 
-                    syntax='asa')
-
-            obj.confobj  = self
-            obj.linenum  = idx
-            obj.indent   = len(line) - len(line.lstrip())
-
-            tmp.append(obj)
-
-        self._list = tmp
-        self.maintain_obj_sanity()
-        return tmp
-
     def maintain_obj_sanity(self):
         ## call maintain_obj_sanity() after we finish inserting new stuff...
+        pass
 
-        self._link_firstchildren_to_parent()
-        self._find_orphans()
+        #self._link_firstchildren_to_parent()
+        #self._find_orphans()
 
         ## Make adjustments to the IOS banners because these currently show up
         ##  as individual lines, instead of a parent / child relationship.
@@ -2183,6 +2160,103 @@ class ASAConfigList(MutableSequence):
 
         ###
         ### ASA-specific post-processing here...
+
+    def _bootstrap_obj_init(self, text_list=[]):
+        """Accept a text list and format into proper objects"""
+        # Append text lines as IOSCfgLine objects...
+        retval = list()
+        idx = 0
+
+        max_indent = 0
+        parents = dict()
+        for line in text_list:
+            # Reject empty lines if ignore_blank_lines...
+            if self.ignore_blank_lines and line.strip()=='':
+                continue
+
+            if self.syntax=='asa' and self.factory:
+                obj = ConfigLineFactory(line, self.comment_delimiter,
+                    syntax='asa')
+            elif self.syntax=='asa' and not self.factory:
+                obj = IOSCfgLine(text=line,
+                    comment_delimiter=self.comment_delimiter)
+            else:
+                raise ValueError
+
+            obj.confobj  = self
+            obj.linenum  = idx
+            indent   = len(line) - len(line.lstrip())
+            obj.indent = indent
+
+            is_config_line = obj.is_config_line
+
+
+            ## Parent cache:
+            ## Maintain indent vs max_indent in a family and
+            ##     cache the parent until indent<max_indent
+            if (indent<max_indent) and is_config_line:
+                parent = None
+                # walk parents and intelligently prune stale parents
+                stale_parent_idxs = filter(lambda ii: ii>=indent, sorted(parents.keys(), reverse=True))
+                for parent_idx in stale_parent_idxs:
+                    del parents[parent_idx]
+            else:
+                ## As long as the child indent hasn't gone backwards, 
+                ##    we can use a cached parent
+                parent = parents.get(indent, None)
+
+            ## If indented, walk backwards and find the parent...
+            ## 1.  Assign parent to the child
+            ## 2.  Assign child to the parent
+            ## 3.  Assign parent's child_indent
+            ## 4.  Maintain oldest_ancestor
+            if (indent>0) and not (parent is None):
+                ## Add the line as a child (parent was cached)
+                self._add_child_to_parent(retval, idx, indent, parent, obj)
+            elif (indent>0) and (parent is None):
+                ## Walk backwards to find parent, and add the line as a child
+                candidate_parent_index = idx - 1
+                while candidate_parent_index>=0:
+                    candidate_parent = retval[candidate_parent_index]
+                    if (candidate_parent.indent<indent) and \
+                        candidate_parent.is_config_line:
+                        # We found the parent
+                        parent = candidate_parent
+                        parents[indent] = parent      # Cache the parent
+                        if indent==0:
+                            parent.oldest_ancestor = True
+                        break
+                    else:
+                        candidate_parent_index -= 1
+
+                ## Add the line as a child...
+                self._add_child_to_parent(retval, idx, indent, parent, obj)
+
+            ## Handle max_indent
+            if (indent==0) and is_config_line:
+                # only do this if it's a config line...
+                max_indent = 0
+            elif indent>max_indent:
+                max_indent = indent
+
+            retval.append(obj)
+            idx += 1
+
+        self._list = retval
+        self.maintain_obj_sanity()
+        return retval
+
+    def _add_child_to_parent(self, _list, idx, indent, parentobj, childobj):
+        if childobj.is_comment and (_list[idx-1].indent>indent):
+            ## I *really* hate making this exception, but legacy 
+            ##   ciscoconfparse never marked a comment as a child 
+            ##   when the line immediately above it was indented more
+            ##   than the comment line
+            pass
+        else:
+            parentobj.children.append(childobj)
+            childobj.parent = parentobj
+            childobj.parent.child_indent = indent
 
     def iter_with_comments(self, begin_index=0):
         for idx, obj in enumerate(self._list):
