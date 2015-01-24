@@ -8,3 +8,4 @@ test:
 	cd ciscoconfparse; python ciscoconfparse.py; ./runtests.sh; cd ..
 clean:
 	find ./* -name '*.pyc' -exec rm {} \;
+	find ./* -path '*__pycache__' -exec rm -rf {} \;
