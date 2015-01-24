@@ -1045,8 +1045,9 @@ class CiscoConfParse(object):
                         insertstr, atomic=False))
                 else:
                     pass
-        if modified:
-            self.ConfigObjs.maintain_obj_sanity()
+        ## Removed during speed optimizations 2015-01-24
+        #if modified:
+        #    self.ConfigObjs.maintain_obj_sanity()
         return retval
 
     def delete_lines(self, linespec, exactmatch=False, ignore_ws=False):
@@ -1496,7 +1497,7 @@ class IOSConfigList(MutableSequence):
         self.syntax = syntax
         self.dna = 'IOSConfigList'
 
-        if isinstance(data, list) and (data):
+        if getattr(data, 'append', False):
             self._list = self._bootstrap_obj_init(data)
         else:
             self._list = list()
@@ -1541,10 +1542,11 @@ class IOSConfigList(MutableSequence):
 
     def insert_before(self, robj, val, atomic=True):
         ## Insert something before robj
-        if isinstance(robj, str):
+        if getattr(robj, 'capitalize', False):
+            # robj must not be a string...
             raise ValueError
 
-        if isinstance(val, str):
+        if getattr(val, 'capitalize', False):
             if self.factory:
                 obj = ConfigLineFactory(text=val, 
                     comment_delimiter=self.comment_delimiter, 
@@ -1560,7 +1562,6 @@ class IOSConfigList(MutableSequence):
 
         if atomic:
             # Reparse the whole config as a text list
-            #     this also calls maintain_obj_sanity()
             self._bootstrap_from_text()
         else:
             ## Just renumber lines...
@@ -1568,10 +1569,10 @@ class IOSConfigList(MutableSequence):
 
     def insert_after(self, robj, val, atomic=True):
         ## Insert something after robj
-        if isinstance(robj, str):
+        if getattr(robj, 'capitalize', False):
             raise ValueError
 
-        if isinstance(val, str):
+        if getattr(val, 'capitalize', False):
             if self.factory:
                 obj = ConfigLineFactory(text=val, 
                     comment_delimiter=self.comment_delimiter,
@@ -1591,7 +1592,6 @@ class IOSConfigList(MutableSequence):
 
         if atomic:
             # Reparse the whole config as a text list
-            #     this also calls maintain_obj_sanity()
             self._bootstrap_from_text()
         else:
             ## Just renumber lines...
@@ -1599,7 +1599,7 @@ class IOSConfigList(MutableSequence):
 
     def insert(self, ii, val, atomic=True):
         ## Insert something at index ii
-        if isinstance(val, str):
+        if getattr(val, 'capitalize', False):
             if self.factory:
                 obj = ConfigLineFactory(text=val, 
                     comment_delimiter=self.comment_delimiter,
@@ -1616,8 +1616,6 @@ class IOSConfigList(MutableSequence):
 
         if atomic:
             # Reparse the whole config as a text list
-            #     this also calls maintain_obj_sanity()
-
             self._bootstrap_from_text()
         else:
             ## Just renumber lines...
@@ -1627,9 +1625,31 @@ class IOSConfigList(MutableSequence):
         list_idx = len(self._list)
         self.insert(list_idx, val, atomic)
 
+    def _banner_mark_regex(self, REGEX):
+        banner_objs = list(filter(lambda obj: REGEX.search(obj.text), self._list))
+        for parent in banner_objs:
+            idx = parent.linenum
+            parent.oldest_ancestor = True
+            while True:
+                idx += 1
+                try:
+                    obj = self._list[idx]
+                    if obj.is_comment:
+                        break
+                    parent.children.append(obj)
+                    parent.child_indent = 0
+                    obj.parent = parent
+                except IndexError:
+                    break
+
     def _bootstrap_obj_init(self, text_list=[]):
         """Accept a text list and format into proper objects"""
         # Append text lines as IOSCfgLine objects...
+        BANNER_STR = set(['login',
+            'motd', 'incoming', 'incoming', 
+            'telnet', 'lcd',
+            ])
+        BANNER_RE = re.compile('|'.join([r'^(set\s+)*banner\s+{0}'.format(ii) for ii in BANNER_STR]))
         retval = list()
         idx = 0
 
@@ -1654,7 +1674,6 @@ class IOSConfigList(MutableSequence):
             obj.indent = indent
 
             is_config_line = obj.is_config_line
-
 
             ## Parent cache:
             ## Maintain indent vs max_indent in a family and
@@ -1708,7 +1727,8 @@ class IOSConfigList(MutableSequence):
             idx += 1
 
         self._list = retval
-        self.maintain_obj_sanity()
+        self._banner_mark_regex(BANNER_RE)
+        #self.maintain_obj_sanity()
         return retval
 
     def _add_child_to_parent(self, _list, idx, indent, parentobj, childobj):
@@ -1790,29 +1810,6 @@ class IOSConfigList(MutableSequence):
             parent_obj = obj
             parent_indent = obj.indent
 
-    def _find_orphans(self, DBGFLAG=False):
-        ## Look for orphaned children, these SHOULD be indented the same
-        ##  number of spaces as the "first" child.  However, we must only
-        ##  look inside our "extended family"
-
-        for obj in self.all_parents:
-            if (DBGFLAG is True):
-                print("[DEBUG] _find_orphans: Parent  : %s" % repr(obj))
-                print("[DEBUG] _find_orphans: Children:\n      %s" % \
-                    [repr(ii) for ii in obj.children])
-
-            if (obj.oldest_ancestor is True):
-                # Look for immediate children
-                self._id_unknown_children(obj)
-                ## this SHOULD find all other children in the family...
-                candidate_children = list(obj.children)
-                for cobj in candidate_children:
-                    if self._id_unknown_children(cobj):
-                        # Appending any new children to candidate_children as
-                        #  we find new children
-                        for newobj in cobj.children:
-                            candidate_children.append(newobj)
-
     def _mark_banner(self, banner_str, os):
         """Identify all multiline entries matching the mlinespec (this is
         typically used for banners).  Associate parent / child relationships,
@@ -1873,98 +1870,6 @@ class IOSConfigList(MutableSequence):
         # Return our success or failure status
         return end_banner
 
-    def _id_unknown_children(self, obj, DBGFLAG=False):
-        """Walk through the configuration and look for configuration child
-        lines that have not already been identified"""
-        found_unknown_child = False
-        parent_indent = obj.indent
-        child_indent  = obj.child_indent
-
-        if DBGFLAG or self.DBGFLAG:
-            print("[DEBUG] _id_unknown_children():")
-            print("[DEBUG] Parent       : %s" % obj.verbose)
-
-        ## If I want to catch all child comments, use iter_with_comments()
-        for iiobj in self.iter_no_comments(obj.linenum + 1):
-            if (iiobj.indent==0):
-                # Cannot be a child with no indent
-                return False
-            elif (iiobj.indent==child_indent):
-                # we have found a potential orphan... also could be the
-                #  first child
-                iiobj.add_parent(obj)
-                found_unknown_child = obj.add_child(iiobj)
-                if (DBGFLAG or self.DBGFLAG) and (found_unknown_child is True):
-                        print("[DEBUG]   Found unknown child: %s" % iiobj)
-            elif (iiobj.indent==parent_indent):
-                return found_unknown_child
-
-        return found_unknown_child
-
-    def _id_family_endpoint(self, obj):
-        """This method can start with any child object, and traces through its
-        parents to the oldest_ancestor.  When it finds the oldest_ancestor, it
-        looks for the family_endpoint attribute."""
-        for tobj in self.iter_no_comments(obj.linenum):
-            if (tobj.family_endpoint>0) and \
-                (tobj.parent.oldest_ancestor is True):
-                return tobj.family_endpoint
-
-        if (tobj.linenum==self.last_index):
-            # FATAL: we searched to the end of the configuration and did not
-            #  find a valid family endpoint.  This is bad, there is something
-            #  wrong with IOSCfgLine relationships if you get this message.
-            raise RuntimeError("FATAL: Could not resolve family " + \
-                "endpoint while starting from configuration line " + \
-                "number %s" % tobj.linenum)
-        else:
-            raise RuntimeError("FATAL: Found invalid family_endpoint " + \
-                "while considering: %s. Validate IOSCfgLine relationships" %\
-                repr(obj))
-
-    def _mark_family_endpoints(self, parents):
-        """Find the endpoint of the config 'family'
-        A family starts when a config line with *no* indentation spawns
-        'children'. A family ends when there are no more children.  See 
-        :class:`~models_cisco.IOSCfgLine` for an example. This method modifies 
-        attributes inside :class:`~models_cisco.IOSCfgLine` instances"""
-        DBGFLAG = self.DBGFLAG
-        if DBGFLAG:
-            print("[DEBUG] _mark_family_endpoints:\n  finding children of PARENTS: %s\n" % parents)
-        lastobj = self # so pylint won't complain
-        for parent in parents:
-            if DBGFLAG:
-                print("[DEBUG]   Finding family_endpoint for: %s" % (parent))
-
-            if (parent.indent==0) and parent.has_children:
-                # we are at the oldest ancestor
-                parent.oldest_ancestor = True
-
-                # start searching for the family endpoint
-                in_family = False
-                for obj in self.iter_no_comments(parent.linenum):
-                    if in_family and (obj.indent==0):
-                        if DBGFLAG:
-                            # Ignore pylint warnings here
-                            print("[DEBUG]      ID family_endpoint: %s" % (lastobj))
-                        in_family = False
-                        break
-                    elif obj.indent>0:
-                        if DBGFLAG:
-                            print("[DEBUG]      Descendant: %s" % (obj))
-                        in_family = True
-                    lastobj = obj
-                    # Special case if we cycle through the config and don't
-                    # find an endpoint. It usually happens if CiscoConfParse
-                    # is called with an array containing a single interface
-                    # config stanza and no "end" statement
-                else:
-                    if DBGFLAG:
-                        print("[DEBUG]      No family_endpoint for: Line #%s: '%s'" % (parent.linenum, parent.text))
-                if in_family:
-                    if DBGFLAG:
-                        print("[DEBUG]      ID family_endpoint: Line #%s: %s" % (obj.linenum, obj.text))
-
     @property
     def all_parents(self):
         return [obj for obj in self._list if obj.has_children]
@@ -2009,7 +1914,7 @@ class ASAConfigList(MutableSequence):
         self.ignore_blank_lines = ignore_blank_lines
         self.syntax = syntax
 
-        if isinstance(data, list) and (data):
+        if getattr(data, 'append', False):
             self._bootstrap_obj_init(data)
         else:
             self._list = list()
@@ -2059,10 +1964,10 @@ class ASAConfigList(MutableSequence):
 
     def insert_before(self, robj, val, atomic=True):
         ## Insert something before robj
-        if isinstance(robj, str):
+        if getattr(robj, 'capitalize', False):
             raise ValueError
 
-        if isinstance(val, str):
+        if getattr(val, 'capitalize', False):
             if self.factory:
                 obj = ConfigLineFactory(text=val, 
                     comment_delimiter=self.comment_delimiter, 
@@ -2086,10 +1991,10 @@ class ASAConfigList(MutableSequence):
 
     def insert_after(self, robj, val, atomic=True):
         ## Insert something after robj
-        if isinstance(robj, str):
+        if getattr(robj, 'capitalize', False):
             raise ValueError
 
-        if isinstance(val, str):
+        if getattr(val, 'capitalize', False):
             if self.factory:
                 obj = ConfigLineFactory(text=val, 
                     comment_delimiter=self.comment_delimiter,
@@ -2108,7 +2013,6 @@ class ASAConfigList(MutableSequence):
 
         if atomic:
             # Reparse the whole config as a text list
-            #     this also calls maintain_obj_sanity()
             self._bootstrap_from_text()
         else:
             ## Just renumber lines...
@@ -2116,7 +2020,7 @@ class ASAConfigList(MutableSequence):
 
     def insert(self, ii, val, atomic=True):
         ## Insert something at index ii
-        if isinstance(val, str):
+        if getattr(val, 'capitalize', False):
             if self.factory:
                 obj = ConfigLineFactory(text=val, 
                     comment_delimiter=self.comment_delimiter,
@@ -2129,7 +2033,6 @@ class ASAConfigList(MutableSequence):
 
         if atomic:
             # Reparse the whole config as a text list
-            #     this also calls maintain_obj_sanity()
             self._bootstrap_from_text()
         else:
             ## Just renumber lines...
@@ -2139,27 +2042,6 @@ class ASAConfigList(MutableSequence):
     def append(self, val, atomic=True):
         list_idx = len(self._list)
         self.insert(list_idx, val, atomic)
-
-    def maintain_obj_sanity(self):
-        ## call maintain_obj_sanity() after we finish inserting new stuff...
-        pass
-
-        #self._link_firstchildren_to_parent()
-        #self._find_orphans()
-
-        ## Make adjustments to the IOS banners because these currently show up
-        ##  as individual lines, instead of a parent / child relationship.
-        ##  This means finding each banner statement, and associating the
-        ##  subsequent lines as children.
-        #
-        # ASA-banners should not need a special-case...
-        #self._mark_banner("login", "ios")
-        #self._mark_banner("motd", "ios")
-        #self._mark_banner("exec", "ios")
-        #self._mark_banner("asdm", "ios")
-
-        ###
-        ### ASA-specific post-processing here...
 
     def _bootstrap_obj_init(self, text_list=[]):
         """Accept a text list and format into proper objects"""
@@ -2243,7 +2125,7 @@ class ASAConfigList(MutableSequence):
             idx += 1
 
         self._list = retval
-        self.maintain_obj_sanity()
+        ## Insert ASA-specific banner processing here, if required
         return retval
 
     def _add_child_to_parent(self, _list, idx, indent, parentobj, childobj):
@@ -2272,60 +2154,6 @@ class ASAConfigList(MutableSequence):
         # Call this after any insertion or deletion
         for idx, obj in enumerate(self._list):
             obj.linenum = idx
-
-    def _link_firstchildren_to_parent(self, DBGFLAG=False):
-        ## Walk through the config and look for the "first" child
-        parent_indent = None 
-        for obj in self.iter_with_comments():
-            if (parent_indent is None):
-                parent_indent = obj.indent
-
-            if DBGFLAG or self.DBGFLAG:
-                print("[DEBUG] _link_firstchildren_to_parent():\n  finding children of PARENT: %s\n" % repr(obj))
-
-            # Determine if this is the "first" child...
-            #   Note: other children will be orphaned until we walk the
-            #   config again.
-            if (obj.indent > parent_indent):
-                # child is indented more, so this is a child
-
-                if DBGFLAG or self.DBGFLAG:
-                    ## Ignore pylint warnings here
-                    print("[DEBUG]       Attaching CHILD: %s\n   to 'PARENT: %s" % (obj, parent_obj))
-
-                # Add child to the parent's object
-                parent_obj.add_child(obj)
-                if (parent_indent==0):
-                    parent_obj.oldest_ancestor = True
-                # Add parent to the child's object
-                obj.add_parent(parent_obj)
-
-            ## These must be the statements in the loop
-            parent_obj = obj
-            parent_indent = obj.indent
-
-    def _find_orphans(self, DBGFLAG=False):
-        ## Look for orphaned children, these SHOULD be indented the same
-        ##  number of spaces as the "first" child.  However, we must only
-        ##  look inside our "extended family"
-
-        for obj in self.all_parents:
-            if (DBGFLAG is True):
-                print("[DEBUG] _find_orphans: Parent  : %s" % repr(obj))
-                print("[DEBUG] _find_orphans: Children:\n      %s" % \
-                    [repr(ii) for ii in obj.children])
-
-            if (obj.oldest_ancestor is True):
-                # Look for immediate children
-                self._id_unknown_children(obj)
-                ## this SHOULD find all other children in the family...
-                candidate_children = list(obj.children)
-                for cobj in candidate_children:
-                    if self._id_unknown_children(cobj):
-                        # Appending any new children to candidate_children as
-                        #  we find new children
-                        for newobj in cobj.children:
-                            candidate_children.append(newobj)
 
     def _mark_banner(self, banner_str, os):
         """Identify all multiline entries matching the mlinespec (this is
@@ -2386,98 +2214,6 @@ class ASAConfigList(MutableSequence):
                     break
         # Return our success or failure status
         return end_banner
-
-    def _id_unknown_children(self, obj, DBGFLAG=False):
-        """Walk through the configuration and look for configuration child
-        lines that have not already been identified"""
-        found_unknown_child = False
-        parent_indent = obj.indent
-        child_indent  = obj.child_indent
-
-        if DBGFLAG or self.DBGFLAG:
-            print("[DEBUG] _id_unknown_children():")
-            print("[DEBUG] Parent       : %s" % obj.verbose)
-
-        ## If I want to catch all child comments, use iter_with_comments()
-        for iiobj in self.iter_no_comments(obj.linenum + 1):
-            if (iiobj.indent==0):
-                # Cannot be a child with no indent
-                return False
-            elif (iiobj.indent==child_indent):
-                # we have found a potential orphan... also could be the
-                #  first child
-                iiobj.add_parent(obj)
-                found_unknown_child = obj.add_child(iiobj)
-                if (DBGFLAG or self.DBGFLAG) and (found_unknown_child is True):
-                        print("[DEBUG]   Found unknown child: %s" % iiobj)
-            elif (iiobj.indent==parent_indent):
-                return found_unknown_child
-
-        return found_unknown_child
-
-    def _id_family_endpoint(self, obj):
-        """This method can start with any child object, and traces through its
-        parents to the oldest_ancestor.  When it finds the oldest_ancestor, it
-        looks for the family_endpoint attribute."""
-        for tobj in self.iter_no_comments(obj.linenum):
-            if (tobj.family_endpoint>0) and \
-                (tobj.parent.oldest_ancestor is True):
-                return tobj.family_endpoint
-
-        if (tobj.linenum==self.last_index):
-            # FATAL: we searched to the end of the configuration and did not
-            #  find a valid family endpoint.  This is bad, there is something
-            #  wrong with IOSCfgLine relationships if you get this message.
-            raise RuntimeError("FATAL: Could not resolve family " + \
-                "endpoint while starting from configuration line " + \
-                "number %s" % tobj.linenum)
-        else:
-            raise RuntimeError("FATAL: Found invalid family_endpoint " + \
-                "while considering: %s. Validate IOSCfgLine relationships" %\
-                repr(obj))
-
-    def _mark_family_endpoints(self, parents):
-        """Find the endpoint of the config 'family'
-        A family starts when a config line with *no* indentation spawns
-        'children'. A family ends when there are no more children.  See 
-        :class:`~models_cisco.IOSCfgLine` for an example. This method modifies 
-        attributes inside :class:`~models_cisco.IOSCfgLine` instances"""
-        DBGFLAG = self.DBGFLAG
-        if DBGFLAG:
-            print("[DEBUG] _mark_family_endpoints:\n  finding children of PARENTS: %s\n" % parents)
-        lastobj = self # so pylint won't complain
-        for parent in parents:
-            if DBGFLAG:
-                print("[DEBUG]   Finding family_endpoint for: %s" % (parent))
-
-            if (parent.indent==0) and parent.has_children:
-                # we are at the oldest ancestor
-                parent.oldest_ancestor = True
-
-                # start searching for the family endpoint
-                in_family = False
-                for obj in self.iter_no_comments(parent.linenum):
-                    if in_family and (obj.indent==0):
-                        if DBGFLAG:
-                            # Ignore pylint warnings here
-                            print("[DEBUG]      ID family_endpoint: %s" % (lastobj))
-                        in_family = False
-                        break
-                    elif obj.indent>0:
-                        if DBGFLAG:
-                            print("[DEBUG]      Descendant: %s" % (obj))
-                        in_family = True
-                    lastobj = obj
-                    # Special case if we cycle through the config and don't
-                    # find an endpoint. It usually happens if CiscoConfParse
-                    # is called with an array containing a single interface
-                    # config stanza and no "end" statement
-                else:
-                    if DBGFLAG:
-                        print("[DEBUG]      No family_endpoint for: Line #%s: '%s'" % (parent.linenum, parent.text))
-                if in_family:
-                    if DBGFLAG:
-                        print("[DEBUG]      ID family_endpoint: Line #%s: %s" % (obj.linenum, obj.text))
 
     @property
     def all_parents(self):
