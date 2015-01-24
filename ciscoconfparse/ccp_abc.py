@@ -52,7 +52,6 @@ class BaseCfgLine(object):
         self.feature   = ''        # Major feature description
         self.feature_param1 = ''   # Parameter1 of the feature
         self.feature_param2 = ''   # Parameter2 of the feature (if req'd)
-        self.hash_arg = None
 
         self.set_comment_bool()
 
@@ -63,36 +62,33 @@ class BaseCfgLine(object):
             return "<%s # %s '%s' (parent is # %s)>" % (self.classname, 
                 self.linenum, self.text, self.parent.linenum)
 
-
     def __str__(self):
         return self.__repr__()
 
-    def __eq__(self, val):
-        try:
-            ##   try / except is much faster than isinstance();
-            ##   I added hash_arg() inline below for speed... whenever I change
-            ##   hash_arg(), I *must* change this
-            return (str(self.linenum)+self.text)==(str(val.linenum)+val.text)
-        except:
-            return False
+    def __hash__(self):
+        ##   I inlined the hash() argument below for speed... whenever I change
+        ##   self.__eq__() I *must* change this
+        return hash(str(self.linenum)+self.text)
 
     def __gt__(self, val):
         if (self.linenum>val.linenum):
             return True
         return False
 
+    def __eq__(self, val):
+        try:
+            ##   try / except is much faster than isinstance();
+            ##   I added hash_arg() inline below for speed... whenever I change
+            ##   self.__hash__() I *must* change this
+            return (str(self.linenum)+self.text)==(str(val.linenum)+val.text)
+        except:
+            return False
+
     def __lt__(self, val):
         # Ref: http://stackoverflow.com/a/7152796/667301
         if (self.linenum<val.linenum):
             return True
         return False
-
-    def __hash__(self):
-        return hash(self.hash_arg)
-
-    def hash_arg(self):
-        # Just a unique string or each object instance
-        return str(self.linenum)+self.text
 
     def set_comment_bool(self):
         retval = None
@@ -145,6 +141,13 @@ class BaseCfgLine(object):
     @property
     def has_children(self):
         if len(self.children)>0:
+            return True
+        return False
+
+    @property
+    def is_config_line(self):
+        """Return a boolean for whether this is a config statement; returns False if this object is a blank line, or a comment"""
+        if len(self.text.strip())>0 and not self.is_comment:
             return True
         return False
 
