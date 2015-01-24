@@ -1,3 +1,4 @@
+1.2.0   20150124 Major parser rewrite: streamline parser, less spaghetti code, add ccp_abc.is_config_line.  This version *should* parse Cisco Nexus syntax now (but parse Cisco Nexus configs with ignore_blank_lines=False)
 1.1.24  20150123 Fix github issue #13 (ciscoconfparse did not parse correctly when ignore_blank_lines=True); some parent assignments were missed if blank lines were in the configuration
 1.1.23  20150117 Update copyrights to 2015, use list comprehension in re_search_children() to increase speed
 1.1.22  20141204 More bugfixes in ccp_util.IPv4Obj(); IPv4Obj should mostly be stable and reliable now.  Added solid unit test coverage for IPv4Obj()
