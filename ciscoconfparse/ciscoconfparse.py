@@ -68,8 +68,10 @@ class CiscoConfParse(object):
                - config (list or str): A list of configuration statements, or a configuration file path to be parsed
                - comment (str): A comment delimiter.  This should only be changed when parsing non-Cisco IOS configurations, which do not use a !  as the comment delimiter.  ``comment`` defaults to '!'
                - debug (bool): ``debug`` defaults to False, and should be kept that way unless you're working on a very tricky config parsing problem.  Debug output is not particularly friendly
+               - factory (bool): ``factory`` defaults to False; if set ``True``, it enables a beta-quality configuration line classifier.
                - linesplit_rgx (str): ``linesplit_rgx`` is used when parsing configuration files to find where new configuration lines are.  It is best to leave this as the default, unless you're working on a system that uses unusual line terminations (for instance something besides Unix, OSX, or Windows)
-               - ignore_blank_lines (bool): ``ignore_blank_lines`` defaults to True; when this is set True, ciscoconfparse ignores blank configuration lines.  You might want to set ``ignore_blank_lines`` to False if you intentionally use blank lines in your configuration (ref: Github Issue #2).
+               - ignore_blank_lines (bool): ``ignore_blank_lines`` defaults to True; when this is set True, ciscoconfparse ignores blank configuration lines.  You might want to set ``ignore_blank_lines`` to False if you intentionally use blank lines in your configuration (ref: Github Issue #2), or you are parsing configurations which naturally have blank lines (such as Cisco Nexus configurations).
+               - syntax (str): ``syntax`` defaults to 'ios'; You can choose from the following values: ios, asa
 
            Attributes:
                - comment_delimiter (str): A string containing the comment-delimiter
