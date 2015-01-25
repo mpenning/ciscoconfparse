@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-from mock import Mock, patch
-from copy import deepcopy
 import unittest
 import sys
 import re

@@ -22,4 +22,3 @@ from .ciscoconfparse import *
      If you need to contact the author, you can do so by emailing:
      mike [~at~] pennington [/dot\] net
 """
-

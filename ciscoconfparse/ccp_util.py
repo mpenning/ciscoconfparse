@@ -98,7 +98,6 @@ class IPv4Obj(object):
             val_prefixlen = int(getattr(val, 'prefixlen'))
             val_nobj = getattr(val, 'network_object')
 
-            self_prefixlen = self.network_object.prefixlen
             self_nobj = self.network_object
             if (self.network_object.prefixlen<val_prefixlen):
                 # Sort shorter masks as higher...
@@ -118,7 +117,6 @@ class IPv4Obj(object):
             val_prefixlen = int(getattr(val, 'prefixlen'))
             val_nobj = getattr(val, 'network_object')
 
-            self_prefixlen = self.network_object.prefixlen
             self_nobj = self.network_object
             if (self.network_object.prefixlen>val_prefixlen):
                 # Sort shorter masks as lower...

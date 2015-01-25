@@ -1,9 +1,6 @@
 from operator import methodcaller, attrgetter
 from collections import MutableSequence
-from copy import deepcopy, copy
-from sys import modules
 import time
-import sys
 import re
 import os
 
@@ -49,7 +46,7 @@ from models_asa import ASAName
 """
 
 ## Docstring props: http://stackoverflow.com/a/1523456/667301
-__version_tuple__ = (1,2,1)
+__version_tuple__ = (1, 2, 1)
 __version__ = '.'.join(map(str, __version_tuple__))
 __email__ = "mike /at\ pennington [dot] net"
 __author__ = "David Michael Pennington <{0}>".format(__email__)
@@ -161,7 +158,7 @@ class CiscoConfParse(object):
                 print("[FATAL] CiscoConfParse could not open '%s'" % config)
                 raise RuntimeError
         else:
-            raise RuntimeError("[FATAL] CiscoConfParse() received" + \
+            raise RuntimeError("[FATAL] CiscoConfParse() received" + 
                 " an invalid argument\n")
         self.ConfigObjs.CiscoConfParse = self
 
@@ -291,8 +288,6 @@ class CiscoConfParse(object):
         Returns:
             - list.  A list of matching configuration lines
         """
-        retval = list()
-
         if ignore_ws:
             linespec = self._build_space_tolerant_regex(linespec)
 
@@ -535,7 +530,6 @@ class CiscoConfParse(object):
 
         """
         tmp = set([])
-        retval = list()
 
         if ignore_ws:
             linespec = self._build_space_tolerant_regex(linespec)
@@ -969,11 +963,8 @@ class CiscoConfParse(object):
 
         retval = set([])
         childobjs = self._find_line_OBJ(childspec)
-        parentspec_re = re.compile(parentspec)
-        childspec_re = re.compile(childspec)
         for child in childobjs:
             parents = child.all_parents
-            match_parentspec = False
             for parent in parents:
                 if re.search(parentspec, parent.text):
                     retval.add(child)
@@ -1056,7 +1047,6 @@ class CiscoConfParse(object):
         """Find all :class:`~models_cisco.IOSCfgLine` objects whose text 
         matches linespec, and delete the object"""
         objs = self.find_objects(linespec, exactmatch, ignore_ws)
-        last_idx = len(objs) - 1
         #atomic = False
         for idx, obj in enumerate(objs):
             #if idx==last_idx:
@@ -1080,7 +1070,6 @@ class CiscoConfParse(object):
             - The parsed :class:`~models_cisco.IOSCfgLine` instance
 
         """
-        retval = self.ConfigObjs.append(linespec)
         return self.ConfigObjs[-1]
 
     def replace_lines(self, linespec, replacestr, excludespec=None, 
@@ -1401,7 +1390,7 @@ class CiscoConfParse(object):
         #    elif exactmatch and re.search("^%s$" % linespec, lineobj.text):
         #        retval.append(lineobj)
         #    else:
-                # No regexp match case
+        #        # No regexp match case
         #        pass
         #return retval
 
@@ -1781,37 +1770,6 @@ class IOSConfigList(MutableSequence):
         for idx, obj in enumerate(self._list):
             obj.linenum = idx
 
-    def _link_firstchildren_to_parent(self, DBGFLAG=False):
-        ## Walk through the config and look for the "first" child
-        parent_indent = None 
-        for obj in self.iter_with_comments():
-            if (parent_indent is None):
-                parent_indent = obj.indent
-
-            if DBGFLAG or self.DBGFLAG:
-                print("[DEBUG] _link_firstchildren_to_parent():\n  finding children of PARENT: %s\n" % repr(obj))
-
-            # Determine if this is the "first" child...
-            #   Note: other children will be orphaned until we walk the
-            #   config again.
-            if (obj.indent > parent_indent):
-                # child is indented more, so this is a child
-
-                if DBGFLAG or self.DBGFLAG:
-                    ## Ignore pylint warnings here
-                    print("[DEBUG]       Attaching CHILD: %s\n   to 'PARENT: %s" % (obj, parent_obj))
-
-                # Add child to the parent's object
-                parent_obj.add_child(obj)
-                if (parent_indent==0):
-                    parent_obj.oldest_ancestor = True
-                # Add parent to the child's object
-                obj.add_parent(parent_obj)
-
-            ## These must be the statements in the loop
-            parent_obj = obj
-            parent_indent = obj.indent
-
     def _mark_banner(self, banner_str, os):
         """Identify all multiline entries matching the mlinespec (this is
         typically used for banners).  Associate parent / child relationships,
@@ -1829,7 +1787,7 @@ class IOSConfigList(MutableSequence):
         elif (os=="catos"):
             prefix = "set "
         else:
-            raise RuntimeError("FATAL: _mark_banner(): received " + \
+            raise RuntimeError("FATAL: _mark_banner(): received " + 
                 "an invalid value for 'os'")
 
         rr = re.compile(r'{0}banner\s+{1}\s+\S*'.format(prefix, banner_str))
@@ -1847,7 +1805,7 @@ class IOSConfigList(MutableSequence):
             for kk in range(ii+1, length):
                 parentobj = self._list[ii]
                 childobj  = self._list[kk]
-                if  childobj.is_comment:
+                if childobj.is_comment:
                     # Note: We are depending on a "!" after the banner... why
                     #       can't a normal regex work with IOS banners!?
                     #       Therefore the endpoint is at ( kk - 1)
@@ -2174,7 +2132,7 @@ class ASAConfigList(MutableSequence):
         elif (os=="catos"):
             prefix = "set "
         else:
-            raise RuntimeError("FATAL: _mark_banner(): received " + \
+            raise RuntimeError("FATAL: _mark_banner(): received " + 
                 "an invalid value for 'os'")
 
         rr = re.compile(r'{0}banner\s+{1}\s+\S*'.format(prefix, banner_str))

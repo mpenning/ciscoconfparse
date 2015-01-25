@@ -1,6 +1,4 @@
-import sys
 import re
-import os
 
 from protocol_values import ASA_TCP_PORTS, ASA_UDP_PORTS
 from ccp_abc import BaseCfgLine

@@ -3,6 +3,7 @@
 from cProfile import run
 import sys
 
+# IGNORE PyFlake's barking here
 from ciscoconfparse import CiscoConfParse
 
 if sys.argv[1]=="1":
