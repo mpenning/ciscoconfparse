@@ -635,11 +635,8 @@ class CiscoConfParse(object):
             parentspec = self._build_space_tolerant_regex(parentspec)
             childspec = self._build_space_tolerant_regex(childspec)
 
-        retval = list()
-        for obj in self.find_objects(parentspec):
-            if obj.re_search_children(childspec):
-                retval.append(obj)
-        return retval
+        return [obj for obj in self.find_objects(parentspec) 
+            if obj.re_search_children(childspec)]
 
     def find_parents_w_child(self, parentspec, childspec, ignore_ws=False):
         """Parse through all children matching childspec, and return a list of
