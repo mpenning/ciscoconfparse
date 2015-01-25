@@ -170,7 +170,7 @@ class CiscoConfParse(object):
     def ioscfg(self):
         """A list containing all text configuration statements"""
         ## I keep this here to emulate the legacy ciscoconfparse behavior
-        return [obj.text for obj in self.ConfigObjs]
+        return list(map(attrgetter('text'), self.ConfigObjs))
 
     @property
     def objs(self):
