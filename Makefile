@@ -12,7 +12,7 @@ repo-push:
 	hg bookmark -f master
 	-hg push git+ssh://git@github.com:mpenning/ciscoconfparse.git
 	-### bitbucket Asks for a password
-	-$(BITBUCKETPUSH)
+	-"hg push https://mpenning@bitbucket.org/mpenning/ciscoconfparse"
 .PHONY: parse-ios
 parse-ios:
 	cd ciscoconfparse; python parse_test.py 1 | less
