@@ -165,7 +165,7 @@ matter if you just want to fork the `github repo`_.
 Unit-Tests
 ==========
 
-I use the `Travis CI project <https://travis-ci.org>`_ to continuously test ciscoconfparse on Python versions 2.6 through 3.4.
+I use the `Travis CI project <https://travis-ci.org>`_ to continuously test ciscoconfparse on Python versions 2.6 through 3.4, as well as pypy_.
 
 Click the image below for details; the current build status is:
 
@@ -186,10 +186,17 @@ Special thanks:
 
  * Thanks to David Muir Sharnoff for his suggestion about making a special case for IOS banners.
  * Thanks to Alan Cownie for his API suggestions.
- * Sola Dei Gloria.
+ * Thanks to CrackerJackMack_ for reporting `Github Issue #13`_
+ * Soli Deo Gloria
 
 
 .. _ciscoconfparse: https://pypi.python.org/pypi/ciscoconfparse
+
+.. _pypy: http://pypy.org/
+
+.. _CrackerJackMack: https://github.com/CrackerJackMack
+
+.. _`Github Issue #13`: https://github.com/mpenning/ciscoconfparse/issues/13
 
 .. _`David Michael Pennington`: http://pennington.net/
 
