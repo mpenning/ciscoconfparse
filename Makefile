@@ -1,4 +1,7 @@
-.PHONY: test perf-acl perf-factory-intf parse-ios parse-ios-factory clean
+.PHONY: test flake devtest perf-acl perf-factory-intf parse-ios parse-ios-factory clean
+PY27DEVTESTS=find ./ciscoconfparse/* -name 'test_*.py' -exec /opt/virtual_env/py27_test/bin/python {} \;
+PY34DEVTESTS=find ./ciscoconfparse/* -name 'test_*.py' -exec /opt/virtual_env/py34_test/bin/python {} \;
+
 parse-ios:
 	cd ciscoconfparse; python parse_test.py 1 | less; cd ..
 parse-ios-factory:
@@ -7,10 +10,46 @@ perf-acl:
 	cd ciscoconfparse; python performance_test.py 5 | less; cd ..
 perf-factory-intf:
 	cd ciscoconfparse; python performance_test.py 6 | less; cd ..
+devpkgs:
+	pip install --upgrade pip
+	pip install --upgrade mercurial
+	pip install --upgrade virtualenv
+	pip install --upgrade virtualenvwrapper
+	pip install --upgrade pss
+	pip install --upgrade mock
+	pip install --upgrade sphinx
+	pip install --upgrade sphinx-bootstrap-theme
+	pip install --upgrade pytest==2.6.4
+	pip install --upgrade mccabe
+	pip install --upgrade flake8
+flake:
+	flake8 --ignore E501,E226,E225,E221,E303,E302,E265,E128,E125,E124,E41,W291 --max-complexity 10 ciscoconfparse | less
+devtest:
+	@echo "[[[[ Python 2.7 tests ]]]"
+	/opt/virtual_env/py27_test/bin/python ciscoconfparse/ciscoconfparse.py;
+	$(PY27DEVTESTS)
+	@echo "[[[[ Python 3.4 tests ]]]"
+	/opt/virtual_env/py34_test/bin/python ciscoconfparse/ciscoconfparse.py
+	$(PY34DEVTESTS)
+	make clean
 test:
 	# Run the doc tests and unit tests
-	cd ciscoconfparse; python ciscoconfparse.py; ./runtests.sh; cd ..
+	cd ciscoconfparse; python ciscoconfparse.py; ./runtests.sh
 clean:
 	find ./* -name '*.pyc' -exec rm {} \;
-	find ./* -path '*__pycache__*' -exec rm {} \;
-	find ./* -name '*__pycache__' -exec rm -rf {} \;
+	find ./* -name '*.so' -exec rm {} \;
+	@# A minus sign prefixing the line means it ignores the return value
+	-find ./* -path '*__pycache__' -exec rm -rf {} \;
+help:
+	@# An @ sign prevents outputting the command itself to stdout
+	@echo "help                 : You figured that out ;-)"
+	@echo "test                 : Run all doctests and unit tests"
+	@echo "devpkgs              : Get all dependencies for the dev environment"
+	@echo "devtest              : Run tests - Specific to Mike Pennington's build env"
+	@echo "flake                : Run PyFlake code audit w/ McCabe complexity"
+	@echo "clean                : Housecleaning"
+	@echo "parse-ios            : Parse configs/sample_01.ios with default args"
+	@echo "parse-ios-factory    : Parse configs/sample_01.ios with factory=True"
+	@echo "perf-acl             : cProfile configs/sample_05.ios (100 acls)"
+	@echo "perf-factory-intf    : cProfile configs/sample_06.ios (many intfs, factory=True)"
+	@echo ""
