@@ -10,20 +10,24 @@ pypi:
 repo-push:
 	cp .hgrc .hg/
 	hg bookmark -f master
-	$(BITBUCKETPUSH)
-	hg push git+ssh://git@github.com:mpenning/ciscoconfparse.git
+	-hg push git+ssh://git@github.com:mpenning/ciscoconfparse.git
+	### Run the following command manually
+	-hg push https://mpenning@bitbucket.org/mpenning/ciscoconfparse
 .PHONY: parse-ios
 parse-ios:
-	cd ciscoconfparse; python parse_test.py 1 | less; cd ..
+	cd ciscoconfparse; python parse_test.py 1 | less
 .PHONY: parse-ios-factory
 parse-ios-factory:
-	cd ciscoconfparse; python parse_test.py 2 | less; cd ..
+	cd ciscoconfparse; python parse_test.py 2 | less
+.PHONY: parse-ios-banner
+parse-iosxr-banner:
+	cd ciscoconfparse; python parse_test.py 3 | less
 .PHONY: perf-acl
 perf-acl:
-	cd ciscoconfparse; python performance_test.py 5 | less; cd ..
+	cd ciscoconfparse; python performance_test.py 5 | less
 .PHONY: perf-factory-intf
 perf-factory-intf:
-	cd ciscoconfparse; python performance_test.py 6 | less; cd ..
+	cd ciscoconfparse; python performance_test.py 6 | less
 .PHONY: devpkgs
 devpkgs:
 	pip install --upgrade pip
@@ -73,6 +77,7 @@ help:
 	@echo "clean                : Housecleaning"
 	@echo "parse-ios            : Parse configs/sample_01.ios with default args"
 	@echo "parse-ios-factory    : Parse configs/sample_01.ios with factory=True"
+	@echo "parse-iosxr-banner   : Parse an interesting IOSXR banner"
 	@echo "perf-acl             : cProfile configs/sample_05.ios (100 acls)"
 	@echo "perf-factory-intf    : cProfile configs/sample_06.ios (many intfs, factory=True)"
 	@echo ""
