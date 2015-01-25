@@ -6,8 +6,12 @@ install:
 python:
   - "2.6"
   - "2.7"
-  #- "3.2" (3.2 is broken)
+  - "3.2"
   - "3.3"
   - "3.4"
   - "pypy"
 script: make test
+matrix:
+  allow_failures:
+    ## FIXME Python3.2 is broken (github issue #14)
+    - python: "3.2"
