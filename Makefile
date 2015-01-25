@@ -10,8 +10,8 @@ pypi:
 repo-push:
 	cp .hgrc .hg/
 	hg bookmark -f master
-	-hg push git+ssh://git@github.com:mpenning/ciscoconfparse.git
 	-hg push ssh://hg@bitbucket.org/mpenning/ciscoconfparse
+	-hg push git+ssh://git@github.com:mpenning/ciscoconfparse.git
 .PHONY: parse-ios
 parse-ios:
 	cd ciscoconfparse; python parse_test.py 1 | less
@@ -68,7 +68,7 @@ help:
 	@# An @ sign prevents outputting the command itself to stdout
 	@echo "help                 : You figured that out ;-)"
 	@echo "pypi                 : Build the project and push to pypi"
-	@echo "repo-push            : Build the project and push to pypi"
+	@echo "repo-push            : Build the project and push to bitbucket / github"
 	@echo "test                 : Run all doctests and unit tests"
 	@echo "devpkgs              : Get all dependencies for the dev environment"
 	@echo "devtest              : Run tests - Specific to Mike Pennington's build env"
