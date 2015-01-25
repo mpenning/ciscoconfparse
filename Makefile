@@ -1,6 +1,6 @@
 PY27DEVTESTS=find ./ciscoconfparse/* -name 'test_*.py' -exec /opt/virtual_env/py27_test/bin/python {} \;
 PY34DEVTESTS=find ./ciscoconfparse/* -name 'test_*.py' -exec /opt/virtual_env/py34_test/bin/python {} \;
-BITBUCKETPUSH ?= $(shell bash -c 'read -s -p "Bitbucket Password: " pwd; "hg push https://mpenning:$$pwd@bitbucket.org/mpenning/ciscoconfparse"')
+BITBUCKETPUSH = $(shell bash -c 'read -s -p "Bitbucket Password: " pwd; "hg push https://mpenning:$$pwd@bitbucket.org/mpenning/ciscoconfparse"')
 DOCHOST ?= $(shell bash -c 'read -p "documentation host: " dochost; echo $$dochost')
 
 .PHONY: pypi
@@ -11,8 +11,8 @@ repo-push:
 	cp .hgrc .hg/
 	hg bookmark -f master
 	-hg push git+ssh://git@github.com:mpenning/ciscoconfparse.git
-	### Run the following command manually
-	-hg push https://mpenning@bitbucket.org/mpenning/ciscoconfparse
+	-### bitbucket Asks for a password
+	-$(BITBUCKETPUSH)
 .PHONY: parse-ios
 parse-ios:
 	cd ciscoconfparse; python parse_test.py 1 | less
