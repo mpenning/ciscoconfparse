@@ -24,6 +24,9 @@ try:
 except:
     pass
 
+## http://ericholscher.com/blog/2013/nov/4/new-theme-read-the-docs/
+RTD_NEW_THEME = True
+
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
@@ -33,13 +36,11 @@ except:
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest', 
-    'sphinx.ext.intersphinx', 'sphinx.ext.autosummary',]
+extensions = ['sphinx.ext.autodoc', 
+    'sphinx.ext.doctest', 
+    'sphinx.ext.intersphinx', 
+    'sphinx.ext.autosummary',]
 intersphinx_mapping = {'python':('http://docs.python.org/2.6', None)}
-
-# Kill errors... thank you daveydave400
-#   http://stackoverflow.com/a/15210813/667301
-numpydoc_show_class_members = False
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -56,8 +57,6 @@ master_doc = 'index'
 # General information about the project.
 project = u'ciscoconfparse'
 copyright = u'2007-%s, %s' % (time.strftime('%Y'), ciscoconfparse.__author__)
-
-
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -110,7 +109,6 @@ pygments_style = 'tango'
 
 # The theme to use for HTML and HTML Help pages.  Major themes that come with
 # Sphinx are currently 'default' and 'sphinxdoc'.
-# Consider using https://github.com/kellycreativetech/proBlue in the future
 if sys.modules.get('sphinx_bootstrap_theme', False):
     html_theme = 'bootstrap'
     html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
