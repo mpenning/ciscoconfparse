@@ -1,15 +1,30 @@
-.PHONY: test flake devtest perf-acl perf-factory-intf parse-ios parse-ios-factory clean
 PY27DEVTESTS=find ./ciscoconfparse/* -name 'test_*.py' -exec /opt/virtual_env/py27_test/bin/python {} \;
 PY34DEVTESTS=find ./ciscoconfparse/* -name 'test_*.py' -exec /opt/virtual_env/py34_test/bin/python {} \;
+BITBUCKETPUSH ?= $(shell bash -c 'read -s -p "Bitbucket Password: " pwd; "hg push https://mpenning:$$pwd@bitbucket.org/mpenning/ciscoconfparse"')
+DOCHOST ?= $(shell bash -c 'read -p "documentation host: " dochost; echo $$dochost')
 
+.PHONY: pypi
+pypi:
+	python setup.py sdist; python setup.py register; python setup.py sdist upload
+.PHONY: repo-push
+repo-push:
+	cp .hgrc .hg/
+	hg bookmark -f master
+	$(BITBUCKETPUSH)
+	hg push git+ssh://git@github.com:mpenning/ciscoconfparse.git
+.PHONY: parse-ios
 parse-ios:
 	cd ciscoconfparse; python parse_test.py 1 | less; cd ..
+.PHONY: parse-ios-factory
 parse-ios-factory:
 	cd ciscoconfparse; python parse_test.py 2 | less; cd ..
+.PHONY: perf-acl
 perf-acl:
 	cd ciscoconfparse; python performance_test.py 5 | less; cd ..
+.PHONY: perf-factory-intf
 perf-factory-intf:
 	cd ciscoconfparse; python performance_test.py 6 | less; cd ..
+.PHONY: devpkgs
 devpkgs:
 	pip install --upgrade pip
 	pip install --upgrade mercurial
@@ -22,8 +37,10 @@ devpkgs:
 	pip install --upgrade pytest==2.6.4
 	pip install --upgrade mccabe
 	pip install --upgrade flake8
+.PHONY: flake
 flake:
 	flake8 --ignore E501,E226,E225,E221,E303,E302,E265,E128,E125,E124,E41,W291 --max-complexity 10 ciscoconfparse | less
+.PHONY: devtest
 devtest:
 	@echo "[[[[ Python 2.7 tests ]]]"
 	/opt/virtual_env/py27_test/bin/python ciscoconfparse/ciscoconfparse.py;
@@ -32,17 +49,23 @@ devtest:
 	/opt/virtual_env/py34_test/bin/python ciscoconfparse/ciscoconfparse.py
 	$(PY34DEVTESTS)
 	make clean
+.PHONY: test
 test:
 	# Run the doc tests and unit tests
 	cd ciscoconfparse; python ciscoconfparse.py; ./runtests.sh
+.PHONY: clean
 clean:
 	find ./* -name '*.pyc' -exec rm {} \;
 	find ./* -name '*.so' -exec rm {} \;
 	@# A minus sign prefixing the line means it ignores the return value
 	-find ./* -path '*__pycache__' -exec rm -rf {} \;
+	-rm -rf dist/ ciscoconfparse.egg-info/ setuptools*
+.PHONY: help
 help:
 	@# An @ sign prevents outputting the command itself to stdout
 	@echo "help                 : You figured that out ;-)"
+	@echo "pypi                 : Build the project and push to pypi"
+	@echo "repo-push            : Build the project and push to pypi"
 	@echo "test                 : Run all doctests and unit tests"
 	@echo "devpkgs              : Get all dependencies for the dev environment"
 	@echo "devtest              : Run tests - Specific to Mike Pennington's build env"
