@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+## Ref https://docs.python.org/2/distutils/introduction.html
+## Ref https://the-hitchhikers-guide-to-packaging.readthedocs.org/en/latest/
+## Ref http://www.ibm.com/developerworks/library/os-pythonpackaging/
 import os
 
 from setuptools import setup, find_packages
