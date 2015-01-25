@@ -1408,13 +1408,6 @@ class CiscoConfParse(object):
         siblings = lineobject.parent.children
         return siblings
 
-    ## Removed 20140202
-    #def _find_child_OBJ(self, lineobject):
-    #    """SEMI-PRIVATE: Takes a single object and returns a list of immediate
-    #    children"""
-    #    retval = lineobject.children
-    #    return retval
-
     def _find_all_child_OBJ(self, lineobject):
         """SEMI-PRIVATE: Takes a single object and returns a list of
         decendants in all 'children' / 'grandchildren' / etc... after it.
@@ -1749,66 +1742,6 @@ class IOSConfigList(MutableSequence):
         for idx, obj in enumerate(self._list):
             obj.linenum = idx
 
-    def _mark_banner(self, banner_str, os):
-        """Identify all multiline entries matching the mlinespec (this is
-        typically used for banners).  Associate parent / child relationships,
-        as well setting the oldest_ancestor."""
-        ## mlinespec must be in the form:
-        ##  ^banner\slogin\.+?(\^\S*)
-        ##
-        ##   Note: the text in parenthesis will be used as the multiline-end
-        ##         delimiter
-        start_banner = False
-        end_banner = False
-        kk = 0
-        if (os=="ios"):
-            prefix = ""
-        elif (os=="catos"):
-            prefix = "set "
-        else:
-            raise RuntimeError("FATAL: _mark_banner(): received " + 
-                "an invalid value for 'os'")
-
-        rr = re.compile(r'{0}banner\s+{1}\s+\S*'.format(prefix, banner_str))
-        length = len(self._list)
-        for ii, obj in enumerate(self._list):
-            if rr.search(obj.text):
-                # Found the start banner at ii
-                ## Debugging only...
-                if (self.DBGFLAG is True):
-                    print("[DEBUG] _mark_banner: found start_banner %s" % (ii))
-                start_banner = True
-                break
-
-        if (start_banner is True):
-            for kk in range(ii+1, length):
-                parentobj = self._list[ii]
-                childobj  = self._list[kk]
-                if childobj.is_comment:
-                    # Note: We are depending on a "!" after the banner... why
-                    #       can't a normal regex work with IOS banners!?
-                    #       Therefore the endpoint is at ( kk - 1)
-
-
-                    ## Debugging only...
-                    if (self.DBGFLAG is True):
-                        print("[DEBUG] _mark_banner: found endpoint %s" % (self._list[kk-1].text))
-                    #
-                    # Set oldest_ancestor on the parent
-                    parentobj.oldest_ancestor = True
-
-                    # Associate all lines between ii and kk to the parent
-                    for mm in range(ii + 1, kk):
-                        obj = self._list[mm]
-                        # Associate parent with the child
-                        parentobj.add_child(obj)
-                        # Associate child with the parent
-                        obj.add_parent(parentobj)
-                    end_banner = True
-                    break
-        # Return our success or failure status
-        return end_banner
-
     @property
     def all_parents(self):
         return [obj for obj in self._list if obj.has_children]
@@ -2093,66 +2026,6 @@ class ASAConfigList(MutableSequence):
         # Call this after any insertion or deletion
         for idx, obj in enumerate(self._list):
             obj.linenum = idx
-
-    def _mark_banner(self, banner_str, os):
-        """Identify all multiline entries matching the mlinespec (this is
-        typically used for banners).  Associate parent / child relationships,
-        as well setting the oldest_ancestor."""
-        ## mlinespec must be in the form:
-        ##  ^banner\slogin\.+?(\^\S*)
-        ##
-        ##   Note: the text in parenthesis will be used as the multiline-end
-        ##         delimiter
-        start_banner = False
-        end_banner = False
-        kk = 0
-        if (os=="ios"):
-            prefix = ""
-        elif (os=="catos"):
-            prefix = "set "
-        else:
-            raise RuntimeError("FATAL: _mark_banner(): received " + 
-                "an invalid value for 'os'")
-
-        rr = re.compile(r'{0}banner\s+{1}\s+\S*'.format(prefix, banner_str))
-        length = len(self._list)
-        for ii, obj in enumerate(self._list):
-            if rr.search(obj.text):
-                # Found the start banner at ii
-                ## Debugging only...
-                if (self.DBGFLAG is True):
-                    print("[DEBUG] _mark_banner: found start_banner %s" % (ii))
-                start_banner = True
-                break
-
-        if (start_banner is True):
-            for kk in range(ii+1, length):
-                parentobj = self._list[ii]
-                childobj  = self._list[kk]
-                if  childobj.is_comment:
-                    # Note: We are depending on a "!" after the banner... why
-                    #       can't a normal regex work with IOS banners!?
-                    #       Therefore the endpoint is at ( kk - 1)
-
-
-                    ## Debugging only...
-                    if (self.DBGFLAG is True):
-                        print("[DEBUG] _mark_banner: found endpoint %s" % (self._list[kk-1].text))
-                    #
-                    # Set oldest_ancestor on the parent
-                    parentobj.oldest_ancestor = True
-
-                    # Associate all lines between ii and kk to the parent
-                    for mm in range(ii + 1, kk):
-                        obj = self._list[mm]
-                        # Associate parent with the child
-                        parentobj.add_child(obj)
-                        # Associate child with the parent
-                        obj.add_parent(parentobj)
-                    end_banner = True
-                    break
-        # Return our success or failure status
-        return end_banner
 
     @property
     def all_parents(self):
