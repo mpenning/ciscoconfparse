@@ -1734,27 +1734,6 @@ class IOSConfigList(MutableSequence):
             childobj.parent = parentobj
             childobj.parent.child_indent = indent
 
-    def maintain_obj_sanity(self):
-        ## call maintain_obj_sanity() after we finish inserting new stuff...
-
-        #self._link_firstchildren_to_parent()
-        #self._find_orphans()
-
-        ## Make adjustments to the IOS banners because these currently show up
-        ##  as individual lines, instead of a parent / child relationship.
-        ##  This means finding each banner statement, and associating the
-        ##  subsequent lines as children.
-        #
-        # ASA-banners should not need a special-case...
-        self._mark_banner("login", "ios")
-        self._mark_banner("motd", "ios")
-        self._mark_banner("exec", "ios")
-        self._mark_banner("incoming", "ios")
-        self._mark_banner("motd", "catos")
-        self._mark_banner("telnet", "catos")
-        self._mark_banner("lcd", "catos")
-
-
     def iter_with_comments(self, begin_index=0):
         for idx, obj in enumerate(self._list):
             if (idx>=begin_index):
