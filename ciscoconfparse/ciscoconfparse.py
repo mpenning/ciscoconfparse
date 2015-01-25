@@ -268,10 +268,6 @@ class CiscoConfParse(object):
         """
         if ignore_ws:
             linespec = self._build_space_tolerant_regex(linespec)
-        #tmp = IOSConfigList()
-        #tmp.CiscoConfParse = self
-        #for obj in self._find_line_OBJ(linespec, exactmatch):
-        #    tmp._list.append(obj)
         return self._find_line_OBJ(linespec, exactmatch)
 
     def find_lines(self, linespec, exactmatch=False, ignore_ws=False):
@@ -635,8 +631,8 @@ class CiscoConfParse(object):
             parentspec = self._build_space_tolerant_regex(parentspec)
             childspec = self._build_space_tolerant_regex(childspec)
 
-        return [obj for obj in self.find_objects(parentspec) 
-            if obj.re_search_children(childspec)]
+        return list(filter(lambda x: x.re_search_children(childspec), 
+            self.find_objects(parentspec)))
 
     def find_parents_w_child(self, parentspec, childspec, ignore_ws=False):
         """Parse through all children matching childspec, and return a list of
@@ -786,11 +782,8 @@ class CiscoConfParse(object):
             parentspec = self._build_space_tolerant_regex(parentspec)
             childspec = self._build_space_tolerant_regex(childspec)
 
-        retval = list()
-        for obj in self.find_objects(parentspec):
-            if not obj.re_search_children(childspec):
-                retval.append(obj)
-        return retval
+        return [obj for obj in self.find_objects(parentspec) 
+            if not obj.re_search_children(childspec)]
 
     def find_parents_wo_child(self, parentspec, childspec, ignore_ws=False):
         """Parse through all parents matching parentspec, and return a list of parents that did NOT have children match the childspec.  For simplicity, this method only finds oldest_ancestors without immediate children that match.
