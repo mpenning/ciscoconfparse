@@ -1038,9 +1038,6 @@ class CiscoConfParse(object):
                         insertstr, atomic=False))
                 else:
                     pass
-        ## Removed during speed optimizations 2015-01-24
-        #if modified:
-        #    self.ConfigObjs.maintain_obj_sanity()
         return retval
 
     def delete_lines(self, linespec, exactmatch=False, ignore_ws=False):
@@ -1070,6 +1067,9 @@ class CiscoConfParse(object):
             - The parsed :class:`~models_cisco.IOSCfgLine` instance
 
         """
+        lines = self.ioscfg
+        lines.append(linespec)
+        self.ConfigObjs._bootstrap_obj_init(text_list=lines)
         return self.ConfigObjs[-1]
 
     def replace_lines(self, linespec, replacestr, excludespec=None, 
@@ -1712,7 +1712,6 @@ class IOSConfigList(MutableSequence):
 
         self._list = retval
         self._banner_mark_regex(BANNER_RE)
-        #self.maintain_obj_sanity()
         return retval
 
     def _add_child_to_parent(self, _list, idx, indent, parentobj, childobj):
@@ -1827,8 +1826,8 @@ class ASAConfigList(MutableSequence):
         return """<ASAConfigList, comment='%s', conf=%s>""" % (self.comment_delimiter, self._list)
 
     def _bootstrap_from_text(self):
-        ## Ultimate goal: get rid of all reparsing from text... it's very slow
         ## reparse all objects from their text attributes... this is *very* slow
+        ## Ultimate goal: get rid of all reparsing from text... 
         self._list = self._bootstrap_obj_init(list(map(attrgetter('text'), self._list)))
 
     def has_line_with(self, linespec):
@@ -1855,7 +1854,6 @@ class ASAConfigList(MutableSequence):
 
         if atomic:
             # Reparse the whole config as a text list
-            #     this also calls maintain_obj_sanity()
             self._bootstrap_from_text()
         else:
             ## Just renumber lines...
