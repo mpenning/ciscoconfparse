@@ -11,7 +11,7 @@ repo-push:
 	cp .hgrc .hg/
 	hg bookmark -f master
 	-hg push git+ssh://git@github.com:mpenning/ciscoconfparse.git
-	-hg push ssh://mpenning@bitbucket.org/mpenning/ciscoconfparse
+	-hg push ssh://hg@bitbucket.org/mpenning/ciscoconfparse
 .PHONY: parse-ios
 parse-ios:
 	cd ciscoconfparse; python parse_test.py 1 | less
