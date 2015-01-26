@@ -24,6 +24,8 @@ from models_asa import ASAIntfLine
 from models_asa import ASACfgLine
 from models_asa import ASAName
 
+from models_junos import JunosCfgLine
+
 
 """ ciscoconfparse.py - Parse, Query, Build, and Modify IOS-style configurations
      Copyright (C) 2007-2015 David Michael Pennington
@@ -127,6 +129,20 @@ class CiscoConfParse(object):
                     ignore_blank_lines=ignore_blank_lines,
                     syntax='asa',
                     CiscoConfParse=self)
+            elif syntax=='junos':
+                ## FIXME I am shamelessly abusing the IOSConfigList for now...
+                # we already have a list object, simply call the parser
+                config = self.convert_braces_to_ios(config)
+                self.ConfigObjs = IOSConfigList(data=config, 
+                    comment_delimiter=comment, 
+                    debug=debug, 
+                    factory=factory, 
+                    ignore_blank_lines=ignore_blank_lines,
+                    syntax='junos',
+                    CiscoConfParse=self)
+            else:
+                raise ValueError("FATAL: '{}' is an unknown syntax".format(syntax))
+
         elif isinstance(config, str):
             # Try opening as a file
             try:
@@ -154,6 +170,26 @@ class CiscoConfParse(object):
                         ignore_blank_lines=ignore_blank_lines,
                         syntax='asa',
                         CiscoConfParse=self)
+
+                elif syntax=='junos':
+                    # string - assume a filename... open file, split and parse
+                    f = open(config)
+                    text = f.read()
+                    rgx = re.compile(linesplit_rgx)
+
+                    print "THIS", text
+                    config = self.convert_braces_to_ios(rgx.split(text))
+                    ## FIXME I am shamelessly abusing the IOSConfigList for now...
+                    self.ConfigObjs = IOSConfigList(config,
+                        comment_delimiter=comment, 
+                        debug=debug,
+                        factory=factory,
+                        ignore_blank_lines=ignore_blank_lines,
+                        syntax='junos',
+                        CiscoConfParse=self)
+                else:
+                    raise ValueError("FATAL: '{}' is an unknown syntax".format(syntax))
+
             except IOError:
                 print("[FATAL] CiscoConfParse could not open '%s'" % config)
                 raise RuntimeError
@@ -218,6 +254,40 @@ class CiscoConfParse(object):
            modifications could lead to unexpected search results.
         """
         self.atomic()
+
+    def convert_braces_to_ios(self, input_list, stop_width=4):
+        ## Note to self, I made this regex fairly junos-specific...
+        LINE_RE = re.compile(r'^\s*([^\{\}].*)*\s*([\{\}\;])(\s\#.+)*$')
+
+        def line_level(input):
+            level_offset = 0
+            mm = LINE_RE.search(input)
+            if not (mm is None):
+                line = mm.group(1) or ''
+                term_char = mm.group(2).strip()
+                if term_char=='{':
+                    level_offset = 1
+                elif term_char=='}':
+                    level_offset = -1
+                return line, level_offset
+            elif input.strip()=='':
+                ## pass blank lines back
+                return input, 0
+            else:
+                raise ValueError("Could not parse: '{0}'".format(input))
+
+        lines = list()
+        offset = 0
+        STOP_WIDTH = stop_width
+        for tmp in input_list:
+            line, line_offset = line_level(tmp.strip())
+            if line:
+                lines.append(" "*STOP_WIDTH*offset+line)
+            offset += line_offset
+        return lines
+
+
+    
 
     def find_objects(self, linespec, exactmatch=False, ignore_ws=False):
         """Find all :class:`~models_cisco.IOSCfgLine` objects whose text 
