@@ -1,3 +1,4 @@
+1.2.4   20150125 Fix _find_unique_OBJ() to work in Python2.6, which doesn't have set comprehensions
 1.2.3   20150125 Add find_objects_w_parents()
 1.2.2   20150125 Add support for parsing Junos as a Cisco-IOS-style configuration - github issue #17, fixed github issue #16 [Banners with comment characters in them are not parsed correctly], fixed github issue #15 [CiscoConfParse.append('config_line_here') is a null operation]
 1.2.1   20150124 More parsing speed optimizations, particularly in banner parsing.  Ripped out old, unused code
