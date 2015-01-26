@@ -225,6 +225,8 @@ Special thanks:
 
 .. _ciscoconfparse: https://pypi.python.org/pypi/ciscoconfparse
 
+.. _Python: http://python.org/
+
 .. _pypy: http://pypy.org/
 
 .. _CrackerJackMack: https://github.com/CrackerJackMack
@@ -234,6 +236,8 @@ Special thanks:
 .. _`Github Issue #14`: https://github.com/mpenning/ciscoconfparse/issues/14
 
 .. _`Github Issue #17`: https://github.com/mpenning/ciscoconfparse/issues/17
+
+.. _`brace-delmited configurations`: https://github.com/mpenning/ciscoconfparse/blob/master/configs/sample_01.junos
 
 .. _`David Michael Pennington`: http://pennington.net/
 
