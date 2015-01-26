@@ -25,8 +25,77 @@ ciscoconfparse
 Introduction: What is ciscoconfparse?
 =====================================
 
-ciscoconfparse_ parses, audits, queries, builds, and modifies Cisco IOS 
-configurations.
+ciscoconfparse is a Python_ library, which parses through Cisco IOS-style
+(and other vendor) configurations.  It can:
+
+- Audit existing router / switch / firewall / wlc configurations
+- Retrieve portions of the configuration
+- Modify existing configurations
+- Build new configurations
+
+The library examines an IOS-style config and breaks it into a set of linked
+parent / child relationships.  You can perform complex queries about these 
+relationships.
+
+.. image:: https://raw.githubusercontent.com/mpenning/ciscoconfparse/master/sphinx-doc/_static/ciscoconfparse_overview.png
+   :target: https://raw.githubusercontent.com/mpenning/ciscoconfparse/master/sphinx-doc/_static/ciscoconfparse_overview.png
+   :alt: CiscoConfParse Parent / Child relationships
+
+Quotes
+======
+
+These are a few selected public mentions about CiscoConfParse; I usually try not to share private emails without asking, thus the quotes aren't long at this time.
+
+|br|
+|br|
+
+.. raw:: html
+
+   <a href="https://github.com/mpenning/ciscoconfparse/issues/13#issuecomment-71340177"><img src="https://raw.githubusercontent.com/mpenning/ciscoconfparse/master/sphinx-doc/_static/crackerjackmack.png" width="800" alt="CiscoConfParse Github issue #13"></a>
+
+|br|
+|br|
+
+.. raw:: html
+
+   <blockquote class="twitter-tweet" lang="en"><p>Have to audit &gt; 100 catalyst sw configs for misconfiguration/non-standard configs. Perfect job for CiscoConfParse http://is.gd/d13z2 <a href="https://twitter.com/hashtag/python?src=hash">#python</a></p>&mdash; Jochen - l0b0 (@verbosemode) <a href="https://twitter.com/verbosemode/status/16878620193">June 23, 2010</a></blockquote>
+   <script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+|br|
+|br|
+
+.. raw:: html
+
+   <blockquote class="twitter-tweet" data-conversation="none" lang="en"><p><a href="https://twitter.com/fryguy_pa">@fryguy_pa</a> There is a Cisco config parsing library for python that does neat tricks for searching configs</p>&mdash; Bob McCouch (@BobMcCouch) <a href="https://twitter.com/BobMcCouch/status/294877521349079041">January 25, 2013</a></blockquote>
+   <script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+   <blockquote class="twitter-tweet" data-conversation="none" lang="en"><p>.<a href="https://twitter.com/fryguy_pa">@fryguy_pa</a> Here it is: ciscoconf python library: <a href="http://t.co/oDCWRZer">http://t.co/oDCWRZer</a></p>&mdash; Bob McCouch (@BobMcCouch) <a href="https://twitter.com/BobMcCouch/status/294878103199698944">January 25, 2013</a></blockquote>
+   <script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+|br|
+|br|
+
+We don't use Cisco
+==================
+
+Don't let that stop you.  CiscoConfParse parses anything that has a Cisco IOS 
+style of configuration, which includes:
+
+- Cisco IOS, Cisco Nexus, Cisco IOS-XR, Cisco IOS-XE, Aironet OS, Cisco ASA, Cisco CatOS
+- Arista EOS
+- Brocade
+- HP Switches
+- Force 10 Switches
+- Dell PowerConnect Switches
+- Extreme Networks
+- Enterasys
+
+As of CiscoConfParse 1.2.4, you can parse `brace-delimited configurations`_ 
+into a Cisco IOS style (see `Github Issue #17`_), which means that 
+CiscoConfParse understands these configurations too:
+
+- Juniper Networks Junos, and Screenos
+- F5 Networks configurations
 
 Docs
 ====
@@ -38,7 +107,7 @@ The latest copy of the docs are `archived on the web <http://www.pennington.net/
 Pre-requisites
 ==============
 
-ciscoconfparse_ needs  Python versions 2.6, 2.7 or 3.2+; the OS should not
+ciscoconfparse_ requires Python versions 2.6, 2.7 or 3.2+; the OS should not
 matter. If you want to run it under a Python virtualenv_, it's been heavily 
 tested in that environment as well.
 
@@ -90,24 +159,12 @@ or `bitbucket repo`_:
       hg clone https://bitbucket.org/mpenning/ciscoconfparse
 
 
-.. _`License and Copyright`:
-
-License and Copyright
-=====================
-
-ciscoconfparse_ is licensed GPLv3_; Copyright `David Michael Pennington`_, 
-2007-2014.
-
-The `ipaddr`_ module is distributed with ciscoconfparse_ to facilitate unit
-tests. `ipaddr`_ uses the `ASF License 2.0`_; `ipaddr`_ is part of the Python
-standard library, starting in Python 3.3 (it's called ``ipaddress`` in Python3).
-
 .. _FAQ:
 
 FAQ
 ===
 
-#) *QUESTION*: I want to use ciscoconfparse_ with Python3; is that safe?  *ANSWER*: As long as you're using Python 3.2 or higher, it's safe. I test every release against Python 3.2+.
+#) *QUESTION*: I want to use ciscoconfparse_ with Python3; is that safe?  *ANSWER*: As long as you're using Python 3.3 or higher, it's safe. I test every release against Python 3.2+; however, Python 3.2 is currently exposed to a small bug for some configurations (see `Github Issue #14`_).
 
 #) *QUESTION*: Some of the code in the documentation looks different than what I'm used to seeing.  Did you change something?  *ANSWER*: Yes, starting around ciscoconfparse_ v0.9.10 I introducted more methods directly on ``IOSConfigLine()`` objects; going forward, these methods are the preferred way to use ciscoconfparse_.  Please start using the new methods shown in the example, since they're faster, and you type much less code this way.
 
@@ -122,34 +179,18 @@ FAQ
 Other Resources
 ===============
 
- * `Dive into Python3`_ is a good way to learn Python
- * `Team CYMRU`_ has a `Secure IOS Template`_, which is especially useful for external-facing routers / switches
- * `Cisco's Guide to hardening IOS devices`_
+- `Dive into Python3`_ is a good way to learn Python
+- `Team CYMRU`_ has a `Secure IOS Template`_, which is especially useful for external-facing routers / switches
+- `Cisco's Guide to hardening IOS devices`_
 
 .. _`Bug-Tracker-and-Support`:
 
 Bug Tracker and Support
 =======================
 
-ciscoconfparse Support
-----------------------
-
-Please report any suggestions, bug reports, or annoyances with 
-ciscoconfparse_ through the `github bug tracker`_.
-
-Python Support
---------------
-
-If you're having problems with general python issues, consider searching for
-a solution on `Stack Overflow`_.  If you can't find a solution for your problem
-or need more help, you can `ask a question`_.
-
-Cisco Support
--------------
-
-If you're having problems with your Cisco devices, you can open a case with 
-`Cisco TAC`_; if you prefer crowd-sourcing, you can ask on the Stack Exchange 
-`Network Engineering`_ site.
+- Please report any suggestions, bug reports, or annoyances with ciscoconfparse_ through the `github bug tracker`_.
+- If you're having problems with general python issues, consider searching for a solution on `Stack Overflow`_.  If you can't find a solution for your problem or need more help, you can `ask a question`_.
+- If you're having problems with your Cisco devices, you can open a case with `Cisco TAC`_; if you prefer crowd-sourcing, you can ask on the Stack Exchange `Network Engineering`_ site.
 
 .. _Contributing:
 
@@ -174,6 +215,19 @@ Click the image below for details; the current build status is:
    :target: https://travis-ci.org/mpenning/ciscoconfparse
    :alt: Travis CI Status
 
+.. _`License and Copyright`:
+
+License and Copyright
+=====================
+
+ciscoconfparse_ is licensed GPLv3_; Copyright `David Michael Pennington`_, 
+2007-2014.
+
+The `ipaddr`_ module is distributed with ciscoconfparse_ to facilitate unit
+tests. `ipaddr`_ uses the `ASF License 2.0`_; `ipaddr`_ is part of the Python
+standard library, starting in Python 3.3 (it's called ``ipaddress`` in Python3).
+
+
 .. _Author:
 
 Author and Thanks
@@ -184,10 +238,10 @@ pennington [/dot\] net).
 
 Special thanks:
 
- * Thanks to David Muir Sharnoff for his suggestion about making a special case for IOS banners.
- * Thanks to Alan Cownie for his API suggestions.
- * Thanks to CrackerJackMack_ for reporting `Github Issue #13`_
- * Soli Deo Gloria
+- Thanks to David Muir Sharnoff for his suggestion about making a special case for IOS banners.
+- Thanks to Alan Cownie for his API suggestions.
+- Thanks to CrackerJackMack_ for reporting `Github Issue #13`_
+- Soli Deo Gloria
 
 
 .. _ciscoconfparse: https://pypi.python.org/pypi/ciscoconfparse
@@ -197,6 +251,10 @@ Special thanks:
 .. _CrackerJackMack: https://github.com/CrackerJackMack
 
 .. _`Github Issue #13`: https://github.com/mpenning/ciscoconfparse/issues/13
+
+.. _`Github Issue #14`: https://github.com/mpenning/ciscoconfparse/issues/14
+
+.. _`Github Issue #17`: https://github.com/mpenning/ciscoconfparse/issues/17
 
 .. _`David Michael Pennington`: http://pennington.net/
 
@@ -244,4 +302,11 @@ Special thanks:
 
 .. _`Cisco TAC`: http://cisco.com/go/support
 
+.. _`Juniper networks`: http://www.juniper.net/
+
 .. _`Cisco's Guide to hardening IOS devices`: http://www.cisco.com/c/en/us/support/docs/ip/access-lists/13608-21.html
+
+.. |br| raw:: html
+
+   <br>
+
