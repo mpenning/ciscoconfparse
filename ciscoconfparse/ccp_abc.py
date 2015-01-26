@@ -266,12 +266,16 @@ class BaseCfgLine(object):
         retval = self.confobj.insert_after(self, insertstr, atomic=local_atomic)
         return retval
 
-    def append_to_family(self, insertstr):
+    def append_to_family(self, insertstr, indent=-1, auto_indent_width=1, 
+        auto_indent=False):
         """Append an :class:`~models_cisco.IOSCfgLine` object with ``insertstr``
-        to the bottom of the current configuration family.
+        as a child at the bottom of the current configuration family.
 
         Args:
             - insertstr (str): A string which contains the text configuration to be apppended.
+            - indent (int): The amount of indentation to use for the child line; by default, the number of left spaces provided with ``insertstr`` are respected.  However, you can manually set the indent level when ``indent``>0.  This option will be ignored, if ``auto_indent`` is True.
+            - auto_indent_width (int): Amount of whitespace to automatically indent
+            - auto_indent (bool): Automatically indent the child to ``auto_indent_width``
 
         Returns:
             - str.  The text matched by the regular expression group; if there is no match, None is returned.
@@ -315,6 +319,12 @@ class BaseCfgLine(object):
         ##  object's children
         local_atomic=False
         last_child = self.children[-1]
+
+        if auto_indent:
+            insertstr = (" "*(self.indent+auto_indent_width))+insertstr.lstrip()
+        elif indent>0:
+            insertstr = (" "*(self.indent+indent))+insertstr.lstrip()
+
         retval = self.confobj.insert_after(last_child, insertstr, 
             atomic=local_atomic)
         return retval
