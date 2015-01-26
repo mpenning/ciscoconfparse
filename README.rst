@@ -38,31 +38,21 @@ parent / child relationships.  You can perform complex queries about these
 relationships.
 
 .. image:: https://raw.githubusercontent.com/mpenning/ciscoconfparse/master/sphinx-doc/_static/ciscoconfparse_overview.png
-   :target: https://raw.githubusercontent.com/mpenning/ciscoconfparse/master/sphinx-doc/_static/ciscoconfparse_overview.png
-   :alt: CiscoConfParse Parent / Child relationships
+   :target: https://github.com/mpenning/ciscoconfparse/issues/13#issuecomment-71340177
+   :alt: CiscoConfParse Github issue #17
+
+.. image:: https://raw.githubusercontent.com/mpenning/ciscoconfparse/master/sphinx-doc/_static/twitter.png
+   :target: https://raw.githubusercontent.com/mpenning/ciscoconfparse/master/sphinx-doc/_static/twitter.png
+   :alt: Twitter mentions
 
 Quotes
 ======
 
 These are a few selected public mentions about CiscoConfParse; I usually try not to share private emails without asking, thus the quotes aren't long at this time.
 
-|br|
-|br|
-
-.. raw:: html
-
-   <a href="https://github.com/mpenning/ciscoconfparse/issues/13#issuecomment-71340177"><img src="https://raw.githubusercontent.com/mpenning/ciscoconfparse/master/sphinx-doc/_static/crackerjackmack.png" width="800" alt="CiscoConfParse Github issue #13"></a>
-
-|br|
-|br|
-
-.. raw:: html
-
-   <blockquote class="twitter-tweet" lang="en"><p>Have to audit &gt; 100 catalyst sw configs for misconfiguration/non-standard configs. Perfect job for CiscoConfParse http://is.gd/d13z2 <a href="https://twitter.com/hashtag/python?src=hash">#python</a></p>&mdash; Jochen - l0b0 (@verbosemode) <a href="https://twitter.com/verbosemode/status/16878620193">June 23, 2010</a></blockquote>
-   <script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
-
-|br|
-|br|
+.. image:: https://raw.githubusercontent.com/mpenning/ciscoconfparse/master/sphinx-doc/_static/crackerjackmack.png
+   :target: 
+   :alt: CiscoConfParse Parent / Child relationships
 
 .. raw:: html
 
