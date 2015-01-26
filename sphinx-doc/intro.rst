@@ -13,7 +13,6 @@ configurations.  It can:
 - Modify existing configurations
 - Build new configurations
 
-
 The library examines an IOS-style config and breaks it into a set of linked 
 parent / child relationships; each configuration line is stored in a different 
 :class:`~models_cisco.IOSCfgLine` object.
@@ -52,7 +51,7 @@ What is ciscoconfparse good for?
 After several network evolutions, you may have a tangled mess of conflicting or 
 misconfigured Cisco devices.  Misconfigurations of proxy-arp, static routes, 
 FHRP timers, routing protocols, duplicated subnets, cdp, console passwords, or 
-aaa schemes have a measurable affect on uptime and beg for a tool to audit them.
+aaa schemes have a measurable affect on up time and beg for a tool to audit them.
 However, manually scrubbing configurations is a long and error-prone process.
 
 Audits aren't the only use for ciscoconfparse.  Let's suppose you are working 
@@ -82,6 +81,56 @@ with that code up there.  If so, don't worry... There is a tutorial following
 this intro.  For more depth, I highly recommend `Dive into Python`_ and 
 `Dive into Python3`_.
 
+We don't have Ciscos
+--------------------
+
+Don't let that stop you.  CiscoConfParse parses anything that has a Cisco IOS 
+style of configuration, which includes:
+
+ - Cisco IOS, Cisco Nexus, Cisco IOS-XR, Cisco IOS-XE, Aironet OS, Cisco ASA, Cisco CatOS
+ - Arista EOS
+ - Brocade
+ - HP Switches
+ - Force 10 Switches
+ - Dell PowerConnect Switches
+ - Extreme Networks
+ - Enterasys
+
+As of CiscoConfParse 1.2.4, you can parse `brace-delimited configurations`_ 
+into a Cisco IOS style (see `Github Issue #17`_), which means that 
+CiscoConfParse understands these configurations too:
+
+ - Juniper Networks Junos, and Screenos
+ - F5 Networks configurations
+
+Quotes
+------
+
+.. raw::
+
+   <a href="https://github.com/mpenning/ciscoconfparse/issues/13#issuecomment-71340177"><img src="https://raw.githubusercontent.com/mpenning/ciscoconfparse/master/sphinx-doc/_static/ciscoconfparse_overview.png" width="600" alt="CiscoConfParse Github issue #13"></a>
+
+|br|
+|br|
+|br|
+
+.. raw::
+
+   <blockquote class="twitter-tweet" lang="en"><p>Have to audit &gt; 100 catalyst sw configs for misconfiguration/non-standard configs. Perfect job for CiscoConfParse http://is.gd/d13z2 <a href="https://twitter.com/hashtag/python?src=hash">#python</a></p>&mdash; Jochen - l0b0 (@verbosemode) <a href="https://twitter.com/verbosemode/status/16878620193">June 23, 2010</a></blockquote>
+   <script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+|br|
+|br|
+|br|
+
+.. raw::
+
+   <blockquote class="twitter-tweet" lang="en"><p><a href="https://twitter.com/fryguy_pa">@fryguy_pa</a> There is a Cisco config parsing library for python that does neat tricks for searching configs</p>&mdash; Bob McCouch (@BobMcCouch) <a href="https://twitter.com/BobMcCouch/status/294877521349079040">January 25, 2013</a></blockquote>
+   <script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
+   <blockquote class="twitter-tweet" lang="en"><p>.<a href="https://twitter.com/fryguy_pa">@fryguy_pa</a> Here it is: ciscoconf python library: <a href="http://t.co/oDCWRZer">http://t.co/oDCWRZer</a></p>&mdash; Bob McCouch (@BobMcCouch) <a href="https://twitter.com/BobMcCouch/status/294878103199698944">January 25, 2013</a></blockquote>
+   <script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+
 What's new in version 1.0.0
 ---------------------------
 
@@ -97,11 +146,14 @@ changes were made:
 - Python3 compatibility; Python2.4 deprecation
 - Major improvement in config parsing speed
 - Much better unit-test coverage
-- Too many bugfixes to count
+- Too many bug fixes to count
 - New feature - :mod:`ciscoconfparse` inserts, deletes and appends config lines
 - Rearchitected the library, with an eye towards more future improvements
 - Revisions in scripting flow.  All users are encouraged to use :class:`~models_cisco.IOSCfgLine()` objects whenever possible.  Typically, you'll start by matching them with :func:`~ciscoconfparse.CiscoConfParse.find_objects()`.  Working directly with :class:`~models_cisco.IOSCfgLine()` objects makes your scripts less complicated and it also makes them faster than using legacy :mod:`ciscoconfparse` syntax.
 
+.. _`brace-delimited configurations`: https://github.com/mpenning/ciscoconfparse/blob/81cb4bee7c5ad95301b9e8b3562d70f11fa32505/configs/sample_01.junos
+.. _`Github Issue #17`: https://github.com/mpenning/ciscoconfparse/issues/17
+.. _`This project [ciscoconfparse] has really been a lifesaver`: https://github.com/mpenning/ciscoconfparse/issues/13#issuecomment-71340177
 .. _`Dive into Python`: http://www.diveintopython.net/
 .. _`Dive into Python3`: http://www.diveintopython3.net/
 .. _`regular expressions`: https://docs.python.org/2/howto/regex.html
