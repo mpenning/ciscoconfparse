@@ -38,12 +38,8 @@ parent / child relationships.  You can perform complex queries about these
 relationships.
 
 .. image:: https://raw.githubusercontent.com/mpenning/ciscoconfparse/master/sphinx-doc/_static/ciscoconfparse_overview.png
-   :target: https://github.com/mpenning/ciscoconfparse/issues/13#issuecomment-71340177
-   :alt: CiscoConfParse Github issue #17
-
-.. image:: https://raw.githubusercontent.com/mpenning/ciscoconfparse/master/sphinx-doc/_static/twitter.png
-   :target: https://raw.githubusercontent.com/mpenning/ciscoconfparse/master/sphinx-doc/_static/twitter.png
-   :alt: Twitter mentions
+   :target: https://raw.githubusercontent.com/mpenning/ciscoconfparse/master/sphinx-doc/_static/ciscoconfparse_overview.png
+   :alt: CiscoConfParse Parent / Child relationships
 
 Quotes
 ======
@@ -51,20 +47,12 @@ Quotes
 These are a few selected public mentions about CiscoConfParse; I usually try not to share private emails without asking, thus the quotes aren't long at this time.
 
 .. image:: https://raw.githubusercontent.com/mpenning/ciscoconfparse/master/sphinx-doc/_static/crackerjackmack.png
-   :target: 
-   :alt: CiscoConfParse Parent / Child relationships
+   :target: https://github.com/mpenning/ciscoconfparse/issues/13#issuecomment-71340177
+   :alt: CiscoConfParse Github issue #17
 
-.. raw:: html
-
-   <blockquote class="twitter-tweet" data-conversation="none" lang="en"><p><a href="https://twitter.com/fryguy_pa">@fryguy_pa</a> There is a Cisco config parsing library for python that does neat tricks for searching configs</p>&mdash; Bob McCouch (@BobMcCouch) <a href="https://twitter.com/BobMcCouch/status/294877521349079041">January 25, 2013</a></blockquote>
-   <script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
-
-   <blockquote class="twitter-tweet" data-conversation="none" lang="en"><p>.<a href="https://twitter.com/fryguy_pa">@fryguy_pa</a> Here it is: ciscoconf python library: <a href="http://t.co/oDCWRZer">http://t.co/oDCWRZer</a></p>&mdash; Bob McCouch (@BobMcCouch) <a href="https://twitter.com/BobMcCouch/status/294878103199698944">January 25, 2013</a></blockquote>
-   <script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
-
-|br|
-|br|
-
+.. image:: https://raw.githubusercontent.com/mpenning/ciscoconfparse/master/sphinx-doc/_static/twitter.png
+   :target: https://raw.githubusercontent.com/mpenning/ciscoconfparse/master/sphinx-doc/_static/twitter.png
+   :alt: Twitter mentions
 
 We don't use Cisco
 ==================
