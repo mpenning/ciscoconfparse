@@ -1371,19 +1371,6 @@ class CiscoConfParse(object):
     def _find_line_OBJ(self, linespec, exactmatch=False):
         """SEMI-PRIVATE: Find objects whose text matches the linespec"""
         ## NOTE TO SELF: do not remove _find_line_OBJ(); used by Cisco employees
-
-        # OLD (slow) code, before lamba, re.compile and filter
-        #retval = list()
-        #for lineobj in self.ConfigObjs:
-        #    if not exactmatch and re.search(linespec, lineobj.text):
-        #        retval.append(lineobj)
-        #    elif exactmatch and re.search("^%s$" % linespec, lineobj.text):
-        #        retval.append(lineobj)
-        #    else:
-        #        # No regexp match case
-        #        pass
-        #return retval
-
         if not exactmatch:
             # Return objects whose text attribute matches linespec
             linespec_re = re.compile(linespec)
