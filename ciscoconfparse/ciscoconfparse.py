@@ -1030,6 +1030,99 @@ class CiscoConfParse(object):
 
         return list(map(attrgetter('text'), sorted(retval)))
 
+    def find_objects_w_parents(self, parentspec, childspec, ignore_ws=False):
+        """Parse through the children of all parents matching parentspec, 
+        and return a list of child objects, which matched the childspec.
+
+        Args:
+            - parentspec (str): Text regular expression for the line to be matched; this must match the parent's line
+            - childspec (str): Text regular expression for the line to be matched; this must match the child's line
+
+        Kwargs:
+            - ignore_ws (bool): boolean that controls whether whitespace is ignored 
+
+        Returns:
+            - list.  A list of matching child objects
+
+        This example finds the object for "ge-0/0/0" under "interfaces" in the
+        following config...
+
+        .. code::
+
+            interfaces 
+                ge-0/0/0 
+                    unit 0 
+                        family ethernet-switching 
+                            port-mode access
+                            vlan 
+                                members VLAN_FOO
+                ge-0/0/1 
+                    unit 0 
+                        family ethernet-switching 
+                            port-mode trunk
+                            vlan 
+                                members all
+                            native-vlan-id 1
+                vlan 
+                    unit 0 
+                        family inet 
+                            address 172.16.15.5/22
+
+
+        The following object should be returned:
+
+        .. code::
+
+            <IOSCfgLine # 7 '    ge-0/0/1' (parent is # 0)>
+
+        We do this by quering `find_childobj_w_parents()`; we set our 
+        parent as `^\s*interface` and set the child as 
+        `^\s+ge-0/0/1`.
+
+        .. code-block:: python
+           :emphasize-lines: 21,22
+
+           >>> config = ['interfaces',
+           ...           '    ge-0/0/0',
+           ...           '        unit 0',
+           ...           '            family ethernet-switching',
+           ...           '                port-mode access',
+           ...           '                vlan',
+           ...           '                    members VLAN_FOO',
+           ...           '    ge-0/0/1',
+           ...           '        unit 0',
+           ...           '            family ethernet-switching',
+           ...           '                port-mode trunk',
+           ...           '                vlan',
+           ...           '                    members all',
+           ...           '                native-vlan-id 1',
+           ...           '    vlan',
+           ...           '        unit 0',
+           ...           '            family inet',
+           ...           '                address 172.16.15.5/22',
+           ...     ]
+           >>> p = CiscoConfParse(config)
+           >>> p.find_objects_w_parents('^\s*interfaces', \
+           r'\s+ge-0/0/1')
+           [<IOSCfgLine # 7 '    ge-0/0/1' (parent is # 0)>]
+           >>>
+
+        """
+        if ignore_ws:
+            parentspec = self._build_space_tolerant_regex(parentspec)
+            childspec = self._build_space_tolerant_regex(childspec)
+
+        retval = set([])
+        childobjs = self._find_line_OBJ(childspec)
+        for child in childobjs:
+            parents = child.all_parents
+            for parent in parents:
+                if re.search(parentspec, parent.text):
+                    retval.add(child)
+
+        return sorted(retval)
+
+
     def find_lineage(self, linespec, exactmatch=False):
         """Iterate through to the oldest ancestor of this object, and return
         a list of all ancestors / children in the direct line.  Cousins or
