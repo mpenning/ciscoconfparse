@@ -106,9 +106,13 @@ CiscoConfParse understands these configurations too:
 Quotes
 ------
 
+|br|
+|br|
+|br|
+
 .. raw:: html
 
-   <a href="https://github.com/mpenning/ciscoconfparse/issues/13#issuecomment-71340177"><img src="https://raw.githubusercontent.com/mpenning/ciscoconfparse/master/sphinx-doc/_static/ciscoconfparse_overview.png" width="600" alt="CiscoConfParse Github issue #13"></a>
+   <a href="https://github.com/mpenning/ciscoconfparse/issues/13#issuecomment-71340177"><img src="https://raw.githubusercontent.com/mpenning/ciscoconfparse/master/sphinx-doc/_static/crackerjackmack.png" width="600" alt="CiscoConfParse Github issue #13"></a>
 
 |br|
 |br|
