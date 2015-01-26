@@ -84,78 +84,6 @@ ciscoconfparse_ requires Python versions 2.6, 2.7 or 3.2+; the OS should not
 matter. If you want to run it under a Python virtualenv_, it's been heavily 
 tested in that environment as well.
 
-.. _Installation:
-
-Installation and Downloads
-==========================
-
-The best way to get ciscoconfparse is with setuptools_ or pip_.  If you 
-already have setuptools_, you can install as usual:
-
-::
-
-      # Substitute whatever ciscoconfparse version you like...
-      easy_install -U ciscoconfparse==1.2.4
-
-Alternatively you can install into Python2.x with pip_:
-
-::
-
-      pip install --upgrade ciscoconfparse
-
-Use ``pip3`` for Python3.x...
-
-::
-
-      pip3 install --upgrade ciscoconfparse
-
-Otherwise `download it from PyPi <https://pypi.python.org/pypi/ciscoconfparse>`_, extract it and run the ``setup.py`` script:
-
-::
-
-      python setup.py install
-
-If you're interested in the source, you can always pull from the `github repo`_
-or `bitbucket repo`_:
-
-
-- From github_:
-  ::
-
-      git clone git://github.com//mpenning/ciscoconfparse
-
-
-- From bitbucket_:
-  ::
-
-      hg init
-      hg clone https://bitbucket.org/mpenning/ciscoconfparse
-
-
-.. _FAQ:
-
-FAQ
-===
-
-#) *QUESTION*: I want to use ciscoconfparse_ with Python3; is that safe?  *ANSWER*: As long as you're using Python 3.3 or higher, it's safe. I test every release against Python 3.2+; however, Python 3.2 is currently exposed to a small bug for some configurations (see `Github Issue #14`_).
-
-#) *QUESTION*: Some of the code in the documentation looks different than what I'm used to seeing.  Did you change something?  *ANSWER*: Yes, starting around ciscoconfparse_ v0.9.10 I introducted more methods directly on ``IOSConfigLine()`` objects; going forward, these methods are the preferred way to use ciscoconfparse_.  Please start using the new methods shown in the example, since they're faster, and you type much less code this way.
-
-#) *QUESTION*: ciscoconfparse_ saved me a lot of time, I want to give money.  Do you have a donation link?  *ANSWER*:  I love getting emails like this; helping people get their jobs done is why I wrote the module.  However, I'm not accepting donations.
-
-#) *QUESTION*: Is there a way to use this module with perl?  *ANSWER*: Yes, I do this myself. Install the python package as you normally would and import it into perl with ``Inline.pm`` and ``Inline::Python`` from CPAN.
-
-#) *QUESTION*: When I use ``find_children("interface GigabitEthernet3/2")``, I'm getting all interfaces beginning with 3/2, including 3/21, 3/22, 3/23 and 3/24. How can I limit my results?  *ANSWER*: There are two ways... the simplest is to use the 'exactmatch' option...  ``find_children("interface GigabitEthernet3/2", exactmatch=True)``. Another way is to utilize regex expansion that is native to many methods... ``find_children("interface GigabitEthernet3/2$")``
-
-.. _`Other-Resources`:
-
-Other Resources
-===============
-
-- `Dive into Python3`_ is a good way to learn Python
-- `Team CYMRU`_ has a `Secure IOS Template`_, which is especially useful for external-facing routers / switches
-- `Cisco's Guide to hardening IOS devices`_
-
 .. _`Bug-Tracker-and-Support`:
 
 Bug Tracker and Support
@@ -165,28 +93,6 @@ Bug Tracker and Support
 - If you're having problems with general python issues, consider searching for a solution on `Stack Overflow`_.  If you can't find a solution for your problem or need more help, you can `ask a question`_.
 - If you're having problems with your Cisco devices, you can open a case with `Cisco TAC`_; if you prefer crowd-sourcing, you can ask on the Stack Exchange `Network Engineering`_ site.
 
-.. _Contributing:
-
-Contributing
-============
-
-ciscoconfparse_ is developed with mercurial_, and pushed to bitbucket_.  
-`hg-git`_ keeps `github repo`_ and bitbucket_ in sync, so it shouldn't 
-matter if you just want to fork the `github repo`_.
-
-.. _Unit-Tests:
-
-Unit-Tests
-==========
-
-I use the `Travis CI project <https://travis-ci.org>`_ to continuously test ciscoconfparse on Python versions 2.6 through 3.4, as well as pypy_.
-
-Click the image below for details; the current build status is:
-
-.. image:: https://travis-ci.org/mpenning/ciscoconfparse.png?branch=master
-   :align: center
-   :target: https://travis-ci.org/mpenning/ciscoconfparse
-   :alt: Travis CI Status
 
 .. _`License and Copyright`:
 
@@ -201,23 +107,7 @@ tests. `ipaddr`_ uses the `ASF License 2.0`_; `ipaddr`_ is part of the Python
 standard library, starting in Python 3.3 (it's called ``ipaddress`` in Python3).
 
 
-.. _Author:
-
-Author and Thanks
-=================
-
-ciscoconfparse_ was written by David Michael Pennington (mike [~at~] 
-pennington [/dot\] net).
-
-Special thanks:
-
-- Thanks to David Muir Sharnoff for his suggestion about making a special case for IOS banners.
-- Thanks to Alan Cownie for his API suggestions.
-- Thanks to CrackerJackMack_ for reporting `Github Issue #13`_
-- Soli Deo Gloria
-
-
-.. _ciscoconfparse: https://pypi.python.org/pypi/ciscoconfparse
+.. _ciscoconfparse: https://github.com/mpenning/ciscoconfparse/
 
 .. _pypy: http://pypy.org/
 
