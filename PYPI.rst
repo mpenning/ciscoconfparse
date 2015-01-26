@@ -18,8 +18,6 @@ ciscoconfparse
    :target: https://pypi.python.org/pypi/ciscoconfparse
    :alt: Downloads
 
-.. contents::
-
 .. _introduction:
 
 Introduction: What is ciscoconfparse?
@@ -46,7 +44,13 @@ Quotes
 
 These are a few selected public mentions about CiscoConfParse; I usually try not to share private emails without asking, thus the quotes aren't long at this time.
 
-   <a href="https://github.com/mpenning/ciscoconfparse/issues/13#issuecomment-71340177"><img src="https://raw.githubusercontent.com/mpenning/ciscoconfparse/master/sphinx-doc/_static/crackerjackmack.png" width="800" alt="CiscoConfParse Github issue #13"></a><br>
+.. image:: https://raw.githubusercontent.com/mpenning/ciscoconfparse/master/sphinx-doc/_static/crackerjackmack.png
+   :target: https://github.com/mpenning/ciscoconfparse/issues/13#issuecomment-71340177
+   :alt: CiscoConfParse Parent / Child relationships
+
+.. image:: https://raw.githubusercontent.com/mpenning/ciscoconfparse/master/sphinx-doc/_static/twitter.png
+   :target: https://raw.githubusercontent.com/mpenning/ciscoconfparse/master/sphinx-doc/_static/twitter.png
+   :alt: Twitter mentions
 
 We don't use Cisco
 ==================
@@ -109,6 +113,10 @@ standard library, starting in Python 3.3 (it's called ``ipaddress`` in Python3).
 
 .. _ciscoconfparse: https://github.com/mpenning/ciscoconfparse/
 
+.. _`brace-delimited configurations`: https://github.com/mpenning/ciscoconfparse/blob/master/configs/sample_01.junos
+
+.. _python: http://python.org/
+
 .. _pypy: http://pypy.org/
 
 .. _CrackerJackMack: https://github.com/CrackerJackMack
@@ -168,4 +176,3 @@ standard library, starting in Python 3.3 (it's called ``ipaddress`` in Python3).
 .. _`Juniper networks`: http://www.juniper.net/
 
 .. _`Cisco's Guide to hardening IOS devices`: http://www.cisco.com/c/en/us/support/docs/ip/access-lists/13608-21.html
-
