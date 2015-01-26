@@ -177,7 +177,6 @@ class CiscoConfParse(object):
                     text = f.read()
                     rgx = re.compile(linesplit_rgx)
 
-                    print "THIS", text
                     config = self.convert_braces_to_ios(rgx.split(text))
                     ## FIXME I am shamelessly abusing the IOSConfigList for now...
                     self.ConfigObjs = IOSConfigList(config,
