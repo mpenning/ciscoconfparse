@@ -48,7 +48,7 @@ from models_junos import JunosCfgLine
 """
 
 ## Docstring props: http://stackoverflow.com/a/1523456/667301
-__version_tuple__ = (1, 2, 4)
+__version_tuple__ = (1, 2, 5)
 __version__ = '.'.join(map(str, __version_tuple__))
 __email__ = "mike /at\ pennington [dot] net"
 __author__ = "David Michael Pennington <{0}>".format(__email__)
