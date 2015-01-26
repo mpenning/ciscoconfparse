@@ -1,3 +1,4 @@
+1.2.7   20150126 Fix README, again; pypi and github don't act the same way.
 1.2.6   20150126 Fix README, because it looks awful on pypi (they don't allow twitter embedding)
 1.2.5   20150126 Add 'indent' and 'auto_indent' options to append_to_family()
 1.2.4   20150125 Fix _unique_OBJ() to work in Python2.6, which doesn't have set comprehensions

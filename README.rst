@@ -56,6 +56,26 @@ These are a few selected public mentions about CiscoConfParse; I usually try not
 |br|
 |br|
 
+.. raw:: html
+
+   <blockquote class="twitter-tweet" lang="en"><p>Have to audit &gt; 100 catalyst sw configs for misconfiguration/non-standard configs. Perfect job for CiscoConfParse http://is.gd/d13z2 <a href="https://twitter.com/hashtag/python?src=hash">#python</a></p>&mdash; Jochen - l0b0 (@verbosemode) <a href="https://twitter.com/verbosemode/status/16878620193">June 23, 2010</a></blockquote>
+   <script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+|br|
+|br|
+
+.. raw:: html
+
+   <blockquote class="twitter-tweet" data-conversation="none" lang="en"><p><a href="https://twitter.com/fryguy_pa">@fryguy_pa</a> There is a Cisco config parsing library for python that does neat tricks for searching configs</p>&mdash; Bob McCouch (@BobMcCouch) <a href="https://twitter.com/BobMcCouch/status/294877521349079041">January 25, 2013</a></blockquote>
+   <script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+   <blockquote class="twitter-tweet" data-conversation="none" lang="en"><p>.<a href="https://twitter.com/fryguy_pa">@fryguy_pa</a> Here it is: ciscoconf python library: <a href="http://t.co/oDCWRZer">http://t.co/oDCWRZer</a></p>&mdash; Bob McCouch (@BobMcCouch) <a href="https://twitter.com/BobMcCouch/status/294878103199698944">January 25, 2013</a></blockquote>
+   <script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+|br|
+|br|
+
+
 We don't use Cisco
 ==================
 
@@ -103,7 +123,7 @@ already have setuptools_, you can install as usual:
 ::
 
       # Substitute whatever ciscoconfparse version you like...
-      easy_install -U ciscoconfparse==1.2.4
+      easy_install -U ciscoconfparse==1.2.5
 
 Alternatively you can install into Python2.x with pip_:
 
