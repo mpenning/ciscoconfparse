@@ -69,7 +69,7 @@ style of configuration, which includes:
 - Extreme Networks
 - Enterasys
 
-As of CiscoConfParse 1.2.4, you can parse `brace-delimited configurations`_ 
+As of CiscoConfParse 1.2.4, you can parse `Junos configurations`_ 
 into a Cisco IOS style (see `Github Issue #17`_), which means that 
 CiscoConfParse understands these configurations too:
 
@@ -237,7 +237,7 @@ Special thanks:
 
 .. _`Github Issue #17`: https://github.com/mpenning/ciscoconfparse/issues/17
 
-.. _`brace-delmited configurations`: https://github.com/mpenning/ciscoconfparse/blob/master/configs/sample_01.junos
+.. _`Junos configurations`: https://github.com/mpenning/ciscoconfparse/blob/master/configs/sample_01.junos
 
 .. _`David Michael Pennington`: http://pennington.net/
 
