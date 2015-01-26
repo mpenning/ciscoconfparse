@@ -87,26 +87,26 @@ We don't have Ciscos
 Don't let that stop you.  CiscoConfParse parses anything that has a Cisco IOS 
 style of configuration, which includes:
 
- - Cisco IOS, Cisco Nexus, Cisco IOS-XR, Cisco IOS-XE, Aironet OS, Cisco ASA, Cisco CatOS
- - Arista EOS
- - Brocade
- - HP Switches
- - Force 10 Switches
- - Dell PowerConnect Switches
- - Extreme Networks
- - Enterasys
+- Cisco IOS, Cisco Nexus, Cisco IOS-XR, Cisco IOS-XE, Aironet OS, Cisco ASA, Cisco CatOS
+- Arista EOS
+- Brocade
+- HP Switches
+- Force 10 Switches
+- Dell PowerConnect Switches
+- Extreme Networks
+- Enterasys
 
 As of CiscoConfParse 1.2.4, you can parse `brace-delimited configurations`_ 
 into a Cisco IOS style (see `Github Issue #17`_), which means that 
 CiscoConfParse understands these configurations too:
 
- - Juniper Networks Junos, and Screenos
- - F5 Networks configurations
+- Juniper Networks Junos, and Screenos
+- F5 Networks configurations
 
 Quotes
 ------
 
-.. raw::
+.. raw:: html
 
    <a href="https://github.com/mpenning/ciscoconfparse/issues/13#issuecomment-71340177"><img src="https://raw.githubusercontent.com/mpenning/ciscoconfparse/master/sphinx-doc/_static/ciscoconfparse_overview.png" width="600" alt="CiscoConfParse Github issue #13"></a>
 
@@ -114,7 +114,7 @@ Quotes
 |br|
 |br|
 
-.. raw::
+.. raw:: html
 
    <blockquote class="twitter-tweet" lang="en"><p>Have to audit &gt; 100 catalyst sw configs for misconfiguration/non-standard configs. Perfect job for CiscoConfParse http://is.gd/d13z2 <a href="https://twitter.com/hashtag/python?src=hash">#python</a></p>&mdash; Jochen - l0b0 (@verbosemode) <a href="https://twitter.com/verbosemode/status/16878620193">June 23, 2010</a></blockquote>
    <script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
@@ -123,7 +123,7 @@ Quotes
 |br|
 |br|
 
-.. raw::
+.. raw:: html
 
    <blockquote class="twitter-tweet" lang="en"><p><a href="https://twitter.com/fryguy_pa">@fryguy_pa</a> There is a Cisco config parsing library for python that does neat tricks for searching configs</p>&mdash; Bob McCouch (@BobMcCouch) <a href="https://twitter.com/BobMcCouch/status/294877521349079040">January 25, 2013</a></blockquote>
    <script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
