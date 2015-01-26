@@ -1589,11 +1589,17 @@ class IOSConfigList(MutableSequence):
         for parent in banner_objs:
             idx = parent.linenum
             parent.oldest_ancestor = True
+            bannerchar = parent.text.strip()[-1]
             while True:
                 idx += 1
                 try:
                     obj = self._list[idx]
-                    if obj.is_comment:
+                    if obj.text.strip()==bannerchar:
+                        parent.children.append(obj)
+                        parent.child_indent = 0
+                        obj.parent = parent
+                        break
+                    elif obj.is_comment and (obj.indent==0):
                         break
                     parent.children.append(obj)
                     parent.child_indent = 0
