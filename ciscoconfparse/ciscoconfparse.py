@@ -1565,7 +1565,10 @@ class CiscoConfParse(object):
         duplicates).
         The returned value is sorted by configuration line number
         (lowest first)"""
-        return sorted({obj for obj in objectlist})
+        retval = set([])
+        for obj in objectlist:
+            retval.add(obj)
+        return sorted(retval)
 
     def _objects_to_uncfg(self, objectlist, unconflist):
         # Used by req_cfgspec_excl_diff()
