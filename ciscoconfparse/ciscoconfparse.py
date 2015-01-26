@@ -1403,10 +1403,7 @@ class CiscoConfParse(object):
         duplicates).
         The returned value is sorted by configuration line number
         (lowest first)"""
-        retval = set([])
-        for obj in objectlist:
-            retval.add(obj)
-        return sorted(retval)
+        return sorted({obj for obj in objectlist})
 
     def _objects_to_uncfg(self, objectlist, unconflist):
         # Used by req_cfgspec_excl_diff()
@@ -1495,7 +1492,7 @@ class IOSConfigList(MutableSequence):
 
     def _bootstrap_from_text(self):
         ## reparse all objects from their text attributes... this is *very* slow
-        ## Ultimate goal: get rid of all reparsing from text... because it's so slow
+        ## Ultimate goal: get rid of all reparsing from text... 
         self._list = self._bootstrap_obj_init(list(map(attrgetter('text'), self._list)))
 
     def has_line_with(self, linespec):
@@ -1533,6 +1530,7 @@ class IOSConfigList(MutableSequence):
         if getattr(robj, 'capitalize', False):
             raise ValueError
 
+        ## If val is a string...
         if getattr(val, 'capitalize', False):
             if self.factory:
                 obj = ConfigLineFactory(text=val, 
