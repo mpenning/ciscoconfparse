@@ -1,5 +1,6 @@
 from operator import methodcaller, attrgetter
 from abc import ABCMeta
+from copy import deepcopy
 import re
 import os
 
@@ -328,6 +329,65 @@ class BaseCfgLine(object):
         retval = self.confobj.insert_after(last_child, insertstr, 
             atomic=local_atomic)
         return retval
+
+    def split_substr_match_iter_typed(self, delimitspec, result_type=str, 
+        default='', delimiter=' ', silent_match_failure=True, trim=True, 
+        ignore_case=False):
+        for childobj in self.children:
+            dm = deepcopy(delimitspec)
+            self.split_substr_match_typed(dm, result_type=result_type, 
+                default=default, delimiter=delimiter, 
+                silent_match_failure=silent_match_failure, trim=trim,
+                ignore_case=ignore_case)
+            if dm.all_matched:
+                return dm
+            elif dm.overflow and dm.matched_indicies:
+                return dm
+        else:
+            delimitspec._result=True
+            return delimitspec
+
+    def split_substr_match_typed(self, delimitspec, result_type=str, default='',
+        delimiter=' ', silent_match_failure=False, trim=True, ignore_case=False):
+        assert (delimitspec._result is False), "Cannot process DelimitedMatches() results"
+
+        if not getattr(delimitspec, 'dna', '')=="DelimitedMatches":
+            raise ValueError("FATAL - delimitspec must be a DelimitedMatches() instance")
+
+        if trim:
+            text_tuple = self.text.strip(delimiter).split(delimiter)
+        else:
+            text_tuple = self.text.split(delimiter)
+
+        if ignore_case:
+            text_tuple = tuple([ii.lower() for ii in text_tuple])
+
+        if not silent_match_failure and len(delimitspec._match_list)>len(text_tuple):
+            raise ValueError, "DelimitedMatches() is longer than the split text values"""
+
+        for idx, text_val in enumerate(text_tuple):
+            try:
+                if delimitspec[idx] in text_val:
+                    # ii is a substring of the text value, this ignores the val
+                    delimitspec._result_list[idx] = delimitspec.substr_arg
+                elif delimitspec[idx].lower()==delimitspec.ignore_arg.lower():
+                    delimitspec._result_list[idx] = delimitspec.ignore_arg
+                elif delimitspec[idx].lower()==delimitspec.match_arg.lower():
+                    delimitspec._result_list[idx] = result_type(text_val)
+                elif delimitspec[idx].lower()==delimitspec.break_arg.lower():
+                    delimitspec._result_list[idx] = delimitspec.break_arg
+                    break
+                elif silent_match_failure:
+                    delimitspec._result_list[idx] = default
+                elif not silent_match_failure:
+                    raise IterationError("{0} did not match at position {1}".format(delimitspec, idx))
+            except IndexError:
+                delimitspec.overflow = True   # Indicate that we overflowed
+                delimitspec.overflow_index = idx
+                break
+
+        delimitspec._result = True
+        return delimitspec
 
     def replace(self, linespec, replacestr, ignore_rgx=None):
         """Replace all strings matching ``linespec`` with ``replacestr`` in 
