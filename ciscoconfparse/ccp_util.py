@@ -1,5 +1,9 @@
 from collections import MutableSequence
-from itertools import izip, takewhile, count
+try:
+    from itertools import takewhile, count
+    from itertools import izip as zip
+except:
+    pass
 import sys
 import re
 import os
@@ -348,7 +352,7 @@ class DelimitedMatches(MutableSequence):
     def match_indicies(self):
         """Return the indicies where a match is required"""
         match_indicies = [idx for idx, val in 
-                izip(count(), self._match_list) if val==self.match_arg]
+                zip(count(), self._match_list) if val==self.match_arg]
         return match_indicies
 
     @property
