@@ -363,7 +363,7 @@ class BaseCfgLine(object):
             text_tuple = tuple([ii.lower() for ii in text_tuple])
 
         if not silent_match_failure and len(delimitspec._match_list)>len(text_tuple):
-            raise ValueError, "DelimitedMatches() is longer than the split text values"""
+            raise ValueError("DelimitedMatches() is longer than the split text values""")
 
         for idx, text_val in enumerate(text_tuple):
             try:
