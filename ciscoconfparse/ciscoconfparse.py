@@ -1772,7 +1772,7 @@ class IOSConfigList(MutableSequence):
                 except IndexError:
                     break
 
-    def _bootstrap_obj_init(self, text_list=[]):
+    def _bootstrap_obj_init(self, text_list):
         """Accept a text list and format into proper objects"""
         # Append text lines as IOSCfgLine objects...
         BANNER_STR = set(['login',
@@ -2059,7 +2059,7 @@ class ASAConfigList(MutableSequence):
         list_idx = len(self._list)
         self.insert(list_idx, val, atomic)
 
-    def _bootstrap_obj_init(self, text_list=[]):
+    def _bootstrap_obj_init(self, text_list):
         """Accept a text list and format into proper objects"""
         # Append text lines as IOSCfgLine objects...
         retval = list()
