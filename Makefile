@@ -31,6 +31,7 @@ perf-factory-intf:
 devpkgs:
 	pip install --upgrade pip
 	pip install --upgrade mercurial
+	pip install --upgrade hg-git
 	pip install --upgrade virtualenv
 	pip install --upgrade virtualenvwrapper
 	pip install --upgrade pss
