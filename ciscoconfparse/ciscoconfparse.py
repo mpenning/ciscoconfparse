@@ -1,5 +1,6 @@
 from operator import methodcaller, attrgetter
 from collections import MutableSequence
+from types import GeneratorType
 import time
 import re
 import os
@@ -110,7 +111,7 @@ class CiscoConfParse(object):
         self.ConfigObjs = None
         self.syntax = syntax
 
-        if isinstance(config, list):
+        if isinstance(config, list) or isinstance(config, GeneratorType):
             if syntax=='ios':
                 # we already have a list object, simply call the parser
                 self.ConfigObjs = IOSConfigList(data=config, 
@@ -1620,7 +1621,8 @@ class IOSConfigList(MutableSequence):
         self.syntax = syntax
         self.dna = 'IOSConfigList'
 
-        if getattr(data, 'append', False):
+        ## Support either a list or a generator instance
+        if getattr(data, '__iter__', False):
             self._list = self._bootstrap_obj_init(data)
         else:
             self._list = list()
@@ -1930,8 +1932,10 @@ class ASAConfigList(MutableSequence):
         self.factory = factory
         self.ignore_blank_lines = ignore_blank_lines
         self.syntax = syntax
+        self.dna = 'ASAConfigList'
 
-        if getattr(data, 'append', False):
+        ## Support either a list or a generator instance
+        if getattr(data, '__iter__', False):
             self._bootstrap_obj_init(data)
         else:
             self._list = list()
