@@ -1,3 +1,4 @@
+1.2.8   20150129 Add support for iterating over a generator (CiscoConfParse input)
 1.2.7   20150126 Fix README, again; pypi and github don't act the same way.
 1.2.6   20150126 Fix README, because it looks awful on pypi (they don't allow twitter embedding)
 1.2.5   20150126 Add 'indent' and 'auto_indent' options to append_to_family()
