@@ -48,7 +48,7 @@ These are a few selected public mentions about CiscoConfParse; I usually try not
 
 .. image:: https://raw.githubusercontent.com/mpenning/ciscoconfparse/master/sphinx-doc/_static/crackerjackmack.png
    :target: https://github.com/mpenning/ciscoconfparse/issues/13#issuecomment-71340177
-   :alt: CiscoConfParse Github issue #17
+   :alt: CiscoConfParse Github Issue #17
 
 .. image:: https://raw.githubusercontent.com/mpenning/ciscoconfparse/master/sphinx-doc/_static/twitter.png
    :target: https://raw.githubusercontent.com/mpenning/ciscoconfparse/master/sphinx-doc/_static/twitter.png
@@ -57,7 +57,7 @@ These are a few selected public mentions about CiscoConfParse; I usually try not
 We don't use Cisco
 ==================
 
-Don't let that stop you.  CiscoConfParse parses anything that has a Cisco IOS 
+Don't let that stop you.  CiscoConfParse handles anything that has a Cisco IOS 
 style of configuration, which includes:
 
 - Cisco IOS, Cisco Nexus, Cisco IOS-XR, Cisco IOS-XE, Aironet OS, Cisco ASA, Cisco CatOS
@@ -69,7 +69,7 @@ style of configuration, which includes:
 - Extreme Networks
 - Enterasys
 
-As of CiscoConfParse 1.2.4, you can parse `Junos configurations`_ 
+As of CiscoConfParse 1.2.4, you can parse `brace-delimited configurations`_ 
 into a Cisco IOS style (see `Github Issue #17`_), which means that 
 CiscoConfParse understands these configurations too:
 
@@ -171,21 +171,12 @@ Bug Tracker and Support
 - If you're having problems with general python issues, consider searching for a solution on `Stack Overflow`_.  If you can't find a solution for your problem or need more help, you can `ask a question`_.
 - If you're having problems with your Cisco devices, you can open a case with `Cisco TAC`_; if you prefer crowd-sourcing, you can ask on the Stack Exchange `Network Engineering`_ site.
 
-.. _Contributing:
-
-Contributing
-============
-
-ciscoconfparse_ is developed with mercurial_, and pushed to bitbucket_.  
-`hg-git`_ keeps `github repo`_ and bitbucket_ in sync, so it shouldn't 
-matter if you just want to fork the `github repo`_.
-
 .. _Unit-Tests:
 
 Unit-Tests
 ==========
 
-I use the `Travis CI project <https://travis-ci.org>`_ to continuously test ciscoconfparse on Python versions 2.6 through 3.4, as well as pypy_.
+`Travis CI project <https://travis-ci.org>`_ tests ciscoconfparse on Python versions 2.6 through 3.4, as well as a `pypy JIT`_ executable.
 
 Click the image below for details; the current build status is:
 
@@ -200,7 +191,7 @@ License and Copyright
 =====================
 
 ciscoconfparse_ is licensed GPLv3_; Copyright `David Michael Pennington`_, 
-2007-2014.
+2007-2015.
 
 The `ipaddr`_ module is distributed with ciscoconfparse_ to facilitate unit
 tests. `ipaddr`_ uses the `ASF License 2.0`_; `ipaddr`_ is part of the Python
@@ -227,9 +218,7 @@ Special thanks:
 
 .. _Python: http://python.org/
 
-.. _pypy: http://pypy.org/
-
-.. _CrackerJackMack: https://github.com/CrackerJackMack
+.. _`pypy JIT`: http://pypy.org/
 
 .. _`Github Issue #13`: https://github.com/mpenning/ciscoconfparse/issues/13
 
@@ -237,7 +226,9 @@ Special thanks:
 
 .. _`Github Issue #17`: https://github.com/mpenning/ciscoconfparse/issues/17
 
-.. _`Junos configurations`: https://github.com/mpenning/ciscoconfparse/blob/master/configs/sample_01.junos
+.. _`brace-delimited configurations`: https://github.com/mpenning/ciscoconfparse/blob/master/configs/sample_01.junos
+
+.. _CrackerJackMack: https://github.com/CrackerJackMack
 
 .. _`David Michael Pennington`: http://pennington.net/
 
@@ -288,8 +279,4 @@ Special thanks:
 .. _`Juniper networks`: http://www.juniper.net/
 
 .. _`Cisco's Guide to hardening IOS devices`: http://www.cisco.com/c/en/us/support/docs/ip/access-lists/13608-21.html
-
-.. |br| raw:: html
-
-   <br>
 
