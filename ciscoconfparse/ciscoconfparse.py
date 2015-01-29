@@ -149,7 +149,7 @@ class CiscoConfParse(object):
             try:
                 if syntax=='ios':
                     # string - assume a filename... open file, split and parse
-                    f = open(config)
+                    f = open(config, mode="rU")
                     text = f.read()
                     rgx = re.compile(linesplit_rgx)
                     self.ConfigObjs = IOSConfigList(rgx.split(text), 
@@ -161,7 +161,7 @@ class CiscoConfParse(object):
                         CiscoConfParse=self)
                 elif syntax=='asa':
                     # string - assume a filename... open file, split and parse
-                    f = open(config)
+                    f = open(config, mode="rU")
                     text = f.read()
                     rgx = re.compile(linesplit_rgx)
                     self.ConfigObjs = ASAConfigList(rgx.split(text), 
@@ -174,7 +174,7 @@ class CiscoConfParse(object):
 
                 elif syntax=='junos':
                     # string - assume a filename... open file, split and parse
-                    f = open(config)
+                    f = open(config, mode="rU")
                     text = f.read()
                     rgx = re.compile(linesplit_rgx)
 
