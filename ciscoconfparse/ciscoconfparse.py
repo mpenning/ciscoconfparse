@@ -1,5 +1,5 @@
 from operator import methodcaller, attrgetter
-from collections import Iterator
+from collections import MutableSequence, Iterator
 import time
 import re
 import os
