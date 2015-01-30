@@ -1,6 +1,5 @@
 from operator import methodcaller, attrgetter
-from collections import MutableSequence
-from types import GeneratorType
+from collections import Iterator
 import time
 import re
 import os
@@ -111,7 +110,7 @@ class CiscoConfParse(object):
         self.ConfigObjs = None
         self.syntax = syntax
 
-        if isinstance(config, list) or isinstance(config, GeneratorType):
+        if isinstance(config, list) or isinstance(config, Iterator):
             if syntax=='ios':
                 # we already have a list object, simply call the parser
                 self.ConfigObjs = IOSConfigList(data=config, 
