@@ -5,4 +5,5 @@ recursive-exclude * *.pyo
 recursive-exclude * *.orig
 recursive-exclude * BUILD.ME
 recursive-exclude * BITBUCKET_HG
-prune sphinx-doc*
+prune sphinx-doc/_static*
+prune sphinx-doc/_build*
