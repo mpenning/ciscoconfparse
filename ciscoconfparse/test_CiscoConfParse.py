@@ -609,12 +609,32 @@ class knownValues(unittest.TestCase):
             self.assertEqual(result_correct, test_result)
 
 
-    def testValues_find_all_children(self):
+    def testValues_find_all_children01(self):
         ## test find_all_chidren
         for config, args, result_correct in self.find_all_children_Values:
             cfg = CiscoConfParse(config)
             test_result = cfg.find_all_children(**args)
             self.assertEqual(result_correct, test_result)
+
+    def testValues_find_all_chidren02(self):
+        CONFIG = ['thing1',
+            ' foo',
+            '  bar',
+            '   100',
+            '   200',
+            '   300',
+            '   400',
+            'thing2',]
+        RESULT_CORRECT = ['thing1',
+            ' foo',
+            '  bar',
+            '   100',
+            '   200',
+            '   300',
+            '   400',]
+        cfg = CiscoConfParse(CONFIG)
+        test_result = cfg.find_all_children('^thing1')
+        self.assertEqual(RESULT_CORRECT, test_result)
 
 
     def testValues_find_parents_w_child(self):
