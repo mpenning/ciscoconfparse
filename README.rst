@@ -41,8 +41,8 @@ relationships.
    :target: https://raw.githubusercontent.com/mpenning/ciscoconfparse/master/sphinx-doc/_static/ciscoconfparse_overview_75pct.png
    :alt: CiscoConfParse Parent / Child relationships
 
-Quotes
-======
+User Testimony
+==============
 
 These are a few selected public mentions about CiscoConfParse; I usually try not to share private emails without asking, thus the quotes aren't long at this time.
 
@@ -54,11 +54,19 @@ These are a few selected public mentions about CiscoConfParse; I usually try not
    :target: https://raw.githubusercontent.com/mpenning/ciscoconfparse/master/sphinx-doc/_static/twitter.png
    :alt: Twitter mentions
 
-We don't use Cisco
-==================
+What if we don't use Cisco?
+===========================
 
-Don't let that stop you.  CiscoConfParse handles anything that has a Cisco IOS 
-style of configuration, which includes:
+Don't let that stop you.
+
+As of CiscoConfParse 1.2.4, you can parse `brace-delimited configurations`_ 
+into a Cisco IOS style (see `Github Issue #17`_), which means that 
+CiscoConfParse understands these configurations:
+
+- Juniper Networks Junos, and Screenos
+- F5 Networks configurations
+
+CiscoConfParse also handles anything that has a Cisco IOS style of configuration, which includes:
 
 - Cisco IOS, Cisco Nexus, Cisco IOS-XR, Cisco IOS-XE, Aironet OS, Cisco ASA, Cisco CatOS
 - Arista EOS
@@ -69,12 +77,6 @@ style of configuration, which includes:
 - Extreme Networks
 - Enterasys
 
-As of CiscoConfParse 1.2.4, you can parse `brace-delimited configurations`_ 
-into a Cisco IOS style (see `Github Issue #17`_), which means that 
-CiscoConfParse understands these configurations too:
-
-- Juniper Networks Junos, and Screenos
-- F5 Networks configurations
 
 Docs
 ====
@@ -101,7 +103,7 @@ already have setuptools_, you can install as usual:
 ::
 
       # Substitute whatever ciscoconfparse version you like...
-      easy_install -U ciscoconfparse==1.2.9
+      easy_install -U ciscoconfparse==1.2.10
 
 Alternatively you can install into Python2.x with pip_:
 
