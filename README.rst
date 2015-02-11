@@ -50,9 +50,11 @@ These are a few selected public mentions about CiscoConfParse; I usually try not
    :target: https://github.com/mpenning/ciscoconfparse/issues/13#issuecomment-71340177
    :alt: CiscoConfParse Github Issue #17
 
+
 .. image:: https://raw.githubusercontent.com/mpenning/ciscoconfparse/master/sphinx-doc/_static/netnea.png
    :target: https://www.netnea.com/cms/2014/01/20/parsing-cisco-configuration/
    :alt: Netnea testimony
+
 
 .. image:: https://raw.githubusercontent.com/mpenning/ciscoconfparse/master/sphinx-doc/_static/twitter.png
    :target: https://raw.githubusercontent.com/mpenning/ciscoconfparse/master/sphinx-doc/_static/twitter.png
