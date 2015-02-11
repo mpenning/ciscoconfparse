@@ -502,9 +502,8 @@ class CiscoConfParse(object):
 
         allobjs = set([])
         for parent in parentobjs:
-            if (parent.has_children is True):
-                allobjs.update(set(self._find_all_child_OBJ(parent)))
             allobjs.add(parent)
+            allobjs.update(set(parent.all_children))
         return list(map(attrgetter('text'), sorted(allobjs)))
 
     def find_blocks(self, linespec, exactmatch=False, ignore_ws=False):
