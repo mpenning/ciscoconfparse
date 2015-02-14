@@ -1327,7 +1327,8 @@ class CiscoConfParse(object):
 
     def replace_children(self, parentspec, childspec, replacestr, 
         excludespec=None, exactmatch=False, atomic=True):
-        """Replace lines matching `childspec` within the immediate children of lines which match `parentspec`
+        """Replace lines matching `childspec` within the `parentspec`'s 
+        immediate children.
 
         Args:
             - parentspec (str): Text IOS configuration line
