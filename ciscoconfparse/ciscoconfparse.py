@@ -1341,6 +1341,36 @@ class CiscoConfParse(object):
         Returns:
             - list.  A list of changed :class:`~models_cisco.IOSCfgLine` instances.
 
+        `replace_children()` just searches through a parent's child lines and 
+        replaces anything matching `childspec` with `replacestr`.  This method
+        is one of my favorites for quick and dirty standardization efforts if 
+        you *know* the commands are already there (just set inconsistently).
+
+        One very common use case is rewriting all vlan access numbers in a 
+        configuration.  The following example sets 
+        `storm-control broadcast level 0.5` on all GigabitEthernet ports.
+
+        .. code-block:: python
+           :emphasize-lines: 13
+
+           >>> from ciscoconfparse import CiscoConfParse
+           >>> config = ['!', 
+           ...           'interface GigabitEthernet1/1',
+           ...           ' description {I have a broken storm-control config}',
+           ...           ' switchport',
+           ...           ' switchport mode access',
+           ...           ' switchport access vlan 50',
+           ...           ' switchport nonegotiate',
+           ...           ' storm-control broadcast level 0.2',
+           ...           '!'
+           ...     ]
+           >>> p = CiscoConfParse(config)
+           >>> p.replace_children(r'^interface\sGigabit', r'broadcast\slevel\s\S+', 'broadcast level 0.5')
+           [' storm-control broadcast level 0.5']
+           >>>
+
+        One thing to remember about the last example, you *cannot* use a 
+        regular expression in `replacestr`; just use a normal python string.
         """
         retval = list()
         ## Since we are replacing text, we *must* operate on ConfigObjs
