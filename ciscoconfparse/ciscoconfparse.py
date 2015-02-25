@@ -1538,6 +1538,231 @@ class CiscoConfParse(object):
 
         return retval
 
+    def sync_diff(self, cfgspec, linespec, uncfgspec=None, 
+        ignore_ws=False, delete_extra_lines=True, debug=False):
+
+        def check_parent_matches(obj, reqobj):
+            """Check all parents of obj and reqobj, return True if all match"""
+            if getattr(obj, 'parents', None):
+                len_obj_parents = len(obj.parents)
+            else:
+                len_obj_parents = -1
+
+            if getattr(reqobj, 'parents', None):
+                len_reqobj_parents = len(reqobj.parents)
+            else:
+                len_reqobj_parents = -1
+
+            if (len_obj_parents==-1) and (len_reqobj_parents==-1):
+                # Return True if both have no parents
+                return True
+            elif len_obj_parents!=len_reqobj_parents:
+                # Parent objects didn't match
+                return False
+            elif len_obj_parents==len_reqobj_parents:
+                # If parent lengths match, compare each parent
+                for pobj, preqobj in zip(obj.parents, reqobj.parents):
+                    if pobj.text!=preqobj.text:
+                        return False
+                return True
+
+        def all_parents_config_text(obj):
+            """If the object's parents have .config_this, return the text"""
+            retval = list()
+            len_parents = obj.all_parents or 0
+            if len_parents>0:
+                for parent in obj.all_parents:
+                    if getattr(parent, 'config_this', False):
+                        retval.append(parent.text)
+            return retval
+            
+
+        if (uncfgspec is None):
+            uncfgspec = linespec
+        cfgspec_parse = CiscoConfParse(cfgspec, factory=False)
+        #result_parse = CiscoConfParse([], factory=False)
+        result_parse = list()
+        matches = self._find_line_OBJ(linespec)
+
+        if debug:
+            print "BASELINE CONFIG:"
+            for this in matches:
+                print this.text
+
+            print "REQUIRED CONFIG:"
+            for this in cfgspec:
+                print this
+
+        # Default matches
+        for obj in matches:
+            # Default: Reject all parents and children of matching lines
+            for relative in obj.lineage:
+                # NOTE: these objects need *both* config & unconfig attributes
+                #   because we might *not* need to configure something when
+                #   unconfig_this is False
+                relative.unconfig_this = True
+                relative.config_this   = False
+
+        # Default reqobjs
+        for reqobj in cfgspec_parse.objs:
+            reqobj.config_this = True         # Default: sync all reqobj
+            reqobj.step_1_done = False          # We haven't finished this step
+
+        # Identify config lines to unconfigure
+        for obj in matches:
+            # Look for missing lines, which are required...
+            for reqobj in cfgspec_parse.objs:
+                if getattr(reqobj, 'step_1_done', None):
+                    continue
+                if (obj.text==reqobj.text) and check_parent_matches(obj, reqobj):
+                    obj.unconfig_this = False   # Keep this obj
+                    reqobj.config_this = False  # We don't have to sync this reqobj
+                    reqobj.step_1_done = True
+                    break
+                elif ignore_ws and (obj.text.rstrip()==reqobj.text.rstrip()):
+                    obj.unconfig_this = False   # Keep this obj
+                    reqobj.config_this = False  # We don't have to sync this reqobj
+                    reqobj.step_1_done = True
+                    break
+                elif len(reqobj.children)>0:
+                    # By now, we know that obj.text!=reqobj.text
+                    #   It's useless to match reqobj children if reqobj failed
+                    reqobj.step_1_done = True
+                    break
+
+        # By default all matches are unconfigured:
+        #   Audit all parents and configure any that have children to 
+        #   remove
+        for obj in matches:
+            if getattr(obj, 'unconfig_this', False):
+                if getattr(obj, 'step_2_done', None):
+                    continue
+                for child in obj.all_children:
+                    if getattr(child, 'step_2_done', None):
+                        continue
+                    elif getattr(child, 'config_this', False):
+                        # configure the parent, if there is a child which
+                        #    requires deletion
+                        obj.unconfig_this = False
+                        obj.config_this = True
+                    child.step_2_done = True
+            obj.step_2_done = True
+
+        # Recurse offensive lines to their most offensive ancestor to remove it
+        for obj in filter(lambda x: getattr(x, 'unconfig_this', False), matches):
+            skip_all_others = False
+            for candidate in obj.lineage:
+                if skip_all_others or candidate.is_comment:
+                    continue
+                # Reject the oldest ancestor which has unconfig_this==True
+                if getattr(candidate, 'unconfig_this', False):
+                    # uncfgspec *must* match for us to reject the line...
+                    mm = re.search(uncfgspec, candidate.text)
+                    if not (mm is None):
+                        relative.add_uncfgtext(mm.group(0))
+                        break   # Go to the next obj
+                if obj==candidate:
+                    skip_all_others = True
+            else:
+                # uncfgspec didn't match any of the relatives...
+                if not obj.is_comment:
+                    raise ValueError("Could not unconfigure {0}".format(obj))
+
+        # Walk match objs and ensure required obj's parents are required
+        for obj in matches:
+            if getattr(obj, 'config_this', False):
+                continue
+            obj_parents = len(obj.all_parents) or 0
+            if obj_parents>0:
+                for parent in obj.all_parents:
+                    parent.config_this = True
+                    parent.unconfig_this = False
+
+        retval = list()
+        # Conditionally remove lines in the config diff
+        if delete_extra_lines:
+            for obj in self.objs:
+                if obj.is_comment:
+                    continue
+                elif getattr(reqobj, 'step_3_done', None):
+                    continue
+                if getattr(obj, 'unconfig_this', False):
+                    ## We need to unconfigure this obj in the diff
+                    try:
+                        #retval.extend(all_parents_config_text(obj))
+                        retval.append(obj.uncfgtext)
+                        obj.step_3_done = True
+                        if debug:
+                            print("DBG: removing {0} in diff config".format(obj))
+
+                    except AttributeError:
+                        if self.syntax=='ios':
+                            retval.extend(all_parents_config_text(obj))
+                            retval.append(" "*obj.indent + "no "+obj.text)
+
+                            obj.step_3_done = True
+                            if debug:
+                                print("DBG: removing (as ios) {0} in diff config".format(obj))
+
+                    ## If the parent is removed, no need to remove children
+                    obj_children = len(obj.children) or 0
+                    if obj_children>0:
+                        for child in obj.children:
+                            child.unconfig_this = False
+
+                # I do not think this is required...
+                #
+                #elif getattr(obj, 'config_this', False):
+                #    retval.append(obj.text)
+
+
+        # Walk required cfgspec objects and ensure their parents are required
+        for reqobj in cfgspec_parse.objs:
+            if not getattr(reqobj, 'config_this', False):
+                continue
+            reqobj_parents = len(reqobj.all_parents) or 0
+            if reqobj_parents>0:
+                for parent in reqobj.all_parents:
+                    parent.config_this = True
+    
+        # Add required cfgspec objects
+        for reqobj in cfgspec_parse.objs:
+            if not getattr(reqobj, 'config_this', False):
+                continue
+            elif getattr(reqobj, 'step_3_done', None):
+                continue
+            for obj in reqobj.lineage:
+                if not getattr(obj, 'config_this', False):
+                    continue
+                elif getattr(obj, 'step_3_done', None):
+                    continue
+                if debug:
+                    print("DBG: adding {0} from cfgspec to diff".format(obj))
+                retval.append(obj.text)
+                obj.step_3_done = True
+
+        ## Delete all the attributes we added
+        for batch in [matches, cfgspec_parse.objs]:
+            for obj in batch:
+                for attr in ['config_this', 'unconfig_this', 'step_1_done', 
+                    'step_2_done', 'step_3_done']:
+                    try:
+                        delattr(obj, attr)
+                    except:
+                        pass
+                    for pobj in obj.lineage:
+                        try:
+                            delattr(pobj, attr)
+                        except:
+                            pass
+
+        if debug:
+            print "DIFF CONFIG:"
+            for this in retval:
+                print this
+
+        return retval
+
     def save_as(self, filepath):
         """Save a text copy of the configuration at ``filepath``; this
         method uses the OperatingSystem's native line separators (such as
@@ -1643,7 +1868,6 @@ class IOSConfigList(MutableSequence):
 
         self._list = list()
         self.CiscoConfParse = CiscoConfParse
-        self.DBGFLAG = debug
         self.comment_delimiter = comment_delimiter
         self.factory = factory
         self.ignore_blank_lines = ignore_blank_lines
@@ -1956,7 +2180,6 @@ class ASAConfigList(MutableSequence):
 
         self._list = list()
         self.CiscoConfParse = CiscoConfParse
-        self.DBGFLAG = debug
         self.comment_delimiter = comment_delimiter
         self.factory = factory
         self.ignore_blank_lines = ignore_blank_lines
