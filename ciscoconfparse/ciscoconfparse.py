@@ -1585,13 +1585,13 @@ class CiscoConfParse(object):
         matches = self._find_line_OBJ(linespec)
 
         if debug:
-            print "BASELINE CONFIG:"
+            print("BASELINE CONFIG:")
             for this in matches:
-                print this.text
+                print(this.text)
 
-            print "REQUIRED CONFIG:"
+            print("REQUIRED CONFIG:")
             for this in cfgspec:
-                print this
+                print(this)
 
         # Default matches
         for obj in matches:
@@ -1757,9 +1757,9 @@ class CiscoConfParse(object):
                             pass
 
         if debug:
-            print "DIFF CONFIG:"
+            print("DIFF CONFIG:")
             for this in retval:
-                print this
+                print(this)
 
         return retval
 
