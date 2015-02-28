@@ -2005,11 +2005,14 @@ class IOSConfigList(MutableSequence):
         self.insert(list_idx, val, atomic)
 
     def _banner_mark_regex(self, REGEX):
+        # Build a list of all leading banner lines
         banner_objs = list(filter(lambda obj: REGEX.search(obj.text), self._list))
         for parent in banner_objs:
             idx = parent.linenum
             parent.oldest_ancestor = True
-            bannerchar = parent.text.strip()[-1]
+            #bannerchar = parent.text.strip()[-1]
+            bannerchar = parent.re_match_typed(r'^.+?\s+(\S+)$', group=1, 
+                default=None)
             while True:
                 idx += 1
                 try:
