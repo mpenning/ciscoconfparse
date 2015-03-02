@@ -2,21 +2,28 @@
 ## Ref https://docs.python.org/2/distutils/introduction.html
 ## Ref https://the-hitchhikers-guide-to-packaging.readthedocs.org/en/latest/
 ## Ref http://www.ibm.com/developerworks/library/os-pythonpackaging/
-import os
 
 from setuptools import setup, find_packages
 import sys
-CURRENT_PATH=os.getcwd()+'/ciscoconfparse'
+import os
+CURRENT_PATH=os.path.join(os.path.dirname(__file__), "ciscoconfparse")
 sys.path.insert(1,CURRENT_PATH)
+
+from ciscoconfparse.ciscoconfparse import __version__ as __ccpversion__
 
 def read(fname):
     # Dynamically generate setup(long_description)
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
+
+## Conditionally require the correct ipaddr package in Python2 vs Python3
+if sys.version_info[0]<3:
+    IPADDR = "ipaddr"
+else:
+    IPADDR = "ipaddress"
+
 setup(name='ciscoconfparse',
-      # TODO: Fix automagic version parsing
-      #version=__import__("ciscoconfparse").__version__,
-      version="1.2.10",
+      version=__ccpversion__,
       description='Parse, Audit, Query, Build, and Modify Cisco IOS-style configurations',
       url='http://www.pennington.net/py/ciscoconfparse/',
       author='David Michael Pennington',
@@ -30,6 +37,7 @@ setup(name='ciscoconfparse',
       packages=find_packages(),
       use_2to3=True,
       zip_safe=False,
+      install_requires = [IPADDR],       # Package dependencies here
       setup_requires=["setuptools_hg"],  # setuptools_hg must be installed as a python module
       classifiers=[
           'Development Status :: 5 - Production/Stable',
