@@ -5,11 +5,11 @@ import sys
 import re
 import os
 
-
-from ciscoconfparse import CiscoConfParse
-from models_asa import ASAObjGroupService
-from ccp_util import L4Object
-from ccp_util import IPv4Obj
+import pytest
+from .ciscoconfparse import CiscoConfParse
+from .models_asa import ASAObjGroupService
+from .ccp_util import L4Object
+from .ccp_util import IPv4Obj
 
 class knownValues(unittest.TestCase):
 
@@ -154,6 +154,8 @@ class knownValues(unittest.TestCase):
         self.assertEqual(obj.L4Objects_are_directional, True)
         self.assertEqual(obj.protocol_type, '')
 
+    @pytest.mark.xfail(sys.version_info[0]==3 and sys.version_info[1]==2,
+                       reason="Known failure in Python3.2")
     def testVal_object_group_service_02(self):
         ## This can only be configured as an object group after a host / network
         conf = ['!',
