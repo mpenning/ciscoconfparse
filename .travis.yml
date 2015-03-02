@@ -1,7 +1,7 @@
 language: python
-#install:
-#  - pip install -r requirements.txt
-#  - pip install --upgrade -q ciscoconfparse
+install:
+  - pip install --upgrade -q ciscoconfparse
+#  - pip install ipaddr
 
 # http://docs.travis-ci.com/user/languages/python/
 python:
