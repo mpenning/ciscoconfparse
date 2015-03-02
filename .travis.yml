@@ -1,7 +1,8 @@
 language: python
-install:
-  - pip install -r requirements.txt
-  - pip install --upgrade -q ciscoconfparse
+#install:
+#  - pip install -r requirements.txt
+#  - pip install --upgrade -q ciscoconfparse
+
 # http://docs.travis-ci.com/user/languages/python/
 python:
   - "2.6"
@@ -10,7 +11,9 @@ python:
   - "3.3"
   - "3.4"
   - "pypy"
+
 script: make test
+
 matrix:
   allow_failures:
     ## FIXME Python3.2 is broken (github issue #14)
