@@ -1,5 +1,6 @@
-from operator import methodcaller, attrgetter
 from collections import MutableSequence, Iterator
+from operator import methodcaller, attrgetter
+from difflib import SequenceMatcher
 import time
 import re
 import os
@@ -1541,227 +1542,222 @@ class CiscoConfParse(object):
     def sync_diff(self, cfgspec, linespec, uncfgspec=None, 
         ignore_ws=False, delete_extra_lines=True, debug=False):
 
-        def check_parent_matches(obj, reqobj):
-            """Check all parents of obj and reqobj, return True if all match"""
-            if getattr(obj, 'parents', None):
-                len_obj_parents = len(obj.parents)
-            else:
-                len_obj_parents = -1
-
-            if getattr(reqobj, 'parents', None):
-                len_reqobj_parents = len(reqobj.parents)
-            else:
-                len_reqobj_parents = -1
-
-            if (len_obj_parents==-1) and (len_reqobj_parents==-1):
-                # Return True if both have no parents
-                return True
-            elif len_obj_parents!=len_reqobj_parents:
-                # Parent objects didn't match
-                return False
-            elif len_obj_parents==len_reqobj_parents:
-                # If parent lengths match, compare each parent
-                for pobj, preqobj in zip(obj.parents, reqobj.parents):
-                    if pobj.text!=preqobj.text:
-                        return False
-                return True
-
-        def all_parents_config_text(obj):
-            """If the object's parents have .config_this, return the text"""
-            retval = list()
-            len_parents = obj.all_parents or 0
-            if len_parents>0:
-                for parent in obj.all_parents:
-                    if getattr(parent, 'config_this', False):
-                        retval.append(parent.text)
-            return retval
-            
-
+        tmp = self._find_line_OBJ(linespec)
         if (uncfgspec is None):
             uncfgspec = linespec
-        cfgspec_parse = CiscoConfParse(cfgspec, factory=False)
-        #result_parse = CiscoConfParse([], factory=False)
-        result_parse = list()
-        matches = self._find_line_OBJ(linespec)
 
-        if debug:
-            print("BASELINE CONFIG:")
-            for this in matches:
-                print(this.text)
+        b = CiscoConfParse(cfgspec, factory=False)
+        b_lines = b.ioscfg
+        a_lines = map(lambda x: x.text, tmp)
+        a = CiscoConfParse(a_lines)
 
-            print("REQUIRED CONFIG:")
-            for this in cfgspec:
-                print(this)
+        a_heirarchy = list()
+        b_heirarchy = list()
 
-        # Default matches
-        for obj in matches:
-            # Default: Reject all parents and children of matching lines
-            for relative in obj.lineage:
-                # NOTE: these objects need *both* config & unconfig attributes
-                #   because we might *not* need to configure something when
-                #   unconfig_this is False
-                relative.unconfig_this = True
-                relative.config_this   = False
+        ## Build heirarchical, equal-length lists of parents / non-parents
+        for level, nonparents, parents in a.objs.heirarchical_yield():
+            obj = DiffObject(level, nonparents, parents)
+            a_heirarchy.append(obj)
+        a_len = len(a_heirarchy)
+        for level, nonparents, parents in b.objs.heirarchical_yield():
+            obj = DiffObject(level, nonparents, parents)
+            b_heirarchy.append(obj)
+        b_len = len(b_heirarchy)
 
-        # Default reqobjs
-        for reqobj in cfgspec_parse.objs:
-            reqobj.config_this = True         # Default: sync all reqobj
-            reqobj.step_1_done = False          # We haven't finished this step
+        ## If DiffObject lists aren't equal-length by default, pad them
+        max_len = max(a_len, b_len)
+        for h_list in [a_heirarchy, b_heirarchy]:
+            h_list_len = len(h_list)
+            for ii in range(0, (max_len-h_list_len)):
+                # Append empty list objects until they are equal
+                obj = DiffObject(h_list_len+ii, [], [])
+                h_list.append(obj)
 
-        # Identify config lines to unconfigure
-        for obj in matches:
-            # Look for missing lines, which are required...
-            for reqobj in cfgspec_parse.objs:
-                if getattr(reqobj, 'step_1_done', None):
-                    continue
-                if (obj.text==reqobj.text) and check_parent_matches(obj, reqobj):
-                    obj.unconfig_this = False   # Keep this obj
-                    reqobj.config_this = False  # We don't have to sync this reqobj
-                    reqobj.step_1_done = True
-                    break
-                elif ignore_ws and (obj.text.rstrip()==reqobj.text.rstrip()):
-                    obj.unconfig_this = False   # Keep this obj
-                    reqobj.config_this = False  # We don't have to sync this reqobj
-                    reqobj.step_1_done = True
-                    break
-                elif len(reqobj.children)>0:
-                    # By now, we know that obj.text!=reqobj.text
-                    #   It's useless to match reqobj children if reqobj failed
-                    reqobj.step_1_done = True
-                    break
+        ## Assign config_this and unconfig_this attributes by "diff level"
+        for adiff_level, bdiff_level in zip(a_heirarchy, b_heirarchy):
+            for attr in ['parents', 'nonparents']:
+                a_lines = map(lambda x: getattr(x, 'text'), getattr(adiff_level, attr))
+                b_lines = map(lambda x: getattr(x, 'text'), getattr(bdiff_level, attr))
 
-        # By default all matches are unconfigured:
-        #   Audit all parents and configure any that have children to 
-        #   remove
-        for obj in matches:
-            if getattr(obj, 'unconfig_this', False):
-                if getattr(obj, 'step_2_done', None):
-                    continue
-                for child in obj.all_children:
-                    if getattr(child, 'step_2_done', None):
-                        continue
-                    elif getattr(child, 'config_this', False):
-                        # configure the parent, if there is a child which
-                        #    requires deletion
-                        obj.unconfig_this = False
-                        obj.config_this = True
-                    child.step_2_done = True
-            obj.step_2_done = True
+                # Build a map from a_lines index to a.ConfigObjs index
+                a_linenums = map(lambda x: getattr(x, 'linenum'), getattr(adiff_level, attr))
+                # Build a map from b_lines index to b.ConfigObjs index
+                b_linenums = map(lambda x: getattr(x, 'linenum'), getattr(bdiff_level, attr))
 
-        # Recurse offensive lines to their most offensive ancestor to remove it
-        for obj in filter(lambda x: getattr(x, 'unconfig_this', False), matches):
-            skip_all_others = False
-            for candidate in obj.lineage:
-                if skip_all_others or candidate.is_comment:
-                    continue
-                # Reject the oldest ancestor which has unconfig_this==True
-                if getattr(candidate, 'unconfig_this', False):
-                    # uncfgspec *must* match for us to reject the line...
-                    mm = re.search(uncfgspec, candidate.text)
-                    if not (mm is None):
-                        relative.add_uncfgtext(mm.group(0))
-                        break   # Go to the next obj
-                if obj==candidate:
-                    skip_all_others = True
-            else:
-                # uncfgspec didn't match any of the relatives...
-                if not obj.is_comment:
-                    raise ValueError("Could not unconfigure {0}".format(obj))
+                # Get a SequenceMatcher instance to calculate diffs at this level
+                matcher = SequenceMatcher(isjunk=None, a=a_lines, b=b_lines)
 
-        # Walk match objs and ensure required obj's parents are required
-        for obj in matches:
-            if getattr(obj, 'config_this', False):
-                continue
-            obj_parents = len(obj.all_parents) or 0
-            if obj_parents>0:
-                for parent in obj.all_parents:
-                    parent.config_this = True
-                    parent.unconfig_this = False
+                # Use the SequenceMatcher instance to label objects appropriately:
+                #  - tag is the diff evaluation: equal, replace, insert, or delete
+                #  - i1 and i2 are the begin and end points for arg a
+                #  - j1 and j2 are the begin and end points for arg b
+                for tag, i1, i2, j1, j2 in matcher.get_opcodes():
+                    #print ("%7s a[%d:%d] (%s) b[%d:%d] (%s)" % (tag, i1, i2, a_lines[i1:i2], j1, j2, b_lines[j1:j2]))
+                    if debug:
+                        print("DBG: TAG='{0}'".format(tag))
+
+                    # if tag=='equal', check whether the parent objs are the same
+                    #     if parent objects are the same, then do nothing
+                    #     if parent objects are different, then delete a & config b
+                    # if tag=='replace'
+                    #     delete a & config b
+                    # if tag=='insert', then configure b
+                    aobjs = list()  # List of a IOSConfigLine objects at this level
+                    bobjs = list()  # List of b IOSConfigLine objects at this level
+                    for num in range(i1, i2):
+                        aobj = a.ConfigObjs[a_linenums[num]]
+                        aobjs.append(aobj)
+                    for num in range(j1, j2):
+                        bobj = b.ConfigObjs[b_linenums[num]]
+                        bobjs.append(bobj)
+
+                    max_len = max(len(aobjs), len(bobjs))
+                    for idx in range(0, max_len):
+                        try:
+                            aobj = aobjs[idx]
+                            # set aparent_text to all parents' text (joined)
+                            aparent_text = ' '.join(map(lambda x: x.text, aobj.all_parents))
+                        except IndexError:
+                            # aobj doesn't exist, if we get an index error
+                            #    fake some data...
+                            aobj = None
+                            aparent_text = '__ANOTHING__'
+                        if debug:
+                            print("    DBG: aobj:'{0}'".format(aobj))
+                            print("    DBG: aobj parents:'{0}'".format(aparent_text))
+
+                        try:
+                            bobj = bobjs[idx]
+                            # set bparent_text to all parents' text (joined)
+                            bparent_text = ' '.join(map(lambda x: x.text, bobj.all_parents))
+                        except IndexError:
+                            # bobj doesn't exist, if we get an index error
+                            #    fake some data...
+                            bobj = None
+                            bparent_text = '__BNOTHING__'
+
+                        if debug:
+                            print("    DBG: bobj:'{0}'".format(bobj))
+                            print("    DBG: bobj parents:'{0}'".format(bparent_text))
+
+                        if (tag=='equal'):
+                            # If the diff claims that these lines are equal, they
+                            #   aren't truly equal unless parents match
+                            if aparent_text!=bparent_text:
+                                if debug:
+                                    print("    DBG1: tagged 'equal', aparent_text!=bparent_text")
+                                # a & b parents are *not* the same
+                                #  therefore a & b are not equal
+                                if aobj:
+                                    # Only configure parent if it's not already
+                                    #    slated for removal
+                                    if not getattr(aobj.parent, 'unconfig_this', False):
+                                        aobj.parent.config_this = True
+                                    aobj.unconfig_this = True
+                                    if debug:
+                                        print("    DBG1: unconfigure aobj")
+                                if bobj:
+                                    bobj.config_this = True
+                                    bobj.parent.config_this = True
+                                    if debug:
+                                        print("    DBG1: configure bobj")
+                            elif aparent_text==bparent_text:
+                                # Both a & b parents match, so these lines are equal
+                                aobj.unconfig_this = False
+                                bobj.config_this = False
+                                if debug:
+                                    print("    DBG2: tagged 'equal', aparent_text==bparent_text")
+                                    print("    DBG2:   do nothing with aobj / bobj")
+                        elif (tag=='replace'):
+                            # tag: replace, I'm not going to check parents for now
+                            if debug:
+                                print("    DBG3: tagged 'replace'")
+                            if aobj:
+                                # Only configure parent if it's not already
+                                #    slated for removal
+                                if not getattr(aobj.parent, 'unconfig_this', False):
+                                    aobj.parent.config_this = True
+                                aobj.unconfig_this = True
+                                if debug:
+                                    print("    DBG3: unconfigure aobj")
+                            if bobj:
+                                bobj.config_this = True
+                                bobj.parent.config_this = True
+                                if debug:
+                                    print("    DBG3: configure bobj")
+                        elif (tag=='insert'):
+                            if debug:
+                                print("    DBG4: tagged 'insert'")
+                            # I don't think tag: insert ever applies to a objects...
+                            if aobj:
+                                # Only configure parent if it's not already
+                                #    slated for removal
+                                if not getattr(aobj.parent, 'unconfig_this', False):
+                                    aobj.parent.config_this = True
+                                aobj.unconfig_this = True
+                                if debug:
+                                    print("    DBG4: unconfigure aobj")
+                            # tag: insert certainly applies to b objects...
+                            if bobj:
+                                bobj.config_this = True
+                                bobj.parent.config_this = True
+                                if debug:
+                                    print("    DBG4: configure bobj")
+                        elif (tag=='delete'):
+                            # NOTE: I'm not deleting b objects, for now
+                            if debug:
+                                print("    DBG5: tagged 'delete'")
+                            if aobj:
+                                # Only configure parent if it's not already
+                                #    slated for removal
+                                if not getattr(aobj.parent, 'unconfig_this', False):
+                                    aobj.parent.config_this = True
+                                aobj.unconfig_this = True
+                                if debug:
+                                    print("    DBG5: unconfigure aobj")
+                        else:
+                            raise ValueError("Unknown action: {0}".format(tag))
 
         retval = list()
-        # Conditionally remove lines in the config diff
-        if delete_extra_lines:
-            for obj in self.objs:
-                if obj.is_comment:
-                    continue
-                elif getattr(reqobj, 'step_3_done', None):
-                    continue
-                if getattr(obj, 'unconfig_this', False):
-                    ## We need to unconfigure this obj in the diff
-                    try:
-                        #retval.extend(all_parents_config_text(obj))
+        ## Unconfigure A objects, as required
+        for obj in a.ConfigObjs:
+            if getattr(obj, 'unconfig_this', False):
+                ## FIXME: This should only be applied to IOS and ASA configs
+                if uncfgspec:
+                    mm = re.search(uncfgspec, obj.text)
+                    if not (mm is None):
+                        obj.add_uncfgtext(mm.group(0))
                         retval.append(obj.uncfgtext)
-                        obj.step_3_done = True
-                        if debug:
-                            print("DBG: removing {0} in diff config".format(obj))
-
-                    except AttributeError:
-                        if self.syntax=='ios':
-                            retval.extend(all_parents_config_text(obj))
-                            retval.append(" "*obj.indent + "no "+obj.text)
-
-                            obj.step_3_done = True
-                            if debug:
-                                print("DBG: removing (as ios) {0} in diff config".format(obj))
-
-                    ## If the parent is removed, no need to remove children
-                    obj_children = len(obj.children) or 0
-                    if obj_children>0:
-                        for child in obj.children:
-                            child.unconfig_this = False
-
-                # I do not think this is required...
-                #
-                #elif getattr(obj, 'config_this', False):
-                #    retval.append(obj.text)
-
-
-        # Walk required cfgspec objects and ensure their parents are required
-        for reqobj in cfgspec_parse.objs:
-            if not getattr(reqobj, 'config_this', False):
-                continue
-            reqobj_parents = len(reqobj.all_parents) or 0
-            if reqobj_parents>0:
-                for parent in reqobj.all_parents:
-                    parent.config_this = True
-    
-        # Add required cfgspec objects
-        for reqobj in cfgspec_parse.objs:
-            if not getattr(reqobj, 'config_this', False):
-                continue
-            elif getattr(reqobj, 'step_3_done', None):
-                continue
-            for obj in reqobj.lineage:
-                if not getattr(obj, 'config_this', False):
-                    continue
-                elif getattr(obj, 'step_3_done', None):
-                    continue
-                if debug:
-                    print("DBG: adding {0} from cfgspec to diff".format(obj))
+                    else:
+                        retval.append(" "*obj.indent + "no " + obj.text.lstrip())
+                else:
+                    retval.append(" "*obj.indent + "no " + obj.text.lstrip())
+            elif getattr(obj, 'config_this', False):
                 retval.append(obj.text)
-                obj.step_3_done = True
 
-        ## Delete all the attributes we added
-        for batch in [matches, cfgspec_parse.objs]:
-            for obj in batch:
-                for attr in ['config_this', 'unconfig_this', 'step_1_done', 
-                    'step_2_done', 'step_3_done']:
-                    try:
-                        delattr(obj, attr)
-                    except:
-                        pass
-                    for pobj in obj.lineage:
-                        try:
-                            delattr(pobj, attr)
-                        except:
-                            pass
+            # Clean up the attributes we used temporarily in this method
+            for attr in ['config_this', 'unconfig_this']:
+                try:
+                    delattr(obj.text, attr)
+                except:
+                    pass
 
+        ## Configure B objects, as required
+        for obj in b.ConfigObjs:
+            if getattr(obj, 'config_this', False):
+                retval.append(obj.text)
+
+            # Clean up the attributes we used temporarily in this method
+            try:
+                delattr(obj.text, 'config_this')
+            except:
+                pass
         if debug:
-            print("DIFF CONFIG:")
-            for this in retval:
-                print(this)
-
+            print("DBG: Completed diff:")
+            for line in retval:
+                print("DBG:'{0}'".format(line))
         return retval
+
 
     def save_as(self, filepath):
         """Save a text copy of the configuration at ``filepath``; this
@@ -2003,6 +1999,41 @@ class IOSConfigList(MutableSequence):
     def append(self, val, atomic=True):
         list_idx = len(self._list)
         self.insert(list_idx, val, atomic)
+
+    def heirarchical_yield(self):
+        """Walk this configuration and return the following tuple
+        at each parent 'level':
+            (level, list_of_nonparent_siblings, list_of_parent_siblings)"""
+        level = 0
+        finished = False
+        last_parent_siblings = list()
+        while not finished:
+            parent_siblings = list()
+            nonparent_siblings = list()
+            if level==0:
+                for obj in self.CiscoConfParse.find_objects('^\S+'):
+                    if obj.is_comment:
+                        continue
+                    elif len(obj.children)==0:
+                        nonparent_siblings.append(obj)
+                    else:
+                        parent_siblings.append(obj)
+            else:
+                for parent in last_parent_siblings:
+                    for obj in parent.children:
+                        if obj.is_comment:
+                            continue
+                        elif len(obj.children)==0:
+                            nonparent_siblings.append(obj)
+                        else:
+                            parent_siblings.append(obj)
+
+            if (len(nonparent_siblings)==0) and (len(parent_siblings)==0):
+                finished = True
+            else:
+                last_parent_siblings = parent_siblings
+                yield (level, nonparent_siblings, parent_siblings)
+                level += 1
 
     def _banner_mark_regex(self, REGEX):
         # Build a list of all leading banner lines
@@ -2318,6 +2349,41 @@ class ASAConfigList(MutableSequence):
         list_idx = len(self._list)
         self.insert(list_idx, val, atomic)
 
+    def heirarchical_yield(self):
+        """Walk this configuration and return the following tuple
+        at each parent 'level':
+            (level, list_of_nonparent_siblings, list_of_parent_siblings)"""
+        level = 0
+        finished = False
+        last_parent_siblings = list()
+        while not finished:
+            parent_siblings = list()
+            nonparent_siblings = list()
+            if level==0:
+                for obj in self.CiscoConfParse.find_objects('^\S+'):
+                    if obj.is_comment:
+                        continue
+                    elif len(obj.children)==0:
+                        nonparent_siblings.append(obj)
+                    else:
+                        parent_siblings.append(obj)
+            else:
+                for parent in last_parent_siblings:
+                    for obj in parent.children:
+                        if obj.is_comment:
+                            continue
+                        elif len(obj.children)==0:
+                            nonparent_siblings.append(obj)
+                        else:
+                            parent_siblings.append(obj)
+
+            if (len(nonparent_siblings)==0) and (len(parent_siblings)==0):
+                finished = True
+            else:
+                last_parent_siblings = parent_siblings
+                yield (level, nonparent_siblings, parent_siblings)
+                level += 1
+
     def _bootstrap_obj_init(self, text_list):
         """Accept a text list and format into proper objects"""
         # Append text lines as IOSCfgLine objects...
@@ -2473,6 +2539,14 @@ class ASAConfigList(MutableSequence):
             retval[name] = obj
         return retval
 
+class DiffObject(object):
+    """This object should be used at every level of heirarchy"""
+    def __init__(self, level, nonparents, parents):
+        self.level = level
+        self.nonparents = nonparents
+        self.parents = parents
+    def __repr__(self):
+        return "<DiffObject level: {0}>".format(self.level)
 
 class CiscoPassword(object):
 
