@@ -1,5 +1,5 @@
-PY27DEVTESTS=find ./ciscoconfparse/* -name 'test_*.py' -exec /opt/virtual_env/py27_test/bin/python {} \;
-PY34DEVTESTS=find ./ciscoconfparse/* -name 'test_*.py' -exec /opt/virtual_env/py34_test/bin/python {} \;
+PY27DEVTESTS=cd ciscoconfparse;find ./* -name 'test_*.py' -exec /opt/virtual_env/py27_test/bin/py.test -s {} \;
+PY34DEVTESTS=cd ciscoconfparse;find ./* -name 'test_*.py' -exec /opt/virtual_env/py34_test/bin/py.test -s {} \;
 BITBUCKETPUSH = $(shell bash -c 'read -s -p "Bitbucket Password: " pwd; hg push "https://mpenning:$$pwd@bitbucket.org/mpenning/ciscoconfparse"')
 DOCHOST ?= $(shell bash -c 'read -p "documentation host: " dochost; echo $$dochost')
 
@@ -23,10 +23,10 @@ parse-iosxr-banner:
 	cd ciscoconfparse; python parse_test.py 3 | less
 .PHONY: perf-acl
 perf-acl:
-	cd ciscoconfparse; python performance_test.py 5 | less
+	cd ciscoconfparse; python performance_case.py 5 | less
 .PHONY: perf-factory-intf
 perf-factory-intf:
-	cd ciscoconfparse; python performance_test.py 6 | less
+	cd ciscoconfparse; python performance_case.py 6 | less
 .PHONY: devpkgs
 devpkgs:
 	pip install --upgrade pip
