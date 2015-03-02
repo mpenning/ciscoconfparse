@@ -1,1052 +1,971 @@
-#!/usr/bin/env python
-
 from operator import attrgetter
 from itertools import repeat
-from mock import Mock, patch
 from copy import deepcopy
-import unittest
+from mock import patch
 import sys
 import re
-import os
 
-
-from models_cisco import IOSCfgLine, IOSIntfLine
-from ciscoconfparse import CiscoConfParse
+import pytest
+from .ciscoconfparse import CiscoConfParse, IOSCfgLine, IOSIntfLine
 from ccp_util import IPv4Obj
 
-class knownValues(unittest.TestCase):
+def testValues_banner_child_parsing_01(parse_c01):
+    """Associate banner lines as parent / child"""
+    result_correct = {
+        59: 58,
+        60: 58,
+        61: 58,
+        62: 58,
+        63: 63,  # Ensure the line *after* the banner isn't a child
+    }
+    banner_obj = parse_c01.find_objects('^banner')[0]
 
-    def setUp(self):
-        """This method is called before all tests, initializing all variables"""
+    # Check banner's parent line (should be its line number)
+    assert banner_obj.parent.linenum == 58
+    for child in banner_obj.all_children:
+        test_result = child.parent.linenum
+        assert result_correct[child.linenum]==test_result
 
-        self.c01 = [
-            'policy-map QOS_1',
-            ' class GOLD',
-            '  priority percent 10',
-            ' !',
-            ' class SILVER',
-            '  bandwidth 30',
-            '  random-detect',
-            ' !',
-            ' class BRONZE',
-            '  random-detect',
-            '!',
-            'interface Serial 1/0',
-            ' encapsulation ppp',
-            ' ip address 1.1.1.1 255.255.255.252',
-            '!',
-            'interface GigabitEthernet4/1',
-            ' switchport',
-            ' switchport access vlan 100',
-            ' switchport voice vlan 150',
-            ' power inline static max 7000',
-            '!',
-            'interface GigabitEthernet4/2',
-            ' switchport',
-            ' switchport access vlan 100',
-            ' switchport voice vlan 150',
-            ' power inline static max 7000',
-            '!',
-            'interface GigabitEthernet4/3',
-            ' switchport',
-            ' switchport access vlan 100',
-            ' switchport voice vlan 150',
-            '!',
-            'interface GigabitEthernet4/4',
-            ' shutdown',
-            '!',
-            'interface GigabitEthernet4/5',
-            ' switchport',
-            ' switchport access vlan 110',
-            '!',
-            'interface GigabitEthernet4/6',
-            ' switchport',
-            ' switchport access vlan 110',
-            '!',
-            'interface GigabitEthernet4/7',
-            ' switchport',
-            ' switchport access vlan 110',
-            '!',
-            'interface GigabitEthernet4/8',
-            ' switchport',
-            ' switchport access vlan 110',
-            '!',
-            'access-list 101 deny tcp any any eq 25 log',
-            'access-list 101 permit ip any any',
-            '!',
-            '!',
-            'logging 1.1.3.5',
-            'logging 1.1.3.17',
-            '!',
-            'banner login ^C'
-            'This is a router, and you cannot have it.',
-            'Log off now while you still can type. I break the fingers',
-            'of all tresspassers.',
-            '^C',
-            'alias exec showthang show ip route vrf THANG',
-            ]
-
-        self.c01_default_gigabitethernets = [
-            'policy-map QOS_1',
-            ' class GOLD',
-            '  priority percent 10',
-            ' !',
-            ' class SILVER',
-            '  bandwidth 30',
-            '  random-detect',
-            ' !',
-            ' class BRONZE',
-            '  random-detect',
-            '!',
-            'interface Serial 1/0',
-            ' encapsulation ppp',
-            ' ip address 1.1.1.1 255.255.255.252',
-            '!',
-            'default interface GigabitEthernet4/1',
-            'interface GigabitEthernet4/1',
-            ' switchport',
-            ' switchport access vlan 100',
-            ' switchport voice vlan 150',
-            ' power inline static max 7000',
-            '!',
-            'default interface GigabitEthernet4/2',
-            'interface GigabitEthernet4/2',
-            ' switchport',
-            ' switchport access vlan 100',
-            ' switchport voice vlan 150',
-            ' power inline static max 7000',
-            '!',
-            'default interface GigabitEthernet4/3',
-            'interface GigabitEthernet4/3',
-            ' switchport',
-            ' switchport access vlan 100',
-            ' switchport voice vlan 150',
-            '!',
-            'default interface GigabitEthernet4/4',
-            'interface GigabitEthernet4/4',
-            ' shutdown',
-            '!',
-            'default interface GigabitEthernet4/5',
-            'interface GigabitEthernet4/5',
-            ' switchport',
-            ' switchport access vlan 110',
-            '!',
-            'default interface GigabitEthernet4/6',
-            'interface GigabitEthernet4/6',
-            ' switchport',
-            ' switchport access vlan 110',
-            '!',
-            'default interface GigabitEthernet4/7',
-            'interface GigabitEthernet4/7',
-            ' switchport',
-            ' switchport access vlan 110',
-            '!',
-            'default interface GigabitEthernet4/8',
-            'interface GigabitEthernet4/8',
-            ' switchport',
-            ' switchport access vlan 110',
-            '!',
-            'access-list 101 deny tcp any any eq 25 log',
-            'access-list 101 permit ip any any',
-            '!',
-            '!',
-            'logging 1.1.3.5',
-            'logging 1.1.3.17',
-            '!',
-            'banner login ^C'
-            'This is a router, and you cannot have it.',
-            'Log off now while you still can type. I break the fingers',
-            'of all tresspassers.',
-            '^C',
-            'alias exec showthang show ip route vrf THANG',
-            ]
-
-        self.c01_insert_serial_replace = [
-            'policy-map QOS_1',
-            ' class GOLD',
-            '  priority percent 10',
-            ' !',
-            ' class SILVER',
-            '  bandwidth 30',
-            '  random-detect',
-            ' !',
-            ' class BRONZE',
-            '  random-detect',
-            '!',
-            'default interface Serial 2/0',
-            'interface Serial 2/0',
-            ' encapsulation ppp',
-            ' ip address 1.1.1.1 255.255.255.252',
-            '!',
-            'interface GigabitEthernet4/1',
-            ' switchport',
-            ' switchport access vlan 100',
-            ' switchport voice vlan 150',
-            ' power inline static max 7000',
-            '!',
-            'interface GigabitEthernet4/2',
-            ' switchport',
-            ' switchport access vlan 100',
-            ' switchport voice vlan 150',
-            ' power inline static max 7000',
-            '!',
-            'interface GigabitEthernet4/3',
-            ' switchport',
-            ' switchport access vlan 100',
-            ' switchport voice vlan 150',
-            '!',
-            'interface GigabitEthernet4/4',
-            ' shutdown',
-            '!',
-            'interface GigabitEthernet4/5',
-            ' switchport',
-            ' switchport access vlan 110',
-            '!',
-            'interface GigabitEthernet4/6',
-            ' switchport',
-            ' switchport access vlan 110',
-            '!',
-            'interface GigabitEthernet4/7',
-            ' switchport',
-            ' switchport access vlan 110',
-            '!',
-            'interface GigabitEthernet4/8',
-            ' switchport',
-            ' switchport access vlan 110',
-            '!',
-            'access-list 101 deny tcp any any eq 25 log',
-            'access-list 101 permit ip any any',
-            '!',
-            '!',
-            'logging 1.1.3.5',
-            'logging 1.1.3.17',
-            '!',
-            'banner login ^C'
-            'This is a router, and you cannot have it.',
-            'Log off now while you still can type. I break the fingers',
-            'of all tresspassers.',
-            '^C',
-            'alias exec showthang show ip route vrf THANG',
-            ]
-
-        self.c01_banner = [
-            '!',
-            'interface GigabitEthernet4/8',
-            ' switchport',
-            ' switchport access vlan 110',
-            '!',
-            'banner login ^C'
-            'This is a router, and you cannot have it.',
-            'Log off now while you still can type. I break the fingers',
-            'of all tresspassers.',
-            '^C',
-            '!',
-            'alias exec showthang show ip route vrf THANG',
-            ]
-
-        self.c01_intf = [
-            'interface Serial 1/0',
-            ]
-
-        self.c01_pmap_children = [
-            'policy-map QOS_1',
-            ' class GOLD',
-            ' class SILVER',
-            ' class BRONZE',
-            ]
-
-        self.c01_pmap_all_children = [
-            'policy-map QOS_1',
-            ' class GOLD',
-            '  priority percent 10',
-            ' class SILVER',
-            '  bandwidth 30',
-            '  random-detect',
-            ' class BRONZE',
-            '  random-detect',
-            ]
-
-        self.c01_find_gige_no_exactmatch = [
-            'interface GigabitEthernet4/1', 
-            'interface GigabitEthernet4/2', 
-            'interface GigabitEthernet4/3', 
-            'interface GigabitEthernet4/4', 
-            'interface GigabitEthernet4/5', 
-            'interface GigabitEthernet4/6', 
-            'interface GigabitEthernet4/7', 
-            'interface GigabitEthernet4/8']
-
-        self.c01_intf_no_exactmatch = [
-            'interface GigabitEthernet4/1',
-            'interface GigabitEthernet4/2',
-            ]
+def testValues_parent_child_parsing_01(parse_c01):
+    parent_intf = {
+        # Line 13's parent should be 11, etc...
+        13: 11,
+        16: 15,
+        17: 15,
+        18: 15,
+        19: 15,
+        22: 21,
+        23: 21,
+        24: 21,
+        25: 21,
+    }
+    for obj in parse_c01.find_objects(''):
+        result_correct = parent_intf.get(obj.linenum, False)
+        if result_correct:
+            test_result = obj.parent.linenum
+            ## Does this object parent's line number match?
+            assert result_correct==test_result
 
 
-        self.c01_parents_w_child_power = [
-            'interface GigabitEthernet4/1',
-            'interface GigabitEthernet4/2',
-            ]
+def testValues_parent_child_parsing_02(parse_c01):
+    cfg = parse_c01
+    # Expected child / parent line numbers before the insert
+    parent_intf_before = {
+        # Line 11 is Serial1/0, child is line 13
+        13: 11,
+        # Line 15 is GigabitEthernet4/1
+        16: 15,
+        17: 15,
+        18: 15,
+        19: 15,
+        # Line 21 is GigabitEthernet4/2
+        22: 21,
+        23: 21,
+        24: 21,
+        25: 21,
+    }
+    # Expected child / parent line numbers after the insert
+
+    # Validate line numbers *before* inserting
+    for obj in cfg.find_objects(''):
+        result_correct = parent_intf_before.get(obj.linenum, False)
+        if result_correct:
+            test_result = obj.parent.linenum
+            ## Does this object parent's line number match?
+            assert result_correct==test_result
+
+    # Insert lines here...
+    for intf_obj in cfg.find_objects('^interface\sGigabitEthernet'):
+        # Configured with an access vlan...
+        if ' switchport access vlan 100' in set(map(attrgetter('text'), intf_obj.children)):
+            intf_obj.insert_after(' spanning-tree portfast')
+    cfg.atomic()
+
+    parent_intf_after = {
+        # Line 11 is Serial1/0, child is line 13
+        13: 11,
+        # Line 15 is GigabitEthernet4/1
+        16: 15,
+        17: 15,
+        18: 15,
+        19: 15,
+        # Line 22 is GigabitEthernet4/2
+        23: 22,
+        24: 22,
+        25: 22,
+        26: 22,
+    }
+    # Validate line numbers *after* inserting
+    for obj in cfg.find_objects(''):
+        result_correct = parent_intf_after.get(obj.linenum, False)
+        if result_correct:
+            test_result = obj.parent.linenum
+            ## Does this object parent's line number match?
+            assert result_correct==test_result
 
 
-        self.c01_parents_w_child_voice = [
-            'interface GigabitEthernet4/1',
-            'interface GigabitEthernet4/2',
-            'interface GigabitEthernet4/3',
-            ]
-
-        self.c01_parents_wo_child_power = [
-            'interface GigabitEthernet4/3',
-            'interface GigabitEthernet4/4',
-            'interface GigabitEthernet4/5',
-            'interface GigabitEthernet4/6',
-            'interface GigabitEthernet4/7',
-            'interface GigabitEthernet4/8',
-            ]
-
-        self.c01_replace_gige_no_exactmatch = [
-            'interface GigabitEthernet8/1', 
-            'interface GigabitEthernet8/2', 
-            'interface GigabitEthernet8/3', 
-            'interface GigabitEthernet8/4', 
-            'interface GigabitEthernet8/5', 
-            'interface GigabitEthernet8/6', 
-            'interface GigabitEthernet8/7', 
-            'interface GigabitEthernet8/8']
-
-        self.c01_replace_gige_exclude = [
-            'interface GigabitEthernet8/1', 
-            'interface GigabitEthernet8/2', 
-            'interface GigabitEthernet8/3', 
-            'interface GigabitEthernet8/7', 
-            'interface GigabitEthernet8/8']
-
-
-        self.c01_children_w_parents_switchport = [
-            ' switchport',
-            ' switchport access vlan 100',
-            ' switchport voice vlan 150',
-            ]
-
-        self.c01_replace_children = [
-            ' power inline static max 30000', 
-            ' power inline static max 30000'
-            ]
-
-        self.c01_req_excl_logging = [
-            'no logging 1.1.3.17',
-            'logging 1.1.3.4',
-            'logging 1.1.3.6',
-            ]
-
-        self.c01_req_all_logging = [
-            'logging 1.1.3.4',
-            'logging 1.1.3.6',
-            ]
-
-        tmp = [
-              ('interface Serial 1/0', 11),
-              ('interface GigabitEthernet4/1', 15),
-              ('interface GigabitEthernet4/2', 21),
-              ('interface GigabitEthernet4/3', 27),
-              ('interface GigabitEthernet4/4', 32),
-              ('interface GigabitEthernet4/5', 35),
-              ('interface GigabitEthernet4/6', 39),
-              ('interface GigabitEthernet4/7', 43),
-              ('interface GigabitEthernet4/8', 47),
-              ]
-        self.c01_find_objects = list()
-        for line, linenum in tmp:
-            # Mock up the correct object
-            obj = IOSCfgLine()
-            obj.text = line
-            obj.linenum = linenum
-            self.c01_find_objects.append(obj)
-
-        self.c02 = [
-            'interface Serial1/0',
-            ' encapsulation ppp',
-            ' ip address 1.1.1.1 255.255.255.252',
-            ]
-
-        # Expected result from one of the unit tests
-        self.c02_encap = [
-            ' encapsulation ppp',
-            ]
-
-        self.c03 = [
-            'set snmp community read-only     myreadonlystring'
-            ]
-
-        self.c04 = [
-            '!',
-            'interface Serial1/0',
-            ' encapsulation ppp',
-            ' ip address 1.1.1.1 255.255.255.252',
-            ' no ip proxy-arp',
-            '!',
-            'interface Serial1/1',
-            ' encapsulation ppp',
-            ' ip address 1.1.1.5 255.255.255.252',
-            '!',
-            ]
-
-        ##--------------------------------
-        # Keep tuples of test parameters below the line
-        #
-        #    Format: (config, args, result_correct)
-        #       config    : the configuration to test
-        #       args      : the arguments to pass to the function
-        #       result_correct: passing value
-        
-
-        self.find_lines_Values = (
+def testValues_find_lines(parse_c01):
+    c01_intf = ['interface Serial 1/0']
+    c01_find_gige_no_exactmatch = [
+        'interface GigabitEthernet4/1',
+        'interface GigabitEthernet4/2',
+        'interface GigabitEthernet4/3',
+        'interface GigabitEthernet4/4',
+        'interface GigabitEthernet4/5',
+        'interface GigabitEthernet4/6',
+        'interface GigabitEthernet4/7',
+        'interface GigabitEthernet4/8']
+    find_lines_Values = (
             # Ensure exact matches work regardless of the exactmatch boolean
-            (self.c01, {'linespec': "interface Serial 1/0", 
-                'exactmatch': False}, self.c01_intf),
-            (self.c01, {'linespec': "interface Serial 1/0", 
-                'exactmatch': True}, self.c01_intf),
+            ({'linespec': "interface Serial 1/0",
+                'exactmatch': False}, c01_intf),
+            ({'linespec': "interface Serial 1/0",
+                'exactmatch': True}, c01_intf),
+
             # Ensure we can find string matches inside an interface config block
-            (self.c02, {'linespec': "encapsulation", 
-                'exactmatch': False}, self.c02_encap),
+            ({'linespec': "encapsulation",
+                'exactmatch': False}, [' encapsulation ppp']),
+
             # Ensure exactmatch=False catches beginning phrases in the config
-            (self.c01, {'linespec': "interface GigabitEthernet4/", 
-                'exactmatch': False}, self.c01_find_gige_no_exactmatch),
+            ({'linespec': "interface GigabitEthernet4/",
+                'exactmatch': False}, c01_find_gige_no_exactmatch),
             # Ensure exactmatch=False catches single words in the config
-            (self.c01, {'linespec': "igabitEthernet", 
-                'exactmatch': False}, self.c01_find_gige_no_exactmatch),
+            ({'linespec': "igabitEthernet",
+                'exactmatch': False}, c01_find_gige_no_exactmatch),
             # Negative test: matches are Case-Sensitive
-            (self.c01, {'linespec': "GigaBitEtherNeT", 
+            ({'linespec': "GigaBitEtherNeT",
                 'exactmatch': False}, []),
             # Negative test for exactmatch=True
-            (self.c01, {'linespec': "interface GigabitEthernet4/", 
+            ({'linespec': "interface GigabitEthernet4/",
                 'exactmatch': True}, []),
             # Negative test for exactmatch=True and ignore_ws=False
-            (self.c01, {'linespec': "interface Serial1/0", 
+            ({'linespec': "interface Serial1/0",
                 'exactmatch': True, 'ignore_ws': False}, []),
         )
 
-        self.find_children_Values = (
-            (self.c01, {'linespec': "policy-map", 'exactmatch': False}, 
-                self.c01_pmap_children),
-            (self.c01, {'linespec': "policy-map", 'exactmatch': True}, []),
-        )
+    for args, result_correct in find_lines_Values:
+        test_result = parse_c01.find_lines(**args)
+        assert result_correct==test_result
 
-        self.find_all_children_Values = (
-            (self.c01, {'linespec': "policy-map", 'exactmatch': False}, 
-                self.c01_pmap_all_children),
-            (self.c01, {'linespec': "policy-map", 'exactmatch': True}, []),
-        )
+def testValues_find_children(parse_c01):
+    c01_pmap_children = [
+        'policy-map QOS_1',
+        ' class GOLD',
+        ' class SILVER',
+        ' class BRONZE',
+        ]
 
-        self.find_parents_w_child_Values = (
-            (self.c01, {'parentspec': "interf", 'childspec': "power inline"}, 
-                self.c01_parents_w_child_power),
-        (self.c01, {'parentspec': "interf", 'childspec': " switchport voice"}, 
-                self.c01_parents_w_child_voice),
-        (self.c01, {'parentspec': "^interface$", 
-                'childspec': "switchport voice"}, 
-                []),
-        )
+    find_children_Values = (
+        ({'linespec': "policy-map", 'exactmatch': False},
+            c01_pmap_children),
+        ({'linespec': "policy-map", 'exactmatch': True}, []),
+    )
+    for args, result_correct in find_children_Values:
+        test_result = parse_c01.find_children(**args)
+        assert result_correct==test_result
 
-        self.find_parents_wo_child_Values = (
-            (self.c01, {'parentspec': "interface Gig", 
-                'childspec': "power inline"}, 
-                self.c01_parents_wo_child_power),
-        )
 
-        self.find_children_w_parents_Values = (
-            (self.c01, {'parentspec': "^interface GigabitEthernet4/1", 
-                'childspec': "switchport"}, 
-                self.c01_children_w_parents_switchport),
-        )
 
-        self.replace_lines_Values01 = (
-            # Ensure basic replacements work
-            (self.c01, {'linespec': r"interface Serial 1/0", 
-                'replacestr': "interface Serial 2/0"}, 
-                ['interface Serial 2/0']),
-            # Ensure we make multiple replacements as required
-            (self.c01, {'linespec': "GigabitEthernet4/", 
-                'replacestr': "GigabitEthernet8/", 'exactmatch': False}, 
-                self.c01_replace_gige_no_exactmatch),
-        )
 
-        self.replace_lines_Values02 = (
-            # Ensure exactmatch rejects substrings
-            (self.c01, {'linespec': "interface Serial 1/", 
-                'replacestr': "interface Serial 2/", 'exactmatch': True}, 
-                []),
-            # Ensure we exclude lines to be replaced
-            (self.c01, {'linespec': "GigabitEthernet4/", 
-                'excludespec': r'/4|/5|/6', 
-                'replacestr': "GigabitEthernet8/", 'exactmatch': False}, 
-                self.c01_replace_gige_exclude),
-        )
+def testValues_find_all_children01(parse_c01):
+    ## test find_all_chidren
+    c01_pmap_all_children = [
+        'policy-map QOS_1',
+        ' class GOLD',
+        '  priority percent 10',
+        ' class SILVER',
+        '  bandwidth 30',
+        '  random-detect',
+        ' class BRONZE',
+        '  random-detect',
+        ]
 
-        self.replace_lines_Values03 = (
+    find_all_children_Values = (
+        ({'linespec': "policy-map", 'exactmatch': False},
+            c01_pmap_all_children),
+        ({'linespec': "policy-map", 'exactmatch': True}, []),
+    )
+
+    for args, result_correct in find_all_children_Values:
+        test_result = parse_c01.find_all_children(**args)
+        assert result_correct==test_result
+
+
+def testValues_find_all_chidren02():
+    """Ensure we don't need a comment at the end of a """
+    """  parent / child block to identify the end of the family"""
+    CONFIG = ['thing1',
+        ' foo',
+        '  bar',
+        '   100',
+        '   200',
+        '   300',
+        '   400',
+        'thing2',]
+    RESULT_CORRECT = ['thing1',
+        ' foo',
+        '  bar',
+        '   100',
+        '   200',
+        '   300',
+        '   400',]
+    cfg = CiscoConfParse(CONFIG)
+    test_result = cfg.find_all_children('^thing1')
+    assert RESULT_CORRECT==test_result
+
+def testValues_find_parents_w_child(parse_c01):
+    c01_parents_w_child_power = [
+        'interface GigabitEthernet4/1',
+        'interface GigabitEthernet4/2',
+    ] 
+    c01_parents_w_child_voice = [
+        'interface GigabitEthernet4/1',
+        'interface GigabitEthernet4/2',
+        'interface GigabitEthernet4/3',
+    ]
+
+    find_parents_w_child_Values = (
+        ({'parentspec': "interf", 'childspec': "power inline"},
+            c01_parents_w_child_power),
+        ({'parentspec': "interf", 'childspec': " switchport voice"},
+            c01_parents_w_child_voice),
+        ({'parentspec': "^interface$", 'childspec': "switchport voice"},
+            []),
+    )
+
+    ## test find_parents_w_child
+    for args, result_correct in find_parents_w_child_Values:
+        test_result = parse_c01.find_parents_w_child(**args)
+        assert result_correct==test_result
+
+def testValues_find_parents_wo_child(parse_c01):
+    c01_parents_wo_child_power = [
+        'interface GigabitEthernet4/3',
+        'interface GigabitEthernet4/4',
+        'interface GigabitEthernet4/5',
+        'interface GigabitEthernet4/6',
+        'interface GigabitEthernet4/7',
+        'interface GigabitEthernet4/8',
+        ]
+    find_parents_wo_child_Values = (
+        ({'parentspec': "interface Gig", 'childspec': "power inline"},
+            c01_parents_wo_child_power),
+    )
+
+    ## test find_parents_wo_child
+    for args, result_correct in find_parents_wo_child_Values:
+        test_result = parse_c01.find_parents_wo_child(**args)
+        assert result_correct==test_result
+
+def testValues_find_children_w_parents(parse_c01):
+    c01_children_w_parents_switchport = [
+        ' switchport',
+        ' switchport access vlan 100',
+        ' switchport voice vlan 150',
+    ]
+    find_children_w_parents_Values = (
+        ({'parentspec': "^interface GigabitEthernet4/1",
+            'childspec': "switchport"},
+            c01_children_w_parents_switchport),
+        )
+    ## test find_children_w_parents
+    for args, result_correct in find_children_w_parents_Values:
+        test_result = parse_c01.find_children_w_parents(**args)
+        assert result_correct==test_result
+
+
+def testValues_replace_lines_01(parse_c01):
+    c01_replace_gige_no_exactmatch = [
+            'interface GigabitEthernet8/1',
+            'interface GigabitEthernet8/2',
+            'interface GigabitEthernet8/3',
+            'interface GigabitEthernet8/4',
+            'interface GigabitEthernet8/5',
+            'interface GigabitEthernet8/6',
+            'interface GigabitEthernet8/7',
+            'interface GigabitEthernet8/8'
+    ]
+    replace_lines_Values01 = (
+        # Ensure basic replacements work
+        ({'linespec': r"interface Serial 1/0",
+            'replacestr': "interface Serial 2/0"},
+            ['interface Serial 2/0']),
+        # Ensure we make multiple replacements as required
+        ({'linespec': "GigabitEthernet4/",
+            'replacestr': "GigabitEthernet8/", 'exactmatch': False},
+            c01_replace_gige_no_exactmatch),
+    )
+    # We have to parse multiple times because of replacements
+    for args, result_correct in replace_lines_Values01:
+        test_result = parse_c01.replace_lines(**args)
+        assert result_correct==test_result
+
+def testValues_replace_lines_02(parse_c01):
+    c01_replace_gige_exclude = [
+        'interface GigabitEthernet8/1',
+        'interface GigabitEthernet8/2',
+        'interface GigabitEthernet8/3',
+        'interface GigabitEthernet8/7',
+        'interface GigabitEthernet8/8'
+    ]
+    replace_lines_Values02 = (
+        # Ensure exactmatch rejects substrings
+        ({'linespec': "interface Serial 1/",
+            'replacestr': "interface Serial 2/", 'exactmatch': True},
+            []),
+        # Ensure we exclude lines which match excludespec
+        ({'linespec': "GigabitEthernet4/",
+            'excludespec': r'/4|/5|/6',
+            'replacestr': "GigabitEthernet8/", 'exactmatch': False},
+            c01_replace_gige_exclude),
+    )
+    for args, result_correct in replace_lines_Values02:
+        test_result = parse_c01.replace_lines(**args)
+        assert result_correct==test_result
+
+def testValues_replace_lines_03(parse_c01):
+    """Ensure we can use a compiled regexp in excludespec"""
+    c01_replace_gige_exclude = [
+        'interface GigabitEthernet8/1',
+        'interface GigabitEthernet8/2',
+        'interface GigabitEthernet8/3',
+        'interface GigabitEthernet8/7',
+        'interface GigabitEthernet8/8'
+    ]
+    replace_lines_Values03 = (
         # Ensure we can use a compiled regexp in excludespec...
-            (self.c01, {'linespec': "GigabitEthernet4/", 
-                'excludespec': re.compile(r'/4|/5|/6'), 
-                'replacestr': "GigabitEthernet8/", 'exactmatch': False}, 
-                self.c01_replace_gige_exclude),
+        ({'linespec': "GigabitEthernet4/",
+            'excludespec': re.compile(r'/4|/5|/6'),
+            'replacestr': "GigabitEthernet8/", 'exactmatch': False},
+            c01_replace_gige_exclude),
+    )
+    for args, result_correct in replace_lines_Values03:
+        test_result = parse_c01.replace_lines(**args)
+        assert result_correct==test_result
+
+def testValues_replace_children_01(parse_c01):
+    """Test child line replacement"""
+    c01_replace_children = [
+        ' power inline static max 30000',
+        ' power inline static max 30000'
+    ]
+    replace_children_Values = (
+        ({'parentspec': "GigabitEthernet4/",
+            'childspec': 'max 7000',
+            'excludespec': re.compile(r'/4|/5|/6'),
+            'replacestr': "max 30000", 'exactmatch': False},
+            c01_replace_children),
+    )
+    # We have to parse multiple times because of replacements
+    for args, result_correct in replace_children_Values:
+        test_result = parse_c01.replace_children(**args)
+        assert result_correct==test_result
+
+@pytest.mark.xfail(sys.version_info[0]==3,
+                   reason="Difflib.SequenceMatcher is broken in Python3")
+def testValues_sync_diff_01(parse_c01):
+    ## test sync_diff as a drop-in replacement for req_cfgspec_excl_diff()
+    ##   This test mirrors testValues_req_cfgspec_excl_diff()
+    result_correct = ['no logging 1.1.3.17',
+        'logging 1.1.3.4',
+        'logging 1.1.3.6',
+    ]
+    test_result = parse_c01.sync_diff(
+        [
+        'logging 1.1.3.4',
+        'logging 1.1.3.5',
+        'logging 1.1.3.6',
+        ],
+        r"^logging\s+",
+        r"logging\s+\d+\.\d+\.\d+\.\d+",
         )
+    assert result_correct==test_result
 
-        self.replace_children_Values = (
-        # Ensure we can use a compiled regexp in excludespec...
-            (self.c01, {'parentspec': "GigabitEthernet4/", 
-                'childspec': 'max 7000',
-                'excludespec': re.compile(r'/4|/5|/6'), 
-                'replacestr': "max 30000", 'exactmatch': False}, 
-                self.c01_replace_children),
-        )
+@pytest.mark.xfail(sys.version_info[0]==3,
+                   reason="Difflib.SequenceMatcher is broken in Python3")
+def testValues_sync_diff_02():
+    ## config_01 is the starting point
+    config_01 = ['!',
+    'vlan 51',
+    ' state active',
+    'vlan 53',
+    '!']
 
-    #--------------------------------
+    required_config = ['!',
+    'vlan 51',
+    ' name SOME-VLAN',
+    ' state active',
+    'vlan 52',
+    ' name BLAH',
+    ' state active',
+    '!',]
 
-    def testValues_banner_child_parsing_01(self):
-        """Associate banner lines as parent / child"""
-        cfg = CiscoConfParse(self.c01_banner)
-        parent_intf = {
-            # Line 6's parent should be 5, etc...
-            6: 5,
-            7: 5,
-            8: 5,
-        }
-        for obj in cfg.find_objects(''):
-            result_correct = parent_intf.get(obj.linenum, False)
-            if result_correct:
-                test_result = obj.parent.linenum
-                ## Does this object parent's line number match?
-                self.assertEqual(result_correct, test_result)
+    result_correct = ['no vlan 53', 'vlan 51', ' name SOME-VLAN', 'vlan 52', 
+        ' name BLAH', ' state active']
 
-    def testValues_parent_child_parsing_01(self):
-        cfg = CiscoConfParse(self.c01)
-        parent_intf = {
-            # Line 13's parent should be 11, etc...
-            13: 11,
-            16: 15,
-            17: 15,
-            18: 15,
-            19: 15,
-            22: 21,
-            23: 21,
-            24: 21,
-            25: 21,
-        }
-        for obj in cfg.find_objects(''):
-            result_correct = parent_intf.get(obj.linenum, False)
-            if result_correct:
-                test_result = obj.parent.linenum
-                ## Does this object parent's line number match?
-                self.assertEqual(result_correct, test_result)
+    linespec = r'vlan\s+\S+|name\s+\S+|state.+'
+    parse = CiscoConfParse(config_01)
+    test_result = parse.sync_diff(required_config, linespec, linespec)
+    assert result_correct==test_result
 
-    def testValues_parent_child_parsing_02(self):
-        cfg = CiscoConfParse(self.c01)
-        # Expected child / parent line numbers before the insert
-        parent_intf_before = {
-            # Line 11 is Serial1/0, child is line 13
-            13: 11,
-            # Line 15 is GigabitEthernet4/1
-            16: 15,
-            17: 15,
-            18: 15,
-            19: 15,
-            # Line 21 is GigabitEthernet4/2
-            22: 21,
-            23: 21,
-            24: 21,
-            25: 21,
-        }
-        # Expected child / parent line numbers after the insert
+@pytest.mark.xfail(sys.version_info[0]==3,
+                   reason="Difflib.SequenceMatcher is broken in Python3")
+def testValues_sync_diff_03():
+    ## config_01 is the starting point
+    config_01 = ['!',
+    'interface GigabitEthernet 1/5',
+    ' ip address 1.1.1.2 255.255.255.0',
+    ' standby 5 ip 1.1.1.1',
+    ' standby 5 preempt',
+    '!']
 
-        # Validate line numbers *before* inserting
-        for obj in cfg.find_objects(''):
-            result_correct = parent_intf_before.get(obj.linenum, False)
-            if result_correct:
-                test_result = obj.parent.linenum
-                ## Does this object parent's line number match?
-                self.assertEqual(result_correct, test_result)
+    required_config = ['!',
+    'interface GigabitEthernet 1/5',
+    ' switchport',
+    ' switchport mode access'
+    ' switchport access vlan 5',
+    ' switchport nonegotiate',
+    '!',
+    'interface Vlan5',
+    ' no shutdown',
+    ' ip address 1.1.1.2 255.255.255.0',
+    ' standby 5 ip 1.1.1.1',
+    ' standby 5 preempt',
+    '!',
+    ]
 
-        # Insert lines here...
-        for intf_obj in cfg.find_objects('^interface\sGigabitEthernet'):
-            # Configured with an access vlan...
-            if ' switchport access vlan 100' in set(map(attrgetter('text'), intf_obj.children)):
-                intf_obj.insert_after(' spanning-tree portfast')
-        cfg.atomic()
+    result_correct = ['interface GigabitEthernet 1/5',
+        ' no ip address 1.1.1.2 255.255.255.0',
+        ' no standby 5 ip 1.1.1.1',
+        ' no standby 5 preempt',
+        'interface GigabitEthernet 1/5',
+        ' switchport',
+        ' switchport mode access switchport access vlan 5',
+        ' switchport nonegotiate',
+        'interface Vlan5',
+        ' no shutdown',
+        ' ip address 1.1.1.2 255.255.255.0',
+        ' standby 5 ip 1.1.1.1',
+        ' standby 5 preempt',
+    ]
 
-        parent_intf_after = {
-            # Line 11 is Serial1/0, child is line 13
-            13: 11,
-            # Line 15 is GigabitEthernet4/1
-            16: 15,
-            17: 15,
-            18: 15,
-            19: 15,
-            # Line 22 is GigabitEthernet4/2
-            23: 22,
-            24: 22,
-            25: 22,
-            26: 22,
-        }
-        # Validate line numbers *after* inserting
-        for obj in cfg.find_objects(''):
-            result_correct = parent_intf_after.get(obj.linenum, False)
-            if result_correct:
-                test_result = obj.parent.linenum
-                ## Does this object parent's line number match?
-                self.assertEqual(result_correct, test_result)
-
-    def testValues_find_lines(self):
-        for config, args, result_correct in self.find_lines_Values:
-            cfg = CiscoConfParse(config)
-            test_result = cfg.find_lines(**args)
-            self.assertEqual(result_correct, test_result)
+    linespec = r''
+    parse = CiscoConfParse(config_01)
+    test_result = parse.sync_diff(required_config, linespec, linespec)
+    assert result_correct==test_result
 
 
-    def testValues_find_children(self):
-        ## test find_chidren
-        for config, args, result_correct in self.find_children_Values:
-            cfg = CiscoConfParse(config)
-            test_result = cfg.find_children(**args)
-            self.assertEqual(result_correct, test_result)
-
-
-    def testValues_find_all_children01(self):
-        ## test find_all_chidren
-        for config, args, result_correct in self.find_all_children_Values:
-            cfg = CiscoConfParse(config)
-            test_result = cfg.find_all_children(**args)
-            self.assertEqual(result_correct, test_result)
-
-    def testValues_find_all_chidren02(self):
-        CONFIG = ['thing1',
-            ' foo',
-            '  bar',
-            '   100',
-            '   200',
-            '   300',
-            '   400',
-            'thing2',]
-        RESULT_CORRECT = ['thing1',
-            ' foo',
-            '  bar',
-            '   100',
-            '   200',
-            '   300',
-            '   400',]
-        cfg = CiscoConfParse(CONFIG)
-        test_result = cfg.find_all_children('^thing1')
-        self.assertEqual(RESULT_CORRECT, test_result)
-
-
-    def testValues_find_parents_w_child(self):
-        ## test find_parents_w_child
-        for config, args, result_correct in self.find_parents_w_child_Values:
-            cfg = CiscoConfParse(config)
-            test_result = cfg.find_parents_w_child(**args)
-            self.assertEqual(result_correct, test_result)
-
-
-    def testValues_find_parents_wo_child(self):
-        ## test find_parents_wo_child
-        for config, args, result_correct in self.find_parents_wo_child_Values:
-            cfg = CiscoConfParse(config)
-            test_result = cfg.find_parents_wo_child(**args)
-            self.assertEqual(result_correct, test_result)
-
-    def testValues_find_children_w_parents(self):
-        ## test find_children_w_parents
-        for config, args, result_correct in self.find_children_w_parents_Values:
-            cfg = CiscoConfParse(config )
-            test_result = cfg.find_children_w_parents(**args)
-            self.assertEqual(result_correct, test_result)
-
-    def testValues_replace_lines_01(self):
-        # We have to parse multiple times because of replacements
-        for config, args, result_correct in self.replace_lines_Values01:
-            cfg = CiscoConfParse(config)
-            test_result = cfg.replace_lines(**args)
-            self.assertEqual(result_correct, test_result)
-
-    def testValues_replace_lines_02(self):
-        for config, args, result_correct in self.replace_lines_Values02:
-            cfg = CiscoConfParse(config)
-            test_result = cfg.replace_lines(**args)
-            self.assertEqual(result_correct, test_result)
-
-    def testValues_replace_lines_03(self):
-        for config, args, result_correct in self.replace_lines_Values03:
-            cfg = CiscoConfParse(config)
-            test_result = cfg.replace_lines(**args)
-            self.assertEqual(result_correct, test_result)
-
-    def testValues_replace_children_01(self):
-        # We have to parse multiple times because of replacements
-        for config, args, result_correct in self.replace_children_Values:
-            cfg = CiscoConfParse(config)
-            test_result = cfg.replace_children(**args)
-            self.assertEqual(result_correct, test_result)
-
-    def testValues_req_cfgspec_excl_diff(self):
+def testValues_req_cfgspec_excl_diff(parse_c01):
         ## test req_cfgspec_excl_diff
-        result_correct = self.c01_req_excl_logging
-        cfg = CiscoConfParse(self.c01)
-        test_result = cfg.req_cfgspec_excl_diff(
-            "^logging\s+",
-            "logging\s+\d+\.\d+\.\d+\.\d+",
-            [
-            'logging 1.1.3.4',
-            'logging 1.1.3.5',
-            'logging 1.1.3.6',
-            ]
-            )
-        self.assertEqual(result_correct, test_result)
+    result_correct = ['no logging 1.1.3.17',
+        'logging 1.1.3.4',
+        'logging 1.1.3.6',
+    ]
+    test_result = parse_c01.req_cfgspec_excl_diff(
+        "^logging\s+",
+        "logging\s+\d+\.\d+\.\d+\.\d+",
+        [
+        'logging 1.1.3.4',
+        'logging 1.1.3.5',
+        'logging 1.1.3.6',
+        ]
+        )
+    assert result_correct==test_result
 
-    def testValues_req_cfgspec_all_diff(self):
-        ## test req_cfgspec_all_diff
-        result_correct = self.c01_req_all_logging
-        cfg = CiscoConfParse(self.c01)
-        test_result = cfg.req_cfgspec_all_diff(
-            [
-            'logging 1.1.3.4',
-            'logging 1.1.3.5',
-            'logging 1.1.3.6',
-            ]
-            )
-        self.assertEqual(result_correct, test_result)
-
-
-    def testValues_ignore_ws(self):
-        ## test find_lines with ignore_ws flag
-        result_correct = self.c03
-        cfg = CiscoConfParse(self.c03)
-        test_result = cfg.find_lines(
-            'set snmp community read-only myreadonlystring',
-            ignore_ws = True
-            )
-        self.assertEqual(result_correct, test_result)
-
-    def testValues_negative_ignore_ws(self):
-        ## test find_lines WITHOUT ignore_ws
-        result_correct = []
-        cfg = CiscoConfParse(self.c03)
-        test_result = cfg.find_lines(
-            'set snmp community read-only myreadonlystring',
-            )
-        self.assertEqual(result_correct, test_result)
-
-    def testValues_IOSCfgLine_all_parents(self):
-        """Ensure IOSCfgLine.all_parents finds all parents, recursively"""
-        result_correct = list()
-        with patch('__main__.IOSCfgLine') as mock:
-            vals = [('policy-map QOS_1', 0), (' class SILVER', 4)]
-            # the mock pretends to be an IOSCfgLine so we can test against it
-            for idx, fakeobj in enumerate(map(deepcopy, repeat(mock, len(vals)))):
-                fakeobj.text = vals[idx][0]
-                fakeobj.linenum = vals[idx][1]
-                fakeobj.classname = "IOSCfgLine"
-                result_correct.append(fakeobj)
-
-        cfg = CiscoConfParse(self.c01)
-        obj = cfg.find_objects('bandwidth 30')[0]
-        ## Removed _find_parent_OBJ on 20140202
-        #test_result = cfg._find_parent_OBJ(obj)
-        test_result = obj.all_parents
-        for idx, testobj in enumerate(test_result):
-            self.assertEqual(result_correct[idx].text, test_result[idx].text)
-            self.assertEqual(result_correct[idx].linenum, 
-                test_result[idx].linenum)
-            self.assertEqual(result_correct[idx].classname, 
-                test_result[idx].classname)
-
-    def testValues_find_objects(self):
-        ## test whether find_objects returns correct IOSCfgLine objects
-        result_correct = self.c01_find_objects
-        cfg = CiscoConfParse(self.c01)
-        test_result = cfg.find_objects('^interface')
-        self.assertEqual(result_correct, test_result)
-
-    def testValues_find_objects_replace_01(self):
-        """test whether find_objects we can correctly replace object values using native IOSCfgLine object methods"""
-        config01 = ['!',
-            'boot system flash slot0:c2600-adventerprisek9-mz.124-21a.bin',
-            'boot system flash bootflash:c2600-adventerprisek9-mz.124-21a.bin',
-            '!',
-            'interface Ethernet0/0',
-            ' ip address 172.16.1.253 255.255.255.0',
-            '!',
-            'ip route 0.0.0.0 0.0.0.0 172.16.1.254',
-            '!',
-            'end',
-            ]
-        result_correct = ['!',
-            '! old boot image flash slot0:c2600-adventerprisek9-mz.124-21a.bin',
-            '! old boot image flash bootflash:c2600-adventerprisek9-mz.124-21a.bin',
-            '!',
-            'interface Ethernet0/0',
-            ' ip address 172.16.1.253 255.255.255.0',
-            '!',
-            'ip route 0.0.0.0 0.0.0.0 172.16.1.254',
-            '!',
-            'end',
-            ]
-        cfg = CiscoConfParse(config01)
-        for obj in cfg.find_objects('boot system'):
-            obj.replace('boot system', '! old boot image')
-        test_result = cfg.ioscfg
-        self.assertEqual(result_correct, test_result)
-
-    def testValues_find_objects_delete_01(self):
-        """Test whether IOSCfgLine.delete() recurses through children correctly"""
-        result_correct = ['!', '!', '!']
-        cfg = CiscoConfParse(self.c04)
-        for intf in cfg.find_objects(r'^interface'):
-            intf.delete(recurse=True)  # recurse=True is the default
-        test_result = cfg.ioscfg
-        self.assertEqual(result_correct, test_result)
+def testValues_req_cfgspec_all_diff(parse_c01):
+    ## test req_cfgspec_all_diff
+    result_correct = [
+        'logging 1.1.3.4',
+        'logging 1.1.3.6',
+    ]
+    test_result = parse_c01.req_cfgspec_all_diff(
+        [
+        'logging 1.1.3.4',
+        'logging 1.1.3.5',
+        'logging 1.1.3.6',
+        ]
+        )
+    assert result_correct==test_result
 
 
-    def testValues_insert_after_atomic_01(self):
-        """We expect insert_after(atomic=True) to correctly parse children"""
-        ## See also -> testValues_insert_after_nonatomic_02()
-        result_correct = [
-            'interface GigabitEthernet4/1', 
-            ' shutdown',
-            ' switchport', 
-            ' switchport access vlan 100', 
-            ' switchport voice vlan 150', 
-            ' power inline static max 7000',
-            ]
-        linespec = 'interface GigabitEthernet4/1'
-        cfg = CiscoConfParse(self.c01, factory=False)
-        cfg.insert_after(linespec, ' shutdown', exactmatch=True, atomic=True)
-        test_result = cfg.find_children(linespec)
+def testValues_ignore_ws():
+    ## test find_lines with ignore_ws flag
+    config = ['set snmp community read-only     myreadonlystring']
+    result_correct = config
+    cfg = CiscoConfParse(config)
+    test_result = cfg.find_lines(
+        'set snmp community read-only myreadonlystring',
+        ignore_ws = True
+        )
+    assert result_correct==test_result
 
-        self.assertEqual(result_correct, test_result)
+def testValues_negative_ignore_ws():
+    """test find_lines WITHOUT ignore_ws"""
+    config = ['set snmp community read-only     myreadonlystring']
+    result_correct = list()
+    cfg = CiscoConfParse(config)
+    test_result = cfg.find_lines(
+        'set snmp community read-only myreadonlystring',
+        ignore_ws = False
+        )
+    assert result_correct==test_result
 
-    def testValues_insert_after_atomic_factory_01(self):
-        """Ensure that comments which are added, assert is_comment"""
-        with patch('__main__.IOSCfgLine') as mock:
-            # the mock pretends to be an IOSCfgLine so we can test against it
-            result_correct01 = mock
-            result_correct01.linenum = 16
-            result_correct01.text = ' ! TODO: some note to self'
-            result_correct01.classname = 'IOSCfgLine'
-            result_correct01.is_comment = True
+def testValues_IOSCfgLine_all_parents(parse_c01):
+    """Ensure IOSCfgLine.all_parents finds all parents, recursively"""
+    result_correct = list()
+    # mockobj pretends to be the IOSCfgLine object
+    with patch(__name__+'.'+'IOSCfgLine') as mockobj:
+        vals = [('policy-map QOS_1', 0), (' class SILVER', 4)]
+        # fakeobj pretends to be an IOSCfgLine instance at the given line number
+        for idx, fakeobj in enumerate(map(deepcopy, repeat(mockobj, len(vals)))):
+            fakeobj.text = vals[idx][0]
+            fakeobj.linenum = vals[idx][1]
+            fakeobj.classname = "IOSCfgLine"
 
-        result_correct02 = [
-            'interface GigabitEthernet4/1', 
-            ' ! TODO: some note to self',
-            ' switchport', 
-            ' switchport access vlan 100', 
-            ' switchport voice vlan 150', 
-            ' power inline static max 7000',
-            ]
-        linespec = 'interface GigabitEthernet4/1'
-        cfg = CiscoConfParse(self.c01, factory=True)
-        cfg.insert_after(linespec, ' ! TODO: some note to self', 
+            result_correct.append(fakeobj)
+
+    cfg = parse_c01
+    obj = cfg.find_objects('bandwidth 30')[0]
+    ## Removed _find_parent_OBJ on 20140202
+    #test_result = cfg._find_parent_OBJ(obj)
+    test_result = obj.all_parents
+    for idx, testobj in enumerate(test_result):
+        assert result_correct[idx].text==test_result[idx].text
+        assert result_correct[idx].linenum==test_result[idx].linenum
+        assert result_correct[idx].classname==test_result[idx].classname
+
+
+def testValues_find_objects(parse_c01):
+    lines = [
+          ('interface Serial 1/0', 11),
+          ('interface GigabitEthernet4/1', 15),
+          ('interface GigabitEthernet4/2', 21),
+          ('interface GigabitEthernet4/3', 27),
+          ('interface GigabitEthernet4/4', 32),
+          ('interface GigabitEthernet4/5', 35),
+          ('interface GigabitEthernet4/6', 39),
+          ('interface GigabitEthernet4/7', 43),
+          ('interface GigabitEthernet4/8', 47),
+          ]
+    c01_find_objects = list()
+    for line, linenum in lines:
+        # Mock up the correct object
+        obj = IOSCfgLine()
+        obj.text = line
+        obj.linenum = linenum
+        c01_find_objects.append(obj)
+
+    ## test whether find_objects returns correct IOSCfgLine objects
+    result_correct = c01_find_objects
+    test_result = parse_c01.find_objects('^interface')
+    assert result_correct==test_result
+
+def testValues_find_objects_replace_01():
+    """test whether find_objects we can correctly replace object values using native IOSCfgLine object methods"""
+    config01 = ['!',
+        'boot system flash slot0:c2600-adventerprisek9-mz.124-21a.bin',
+        'boot system flash bootflash:c2600-adventerprisek9-mz.124-21a.bin',
+        '!',
+        'interface Ethernet0/0',
+        ' ip address 172.16.1.253 255.255.255.0',
+        '!',
+        'ip route 0.0.0.0 0.0.0.0 172.16.1.254',
+        '!',
+        'end',
+        ]
+    result_correct = ['!',
+        '! old boot image flash slot0:c2600-adventerprisek9-mz.124-21a.bin',
+        '! old boot image flash bootflash:c2600-adventerprisek9-mz.124-21a.bin',
+        '!',
+        'interface Ethernet0/0',
+        ' ip address 172.16.1.253 255.255.255.0',
+        '!',
+        'ip route 0.0.0.0 0.0.0.0 172.16.1.254',
+        '!',
+        'end',
+        ]
+    cfg = CiscoConfParse(config01)
+    for obj in cfg.find_objects('boot system'):
+        obj.replace('boot system', '! old boot image')
+    test_result = cfg.ioscfg
+    assert result_correct==test_result
+
+def testValues_find_objects_delete_01():
+    """Test whether IOSCfgLine.delete() recurses through children correctly"""
+    config = [
+        '!',
+        'interface Serial1/0',
+        ' encapsulation ppp',
+        ' ip address 1.1.1.1 255.255.255.252',
+        ' no ip proxy-arp',
+        '!',
+        'interface Serial1/1',
+        ' encapsulation ppp',
+        ' ip address 1.1.1.5 255.255.255.252',
+        '!',
+    ]
+    result_correct = ['!', '!', '!']
+    cfg = CiscoConfParse(config)
+    for intf in cfg.find_objects(r'^interface'):
+        # Delete all the interface objects
+        intf.delete(recurse=True)  # recurse=True is the default
+    test_result = cfg.ioscfg
+    assert result_correct==test_result
+
+def testValues_insert_after_atomic_02(parse_c01):
+    """We expect insert_after(atomic=True) to correctly parse children"""
+    ## See also -> testValues_insert_after_nonatomic_02()
+    result_correct = [
+        'interface GigabitEthernet4/1',
+        ' shutdown',
+        ' switchport',
+        ' switchport access vlan 100',
+        ' switchport voice vlan 150',
+        ' power inline static max 7000',
+        ]
+    linespec = 'interface GigabitEthernet4/1'
+    parse_c01.insert_after(linespec, ' shutdown', exactmatch=True, atomic=True)
+    test_result = parse_c01.find_children(linespec)
+
+    assert result_correct==test_result
+
+def testValues_insert_after_atomic_factory_01(parse_c01_factory):
+    """Ensure that comments which are added, assert is_comment"""
+    # mockobj pretends to be the IOSCfgLine object
+    with patch(__name__+'.'+'IOSCfgLine') as mockobj:
+        result_correct01 = mockobj
+        result_correct01.linenum = 16
+        result_correct01.text = ' ! TODO: some note to self'
+        result_correct01.classname = 'IOSCfgLine'
+        result_correct01.is_comment = True
+
+    linespec = 'interface GigabitEthernet4/1'
+    parse_c01_factory.insert_after(linespec, ' ! TODO: some note to self',
+        exactmatch=True, atomic=True)
+    test_result01 = parse_c01_factory.find_objects('TODO')[0]
+    assert result_correct01.linenum==test_result01.linenum
+    assert result_correct01.text==test_result01.text
+    assert result_correct01.classname==test_result01.classname
+    assert result_correct01.is_comment==test_result01.is_comment
+
+    result_correct02 = [
+        'interface GigabitEthernet4/1',
+        ' ! TODO: some note to self',
+        ' switchport',
+        ' switchport access vlan 100',
+        ' switchport voice vlan 150',
+        ' power inline static max 7000',
+        ]
+    test_result02 = parse_c01_factory.find_children(linespec)
+    assert result_correct02==test_result02
+
+def testValues_insert_after_atomic_01(parse_c01):
+    inputs = ['interface GigabitEthernet4/1',
+        'interface GigabitEthernet4/2',
+        'interface GigabitEthernet4/3',
+        'interface GigabitEthernet4/4',
+        'interface GigabitEthernet4/5',
+        'interface GigabitEthernet4/6',
+        'interface GigabitEthernet4/7',
+        'interface GigabitEthernet4/8',
+        ]
+    for idx, linespec in enumerate(inputs):
+        test_result = parse_c01.insert_after(linespec, ' shutdown',
+            exactmatch=True, atomic=False)
+        result_correct = [inputs[idx]]
+        assert result_correct==test_result
+    parse_c01.commit()
+
+    ## Ensure we inserted the text at the right line number
+    ##   i.e. it should be immediately below the interface line
+    result_correct_dict = {
+        23: ' shutdown',
+        30: ' shutdown',
+        36: ' shutdown',
+        40: ' shutdown',
+        45: ' shutdown',
+        50: ' shutdown',
+        55: ' shutdown',
+    }
+    for idx, result_correct in result_correct_dict.items():
+        assert parse_c01.ConfigObjs[idx].text==result_correct
+
+        # The parent line should be immediately above it
+        correct_parent = parse_c01.ConfigObjs[idx-1]
+        assert parse_c01.ConfigObjs[idx].parent==correct_parent
+
+
+def testValues_insert_after_nonatomic_01(parse_c01):
+    inputs = ['interface GigabitEthernet4/1',
+        'interface GigabitEthernet4/2',
+        'interface GigabitEthernet4/3',
+        'interface GigabitEthernet4/4',
+        'interface GigabitEthernet4/5',
+        'interface GigabitEthernet4/6',
+        'interface GigabitEthernet4/7',
+        'interface GigabitEthernet4/8',
+        ]
+    for idx, linespec in enumerate(inputs):
+        test_result = parse_c01.insert_after(linespec, ' shutdown',
+            exactmatch=True, atomic=False)
+        result_correct = [inputs[idx]]
+        assert result_correct==test_result
+    ## NOTE: We DO NOT commit here to test as a non-atomic change
+
+    ## Ensure we inserted the text at the right line number
+    ##   i.e. it should be immediately below the interface line
+    result_correct_dict = {
+        23: ' shutdown',
+        30: ' shutdown',
+        36: ' shutdown',
+        40: ' shutdown',
+        45: ' shutdown',
+        50: ' shutdown',
+        55: ' shutdown',
+    }
+    for idx, result_correct in result_correct_dict.items():
+        assert parse_c01.ConfigObjs[idx].text==result_correct
+
+def testValues_insert_after_nonatomic_02(parse_c01):
+    """Negative test.  We expect insert_after(atomic=False) to miss any children added like this at some point in the future I might fix insert_after so it knows how to correctly parse children"""
+    result_correct = ['interface GigabitEthernet4/1',
+        #' shutdown',   <--- Intentionally commented out
+        ' switchport',
+        ' switchport access vlan 100',
+        ' switchport voice vlan 150',
+        ' power inline static max 7000',
+        ]
+    linespec = 'interface GigabitEthernet4/1'
+    parse_c01.insert_after(linespec, ' shutdown', exactmatch=True, 
+        atomic=False)
+    test_result = parse_c01.find_children(linespec)
+    ## NOTE: We DO NOT commit here to test as a non-atomic change
+
+    # the interface should *not* be shutdown, because I made a non-atomic change
+    assert result_correct==test_result
+
+
+def testValues_insert_before_nonatomic_01(parse_c01):
+    inputs = ['interface GigabitEthernet4/1',
+        'interface GigabitEthernet4/2',
+        'interface GigabitEthernet4/3',
+        'interface GigabitEthernet4/4',
+        'interface GigabitEthernet4/5',
+        'interface GigabitEthernet4/6',
+        'interface GigabitEthernet4/7',
+        'interface GigabitEthernet4/8',
+        ]
+    for idx, linespec in enumerate(inputs):
+        test_result = parse_c01.insert_before(linespec, 'default '+linespec,
+            exactmatch=True, atomic=False)
+        result_correct = [inputs[idx]]
+        assert result_correct==test_result
+
+def testValues_insert_before_atomic_01(parse_c01):
+    inputs = ['interface GigabitEthernet4/1',
+        'interface GigabitEthernet4/2',
+        'interface GigabitEthernet4/3',
+        'interface GigabitEthernet4/4',
+        'interface GigabitEthernet4/5',
+        'interface GigabitEthernet4/6',
+        'interface GigabitEthernet4/7',
+        'interface GigabitEthernet4/8',
+        ]
+    for idx, linespec in enumerate(inputs):
+        test_result = parse_c01.insert_before(linespec, 'default '+linespec,
             exactmatch=True, atomic=True)
+        result_correct = [inputs[idx]]
+        assert result_correct==test_result
 
-        test_result01 = cfg.find_objects('TODO')[0]
-        self.assertEqual(result_correct01.linenum, test_result01.linenum)
-        self.assertEqual(result_correct01.text, test_result01.text)
-        self.assertEqual(result_correct01.classname, test_result01.classname)
-        self.assertEqual(result_correct01.is_comment, test_result01.is_comment)
+c01_default_gigabitethernets = """policy-map QOS_1
+ class GOLD
+  priority percent 10
+ !
+ class SILVER
+  bandwidth 30
+  random-detect
+ !
+ class BRONZE
+  random-detect
+!
+interface Serial 1/0
+ encapsulation ppp
+ ip address 1.1.1.1 255.255.255.252
+!
+default interface GigabitEthernet4/1
+interface GigabitEthernet4/1
+ switchport
+ switchport access vlan 100
+ switchport voice vlan 150
+ power inline static max 7000
+!
+default interface GigabitEthernet4/2
+interface GigabitEthernet4/2
+ switchport
+ switchport access vlan 100
+ switchport voice vlan 150
+ power inline static max 7000
+!
+default interface GigabitEthernet4/3
+interface GigabitEthernet4/3
+ switchport
+ switchport access vlan 100
+ switchport voice vlan 150
+!
+default interface GigabitEthernet4/4
+interface GigabitEthernet4/4
+ shutdown
+!
+default interface GigabitEthernet4/5
+interface GigabitEthernet4/5
+ switchport
+ switchport access vlan 110
+!
+default interface GigabitEthernet4/6
+interface GigabitEthernet4/6
+ switchport
+ switchport access vlan 110
+!
+default interface GigabitEthernet4/7
+interface GigabitEthernet4/7
+ switchport
+ switchport access vlan 110
+!
+default interface GigabitEthernet4/8
+interface GigabitEthernet4/8
+ switchport
+ switchport access vlan 110
+!
+access-list 101 deny tcp any any eq 25 log
+access-list 101 permit ip any any
+!
+!
+logging 1.1.3.5
+logging 1.1.3.17
+!
+banner login ^C
+This is a router, and you cannot have it.
+Log off now while you still can type. I break the fingers
+of all tresspassers.
+^C
+alias exec showthang show ip route vrf THANG""".splitlines()
 
-        # FIXME: this fails... maybe because I don't parse comments as children correctly???
-        test_result02 = cfg.find_children(linespec)
-        self.assertEqual(result_correct02, test_result02)
+def testValues_renumbering_insert_before_nonatomic_01(parse_c01, 
+    c01_default_gigethernets):
+    """Ensure we renumber lines after insert_before(atomic=False)"""
+    inputs = ['interface GigabitEthernet4/1',
+        'interface GigabitEthernet4/2',
+        'interface GigabitEthernet4/3',
+        'interface GigabitEthernet4/4',
+        'interface GigabitEthernet4/5',
+        'interface GigabitEthernet4/6',
+        'interface GigabitEthernet4/7',
+        'interface GigabitEthernet4/8',
+        ]
+    for idx, linespec in enumerate(inputs):
+        parse_c01.insert_before(linespec, 'default '+linespec,
+            exactmatch=True, atomic=False)
+    test_result = parse_c01.ioscfg
+    result_correct = c01_default_gigabitethernets
+    assert result_correct==test_result
 
-    def testValues_insert_after_nonatomic_01(self):
-        inputs = ['interface GigabitEthernet4/1',
-            'interface GigabitEthernet4/2',
-            'interface GigabitEthernet4/3',
-            'interface GigabitEthernet4/4',
-            'interface GigabitEthernet4/5',
-            'interface GigabitEthernet4/6',
-            'interface GigabitEthernet4/7',
-            'interface GigabitEthernet4/8',
+def testValues_renumbering_insert_before_nonatomic_02(parse_c01, 
+    c01_default_gigethernets):
+    """Ensure we renumber lines after insert_before(atomic=False)"""
+    inputs = ['interface GigabitEthernet4/1',
+        'interface GigabitEthernet4/2',
+        'interface GigabitEthernet4/3',
+        'interface GigabitEthernet4/4',
+        'interface GigabitEthernet4/5',
+        'interface GigabitEthernet4/6',
+        'interface GigabitEthernet4/7',
+        'interface GigabitEthernet4/8',
+        ]
+    for idx, linespec in enumerate(inputs):
+        parse_c01.insert_before(linespec, 'default '+linespec,
+            exactmatch=True, atomic=True)
+    test_result = parse_c01.ioscfg
+    result_correct = c01_default_gigabitethernets
+    assert result_correct==test_result
+
+def testValues_find_objects_factory_01(parse_c01_factory):
+    """Test whether find_objects returns the correct objects"""
+    # mockobj pretends to be the IOSIntfLine object
+    with patch(__name__+'.'+'IOSIntfLine') as mockobj:
+        vals = [('interface GigabitEthernet4/1', 15),
+            ('interface GigabitEthernet4/2', 21),
+            ('interface GigabitEthernet4/3', 27),
+            ('interface GigabitEthernet4/4', 32),
+            ('interface GigabitEthernet4/5', 35),
+            ('interface GigabitEthernet4/6', 39),
+            ('interface GigabitEthernet4/7', 43),
+            ('interface GigabitEthernet4/8', 47),
             ]
-        cfg = CiscoConfParse(self.c01, factory=False)
-        for idx, linespec in enumerate(inputs):
-            test_result = cfg.insert_after(linespec, ' shutdown',
-                exactmatch=True, atomic=False)
-            result_correct = [inputs[idx]]
-            self.assertEqual(result_correct, test_result)
+        ## Build fake IOSIntfLine objects to validate unit tests...
+        result_correct = list()
+        # deepcopy a unique mock for every val with itertools.repeat()
+        mockobjs = map(deepcopy, repeat(mockobj, len(vals)))
+        # mock pretends to be an IOSCfgLine so we can test against it
+        for idx, obj in enumerate(mockobjs):
+            obj.text     = vals[idx][0]  # Check the text
+            obj.linenum  = vals[idx][1]  # Check the line numbers
+            # append the fake IOSIntfLine object to result_correct
+            result_correct.append(obj)
 
-    def testValues_insert_after_nonatomic_02(self):
-        """Negative test.  We expect insert_after(atomic=False) to miss any children added like this at some point in the future I might fix insert_after so it knows how to correctly parse children"""
-        result_correct = ['interface GigabitEthernet4/1', 
-            #' shutdown',   <--- Intentionally commented out
-            ' switchport', 
-            ' switchport access vlan 100', 
-            ' switchport voice vlan 150', 
-            ' power inline static max 7000',
-            ]
-        linespec = 'interface GigabitEthernet4/1'
-        cfg = CiscoConfParse(self.c01, factory=False)
-        cfg.insert_after(linespec, ' shutdown', exactmatch=True, atomic=False)
-        test_result = cfg.find_children(linespec)
+        test_result = parse_c01_factory.find_objects('^interface GigabitEther')
+        for idx, test_result_object in enumerate(test_result):
+            # Check line numbers
+            assert result_correct[idx].linenum==test_result_object.linenum
+            # Check text
+            assert result_correct[idx].text==test_result_object.text
 
-        self.assertEqual(result_correct, test_result)
+def testValues_IOSIntfLine_find_objects_factory_01(parse_c01_factory):
+    """test whether find_objects() returns correct IOSIntfLine objects and tests IOSIntfLine methods"""
+    # mockobj pretends to be the IOSIntfLine object
+    with patch(__name__+'.'+'IOSIntfLine') as mockobj:
+        # the mock pretends to be an IOSCfgLine so we can test against it
+        result_correct = mockobj
+        result_correct.linenum = 11
+        result_correct.text = 'interface Serial 1/0'
+        result_correct.classname = 'IOSIntfLine'
+        result_correct.ipv4_addr_object = IPv4Obj('1.1.1.1/30',
+            strict=False)
 
+        # this test finds the IOSIntfLine instance for 'Serial 1/0'
+        test_result = parse_c01_factory.find_objects('^interface Serial 1/0')[0]
 
-    def testValues_insert_before_nonatomic_01(self):
-        inputs = ['interface GigabitEthernet4/1',
-            'interface GigabitEthernet4/2',
-            'interface GigabitEthernet4/3',
-            'interface GigabitEthernet4/4',
-            'interface GigabitEthernet4/5',
-            'interface GigabitEthernet4/6',
-            'interface GigabitEthernet4/7',
-            'interface GigabitEthernet4/8',
-            ]
-        cfg = CiscoConfParse(self.c01, factory=False)
-        for idx, linespec in enumerate(inputs):
-            test_result = cfg.insert_before(linespec, 'default '+linespec, 
-                exactmatch=True, atomic=False)
-            result_correct = [inputs[idx]]
-            self.assertEqual(result_correct, test_result)
+        assert result_correct.linenum==test_result.linenum
+        assert result_correct.text==test_result.text
+        assert result_correct.classname==test_result.classname
+        assert result_correct.ipv4_addr_object==test_result.ipv4_addr_object
 
-    def testValues_insert_before_atomic_01(self):
-        inputs = ['interface GigabitEthernet4/1',
-            'interface GigabitEthernet4/2',
-            'interface GigabitEthernet4/3',
-            'interface GigabitEthernet4/4',
-            'interface GigabitEthernet4/5',
-            'interface GigabitEthernet4/6',
-            'interface GigabitEthernet4/7',
-            'interface GigabitEthernet4/8',
-            ]
-        cfg = CiscoConfParse(self.c01, factory=False)
-        for idx, linespec in enumerate(inputs):
-            test_result = cfg.insert_before(linespec, 'default '+linespec, 
-                exactmatch=True, atomic=True)
-            result_correct = [inputs[idx]]
-            self.assertEqual(result_correct, test_result)
+def testValues_IOSIntfLine_find_objects_factory_02(parse_c01_factory,
+    c01_insert_serial_replace):
+    """test whether find_objects() returns correct IOSIntfLine objects and tests IOSIntfLine methods"""
+    with patch(__name__+'.'+'IOSIntfLine') as mockobj:
+        # the mock pretends to be an IOSCfgLine so we can test against it
+        result_correct01 = mockobj
+        result_correct01.linenum = 12
+        result_correct01.text = 'interface Serial 2/0'
+        result_correct01.classname = 'IOSIntfLine'
+        result_correct01.ipv4_addr_object = IPv4Obj('1.1.1.1/30',
+            strict=False)
 
-    def testValues_renumbering_insert_before_nonatomic_01(self):
-        """Ensure we renumber lines after insert_before(atomic=False)"""
-        inputs = ['interface GigabitEthernet4/1',
-            'interface GigabitEthernet4/2',
-            'interface GigabitEthernet4/3',
-            'interface GigabitEthernet4/4',
-            'interface GigabitEthernet4/5',
-            'interface GigabitEthernet4/6',
-            'interface GigabitEthernet4/7',
-            'interface GigabitEthernet4/8',
-            ]
-        cfg = CiscoConfParse(self.c01, factory=False)
-        for idx, linespec in enumerate(inputs):
-            cfg.insert_before(linespec, 'default '+linespec, 
-                exactmatch=True, atomic=False)
-        test_result = cfg.ioscfg
-        result_correct = self.c01_default_gigabitethernets
-        self.assertEqual(result_correct, test_result)
+        result_correct02 = c01_insert_serial_replace
 
-    def testValues_renumbering_insert_before_atomic_01(self):
-        """Ensure we renumber lines after insert_before(atomic=True)"""
-        inputs = ['interface GigabitEthernet4/1',
-            'interface GigabitEthernet4/2',
-            'interface GigabitEthernet4/3',
-            'interface GigabitEthernet4/4',
-            'interface GigabitEthernet4/5',
-            'interface GigabitEthernet4/6',
-            'interface GigabitEthernet4/7',
-            'interface GigabitEthernet4/8',
-            ]
-        cfg = CiscoConfParse(self.c01, factory=False)
-        for idx, linespec in enumerate(inputs):
-            cfg.insert_before(linespec, 'default '+linespec, 
-                exactmatch=True, atomic=True)
-        test_result = cfg.ioscfg
-        result_correct = self.c01_default_gigabitethernets
-        self.assertEqual(result_correct, test_result)
+        # Insert a line above the IOSIntfLine object
+        parse_c01_factory.insert_before('interface Serial 1/0', 'default interface Serial 1/0')
+        # Replace text in the IOSIntfLine object
+        parse_c01_factory.replace_lines('interface Serial 1/0', 'interface Serial 2/0', exactmatch=False)
 
-    def testValues_find_objects_factory_01(self):
-        """Test whether find_objects returns the correct objects"""
-        with patch('__main__.IOSIntfLine') as mock:
-            vals = [('interface GigabitEthernet4/1', 15),
-                ('interface GigabitEthernet4/2', 21),
-                ('interface GigabitEthernet4/3', 27),
-                ('interface GigabitEthernet4/4', 32),
-                ('interface GigabitEthernet4/5', 35),
-                ('interface GigabitEthernet4/6', 39),
-                ('interface GigabitEthernet4/7', 43),
-                ('interface GigabitEthernet4/8', 47),
-                ]
-            ## Build fake IOSIntfLine objects to validate unit tests...
-            result_correct = list()
-            # deepcopy a unique mock for every val with itertools.repeat()
-            mockobjs = map(deepcopy, repeat(mock, len(vals)))
-            # mock pretends to be an IOSCfgLine so we can test against it
-            for idx, obj in enumerate(mockobjs):
-                obj.text     = vals[idx][0]  # Check the text
-                obj.linenum  = vals[idx][1]  # Check the line numbers
-                # append the fake IOSIntfLine object to result_correct
-                result_correct.append(obj)
+        test_result01 = parse_c01_factory.find_objects('^interface Serial 2/0')[0]
+        test_result02 = parse_c01_factory.ioscfg
 
-            cfg = CiscoConfParse(self.c01, factory=True)
-            test_result = cfg.find_objects('^interface GigabitEther')
-            for idx, test_result_object in enumerate(test_result):
-                # Check line numbers
-                self.assertEqual(result_correct[idx].linenum, 
-                    test_result_object.linenum)
-                # Check text
-                self.assertEqual(result_correct[idx].text, 
-                    test_result_object.text)
+        # Check attributes of the IOSIntfLine object
+        assert result_correct01.linenum==test_result01.linenum
+        assert result_correct01.text==test_result01.text
+        assert result_correct01.classname==test_result01.classname
+        assert result_correct01.ipv4_addr_object==test_result01.ipv4_addr_object
 
-    def testValues_IOSIntfLine_find_objects_factory_01(self):
-        """test whether find_objects() returns correct IOSIntfLine objects and tests IOSIntfLine methods"""
-        with patch('__main__.IOSIntfLine') as mock:
-            # the mock pretends to be an IOSCfgLine so we can test against it
-            result_correct = mock
-            result_correct.linenum = 11
-            result_correct.text = 'interface Serial 1/0'
-            result_correct.classname = 'IOSIntfLine'
-            result_correct.ipv4_addr_object = IPv4Obj('1.1.1.1/30', 
-                strict=False)
-
-            cfg = CiscoConfParse(self.c01, factory=True)
-            # this test finds the IOSIntfLine instance for 'Serial 1/0'
-            test_result = cfg.find_objects('^interface Serial 1/0')[0]
-
-            self.assertEqual(result_correct.linenum,   test_result.linenum)
-            self.assertEqual(result_correct.text,      test_result.text)
-            self.assertEqual(result_correct.classname, test_result.classname)
-            self.assertEqual(result_correct.ipv4_addr_object, 
-                test_result.ipv4_addr_object)
-
-    def testValues_IOSIntfLine_find_objects_factory_02(self):
-        """test whether find_objects() returns correct IOSIntfLine objects and tests IOSIntfLine methods"""
-        with patch('__main__.IOSIntfLine') as mock:
-            # the mock pretends to be an IOSCfgLine so we can test against it
-            result_correct01 = mock
-            result_correct01.linenum = 12
-            result_correct01.text = 'interface Serial 2/0'
-            result_correct01.classname = 'IOSIntfLine'
-            result_correct01.ipv4_addr_object = IPv4Obj('1.1.1.1/30', 
-                strict=False)
-
-            result_correct02 = self.c01_insert_serial_replace
-
-            cfg = CiscoConfParse(self.c01, factory=True)
-            # Insert a line above the IOSIntfLine object
-            cfg.insert_before('interface Serial 1/0', 'default interface Serial 1/0')
-            # Replace text in the IOSIntfLine object
-            cfg.replace_lines('interface Serial 1/0', 'interface Serial 2/0', exactmatch=False)
-
-            test_result01 = cfg.find_objects('^interface Serial 2/0')[0]
-            test_result02 = cfg.ioscfg
-
-            # Check attributes of the IOSIntfLine object
-            self.assertEqual(result_correct01.linenum,   test_result01.linenum)
-            self.assertEqual(result_correct01.text,      test_result01.text)
-            self.assertEqual(result_correct01.classname, test_result01.classname)
-            self.assertEqual(result_correct01.ipv4_addr_object, 
-                test_result01.ipv4_addr_object)
-
-            # Ensure the text configs are exactly what we wanted
-            self.assertEqual(result_correct02, test_result02)
-
-
-if __name__ == "__main__":
-     unittest.main()
+        # Ensure the text configs are exactly what we wanted
+        assert result_correct02==test_result02
