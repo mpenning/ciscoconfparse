@@ -1,3 +1,4 @@
+1.2.11  20150301 Converted unit-tests to py.test. Fix Github issue #23 (banner detection bug), add sync_diff() feature from Github issue #22, improve setup.py script.  NOTE: going forward, sync_diff() will deprecate use of req_cfgspec_excl_diff()
 1.2.10  20150210 Fix Github issue #21 in find_all_children(), update unit tests to detect github issue #21, add new-style example in examples/
 1.2.9   20150202 reduce package size, enhance generator support
 1.2.8   20150129 Add support for iterating over a generator (CiscoConfParse input, ref Github issue #19)
