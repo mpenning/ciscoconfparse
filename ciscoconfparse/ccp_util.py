@@ -10,23 +10,10 @@ import os
 
 from protocol_values import ASA_TCP_PORTS, ASA_UDP_PORTS
 
-try:
-    if sys.version_info[0]<3:
-        from ipaddr import IPv4Network, IPv6Network, IPv4Address, IPv6Address
-    else:
-        from ipaddress import IPv4Network, IPv6Network, IPv4Address, IPv6Address
-except:
-    sys.path.append(os.path.join(os.path.abspath(os.path.dirname(__file__)), "local_py"))
-    # re: modules usage... thank you Delnan
-    # http://stackoverflow.com/a/5027393
-    if (sys.version_info[0]<3) and \
-        (bool(sys.modules.get('ipaddr', False)) is False):
-        # Relative import path referenced to this directory
-        from ipaddr import IPv4Network, IPv6Network, IPv4Address, IPv6Address
-    elif (sys.version_info[0]==3) and \
-        (bool(sys.modules.get('ipaddress', False)) is False):
-        # Relative import path referenced to this directory
-        from ipaddress import IPv4Network, IPv6Network, IPv4Address, IPv6Address
+if sys.version_info[0]<3:
+    from ipaddr import IPv4Network, IPv6Network, IPv4Address, IPv6Address
+else:
+    from ipaddress import IPv4Network, IPv6Network, IPv4Address, IPv6Address
 
 """ ccp_util.py - Parse, Query, Build, and Modify IOS-style configurations
      Copyright (C) 2014-2015 David Michael Pennington
