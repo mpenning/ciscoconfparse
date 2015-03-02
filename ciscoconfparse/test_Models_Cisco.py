@@ -8,8 +8,8 @@ import re
 import os
 
 
-from ciscoconfparse import CiscoConfParse
-from ccp_util import IPv4Obj
+from .ciscoconfparse import CiscoConfParse
+from .ccp_util import IPv4Obj
 
 class knownValues(unittest.TestCase):
 
