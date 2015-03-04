@@ -26,6 +26,7 @@ from models_asa import ASACfgLine
 from models_asa import ASAName
 
 from models_junos import JunosCfgLine
+from version import __version__
 
 
 """ ciscoconfparse.py - Parse, Query, Build, and Modify IOS-style configurations
@@ -49,8 +50,6 @@ from models_junos import JunosCfgLine
 """
 
 ## Docstring props: http://stackoverflow.com/a/1523456/667301
-__version_tuple__ = (1, 2, 11)
-__version__ = '.'.join(map(str, __version_tuple__))
 __email__ = "mike /at\ pennington [dot] net"
 __author__ = "David Michael Pennington <{0}>".format(__email__)
 __copyright__ = "2007-{0}, {1}".format(time.strftime('%Y'), __author__)
