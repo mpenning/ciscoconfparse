@@ -1,1 +1,1 @@
-from ccp_version import *
+from version import *
