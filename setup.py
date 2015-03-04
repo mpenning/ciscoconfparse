@@ -6,12 +6,12 @@
 from setuptools import setup, find_packages
 import sys
 import os
-#CURRENT_PATH=os.path.join(os.path.dirname(__file__), "ciscoconfparse")
 CURRENT_PATH=os.path.join(os.path.dirname(__file__))
 sys.path.insert(1,CURRENT_PATH)
 
-from version_info.ccp_version import __version__ as __ccpversion__
-#from ciscoconfparse.ciscoconfparse import __version__ as __ccpversion__
+## Using version_info/version.py as a workaround for
+##   Github issue #24 (recursive import dependencies)
+from version_info.version import __version__ as __ccpversion__
 
 def read(fname):
     # Dynamically generate setup(long_description)
