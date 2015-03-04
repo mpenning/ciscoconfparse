@@ -63,7 +63,7 @@ copyright = u'2007-%s, %s' % (time.strftime('%Y'), ciscoconfparse.__author__)
 # built documents.
 #
 # The short X.Y version.
-version = '.'.join(map(str, ciscoconfparse.__version_tuple__[:2]))
+version = '.'.join(map(str, version.__version_tuple__[:2]))
 # The full version, including alpha/beta/rc tags.
 release = version.__version__
 
