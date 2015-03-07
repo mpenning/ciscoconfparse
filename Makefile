@@ -34,6 +34,7 @@ devpkgs:
 	pip install --upgrade hg-git
 	pip install --upgrade virtualenv
 	pip install --upgrade virtualenvwrapper
+	pip install --upgrade passlib
 	pip install --upgrade pss
 	pip install --upgrade mock
 	pip install --upgrade sphinx
@@ -44,12 +45,16 @@ devpkgs:
 .PHONY: flake
 flake:
 	flake8 --ignore E501,E226,E225,E221,E303,E302,E265,E128,E125,E124,E41,W291 --max-complexity 10 ciscoconfparse | less
+.PHONY: coverage
+coverage:
+	@echo "[[[ py.test Coverage ]]]"
+	cd ciscoconfparse;py.test --cov-report term-missing --cov=ciscoconfparse.py -s -v
 .PHONY: devtest
 devtest:
-	@echo "[[[[ Python 2.7 tests ]]]"
+	@echo "[[[ Python 2.7 tests ]]]"
 	/opt/virtual_env/py27_test/bin/python ciscoconfparse/ciscoconfparse.py;
 	$(PY27DEVTESTS)
-	@echo "[[[[ Python 3.4 tests ]]]"
+	@echo "[[[ Python 3.4 tests ]]]"
 	/opt/virtual_env/py34_test/bin/python ciscoconfparse/ciscoconfparse.py
 	$(PY34DEVTESTS)
 	make clean
@@ -61,6 +66,7 @@ test:
 clean:
 	find ./* -name '*.pyc' -exec rm {} \;
 	find ./* -name '*.so' -exec rm {} \;
+	find ./* -name '*.coverage' -exec rm {} \;
 	@# A minus sign prefixing the line means it ignores the return value
 	-find ./* -path '*__pycache__' -exec rm -rf {} \;
 	-rm -rf .eggs/
