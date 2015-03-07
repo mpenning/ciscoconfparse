@@ -80,6 +80,7 @@ help:
 	@echo "test                 : Run all doctests and unit tests"
 	@echo "devpkgs              : Get all dependencies for the dev environment"
 	@echo "devtest              : Run tests - Specific to Mike Pennington's build env"
+	@echo "coverage             : Run tests with coverage - Specific to this build env"
 	@echo "flake                : Run PyFlake code audit w/ McCabe complexity"
 	@echo "clean                : Housecleaning"
 	@echo "parse-ios            : Parse configs/sample_01.ios with default args"
