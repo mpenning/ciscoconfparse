@@ -1136,7 +1136,7 @@ class CiscoConfParse(object):
         return self.ConfigObjs.has_line_with(linespec)
 
     def insert_before(self, linespec, insertstr="", exactmatch=False, 
-        ignore_ws=False, atomic=True):
+        ignore_ws=False, atomic=False):
         """Find all objects whose text matches linespec, and insert 'insertstr' before those line objects"""
         objs = self.find_objects(linespec, exactmatch, ignore_ws)
         last_idx = len(objs) - 1
@@ -1151,7 +1151,7 @@ class CiscoConfParse(object):
         return list(map(attrgetter('text'), sorted(objs)))
 
     def insert_after(self, linespec, insertstr="", exactmatch=False, 
-        ignore_ws=False, atomic=True):
+        ignore_ws=False, atomic=False):
         """Find all :class:`~models_cisco.IOSCfgLine` objects whose text 
         matches ``linespec``, and insert ``insertstr`` after those line 
         objects"""
@@ -1168,7 +1168,7 @@ class CiscoConfParse(object):
         return list(map(attrgetter('text'), sorted(objs)))
 
     def insert_after_child(self, parentspec, childspec, insertstr="", 
-        exactmatch=False, excludespec=None, ignore_ws=False, atomic=True):
+        exactmatch=False, excludespec=None, ignore_ws=False, atomic=False):
         """Find all :class:`~models_cisco.IOSCfgLine` objects whose text 
         matches ``linespec`` and have a child matching ``childspec``, and 
         insert an :class:`~models_cisco.IOSCfgLine` object for ``insertstr`` 
@@ -1218,12 +1218,11 @@ class CiscoConfParse(object):
             - The parsed :class:`~models_cisco.IOSCfgLine` instance
 
         """
-        lines = self.ioscfg
-        lines.append(linespec)
+        self.ConfigObjs.append(linespec)
         return self.ConfigObjs[-1]
 
     def replace_lines(self, linespec, replacestr, excludespec=None, 
-        exactmatch=False, atomic=True):
+        exactmatch=False, atomic=False):
         """This method is a text search and replace (Case-sensitive).  You can
         optionally exclude lines from replacement by including a string (or
         compiled regular expression) in `excludespec`.
@@ -1325,7 +1324,7 @@ class CiscoConfParse(object):
         return retval
 
     def replace_children(self, parentspec, childspec, replacestr, 
-        excludespec=None, exactmatch=False, atomic=True):
+        excludespec=None, exactmatch=False, atomic=False):
         """Replace lines matching `childspec` within the `parentspec`'s 
         immediate children.
 
@@ -1912,7 +1911,7 @@ class IOSConfigList(MutableSequence):
     def has_line_with(self, linespec):
         return bool(filter(methodcaller('re_search', linespec), self._list))
 
-    def insert_before(self, robj, val, atomic=True):
+    def insert_before(self, robj, val, atomic=False):
         ## Insert something before robj
         if getattr(robj, 'capitalize', False):
             # robj must not be a string...
@@ -1939,7 +1938,7 @@ class IOSConfigList(MutableSequence):
             ## Just renumber lines...
             self._reassign_linenums()
 
-    def insert_after(self, robj, val, atomic=True):
+    def insert_after(self, robj, val, atomic=False):
         ## Insert something after robj
         if getattr(robj, 'capitalize', False):
             raise ValueError
@@ -1970,7 +1969,7 @@ class IOSConfigList(MutableSequence):
             ## Just renumber lines...
             self._reassign_linenums()
 
-    def insert(self, ii, val, atomic=True):
+    def insert(self, ii, val, atomic=False):
         ## Insert something at index ii
         if getattr(val, 'capitalize', False):
             if self.factory:
@@ -1994,7 +1993,7 @@ class IOSConfigList(MutableSequence):
             ## Just renumber lines...
             self._reassign_linenums()
 
-    def append(self, val, atomic=True):
+    def append(self, val, atomic=False):
         list_idx = len(self._list)
         self.insert(list_idx, val, atomic)
 
@@ -2267,7 +2266,7 @@ class ASAConfigList(MutableSequence):
     def has_line_with(self, linespec):
         return bool(filter(methodcaller('re_search', linespec), self._list))
 
-    def insert_before(self, robj, val, atomic=True):
+    def insert_before(self, robj, val, atomic=False):
         ## Insert something before robj
         if getattr(robj, 'capitalize', False):
             raise ValueError
@@ -2293,7 +2292,7 @@ class ASAConfigList(MutableSequence):
             ## Just renumber lines...
             self._reassign_linenums()
 
-    def insert_after(self, robj, val, atomic=True):
+    def insert_after(self, robj, val, atomic=False):
         ## Insert something after robj
         if getattr(robj, 'capitalize', False):
             raise ValueError
@@ -2322,7 +2321,7 @@ class ASAConfigList(MutableSequence):
             ## Just renumber lines...
             self._reassign_linenums()
 
-    def insert(self, ii, val, atomic=True):
+    def insert(self, ii, val, atomic=False):
         ## Insert something at index ii
         if getattr(val, 'capitalize', False):
             if self.factory:
@@ -2343,7 +2342,7 @@ class ASAConfigList(MutableSequence):
             self._reassign_linenums()
 
 
-    def append(self, val, atomic=True):
+    def append(self, val, atomic=False):
         list_idx = len(self._list)
         self.insert(list_idx, val, atomic)
 
