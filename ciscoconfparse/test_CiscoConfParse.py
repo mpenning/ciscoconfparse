@@ -5,9 +5,11 @@ from mock import patch
 import sys
 import re
 
-import pytest
 from .ciscoconfparse import CiscoConfParse, IOSCfgLine, IOSIntfLine
+from .ciscoconfparse import CiscoPassword
 from ccp_util import IPv4Obj
+from passlib.hash import cisco_type7
+import pytest
 
 def testValues_banner_child_parsing_01(parse_c01):
     """Associate banner lines as parent / child"""
@@ -213,6 +215,18 @@ def testValues_find_all_chidren02():
     test_result = cfg.find_all_children('^thing1')
     assert RESULT_CORRECT==test_result
 
+def testValues_find_blocks(parse_c01):
+    result_correct = [
+        'banner login ^C',
+        'This is a router, and you cannot have it.',
+        'Log off now while you still can type. I break the fingers',
+        'of all tresspassers.',
+        '^C',
+    ]
+
+    test_result = parse_c01.find_blocks('tresspasser')
+    assert result_correct==test_result
+
 def testValues_find_parents_w_child(parse_c01):
     c01_parents_w_child_power = [
         'interface GigabitEthernet4/1',
@@ -272,6 +286,24 @@ def testValues_find_children_w_parents(parse_c01):
     for args, result_correct in find_children_w_parents_Values:
         test_result = parse_c01.find_children_w_parents(**args)
         assert result_correct==test_result
+
+def testValues_find_objects_w_parents(parse_c01):
+    c01_children_w_parents_switchport = [
+        ' switchport',
+        ' switchport access vlan 100',
+        ' switchport voice vlan 150',
+    ]
+    find_objects_w_parents_Values = (
+        ({'parentspec': "^interface GigabitEthernet4/1",
+            'childspec': "switchport"},
+            c01_children_w_parents_switchport),
+        )
+    ## test find_children_w_parents
+    for args, result_correct in find_objects_w_parents_Values:
+        test_result = list(map(attrgetter('text'), 
+            parse_c01.find_objects_w_parents(**args)))
+        assert result_correct==test_result
+
 
 
 def testValues_replace_lines_01(parse_c01):
@@ -744,6 +776,22 @@ def testValues_insert_after_nonatomic_02(parse_c01):
     # the interface should *not* be shutdown, because I made a non-atomic change
     assert result_correct==test_result
 
+def testValues_insert_after_child_atomic_01(parse_c01):
+    """We expect insert_after_child(atomic=True) to correctly parse children"""
+    result_correct = [
+        'interface GigabitEthernet4/1',
+        ' switchport',
+        ' switchport access vlan 100',
+        ' switchport voice vlan 150',
+        ' power inline static max 7000',
+        ' shutdown',
+        ]
+    linespec = 'interface GigabitEthernet4/1'
+    parse_c01.insert_after_child(linespec, 'power', ' shutdown', exactmatch=True, atomic=True)
+    test_result = parse_c01.find_children(linespec)
+
+    assert result_correct==test_result
+
 
 def testValues_insert_before_nonatomic_01(parse_c01):
     inputs = ['interface GigabitEthernet4/1',
@@ -969,3 +1017,70 @@ def testValues_IOSIntfLine_find_objects_factory_02(parse_c01_factory,
 
         # Ensure the text configs are exactly what we wanted
         assert result_correct02==test_result02
+
+def testValues_IOSConfigList_insert01(parse_c02):
+    result_correct = [
+        'hostname LabRouter',
+        'policy-map QOS_1', 
+        ' class GOLD', 
+        '  priority percent 10', 
+        ' !', 
+        ' class SILVER', 
+        '  bandwidth 30', 
+        '  random-detect', 
+        ' !', 
+        ' class BRONZE', 
+        '  random-detect', 
+        '!', 
+        'interface GigabitEthernet4/1', 
+        ' switchport', 
+        ' switchport access vlan 100', 
+        ' switchport voice vlan 150', 
+        ' power inline static max 7000', 
+        '!',
+    ]
+    iosconfiglist = parse_c02.ConfigObjs
+
+    # insert at the beginning
+    iosconfiglist.insert(0, 'hostname LabRouter')
+    test_result = list(map(attrgetter('text'), iosconfiglist))
+
+    assert test_result==result_correct
+
+def testValues_IOSConfigList_insert02(parse_c02):
+    result_correct = [
+        'policy-map QOS_1', 
+        ' class GOLD', 
+        '  priority percent 10', 
+        ' !', 
+        ' class SILVER', 
+        '  bandwidth 30', 
+        '  random-detect', 
+        ' !', 
+        ' class BRONZE', 
+        '  random-detect', 
+        '!', 
+        'interface GigabitEthernet4/1', 
+        ' switchport', 
+        ' switchport access vlan 100', 
+        ' switchport voice vlan 150', 
+        ' power inline static max 7000', 
+        'hostname LabRouter',
+        '!',
+    ]
+    iosconfiglist = parse_c02.ConfigObjs
+
+    # insert at the end
+    iosconfiglist.insert(-1, 'hostname LabRouter')
+    test_result = list(map(attrgetter('text'), iosconfiglist))
+
+    assert test_result==result_correct
+
+def testValues_CiscoPassword():
+    ep = "04480E051A33490E"
+    test_result_01 = CiscoPassword(ep).decrypt()
+    test_result_02 = CiscoPassword().decrypt(ep)
+
+    result_correct = cisco_type7(0).decode(ep)
+    assert result_correct==test_result_01
+    assert result_correct==test_result_02
