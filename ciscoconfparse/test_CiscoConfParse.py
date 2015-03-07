@@ -1047,6 +1047,7 @@ def testValues_IOSConfigList_insert01(parse_c02):
 
     assert test_result==result_correct
 
+
 def testValues_IOSConfigList_insert02(parse_c02):
     result_correct = [
         'policy-map QOS_1', 
@@ -1074,6 +1075,18 @@ def testValues_IOSConfigList_insert02(parse_c02):
     iosconfiglist.insert(-1, 'hostname LabRouter')
     test_result = list(map(attrgetter('text'), iosconfiglist))
 
+    assert test_result==result_correct
+
+def testValues_IOSConfigLine_ioscfg01(parse_c02):
+    result_correct = [
+        'interface GigabitEthernet4/1', 
+        ' switchport', 
+        ' switchport access vlan 100', 
+        ' switchport voice vlan 150', 
+        ' power inline static max 7000', 
+    ]
+    test_result = parse_c02.find_objects(r'^interface\sGigabitEthernet4/1', 
+        exactmatch=True)[0].ioscfg
     assert test_result==result_correct
 
 def testValues_CiscoPassword():
