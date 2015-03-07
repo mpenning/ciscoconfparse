@@ -26,7 +26,8 @@ from models_asa import ASACfgLine
 from models_asa import ASAName
 
 from models_junos import JunosCfgLine
-from version import __version__
+
+from .version import __version__ as __ccpversion__
 
 
 """ ciscoconfparse.py - Parse, Query, Build, and Modify IOS-style configurations
@@ -50,6 +51,7 @@ from version import __version__
 """
 
 ## Docstring props: http://stackoverflow.com/a/1523456/667301
+__version__ = __ccpversion__
 __email__ = "mike /at\ pennington [dot] net"
 __author__ = "David Michael Pennington <{0}>".format(__email__)
 __copyright__ = "2007-{0}, {1}".format(time.strftime('%Y'), __author__)
@@ -1390,7 +1392,7 @@ class CiscoConfParse(object):
                     pass
 
         if self.factory and atomic:
-            self.ConfigObjs._reassign_linenums()
+            #self.ConfigObjs._reassign_linenums()
             self.ConfigObjs._bootstrap_from_text()
         return retval
 
@@ -1416,7 +1418,7 @@ class CiscoConfParse(object):
                     pass
 
         if self.factory and atomic:
-            self.ConfigObjs._reassign_linenums()
+            #self.ConfigObjs._reassign_linenums()
             self.ConfigObjs._bootstrap_from_text()
 
         return retval
