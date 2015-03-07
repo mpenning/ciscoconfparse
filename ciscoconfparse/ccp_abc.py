@@ -691,6 +691,14 @@ class BaseCfgLine(object):
         raise NotImplementedError
 
     @property
+    def ioscfg(self):
+        """Return a list with this the text of this object, and 
+        with all children in the direct line."""
+        retval = [self.text]
+        retval.extend(list(map(attrgetter('text'), self.all_children)))
+        return retval
+
+    @property
     def lineage(self):
         """Iterate through to the oldest ancestor of this object, and return
         a list of all ancestors / children in the direct line.  Cousins or
