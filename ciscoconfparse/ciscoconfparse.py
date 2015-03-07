@@ -27,7 +27,7 @@ from models_asa import ASAName
 
 from models_junos import JunosCfgLine
 
-from .version import __version__ as __ccpversion__
+from version import __version__ as __ccpversion__
 
 
 """ ciscoconfparse.py - Parse, Query, Build, and Modify IOS-style configurations
