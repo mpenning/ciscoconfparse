@@ -1220,7 +1220,6 @@ class CiscoConfParse(object):
         """
         lines = self.ioscfg
         lines.append(linespec)
-        self.ConfigObjs._bootstrap_obj_init(text_list=lines)
         return self.ConfigObjs[-1]
 
     def replace_lines(self, linespec, replacestr, excludespec=None, 
