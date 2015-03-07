@@ -1552,34 +1552,43 @@ class CiscoConfParse(object):
         b_heirarchy = list()
 
         ## Build heirarchical, equal-length lists of parents / non-parents
-        for level, nonparents, parents in a.objs.heirarchical_yield():
-            obj = DiffObject(level, nonparents, parents)
-            a_heirarchy.append(obj)
+        parents, nonparents = a.objs.config_heirarchy()
+        obj = DiffObject(0, nonparents, parents)
+        a_heirarchy.append(obj)
         a_len = len(a_heirarchy)
-        for level, nonparents, parents in b.objs.heirarchical_yield():
-            obj = DiffObject(level, nonparents, parents)
-            b_heirarchy.append(obj)
-        b_len = len(b_heirarchy)
 
-        ## If DiffObject lists aren't equal-length by default, pad them
-        max_len = max(a_len, b_len)
-        for h_list in [a_heirarchy, b_heirarchy]:
-            h_list_len = len(h_list)
-            for ii in range(0, (max_len-h_list_len)):
-                # Append empty list objects until they are equal
-                obj = DiffObject(h_list_len+ii, [], [])
-                h_list.append(obj)
+        parents, nonparents = b.objs.config_heirarchy()
+        obj = DiffObject(0, nonparents, parents)
+        b_heirarchy.append(obj)
+        b_len = len(b_heirarchy)
 
         ## Assign config_this and unconfig_this attributes by "diff level"
         for adiff_level, bdiff_level in zip(a_heirarchy, b_heirarchy):
             for attr in ['parents', 'nonparents']:
-                a_lines = map(lambda x: getattr(x, 'text'), getattr(adiff_level, attr))
-                b_lines = map(lambda x: getattr(x, 'text'), getattr(bdiff_level, attr))
-
-                # Build a map from a_lines index to a.ConfigObjs index
-                a_linenums = map(lambda x: getattr(x, 'linenum'), getattr(adiff_level, attr))
-                # Build a map from b_lines index to b.ConfigObjs index
-                b_linenums = map(lambda x: getattr(x, 'linenum'), getattr(bdiff_level, attr))
+                if attr=='parents':
+                    a_lines = list()
+                    a_linenums = list()
+                    for obj in adiff_level.parents:
+                        a_lines.append(obj.text)
+                        a_linenums.append(obj.linenum)
+                        a_lines.extend(map(lambda x: getattr(x, 'text'), obj.all_children))
+                        a_linenums.extend(map(lambda x: getattr(x, 'linenum'), obj.all_children))
+                    b_lines = list()
+                    b_linenums = list()
+                    for obj in bdiff_level.parents:
+                        b_lines.append(obj.text)
+                        b_linenums.append(obj.linenum)
+                        b_lines.extend(map(lambda x: getattr(x, 'text'), obj.all_children))
+                        b_linenums.extend(map(lambda x: getattr(x, 'linenum'), obj.all_children))
+                else:
+                    a_lines = map(lambda x: getattr(x, 'text'), 
+                        getattr(adiff_level, attr))
+                    b_lines = map(lambda x: getattr(x, 'text'), 
+                        getattr(bdiff_level, attr))
+                    # Build a map from a_lines index to a.ConfigObjs index
+                    a_linenums = map(lambda x: getattr(x, 'linenum'), getattr(adiff_level, attr))
+                    # Build a map from b_lines index to b.ConfigObjs index
+                    b_linenums = map(lambda x: getattr(x, 'linenum'), getattr(bdiff_level, attr))
 
                 # Get a SequenceMatcher instance to calculate diffs at this level
                 matcher = SequenceMatcher(isjunk=None, a=a_lines, b=b_lines)
@@ -1993,40 +2002,22 @@ class IOSConfigList(MutableSequence):
         list_idx = len(self._list)
         self.insert(list_idx, val)
 
-    def heirarchical_yield(self):
+    def config_heirarchy(self):
         """Walk this configuration and return the following tuple
         at each parent 'level':
-            (level, list_of_nonparent_siblings, list_of_parent_siblings)"""
-        level = 0
-        finished = False
-        last_parent_siblings = list()
-        while not finished:
-            parent_siblings = list()
-            nonparent_siblings = list()
-            if level==0:
-                for obj in self.CiscoConfParse.find_objects('^\S+'):
-                    if obj.is_comment:
-                        continue
-                    elif len(obj.children)==0:
-                        nonparent_siblings.append(obj)
-                    else:
-                        parent_siblings.append(obj)
-            else:
-                for parent in last_parent_siblings:
-                    for obj in parent.children:
-                        if obj.is_comment:
-                            continue
-                        elif len(obj.children)==0:
-                            nonparent_siblings.append(obj)
-                        else:
-                            parent_siblings.append(obj)
+            (list_of_parent_siblings, list_of_nonparent_siblings)"""
+        parent_siblings = list()
+        nonparent_siblings = list()
 
-            if (len(nonparent_siblings)==0) and (len(parent_siblings)==0):
-                finished = True
+        for obj in self.CiscoConfParse.find_objects('^\S+'):
+            if obj.is_comment:
+                continue
+            elif len(obj.children)==0:
+                nonparent_siblings.append(obj)
             else:
-                last_parent_siblings = parent_siblings
-                yield (level, nonparent_siblings, parent_siblings)
-                level += 1
+                parent_siblings.append(obj)
+
+        return parent_siblings, nonparent_siblings
 
     def _banner_mark_regex(self, REGEX):
         # Build a list of all leading banner lines
@@ -2338,40 +2329,22 @@ class ASAConfigList(MutableSequence):
         list_idx = len(self._list)
         self.insert(list_idx, val, atomic)
 
-    def heirarchical_yield(self):
+    def config_heirarchy(self):
         """Walk this configuration and return the following tuple
         at each parent 'level':
-            (level, list_of_nonparent_siblings, list_of_parent_siblings)"""
-        level = 0
-        finished = False
-        last_parent_siblings = list()
-        while not finished:
-            parent_siblings = list()
-            nonparent_siblings = list()
-            if level==0:
-                for obj in self.CiscoConfParse.find_objects('^\S+'):
-                    if obj.is_comment:
-                        continue
-                    elif len(obj.children)==0:
-                        nonparent_siblings.append(obj)
-                    else:
-                        parent_siblings.append(obj)
-            else:
-                for parent in last_parent_siblings:
-                    for obj in parent.children:
-                        if obj.is_comment:
-                            continue
-                        elif len(obj.children)==0:
-                            nonparent_siblings.append(obj)
-                        else:
-                            parent_siblings.append(obj)
+            (list_of_parent_siblings, list_of_nonparent_siblings)"""
+        parent_siblings = list()
+        nonparent_siblings = list()
 
-            if (len(nonparent_siblings)==0) and (len(parent_siblings)==0):
-                finished = True
+        for obj in self.CiscoConfParse.find_objects('^\S+'):
+            if obj.is_comment:
+                continue
+            elif len(obj.children)==0:
+                nonparent_siblings.append(obj)
             else:
-                last_parent_siblings = parent_siblings
-                yield (level, nonparent_siblings, parent_siblings)
-                level += 1
+                parent_siblings.append(obj)
+
+        return parent_siblings, nonparent_siblings
 
     def _bootstrap_obj_init(self, text_list):
         """Accept a text list and format into proper objects"""
