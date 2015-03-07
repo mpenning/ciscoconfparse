@@ -209,6 +209,25 @@ of all tresspassers.
 ^C
 alias exec showthang show ip route vrf THANG""".splitlines()
 
+# A smaller version of c01...
+c02 = """policy-map QOS_1
+ class GOLD
+  priority percent 10
+ !
+ class SILVER
+  bandwidth 30
+  random-detect
+ !
+ class BRONZE
+  random-detect
+!
+interface GigabitEthernet4/1
+ switchport
+ switchport access vlan 100
+ switchport voice vlan 150
+ power inline static max 7000
+!""".splitlines()
+
 @pytest.yield_fixture(scope='session')
 def c01_default_gigethernets(request):
     yield config_c01_default_gige
@@ -231,4 +250,17 @@ def parse_c01_factory(request):
      
     yield parse_c01_factory
 
+@pytest.yield_fixture(scope='function')
+def parse_c02(request):
+    """Preparsed c02"""
+    parse_c02 = CiscoConfParse(c02, factory=False)
+     
+    yield parse_c02
+
+@pytest.yield_fixture(scope='function')
+def parse_c02_factory(request):
+    """Preparsed c02"""
+    parse_c02 = CiscoConfParse(c02, factory=True)
+     
+    yield parse_c02
 
