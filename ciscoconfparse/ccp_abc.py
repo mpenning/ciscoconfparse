@@ -499,7 +499,7 @@ class BaseCfgLine(object):
         Args:
             - regex (str): A string or python regular expression, which should be matched.  This regular expression should contain parenthesis, which bound a match group.
         Kwargs:
-            - group (int): An integer which specifies the desired group to be returned.  ``group`` defaults to 1.
+            - group (int): An integer which specifies the desired regex group to be returned.  ``group`` defaults to 1.
             - default (str): The default value to be returned, if there is no match.  By default an empty string is returned if there is no match.
 
         Returns:
@@ -570,13 +570,13 @@ class BaseCfgLine(object):
     def re_match_typed(self, regex, group=1, result_type=str, default=''):
         """Use ``regex`` to search the :class:`~models_cisco.IOSCfgLine` text 
         and return the contents of the regular expression group, at the 
-        integer index, cast as ``result_type``; if there is no match, 
+        integer ``group`` index, cast as ``result_type``; if there is no match, 
         ``default`` is returned.
 
         Args:
             - regex (str): A string or python regular expression, which should be matched.  This regular expression should contain parenthesis, which bound a match group.
         Kwargs:
-            - group (int): An integer which specifies the desired group to be returned.  ``group`` defaults to 1.
+            - group (int): An integer which specifies the desired regex group to be returned.  ``group`` defaults to 1.
             - result_type (type): A type (typically one of: ``str``, ``int``, ``float``, or ``IPv4Obj``).  All returned values are cast as ``result_type``, which defaults to ``str``.
             - default (any): The default value to be returned, if there is no match.
 
@@ -628,13 +628,13 @@ class BaseCfgLine(object):
     def re_match_iter_typed(self, regex, group=1, result_type=str, default=''):
         """Use ``regex`` to search the children of 
         :class:`~models_cisco.IOSCfgLine` text and return the contents of 
-        the regular expression group, at the integer index, cast as 
+        the regular expression group, at the integer ``group`` index, cast as 
         ``result_type``; if there is no match, ``default`` is returned.
 
         Args:
             - regex (str): A string or python compiled regular expression, which should be matched.  This regular expression should contain parenthesis, which bound a match group.
         Kwargs:
-            - group (int): An integer which specifies the desired group to be returned.  ``group`` defaults to 1.
+            - group (int): An integer which specifies the desired regex group to be returned.  ``group`` defaults to 1.
             - result_type (type): A type (typically one of: ``str``, ``int``, ``float``, or :class:`~ccp_util.IPv4Obj`).         All returned values are cast as ``result_type``, which defaults to ``str``.
             - default (any): The default value to be returned, if there is no match.
 
