@@ -1987,8 +1987,7 @@ class IOSConfigList(MutableSequence):
         self._list.insert(ii, obj)
 
         ## Just renumber lines...
-        #self._reassign_linenums()
-        self._bootstrap_from_text()
+        self._reassign_linenums()
 
     def append(self, val):
         list_idx = len(self._list)
@@ -2318,7 +2317,7 @@ class ASAConfigList(MutableSequence):
             ## Just renumber lines...
             self._reassign_linenums()
 
-    def insert(self, ii, val, atomic=False):
+    def insert(self, ii, val):
         ## Insert something at index ii
         if getattr(val, 'capitalize', False):
             if self.factory:
@@ -2331,12 +2330,8 @@ class ASAConfigList(MutableSequence):
 
         self._list.insert(ii, obj)
 
-        if atomic:
-            # Reparse the whole config as a text list
-            self._bootstrap_from_text()
-        else:
-            ## Just renumber lines...
-            self._reassign_linenums()
+        ## Just renumber lines...
+        self._reassign_linenums()
 
 
     def append(self, val, atomic=False):
