@@ -1969,8 +1969,7 @@ class IOSConfigList(MutableSequence):
             ## Just renumber lines...
             self._reassign_linenums()
 
-    def insert(self, ii, val, atomic=False):
-        ## Insert something at index ii
+    def insert(self, ii, val):
         if getattr(val, 'capitalize', False):
             if self.factory:
                 obj = ConfigLineFactory(text=val, 
@@ -1984,18 +1983,16 @@ class IOSConfigList(MutableSequence):
         else:
             raise ValueError('FATAL insert - Cannot insert "{0}"'.format(val))
 
+        ## Insert something at index ii
         self._list.insert(ii, obj)
 
-        if atomic:
-            # Reparse the whole config as a text list
-            self._bootstrap_from_text()
-        else:
-            ## Just renumber lines...
-            self._reassign_linenums()
+        ## Just renumber lines...
+        #self._reassign_linenums()
+        self._bootstrap_from_text()
 
-    def append(self, val, atomic=False):
+    def append(self, val):
         list_idx = len(self._list)
-        self.insert(list_idx, val, atomic)
+        self.insert(list_idx, val)
 
     def heirarchical_yield(self):
         """Walk this configuration and return the following tuple
@@ -2547,10 +2544,10 @@ class DiffObject(object):
 
 class CiscoPassword(object):
 
-    def __init__(self):
-        self
+    def __init__(self, ep=""):
+        self.ep = ep
 
-    def decrypt(self, ep):
+    def decrypt(self, ep=""):
         """Cisco Type 7 password decryption.  Converted from perl code that was
         written by jbash [~at~] cisco.com; enhancements suggested by 
         rucjain [~at~] cisco.com"""
@@ -2564,6 +2561,7 @@ class CiscoPassword(object):
 
         dp = ""
         regex = re.compile("^(..)(.+)")
+        ep = ep or self.ep
         if not (len(ep) & 1):
             result = regex.search(ep)
             try:
