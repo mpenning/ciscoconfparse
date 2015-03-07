@@ -1186,7 +1186,7 @@ class CiscoConfParse(object):
                 elif re.search(childspec, cobj.text):
                     modified = True
                     retval.append(self.ConfigObjs.insert_after(cobj, 
-                        insertstr, atomic=False))
+                        insertstr, atomic=atomic))
                 else:
                     pass
         return retval
@@ -2398,7 +2398,7 @@ class ASAConfigList(MutableSequence):
                 obj = ConfigLineFactory(line, self.comment_delimiter,
                     syntax='asa')
             elif self.syntax=='asa' and not self.factory:
-                obj = IOSCfgLine(text=line,
+                obj = ASACfgLine(text=line,
                     comment_delimiter=self.comment_delimiter)
             else:
                 raise ValueError
