@@ -287,8 +287,61 @@ class CiscoConfParse(object):
             offset += line_offset
         return lines
 
+    def find_interface_objects(self, intfspec, exactmatch=True):
+        """Find all :class:`~models_cisco.IOSCfgLine` objects whose text 
+        is an abbreviation for ``intfspec`` and return the 
+        :class:`~models_cisco.IOSIntfLine` objects in a python list.
 
-    
+        .. note::
+
+           The configuration *must* be parsed with ``factory=True`` to
+           use this method
+
+        Args:
+            - intfspec (str): A string which is the abbreviation (or full name) of the interface
+        Kwargs:
+            - exactmatch (bool): Defaults to True; when True, this option requires ``intfspec`` match the whole interface name and number.
+
+        Returns:
+            - list.  A list of matching :class:`~ciscoconfparse.IOSIntfLine` objects
+
+        .. code-block:: python
+           :emphasize-lines: 12,15
+
+           >>> config = [
+           ...     '!',
+           ...     'interface Serial1/0',
+           ...     ' ip address 1.1.1.1 255.255.255.252',
+           ...     '!',
+           ...     'interface Serial1/1',
+           ...     ' ip address 1.1.1.5 255.255.255.252',
+           ...     '!',
+           ...     ]
+           >>> parse = CiscoConfParse(config, factory=True)
+           >>>
+           >>> parse.find_interface_objects('Se 1/0')
+           [<IOSIntfLine # 1 'Serial1/0' info: '1.1.1.1/30'>]
+           >>>
+
+        """
+        if not (self.factory is True):
+            raise ValueError("FATAL: find_interface_objects() must be called with 'factory=True'")
+
+        retval = list()
+        if self.syntax=='ios':
+            if exactmatch:
+                for obj in self.find_objects('^interface'):
+                    if intfspec.lower() in obj.abbvs:
+                        retval.append(obj)
+                        break  # Only break if exactmatch is True
+            else:
+                raise NotImplementedError
+        ## TODO: implement ASAConfigLine.abbvs and others
+        else:
+            raise NotImplementedError
+
+        return retval
+
 
     def find_objects(self, linespec, exactmatch=False, ignore_ws=False):
         """Find all :class:`~models_cisco.IOSCfgLine` objects whose text 
