@@ -1,3 +1,4 @@
+1.2.14  20150307 Enhance config modification speed as documented in Github issue #26. Implement find_interface_objects() as documented in Github issue #27.  Improved unit test coverage, and fixed Github issue #25.
 1.2.13  20150301 Fix Github issue #25: Python3 bites me again
 1.2.12  20150301 Fix Github issue #24: recursive dependencies in setup.py and ciscoconfparse/__init__.py
 1.2.11  20150301 Converted unit-tests to py.test. Fix Github issue #23 (banner detection bug), add sync_diff() feature from Github issue #22, improve setup.py script.  NOTE: going forward, sync_diff() will deprecate use of req_cfgspec_excl_diff()
