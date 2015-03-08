@@ -282,6 +282,17 @@ class BaseIOSIntfLine(IOSCfgLine):
         else:
             return "<%s # %s '%s' info: 'switchport'>" % (self.classname, self.linenum, self.name)
 
+    def _build_abbvs(self):
+        """Build a set of valid abbreviations (lowercased) for the interface"""
+        retval = set([])
+        port_type_chars = self.port_type.lower()
+        subinterface_number = self.subinterface_number
+        for sep in ['', ' ']:
+            for ii in range(1, len(port_type_chars)+1):
+                retval.add('{0}{1}{2}'.format(port_type_chars[0:ii], sep, 
+                    subinterface_number))
+        return retval
+
     def reset(self, atomic=True):
         # Insert build_reset_string() before this line...
         self.insert_before(self.build_reset_string(), atomic=atomic)
@@ -289,6 +300,7 @@ class BaseIOSIntfLine(IOSCfgLine):
     def build_reset_string(self):
         # IOS interfaces are defaulted like this...
         return "default " + self.text
+
 
     @property
     def verbose(self):
@@ -304,6 +316,9 @@ class BaseIOSIntfLine(IOSCfgLine):
 
     ##-------------  Basic interface properties
 
+    @property
+    def abbvs(self):
+        return self._build_abbvs()
 
 
     @property
@@ -467,12 +482,103 @@ class BaseIOSIntfLine(IOSCfgLine):
         if not self.is_intf:
             return ()
         else:
-            intf_regex = r'^interface\s+[A-Za-z\-]+\s*(\d+.*?)(\.\d+)*(\s\S+)*\s*$'
-            intf_number = self.re_match(intf_regex, group=1, default='')
+            intf_number = self.interface_number
             if intf_number:
                 return tuple([int(ii) for ii in intf_number.split('/')])
             else:
                 return ()
+
+    @property
+    def interface_number(self):
+        """Return a string representing the card, slot, port for this interface.  If you call interface_number on GigabitEthernet2/25.100, you'll get this python string: '2/25'.  If you call interface_number on GigabitEthernet2/0/25.100 you'll get this python string '2/0/25'.  This method strips all subinterface information in the returned value.
+
+        Returns:
+            - string.
+
+        .. warning::
+
+           interface_number should silently fail (returning an empty python string) if the interface doesn't parse correctly
+
+        This example illustrates use of the method.
+
+        .. code-block:: python
+           :emphasize-lines: 17,20
+
+           >>> config = [
+           ...     '!',
+           ...     'interface FastEthernet1/0',
+           ...     ' ip address 1.1.1.1 255.255.255.252',
+           ...     '!',
+           ...     'interface ATM2/0',
+           ...     ' no ip address',
+           ...     '!',
+           ...     'interface ATM2/0.100 point-to-point',
+           ...     ' ip address 1.1.1.5 255.255.255.252',
+           ...     ' pvc 0/100',
+           ...     '  vbr-nrt 704 704',
+           ...     '!',
+           ...     ]
+           >>> parse = CiscoConfParse(config, factory=True)
+           >>> obj = parse.find_objects('^interface\sFast')[0]
+           >>> obj.interface_number
+           '1/0'
+           >>> obj = parse.find_objects('^interface\sATM')[-1]
+           >>> obj.interface_number
+           '2/0'
+           >>>
+        """
+        if not self.is_intf:
+            return ""
+        else:
+            intf_regex = r'^interface\s+[A-Za-z\-]+\s*(\d+.*?)(\.\d+)*(\s\S+)*\s*$'
+            intf_number = self.re_match(intf_regex, group=1, default='')
+            return intf_number
+
+    @property
+    def subinterface_number(self):
+        """Return a string representing the card, slot, port for this interface or subinterface.  If you call subinterface_number on GigabitEthernet2/25.100, you'll get this python string: '2/25.100'.  If you call interface_number on GigabitEthernet2/0/25 you'll get this python string '2/0/25'.  This method strips all subinterface information in the returned value.
+
+        Returns:
+            - string.
+
+        .. warning::
+
+           subinterface_number should silently fail (returning an empty python string) if the interface doesn't parse correctly
+
+        This example illustrates use of the method.
+
+        .. code-block:: python
+           :emphasize-lines: 17,20
+
+           >>> config = [
+           ...     '!',
+           ...     'interface FastEthernet1/0',
+           ...     ' ip address 1.1.1.1 255.255.255.252',
+           ...     '!',
+           ...     'interface ATM2/0',
+           ...     ' no ip address',
+           ...     '!',
+           ...     'interface ATM2/0.100 point-to-point',
+           ...     ' ip address 1.1.1.5 255.255.255.252',
+           ...     ' pvc 0/100',
+           ...     '  vbr-nrt 704 704',
+           ...     '!',
+           ...     ]
+           >>> parse = CiscoConfParse(config, factory=True)
+           >>> obj = parse.find_objects('^interface\sFast')[0]
+           >>> obj.subinterface_number
+           '1/0'
+           >>> obj = parse.find_objects('^interface\sATM')[-1]
+           >>> obj.subinterface_number
+           '2/0.100'
+           >>>
+        """
+        if not self.is_intf:
+            return ""
+        else:
+            subintf_regex = r'^interface\s+[A-Za-z\-]+\s*(\d+.*?\.?\d?)(\s\S+)*\s*$'
+            subintf_number = self.re_match(subintf_regex, group=1, default='')
+            return subintf_number
 
     @property
     def description(self):
@@ -1194,6 +1300,7 @@ class IOSIntfLine(BaseIOSIntfLine):
           All :class:`~models_cisco.IOSIntfLine` methods are still considered beta-quality, until this notice is removed.  The behavior of APIs on this object could change at any time.
         """
         super(IOSIntfLine, self).__init__(*args, **kwargs)
+
 
     @classmethod
     def is_object_for(cls, line="", re=re):
