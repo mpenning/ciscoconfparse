@@ -20,7 +20,7 @@ def read(fname):
 
 ## Conditionally require the correct ipaddr package in Python2 vs Python3
 if sys.version_info[0]<3:
-    IPADDR = "ipaddr"
+    IPADDR = "ipaddr>=2.1.11"
 else:
     IPADDR = "ipaddress"
 
@@ -30,14 +30,14 @@ setup(name='ciscoconfparse',
       url='http://www.pennington.net/py/ciscoconfparse/',
       author='David Michael Pennington',
       author_email='mike /|at|\ pennington.net',
-      license='GPL',
+      license='GPLv3',
       platforms='any',
       keywords='Parse audit query modify Cisco IOS configuration',
       entry_points = "",
       long_description=read('README.rst'),
       include_package_data=True,  # See MANIFEST.in for explicit rules
       packages=find_packages(),
-      use_2to3=True,
+      use_2to3=False,
       zip_safe=False,
       install_requires = [IPADDR],       # Package dependencies here
       setup_requires=["setuptools_hg"],  # setuptools_hg must be installed as a python module
