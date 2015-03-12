@@ -55,7 +55,7 @@ __version__ = __ccpversion__
 __email__ = "mike /at\ pennington [dot] net"
 __author__ = "David Michael Pennington <{0}>".format(__email__)
 __copyright__ = "2007-{0}, {1}".format(time.strftime('%Y'), __author__)
-__license__ = "GPL"
+__license__ = "GPLv3"
 __status__ = "Production"
 
 class CiscoConfParse(object):
