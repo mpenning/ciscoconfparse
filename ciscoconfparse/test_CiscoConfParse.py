@@ -413,9 +413,105 @@ def testValues_sync_diff_01(parse_c01):
         )
     assert result_correct==test_result
 
+
 @pytest.mark.xfail(sys.version_info[0]==3,
                    reason="Difflib.SequenceMatcher is broken in Python3")
-def testValues_sync_diff_02():
+def testValues_sync_diff_03():
+    ## config_01 is the starting point
+    config_01 = ['!',
+    'interface GigabitEthernet 1/5',
+    ' ip address 1.1.1.2 255.255.255.0',
+    ' standby 5 ip 1.1.1.1',
+    ' standby 5 preempt',
+    '!']
+
+    required_config = ['!',
+    'interface GigabitEthernet 1/5',
+    ' switchport',
+    ' switchport mode access',
+    ' switchport access vlan 5',
+    ' switchport nonegotiate',
+    '!',
+    'interface Vlan5',
+    ' no shutdown',
+    ' ip address 1.1.1.2 255.255.255.0',
+    ' standby 5 ip 1.1.1.1',
+    ' standby 5 preempt',
+    '!',
+    ]
+
+    result_correct = ['interface GigabitEthernet 1/5',
+        ' no ip address 1.1.1.2 255.255.255.0',
+        ' no standby 5 ip 1.1.1.1',
+        ' no standby 5 preempt',
+        'interface GigabitEthernet 1/5',
+        ' switchport',
+        ' switchport mode access',
+        ' switchport access vlan 5',
+        ' switchport nonegotiate',
+        'interface Vlan5',
+        ' no shutdown',
+        ' ip address 1.1.1.2 255.255.255.0',
+        ' standby 5 ip 1.1.1.1',
+        ' standby 5 preempt',
+    ]
+
+    linespec = r''
+    parse = CiscoConfParse(config_01)
+    test_result = parse.sync_diff(required_config, linespec, linespec)
+    assert result_correct==test_result
+
+@pytest.mark.xfail(sys.version_info[0]==3,
+                   reason="Difflib.SequenceMatcher is broken in Python3")
+def testValues_sync_diff_04():
+    """Test diffs against double-spacing for children (such as NXOS)"""
+    ## config_01 is the starting point
+    config_01 = ['!',
+    'interface GigabitEthernet 1/5',
+    '  ip address 1.1.1.2 255.255.255.0',
+    '  standby 5 ip 1.1.1.1',
+    '  standby 5 preempt',
+    '!']
+
+    required_config = ['!',
+    'interface GigabitEthernet 1/5',
+    '  switchport',
+    '  switchport mode access',
+    '  switchport access vlan 5',
+    '  switchport nonegotiate',
+    '!',
+    'interface Vlan5',
+    '  no shutdown',
+    '  ip address 1.1.1.2 255.255.255.0',
+    '  standby 5 ip 1.1.1.1',
+    '  standby 5 preempt',
+    '!',
+    ]
+
+    result_correct = ['interface GigabitEthernet 1/5',
+        '  no ip address 1.1.1.2 255.255.255.0',
+        '  no standby 5 ip 1.1.1.1',
+        '  no standby 5 preempt',
+        'interface GigabitEthernet 1/5',
+        '  switchport',
+        '  switchport mode access',
+        '  switchport access vlan 5',
+        '  switchport nonegotiate',
+        'interface Vlan5',
+        '  no shutdown',
+        '  ip address 1.1.1.2 255.255.255.0',
+        '  standby 5 ip 1.1.1.1',
+        '  standby 5 preempt',
+    ]
+
+    linespec = r''
+    parse = CiscoConfParse(config_01)
+    test_result = parse.sync_diff(required_config, linespec, linespec)
+    assert result_correct==test_result
+
+@pytest.mark.xfail(sys.version_info[0]==3,
+                   reason="Difflib.SequenceMatcher is broken in Python3")
+def testValues_sync_diff_05():
     ## config_01 is the starting point
     config_01 = ['!',
     'vlan 51',
@@ -442,50 +538,31 @@ def testValues_sync_diff_02():
 
 @pytest.mark.xfail(sys.version_info[0]==3,
                    reason="Difflib.SequenceMatcher is broken in Python3")
-def testValues_sync_diff_03():
+def testValues_sync_diff_06():
+    """Test diffs against double-spacing for children (such as NXOS)"""
     ## config_01 is the starting point
     config_01 = ['!',
-    'interface GigabitEthernet 1/5',
-    ' ip address 1.1.1.2 255.255.255.0',
-    ' standby 5 ip 1.1.1.1',
-    ' standby 5 preempt',
+    'vlan 51',
+    '  state active',
+    'vlan 53',
     '!']
 
     required_config = ['!',
-    'interface GigabitEthernet 1/5',
-    ' switchport',
-    ' switchport mode access'
-    ' switchport access vlan 5',
-    ' switchport nonegotiate',
-    '!',
-    'interface Vlan5',
-    ' no shutdown',
-    ' ip address 1.1.1.2 255.255.255.0',
-    ' standby 5 ip 1.1.1.1',
-    ' standby 5 preempt',
-    '!',
-    ]
+    'vlan 51',
+    '  name SOME-VLAN',
+    '  state active',
+    'vlan 52',
+    '  name BLAH',
+    '  state active',
+    '!',]
 
-    result_correct = ['interface GigabitEthernet 1/5',
-        ' no ip address 1.1.1.2 255.255.255.0',
-        ' no standby 5 ip 1.1.1.1',
-        ' no standby 5 preempt',
-        'interface GigabitEthernet 1/5',
-        ' switchport',
-        ' switchport mode access switchport access vlan 5',
-        ' switchport nonegotiate',
-        'interface Vlan5',
-        ' no shutdown',
-        ' ip address 1.1.1.2 255.255.255.0',
-        ' standby 5 ip 1.1.1.1',
-        ' standby 5 preempt',
-    ]
+    result_correct = ['no vlan 53', 'vlan 51', '  name SOME-VLAN', 'vlan 52', 
+        '  name BLAH', '  state active']
 
-    linespec = r''
+    linespec = r'vlan\s+\S+|name\s+\S+|state.+'
     parse = CiscoConfParse(config_01)
     test_result = parse.sync_diff(required_config, linespec, linespec)
     assert result_correct==test_result
-
 
 def testValues_req_cfgspec_excl_diff(parse_c01):
         ## test req_cfgspec_excl_diff
