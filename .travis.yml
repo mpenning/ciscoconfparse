@@ -3,7 +3,6 @@ language: python
 install:
   - pip install --upgrade -q pip
   - pip install --upgrade -q ciscoconfparse
-#  - pip install ipaddr
 
 # http://docs.travis-ci.com/user/languages/python/
 python:
