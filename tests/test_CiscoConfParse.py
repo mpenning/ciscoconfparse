@@ -4,9 +4,11 @@ from copy import deepcopy
 from mock import patch
 import sys
 import re
+sys.path.insert(0, '../ciscoconfparse/')
 
-from .ciscoconfparse import CiscoConfParse, IOSCfgLine, IOSIntfLine
-from .ciscoconfparse import CiscoPassword
+
+from ciscoconfparse import CiscoConfParse, IOSCfgLine, IOSIntfLine
+from ciscoconfparse import CiscoPassword
 from ccp_util import IPv4Obj
 from passlib.hash import cisco_type7
 import pytest

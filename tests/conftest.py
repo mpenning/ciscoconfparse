@@ -1,8 +1,8 @@
 import sys
-sys.path.insert(0, './')
+sys.path.insert(0, '../ciscoconfparse/')
 
 import pytest
-from .ciscoconfparse import CiscoConfParse
+from ciscoconfparse import CiscoConfParse
 
 
 c01 = """policy-map QOS_1

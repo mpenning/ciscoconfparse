@@ -2,6 +2,7 @@
 
 from cProfile import run
 import sys
+sys.path.insert(0, '../ciscoconfparse/')
 
 # IGNORE PyFlake's barking here
 from ciscoconfparse import CiscoConfParse

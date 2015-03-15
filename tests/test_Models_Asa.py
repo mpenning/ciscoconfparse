@@ -4,12 +4,14 @@ import unittest
 import sys
 import re
 import os
+sys.path.insert(0, '../ciscoconfparse/')
+
 
 import pytest
-from .ciscoconfparse import CiscoConfParse
-from .models_asa import ASAObjGroupService
-from .ccp_util import L4Object
-from .ccp_util import IPv4Obj
+from ciscoconfparse import CiscoConfParse
+from models_asa import ASAObjGroupService
+from ccp_util import L4Object
+from ccp_util import IPv4Obj
 
 class knownValues(unittest.TestCase):
 

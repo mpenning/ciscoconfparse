@@ -6,10 +6,11 @@ import unittest
 import sys
 import re
 import os
+sys.path.insert(0, '../ciscoconfparse/')
 
 
-from .ciscoconfparse import CiscoConfParse
-from .ccp_util import IPv4Obj
+from ciscoconfparse import CiscoConfParse
+from ccp_util import IPv4Obj
 
 class knownValues(unittest.TestCase):
 
