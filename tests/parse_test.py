@@ -1,5 +1,7 @@
-from ciscoconfparse import CiscoConfParse
 import sys
+sys.path.insert(0, '../ciscoconfparse/')
+
+from ciscoconfparse import CiscoConfParse
 
 if sys.argv[1]=="1":
     parse = CiscoConfParse('../configs/sample_01.ios', syntax='ios', factory=False)

@@ -6,11 +6,10 @@ import unittest
 import sys
 import re
 import os
-
+sys.path.insert(0, '../ciscoconfparse/')
 
 import pytest
-from .ccp_util import IPv4Obj, L4Object
-
+from ccp_util import IPv4Obj, L4Object
 if sys.version_info[0]<3:
     from ipaddr import IPv4Network, IPv6Network, IPv4Address, IPv6Address
 else:

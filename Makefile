@@ -1,5 +1,5 @@
-PY27DEVTESTS=cd ciscoconfparse;find ./* -name 'test_*.py' -exec /opt/virtual_env/py27_test/bin/py.test -s {} \;
-PY34DEVTESTS=cd ciscoconfparse;find ./* -name 'test_*.py' -exec /opt/virtual_env/py34_test/bin/py.test -s {} \;
+PY27DEVTESTS=cd tests;find ./* -name 'test_*.py' -exec /opt/virtual_env/py27_test/bin/py.test -s {} \;
+PY34DEVTESTS=cd tests;find ./* -name 'test_*.py' -exec /opt/virtual_env/py34_test/bin/py.test -s {} \;
 BITBUCKETPUSH = $(shell bash -c 'read -s -p "Bitbucket Password: " pwd; hg push "https://mpenning:$$pwd@bitbucket.org/mpenning/ciscoconfparse"')
 DOCHOST ?= $(shell bash -c 'read -p "documentation host: " dochost; echo $$dochost')
 
@@ -14,19 +14,19 @@ repo-push:
 	-hg push git+ssh://git@github.com:mpenning/ciscoconfparse.git
 .PHONY: parse-ios
 parse-ios:
-	cd ciscoconfparse; python parse_test.py 1 | less
+	cd tests; python parse_test.py 1 | less
 .PHONY: parse-ios-factory
 parse-ios-factory:
-	cd ciscoconfparse; python parse_test.py 2 | less
+	cd tests; python parse_test.py 2 | less
 .PHONY: parse-ios-banner
 parse-iosxr-banner:
-	cd ciscoconfparse; python parse_test.py 3 | less
+	cd tests; python parse_test.py 3 | less
 .PHONY: perf-acl
 perf-acl:
-	cd ciscoconfparse; python performance_case.py 5 | less
+	cd tests; python performance_case.py 5 | less
 .PHONY: perf-factory-intf
 perf-factory-intf:
-	cd ciscoconfparse; python performance_case.py 6 | less
+	cd tests; python performance_case.py 6 | less
 .PHONY: devpkgs
 devpkgs:
 	pip install --upgrade pip
@@ -48,7 +48,7 @@ flake:
 .PHONY: coverage
 coverage:
 	@echo "[[[ py.test Coverage ]]]"
-	cd ciscoconfparse;py.test --cov-report term-missing --cov=ciscoconfparse.py -s -v
+	cd tests;py.test --cov-report term-missing --cov=ciscoconfparse.py -s -v
 .PHONY: devtest
 devtest:
 	@echo "[[[ Python 2.7 tests ]]]"
@@ -61,7 +61,7 @@ devtest:
 .PHONY: test
 test:
 	# Run the doc tests and unit tests
-	cd ciscoconfparse; python ciscoconfparse.py; ./runtests.sh
+	cd tests; python ciscoconfparse/ciscoconfparse.py; ./runtests.sh
 .PHONY: clean
 clean:
 	find ./* -name '*.pyc' -exec rm {} \;
