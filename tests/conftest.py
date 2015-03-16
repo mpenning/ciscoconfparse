@@ -1,5 +1,10 @@
+import platform
 import sys
-sys.path.insert(0, '../ciscoconfparse/')
+import os
+THIS_DIR = os.path.dirname(__file__)
+sys.path.insert(0, os.path.join(os.path.abspath(THIS_DIR), "../ciscoconfparse/"))
+sys.path.insert(0, os.path.abspath(THIS_DIR))
+
 
 import pytest
 from ciscoconfparse import CiscoConfParse
@@ -264,3 +269,20 @@ def parse_c02_factory(request):
      
     yield parse_c02
 
+@pytest.mark.skipif(sys.version_info[0]>=3,
+    reason="No Python3 MockSSH support")
+@pytest.mark.skipif('windows' in platform.system().lower(),
+    reason="No Windows MockSSH support")
+@pytest.yield_fixture(scope='session')
+def cisco_sshd_mocked(request):
+    """Mock Cisco IOS SSH"""
+    from fixtures.devices.mock_cisco import start_cisco_mock, stop_cisco_mock
+
+    try:
+        ## Start the SSH Server
+        start_cisco_mock()
+        yield True
+    except:
+        yield False
+        stop_cisco_mock()
+    stop_cisco_mock()
