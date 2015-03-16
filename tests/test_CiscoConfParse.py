@@ -2,10 +2,13 @@ from operator import attrgetter
 from itertools import repeat
 from copy import deepcopy
 from mock import patch
+import platform
 import sys
 import re
-sys.path.insert(0, '../ciscoconfparse/')
-
+import os
+THIS_DIR = os.path.dirname(__file__)
+sys.path.insert(0, os.path.join(os.path.abspath(THIS_DIR), "../ciscoconfparse/"))
+sys.path.insert(0, os.path.join(os.path.abspath(THIS_DIR), "../ciscoconfparse/local_py/"))
 
 from ciscoconfparse import CiscoConfParse, IOSCfgLine, IOSIntfLine
 from ciscoconfparse import CiscoPassword

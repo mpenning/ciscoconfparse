@@ -2,7 +2,10 @@
 
 from cProfile import run
 import sys
-sys.path.insert(0, '../ciscoconfparse/')
+import os
+THIS_DIR = os.path.dirname(__file__)
+sys.path.insert(0, os.path.join(os.path.abspath(THIS_DIR), "../ciscoconfparse/"))
+
 
 # IGNORE PyFlake's barking here
 from ciscoconfparse import CiscoConfParse

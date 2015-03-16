@@ -6,8 +6,8 @@ import unittest
 import sys
 import re
 import os
-sys.path.insert(0, '../ciscoconfparse/')
-
+THIS_DIR = os.path.dirname(__file__)
+sys.path.insert(0, os.path.join(os.path.abspath(THIS_DIR), "../ciscoconfparse/"))
 
 from ciscoconfparse import CiscoConfParse
 from ccp_util import IPv4Obj
