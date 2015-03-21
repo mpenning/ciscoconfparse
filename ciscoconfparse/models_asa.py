@@ -226,6 +226,15 @@ class BaseASAIntfLine(ASACfgLine):
             return self.default_ipv4_addr_object
 
     @property
+    def ipv4_standby_addr_object(self):
+        """Return a ccp_util.IPv4Obj object representing the standby address on this interface; if there is no address, return IPv4Obj('127.0.0.1/32')"""
+        try:
+            return IPv4Obj('%s/%s' % (self.ipv4_standby_addr, 
+                self.ipv4_netmask))
+        except:
+            return self.default_ipv4_addr_object
+
+    @property
     def ipv4_network_object(self):
         """Return an ccp_util.IPv4Obj object representing the subnet on this interface; if there is no address, return ccp_util.IPv4Obj('127.0.0.1/32')"""
         return self.ip_network_object
@@ -278,14 +287,21 @@ class BaseASAIntfLine(ASACfgLine):
     @property
     def ipv4_addr(self):
         """Return a string with the interface's IPv4 address, or '' if there is none"""
-        retval = self.re_match_iter_typed(r'^\s+ip\s+address\s+(\d+\.\d+\.\d+\.\d+)\s+\d+\.\d+\.\d+\.\d+\s*$', 
+        retval = self.re_match_iter_typed(r'^\s+ip\s+address\s+(\d+\.\d+\.\d+\.\d+)\s+\d+\.\d+\.\d+\.\d+(\sstandby\s+\S+\s*)*$', 
+            result_type=str, default='')
+        return retval
+
+    @property
+    def ipv4_standby_addr(self):
+        """Return a string with the interface's IPv4 address, or '' if there is none"""
+        retval = self.re_match_iter_typed(r'^\s+ip\s+address\s+\d+\.\d+\.\d+\.\d+\s+\d+\.\d+\.\d+\.\d+\sstandby\s+(\S+)\s*$', 
             result_type=str, default='')
         return retval
 
     @property
     def ipv4_netmask(self):
         """Return a string with the interface's IPv4 netmask, or '' if there is none"""
-        retval = self.re_match_iter_typed(r'^\s+ip\s+address\s+\d+\.\d+\.\d+\.\d+\s+(\d+\.\d+\.\d+\.\d+)\s*$',
+        retval = self.re_match_iter_typed(r'^\s+ip\s+address\s+\d+\.\d+\.\d+\.\d+\s+(\d+\.\d+\.\d+\.\d+)(\sstandby\s+\S+\s*)*$',
             result_type=str, default='')
         return retval
 
