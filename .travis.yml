@@ -24,4 +24,4 @@ script: make test
 matrix:
   allow_failures:
     ## FIXME Python3.2 is broken (github issue #14)
-    - python: "3.2"
+    - python: 3.2
