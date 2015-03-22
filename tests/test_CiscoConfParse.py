@@ -550,7 +550,8 @@ def testValues_sync_diff_06():
     'vlan 51',
     '  state active',
     'vlan 53',
-    '!']
+    '!',
+    ]
 
     required_config = ['!',
     'vlan 51',
@@ -567,6 +568,109 @@ def testValues_sync_diff_06():
     linespec = r'vlan\s+\S+|name\s+\S+|state.+'
     parse = CiscoConfParse(config_01)
     test_result = parse.sync_diff(required_config, linespec, linespec)
+    assert result_correct==test_result
+
+@pytest.mark.xfail(sys.version_info[0]==3,
+                   reason="Difflib.SequenceMatcher is broken in Python3")
+def testValues_sync_diff_07():
+    """Test diffs with remove_lines=False"""
+    ## config_01 is the starting point
+    config_01 = ['!',
+    'vlan 51',
+    ' state active',
+    'vlan 53',
+    '!',
+    'vtp mode transparent',
+    ]
+
+    required_config = ['!',
+    'vlan 51',
+    ' name SOME-VLAN',
+    ' state active',
+    'vlan 52',
+    ' name BLAH',
+    ' state active',
+    '!',]
+
+    result_correct = ['vlan 51', ' name SOME-VLAN', 'vlan 52', 
+        ' name BLAH', ' state active']
+
+    linespec = r'vlan\s+\S+|name\s+\S+|state.+'
+    parse = CiscoConfParse(config_01)
+    test_result = parse.sync_diff(required_config, linespec, linespec, remove_lines=False)
+    assert result_correct==test_result
+
+@pytest.mark.xfail(sys.version_info[0]==3,
+                   reason="Difflib.SequenceMatcher is broken in Python3")
+def testValues_sync_diff_08():
+    """Test diffs with explicit ignore_order=False"""
+    ## config_01 is the starting point
+    config_01 = ['!',
+    'vlan 51',
+    ' state active',
+    'vlan 53',
+    '!',
+    'vtp mode transparent',
+    ]
+
+    required_config = ['!',
+    'vtp mode transparent',
+    'vlan 52',
+    ' name BLAH',
+    ' state active',
+    'vlan 51',
+    ' name SOME-VLAN',
+    ' state active',
+    '!',]
+
+    result_correct = ['no vlan 53', 
+        'vlan 52', 
+        ' name BLAH', 
+        ' state active',
+        'vlan 51', 
+        ' name SOME-VLAN', 
+        ]
+
+    linespec = r'vlan\s+\S+|name\s+\S+|state.+|vtp'
+    parse = CiscoConfParse(config_01)
+    test_result = parse.sync_diff(required_config, linespec, linespec, ignore_order=False)
+    assert result_correct==test_result
+
+@pytest.mark.xfail(sys.version_info[0]==3,
+                   reason="Difflib.SequenceMatcher is broken in Python3")
+def testValues_sync_diff_09():
+    """Test diffs with explicit ignore_order=True"""
+    ## config_01 is the starting point
+    config_01 = ['!',
+    'vlan 51',
+    ' state active',
+    'vlan 53',
+    '!',
+    'vtp mode transparent',
+    ]
+
+    required_config = ['!',
+    'vtp mode transparent',
+    'vlan 51',
+    ' name SOME-VLAN',
+    ' state active',
+    'vlan 52',
+    ' name BLAH',
+    ' state active',
+    '!',]
+
+    result_correct = [
+        'no vlan 53', 
+        'vlan 51', 
+        ' name SOME-VLAN', 
+        'vlan 52', 
+        ' name BLAH', 
+        ' state active',
+        ]
+
+    linespec = r'vlan\s+\S+|name\s+\S+|state.+|vtp'
+    parse = CiscoConfParse(config_01)
+    test_result = parse.sync_diff(required_config, linespec, linespec, ignore_order=True)
     assert result_correct==test_result
 
 def testValues_req_cfgspec_excl_diff(parse_c01):
