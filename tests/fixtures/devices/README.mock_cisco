@@ -1,0 +1,28 @@
+mock_cisco.py is a Cisco IOS mock up as a proof of concept for testing 
+interactive screen scrapers; I intended it to work well with several 
+parallel scrapers hitting it at once.
+
+However, it seems that the MockSSH library isn't up to the task as of MockSSH
+version 1.4.2.  I saw strange behavior when I tried to enable with three 
+parallel ssh sessions at once.  Nevertheless, it's an interesting proof of 
+concept, so I'm leaving it in the repo.
+
+To run it...
+
+- Use Python 2.7
+- Install MockSSH
+- python path/to/mock_cisco.py
+
+By default, it listens for ssh on port 2222, the login credentials are:
+
+- Username: admin
+- Password: cisco
+- Enable: cisco123
+
+The commands it mocks are:
+
+- enable
+- term len 0 (there is no paging, but it won't burp when you enter this)
+- sh ip int brief
+- show ver
+
