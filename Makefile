@@ -42,23 +42,6 @@ devpkgs:
 	pip install --upgrade pytest==2.6.4
 	pip install --upgrade mccabe
 	pip install --upgrade flake8
-	@# Keep tight dependencies for MockSSH, since
-	@#   Twisted is so quirky
-	pip install astor==0.4.1
-	pip install rply==0.7.3
-	pip install hy==0.10.1
-	@# Keep tight dependencies for MockSSH, since
-	@#   Twisted is so quirky
-	pip install wsgiref==0.1.2
-	pip install zope.interface==4.1.2
-	pip install Twisted==15.0.0
-	@# Keep tight dependencies for MockSSH, since
-	@#   Twisted is so quirky
-	pip install pyasn1==0.1.7
-	pip install ecdsa==0.13
-	pip install pycrypto==2.6.1
-	pip install paramiko==1.15.2
-	pip install MockSSH==1.4.1
 .PHONY: flake
 flake:
 	flake8 --ignore E501,E226,E225,E221,E303,E302,E265,E128,E125,E124,E41,W291 --max-complexity 10 ciscoconfparse | less
