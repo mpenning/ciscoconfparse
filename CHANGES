@@ -1,3 +1,4 @@
+1.2.15  20150322 Implement feature requested by Github issue #28 (Cisco ASA standby addrs), improve sync_diff() / fix bugs, add .geneology / .geneology_text features
 1.2.14  20150307 Enhance config modification speed as documented in Github issue #26. Implement find_interface_objects() as documented in Github issue #27.  Improved unit test coverage
 1.2.13  20150301 Fix Github issue #25: Python3 bites me again
 1.2.12  20150301 Fix Github issue #24: recursive dependencies in setup.py and ciscoconfparse/__init__.py
