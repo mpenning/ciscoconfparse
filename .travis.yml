@@ -1,5 +1,9 @@
 language: python
 
+os:
+  - linux
+  - osx
+
 install:
   - pip install --upgrade -q pip
   - pip install --upgrade -q ciscoconfparse
