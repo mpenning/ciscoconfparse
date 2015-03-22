@@ -1591,43 +1591,201 @@ class CiscoConfParse(object):
 
         return retval
 
+    def _sequence_nonparent_lines(self, a_nonparent_objs, b_nonparent_objs):
+        """Assume a_nonparent_objs is the existing config sequence, and
+        b_nonparent_objs is the *desired* config sequence
+        
+        This method walks b_nonparent_objs, and orders a_nonparent_objs 
+        the same way (as much as possible)
+
+        This method returns:
+        
+        - The reordered list of a_nonparent_objs
+        - The reordered list of a_nonparent_lines
+        - The reordered list of a_nonparent_linenums
+        """
+        a_parse = CiscoConfParse([])   # A *new* parse for reordered a lines
+        a_lines = list()
+        a_linenums = list()
+
+        ## Mark all a objects as not done
+        for aobj in a_nonparent_objs:
+            aobj.done = False
+
+        for bobj in b_nonparent_objs:
+            for aobj in a_nonparent_objs:
+                if aobj.text==bobj.text:
+                    aobj.done = True
+                    a_parse.append_line(aobj.text)
+
+        # Add any missing a_parent_objs + their children...
+        for aobj in a_nonparent_objs:
+            if aobj.done is False:
+                aobj.done = True
+                a_parse.append_line(aobj.text)
+
+        a_parse.commit()
+
+        a_nonparents_reordered = a_parse.ConfigObjs
+        for aobj in a_nonparents_reordered:
+            a_lines.append(aobj.text)
+            a_linenums.append(aobj.linenum)
+
+        return a_parse, a_lines, a_linenums
+
+    def _sequence_parent_lines(self, a_parent_objs, b_parent_objs):
+        """Assume a_parent_objs is the existing config sequence, and
+        b_parent_objs is the *desired* config sequence
+        
+        This method walks b_parent_objs, and orders a_parent_objs 
+        the same way (as much as possible)
+
+        This method returns:
+        
+        - The reordered list of a_parent_objs
+        - The reordered list of a_parent_lines
+        - The reordered list of a_parent_linenums
+        """
+        a_parse = CiscoConfParse([])   # A *new* parse for reordered a lines
+        a_lines = list()
+        a_linenums = list()
+
+        ## Mark all a objects as not done
+        for aobj in a_parent_objs:
+            aobj.done = False
+            for child in aobj.all_children:
+                child.done = False
+
+        ## Walk the b objects by parent, then child and reorder a objects
+        for bobj in b_parent_objs:
+
+            for aobj in a_parent_objs:
+                if aobj.text==bobj.text:
+                    aobj.done = True
+                    a_parse.append_line(aobj.text)
+
+                    # Append *matching* children to this aobj in the same order
+                    for bchild in bobj.all_children:
+                        for achild in aobj.all_children:
+                            if achild.done:
+                                continue
+                            elif achild.geneology_text==bchild.geneology_text:
+                                achild.done = True
+                                a_parse.append_line(achild.text)
+
+                    # Append *missing* children to this aobj...
+                    for achild in aobj.all_children:
+                        if achild.done is False:
+                            achild.done = True
+                            a_parse.append_line(achild.text)
+
+        # Add any missing a_parent_objs + their children...
+        for aobj in a_parent_objs:
+            if aobj.done is False:
+                aobj.done = True
+                a_parse.append_line(aobj.text)
+                for achild in aobj.all_children:
+                    achild.done = True
+                    a_parse.append_line(achild.text)
+
+        a_parse.commit()
+
+        a_parents_reordered = a_parse.ConfigObjs
+        for aobj in a_parents_reordered:
+            a_lines.append(aobj.text)
+            a_linenums.append(aobj.linenum)
+
+        return a_parse, a_lines, a_linenums
+
     def sync_diff(self, cfgspec, linespec, uncfgspec=None, 
-        ignore_ws=False, delete_extra_lines=True, debug=False):
+        ignore_order=True, remove_lines=True, debug=False):
+        """
+        ``sync_diff()`` accepts a list of required configuration elements, 
+        a linespec, and an unconfig spec.  This method return a list of
+        configuration diffs to make the configuration comply with cfgspec.
+
+        Args:
+            - cfgspec (list): A list of required configuration lines
+            - linespec (str): A regular expression, which filters lines to be diff'd
+
+        Kwargs:
+            - uncfgspec (str): A regular expression, which is used to unconfigure lines.  When ciscoconfparse removes a line, it takes the entire portion of the line that matches ``uncfgspec``, and prepends "no" to it.
+            - ignore_order (bool): Indicates whether the configuration should be reordered to minimize the number of diffs.  Default: True (usually it's a good idea to leave ``ignore_order`` True, except for ACL comparisions)
+            - remove_lines (bool): Indicates whether the lines which are *not* in ``cfgspec`` should be removed.  Default: True.  When ``remove_lines`` is True, all other config lines matching the linespec that are *not* listed in the cfgspec will be removed with the uncfgspec regex.
+            - debug (bool): Miscellaneous debugging; Default: False
+
+        Returns:
+            - list.  A list of string configuration diffs
+
+
+        Uses for this method include the need to enforce syslog, acl, or
+        aaa standards.
+
+        **Example**
+
+        .. doctest::
+
+           >>> config = [
+           ...     'logging trap debugging',
+           ...     'logging 172.28.26.15',
+           ...     ] 
+           >>> p = CiscoConfParse(config)
+           >>> required_lines = [
+           ...     "logging 172.16.1.5",
+           ...     "logging 1.10.20.30",
+           ...     "logging 192.168.1.1",
+           ...     ]
+           >>> linespec = "logging\s+\d+\.\d+\.\d+\.\d+"
+           >>> unconfspec = linespec
+           >>> diffs = p.sync_diff(required_lines, linespec, unconfspec)
+           >>> diffs
+           ['no logging 172.28.26.15', 'logging 172.16.1.5', 'logging 1.10.20.30', 'logging 192.168.1.1']
+           >>>
+        """
 
         tmp = self._find_line_OBJ(linespec)
         if (uncfgspec is None):
             uncfgspec = linespec
+        a_lines = map(lambda x: x.text, tmp)
+        a = CiscoConfParse(a_lines)
 
         b = CiscoConfParse(cfgspec, factory=False)
         b_lines = b.ioscfg
-        a_lines = map(lambda x: x.text, tmp)
-        a = CiscoConfParse(a_lines)
 
         a_heirarchy = list()
         b_heirarchy = list()
 
         ## Build heirarchical, equal-length lists of parents / non-parents
-        parents, nonparents = a.objs.config_heirarchy()
-        obj = DiffObject(0, nonparents, parents)
+        a_parents, a_nonparents = a.ConfigObjs.config_heirarchy()
+        b_parents, b_nonparents = b.ConfigObjs.config_heirarchy()
+
+
+        obj = DiffObject(0, a_nonparents, a_parents)
         a_heirarchy.append(obj)
-        a_len = len(a_heirarchy)
 
-        parents, nonparents = b.objs.config_heirarchy()
-        obj = DiffObject(0, nonparents, parents)
+        obj = DiffObject(0, b_nonparents, b_parents)
         b_heirarchy.append(obj)
-        b_len = len(b_heirarchy)
 
+        retval = list()
         ## Assign config_this and unconfig_this attributes by "diff level"
         for adiff_level, bdiff_level in zip(a_heirarchy, b_heirarchy):
             for attr in ['parents', 'nonparents']:
                 if attr=='parents':
-                    a_lines = list()
-                    a_linenums = list()
-                    for obj in adiff_level.parents:
-                        a_lines.append(obj.text)
-                        a_linenums.append(obj.linenum)
-                        a_lines.extend(map(lambda x: getattr(x, 'text'), obj.all_children))
-                        a_linenums.extend(map(lambda x: getattr(x, 'linenum'), obj.all_children))
+                    if ignore_order:
+                        a_parents = getattr(adiff_level, attr)
+                        b_parents = getattr(bdiff_level, attr)
+
+                        # Rewrite a, since we reordered everything
+                        a, a_lines, a_linenums = self._sequence_parent_lines(a_parents, 
+                            b_parents)
+                    else:
+                        a_lines = list()
+                        a_linenums = list()
+                        for obj in adiff_level.parents:
+                            a_lines.append(obj.text)
+                            a_linenums.append(obj.linenum)
+                            a_lines.extend(map(lambda x: getattr(x, 'text'), obj.all_children))
+                            a_linenums.extend(map(lambda x: getattr(x, 'linenum'), obj.all_children))
                     b_lines = list()
                     b_linenums = list()
                     for obj in bdiff_level.parents:
@@ -1636,14 +1794,26 @@ class CiscoConfParse(object):
                         b_lines.extend(map(lambda x: getattr(x, 'text'), obj.all_children))
                         b_linenums.extend(map(lambda x: getattr(x, 'linenum'), obj.all_children))
                 else:
-                    a_lines = map(lambda x: getattr(x, 'text'), 
-                        getattr(adiff_level, attr))
+                    if ignore_order:
+                        a_nonparents = getattr(adiff_level, attr)
+                        b_nonparents = getattr(bdiff_level, attr)
+
+                        # Rewrite a, since we reordered everything
+                        a, a_lines, a_linenums = self._sequence_nonparent_lines(a_nonparents, 
+                            b_nonparents)
+                    else:
+                        a_lines = map(lambda x: getattr(x, 'text'), 
+                            getattr(adiff_level, attr))
+                        # Build a map from a_lines index to a.ConfigObjs index
+                        a_linenums = map(lambda x: getattr(x, 'linenum'), getattr(adiff_level, attr))
                     b_lines = map(lambda x: getattr(x, 'text'), 
                         getattr(bdiff_level, attr))
-                    # Build a map from a_lines index to a.ConfigObjs index
-                    a_linenums = map(lambda x: getattr(x, 'linenum'), getattr(adiff_level, attr))
                     # Build a map from b_lines index to b.ConfigObjs index
                     b_linenums = map(lambda x: getattr(x, 'linenum'), getattr(bdiff_level, attr))
+
+                ###
+                ### Mark diffs here
+                ###
 
                 # Get a SequenceMatcher instance to calculate diffs at this level
                 matcher = SequenceMatcher(isjunk=None, a=a_lines, b=b_lines)
@@ -1771,39 +1941,45 @@ class CiscoConfParse(object):
                             if aobj:
                                 # Only configure parent if it's not already
                                 #    slated for removal
-                                if not getattr(aobj.parent, 'unconfig_this', False):
-                                    aobj.parent.config_this = True
+                                for pobj in aobj.all_parents:
+                                    if not getattr(pobj, 'unconfig_this', False):
+                                        pobj.config_this = True
                                 aobj.unconfig_this = True
                                 if debug:
                                     print("    DBG5: unconfigure aobj")
                         else:
                             raise ValueError("Unknown action: {0}".format(tag))
 
-        retval = list()
-        ## Unconfigure A objects, as required
-        for obj in a.ConfigObjs:
-            if getattr(obj, 'unconfig_this', False):
-                ## FIXME: This should only be applied to IOS and ASA configs
-                if uncfgspec:
-                    mm = re.search(uncfgspec, obj.text)
-                    if not (mm is None):
-                        obj.add_uncfgtext(mm.group(0))
-                        retval.append(obj.uncfgtext)
-                    else:
-                        retval.append(" "*obj.indent + "no " + obj.text.lstrip())
-                else:
-                    retval.append(" "*obj.indent + "no " + obj.text.lstrip())
-            elif getattr(obj, 'config_this', False):
-                retval.append(obj.text)
+                ###
+                ### Write a object diffs here
+                ###
 
-            # Clean up the attributes we used temporarily in this method
-            for attr in ['config_this', 'unconfig_this']:
-                try:
-                    delattr(obj.text, attr)
-                except:
-                    pass
+                ## Unconfigure A objects, at *each level*, as required
+                for obj in a.ConfigObjs:
+                    if remove_lines and getattr(obj, 'unconfig_this', False):
+                        ## FIXME: This should only be applied to IOS and ASA configs
+                        if uncfgspec:
+                            mm = re.search(uncfgspec, obj.text)
+                            if not (mm is None):
+                                obj.add_uncfgtext(mm.group(0))
+                                retval.append(obj.uncfgtext)
+                            else:
+                                retval.append(" "*obj.indent + "no " + obj.text.lstrip())
+                        else:
+                            retval.append(" "*obj.indent + "no " + obj.text.lstrip())
+                    elif remove_lines and getattr(obj, 'config_this', False):
+                        retval.append(obj.text)
 
-        ## Configure B objects, as required
+                    # Clean up the attributes we used temporarily in this method
+                    for attr in ['config_this', 'unconfig_this']:
+                        try:
+                            delattr(obj.text, attr)
+                        except:
+                            pass
+
+        ###
+        ### Write b object diffs here
+        ###
         for obj in b.ConfigObjs:
             if getattr(obj, 'config_this', False):
                 retval.append(obj.text)
@@ -1813,6 +1989,7 @@ class CiscoConfParse(object):
                 delattr(obj.text, 'config_this')
             except:
                 pass
+
         if debug:
             print("DBG: Completed diff:")
             for line in retval:
@@ -2060,7 +2237,8 @@ class IOSConfigList(MutableSequence):
     def config_heirarchy(self):
         """Walk this configuration and return the following tuple
         at each parent 'level':
-            (list_of_parent_siblings, list_of_nonparent_siblings)"""
+            (list_of_parent_sibling_objs, list_of_nonparent_sibling_objs)
+        """
         parent_siblings = list()
         nonparent_siblings = list()
 
