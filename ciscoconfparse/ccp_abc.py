@@ -711,6 +711,26 @@ class BaseCfgLine(object):
         return sorted(retval)
 
     @property
+    def geneology(self):
+        """Iterate through to the oldest ancestor of this object, and return
+        a list of all ancestors in the direct line as well as this obj.  
+        Cousins or aunts / uncles are *not* returned.  Note: children of this 
+        object are *not* returned."""
+        retval = sorted(self.all_parents)
+        retval.append(self)
+        return retval
+
+    @property
+    def geneology_text(self):
+        """Iterate through to the oldest ancestor of this object, and return
+        a list of all ancestors in the direct line as well as this obj.  
+        Cousins or aunts / uncles are *not* returned.  Note: children of this 
+        object are *not* returned."""
+        retval = map(lambda x: x.text, sorted(self.all_parents))
+        retval.append(self.text)
+        return retval
+
+    @property
     def is_parent(self):
         return bool(self.has_children)
 
