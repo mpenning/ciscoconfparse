@@ -8,7 +8,6 @@ THIS_DIR = os.path.dirname(__file__)
 sys.path.insert(0, os.path.join(os.path.abspath(THIS_DIR), "../ciscoconfparse/"))
 
 
-
 import pytest
 from ciscoconfparse import CiscoConfParse
 from models_asa import ASAObjGroupService
@@ -140,6 +139,44 @@ class knownValues(unittest.TestCase):
         result_correct = [IPv4Obj('1.1.2.20/32'), IPv4Obj('1.1.2.1/32'),
             IPv4Obj('1.1.2.2/32'), IPv4Obj('1.1.2.0/24')]
         self.assertEqual(obj.networks, result_correct)
+
+    def testVal_ipv4_addr(self):
+        conf = ['!',
+            'interface Ethernet0/0',
+            ' nameif OUTSIDE',
+            ' ip address 198.101.172.106 255.255.255.128 standby 198.101.172.107',
+            '!',
+            'interface Ethernet0/1',
+            ' nameif INSIDE',
+            ' ip address 192.0.2.254 255.255.255.0',
+            '!',
+            ]
+        cfg_factory = CiscoConfParse(conf, factory=True, syntax='asa')
+
+        obj = cfg_factory.find_objects(r'^interface\sEthernet0\/0$')[0]
+        # Ensure obj.ipv4_addr is set correctly
+        self.assertEqual(obj.ipv4_addr, '198.101.172.106')
+
+        obj = cfg_factory.find_objects(r'^interface\sEthernet0\/1$')[0]
+        # Ensure obj.ipv4_addr is set correctly
+        self.assertEqual(obj.ipv4_addr, '192.0.2.254')
+
+    def testVal_ipv4_standby_addr(self):
+        conf = ['!',
+            'interface Ethernet0/0',
+            ' nameif OUTSIDE',
+            ' ip address 198.101.172.106 255.255.255.128 standby 198.101.172.107',
+            '!',
+            'interface Ethernet0/1',
+            ' nameif INSIDE',
+            ' ip address 192.0.2.254 255.255.255.0',
+            '!',
+            ]
+        cfg_factory = CiscoConfParse(conf, factory=True, syntax='asa')
+
+        obj = cfg_factory.find_objects(r'^interface\sEthernet0\/0$')[0]
+        # Ensure obj.ipv4_standby_addr is set correctly
+        self.assertEqual(obj.ipv4_standby_addr, '198.101.172.107')
 
     def testVal_object_group_service_01(self):
         ## This can only be configured as protocol object-group
