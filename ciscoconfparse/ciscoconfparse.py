@@ -15,6 +15,7 @@ from models_cisco import IOSAaaExecAccountingLine
 from models_cisco import IOSAaaGroupServerLine
 from models_cisco import IOSCfgLine
 
+from models_asa import ASAAclLine
 from models_asa import ASAObjGroupNetwork
 from models_asa import ASAObjGroupService
 from models_asa import ASAHostnameLine
@@ -61,7 +62,7 @@ __status__ = "Production"
 class CiscoConfParse(object):
     """Parses Cisco IOS configurations and answers queries about the configs"""
 
-    def __init__(self, config="", comment="!", debug=False, factory=False, 
+    def __init__(self, config="", comment="!", debug=False, factory=False,
         linesplit_rgx=r"\r*\n+", ignore_blank_lines=True, syntax='ios'):
         """Initialize CiscoConfParse.
 
@@ -84,8 +85,8 @@ class CiscoConfParse(object):
 
 
            This example illustrates how to parse a simple Cisco IOS configuration
-           with :class:`~ciscoconfparse.CiscoConfParse` into a variable called 
-           ``parse``.  This example also illustrates what the ``ConfigObjs`` 
+           with :class:`~ciscoconfparse.CiscoConfParse` into a variable called
+           ``parse``.  This example also illustrates what the ``ConfigObjs``
            and ``ioscfg`` attributes contain.
 
            .. code-block:: python
@@ -94,7 +95,7 @@ class CiscoConfParse(object):
               >>> config = [
               ...     'logging trap debugging',
               ...     'logging 172.28.26.15',
-              ...     ] 
+              ...     ]
               >>> parse = CiscoConfParse(config)
               >>> parse
               <CiscoConfParse: 2 lines / syntax: ios / comment delimiter: '!' / factory: False>
@@ -115,19 +116,19 @@ class CiscoConfParse(object):
         if isinstance(config, list) or isinstance(config, Iterator):
             if syntax=='ios':
                 # we already have a list object, simply call the parser
-                self.ConfigObjs = IOSConfigList(data=config, 
-                    comment_delimiter=comment, 
-                    debug=debug, 
-                    factory=factory, 
+                self.ConfigObjs = IOSConfigList(data=config,
+                    comment_delimiter=comment,
+                    debug=debug,
+                    factory=factory,
                     ignore_blank_lines=ignore_blank_lines,
                     syntax='ios',
                     CiscoConfParse=self)
             elif syntax=='asa':
                 # we already have a list object, simply call the parser
-                self.ConfigObjs = ASAConfigList(data=config, 
-                    comment_delimiter=comment, 
-                    debug=debug, 
-                    factory=factory, 
+                self.ConfigObjs = ASAConfigList(data=config,
+                    comment_delimiter=comment,
+                    debug=debug,
+                    factory=factory,
                     ignore_blank_lines=ignore_blank_lines,
                     syntax='asa',
                     CiscoConfParse=self)
@@ -135,10 +136,10 @@ class CiscoConfParse(object):
                 ## FIXME I am shamelessly abusing the IOSConfigList for now...
                 # we already have a list object, simply call the parser
                 config = self.convert_braces_to_ios(config)
-                self.ConfigObjs = IOSConfigList(data=config, 
-                    comment_delimiter=comment, 
-                    debug=debug, 
-                    factory=factory, 
+                self.ConfigObjs = IOSConfigList(data=config,
+                    comment_delimiter=comment,
+                    debug=debug,
+                    factory=factory,
                     ignore_blank_lines=ignore_blank_lines,
                     syntax='junos',
                     CiscoConfParse=self)
@@ -153,8 +154,8 @@ class CiscoConfParse(object):
                     f = open(config, mode="rU")
                     text = f.read()
                     rgx = re.compile(linesplit_rgx)
-                    self.ConfigObjs = IOSConfigList(rgx.split(text), 
-                        comment_delimiter=comment, 
+                    self.ConfigObjs = IOSConfigList(rgx.split(text),
+                        comment_delimiter=comment,
                         debug=debug,
                         factory=factory,
                         ignore_blank_lines=ignore_blank_lines,
@@ -165,8 +166,8 @@ class CiscoConfParse(object):
                     f = open(config, mode="rU")
                     text = f.read()
                     rgx = re.compile(linesplit_rgx)
-                    self.ConfigObjs = ASAConfigList(rgx.split(text), 
-                        comment_delimiter=comment, 
+                    self.ConfigObjs = ASAConfigList(rgx.split(text),
+                        comment_delimiter=comment,
                         debug=debug,
                         factory=factory,
                         ignore_blank_lines=ignore_blank_lines,
@@ -182,7 +183,7 @@ class CiscoConfParse(object):
                     config = self.convert_braces_to_ios(rgx.split(text))
                     ## FIXME I am shamelessly abusing the IOSConfigList for now...
                     self.ConfigObjs = IOSConfigList(config,
-                        comment_delimiter=comment, 
+                        comment_delimiter=comment,
                         debug=debug,
                         factory=factory,
                         ignore_blank_lines=ignore_blank_lines,
@@ -195,7 +196,7 @@ class CiscoConfParse(object):
                 print("[FATAL] CiscoConfParse could not open '%s'" % config)
                 raise RuntimeError
         else:
-            raise RuntimeError("[FATAL] CiscoConfParse() received" + 
+            raise RuntimeError("[FATAL] CiscoConfParse() received" +
                 " an invalid argument\n")
         self.ConfigObjs.CiscoConfParse = self
 
@@ -215,43 +216,43 @@ class CiscoConfParse(object):
         return self.ConfigObjs
 
     def atomic(self):
-        """Call :func:`~ciscoconfparse.CiscoConfParse.atomic` to manually fix 
-        up ``ConfigObjs`` relationships 
-        after modifying a parsed configuration.  This method is slow; try to 
-        batch calls to :func:`~ciscoconfparse.CiscoConfParse.atomic()` if 
+        """Call :func:`~ciscoconfparse.CiscoConfParse.atomic` to manually fix
+        up ``ConfigObjs`` relationships
+        after modifying a parsed configuration.  This method is slow; try to
+        batch calls to :func:`~ciscoconfparse.CiscoConfParse.atomic()` if
         possible.
 
         .. warning::
 
-           If you modify a configuration after parsing it with 
-           :class:`~ciscoconfparse.CiscoConfParse`, you *must* call 
-           :func:`~ciscoconfparse.CiscoConfParse.commit` or 
-           :func:`~ciscoconfparse.CiscoConfParse.atomic` before searching 
-           the configuration again with methods such as 
-           :func:`~ciscoconfparse.CiscoConfParse.find_objects` or 
-           :func:`~ciscoconfparse.CiscoConfParse.find_lines`.  Failure to 
-           call :func:`~ciscoconfparse.CiscoConfParse.commit` or 
-           :func:`~ciscoconfparse.CiscoConfParse.atomic` on config 
+           If you modify a configuration after parsing it with
+           :class:`~ciscoconfparse.CiscoConfParse`, you *must* call
+           :func:`~ciscoconfparse.CiscoConfParse.commit` or
+           :func:`~ciscoconfparse.CiscoConfParse.atomic` before searching
+           the configuration again with methods such as
+           :func:`~ciscoconfparse.CiscoConfParse.find_objects` or
+           :func:`~ciscoconfparse.CiscoConfParse.find_lines`.  Failure to
+           call :func:`~ciscoconfparse.CiscoConfParse.commit` or
+           :func:`~ciscoconfparse.CiscoConfParse.atomic` on config
            modifications could lead to unexpected search results.
         """
         self.ConfigObjs._bootstrap_from_text()
 
     def commit(self):
-        """Alias for calling the :func:`~ciscoconfparse.CiscoConfParse.atomic` 
-        method.  This method is slow; try to batch calls to 
+        """Alias for calling the :func:`~ciscoconfparse.CiscoConfParse.atomic`
+        method.  This method is slow; try to batch calls to
         :func:`~ciscoconfparse.CiscoConfParse.commit()` if possible.
 
         .. warning::
 
-           If you modify a configuration after parsing it with 
-           :class:`~ciscoconfparse.CiscoConfParse`, you *must* call 
-           :func:`~ciscoconfparse.CiscoConfParse.commit` or 
-           :func:`~ciscoconfparse.CiscoConfParse.atomic` before searching 
-           the configuration again with methods such as 
-           :func:`~ciscoconfparse.CiscoConfParse.find_objects` or 
-           :func:`~ciscoconfparse.CiscoConfParse.find_lines`.  Failure to 
-           call :func:`~ciscoconfparse.CiscoConfParse.commit` or 
-           :func:`~ciscoconfparse.CiscoConfParse.atomic` on config 
+           If you modify a configuration after parsing it with
+           :class:`~ciscoconfparse.CiscoConfParse`, you *must* call
+           :func:`~ciscoconfparse.CiscoConfParse.commit` or
+           :func:`~ciscoconfparse.CiscoConfParse.atomic` before searching
+           the configuration again with methods such as
+           :func:`~ciscoconfparse.CiscoConfParse.find_objects` or
+           :func:`~ciscoconfparse.CiscoConfParse.find_lines`.  Failure to
+           call :func:`~ciscoconfparse.CiscoConfParse.commit` or
+           :func:`~ciscoconfparse.CiscoConfParse.atomic` on config
            modifications could lead to unexpected search results.
         """
         self.atomic()
@@ -288,8 +289,8 @@ class CiscoConfParse(object):
         return lines
 
     def find_interface_objects(self, intfspec, exactmatch=True):
-        """Find all :class:`~models_cisco.IOSCfgLine` objects whose text 
-        is an abbreviation for ``intfspec`` and return the 
+        """Find all :class:`~models_cisco.IOSCfgLine` objects whose text
+        is an abbreviation for ``intfspec`` and return the
         :class:`~models_cisco.IOSIntfLine` objects in a python list.
 
         .. note::
@@ -344,15 +345,15 @@ class CiscoConfParse(object):
 
 
     def find_objects(self, linespec, exactmatch=False, ignore_ws=False):
-        """Find all :class:`~models_cisco.IOSCfgLine` objects whose text 
-        matches ``linespec`` and return the :class:`~models_cisco.IOSCfgLine` 
-        objects in a python list.  
-        :func:`~ciscoconfparse.CiscoConfParse.find_objects` is similar to 
-        :func:`~ciscoconfparse.CiscoConfParse.find_lines`; however, the former 
-        returns a list of :class:`~models_cisco.IOSCfgLine` objects, while the 
-        latter returns a list of text configuration statements.  Going 
-        forward, I strongly encourage people to start using 
-        :func:`~ciscoconfparse.CiscoConfParse.find_objects` instead of 
+        """Find all :class:`~models_cisco.IOSCfgLine` objects whose text
+        matches ``linespec`` and return the :class:`~models_cisco.IOSCfgLine`
+        objects in a python list.
+        :func:`~ciscoconfparse.CiscoConfParse.find_objects` is similar to
+        :func:`~ciscoconfparse.CiscoConfParse.find_lines`; however, the former
+        returns a list of :class:`~models_cisco.IOSCfgLine` objects, while the
+        latter returns a list of text configuration statements.  Going
+        forward, I strongly encourage people to start using
+        :func:`~ciscoconfparse.CiscoConfParse.find_objects` instead of
         :func:`~ciscoconfparse.CiscoConfParse.find_lines`.
 
         Args:
@@ -364,8 +365,8 @@ class CiscoConfParse(object):
         Returns:
             - list.  A list of matching :class:`~ciscoconfparse.IOSCfgLine` objects
 
-        This example illustrates the difference between 
-        :func:`~ciscoconfparse.CiscoConfParse.find_objects` and 
+        This example illustrates the difference between
+        :func:`~ciscoconfparse.CiscoConfParse.find_objects` and
         :func:`~ciscoconfparse.CiscoConfParse.find_lines`.
 
         .. code-block:: python
@@ -433,7 +434,7 @@ class CiscoConfParse(object):
         Returns:
             - list.  A list of matching configuration lines
 
-        Suppose you are interested in finding all immediate children of the 
+        Suppose you are interested in finding all immediate children of the
         `archive` statements in the following configuration...
 
         .. code::
@@ -490,11 +491,11 @@ class CiscoConfParse(object):
         return list(map(attrgetter('text'), sorted(allobjs)))
 
     def find_all_children(self, linespec, exactmatch=False, ignore_ws=False):
-        """Returns the parents matching the linespec, and all their children.  
+        """Returns the parents matching the linespec, and all their children.
         This method is different than :meth:`find_children`, because
         :meth:`find_all_children` finds children of children.
         :meth:`find_children` only finds immediate children.
-     
+
         Args:
             - linespec (str): Text regular expression for the line to be matched
         Kwargs:
@@ -577,7 +578,7 @@ class CiscoConfParse(object):
             - list.  A list of matching configuration lines
 
 
-        This example finds `bandwidth percent` statements in following config, 
+        This example finds `bandwidth percent` statements in following config,
         the siblings of those `bandwidth percent` statements, as well
         as the parent configuration statements required to access them.
 
@@ -620,23 +621,23 @@ class CiscoConfParse(object):
            :emphasize-lines: 22,25
 
            >>> from ciscoconfparse import CiscoConfParse
-           >>> config = ['!', 
-           ...           'policy-map EXTERNAL_CBWFQ', 
-           ...           ' class IP_PREC_HIGH', 
-           ...           '  priority percent 10', 
-           ...           '  police cir percent 10', 
-           ...           '    conform-action transmit', 
-           ...           '    exceed-action drop', 
-           ...           ' class IP_PREC_MEDIUM', 
-           ...           '  bandwidth percent 50', 
-           ...           '  queue-limit 100', 
-           ...           ' class class-default', 
-           ...           '  bandwidth percent 40', 
-           ...           '  queue-limit 100', 
-           ...           'policy-map SHAPE_HEIR', 
-           ...           ' class ALL', 
-           ...           '  shape average 630000', 
-           ...           '  service-policy EXTERNAL_CBWFQ', 
+           >>> config = ['!',
+           ...           'policy-map EXTERNAL_CBWFQ',
+           ...           ' class IP_PREC_HIGH',
+           ...           '  priority percent 10',
+           ...           '  police cir percent 10',
+           ...           '    conform-action transmit',
+           ...           '    exceed-action drop',
+           ...           ' class IP_PREC_MEDIUM',
+           ...           '  bandwidth percent 50',
+           ...           '  queue-limit 100',
+           ...           ' class class-default',
+           ...           '  bandwidth percent 40',
+           ...           '  queue-limit 100',
+           ...           'policy-map SHAPE_HEIR',
+           ...           ' class ALL',
+           ...           '  shape average 630000',
+           ...           '  service-policy EXTERNAL_CBWFQ',
            ...           '!',
            ...     ]
            >>> p = CiscoConfParse(config)
@@ -676,9 +677,9 @@ class CiscoConfParse(object):
         return list(map(attrgetter('text'), sorted(tmp)))
 
     def find_objects_w_child(self, parentspec, childspec, ignore_ws=False):
-        """Return a list of parent :class:`~models_cisco.IOSCfgLine` objects, 
+        """Return a list of parent :class:`~models_cisco.IOSCfgLine` objects,
         which matched the ``parentspec`` and whose children match ``childspec``.
-        Only the parent :class:`~models_cisco.IOSCfgLine` objects will be 
+        Only the parent :class:`~models_cisco.IOSCfgLine` objects will be
         returned.
 
         Args:
@@ -690,8 +691,8 @@ class CiscoConfParse(object):
         Returns:
             - list.  A list of matching parent :class:`~models_cisco.IOSCfgLine` objects
 
-        This example uses :func:`~ciscoconfparse.find_objects_w_child()` to 
-        find all ports that are members of access vlan 300 in following 
+        This example uses :func:`~ciscoconfparse.find_objects_w_child()` to
+        find all ports that are members of access vlan 300 in following
         config...
 
         .. code::
@@ -719,31 +720,31 @@ class CiscoConfParse(object):
            interface FastEthernet0/2
            interface FastEthernet0/3
 
-        We do this by quering `find_objects_w_child()`; we set our 
-        parent as `^interface` and set the child as `switchport access 
+        We do this by quering `find_objects_w_child()`; we set our
+        parent as `^interface` and set the child as `switchport access
         vlan 300`.
 
         .. code-block:: python
            :emphasize-lines: 18
 
-           >>> config = ['!', 
-           ...           'interface FastEthernet0/1', 
-           ...           ' switchport access vlan 532', 
-           ...           ' spanning-tree vlan 532 cost 3', 
-           ...           '!', 
-           ...           'interface FastEthernet0/2', 
-           ...           ' switchport access vlan 300', 
-           ...           ' spanning-tree portfast', 
-           ...           '!', 
-           ...           'interface FastEthernet0/3', 
-           ...           ' duplex full', 
-           ...           ' speed 100', 
-           ...           ' switchport access vlan 300', 
-           ...           ' spanning-tree portfast', 
+           >>> config = ['!',
+           ...           'interface FastEthernet0/1',
+           ...           ' switchport access vlan 532',
+           ...           ' spanning-tree vlan 532 cost 3',
+           ...           '!',
+           ...           'interface FastEthernet0/2',
+           ...           ' switchport access vlan 300',
+           ...           ' spanning-tree portfast',
+           ...           '!',
+           ...           'interface FastEthernet0/3',
+           ...           ' duplex full',
+           ...           ' speed 100',
+           ...           ' switchport access vlan 300',
+           ...           ' spanning-tree portfast',
            ...           '!',
            ...     ]
            >>> p = CiscoConfParse(config)
-           >>> p.find_objects_w_child('^interface', 
+           >>> p.find_objects_w_child('^interface',
            ...     'switchport access vlan 300')
            ...
            [<IOSCfgLine # 5 'interface FastEthernet0/2'>, <IOSCfgLine # 9 'interface FastEthernet0/3'>]
@@ -754,7 +755,7 @@ class CiscoConfParse(object):
             parentspec = self._build_space_tolerant_regex(parentspec)
             childspec = self._build_space_tolerant_regex(childspec)
 
-        return list(filter(lambda x: x.re_search_children(childspec), 
+        return list(filter(lambda x: x.re_search_children(childspec),
             self.find_objects(parentspec)))
 
     def find_parents_w_child(self, parentspec, childspec, ignore_ws=False):
@@ -771,7 +772,7 @@ class CiscoConfParse(object):
         Returns:
             - list.  A list of matching parent configuration lines
 
-        This example finds all ports that are members of access vlan 300 
+        This example finds all ports that are members of access vlan 300
         in following config...
 
         .. code::
@@ -799,27 +800,27 @@ class CiscoConfParse(object):
            interface FastEthernet0/2
            interface FastEthernet0/3
 
-        We do this by quering `find_parents_w_child()`; we set our 
-        parent as `^interface` and set the child as 
+        We do this by quering `find_parents_w_child()`; we set our
+        parent as `^interface` and set the child as
         `switchport access vlan 300`.
 
         .. code-block:: python
            :emphasize-lines: 18
 
-           >>> config = ['!', 
-           ...           'interface FastEthernet0/1', 
-           ...           ' switchport access vlan 532', 
-           ...           ' spanning-tree vlan 532 cost 3', 
-           ...           '!', 
-           ...           'interface FastEthernet0/2', 
-           ...           ' switchport access vlan 300', 
-           ...           ' spanning-tree portfast', 
-           ...           '!', 
-           ...           'interface FastEthernet0/3', 
-           ...           ' duplex full', 
-           ...           ' speed 100', 
-           ...           ' switchport access vlan 300', 
-           ...           ' spanning-tree portfast', 
+           >>> config = ['!',
+           ...           'interface FastEthernet0/1',
+           ...           ' switchport access vlan 532',
+           ...           ' spanning-tree vlan 532 cost 3',
+           ...           '!',
+           ...           'interface FastEthernet0/2',
+           ...           ' switchport access vlan 300',
+           ...           ' spanning-tree portfast',
+           ...           '!',
+           ...           'interface FastEthernet0/3',
+           ...           ' duplex full',
+           ...           ' speed 100',
+           ...           ' switchport access vlan 300',
+           ...           ' spanning-tree portfast',
            ...           '!',
            ...     ]
            >>> p = CiscoConfParse(config)
@@ -828,7 +829,7 @@ class CiscoConfParse(object):
            >>>
 
         """
-        tmp = self.find_objects_w_child(parentspec, childspec, 
+        tmp = self.find_objects_w_child(parentspec, childspec,
             ignore_ws=ignore_ws)
         return list(map(attrgetter('text'), tmp))
 
@@ -871,28 +872,28 @@ class CiscoConfParse(object):
            interface FastEthernet0/1
            interface FastEthernet0/2
 
-        We do this by quering `find_objects_wo_child()`; we set our 
-        parent as `^interface` and set the child as `speed\s\d+` (a 
+        We do this by quering `find_objects_wo_child()`; we set our
+        parent as `^interface` and set the child as `speed\s\d+` (a
         regular-expression which matches the word 'speed' followed by
         an integer).
 
         .. code-block:: python
            :emphasize-lines: 18
 
-           >>> config = ['!', 
-           ...           'interface FastEthernet0/1', 
-           ...           ' switchport access vlan 532', 
-           ...           ' spanning-tree vlan 532 cost 3', 
-           ...           '!', 
-           ...           'interface FastEthernet0/2', 
-           ...           ' switchport access vlan 300', 
-           ...           ' spanning-tree portfast', 
-           ...           '!', 
-           ...           'interface FastEthernet0/3', 
-           ...           ' duplex full', 
-           ...           ' speed 100', 
-           ...           ' switchport access vlan 300', 
-           ...           ' spanning-tree portfast', 
+           >>> config = ['!',
+           ...           'interface FastEthernet0/1',
+           ...           ' switchport access vlan 532',
+           ...           ' spanning-tree vlan 532 cost 3',
+           ...           '!',
+           ...           'interface FastEthernet0/2',
+           ...           ' switchport access vlan 300',
+           ...           ' spanning-tree portfast',
+           ...           '!',
+           ...           'interface FastEthernet0/3',
+           ...           ' duplex full',
+           ...           ' speed 100',
+           ...           ' switchport access vlan 300',
+           ...           ' spanning-tree portfast',
            ...           '!',
            ...     ]
            >>> p = CiscoConfParse(config)
@@ -905,7 +906,7 @@ class CiscoConfParse(object):
             parentspec = self._build_space_tolerant_regex(parentspec)
             childspec = self._build_space_tolerant_regex(childspec)
 
-        return [obj for obj in self.find_objects(parentspec) 
+        return [obj for obj in self.find_objects(parentspec)
             if not obj.re_search_children(childspec)]
 
     def find_parents_wo_child(self, parentspec, childspec, ignore_ws=False):
@@ -920,7 +921,7 @@ class CiscoConfParse(object):
         Returns:
             - list.  A list of matching parent configuration lines
 
-        This example finds all ports that are autonegotiating in the 
+        This example finds all ports that are autonegotiating in the
         following config...
 
         .. code::
@@ -948,28 +949,28 @@ class CiscoConfParse(object):
            interface FastEthernet0/1
            interface FastEthernet0/2
 
-        We do this by quering `find_parents_wo_child()`; we set our 
-        parent as `^interface` and set the child as `speed\s\d+` (a 
+        We do this by quering `find_parents_wo_child()`; we set our
+        parent as `^interface` and set the child as `speed\s\d+` (a
         regular-expression which matches the word 'speed' followed by
         an integer).
 
         .. code-block:: python
            :emphasize-lines: 18
 
-           >>> config = ['!', 
-           ...           'interface FastEthernet0/1', 
-           ...           ' switchport access vlan 532', 
-           ...           ' spanning-tree vlan 532 cost 3', 
-           ...           '!', 
-           ...           'interface FastEthernet0/2', 
-           ...           ' switchport access vlan 300', 
-           ...           ' spanning-tree portfast', 
-           ...           '!', 
-           ...           'interface FastEthernet0/3', 
-           ...           ' duplex full', 
-           ...           ' speed 100', 
-           ...           ' switchport access vlan 300', 
-           ...           ' spanning-tree portfast', 
+           >>> config = ['!',
+           ...           'interface FastEthernet0/1',
+           ...           ' switchport access vlan 532',
+           ...           ' spanning-tree vlan 532 cost 3',
+           ...           '!',
+           ...           'interface FastEthernet0/2',
+           ...           ' switchport access vlan 300',
+           ...           ' spanning-tree portfast',
+           ...           '!',
+           ...           'interface FastEthernet0/3',
+           ...           ' duplex full',
+           ...           ' speed 100',
+           ...           ' switchport access vlan 300',
+           ...           ' spanning-tree portfast',
            ...           '!',
            ...     ]
            >>> p = CiscoConfParse(config)
@@ -978,12 +979,12 @@ class CiscoConfParse(object):
            >>>
 
         """
-        tmp = self.find_objects_wo_child(parentspec, childspec, 
+        tmp = self.find_objects_wo_child(parentspec, childspec,
             ignore_ws=ignore_ws)
         return list(map(attrgetter('text'), tmp))
 
     def find_children_w_parents(self, parentspec, childspec, ignore_ws=False):
-        """Parse through the children of all parents matching parentspec, 
+        """Parse through the children of all parents matching parentspec,
         and return a list of children that matched the childspec.
 
         Args:
@@ -991,12 +992,12 @@ class CiscoConfParse(object):
             - childspec (str): Text regular expression for the line to be matched; this must match the child's line
 
         Kwargs:
-            - ignore_ws (bool): boolean that controls whether whitespace is ignored 
+            - ignore_ws (bool): boolean that controls whether whitespace is ignored
 
         Returns:
             - list.  A list of matching child configuration lines
 
-        This example finds the port-security lines on FastEthernet0/1 in 
+        This example finds the port-security lines on FastEthernet0/1 in
         following config...
 
         .. code::
@@ -1033,34 +1034,34 @@ class CiscoConfParse(object):
             switchport port-security aging time 5
             switchport port-security aging type inactivity
 
-        We do this by quering `find_children_w_parents()`; we set our 
-        parent as `^interface` and set the child as 
+        We do this by quering `find_children_w_parents()`; we set our
+        parent as `^interface` and set the child as
         `switchport port-security`.
 
         .. code-block:: python
            :emphasize-lines: 25
 
-           >>> config = ['!', 
-           ...           'interface FastEthernet0/1', 
-           ...           ' switchport access vlan 532', 
-           ...           ' switchport port-security', 
-           ...           ' switchport port-security violation protect', 
-           ...           ' switchport port-security aging time 5', 
-           ...           ' switchport port-security aging type inactivity', 
-           ...           ' spanning-tree portfast', 
-           ...           ' spanning-tree bpduguard enable', 
-           ...           '!', 
-           ...           'interface FastEthernet0/2', 
-           ...           ' switchport access vlan 300', 
-           ...           ' spanning-tree portfast', 
-           ...           ' spanning-tree bpduguard enable', 
-           ...           '!', 
-           ...           'interface FastEthernet0/3', 
-           ...           ' duplex full', 
-           ...           ' speed 100', 
-           ...           ' switchport access vlan 300', 
-           ...           ' spanning-tree portfast', 
-           ...           ' spanning-tree bpduguard enable', 
+           >>> config = ['!',
+           ...           'interface FastEthernet0/1',
+           ...           ' switchport access vlan 532',
+           ...           ' switchport port-security',
+           ...           ' switchport port-security violation protect',
+           ...           ' switchport port-security aging time 5',
+           ...           ' switchport port-security aging type inactivity',
+           ...           ' spanning-tree portfast',
+           ...           ' spanning-tree bpduguard enable',
+           ...           '!',
+           ...           'interface FastEthernet0/2',
+           ...           ' switchport access vlan 300',
+           ...           ' spanning-tree portfast',
+           ...           ' spanning-tree bpduguard enable',
+           ...           '!',
+           ...           'interface FastEthernet0/3',
+           ...           ' duplex full',
+           ...           ' speed 100',
+           ...           ' switchport access vlan 300',
+           ...           ' spanning-tree portfast',
+           ...           ' spanning-tree bpduguard enable',
            ...           '!',
            ...     ]
            >>> p = CiscoConfParse(config)
@@ -1085,7 +1086,7 @@ class CiscoConfParse(object):
         return list(map(attrgetter('text'), sorted(retval)))
 
     def find_objects_w_parents(self, parentspec, childspec, ignore_ws=False):
-        """Parse through the children of all parents matching parentspec, 
+        """Parse through the children of all parents matching parentspec,
         and return a list of child objects, which matched the childspec.
 
         Args:
@@ -1093,7 +1094,7 @@ class CiscoConfParse(object):
             - childspec (str): Text regular expression for the line to be matched; this must match the child's line
 
         Kwargs:
-            - ignore_ws (bool): boolean that controls whether whitespace is ignored 
+            - ignore_ws (bool): boolean that controls whether whitespace is ignored
 
         Returns:
             - list.  A list of matching child objects
@@ -1103,23 +1104,23 @@ class CiscoConfParse(object):
 
         .. code::
 
-            interfaces 
-                ge-0/0/0 
-                    unit 0 
-                        family ethernet-switching 
+            interfaces
+                ge-0/0/0
+                    unit 0
+                        family ethernet-switching
                             port-mode access
-                            vlan 
+                            vlan
                                 members VLAN_FOO
-                ge-0/0/1 
-                    unit 0 
-                        family ethernet-switching 
+                ge-0/0/1
+                    unit 0
+                        family ethernet-switching
                             port-mode trunk
-                            vlan 
+                            vlan
                                 members all
                             native-vlan-id 1
-                vlan 
-                    unit 0 
-                        family inet 
+                vlan
+                    unit 0
+                        family inet
                             address 172.16.15.5/22
 
 
@@ -1129,8 +1130,8 @@ class CiscoConfParse(object):
 
             <IOSCfgLine # 7 '    ge-0/0/1' (parent is # 0)>
 
-        We do this by quering `find_childobj_w_parents()`; we set our 
-        parent as `^\s*interface` and set the child as 
+        We do this by quering `find_childobj_w_parents()`; we set our
+        parent as `^\s*interface` and set the child as
         `^\s+ge-0/0/1`.
 
         .. code-block:: python
@@ -1190,7 +1191,7 @@ class CiscoConfParse(object):
     def has_line_with(self, linespec):
         return self.ConfigObjs.has_line_with(linespec)
 
-    def insert_before(self, linespec, insertstr="", exactmatch=False, 
+    def insert_before(self, linespec, insertstr="", exactmatch=False,
         ignore_ws=False, atomic=False):
         """Find all objects whose text matches linespec, and insert 'insertstr' before those line objects"""
         objs = self.find_objects(linespec, exactmatch, ignore_ws)
@@ -1199,16 +1200,16 @@ class CiscoConfParse(object):
         for idx, obj in enumerate(objs):
             if (idx==last_idx):
                 local_atomic = True & atomic
-            self.ConfigObjs.insert_before(obj, insertstr, 
+            self.ConfigObjs.insert_before(obj, insertstr,
                 atomic=local_atomic)
 
         ## Return the matching lines
         return list(map(attrgetter('text'), sorted(objs)))
 
-    def insert_after(self, linespec, insertstr="", exactmatch=False, 
+    def insert_after(self, linespec, insertstr="", exactmatch=False,
         ignore_ws=False, atomic=False):
-        """Find all :class:`~models_cisco.IOSCfgLine` objects whose text 
-        matches ``linespec``, and insert ``insertstr`` after those line 
+        """Find all :class:`~models_cisco.IOSCfgLine` objects whose text
+        matches ``linespec``, and insert ``insertstr`` after those line
         objects"""
         objs = self.find_objects(linespec, exactmatch, ignore_ws)
         last_idx = len(objs) - 1
@@ -1216,17 +1217,17 @@ class CiscoConfParse(object):
         for idx, obj in enumerate(objs):
             if idx==last_idx:
                 local_atomic = True & atomic
-            self.ConfigObjs.insert_after(obj, insertstr, 
+            self.ConfigObjs.insert_after(obj, insertstr,
                 atomic=local_atomic)
 
         ## Return the matching lines
         return list(map(attrgetter('text'), sorted(objs)))
 
-    def insert_after_child(self, parentspec, childspec, insertstr="", 
+    def insert_after_child(self, parentspec, childspec, insertstr="",
         exactmatch=False, excludespec=None, ignore_ws=False, atomic=False):
-        """Find all :class:`~models_cisco.IOSCfgLine` objects whose text 
-        matches ``linespec`` and have a child matching ``childspec``, and 
-        insert an :class:`~models_cisco.IOSCfgLine` object for ``insertstr`` 
+        """Find all :class:`~models_cisco.IOSCfgLine` objects whose text
+        matches ``linespec`` and have a child matching ``childspec``, and
+        insert an :class:`~models_cisco.IOSCfgLine` object for ``insertstr``
         after those child objects."""
         retval = list()
         modified = False
@@ -1240,14 +1241,14 @@ class CiscoConfParse(object):
                     continue
                 elif re.search(childspec, cobj.text):
                     modified = True
-                    retval.append(self.ConfigObjs.insert_after(cobj, 
+                    retval.append(self.ConfigObjs.insert_after(cobj,
                         insertstr, atomic=atomic))
                 else:
                     pass
         return retval
 
     def delete_lines(self, linespec, exactmatch=False, ignore_ws=False):
-        """Find all :class:`~models_cisco.IOSCfgLine` objects whose text 
+        """Find all :class:`~models_cisco.IOSCfgLine` objects whose text
         matches linespec, and delete the object"""
         objs = self.find_objects(linespec, exactmatch, ignore_ws)
         #atomic = False
@@ -1263,7 +1264,7 @@ class CiscoConfParse(object):
         return self.ConfigObjs[0]
 
     def append_line(self, linespec):
-        """Unconditionally insert ``linespec`` (a text line) at the end of the 
+        """Unconditionally insert ``linespec`` (a text line) at the end of the
         configuration
 
         Args:
@@ -1276,7 +1277,7 @@ class CiscoConfParse(object):
         self.ConfigObjs.append(linespec)
         return self.ConfigObjs[-1]
 
-    def replace_lines(self, linespec, replacestr, excludespec=None, 
+    def replace_lines(self, linespec, replacestr, excludespec=None,
         exactmatch=False, atomic=False):
         """This method is a text search and replace (Case-sensitive).  You can
         optionally exclude lines from replacement by including a string (or
@@ -1294,7 +1295,7 @@ class CiscoConfParse(object):
         Returns:
             - list. A list of changed configuration lines
 
-        This example finds statements with `EXTERNAL_CBWFQ` in following 
+        This example finds statements with `EXTERNAL_CBWFQ` in following
         config, and replaces all matching lines (in-place) with `EXTERNAL_QOS`.
         For the purposes of this example, let's assume that we do *not* want
         to make changes to any descriptions on the policy.
@@ -1321,31 +1322,31 @@ class CiscoConfParse(object):
              service-policy EXTERNAL_CBWFQ
            !
 
-        We do this by calling `replace_lines(linespec='EXTERNAL_CBWFQ', 
+        We do this by calling `replace_lines(linespec='EXTERNAL_CBWFQ',
         replacestr='EXTERNAL_QOS', excludespec='description')`...
 
         .. code-block:: python
            :emphasize-lines: 23
 
            >>> from ciscoconfparse import CiscoConfParse
-           >>> config = ['!', 
-           ...           'policy-map EXTERNAL_CBWFQ', 
+           >>> config = ['!',
+           ...           'policy-map EXTERNAL_CBWFQ',
            ...           ' description implement an EXTERNAL_CBWFQ policy',
-           ...           ' class IP_PREC_HIGH', 
-           ...           '  priority percent 10', 
-           ...           '  police cir percent 10', 
-           ...           '    conform-action transmit', 
-           ...           '    exceed-action drop', 
-           ...           ' class IP_PREC_MEDIUM', 
-           ...           '  bandwidth percent 50', 
-           ...           '  queue-limit 100', 
-           ...           ' class class-default', 
-           ...           '  bandwidth percent 40', 
-           ...           '  queue-limit 100', 
-           ...           'policy-map SHAPE_HEIR', 
-           ...           ' class ALL', 
-           ...           '  shape average 630000', 
-           ...           '  service-policy EXTERNAL_CBWFQ', 
+           ...           ' class IP_PREC_HIGH',
+           ...           '  priority percent 10',
+           ...           '  police cir percent 10',
+           ...           '    conform-action transmit',
+           ...           '    exceed-action drop',
+           ...           ' class IP_PREC_MEDIUM',
+           ...           '  bandwidth percent 50',
+           ...           '  queue-limit 100',
+           ...           ' class class-default',
+           ...           '  bandwidth percent 40',
+           ...           '  queue-limit 100',
+           ...           'policy-map SHAPE_HEIR',
+           ...           ' class ALL',
+           ...           '  shape average 630000',
+           ...           '  service-policy EXTERNAL_CBWFQ',
            ...           '!',
            ...     ]
            >>> p = CiscoConfParse(config)
@@ -1354,7 +1355,7 @@ class CiscoConfParse(object):
            >>>
 
         Now when we call `p.find_blocks('policy-map EXTERNAL_QOS')`, we get the
-        changed configuration, which has the replacements except on the 
+        changed configuration, which has the replacements except on the
         policy-map's description.
 
         >>> p.find_blocks('EXTERNAL_QOS')
@@ -1378,9 +1379,9 @@ class CiscoConfParse(object):
 
         return retval
 
-    def replace_children(self, parentspec, childspec, replacestr, 
+    def replace_children(self, parentspec, childspec, replacestr,
         excludespec=None, exactmatch=False, atomic=False):
-        """Replace lines matching `childspec` within the `parentspec`'s 
+        """Replace lines matching `childspec` within the `parentspec`'s
         immediate children.
 
         Args:
@@ -1395,20 +1396,20 @@ class CiscoConfParse(object):
         Returns:
             - list.  A list of changed :class:`~models_cisco.IOSCfgLine` instances.
 
-        `replace_children()` just searches through a parent's child lines and 
+        `replace_children()` just searches through a parent's child lines and
         replaces anything matching `childspec` with `replacestr`.  This method
-        is one of my favorites for quick and dirty standardization efforts if 
+        is one of my favorites for quick and dirty standardization efforts if
         you *know* the commands are already there (just set inconsistently).
 
-        One very common use case is rewriting all vlan access numbers in a 
-        configuration.  The following example sets 
+        One very common use case is rewriting all vlan access numbers in a
+        configuration.  The following example sets
         `storm-control broadcast level 0.5` on all GigabitEthernet ports.
 
         .. code-block:: python
            :emphasize-lines: 13
 
            >>> from ciscoconfparse import CiscoConfParse
-           >>> config = ['!', 
+           >>> config = ['!',
            ...           'interface GigabitEthernet1/1',
            ...           ' description {I have a broken storm-control config}',
            ...           ' switchport',
@@ -1423,7 +1424,7 @@ class CiscoConfParse(object):
            [' storm-control broadcast level 0.5']
            >>>
 
-        One thing to remember about the last example, you *cannot* use a 
+        One thing to remember about the last example, you *cannot* use a
         regular expression in `replacestr`; just use a normal python string.
         """
         retval = list()
@@ -1449,7 +1450,7 @@ class CiscoConfParse(object):
             self.ConfigObjs._bootstrap_from_text()
         return retval
 
-    def replace_all_children(self, parentspec, childspec, replacestr, 
+    def replace_all_children(self, parentspec, childspec, replacestr,
         excludespec=None, exactmatch=False, atomic=False):
         """Replace lines matching `childspec` within all children (recursive) of lines whilch match `parentspec`"""
         retval = list()
@@ -1493,7 +1494,7 @@ class CiscoConfParse(object):
            >>> config = [
            ...     'logging trap debugging',
            ...     'logging 172.28.26.15',
-           ...     ] 
+           ...     ]
            >>> p = CiscoConfParse(config)
            >>> required_lines = [
            ...     "logging 172.28.26.15",
@@ -1542,7 +1543,7 @@ class CiscoConfParse(object):
            >>> config = [
            ...     'logging trap debugging',
            ...     'logging 172.28.26.15',
-           ...     ] 
+           ...     ]
            >>> p = CiscoConfParse(config)
            >>> required_lines = [
            ...     "logging 172.16.1.5",
@@ -1551,7 +1552,7 @@ class CiscoConfParse(object):
            ...     ]
            >>> linespec = "logging\s+\d+\.\d+\.\d+\.\d+"
            >>> unconfspec = linespec
-           >>> diffs = p.req_cfgspec_excl_diff(linespec, unconfspec, 
+           >>> diffs = p.req_cfgspec_excl_diff(linespec, unconfspec,
            ...     required_lines)
            >>> diffs
            ['no logging 172.28.26.15', 'logging 172.16.1.5', 'logging 1.10.20.30', 'logging 192.168.1.1']
@@ -1594,12 +1595,12 @@ class CiscoConfParse(object):
     def _sequence_nonparent_lines(self, a_nonparent_objs, b_nonparent_objs):
         """Assume a_nonparent_objs is the existing config sequence, and
         b_nonparent_objs is the *desired* config sequence
-        
-        This method walks b_nonparent_objs, and orders a_nonparent_objs 
+
+        This method walks b_nonparent_objs, and orders a_nonparent_objs
         the same way (as much as possible)
 
         This method returns:
-        
+
         - The reordered list of a_nonparent_objs
         - The reordered list of a_nonparent_lines
         - The reordered list of a_nonparent_linenums
@@ -1636,12 +1637,12 @@ class CiscoConfParse(object):
     def _sequence_parent_lines(self, a_parent_objs, b_parent_objs):
         """Assume a_parent_objs is the existing config sequence, and
         b_parent_objs is the *desired* config sequence
-        
-        This method walks b_parent_objs, and orders a_parent_objs 
+
+        This method walks b_parent_objs, and orders a_parent_objs
         the same way (as much as possible)
 
         This method returns:
-        
+
         - The reordered list of a_parent_objs
         - The reordered list of a_parent_lines
         - The reordered list of a_parent_linenums
@@ -1697,10 +1698,10 @@ class CiscoConfParse(object):
 
         return a_parse, a_lines, a_linenums
 
-    def sync_diff(self, cfgspec, linespec, uncfgspec=None, 
+    def sync_diff(self, cfgspec, linespec, uncfgspec=None,
         ignore_order=True, remove_lines=True, debug=False):
         """
-        ``sync_diff()`` accepts a list of required configuration elements, 
+        ``sync_diff()`` accepts a list of required configuration elements,
         a linespec, and an unconfig spec.  This method return a list of
         configuration diffs to make the configuration comply with cfgspec.
 
@@ -1728,7 +1729,7 @@ class CiscoConfParse(object):
            >>> config = [
            ...     'logging trap debugging',
            ...     'logging 172.28.26.15',
-           ...     ] 
+           ...     ]
            >>> p = CiscoConfParse(config)
            >>> required_lines = [
            ...     "logging 172.16.1.5",
@@ -1776,7 +1777,7 @@ class CiscoConfParse(object):
                         b_parents = getattr(bdiff_level, attr)
 
                         # Rewrite a, since we reordered everything
-                        a, a_lines, a_linenums = self._sequence_parent_lines(a_parents, 
+                        a, a_lines, a_linenums = self._sequence_parent_lines(a_parents,
                             b_parents)
                     else:
                         a_lines = list()
@@ -1799,14 +1800,14 @@ class CiscoConfParse(object):
                         b_nonparents = getattr(bdiff_level, attr)
 
                         # Rewrite a, since we reordered everything
-                        a, a_lines, a_linenums = self._sequence_nonparent_lines(a_nonparents, 
+                        a, a_lines, a_linenums = self._sequence_nonparent_lines(a_nonparents,
                             b_nonparents)
                     else:
-                        a_lines = map(lambda x: getattr(x, 'text'), 
+                        a_lines = map(lambda x: getattr(x, 'text'),
                             getattr(adiff_level, attr))
                         # Build a map from a_lines index to a.ConfigObjs index
                         a_linenums = map(lambda x: getattr(x, 'linenum'), getattr(adiff_level, attr))
-                    b_lines = map(lambda x: getattr(x, 'text'), 
+                    b_lines = map(lambda x: getattr(x, 'text'),
                         getattr(bdiff_level, attr))
                     # Build a map from b_lines index to b.ConfigObjs index
                     b_linenums = map(lambda x: getattr(x, 'linenum'), getattr(bdiff_level, attr))
@@ -2146,7 +2147,7 @@ class IOSConfigList(MutableSequence):
 
     def _bootstrap_from_text(self):
         ## reparse all objects from their text attributes... this is *very* slow
-        ## Ultimate goal: get rid of all reparsing from text... 
+        ## Ultimate goal: get rid of all reparsing from text...
         self._list = self._bootstrap_obj_init(list(map(attrgetter('text'), self._list)))
 
     def has_line_with(self, linespec):
@@ -2160,11 +2161,11 @@ class IOSConfigList(MutableSequence):
 
         if getattr(val, 'capitalize', False):
             if self.factory:
-                obj = ConfigLineFactory(text=val, 
-                    comment_delimiter=self.comment_delimiter, 
+                obj = ConfigLineFactory(text=val,
+                    comment_delimiter=self.comment_delimiter,
                     syntax=self.syntax)
             elif self.syntax=='ios':
-                obj = IOSCfgLine(text=val, 
+                obj = IOSCfgLine(text=val,
                     comment_delimiter=self.comment_delimiter)
 
         ii = self._list.index(robj)
@@ -2187,11 +2188,11 @@ class IOSConfigList(MutableSequence):
         ## If val is a string...
         if getattr(val, 'capitalize', False):
             if self.factory:
-                obj = ConfigLineFactory(text=val, 
+                obj = ConfigLineFactory(text=val,
                     comment_delimiter=self.comment_delimiter,
                     syntax=self.syntax)
             elif self.syntax=='ios':
-                obj = IOSCfgLine(text=val, 
+                obj = IOSCfgLine(text=val,
                     comment_delimiter=self.comment_delimiter)
 
         ## FIXME: This shouldn't be required
@@ -2213,11 +2214,11 @@ class IOSConfigList(MutableSequence):
     def insert(self, ii, val):
         if getattr(val, 'capitalize', False):
             if self.factory:
-                obj = ConfigLineFactory(text=val, 
+                obj = ConfigLineFactory(text=val,
                     comment_delimiter=self.comment_delimiter,
                     syntax=self.syntax)
             elif self.syntax=='ios':
-                obj = IOSCfgLine(text=val, 
+                obj = IOSCfgLine(text=val,
                     comment_delimiter=self.comment_delimiter)
             else:
                 raise ValueError('FATAL insert string - Cannot insert "{0}"'.format(val))
@@ -2259,7 +2260,7 @@ class IOSConfigList(MutableSequence):
             idx = parent.linenum
             parent.oldest_ancestor = True
             #bannerchar = parent.text.strip()[-1]
-            bannerchar = parent.re_match_typed(r'^.+?\s+(\S+)$', group=1, 
+            bannerchar = parent.re_match_typed(r'^.+?\s+(\S+)$', group=1,
                 default=None)
             while True:
                 idx += 1
@@ -2282,7 +2283,7 @@ class IOSConfigList(MutableSequence):
         """Accept a text list and format into proper objects"""
         # Append text lines as IOSCfgLine objects...
         BANNER_STR = set(['login',
-            'motd', 'incoming', 'incoming', 
+            'motd', 'incoming', 'incoming',
             'telnet', 'lcd',
             ])
         BANNER_RE = re.compile('|'.join([r'^(set\s+)*banner\s+{0}'.format(ii) for ii in BANNER_STR]))
@@ -2295,7 +2296,7 @@ class IOSConfigList(MutableSequence):
             # Reject empty lines if ignore_blank_lines...
             if self.ignore_blank_lines and line.strip()=='':
                 continue
-            # 
+            #
             if not self.factory:
                 obj = IOSCfgLine(line, self.comment_delimiter)
             elif self.syntax=='ios':
@@ -2321,7 +2322,7 @@ class IOSConfigList(MutableSequence):
                 for parent_idx in stale_parent_idxs:
                     del parents[parent_idx]
             else:
-                ## As long as the child indent hasn't gone backwards, 
+                ## As long as the child indent hasn't gone backwards,
                 ##    we can use a cached parent
                 parent = parents.get(indent, None)
 
@@ -2368,8 +2369,8 @@ class IOSConfigList(MutableSequence):
 
     def _add_child_to_parent(self, _list, idx, indent, parentobj, childobj):
         if childobj.is_comment and (_list[idx-1].indent>indent):
-            ## I *really* hate making this exception, but legacy 
-            ##   ciscoconfparse never marked a comment as a child 
+            ## I *really* hate making this exception, but legacy
+            ##   ciscoconfparse never marked a comment as a child
             ##   when the line immediately above it was indented more
             ##   than the comment line
             pass
@@ -2403,12 +2404,12 @@ class IOSConfigList(MutableSequence):
 
 
 class ASAConfigList(MutableSequence):
-    """A custom list to hold :class:`~models_asa.ASACfgLine` objects.  Most 
+    """A custom list to hold :class:`~models_asa.ASACfgLine` objects.  Most
        people will never need to use this class directly.
 
 
     """
-    def __init__(self, data=None, comment_delimiter='!', debug=False, 
+    def __init__(self, data=None, comment_delimiter='!', debug=False,
         factory=False, ignore_blank_lines=True, syntax='asa', CiscoConfParse=None):
         """Initialize the class.
 
@@ -2422,10 +2423,10 @@ class ASAConfigList(MutableSequence):
             - names (dict): A Python dictionary, which maps a Cisco ASA name to a string representing the address
             - object_group_network (dict): A Python dictionary, which maps a Cisco ASA object-group network name to the :class:`~models_asa.ASAObjNetwork` object
             - object_group_service (dict): A Python dictionary, which maps a Cisco ASA object-group service name to the :class:`~models_asa.ASAObjService` object
- 
+
         Returns:
             - An instance of an :class:`~ciscoconfparse.ASAConfigList` object.
- 
+
         """
         super(ASAConfigList, self).__init__()
 
@@ -2480,7 +2481,7 @@ class ASAConfigList(MutableSequence):
 
     def _bootstrap_from_text(self):
         ## reparse all objects from their text attributes... this is *very* slow
-        ## Ultimate goal: get rid of all reparsing from text... 
+        ## Ultimate goal: get rid of all reparsing from text...
         self._list = self._bootstrap_obj_init(list(map(attrgetter('text'), self._list)))
 
     def has_line_with(self, linespec):
@@ -2493,11 +2494,11 @@ class ASAConfigList(MutableSequence):
 
         if getattr(val, 'capitalize', False):
             if self.factory:
-                obj = ConfigLineFactory(text=val, 
-                    comment_delimiter=self.comment_delimiter, 
+                obj = ConfigLineFactory(text=val,
+                    comment_delimiter=self.comment_delimiter,
                     syntax=self.syntax)
             elif self.syntax=='asa':
-                obj = ASACfgLine(text=val, 
+                obj = ASACfgLine(text=val,
                     comment_delimiter=self.comment_delimiter)
 
         ii = self._list.index(robj)
@@ -2519,11 +2520,11 @@ class ASAConfigList(MutableSequence):
 
         if getattr(val, 'capitalize', False):
             if self.factory:
-                obj = ConfigLineFactory(text=val, 
+                obj = ConfigLineFactory(text=val,
                     comment_delimiter=self.comment_delimiter,
                     syntax=self.syntax)
             elif self.syntax=='asa':
-                obj = ASACfgLine(text=val, 
+                obj = ASACfgLine(text=val,
                     comment_delimiter=self.comment_delimiter)
 
         ## FIXME: This shouldn't be required
@@ -2545,11 +2546,11 @@ class ASAConfigList(MutableSequence):
         ## Insert something at index ii
         if getattr(val, 'capitalize', False):
             if self.factory:
-                obj = ConfigLineFactory(text=val, 
+                obj = ConfigLineFactory(text=val,
                     comment_delimiter=self.comment_delimiter,
                     syntax=self.syntax)
             elif self.syntax=='asa':
-                obj = ASACfgLine(text=val, 
+                obj = ASACfgLine(text=val,
                     comment_delimiter=self.comment_delimiter)
 
         self._list.insert(ii, obj)
@@ -2619,7 +2620,7 @@ class ASAConfigList(MutableSequence):
                 for parent_idx in stale_parent_idxs:
                     del parents[parent_idx]
             else:
-                ## As long as the child indent hasn't gone backwards, 
+                ## As long as the child indent hasn't gone backwards,
                 ##    we can use a cached parent
                 parent = parents.get(indent, None)
 
@@ -2666,8 +2667,8 @@ class ASAConfigList(MutableSequence):
 
     def _add_child_to_parent(self, _list, idx, indent, parentobj, childobj):
         if childobj.is_comment and (_list[idx-1].indent>indent):
-            ## I *really* hate making this exception, but legacy 
-            ##   ciscoconfparse never marked a comment as a child 
+            ## I *really* hate making this exception, but legacy
+            ##   ciscoconfparse never marked a comment as a child
             ##   when the line immediately above it was indented more
             ##   than the comment line
             pass
@@ -2750,7 +2751,7 @@ class CiscoPassword(object):
 
     def decrypt(self, ep=""):
         """Cisco Type 7 password decryption.  Converted from perl code that was
-        written by jbash [~at~] cisco.com; enhancements suggested by 
+        written by jbash [~at~] cisco.com; enhancements suggested by
         rucjain [~at~] cisco.com"""
 
         xlat = (0x64, 0x73, 0x66, 0x64, 0x3b, 0x6b, 0x66, 0x6f, 0x41, 0x2c,
@@ -2789,19 +2790,19 @@ def ConfigLineFactory(text="", comment_delimiter="!", syntax='ios'):
 
     ## Manual and simple
     if syntax=='ios':
-        classes = [IOSIntfLine, IOSRouteLine, IOSAccessLine, 
+        classes = [IOSIntfLine, IOSRouteLine, IOSAccessLine,
             IOSAaaLoginAuthenticationLine, IOSAaaEnableAuthenticationLine,
             IOSAaaCommandsAuthorizationLine, IOSAaaCommandsAccountingLine,
             IOSAaaExecAccountingLine, IOSAaaGroupServerLine,
             IOSHostnameLine, IOSIntfGlobal, IOSCfgLine]  # This is simple
     elif syntax=='asa':
-        classes = [ASAName, ASAObjNetwork, ASAObjService, 
-            ASAObjGroupNetwork, ASAObjGroupService, 
-            ASAIntfLine, ASAIntfGlobal, 
+        classes = [ASAName, ASAObjNetwork, ASAObjService,
+            ASAObjGroupNetwork, ASAObjGroupService,
+            ASAIntfLine, ASAIntfGlobal,
             ASAHostnameLine, ASACfgLine]
     for cls in classes:
         if cls.is_object_for(text):
-            inst = cls(text=text, 
+            inst = cls(text=text,
                 comment_delimiter=comment_delimiter) # instance of the proper subclass
             return inst
     raise ValueError("Could not find an object for '%s'" % line)

@@ -7,9 +7,9 @@ from ccp_util import IPv4Obj
 
 ### HUGE UGLY WARNING:
 ###   Anything in models_asa.py could change at any time, until I remove this
-###   warning.  I have good reason to believe that these methods 
+###   warning.  I have good reason to believe that these methods
 ###   function correctly, but I've been wrong before.  There are no unit tests
-###   for this functionality yet, so I consider all this code alpha quality. 
+###   for this functionality yet, so I consider all this code alpha quality.
 ###
 ###   Use models_asa.py at your own risk.  You have been warned :-)
 
@@ -39,23 +39,23 @@ from ccp_util import IPv4Obj
 
 
 class ASACfgLine(BaseCfgLine):
-    """An object for a parsed ASA-style configuration line.  
-    :class:`~models_asa.ASACfgLine` objects contain references to other 
+    """An object for a parsed ASA-style configuration line.
+    :class:`~models_asa.ASACfgLine` objects contain references to other
     parent and child :class:`~models_asa.ASACfgLine` objects.
 
     .. note::
 
-       Originally, :class:`~models_asa.ASACfgLine` objects were only 
-       intended for advanced ciscoconfparse users.  As of ciscoconfparse 
-       version 0.9.10, *all users* are strongly encouraged to prefer the 
-       methods directly on :class:`~models_asa.ASACfgLine` objects.  
-       Ultimately, if you write scripts which call methods on 
-       :class:`~models_asa.ASACfgLine` objects, your scripts will be much 
-       more efficient than if you stick strictly to the classic 
+       Originally, :class:`~models_asa.ASACfgLine` objects were only
+       intended for advanced ciscoconfparse users.  As of ciscoconfparse
+       version 0.9.10, *all users* are strongly encouraged to prefer the
+       methods directly on :class:`~models_asa.ASACfgLine` objects.
+       Ultimately, if you write scripts which call methods on
+       :class:`~models_asa.ASACfgLine` objects, your scripts will be much
+       more efficient than if you stick strictly to the classic
        :class:`~ciscoconfparse.CiscoConfParse` methods.
 
     Args:
-        - text (str): A string containing a text copy of the ASA configuration line.  :class:`~ciscoconfparse.CiscoConfParse` will automatically identify the parent and children (if any) when it parses the configuration. 
+        - text (str): A string containing a text copy of the ASA configuration line.  :class:`~ciscoconfparse.CiscoConfParse` will automatically identify the parent and children (if any) when it parses the configuration.
         - comment_delimiter (str): A string which is considered a comment for the configuration format.  Since this is for Cisco ASA-style configurations, it defaults to ``!``.
 
     Attributes:
@@ -133,7 +133,7 @@ class BaseASAIntfLine(ASACfgLine):
     def __init__(self, *args, **kwargs):
         super(BaseASAIntfLine, self).__init__(*args, **kwargs)
         self.ifindex = None    # Optional, for user use
-        self.default_ipv4_addr_object = IPv4Obj('127.0.0.1/32', 
+        self.default_ipv4_addr_object = IPv4Obj('127.0.0.1/32',
             strict=False)
 
     def __repr__(self):
@@ -142,7 +142,7 @@ class BaseASAIntfLine(ASACfgLine):
                 addr = "No IPv4"
             else:
                 addr = self.ipv4_addr_object
-            return "<%s # %s '%s' info: '%s'>" % (self.classname, 
+            return "<%s # %s '%s' info: '%s'>" % (self.classname,
                 self.linenum, self.name, addr)
         else:
             return "<%s # %s '%s' info: 'switchport'>" % (self.classname, self.linenum, self.name)
@@ -158,9 +158,9 @@ class BaseASAIntfLine(ASACfgLine):
     @property
     def verbose(self):
         if not self.is_switchport:
-            return "<%s # %s '%s' info: '%s' (child_indent: %s / len(children): %s / family_endpoint: %s)>" % (self.classname, self.linenum, self.text, self.ipv4_addr_object or "No IPv4", self.child_indent, len(self.children), self.family_endpoint) 
+            return "<%s # %s '%s' info: '%s' (child_indent: %s / len(children): %s / family_endpoint: %s)>" % (self.classname, self.linenum, self.text, self.ipv4_addr_object or "No IPv4", self.child_indent, len(self.children), self.family_endpoint)
         else:
-            return "<%s # %s '%s' info: 'switchport' (child_indent: %s / len(children): %s / family_endpoint: %s)>" % (self.classname, self.linenum, self.text, self.child_indent, len(self.children), self.family_endpoint) 
+            return "<%s # %s '%s' info: 'switchport' (child_indent: %s / len(children): %s / family_endpoint: %s)>" % (self.classname, self.linenum, self.text, self.child_indent, len(self.children), self.family_endpoint)
 
     @classmethod
     def is_object_for(cls, line="", re=re):
@@ -229,7 +229,7 @@ class BaseASAIntfLine(ASACfgLine):
     def ipv4_standby_addr_object(self):
         """Return a ccp_util.IPv4Obj object representing the standby address on this interface; if there is no address, return IPv4Obj('127.0.0.1/32')"""
         try:
-            return IPv4Obj('%s/%s' % (self.ipv4_standby_addr, 
+            return IPv4Obj('%s/%s' % (self.ipv4_standby_addr,
                 self.ipv4_netmask))
         except:
             return self.default_ipv4_addr_object
@@ -242,10 +242,10 @@ class BaseASAIntfLine(ASACfgLine):
     @property
     def ip_network_object(self):
         try:
-            return IPv4Obj('%s/%s' % (self.ipv4_addr, self.ipv4_netmask), 
+            return IPv4Obj('%s/%s' % (self.ipv4_addr, self.ipv4_netmask),
                 strict=False).network
         except AttributeError:
-            return IPv4Obj('%s/%s' % (self.ipv4_addr, self.ipv4_netmask), 
+            return IPv4Obj('%s/%s' % (self.ipv4_addr, self.ipv4_netmask),
                 strict=False).network_address
         except:
             return self.default_ipv4_addr_object
@@ -287,14 +287,14 @@ class BaseASAIntfLine(ASACfgLine):
     @property
     def ipv4_addr(self):
         """Return a string with the interface's IPv4 address, or '' if there is none"""
-        retval = self.re_match_iter_typed(r'^\s+ip\s+address\s+(\d+\.\d+\.\d+\.\d+)\s+\d+\.\d+\.\d+\.\d+(\sstandby\s+\S+\s*)*$', 
+        retval = self.re_match_iter_typed(r'^\s+ip\s+address\s+(\d+\.\d+\.\d+\.\d+)\s+\d+\.\d+\.\d+\.\d+(\sstandby\s+\S+\s*)*$',
             result_type=str, default='')
         return retval
 
     @property
     def ipv4_standby_addr(self):
         """Return a string with the interface's IPv4 address, or '' if there is none"""
-        retval = self.re_match_iter_typed(r'^\s+ip\s+address\s+\d+\.\d+\.\d+\.\d+\s+\d+\.\d+\.\d+\.\d+\sstandby\s+(\S+)\s*$', 
+        retval = self.re_match_iter_typed(r'^\s+ip\s+address\s+\d+\.\d+\.\d+\.\d+\s+\d+\.\d+\.\d+\.\d+\sstandby\s+(\S+)\s*$',
             result_type=str, default='')
         return retval
 
@@ -445,7 +445,7 @@ class ASAObjGroupNetwork(ASACfgLine):
         attributes"""
         super(ASAObjGroupNetwork, self).__init__(*args, **kwargs)
 
-        self.name = self.re_match_typed(r'^object-group\s+network\s+(\S+)', group=1, 
+        self.name = self.re_match_typed(r'^object-group\s+network\s+(\S+)', group=1,
             result_type=str)
 
     @classmethod
@@ -468,10 +468,10 @@ class ASAObjGroupNetwork(ASACfgLine):
             elif 'network-object ' in obj.text:
                 network_str = obj.re_match_typed(_RE_NETWORK1, group=1, result_type=str)
                 netmask_str = obj.re_match_typed(_RE_NETWORK2, group=1, result_type=str)
-                retval.append(IPv4Obj('{0} {1}'.format(names.get(network_str, 
+                retval.append(IPv4Obj('{0} {1}'.format(names.get(network_str,
                     network_str), netmask_str)))
             elif 'group-object ' in obj.text:
-                name = obj.re_match_typed(r'^\s*group-object\s+(\S+)', group=1, 
+                name = obj.re_match_typed(r'^\s*group-object\s+(\S+)', group=1,
                     result_type=str)
                 group_nets = self.confobj.object_group_network.get(name, None)
                 if name==self.name:
@@ -494,7 +494,7 @@ class ASAObjGroupNetwork(ASACfgLine):
 class ASAObjGroupService(ASACfgLine):
 
     def __init__(self, *args, **kwargs):
-        """Accept an ASA line number and initialize family relationship 
+        """Accept an ASA line number and initialize family relationship
             attributes"""
         super(ASAObjGroupService, self).__init__(*args, **kwargs)
 
@@ -502,8 +502,8 @@ class ASAObjGroupService(ASACfgLine):
             group=1, default='', result_type=str).strip()
         self.name = self.re_match_typed(r'^object-group\s+service\s+(\S+)',
             group=1, default='', result_type=str)
-        ## If *no protocol* is specified in the object-group statement, the 
-        ##   object-group can be used for both source or destination ports 
+        ## If *no protocol* is specified in the object-group statement, the
+        ##   object-group can be used for both source or destination ports
         ##   at the same time.  Thus L4Objects_are_directional is True if we
         ##   do not specify a protocol in the 'object-group service' line
         if (self.protocol_type==''):
@@ -525,46 +525,46 @@ class ASAObjGroupService(ASACfgLine):
     def ports(self):
         """Return a list of objects which represent the protocol and ports allowed by this object-group"""
         retval = list()
-        ## TODO: implement processing for group-objects (which obviously 
+        ## TODO: implement processing for group-objects (which obviously
         ##    involves iteration
         #GROUP_OBJ_REGEX = r'^\s*group-object\s+(\S+)'
         SERVICE_OBJ_REGEX = r'^\s*service-object\s+(tcp|udp|tcp-udp)\s+(\S+)\s+(\S+)'
         PORT_OBJ_REGEX = r'^\s*port-object\s+(eq|range)\s+(\S.+)'
         for obj in self.children:
             if 'service-object ' in obj.text:
-                protocol = obj.re_match_typed(SERVICE_OBJ_REGEX, 
+                protocol = obj.re_match_typed(SERVICE_OBJ_REGEX,
                     group=1, result_type=str)
-                src_dst = obj.re_match_typed(SERVICE_OBJ_REGEX, 
+                src_dst = obj.re_match_typed(SERVICE_OBJ_REGEX,
                     group=2, result_type=str)
-                port = obj.re_match_typed(SERVICE_OBJ_REGEX, 
+                port = obj.re_match_typed(SERVICE_OBJ_REGEX,
                     group=3, result_type=str)
 
                 if protocol=='tcp-udp':
-                    retval.append(L4Object(protocol='tcp', 
+                    retval.append(L4Object(protocol='tcp',
                         port_spec=port, syntax='asa'))
-                    retval.append(L4Object(protocol='udp', 
+                    retval.append(L4Object(protocol='udp',
                         port_spec=port, syntax='asa'))
                 else:
-                    retval.append(L4Object(protocol=protocol, 
+                    retval.append(L4Object(protocol=protocol,
                         port_spec=port, syntax='asa'))
 
             elif 'port-object ' in obj.text:
-                op = obj.re_match_typed(PORT_OBJ_REGEX, 
+                op = obj.re_match_typed(PORT_OBJ_REGEX,
                     group=1, result_type=str)
-                port = obj.re_match_typed(PORT_OBJ_REGEX, 
+                port = obj.re_match_typed(PORT_OBJ_REGEX,
                     group=2, result_type=str)
 
                 port_spec="{0} {1}".format(op, port)
                 if self.protocol_type=='tcp-udp':
-                    retval.append(L4Object(protocol='tcp', 
+                    retval.append(L4Object(protocol='tcp',
                         port_spec=port_spec, syntax='asa'))
-                    retval.append(L4Object(protocol='udp', 
+                    retval.append(L4Object(protocol='udp',
                         port_spec=port_spec, syntax='asa'))
                 else:
-                    retval.append(L4Object(protocol=self.protocol_type, 
+                    retval.append(L4Object(protocol=self.protocol_type,
                         port_spec=port_spec, syntax='asa'))
             elif 'group-object ' in obj.text:
-                name = obj.re_match_typed(r'^\s*group-object\s+(\S+)', group=1, 
+                name = obj.re_match_typed(r'^\s*group-object\s+(\S+)', group=1,
                     result_type=str)
                 group_ports = self.confobj.object_group_service.get(name, None)
                 if name==self.name:
@@ -608,7 +608,7 @@ class ASAIntfGlobal(BaseCfgLine):
         self.feature = 'interface global'
 
     def __repr__(self):
-        return "<%s # %s '%s'>" % (self.classname, self.linenum, 
+        return "<%s # %s '%s'>" % (self.classname, self.linenum,
             self.text)
 
     @classmethod
@@ -628,7 +628,7 @@ class ASAHostnameLine(BaseCfgLine):
         self.feature = 'hostname'
 
     def __repr__(self):
-        return "<%s # %s '%s'>" % (self.classname, self.linenum, 
+        return "<%s # %s '%s'>" % (self.classname, self.linenum,
             self.hostname)
 
     @classmethod
@@ -741,7 +741,7 @@ class ASARouteLine(BaseASARouteLine):
     def network_object(self):
         try:
             if self.address_family=='ip':
-                return IPv4Obj('%s/%s' % (self.network, self.netmask), 
+                return IPv4Obj('%s/%s' % (self.network, self.netmask),
                     strict=False)
             elif self.address_family=='ipv6':
                 return IPv6Network('%s/%s' % (self.network, self.netmask))
@@ -771,7 +771,141 @@ class ASARouteLine(BaseASARouteLine):
             group=2, result_type=str, default='')
         return retval
 
+##
+##-------------  Base ASA Acl line object
+##
+
+class BaseASAAclLine(BaseCfgLine):
+    def __init__(self, *args, **kwargs):
+        super(BaseASAAclLine, self).__init__(*args, **kwargs)
+
+    def __repr__(self):
+        #return "<%s # %s '%s' info: '%s'>" % (self.classname, self.linenum, self.network_object, self.aclinfo)
+        return "<%s # %s '%s' info: '%s'>" % (self.classname, self.linenum, self.aclinfo)
+
+    @property
+    def aclinfo(self):
+        ### Acl Info
+        if self.acl_action:
+            return self.acl_name+" type: "+str(self.acl_type)+" action: "+self.acl_action
+        else:
+            return self.acl_name+" type: "+str(self.acl_type)
+
+    @classmethod
+    def is_object_for(cls, line="", re=re):
+        return False
+
+    @property
+    def address_family(self):
+        ## ipv4, ipv6, etc
+        raise NotImplementedError
+
+    @property
+    def network(self):
+        raise NotImplementedError
+
+    @property
+    def netmask(self):
+        raise NotImplementedError
+
+    @property
+    def acl_name(self):
+        raise NotImplementedError
+
+    @property
+    def acl_type(self):
+        raise NotImplementedError
+
+    @property
+    def acl_action(self):
+        raise NotImplementedError
+
+##
+##-------------  ASA Acl Configuration line object
+##
+
+class ASAAclLine(BaseASAAclLine):
+    def __init__(self, *args, **kwargs):
+        super(ASAAclLine, self).__init__(*args, **kwargs)
+        #if 'ipv6' in self.text:
+        #    self.feature = 'ipv6 route'
+        #else:
+        #    self.feature = 'ip route'
+
+    #@classmethod
+    #def is_object_for(cls, line="", re=re):
+    #    if re.search('^(ip|ipv6)\s+route\s+\S', line):
+    #        return True
+    #    return False
+
+    #@property
+    #def address_family(self):
+    #    ## ipv4, ipv6, etc
+    #    retval = self.re_match_typed(r'^(ip|ipv6)\s+route\s+*(\S+)',
+    #        group=1, result_type=str, default='')
+    #    return retval
+
+    #@property
+    #def network(self):
+    #    if self.address_family=='ip':
+    #        retval = self.re_match_typed(r'^ip\s+route\s+*(\S+)',
+    #            group=2, result_type=str, default='')
+    #    elif self.address_family=='ipv6':
+    #        retval = self.re_match_typed(r'^ipv6\s+route\s+*(\S+?)\/\d+',
+    #            group=2, result_type=str, default='')
+    #    return retval
+
+    #@property
+    #def netmask(self):
+    #    if self.address_family=='ip':
+    #        retval = self.re_match_typed(r'^ip\s+route\s+*\S+\s+(\S+)',
+    #            group=2, result_type=str, default='')
+    #    elif self.address_family=='ipv6':
+    #        retval = self.re_match_typed(r'^ipv6\s+route\s+*\S+?\/(\d+)',
+    #            group=2, result_type=str, default='')
+    #    return retval
+
+    #@property
+    #def network_object(self):
+    #    try:
+    #        if self.address_family=='ip':
+    #            return IPv4Obj('%s/%s' % (self.network, self.netmask),
+    #                strict=False)
+    #        elif self.address_family=='ipv6':
+    #            return IPv6Network('%s/%s' % (self.network, self.netmask))
+    #    except:
+    #        return None
+
+    @property
+    def acl_name(self):
+        retval = self.re_match_typed(r'^access-list\s+(\S+)\s',
+                group=1, result_type=str, default='')
+        return retval
+
+    @property
+    def acl_type(self):
+        retval = self.re_match_typed(r'^access-list\s+\S+\s+(\S+)',
+            group=1, result_type=str, default='')
+        return retval
+
+    @property
+    def acl_action(self):
+        retval = self.re_match_typed(r'^access-list\s+\S+\s+\S+\s+(\S+)',
+            group=1, result_type=str, default='')
+        return retval
+
+    @property
+    def acl_protocol(self):
+        retval = self.re_match_typed(r'^access-list\s+\S+\s+\S+\s+\S+\s+(tcp|udp|ip|icmp)\s',
+                group=1, result_type=str, default='')
+        return retval
+
+    @property
+    def acl_matchtype(self):
+        retval = self.re_match_typed(r'^access-list\s+\S+\s+\S+\s+\S+\s+(tcp|udp|ip|icmp)\s+(host|object-group)',
+                group=1, result_type=str, default='')
+        return retval
+
 ################################
 ################################ Groups ###############################
 ################################
-
