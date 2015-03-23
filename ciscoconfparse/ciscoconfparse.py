@@ -2796,7 +2796,7 @@ def ConfigLineFactory(text="", comment_delimiter="!", syntax='ios'):
             IOSAaaExecAccountingLine, IOSAaaGroupServerLine,
             IOSHostnameLine, IOSIntfGlobal, IOSCfgLine]  # This is simple
     elif syntax=='asa':
-        classes = [ASAName, ASAObjNetwork, ASAObjService,
+        classes = [ASAName, ASAAclLine, ASAObjNetwork, ASAObjService,
             ASAObjGroupNetwork, ASAObjGroupService,
             ASAIntfLine, ASAIntfGlobal,
             ASAHostnameLine, ASACfgLine]

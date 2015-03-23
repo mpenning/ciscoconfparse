@@ -142,8 +142,8 @@ class BaseASAIntfLine(ASACfgLine):
                 addr = "No IPv4"
             else:
                 addr = self.ipv4_addr_object
-            return "<%s # %s '%s' info: '%s'>" % (self.classname,
-                self.linenum, self.name, addr)
+            return "<%s # %s '%s' info: '%s name: %s'>" % (self.classname,
+                self.linenum, self.name, addr, self.intf_name)
         else:
             return "<%s # %s '%s' info: 'switchport'>" % (self.classname, self.linenum, self.name)
 
@@ -233,6 +233,12 @@ class BaseASAIntfLine(ASACfgLine):
                 self.ipv4_netmask))
         except:
             return self.default_ipv4_addr_object
+
+    @property
+    def intf_name(self):
+        retval = self.re_match_iter_typed(r'^\s*nameif\s+(\S+)$',
+            result_type=str, default=0)
+        return retval
 
     @property
     def ipv4_network_object(self):
@@ -781,13 +787,16 @@ class BaseASAAclLine(BaseCfgLine):
 
     def __repr__(self):
         #return "<%s # %s '%s' info: '%s'>" % (self.classname, self.linenum, self.network_object, self.aclinfo)
-        return "<%s # %s '%s' info: '%s'>" % (self.classname, self.linenum, self.aclinfo)
+        return "<%s # %s info: '%s'>" % (self.classname, self.linenum, self.aclinfo)
 
     @property
     def aclinfo(self):
         ### Acl Info
         if self.acl_action:
-            return self.acl_name+" type: "+str(self.acl_type)+" action: "+self.acl_action
+            return "acl_name: "+self.acl_name+" acl_type: "+str(self.acl_type)+\
+                " acl_action: "+self.acl_action+\
+                " acl_protocol: "+self.acl_protocol+\
+                " acl_matchtype: "+self.acl_matchtype
         else:
             return self.acl_name+" type: "+str(self.acl_type)
 
@@ -832,11 +841,11 @@ class ASAAclLine(BaseASAAclLine):
         #else:
         #    self.feature = 'ip route'
 
-    #@classmethod
-    #def is_object_for(cls, line="", re=re):
-    #    if re.search('^(ip|ipv6)\s+route\s+\S', line):
-    #        return True
-    #    return False
+    @classmethod
+    def is_object_for(cls, line="", re=re):
+        if re.search('^access-list', line):
+            return True
+        return False
 
     #@property
     #def address_family(self):
@@ -878,7 +887,7 @@ class ASAAclLine(BaseASAAclLine):
 
     @property
     def acl_name(self):
-        retval = self.re_match_typed(r'^access-list\s+(\S+)\s',
+        retval = self.re_match_typed(r'^access-list\s+(\S+)',
                 group=1, result_type=str, default='')
         return retval
 
@@ -896,14 +905,14 @@ class ASAAclLine(BaseASAAclLine):
 
     @property
     def acl_protocol(self):
-        retval = self.re_match_typed(r'^access-list\s+\S+\s+\S+\s+\S+\s+(tcp|udp|ip|icmp)\s',
+        retval = self.re_match_typed(r'^access-list\s+\S+\s+\S+\s+\S+\s+(tcp|udp|ip|icmp)',
                 group=1, result_type=str, default='')
         return retval
 
     @property
     def acl_matchtype(self):
         retval = self.re_match_typed(r'^access-list\s+\S+\s+\S+\s+\S+\s+(tcp|udp|ip|icmp)\s+(host|object-group)',
-                group=1, result_type=str, default='')
+                group=2, result_type=str, default='')
         return retval
 
 ################################
