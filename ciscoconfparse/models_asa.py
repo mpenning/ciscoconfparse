@@ -793,13 +793,13 @@ class BaseASAAclLine(BaseCfgLine):
     def aclinfo(self):
         ### Acl Info
         if self.is_remark:
-            return "acl_name: "+self.acl_name+" acl_type: "+str(self.acl_type)+\
-                " remark: "+str(self.acl_remark)
+            return "acl_name: "+self.acl_name+", acl_type: "+str(self.acl_type)+\
+                ", remark: "+str(self.acl_remark)
         else:
-            return "acl_name: "+self.acl_name+" acl_type: "+str(self.acl_type)+\
-                " acl_action: "+self.acl_action+\
-                " acl_protocol: "+self.acl_protocol+\
-                " acl_matchtype: "+self.acl_matchtype
+            return "acl_name: "+self.acl_name+", acl_type: "+str(self.acl_type)+\
+                ", acl_action: "+self.acl_action+\
+                ", acl_protocol: "+self.acl_protocol+\
+                ", acl_matchtype: "+self.acl_matchtype
         #else:
         #    return self.acl_name+" type: "+str(self.acl_type)
 
