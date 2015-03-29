@@ -54,8 +54,8 @@ devtest:
 	@echo "[[[ Python 2.7 tests ]]]"
 	/opt/virtual_env/py27_test/bin/python ciscoconfparse/ciscoconfparse.py;
 	$(PY27DEVTESTS)
-	@echo "[[[ Python 3.4 tests ]]]"
-	/opt/virtual_env/py34_test/bin/python ciscoconfparse/ciscoconfparse.py
+	#@echo "[[[ Python 3.4 tests ]]]"
+	#/opt/virtual_env/py34_test/bin/python ciscoconfparse/ciscoconfparse.py
 	$(PY34DEVTESTS)
 	make clean
 .PHONY: test
