@@ -10,6 +10,7 @@ python:
  - pypy
  - pypy3
 
+# http://docs.travis-ci.com/user/multi-os/
 os:
  - osx
  - linux
