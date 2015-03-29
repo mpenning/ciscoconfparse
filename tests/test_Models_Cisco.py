@@ -1052,6 +1052,155 @@ class knownValues(unittest.TestCase):
         self.assertEqual(result_correct, test_result)
 
 ###
+### ------ Static Route tests
+###
+
+    def testVal_IOSRouteLine_01(self):
+        line = 'ip route 0.0.0.0 0.0.0.0 172.16.1.254'
+        cfg = CiscoConfParse([line], factory=True)
+        obj = cfg.ConfigObjs[0]
+        self.assertEqual('ip', obj.address_family)
+        self.assertEqual('0.0.0.0', obj.network)
+        self.assertEqual('0.0.0.0', obj.netmask)
+        self.assertEqual('', obj.next_hop_interface)
+        self.assertEqual('172.16.1.254', obj.next_hop_addr)
+        self.assertEqual('', obj.tracking_object_name)
+        self.assertEqual('', obj.route_name)
+        self.assertEqual(False, obj.permanent)
+        self.assertEqual(True, obj.global_next_hop)
+        self.assertEqual(1, obj.admin_distance)
+
+    def testVal_IOSRouteLine_02(self):
+        line = 'ip route vrf mgmtVrf 0.0.0.0 0.0.0.0 172.16.1.254'
+        cfg = CiscoConfParse([line], factory=True)
+        obj = cfg.ConfigObjs[0]
+        self.assertEqual('ip', obj.address_family)
+        self.assertEqual('mgmtVrf', obj.vrf)
+        self.assertEqual('0.0.0.0', obj.network)
+        self.assertEqual('0.0.0.0', obj.netmask)
+        self.assertEqual('', obj.next_hop_interface)
+        self.assertEqual('172.16.1.254', obj.next_hop_addr)
+        self.assertEqual('', obj.tracking_object_name)
+        self.assertEqual('', obj.route_name)
+        self.assertEqual(False, obj.permanent)
+        self.assertEqual(False, obj.global_next_hop)
+        self.assertEqual(1, obj.admin_distance)
+
+    def testVal_IOSRouteLine_03(self):
+        line = 'ip route vrf mgmtVrf 0.0.0.0 0.0.0.0 172.16.1.254 254'
+        cfg = CiscoConfParse([line], factory=True)
+        obj = cfg.ConfigObjs[0]
+        self.assertEqual('ip', obj.address_family)
+        self.assertEqual('mgmtVrf', obj.vrf)
+        self.assertEqual('0.0.0.0', obj.network)
+        self.assertEqual('0.0.0.0', obj.netmask)
+        self.assertEqual('', obj.next_hop_interface)
+        self.assertEqual('172.16.1.254', obj.next_hop_addr)
+        self.assertEqual('', obj.tracking_object_name)
+        self.assertEqual('', obj.route_name)
+        self.assertEqual(False, obj.permanent)
+        self.assertEqual(False, obj.global_next_hop)
+        self.assertEqual(254, obj.admin_distance)
+
+    def testVal_IOSRouteLine_04(self):
+        line = 'ip route vrf mgmtVrf 0.0.0.0 0.0.0.0 172.16.1.254 global 254'
+        cfg = CiscoConfParse([line], factory=True)
+        obj = cfg.ConfigObjs[0]
+        self.assertEqual('ip', obj.address_family)
+        self.assertEqual('mgmtVrf', obj.vrf)
+        self.assertEqual('0.0.0.0', obj.network)
+        self.assertEqual('0.0.0.0', obj.netmask)
+        self.assertEqual('', obj.next_hop_interface)
+        self.assertEqual('172.16.1.254', obj.next_hop_addr)
+        self.assertEqual('', obj.tracking_object_name)
+        self.assertEqual('', obj.route_name)
+        self.assertEqual(False, obj.permanent)
+        self.assertEqual(True, obj.global_next_hop)
+        self.assertEqual(254, obj.admin_distance)
+
+    def testVal_IOSRouteLine_05(self):
+        line = 'ip route vrf mgmtVrf 0.0.0.0 0.0.0.0 172.16.1.254 global 254 track 35'
+        cfg = CiscoConfParse([line], factory=True)
+        obj = cfg.ConfigObjs[0]
+        self.assertEqual('ip', obj.address_family)
+        self.assertEqual('mgmtVrf', obj.vrf)
+        self.assertEqual('0.0.0.0', obj.network)
+        self.assertEqual('0.0.0.0', obj.netmask)
+        self.assertEqual('', obj.next_hop_interface)
+        self.assertEqual('172.16.1.254', obj.next_hop_addr)
+        self.assertEqual('35', obj.tracking_object_name)
+        self.assertEqual('', obj.route_name)
+        self.assertEqual(False, obj.permanent)
+        self.assertEqual(True, obj.global_next_hop)
+        self.assertEqual(254, obj.admin_distance)
+
+    def testVal_IOSRouteLine_06(self):
+        line = 'ip route vrf mgmtVrf 0.0.0.0 0.0.0.0 FastEthernet0/0 172.16.1.254 global 254 track 35'
+        cfg = CiscoConfParse([line], factory=True)
+        obj = cfg.ConfigObjs[0]
+        self.assertEqual('ip', obj.address_family)
+        self.assertEqual('mgmtVrf', obj.vrf)
+        self.assertEqual('0.0.0.0', obj.network)
+        self.assertEqual('0.0.0.0', obj.netmask)
+        self.assertEqual('FastEthernet0/0', obj.next_hop_interface)
+        self.assertEqual('172.16.1.254', obj.next_hop_addr)
+        self.assertEqual('35', obj.tracking_object_name)
+        self.assertEqual('', obj.route_name)
+        self.assertEqual(False, obj.permanent)
+        self.assertEqual(True, obj.global_next_hop)
+        self.assertEqual(254, obj.admin_distance)
+
+    def testVal_IOSRouteLine_07(self):
+        line = 'ip route vrf mgmtVrf 0.0.0.0 0.0.0.0 FastEthernet0/0 254 track 35'
+        cfg = CiscoConfParse([line], factory=True)
+        obj = cfg.ConfigObjs[0]
+        self.assertEqual('ip', obj.address_family)
+        self.assertEqual('mgmtVrf', obj.vrf)
+        self.assertEqual('0.0.0.0', obj.network)
+        self.assertEqual('0.0.0.0', obj.netmask)
+        self.assertEqual('FastEthernet0/0', obj.next_hop_interface)
+        self.assertEqual('', obj.next_hop_addr)
+        self.assertEqual('35', obj.tracking_object_name)
+        self.assertEqual('', obj.route_name)
+        self.assertEqual(False, obj.permanent)
+        self.assertEqual(False, obj.global_next_hop) # TODO: Figure out if False is right
+        self.assertEqual(254, obj.admin_distance)
+
+    def testVal_IOSRouteLine_08(self):
+        line = 'ip route vrf mgmtVrf 0.0.0.0 0.0.0.0 FastEthernet0/0 254 track 35 tag 20'
+        cfg = CiscoConfParse([line], factory=True)
+        obj = cfg.ConfigObjs[0]
+        self.assertEqual('ip', obj.address_family)
+        self.assertEqual('mgmtVrf', obj.vrf)
+        self.assertEqual('0.0.0.0', obj.network)
+        self.assertEqual('0.0.0.0', obj.netmask)
+        self.assertEqual('FastEthernet0/0', obj.next_hop_interface)
+        self.assertEqual('', obj.next_hop_addr)
+        self.assertEqual('35', obj.tracking_object_name)
+        self.assertEqual('', obj.route_name)
+        self.assertEqual(False, obj.permanent)
+        self.assertEqual(False, obj.global_next_hop) # TODO: Figure out if False is right
+        self.assertEqual(254, obj.admin_distance)
+        self.assertEqual('20', obj.tag)
+
+    def testVal_IOSRouteLine_08(self):
+        line = 'ip route vrf mgmtVrf 0.0.0.0 0.0.0.0 FastEthernet0/0 254 name foobarme tag 20'
+        cfg = CiscoConfParse([line], factory=True)
+        obj = cfg.ConfigObjs[0]
+        self.assertEqual('ip', obj.address_family)
+        self.assertEqual('mgmtVrf', obj.vrf)
+        self.assertEqual('0.0.0.0', obj.network)
+        self.assertEqual('0.0.0.0', obj.netmask)
+        self.assertEqual('FastEthernet0/0', obj.next_hop_interface)
+        self.assertEqual('', obj.next_hop_addr)
+        self.assertEqual('', obj.tracking_object_name)
+        self.assertEqual('foobarme', obj.route_name)
+        self.assertEqual(False, obj.permanent)
+        self.assertEqual(False, obj.global_next_hop) # TODO: Figure out if False is right
+        self.assertEqual(254, obj.admin_distance)
+        self.assertEqual('20', obj.tag)
+
+###
 ### ------ AAA Tests --------
 ###
 
