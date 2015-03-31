@@ -1509,16 +1509,39 @@ class BaseIOSRouteLine(BaseCfgLine):
         raise NotImplementedError
 
 ##
-##-------------  IOS Configuration line object
+##-------------  IOS Route line object
 ##
+
+_RE_IP_ROUTE = re.compile(r"""^ip\s+route
+(?:\s+(?:vrf\s+(\S+)))?       # VRF detection
+\s+
+(\d+\.\d+\.\d+\.\d+)          # Prefix detection
+\s+
+(\d+\.\d+\.\d+\.\d+)          # Netmask detection
+\s+
+(?:(\w\S+)(?:\s+(\d+\.\d+\.\d+\.\d+))?|(\d+\.\d+\.\d+\.\d+)) # intf+NH, intf, or NH
+(?:\s+(dhcp))?                # DHCP keyword       (FIXME: add unit test)
+(?:\s+(global))?              # Global keyword
+(?:\s+(\d+))?                 # Administrative distance
+(?:\s+(multicast))?           # Multicast Keyword  (FIXME: add unit test)
+(?:\s+name\s+(\S+))?          # Route name
+(?:\s+(permanent))?           # Permanent Keyword  (exclusive of track)
+(?:\s+track\s+(\d+))?         # Track object (exclusive of permanent)
+(?:\s+tag\s+(\d+))?           # Route tag
+""", re.VERBOSE)
 
 class IOSRouteLine(BaseIOSRouteLine):
     def __init__(self, *args, **kwargs):
         super(IOSRouteLine, self).__init__(*args, **kwargs)
-        if 'ipv6' in self.text:
+        if 'ipv6' in self.text[0:4]:
             self.feature = 'ipv6 route'
+            self._address_family = "ipv6"
         else:
             self.feature = 'ip route'
+            self._address_family = "ip"
+            mm = _RE_IP_ROUTE.search(self.text)
+            if not (mm is None):
+                self.route_info = mm.groups()
 
     @classmethod
     def is_object_for(cls, line="", re=re):
@@ -1528,33 +1551,29 @@ class IOSRouteLine(BaseIOSRouteLine):
 
     @property
     def vrf(self):
-        retval = self.re_match_typed(r'^(ip|ipv6)\s+route\s+(vrf\s+)*(\S+)',
-            group=3, result_type=str, default='')
-        return retval
+        return self.route_info[0]
 
     @property
     def address_family(self):
         ## ipv4, ipv6, etc
-        retval = self.re_match_typed(r'^(ip|ipv6)\s+route\s+(vrf\s+)*(\S+)',
-            group=1, result_type=str, default='')
-        return retval
+        return self._address_family
 
     @property
     def network(self):
-        if self.address_family=='ip':
-            retval = self.re_match_typed(r'^ip\s+route\s+(vrf\s+)*(\S+)',
-                group=2, result_type=str, default='')
-        elif self.address_family=='ipv6':
+        if self._address_family=='ip':
+            return self.route_info[1]
+        elif self._address_family=='ipv6':
             retval = self.re_match_typed(r'^ipv6\s+route\s+(vrf\s+)*(\S+?)\/\d+',
                 group=2, result_type=str, default='')
         return retval
 
     @property
     def netmask(self):
-        if self.address_family=='ip':
-            retval = self.re_match_typed(r'^ip\s+route\s+(vrf\s+)*\S+\s+(\S+)',
-                group=2, result_type=str, default='')
-        elif self.address_family=='ipv6':
+        if self._address_family=='ip':
+            #retval = self.re_match_typed(r'^ip\s+route\s+(vrf\s+)*\S+\s+(\S+)',
+            #    group=2, result_type=str, default='')
+            return self.route_info[2]
+        elif self._address_family=='ipv6':
             retval = self.re_match_typed(r'^ipv6\s+route\s+(vrf\s+)*\S+?\/(\d+)',
                 group=2, result_type=str, default='')
         return retval
@@ -1562,36 +1581,117 @@ class IOSRouteLine(BaseIOSRouteLine):
     @property
     def network_object(self):
         try:
-            if self.address_family=='ip':
+            if self._address_family=='ip':
                 return IPv4Obj('%s/%s' % (self.network, self.netmask), 
                     strict=False)
-            elif self.address_family=='ipv6':
+            elif self._address_family=='ipv6':
                 return IPv6Network('%s/%s' % (self.network, self.netmask))
         except:
             return None
 
     @property
     def nexthop_str(self):
-        if self.address_family=='ip':
+        if self._address_family=='ip':
             retval = self.re_match_typed(r'^ip\s+route\s+(vrf\s+)*\S+\s+\S+\s+(\S+)',
                 group=2, result_type=str, default='')
-        elif self.address_family=='ipv6':
+        elif self._address_family=='ipv6':
             retval = self.re_match_typed(r'^ipv6\s+route\s+(vrf\s+)*\S+\s+(\S+)',
                 group=2, result_type=str, default='')
         return retval
 
+
     @property
-    def admin_distance(self):
-        retval = self.re_match_typed(r'(\d+)$',
-            group=1, result_type=int, default=1)
+    def next_hop_interface(self):
+        if self._address_family=='ip':
+            if not re.search(r'\d+\.\d+\.\d+\.\d+', self.route_info[3]):
+                return self.route_info[3]
+            else:
+                return ''
+        elif self._address_family=='ipv6':
+            raise NotImplementedError
+
+    @property
+    def next_hop_addr(self):
+        if self._address_family=='ip':
+            if self.next_hop_interface:
+                if self.route_info[4] is None:
+                    return ''
+                else:
+                    return self.route_info[4]
+            else:
+                return self.route_info[3]
+        elif self._address_family=='ipv6':
+            raise NotImplementedError
+
+    @property
+    def global_next_hop(self):
+        if self._address_family=='ip' and bool(self.vrf):
+            return bool(self.route_info[7])
+        elif self._address_family=='ip' and not bool(self.vrf):
+            return True
+        elif self._address_family=='ipv6':
+            # FIXME: add info for ipv6 routes
+            retval = self.re_match_typed(r'^ipv6\s+route\s+(vrf\s+)*\S+\s+(\S+)',
+                group=2, result_type=str, default='')
         return retval
 
+
+    @property
+    def admin_distance(self):
+        if self._address_family=='ip':
+            if self.route_info[8]:
+                return int(self.route_info[8])
+            else:
+                return 1
+        elif self._address_family=='ipv6':
+            raise NotImplementedError
+
+    @property
+    def multicast(self):
+        if self._address_family=='ip':
+            return bool(self.route_info[9])
+        elif self._address_family=='ipv6':
+            raise NotImplementedError
+
+    @property
+    def route_name(self):
+        if self._address_family=='ip':
+            if self.route_info[10]:
+                return self.route_info[10]
+            else:
+                return ''
+        elif self._address_family=='ipv6':
+            raise NotImplementedError
+
+    @property
+    def permanent(self):
+        if self._address_family=='ip':
+            if self.route_info[11]:
+                return bool(self.route_info[11])
+            else:
+                return False
+        elif self._address_family=='ipv6':
+            raise NotImplementedError
 
     @property
     def tracking_object_name(self):
-        retval = self.re_match_typed(r'^ip(v6)*\s+route\s+.+?track\s+(\S+)',
-            group=2, result_type=str, default='')
-        return retval
+        if self._address_family=='ip':
+            if bool(self.route_info[12]):
+                return self.route_info[12]
+            else:
+                return ''
+        elif self._address_family=='ipv6':
+            raise NotImplementedError
+
+    @property
+    def tag(self):
+        if self._address_family=='ip':
+            if self.route_info[13]:
+                return self.route_info[13]
+            else:
+                return ''
+        elif self._address_family=='ipv6':
+            raise NotImplementedError
 
 ################################
 ################################ Groups ###############################
