@@ -799,7 +799,7 @@ class BaseASAAclLine(BaseCfgLine):
             return "acl_name: "+self.acl_name+", acl_type: "+str(self.acl_type)+\
                 ", acl_action: "+self.acl_action+\
                 ", acl_protocol: "+self.acl_protocol+\
-                ", acl_matchtype: "+self.acl_matchtype
+                ", acl_matchtype: "+self.acl_srcmatchtype
         #else:
         #    return self.acl_name+" type: "+str(self.acl_type)
 
@@ -867,7 +867,7 @@ class ASAAclLine(BaseASAAclLine):
         return retval
 
     @property
-    def is_srcobjectgroup(self):
+    def is_srcobjectgroupacl(self):
         retval = self.re_match_typed(r'^access-list\s+\S+\s+\S+\s+\S+\s+(tcp|udp|ip|icmp)\s+(object-group)',
             group=2, result_type=bool, default='')
         return retval
@@ -878,37 +878,6 @@ class ASAAclLine(BaseASAAclLine):
         retval = self.re_match_typed(r'^access-list\s+\S+\s+(remark)',
             group=1, result_type=bool, default='')
         return retval
-
-    #@property
-    #def network(self):
-    #    if self.address_family=='ip':
-    #        retval = self.re_match_typed(r'^ip\s+route\s+*(\S+)',
-    #            group=2, result_type=str, default='')
-    #    elif self.address_family=='ipv6':
-    #        retval = self.re_match_typed(r'^ipv6\s+route\s+*(\S+?)\/\d+',
-    #            group=2, result_type=str, default='')
-    #    return retval
-
-    #@property
-    #def netmask(self):
-    #    if self.address_family:
-    #        retval = self.re_match_typed(r'^ip\s+route\s+*\S+\s+(\S+)',
-    #            group=2, result_type=str, default='')
-    #    elif self.address_family:
-    #        retval = self.re_match_typed(r'^ipv6\s+route\s+*\S+?\/(\d+)',
-    #            group=2, result_type=str, default='')
-    #    return retval
-
-    #@property
-    #def network_object(self):
-    #    try:
-    #        if self.address_family=='ip':
-    #            return IPv4Obj('%s/%s' % (self.network, self.netmask),
-    #                strict=False)
-    #        elif self.address_family=='ipv6':
-    #            return IPv6Network('%s/%s' % (self.network, self.netmask))
-    #    except:
-    #        return None
 
     @property
     def acl_name(self):
@@ -944,7 +913,7 @@ class ASAAclLine(BaseASAAclLine):
             return retval
 
     @property
-    def acl_matchtype(self):
+    def acl_srcmatchtype(self):
         try:
             if self.is_srcnetacl:
                 return "src-net"
@@ -962,25 +931,41 @@ class ASAAclLine(BaseASAAclLine):
     def acl_srcmatchobject(self):
         try:
             if self.is_srcnetacl:
-                src_net = self.re_match_typed(r'^access-list\s+\S+\s+\S+\s+\S+\s+\S+\s+(\d+\.\d+\.\d+\.\d+)',
+                self.src_net = self.re_match_typed(r'^access-list\s+\S+\s+\S+\s+\S+\s+\S+\s+(\d+\.\d+\.\d+\.\d+)',
                     group=1, result_type=str, default='')
-                src_mask = self.re_match_typed(r'^access-list\s+\S+\s+\S+\s+\S+\s+\S+\s+(\d+\.\d+\.\d+\.\d+)\s(\d+\.\d+\.\d+\.\d+)',
+                self.src_mask = self.re_match_typed(r'^access-list\s+\S+\s+\S+\s+\S+\s+\S+\s+(\d+\.\d+\.\d+\.\d+)\s(\d+\.\d+\.\d+\.\d+)',
                     group=2, result_type=str, default='')
-                return IPv4Obj('%s/%s' % (src_net, src_mask))
+                return IPv4Obj('%s/%s' % (self.src_net, self.src_mask))
             elif self.is_srcanyacl:
                 return IPv4Obj('%s/%s' % ('0.0.0.0', '0.0.0.0'))
             elif self.is_srchostacl:
                 src_net = self.re_match_typed(r'^access-list\s+\S+\s+\S+\s+\S+\s+\S+\s+(host)\s+(\d+\.\d+\.\d+\.\d+)',
                     group=2, result_type=str, default='')
                 return IPv4Obj('%s/%s' % (src_net, '255.255.255.255'))
-            elif self.is_srcobjectgroup:
+            elif self.is_srcobjectgroupacl:
                 retval = self.re_match_typed(r'^access-list\s+\S+\s+\S+\s+\S+\s+(tcp|udp|ip|icmp)\s+object-group+\s+(\S+)\s',
                     group=2, result_type=str, default='')
                 return retval
             else:
                 retval = self.re_match_typed(r'^access-list\s+\S+\s+\S+\s+\S+\s+\S+\s+(\d+\.\d+\.\d+\.\d+)',
                     group=1, result_type=str, default='')
-                return
+                return retval
+        except:
+            return None
+
+    @property
+    def acl_dstmatchtype(self):
+        try:
+            if self.is_dstnetacl:
+                pass
+            elif self.is_dstanyacl:
+                pass
+            elif self.is_dsthostacl:
+                pass
+            elif self.is_dstobjectgroupacl:
+                pass
+            else:
+                pass
         except:
             return None
 

@@ -38,11 +38,11 @@ for acl in acls:
         print "ACL Type  : ", acl.acl_type
         print "ACL Remark: ", acl.acl_remark
     else:
-        print "ACL Object   : ", acl
-        print "ACL Config   : ", acl.text
-        print "ACL Name     : ", acl.acl_name
-        print "ACL Type     : ", acl.acl_type
-        print "ACL Action   : ", acl.acl_action
-        print "ACL Protocol : ", acl.acl_protocol
-        print "ACL Matchtype: ", acl.acl_matchtype
-        print "ACL src      : ", acl.acl_srcmatchobject
+        print "ACL Object        : ", acl
+        print "ACL Config        : ", acl.text
+        print "ACL Name          : ", acl.acl_name
+        print "ACL Type          : ", acl.acl_type
+        print "ACL Action        : ", acl.acl_action
+        print "ACL Protocol      : ", acl.acl_protocol
+        print "ACL Src Matchtype : ", acl.acl_srcmatchtype
+        print "ACL Src Object    : ", acl.acl_srcmatchobject
