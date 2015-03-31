@@ -854,10 +854,22 @@ class ASAAclLine(BaseASAAclLine):
         return retval
 
     @property
+    def is_srchostacl(self):
+        retval = self.re_match_typed(r'^access-list\s+\S+\s+\S+\s+\S+\s+\S+\s+(host)',
+            group=1, result_type=bool, default='')
+        return retval
+
+    @property
     def is_srcanyacl(self):
         # ipv4, ipv6, etc
         retval = self.re_match_typed(r'^access-list\s+\S+\s+\S+\s+\S+\s+\S+\s+(any)',
             group=1, result_type=bool, default='')
+        return retval
+
+    @property
+    def is_srcobjectgroup(self):
+        retval = self.re_match_typed(r'^access-list\s+\S+\s+\S+\s+\S+\s+(tcp|udp|ip|icmp)\s+(object-group)',
+            group=2, result_type=bool, default='')
         return retval
 
     @property
@@ -944,6 +956,31 @@ class ASAAclLine(BaseASAAclLine):
                 retval = self.re_match_typed(r'^access-list\s+\S+\s+\S+\s+\S+\s+(tcp|udp|ip|icmp)\s+(host|object-group|any)',
                     group=2, result_type=str, default='')
                 return retval
+        except:
+            return None
+    @property
+    def acl_srcmatchobject(self):
+        try:
+            if self.is_srcnetacl:
+                src_net = self.re_match_typed(r'^access-list\s+\S+\s+\S+\s+\S+\s+\S+\s+(\d+\.\d+\.\d+\.\d+)',
+                    group=1, result_type=str, default='')
+                src_mask = self.re_match_typed(r'^access-list\s+\S+\s+\S+\s+\S+\s+\S+\s+(\d+\.\d+\.\d+\.\d+)\s(\d+\.\d+\.\d+\.\d+)',
+                    group=2, result_type=str, default='')
+                return IPv4Obj('%s/%s' % (src_net, src_mask))
+            elif self.is_srcanyacl:
+                return IPv4Obj('%s/%s' % ('0.0.0.0', '0.0.0.0'))
+            elif self.is_srchostacl:
+                src_net = self.re_match_typed(r'^access-list\s+\S+\s+\S+\s+\S+\s+\S+\s+(host)\s+(\d+\.\d+\.\d+\.\d+)',
+                    group=2, result_type=str, default='')
+                return IPv4Obj('%s/%s' % (src_net, '255.255.255.255'))
+            elif self.is_srcobjectgroup:
+                retval = self.re_match_typed(r'^access-list\s+\S+\s+\S+\s+\S+\s+(tcp|udp|ip|icmp)\s+object-group+\s+(\S+)\s',
+                    group=2, result_type=str, default='')
+                return retval
+            else:
+                retval = self.re_match_typed(r'^access-list\s+\S+\s+\S+\s+\S+\s+\S+\s+(\d+\.\d+\.\d+\.\d+)',
+                    group=1, result_type=str, default='')
+                return
         except:
             return None
 
