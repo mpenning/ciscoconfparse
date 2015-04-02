@@ -1513,21 +1513,21 @@ class BaseIOSRouteLine(BaseCfgLine):
 ##
 
 _RE_IP_ROUTE = re.compile(r"""^ip\s+route
-(?:\s+(?:vrf\s+(\S+)))?       # VRF detection
+(?:\s+(?:vrf\s+(?P<vrf>\S+)))?          # VRF detection
 \s+
-(\d+\.\d+\.\d+\.\d+)          # Prefix detection
+(?P<prefix>\d+\.\d+\.\d+\.\d+)          # Prefix detection
 \s+
-(\d+\.\d+\.\d+\.\d+)          # Netmask detection
-\s+
-(?:(\w\S+)(?:\s+(\d+\.\d+\.\d+\.\d+))?|(\d+\.\d+\.\d+\.\d+)) # intf+NH, intf, or NH
-(?:\s+(dhcp))?                # DHCP keyword       (FIXME: add unit test)
-(?:\s+(global))?              # Global keyword
-(?:\s+(\d+))?                 # Administrative distance
-(?:\s+(multicast))?           # Multicast Keyword  (FIXME: add unit test)
-(?:\s+name\s+(\S+))?          # Route name
-(?:\s+(permanent))?           # Permanent Keyword  (exclusive of track)
-(?:\s+track\s+(\d+))?         # Track object (exclusive of permanent)
-(?:\s+tag\s+(\d+))?           # Route tag
+(?P<netmask>\d+\.\d+\.\d+\.\d+)         # Netmask detection
+(?:\s+(?P<nh_intf>[^\d]\S+))?           # NH intf
+(?:\s+(?P<nh_addr>\d+\.\d+\.\d+\.\d+))? # NH addr
+(?:\s+(?P<dhcp>dhcp))?           # DHCP keyword       (FIXME: add unit test)
+(?:\s+(?P<global>global))?       # Global keyword
+(?:\s+(?P<ad>\d+))?              # Administrative distance
+(?:\s+(?P<mcast>multicast))?     # Multicast Keyword  (FIXME: add unit test)
+(?:\s+name\s+(?P<name>\S+))?     # Route name
+(?:\s+(?P<permanent>permanent))? # Permanent Keyword  (exclusive of track)
+(?:\s+track\s+(?P<track>\d+))?   # Track object (exclusive of permanent)
+(?:\s+tag\s+(?P<tag>\d+))?       # Route tag
 """, re.VERBOSE)
 
 class IOSRouteLine(BaseIOSRouteLine):
@@ -1541,7 +1541,9 @@ class IOSRouteLine(BaseIOSRouteLine):
             self._address_family = "ip"
             mm = _RE_IP_ROUTE.search(self.text)
             if not (mm is None):
-                self.route_info = mm.groups()
+                self.route_info = mm.groupdict()
+            else:
+                raise ValueError("Could not parse {0}".format(self.text))
 
     @classmethod
     def is_object_for(cls, line="", re=re):
@@ -1551,7 +1553,7 @@ class IOSRouteLine(BaseIOSRouteLine):
 
     @property
     def vrf(self):
-        return self.route_info[0]
+        return self.route_info['vrf']
 
     @property
     def address_family(self):
@@ -1561,7 +1563,7 @@ class IOSRouteLine(BaseIOSRouteLine):
     @property
     def network(self):
         if self._address_family=='ip':
-            return self.route_info[1]
+            return self.route_info['prefix']
         elif self._address_family=='ipv6':
             retval = self.re_match_typed(r'^ipv6\s+route\s+(vrf\s+)*(\S+?)\/\d+',
                 group=2, result_type=str, default='')
@@ -1570,9 +1572,7 @@ class IOSRouteLine(BaseIOSRouteLine):
     @property
     def netmask(self):
         if self._address_family=='ip':
-            #retval = self.re_match_typed(r'^ip\s+route\s+(vrf\s+)*\S+\s+(\S+)',
-            #    group=2, result_type=str, default='')
-            return self.route_info[2]
+            return self.route_info['netmask']
         elif self._address_family=='ipv6':
             retval = self.re_match_typed(r'^ipv6\s+route\s+(vrf\s+)*\S+?\/(\d+)',
                 group=2, result_type=str, default='')
@@ -1592,8 +1592,10 @@ class IOSRouteLine(BaseIOSRouteLine):
     @property
     def nexthop_str(self):
         if self._address_family=='ip':
-            retval = self.re_match_typed(r'^ip\s+route\s+(vrf\s+)*\S+\s+\S+\s+(\S+)',
-                group=2, result_type=str, default='')
+            if self.next_hop_interface:
+                return self.next_hop_interface + " " + self.next_hop_addr
+            else:
+                return self.next_hop_addr
         elif self._address_family=='ipv6':
             retval = self.re_match_typed(r'^ipv6\s+route\s+(vrf\s+)*\S+\s+(\S+)',
                 group=2, result_type=str, default='')
@@ -1603,8 +1605,8 @@ class IOSRouteLine(BaseIOSRouteLine):
     @property
     def next_hop_interface(self):
         if self._address_family=='ip':
-            if not re.search(r'\d+\.\d+\.\d+\.\d+', self.route_info[3]):
-                return self.route_info[3]
+            if self.route_info['nh_intf']:
+                return self.route_info['nh_intf']
             else:
                 return ''
         elif self._address_family=='ipv6':
@@ -1614,19 +1616,19 @@ class IOSRouteLine(BaseIOSRouteLine):
     def next_hop_addr(self):
         if self._address_family=='ip':
             if self.next_hop_interface:
-                if self.route_info[4] is None:
+                if self.route_info['nh_addr'] is None:
                     return ''
                 else:
-                    return self.route_info[4]
+                    return self.route_info['nh_addr']
             else:
-                return self.route_info[3]
+                return self.route_info['nh_addr']
         elif self._address_family=='ipv6':
             raise NotImplementedError
 
     @property
     def global_next_hop(self):
         if self._address_family=='ip' and bool(self.vrf):
-            return bool(self.route_info[7])
+            return bool(self.route_info['global'])
         elif self._address_family=='ip' and not bool(self.vrf):
             return True
         elif self._address_family=='ipv6':
@@ -1639,8 +1641,8 @@ class IOSRouteLine(BaseIOSRouteLine):
     @property
     def admin_distance(self):
         if self._address_family=='ip':
-            if self.route_info[8]:
-                return int(self.route_info[8])
+            if self.route_info['ad']:
+                return int(self.route_info['ad'])
             else:
                 return 1
         elif self._address_family=='ipv6':
@@ -1649,15 +1651,15 @@ class IOSRouteLine(BaseIOSRouteLine):
     @property
     def multicast(self):
         if self._address_family=='ip':
-            return bool(self.route_info[9])
+            return bool(self.route_info['mcast'])
         elif self._address_family=='ipv6':
             raise NotImplementedError
 
     @property
     def route_name(self):
         if self._address_family=='ip':
-            if self.route_info[10]:
-                return self.route_info[10]
+            if self.route_info['name']:
+                return self.route_info['name']
             else:
                 return ''
         elif self._address_family=='ipv6':
@@ -1666,8 +1668,8 @@ class IOSRouteLine(BaseIOSRouteLine):
     @property
     def permanent(self):
         if self._address_family=='ip':
-            if self.route_info[11]:
-                return bool(self.route_info[11])
+            if self.route_info['permanent']:
+                return bool(self.route_info['permanent'])
             else:
                 return False
         elif self._address_family=='ipv6':
@@ -1676,8 +1678,8 @@ class IOSRouteLine(BaseIOSRouteLine):
     @property
     def tracking_object_name(self):
         if self._address_family=='ip':
-            if bool(self.route_info[12]):
-                return self.route_info[12]
+            if bool(self.route_info['track']):
+                return self.route_info['track']
             else:
                 return ''
         elif self._address_family=='ipv6':
@@ -1686,8 +1688,8 @@ class IOSRouteLine(BaseIOSRouteLine):
     @property
     def tag(self):
         if self._address_family=='ip':
-            if self.route_info[13]:
-                return self.route_info[13]
+            if self.route_info['tag']:
+                return self.route_info['tag']
             else:
                 return ''
         elif self._address_family=='ipv6':
@@ -1705,11 +1707,14 @@ class IOSAaaGroupServerLine(BaseCfgLine):
         super(IOSAaaGroupServerLine, self).__init__(*args, **kwargs)
         self.feature = 'aaa group server'
 
-        regex = r'^aaa\sgroup\sserver\s(\S+)\s(\S+)$'
-        self.protocol = self.re_match_typed(regex, group=1, result_type=str,
-            default='')
-        self.group = self.re_match_typed(regex, group=2, result_type=str,
-            default='')
+        REGEX = r'^aaa\sgroup\sserver\s(?P<protocol>\S+)\s(?P<group>\S+)$'
+        mm = re.search(REGEX, self.text)
+        if not (mm is None):
+            groups = mm.groupdict()
+            self.protocol = groups.get('protocol', '')
+            self.group = groups.get('group', '')
+        else:
+            raise ValueError
 
 
     @classmethod
