@@ -233,6 +233,8 @@ interface GigabitEthernet4/1
  power inline static max 7000
 !""".splitlines()
 
+## For historical reasons, I'm use c03 for configs/sample_01.ios (i.e. c01 was
+##    already taken)
 c03 = """!
 service timestamps debug datetime msec localtime show-timezone
 service timestamps log datetime msec localtime show-timezone
@@ -423,13 +425,15 @@ def parse_c02_factory(request):
      
     yield parse_c02
 
+## parse_c03 yields configs/sample_01.ios
 @pytest.yield_fixture(scope='function')
 def parse_c03(request):
     """Preparsed c03"""
-    parse_c03 = CiscoConfParse(c01, factory=False)
+    parse_c03 = CiscoConfParse(c03, factory=False)
      
     yield parse_c03
 
+## parse_c03_factory yields configs/sample_01.ios
 @pytest.yield_fixture(scope='function')
 def parse_c03_factory(request):
     """Preparsed c01 with factory option"""
