@@ -97,6 +97,136 @@ def testVal_IOSIntfLine_name():
         obj = cfg.ConfigObjs[0]
         assert obj.name==result_correct
 
+def testVal_IOSIntfLine_abbvs(parse_c03_factory):
+    cfg = parse_c03_factory
+    result_correct = {
+        'interface Serial 1/0': set(['s1/0', 'se1/0', 's 1/0', 'ser1/0', 
+            'se 1/0', 'ser 1/0', 'seri1/0', 'seri 1/0', 'seria1/0', 
+            'serial1/0', 'seria 1/0', 'serial 1/0']),
+
+        'interface Serial 1/1': set(['s1/1', 'se1/1', 's 1/1', 'ser1/1', 
+            'se 1/1', 'ser 1/1', 'seri1/1', 'seri 1/1', 'seria1/1', 
+            'serial1/1', 'seria 1/1', 'serial 1/1']),
+
+        'interface GigabitEthernet4/1': set(['g4/1', 'gi4/1', 'g 4/1', 
+            'gi 4/1', 'gig4/1', 'giga4/1', 'gig 4/1', 'gigab4/1', 
+            'giga 4/1', 'gigab 4/1', 'gigabi4/1', 'gigabit4/1', 
+            'gigabi 4/1', 'gigabite4/1', 'gigabit 4/1', 'gigabite 4/1', 
+            'gigabitet4/1', 'gigabiteth4/1', 'gigabitet 4/1', 'gigabiteth 4/1',
+            'gigabitethe4/1', 'gigabitethe 4/1', 'gigabitether4/1', 
+            'gigabitether 4/1', 'gigabitethern4/1', 'gigabitethern 4/1',
+            'gigabitetherne4/1', 'gigabitetherne 4/1', 'gigabitethernet4/1', 
+            'gigabitethernet 4/1']),
+
+        'interface GigabitEthernet4/2': set(['g4/2', 'gi4/2', 'g 4/2', 
+            'gi 4/2', 'gig4/2', 'giga4/2', 'gig 4/2', 'gigab4/2', 
+            'giga 4/2', 'gigab 4/2', 'gigabi4/2', 'gigabit4/2', 
+            'gigabi 4/2', 'gigabite4/2', 'gigabit 4/2', 'gigabite 4/2', 
+            'gigabitet4/2', 'gigabiteth4/2', 'gigabitet 4/2', 'gigabiteth 4/2',
+            'gigabitethe4/2', 'gigabitethe 4/2', 'gigabitether4/2', 
+            'gigabitether 4/2', 'gigabitethern4/2', 'gigabitethern 4/2',
+            'gigabitetherne4/2', 'gigabitetherne 4/2', 'gigabitethernet4/2', 
+            'gigabitethernet 4/2']),
+
+        'interface GigabitEthernet4/3': set(['g4/3', 'gi4/3', 'g 4/3', 
+            'gi 4/3', 'gig4/3', 'giga4/3', 'gig 4/3', 'gigab4/3', 
+            'giga 4/3', 'gigab 4/3', 'gigabi4/3', 'gigabit4/3', 
+            'gigabi 4/3', 'gigabite4/3', 'gigabit 4/3', 'gigabite 4/3', 
+            'gigabitet4/3', 'gigabiteth4/3', 'gigabitet 4/3', 'gigabiteth 4/3',
+            'gigabitethe4/3', 'gigabitethe 4/3', 'gigabitether4/3', 
+            'gigabitether 4/3', 'gigabitethern4/3', 'gigabitethern 4/3',
+            'gigabitetherne4/3', 'gigabitetherne 4/3', 'gigabitethernet4/3', 
+            'gigabitethernet 4/3']),
+
+        'interface GigabitEthernet4/4': set(['g4/4', 'g 4/4', 'gi4/4',
+            'gi 4/4', 'gig4/4', 'giga4/4', 'gig 4/4', 'gigab4/4',
+            'giga 4/4', 'gigab 4/4', 'gigabi4/4', 'gigabit4/4',
+            'gigabi 4/4', 'gigabite4/4', 'gigabit 4/4', 'gigabitet4/4',
+            'gigabite 4/4', 'gigabiteth4/4', 'gigabitet 4/4',
+            'gigabiteth 4/4', 'gigabitethe4/4', 'gigabitethe 4/4',
+            'gigabitether4/4', 'gigabitether 4/4', 'gigabitethern4/4',
+            'gigabitethern 4/4', 'gigabitetherne4/4', 'gigabitethernet4/4',
+            'gigabitetherne 4/4', 'gigabitethernet 4/4']),
+
+        'interface GigabitEthernet4/5': set(['g4/5', 'gi4/5', 'g 4/5', 
+            'gi 4/5', 'gig4/5', 'giga4/5', 'gig 4/5', 'gigab4/5', 
+            'giga 4/5', 'gigab 4/5', 'gigabi4/5', 'gigabit4/5', 
+            'gigabi 4/5', 'gigabite4/5', 'gigabit 4/5', 'gigabite 4/5', 
+            'gigabitet4/5', 'gigabiteth4/5', 'gigabitet 4/5', 'gigabiteth 4/5',
+            'gigabitethe4/5', 'gigabitethe 4/5', 'gigabitether4/5', 
+            'gigabitether 4/5', 'gigabitethern4/5', 'gigabitethern 4/5',
+            'gigabitetherne4/5', 'gigabitetherne 4/5', 'gigabitethernet4/5', 
+            'gigabitethernet 4/5']),
+
+        'interface GigabitEthernet4/6': set(['g4/6', 'gi4/6', 'g 4/6', 
+            'gi 4/6', 'gig4/6', 'giga4/6', 'gig 4/6', 'gigab4/6', 
+            'giga 4/6', 'gigab 4/6', 'gigabi4/6', 'gigabit4/6', 
+            'gigabi 4/6', 'gigabite4/6', 'gigabit 4/6', 'gigabite 4/6', 
+            'gigabitet4/6', 'gigabiteth4/6', 'gigabitet 4/6', 'gigabiteth 4/6',
+            'gigabitethe4/6', 'gigabitethe 4/6', 'gigabitether4/6', 
+            'gigabitether 4/6', 'gigabitethern4/6', 'gigabitethern 4/6',
+            'gigabitetherne4/6', 'gigabitetherne 4/6', 'gigabitethernet4/6', 
+            'gigabitethernet 4/6']),
+
+        'interface GigabitEthernet4/7': set(['g4/7', 'gi4/7', 'g 4/7', 
+            'gi 4/7', 'gig4/7', 'giga4/7', 'gig 4/7', 'gigab4/7', 
+            'giga 4/7', 'gigab 4/7', 'gigabi4/7', 'gigabit4/7', 
+            'gigabi 4/7', 'gigabite4/7', 'gigabit 4/7', 'gigabite 4/7', 
+            'gigabitet4/7', 'gigabiteth4/7', 'gigabitet 4/7', 'gigabiteth 4/7',
+            'gigabitethe4/7', 'gigabitethe 4/7', 'gigabitether4/7', 
+            'gigabitether 4/7', 'gigabitethern4/7', 'gigabitethern 4/7',
+            'gigabitetherne4/7', 'gigabitetherne 4/7', 'gigabitethernet4/7', 
+            'gigabitethernet 4/7']),
+
+        'interface GigabitEthernet4/8.120': set(['g4/8.120', 'gi4/8.120', 
+            'g 4/8.120', 'gi 4/8.120', 'gig4/8.120', 'giga4/8.120', 
+            'gig 4/8.120', 'gigab4/8.120', 'giga 4/8.120', 'gigab 4/8.120',
+            'gigabi4/8.120', 'gigabi 4/8.120', 'gigabit4/8.120',
+            'gigabit 4/8.120', 'gigabite4/8.120', 'gigabite 4/8.120',
+            'gigabitet4/8.120', 'gigabitet 4/8.120', 'gigabiteth4/8.120',
+            'gigabitethe4/8.120', 'gigabiteth 4/8.120', 'gigabitethe 4/8.120',
+            'gigabitether4/8.120', 'gigabitethern4/8.120',
+            'gigabitether 4/8.120', 'gigabitethern 4/8.120',
+            'gigabitetherne4/8.120', 'gigabitethernet4/8.120',
+            'gigabitetherne 4/8.120', 'gigabitethernet 4/8.120']),
+
+        'interface ATM5/0/0': set(['a5/0/0', 'at5/0/0', 'a 5/0/0', 'at 5/0/0',
+            'atm5/0/0', 'atm 5/0/0']),
+
+        'interface ATM5/0/0.32 point-to-point': set(['a5/0/0.32',
+            'at5/0/0.32', 'a 5/0/0.32', 'at 5/0/0.32', 'atm5/0/0.32',
+            'atm 5/0/0.32']),
+
+        'interface ATM5/0/1': set(['a5/0/1', 'at5/0/1', 'a 5/0/1', 'at 5/0/1',
+            'atm5/0/1', 'atm 5/0/1']),
+    }
+    test_result = dict()
+    for intf_obj in cfg.find_objects('^interface'):
+        test_result[intf_obj.text] = intf_obj.abbvs
+    assert result_correct==test_result
+
+def testVal_IOSIntfLine_is_abbv_as(parse_c03_factory):
+    cfg = parse_c03_factory
+    params = {
+        'interface Serial 1/0': ('Ser1/0', True),
+        'interface Serial 1/1': ('ser11/1', False),
+        'interface GigabitEthernet4/1': ('GI4', False),
+        'interface GigabitEthernet4/2': ('gig 4', False),
+        'interface GigabitEthernet4/3': ('g4/3', True),
+        'interface GigabitEthernet4/4': ('g 4/4', True),
+        'interface GigabitEthernet4/5': ('g 4/4', False),
+        'interface GigabitEthernet4/6': ('gigabitethernet4/6', True),
+        'interface GigabitEthernet4/7': ('GigabitEthernet 4/7', True),
+        'interface GigabitEthernet4/8.120': ('G 4/8.120', True),
+        'interface ATM5/0/0': ('atm5/0', False),
+        'interface ATM5/0/0.32 point-to-point': ('At 5/0/0', False),
+        'interface ATM5/0/1': ('atm5/0/1', True),
+    }
+    for intf_text, vals in params.items():
+        abbv, result_correct = vals[0], vals[1]
+        intfobj = cfg.find_objects(intf_text, exactmatch=True)[0]
+        assert intfobj.is_abbreviated_as(abbv) is result_correct
+
 def testVal_IOSIntfLine_ordinal_list(parse_c03_factory):
     cfg = parse_c03_factory
     result_correct = {
