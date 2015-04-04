@@ -119,8 +119,9 @@ class IOSCfgLine(BaseCfgLine):
            True
            >>>
         """
-        intf_regex = r'^interface\s+(\S+.+)'
-        if self.re_match(intf_regex):
+        #intf_regex = r'^interface\s+(\S+.+)'
+        #if self.re_match(intf_regex):
+        if self.text[0:10]=='interface ' and self.text[10]!=' ':
             return True
         return False
 
@@ -318,6 +319,7 @@ class BaseIOSIntfLine(IOSCfgLine):
 
     @property
     def abbvs(self):
+        """Build a set of valid abbreviations (lowercased) for the interface"""
         return self._build_abbvs()
 
 
@@ -823,6 +825,12 @@ class BaseIOSIntfLine(IOSCfgLine):
         if ipv4_addr_object!=self.default_ipv4_addr_object:
             return ipv4_addr_object.prefixlen
         return 0
+
+    def is_abbreviated_as(self, val):
+        """Test whether `val` is a good abbreviation for the interface"""
+        if val.lower() in self.abbvs:
+                return True
+        return False
 
     def in_ipv4_subnet(self, ipv4network=IPv4Obj('0.0.0.0/32', strict=False)):
         """Accept an argument for the :class:`~ccp_util.IPv4Obj` to be 
@@ -1553,7 +1561,10 @@ class IOSRouteLine(BaseIOSRouteLine):
 
     @property
     def vrf(self):
-        return self.route_info['vrf']
+        if not (self.route_info['vrf'] is None):
+            return self.route_info['vrf']
+        else:
+            return ''
 
     @property
     def address_family(self):
