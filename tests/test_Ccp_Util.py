@@ -6,15 +6,73 @@ import os
 THIS_DIR = os.path.dirname(__file__)
 sys.path.insert(0, os.path.join(os.path.abspath(THIS_DIR), "../ciscoconfparse/"))
 
-
-import pytest
+from ccp_util import _RGX_IPV4ADDR, _RGX_IPV6ADDR
 from ccp_util import IPv4Obj, L4Object
+import pytest
+
 if sys.version_info[0]<3:
     from ipaddr import IPv4Network, IPv6Network, IPv4Address, IPv6Address
 else:
     from ipaddress import IPv4Network, IPv6Network, IPv4Address, IPv6Address
 
 
+@pytest.mark.parametrize("addr", [
+        '192.0.2.1',
+        '4.2.2.2',
+        '10.255.255.255',
+        '127.0.0.1',
+    ])
+def test_IPv4_REGEX(addr):
+    test_result = _RGX_IPV4ADDR.search(addr)
+    assert test_result.group('addr')==addr
+
+@pytest.mark.parametrize("addr", [
+        'fe80::',                                  # Trailing double colons
+        'fe80:beef::',                             # Trailing double colons
+        'fe80:dead:beef::',                        # Trailing double colons
+        'fe80:a:dead:beef::',                      # Trailing double colons
+        'fe80:a:a:dead:beef::',                    # Trailing double colons
+        'fe80:a:a:a:dead:beef::',                  # Trailing double colons
+        'fe80:a:a:a:a:dead:beef::',                # Trailing double colons
+        'fe80:dead:beef::a',                       #
+        'fe80:dead:beef::a:b',                     #
+        'fe80:dead:beef::a:b:c',                   #
+        'fe80:dead:beef::a:b:c:d',                 #
+        'FE80:AAAA::DEAD:BEEF',                    # Capital letters
+        'FE80:AAAA:0000:0000:0000:0000:DEAD:BEEF', # Capital Letters
+        '0:0:0:0:0:0:0:1',                         # Loopback
+        '::1',                           # Loopback, leading double-colons
+    ])
+def test_IPv6_REGEX(addr):
+    test_result = _RGX_IPV6ADDR.search(addr)
+    assert test_result.group('addr')==addr
+
+@pytest.mark.parametrize("addr", [
+        'fe80:',                        # Single trailing colon
+        'fe80:beef',                    # Insufficient number of bytes
+        'fe80:dead:beef',               # Insufficient number of bytes
+        'fe80:a:dead:beef',             # Insufficient number of bytes
+        'fe80:a:a:dead:beef',           # Insufficient number of bytes
+        'fe80:a:a:a:dead:beef',         # Insufficient number of bytes
+        'fe80:a:a:a:a:dead:beef',       # Insufficient number of bytes
+        'fe80:a:a:a :a:dead:beef',      # Superflous space
+        'zzzz:a:a:a:a:a:dead:beef',     # bad characters
+        '0:0:0:0:0:0:1',                # Loopback, insufficient bytes
+        '0:0:0:0:0:1',                  # Loopback, insufficient bytes
+        '0:0:0:0:1',                    # Loopback, insufficient bytes
+        '0:0:0:1',                      # Loopback, insufficient bytes
+        '0:0:1',                        # Loopback, insufficient bytes
+        '0:1',                          # Loopback, insufficient bytes
+        ':1',                           # Loopback, insufficient bytes
+        # FIXME: The following *should* fail, but I'm not failing on them
+        #':::beef',                     # FAIL Too many leading colons
+        #'fe80::dead::beef',            # FAIL multiple double colons
+        #'::1::',                       # FAIL too many double colons
+        #'fe80:0:0:0:0:0:dead:beef::',  # FAIL Too many bytes with double colons
+    ])
+def test_negative_IPv6_REGEX(addr):
+    test_result = _RGX_IPV6ADDR.search(addr)
+    assert test_result is None    # The regex *should* fail on these addrs
 
 @pytest.mark.xfail(sys.version_info[0]==3 and sys.version_info[1]==2,
                    reason="Known failure in Python3.2")
