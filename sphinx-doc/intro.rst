@@ -120,6 +120,13 @@ These are a few selected public mentions about CiscoConfParse; I usually try not
 
 .. raw:: html
 
+   <a href="http://www.reddit.com/r/Python/comments/2zxew5/interesting_dmca_notice_gplv3_license_violation/#cptgtl7"><img src="https://raw.githubusercontent.com/mpenning/ciscoconfparse/master/sphinx-doc/_static/reddit_20150328.png" width="800" alt="Reddit comment - 20150328"></a>
+
+|br|
+|br|
+
+.. raw:: html
+
    <blockquote class="twitter-tweet" lang="en"><p>Have to audit &gt; 100 catalyst sw configs for misconfiguration/non-standard configs. Perfect job for CiscoConfParse http://is.gd/d13z2 <a href="https://twitter.com/hashtag/python?src=hash">#python</a></p>&mdash; Jochen - l0b0 (@verbosemode) <a href="https://twitter.com/verbosemode/status/16878620193">June 23, 2010</a></blockquote>
    <script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
 
