@@ -120,7 +120,7 @@ These are a few selected public mentions about CiscoConfParse; I usually try not
 
 .. raw:: html
 
-   <a href="http://www.reddit.com/r/Python/comments/2zxew5/interesting_dmca_notice_gplv3_license_violation/#cptgtl7"><img src="https://raw.githubusercontent.com/mpenning/ciscoconfparse/master/sphinx-doc/_static/reddit_20150328.png" width="800" alt="Reddit comment - 20150328"></a>
+   <a href="http://www.reddit.com/r/Python/comments/2zxew5/interesting_dmca_notice_gplv3_license_violation/#cptgtl7"><img src="https://raw.githubusercontent.com/mpenning/ciscoconfparse/master/sphinx-doc/_static/reddit_20150328.png" width="500" alt="Reddit comment - 20150328"></a>
 
 |br|
 |br|
