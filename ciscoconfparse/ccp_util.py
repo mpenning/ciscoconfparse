@@ -30,8 +30,23 @@ else:
      mike [~at~] pennington [/dot\] net
 """
 
-RGX_IPV4ADDR = re.compile(r'^(\d+\.\d+\.\d+\.\d+)')
-RGX_IPV4ADDR_NETMASK = re.compile(r'(\d+\.\d+\.\d+\.\d+)\s+(\d+\.\d+\.\d+\.\d+)')
+
+_IPV6_REGEX = r"""(?P<addr>              # Begin a group named 'addr'
+ (?P<opt1>{0}(?::{0}){{7}})              # no double colons, option 1
+|(?P<opt2>(?:{0}:){{1}}(?::{0}){{1,6}})  # match fe80::1
+|(?P<opt3>(?:{0}:){{2}}(?::{0}){{1,5}})  # match fe80:a::1
+|(?P<opt4>(?:{0}:){{3}}(?::{0}){{1,4}})  # match fe80:a:b::1
+|(?P<opt5>(?:{0}:){{4}}(?::{0}){{1,3}})  # match fe80:a:b:c::1
+|(?P<opt6>(?:{0}:){{5}}(?::{0}){{1,2}})  # match fe80:a:b:c:d::1
+|(?P<opt7>(?:{0}:){{6}}(?::{0}){{1,1}})  # match fe80:a:b:c:d:e::1
+|(?P<opt8>:(?::{0}){{1,7}})              # leading double colons
+|(?P<opt9>(?:{0}:){{1,7}}:)              # trailing double colons
+)                                        # End group named 'addr'
+""".format(r'[0-9a-fA-F]{1,4}')
+_RGX_IPV6ADDR = re.compile(_IPV6_REGEX, re.VERBOSE)
+
+_RGX_IPV4ADDR = re.compile(r'^(?P<addr>\d+\.\d+\.\d+\.\d+)')
+_RGX_IPV4ADDR_NETMASK = re.compile(r'(\d+\.\d+\.\d+\.\d+)\s+(\d+\.\d+\.\d+\.\d+)')
 
 ## Emulate the old behavior of ipaddr.IPv4Network in Python2, which can use
 ##    IPv4Network with a host address.  Google removed that in Python3's 
@@ -59,12 +74,12 @@ class IPv4Obj(object):
     """
     def __init__(self, arg='127.0.0.1/32', strict=False):
 
-        RGX_IPV4ADDR = re.compile(r'^(\d+\.\d+\.\d+\.\d+)')
-        RGX_IPV4ADDR_NETMASK = re.compile(r'(\d+\.\d+\.\d+\.\d+)\s+(\d+\.\d+\.\d+\.\d+)')
+        #RGX_IPV4ADDR = re.compile(r'^(\d+\.\d+\.\d+\.\d+)')
+        #RGX_IPV4ADDR_NETMASK = re.compile(r'(\d+\.\d+\.\d+\.\d+)\s+(\d+\.\d+\.\d+\.\d+)')
 
-        arg = RGX_IPV4ADDR_NETMASK.sub(r'\1/\2', arg) # mangle IOS: 'addr mask'
+        arg = _RGX_IPV4ADDR_NETMASK.sub(r'\1/\2', arg) # mangle IOS: 'addr mask'
         self.arg = arg
-        mm = RGX_IPV4ADDR.search(arg)
+        mm = _RGX_IPV4ADDR.search(arg)
         assert (not (mm is None)), "IPv4Obj couldn't parse {0}".format(arg)
         self.network_object = IPv4Network(arg, strict=strict)
         self.ip_object = IPv4Address(mm.group(1))
