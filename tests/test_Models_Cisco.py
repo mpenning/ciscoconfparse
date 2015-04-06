@@ -8,6 +8,27 @@ sys.path.insert(0, os.path.join(os.path.abspath(THIS_DIR), "../ciscoconfparse/")
 
 from ciscoconfparse import CiscoConfParse
 from ccp_util import IPv4Obj
+import pytest
+
+@pytest.mark.parametrize("line", [
+     'interface GigabitEthernet4/1',
+     'interface  GigabitEthernet4/1',  # Two spaces
+     'interface  GigabitEthernet4/1 ',  # Two spaces and trailing space
+])
+def testVal_IOSIntfLine_dna(line):
+    cfg = CiscoConfParse([line], factory=True, syntax='ios')
+    obj = cfg.ConfigObjs[0]
+    assert obj.dna == 'IOSIntfLine'
+
+@pytest.mark.parametrize("line", [
+     'hostname Router',
+     'hostname  Router',    # Two spaces
+     'hostname  Router ',    # Two spaces and trailing space
+])
+def testVal_IOSHostnameLine_dna(line):
+    cfg = CiscoConfParse([line], factory=True, syntax='ios')
+    obj = cfg.ConfigObjs[0]
+    assert obj.dna == 'IOSHostnameLine'
 
 def testVal_IOSCfgLine_is_intf():
     # Map a config line to result_correct
