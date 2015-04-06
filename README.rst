@@ -51,6 +51,10 @@ These are a few selected public mentions about CiscoConfParse; I usually try not
    :alt: CiscoConfParse Github Issue #17
 
 
+.. image:: https://raw.githubusercontent.com/mpenning/ciscoconfparse/master/sphinx-doc/_static/reddit_20150328.png
+   :target: http://www.reddit.com/r/Python/comments/2zxew5/interesting_dmca_notice_gplv3_license_violation/#cptgtl7
+   :alt: Reddit comment
+
 .. image:: https://raw.githubusercontent.com/mpenning/ciscoconfparse/master/sphinx-doc/_static/netnea.png
    :target: https://www.netnea.com/cms/2014/01/20/parsing-cisco-configuration/
    :alt: Netnea testimony
@@ -109,7 +113,7 @@ already have setuptools_, you can install as usual:
 ::
 
       # Substitute whatever ciscoconfparse version you like...
-      easy_install -U ciscoconfparse==1.2.16
+      easy_install -U ciscoconfparse==1.2.17
 
 Alternatively you can install into Python2.x with pip_:
 
