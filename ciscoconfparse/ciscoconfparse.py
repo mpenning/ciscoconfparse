@@ -2003,7 +2003,7 @@ class CiscoConfParse(object):
         ``\\r\\n`` in Windows)."""
         with open(filepath, 'w') as newconf:
             for line in self.ioscfg:
-                newconf.write(line+os.linesep)
+                newconf.write(line+'\n')
 
 
     ### The methods below are marked SEMI-PRIVATE because they return an object
