@@ -8,3 +8,5 @@ sleep 0.25
 py.test -s test_Models_Cisco.py
 sleep 0.25
 py.test -s test_Models_Asa.py
+sleep 0.25
+py.test -s test_Models_Junos.py
