@@ -1,9 +1,4 @@
 from collections import MutableSequence
-try:
-    from itertools import takewhile, count
-    from itertools import izip as zip
-except:
-    pass
 import sys
 import re
 import os
@@ -35,8 +30,23 @@ else:
      mike [~at~] pennington [/dot\] net
 """
 
-RGX_IPV4ADDR = re.compile(r'^(\d+\.\d+\.\d+\.\d+)')
-RGX_IPV4ADDR_NETMASK = re.compile(r'(\d+\.\d+\.\d+\.\d+)\s+(\d+\.\d+\.\d+\.\d+)')
+
+_IPV6_REGEX = r"""(?P<addr>              # Begin a group named 'addr'
+ (?P<opt1>{0}(?::{0}){{7}})              # no double colons, option 1
+|(?P<opt2>(?:{0}:){{1}}(?::{0}){{1,6}})  # match fe80::1
+|(?P<opt3>(?:{0}:){{2}}(?::{0}){{1,5}})  # match fe80:a::1
+|(?P<opt4>(?:{0}:){{3}}(?::{0}){{1,4}})  # match fe80:a:b::1
+|(?P<opt5>(?:{0}:){{4}}(?::{0}){{1,3}})  # match fe80:a:b:c::1
+|(?P<opt6>(?:{0}:){{5}}(?::{0}){{1,2}})  # match fe80:a:b:c:d::1
+|(?P<opt7>(?:{0}:){{6}}(?::{0}){{1,1}})  # match fe80:a:b:c:d:e::1
+|(?P<opt8>:(?::{0}){{1,7}})              # leading double colons
+|(?P<opt9>(?:{0}:){{1,7}}:)              # trailing double colons
+)                                        # End group named 'addr'
+""".format(r'[0-9a-fA-F]{1,4}')
+_RGX_IPV6ADDR = re.compile(_IPV6_REGEX, re.VERBOSE)
+
+_RGX_IPV4ADDR = re.compile(r'^(?P<addr>\d+\.\d+\.\d+\.\d+)')
+_RGX_IPV4ADDR_NETMASK = re.compile(r'(\d+\.\d+\.\d+\.\d+)\s+(\d+\.\d+\.\d+\.\d+)')
 
 ## Emulate the old behavior of ipaddr.IPv4Network in Python2, which can use
 ##    IPv4Network with a host address.  Google removed that in Python3's 
@@ -64,12 +74,12 @@ class IPv4Obj(object):
     """
     def __init__(self, arg='127.0.0.1/32', strict=False):
 
-        RGX_IPV4ADDR = re.compile(r'^(\d+\.\d+\.\d+\.\d+)')
-        RGX_IPV4ADDR_NETMASK = re.compile(r'(\d+\.\d+\.\d+\.\d+)\s+(\d+\.\d+\.\d+\.\d+)')
+        #RGX_IPV4ADDR = re.compile(r'^(\d+\.\d+\.\d+\.\d+)')
+        #RGX_IPV4ADDR_NETMASK = re.compile(r'(\d+\.\d+\.\d+\.\d+)\s+(\d+\.\d+\.\d+\.\d+)')
 
-        arg = RGX_IPV4ADDR_NETMASK.sub(r'\1/\2', arg) # mangle IOS: 'addr mask'
+        arg = _RGX_IPV4ADDR_NETMASK.sub(r'\1/\2', arg) # mangle IOS: 'addr mask'
         self.arg = arg
-        mm = RGX_IPV4ADDR.search(arg)
+        mm = _RGX_IPV4ADDR.search(arg)
         assert (not (mm is None)), "IPv4Obj couldn't parse {0}".format(arg)
         self.network_object = IPv4Network(arg, strict=strict)
         self.ip_object = IPv4Address(mm.group(1))
@@ -292,150 +302,3 @@ class L4Object(object):
 
     def __repr__(self):
         return "<L4Object {0} {1}>".format(self.protocol, self.port_list)
-
-class DelimitedMatches(MutableSequence):
-    """A list which specifies how delimited matches should be processed; 
-    all matches start at index=0, and terminate either at the end of the 
-    delimted sequence in question, or at the corresponding value of break_arg.
-
-    This list supports a shorthand 'hack' for certain special values:
-
-    - k:i means ignore anything at this position (defaults to "__ignore__")
-    - k:m means match anything at this position (defaults to "__match__")
-    - k:b means break match iteration at this position (defaults to "__break__")
-
-    *Any other value* in the list will be processed locally by the method receiving 
-    the DelimitedMatch instance in question.  Only certain methods support delimited
-    matches at this time.
-    """
-    def __init__(self, match_shim=None, ignore_arg="__ignore__", 
-        break_arg="__break__", match_arg="__match__", 
-        unknown_arg="__unknown__", substr_arg="__substr__"):
-
-        super(DelimitedMatches, self).__init__()
-
-        self.dna = "DelimitedMatches"
-        self.ignore_arg = ignore_arg
-        self.break_arg = break_arg
-        self.match_arg = match_arg
-        self.unknown_arg = unknown_arg
-        self.substr_arg = substr_arg
-        self._result = False         # Is this a result value?
-        self.overflow = False        # Was there an overflow?
-        self.overflow_index = -1     # Point where overflow occured
-
-        if getattr(match_shim, 'append', ''):
-            self._match_list = [self._match_expansion(ii) 
-                for ii in match_shim]
-            self._result_list = [unknown_arg for ii in range(0, 
-                len(self._match_list))]
-        elif (match_shim is None):
-            self._match_list = list()
-            self._result_list = list()
-        else:
-            raise ValueError("DelimtedMatches() requires a list")
-
-    @property
-    def match_indicies(self):
-        """Return the indicies where a match is required"""
-        match_indicies = [idx for idx, val in 
-                zip(count(), self._match_list) if val==self.match_arg]
-        return match_indicies
-
-    @property
-    def matched_indicies(self):
-        """Return the indicies where a match happened"""
-        return list(takewhile(lambda x: self._result_list[x]!=self.unknown_arg, 
-            self.match_indicies))
-
-    @property
-    def number_unmatched_elements(self):
-        """Return the number of unmatched elements"""
-        if self._result and self.overflow:
-            return len(filter(lambda x: x==self.match_arg, 
-                self._match_list[self.overflow_index:]))
-        elif self._result and not self.overflow:
-            return len(self.match_indicies) - len(self.matched_indicies)
-        else:
-            return 0
-
-    @property
-    def all_matched(self):
-        """Return a boolean for whether all matches occured"""
-        if self._result and len(self.match_indicies)>0 \
-            and (self.number_unmatched_elements==0):
-            return True
-        else:
-            return False
-
-    @property
-    def result(self):
-        return self._result
-
-    @property
-    def match_list(self):
-        return self._match_list
-
-    @property
-    def result_list(self):
-        """Return the list of results"""
-        return self._result_list
-
-    @property
-    def _list(self):
-        if self._result:
-            return tuple(self._result_list)
-        else:
-            return self._match_list
-
-    def _match_expansion(self, arg):
-        ## k:i  => __ignore__
-        ## k:m  => __match__
-        ## k:b  => __break__
-        return arg.replace('k:i', self.ignore_arg).replace('k:b', 
-            self.break_arg).replace('k:m', self.match_arg)
-
-    def __len__(self):
-        return len(self._list)
-
-    def __getitem__(self, ii):
-        return self._list[ii]
-
-    def __delitem__(self, ii):
-        if not self._result:
-            del self._match_list[ii]
-            del self._result_list[ii]
-        else:
-            raise AttributeError("Cannot delete a DelimitedMatches result")
-
-    def __setitem__(self, ii, val):
-        if not self._result:
-            self._match_list[ii] = self._match_expansion(val)
-            self._result_list[ii] = self.unknown_arg
-            return self._list[ii]
-        else:
-            raise AttributeError("Cannot modify a DelimitedMatches result")
-
-    def __str__(self):
-        return self.__repr__()
-
-    def __repr__(self):
-        if self._result:
-            return """<DelimitedMatches result {}>""".format(str(self._list))
-        else:
-            return """<DelimitedMatches match {}>""".format(str(self._list))
-
-    def insert(self, ii, val):
-        if not self._result:
-            self._match_list.insert(ii, self._match_expansion(val))
-            self._result_list.insert(ii, self.unknown_arg)
-        else:
-            raise AttributeError("Cannot insert in a DelimitedMatches result")
-
-    def append(self, val):
-        if not self._result:
-            list_idx = len(self._list)
-            self._match_list.insert(list_idx, self._match_expansion(val))
-            self._result_list.insert(list_idx, self.unknown_arg)
-        else:
-            raise AttributeError("Cannot append to a DelimitedMatches result")
