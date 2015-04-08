@@ -3,8 +3,13 @@ PY34DEVTESTS=cd tests;find ./* -name 'test_*.py' -exec /opt/virtual_env/py34_tes
 BITBUCKETPUSH = $(shell bash -c 'read -s -p "Bitbucket Password: " pwd; hg push "https://mpenning:$$pwd@bitbucket.org/mpenning/ciscoconfparse"')
 DOCHOST ?= $(shell bash -c 'read -p "documentation host: " dochost; echo $$dochost')
 
+.PHONY: package
+package:
+	make clean
+	python setup.py sdist
 .PHONY: pypi
 pypi:
+	make clean
 	python setup.py sdist; python setup.py register; python setup.py sdist upload
 .PHONY: repo-push
 repo-push:
