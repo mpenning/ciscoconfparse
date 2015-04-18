@@ -1,4 +1,5 @@
 from collections import MutableSequence
+import itertools
 import sys
 import re
 import os
@@ -31,7 +32,8 @@ else:
 """
 
 
-_IPV6_REGEX = r"""(?P<addr>              # Begin a group named 'addr'
+_IPV6_REGEX = r"""(?!:::\S+?$)
+ (?P<addr>                               # Begin a group named 'addr'
  (?P<opt1>{0}(?::{0}){{7}})              # no double colons, option 1
 |(?P<opt2>(?:{0}:){{1}}(?::{0}){{1,6}})  # match fe80::1
 |(?P<opt3>(?:{0}:){{2}}(?::{0}){{1,5}})  # match fe80:a::1
@@ -250,6 +252,247 @@ class IPv4Obj(object):
     def is_reserved(self):
         """Returns a boolean for whether this is a reserved address"""
         return self.network_object.is_reserved
+
+## Emulate the old behavior of ipaddr.IPv6Network in Python2, which can use
+##    IPv6Network with a host address.  Google removed that in Python3's 
+##    ipaddress.py module
+class IPv6Obj(object):
+    """An object to represent IPv6 addresses and IPv6Networks.  When :class:`~ccp_util.IPv6Obj` objects are compared or sorted, shorter masks are greater than longer masks. After comparing mask length, numerically higher IP addresses are greater than numerically lower IP addresses.
+
+    Kwargs:
+        - arg (str): A string containing an IPv6 address, and optionally a netmask or masklength.  The following address/netmask formats are supported: "10.1.1.1/24", "10.1.1.1 255.255.255.0", "10.1.1.1/255.255.255.0"
+
+    Attributes:
+        - network_object : An IPv6Network object
+        - ip_object  : An IPAddress object
+        - ip : An IPAddress object
+        - network (str): A string representing the network address
+        - netmask (str): A string representing the netmask
+        - prefixlen (int): An integer representing the length of the netmask
+        - broadcast: raises `NotImplementedError`; IPv6 doesn't use broadcast
+        - hostmask (str): A string representing the hostmask
+        - numhosts (int): An integer representing the number of hosts contained in the network
+
+    Returns:
+        - an instance of :class:`~ccp_util.IPv6Obj`.
+
+    """
+    def __init__(self, arg='::1/128', strict=False):
+
+        #arg= _RGX_IPV6ADDR_NETMASK.sub(r'\1/\2', arg) # mangle IOS: 'addr mask'
+        self.arg = arg
+        mm = _RGX_IPV6ADDR.search(arg)
+        assert (not (mm is None)), "IPv6Obj couldn't parse {0}".format(arg)
+        self.network_object = IPv6Network(arg, strict=strict)
+        self.ip_object = IPv6Address(mm.group(1))
+
+# 'address_exclude', 'compare_networks', 'hostmask', 'ipv4_mapped', 'iter_subnets', 'iterhosts', 'masked', 'max_prefixlen', 'netmask', 'network', 'numhosts', 'overlaps', 'prefixlen', 'sixtofour', 'subnet', 'supernet', 'teredo', 'with_hostmask', 'with_netmask', 'with_prefixlen'
+
+
+    def __repr__(self):
+        return """<IPv6Obj {0}/{1}>""".format(str(self.ip_object), self.prefixlen)
+    def __eq__(self, val):
+        try:
+            if self.network_object==val.network_object:
+                return True
+            return False
+        except (Exception) as e:
+            errmsg = "'{0}' cannot compare itself to '{1}': {2}".format(self.__repr__(), val, e)
+            raise ValueError(errmsg)
+
+    def __gt__(self, val):
+        try:
+            val_prefixlen = int(getattr(val, 'prefixlen'))
+            val_nobj = getattr(val, 'network_object')
+
+            self_nobj = self.network_object
+            if (self.network_object.prefixlen<val_prefixlen):
+                # Sort shorter masks as higher...
+                return True
+            elif (self.network_object.prefixlen>val_prefixlen):
+                return False
+            elif (self_nobj>val_nobj):
+                # If masks are equal, rely on Google's sorting...
+                return True
+            return False
+        except:
+            errmsg = "{0} cannot compare itself to '{1}'".format(self.__repr__(), val)
+            raise ValueError(errmsg)
+
+    def __lt__(self, val):
+        try:
+            val_prefixlen = int(getattr(val, 'prefixlen'))
+            val_nobj = getattr(val, 'network_object')
+
+            self_nobj = self.network_object
+            if (self.network_object.prefixlen>val_prefixlen):
+                # Sort shorter masks as lower...
+                return True
+            elif (self.network_object.prefixlen<val_prefixlen):
+                return False
+            elif (self_nobj<val_nobj):
+                # If masks are equal, rely on Google's sorting...
+                return True
+            return False
+        except:
+            errmsg = "{0} cannot compare itself to '{1}'".format(self.__repr__(), val)
+            raise ValueError(errmsg)
+
+    def __contains__(self, val):
+        # Used for "foo in bar"... python calls bar.__contains__(foo)
+        try:
+            if (self.network_object.prefixlen==0):
+                return True
+            elif self.network_object.prefixlen>val.network_object.prefixlen:
+                # obvious shortcut... if this object's mask is longer than
+                #    val, this object cannot contain val
+                return False
+            else:
+                #return (val.network in self.network)
+                return (self.network<=val.network) and \
+                    (self.broadcast>=val.broadcast)
+
+        except (Exception) as e:
+            raise ValueError("Could not check whether '{0}' is contained in '{1}': {2}".format(val, self, e))
+
+    def __hash__(self):
+        # Python3 needs __hash__()
+        return hash(str(self.ip_object))+hash(str(self.prefixlen))
+
+    def __iter__(self):
+        return self.network_object.__iter__()
+
+    def __next__(self):
+        ## For Python3 iteration...
+        return self.network_object.__next__()
+
+    def next(self):
+        ## For Python2 iteration...
+        return self.network_object.__next__()
+
+    @property
+    def ip(self):
+        """Returns the address as an IPv6Address object."""
+        return self.ip_object
+
+    @property
+    def netmask(self):
+        """Returns the network mask as an IPv6Address object."""
+        return self.network_object.netmask
+
+    @property
+    def prefixlen(self):
+        """Returns the length of the network mask as an integer."""
+        return self.network_object.prefixlen
+
+    @property
+    def compressed(self):
+        """Returns the IPv6 object in compressed form"""
+        return self.network_object.compressed
+
+    @property
+    def exploded(self):
+        """Returns the IPv6 object in exploded form"""
+        return self.network_object.exploded
+
+    @property
+    def packed(self):
+        """Returns the IPv6 object in packed form"""
+        return self.network_object.packed
+
+    @property
+    def broadcast(self):
+        raise NotImplementedError("IPv6 does not have broadcasts")
+
+    @property
+    def network(self):
+        """Returns an IPv6Network object, which represents this network.
+        """
+        if sys.version_info[0]<3:
+            return self.network_object.network
+        else:
+            ## The ipaddress module returns an "IPAddress" object in Python3...
+            return IPv6Network('{0}'.format(self.network_object.compressed))
+
+    @property
+    def hostmask(self):
+        """Returns the host mask as an IPv6Address object."""
+        return self.network_object.hostmask
+
+    @property
+    def version(self):
+        """Returns the version of the object as an integer.  i.e. 4"""
+        return 6
+
+    @property
+    def numhosts(self):
+        """Returns the total number of IP addresses in this network, including broadcast and the "subnet zero" address"""
+        if sys.version_info[0]<3:
+            return self.network_object.numhosts
+        else:
+            return 2**(128-self.network_object.prefixlen)
+
+    @property
+    def as_decimal(self):
+        """Returns the IP address as a decimal integer"""
+        num_strings = str(self.ip.exploded).split(':')
+        num_strings.reverse()  # reverse the order
+        return sum([int(num, 16)*(256**idx) for idx, num in enumerate(num_strings)])
+
+    @property
+    def as_binary_tuple(self):
+        """Returns the IPv6 address as a tuple of zero-padded 8-bit binary strings"""
+        nested_list = [
+            ['{0:08b}'.format(int(ii, 16)) for ii in [num[0:2], num[2:4]]]
+            for num in str(self.ip.exploded).split(':')]
+        return tuple(itertools.chain(*nested_list))
+
+    @property
+    def as_hex_tuple(self):
+        """Returns the IPv6 address as a tuple of zero-padded 8-bit hex strings"""
+        nested_list = [
+            ['{0:02x}'.format(int(ii, 16)) for ii in [num[0:2], num[2:4]]]
+            for num in str(self.ip.exploded).split(':')]
+        return tuple(itertools.chain(*nested_list))
+
+    @property
+    def is_multicast(self):
+        """Returns a boolean for whether this is a multicast address"""
+        return self.network_object.is_multicast
+
+    @property
+    def is_private(self):
+        """Returns a boolean for whether this is a private address"""
+        return self.network_object.is_private
+
+    @property
+    def is_reserved(self):
+        """Returns a boolean for whether this is a reserved address"""
+        return self.network_object.is_reserved
+
+    @property
+    def is_link_local(self):
+        """Returns a boolean for whether this is an IPv6 link-local address"""
+        return self.network_object.is_link_local
+
+    @property
+    def is_site_local(self):
+        """Returns a boolean for whether this is an IPv6 site-local address"""
+        return self.network_object.is_site_local
+
+    @property
+    def is_unspecified(self):
+        """Returns a boolean for whether this address is not otherwise 
+        classified"""
+        return self.network_object.is_unspecified
+
+    @property
+    def teredo(self):
+        return self.network_object.teredo
+
+    @property
+    def sixtofour(self):
+        return self.network_object.sixtofour
 
 class L4Object(object):
     """Object for Transport-layer protocols; the object ensures that logical operators (such as le, gt, eq, and ne) are parsed correctly, as well as mapping service names to port numbers"""
