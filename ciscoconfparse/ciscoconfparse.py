@@ -2107,6 +2107,7 @@ class IOSConfigList(MutableSequence):
         self.ignore_blank_lines = ignore_blank_lines
         self.syntax = syntax
         self.dna = 'IOSConfigList'
+        self.debug = debug
 
         ## Support either a list or a generator instance
         if getattr(data, '__iter__', False):
@@ -2255,17 +2256,46 @@ class IOSConfigList(MutableSequence):
     def _banner_mark_regex(self, REGEX):
         # Build a list of all leading banner lines
         banner_objs = list(filter(lambda obj: REGEX.search(obj.text), self._list))
+
+        BANNER_STR_RE = r'^(?P<btype>(?:set\s)*banner\s\w+\s+)(?P<bchar>\S)\S*$'
         for parent in banner_objs:
-            idx = parent.linenum
             parent.oldest_ancestor = True
-            #bannerchar = parent.text.strip()[-1]
-            bannerchar = parent.re_match_typed(r'^.+?\s+(\S+)$', group=1, 
-                default=None)
+
+            ## Parse out the banner type and delimiting banner character
+            mm = re.search(BANNER_STR_RE, parent.text)
+            if not (mm is None):
+                (banner_lead, bannerdelimit) = (mm.group('btype').rstrip(), 
+                    mm.group('bchar'))
+            else:
+                (banner_lead, bannerdelimit) = ('', None)
+
+            if self.debug:
+                print("[DBG] _banner_mark_regex(): banner_lead = '{0}'"
+                    .format(banner_lead))
+                print("[DBG] _banner_mark_regex(): bannerdelimit = '{0}'"
+                    .format(bannerdelimit))
+                print("[DBG] _banner_mark_regex(): {0} starts at line"
+                    " {1}".format(banner_lead, parent.linenum))
+
+            idx = parent.linenum
             while True:
+                ## Check whether the banner line has both begin and end delimter
+                if idx==parent.linenum:
+                    parts = parent.text.split(bannerdelimit)
+                    if len(parts)>2:
+                        ## banner has both begin and end delimiter on one line
+                        if self.debug:
+                            print("[DBG] _banner_mark_regex(): {0} ends at line"
+                                " {1}".format(banner_lead, parent.linenum))
+                        break
+
                 idx += 1
                 try:
                     obj = self._list[idx]
-                    if obj.text.strip()==bannerchar:
+                    if bannerdelimit in obj.text.strip():
+                        if self.debug:
+                            print("[DBG] _banner_mark_regex(): {0} ends at line"
+                                " {1}".format(banner_lead, obj.linenum))
                         parent.children.append(obj)
                         parent.child_indent = 0
                         obj.parent = parent
@@ -2282,7 +2312,7 @@ class IOSConfigList(MutableSequence):
         """Accept a text list and format into proper objects"""
         # Append text lines as IOSCfgLine objects...
         BANNER_STR = set(['login',
-            'motd', 'incoming', 'incoming', 
+            'motd', 'incoming', 'exec', 
             'telnet', 'lcd',
             ])
         BANNER_RE = re.compile('|'.join([r'^(set\s+)*banner\s+{0}'.format(ii) for ii in BANNER_STR]))
