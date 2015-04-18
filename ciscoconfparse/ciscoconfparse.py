@@ -145,7 +145,8 @@ class CiscoConfParse(object):
             else:
                 raise ValueError("FATAL: '{}' is an unknown syntax".format(syntax))
 
-        elif isinstance(config, str):
+        ## Accept either a string or unicode...
+        elif getattr(config, 'encode', False):
             # Try opening as a file
             try:
                 if syntax=='ios':
@@ -2488,6 +2489,7 @@ class ASAConfigList(MutableSequence):
         self.ignore_blank_lines = ignore_blank_lines
         self.syntax = syntax
         self.dna = 'ASAConfigList'
+        self.debug = debug
 
         ## Support either a list or a generator instance
         if getattr(data, '__iter__', False):
