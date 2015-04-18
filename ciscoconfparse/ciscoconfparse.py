@@ -2149,6 +2149,9 @@ class IOSConfigList(MutableSequence):
         ## reparse all objects from their text attributes... this is *very* slow
         ## Ultimate goal: get rid of all reparsing from text... 
         self._list = self._bootstrap_obj_init(list(map(attrgetter('text'), self._list)))
+        if self.debug:
+            print("[DBG] _bootstrap_from_text() - self._list = {0}".format(
+                self._list))
 
     def has_line_with(self, linespec):
         return bool(filter(methodcaller('re_search', linespec), self._list))
@@ -2397,16 +2400,35 @@ class IOSConfigList(MutableSequence):
         return retval
 
     def _add_child_to_parent(self, _list, idx, indent, parentobj, childobj):
+        ## parentobj could be None when trying to add a child that should not 
+        ##    have a parent
+        if parentobj is None:
+            if self.debug:
+                print("[DBG] _add_child_to_parent() - parentobj is None")
+            return
+
+        if self.debug:
+            print("[DBG] _add_child_to_parent() - Adding child '{0}' to parent"
+                " '{1}'".format(childobj, parentobj))
+            print("[DBG]     BEFORE parent.children - {0}"
+                .format(parentobj.children))
         if childobj.is_comment and (_list[idx-1].indent>indent):
             ## I *really* hate making this exception, but legacy 
             ##   ciscoconfparse never marked a comment as a child 
             ##   when the line immediately above it was indented more
             ##   than the comment line
             pass
-        else:
+        elif (childobj.parent is childobj):
+            # Child has not been assigned yet
             parentobj.children.append(childobj)
             childobj.parent = parentobj
             childobj.parent.child_indent = indent
+        else:
+            pass
+
+        if self.debug:
+            print("[DBG]     AFTER parent.children - {0}"
+                .format(parentobj.children))
 
     def iter_with_comments(self, begin_index=0):
         for idx, obj in enumerate(self._list):
@@ -2695,16 +2717,35 @@ class ASAConfigList(MutableSequence):
         return retval
 
     def _add_child_to_parent(self, _list, idx, indent, parentobj, childobj):
+        ## parentobj could be None when trying to add a child that should not 
+        ##    have a parent
+        if parentobj is None:
+            if self.debug:
+                print("[DBG] _add_child_to_parent() - parentobj is None")
+            return
+
+        if self.debug:
+            print("[DBG] _add_child_to_parent() - Adding child '{0}' to parent"
+                " '{1}'".format(childobj, parentobj))
+            print("[DBG]     BEFORE parent.children - {0}"
+                .format(parentobj.children))
         if childobj.is_comment and (_list[idx-1].indent>indent):
             ## I *really* hate making this exception, but legacy 
             ##   ciscoconfparse never marked a comment as a child 
             ##   when the line immediately above it was indented more
             ##   than the comment line
             pass
-        else:
+        elif (childobj.parent is childobj):
+            # Child has not been assigned yet
             parentobj.children.append(childobj)
             childobj.parent = parentobj
             childobj.parent.child_indent = indent
+        else:
+            pass
+
+        if self.debug:
+            print("[DBG]     AFTER parent.children - {0}"
+                .format(parentobj.children))
 
     def iter_with_comments(self, begin_index=0):
         for idx, obj in enumerate(self._list):
