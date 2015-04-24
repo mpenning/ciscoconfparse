@@ -2266,10 +2266,13 @@ class IOSConfigList(MutableSequence):
         for parent in banner_objs:
             parent.oldest_ancestor = True
 <<<<<<< HEAD
+<<<<<<< HEAD
             #bannerchar = parent.text.strip()[-1]
             bannerchar = parent.re_match_typed(r'^.+?\s+(\S+)$', group=1,
                 default=None)
 =======
+=======
+>>>>>>> mpenning/master
 
             ## Parse out the banner type and delimiting banner character
             mm = re.search(BANNER_STR_RE, parent.text)
@@ -2288,6 +2291,9 @@ class IOSConfigList(MutableSequence):
                     " {1}".format(banner_lead, parent.linenum))
 
             idx = parent.linenum
+<<<<<<< HEAD
+>>>>>>> mpenning/master
+=======
 >>>>>>> mpenning/master
             while True:
                 ## Check whether the banner line has both begin and end delimter
@@ -2324,7 +2330,11 @@ class IOSConfigList(MutableSequence):
         # Append text lines as IOSCfgLine objects...
         BANNER_STR = set(['login',
 <<<<<<< HEAD
+<<<<<<< HEAD
             'motd', 'incoming', 'incoming',
+=======
+            'motd', 'incoming', 'exec', 
+>>>>>>> mpenning/master
 =======
             'motd', 'incoming', 'exec', 
 >>>>>>> mpenning/master
