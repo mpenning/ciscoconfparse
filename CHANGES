@@ -1,3 +1,4 @@
+1.2.19  20150418 Fix Github issue #33 - Unicode path support, Github issue #36 - Banner delimiter issues, Github issue #37 - delete() broke in some situations
 1.2.18  20150408 Fix Github issue #32 (ccp + py34 + windows broken).
 1.2.17  20150406 Fix Github issue #31.  First steps towards IPv6Obj support.
 1.2.16  20150401 Improve ip route detection in models_cisco, as requested by Github issue #30.  Convert more unit tests to native py.test format

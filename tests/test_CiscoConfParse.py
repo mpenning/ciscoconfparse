@@ -15,6 +15,102 @@ from ccp_util import IPv4Obj
 from passlib.hash import cisco_type7
 import pytest
 
+def testValues_banner_delimiter_01():
+    # Test banner delimiter on the same lines
+    CONFIG = ['!', 'banner motd ^   trivial banner here ^', 'end']
+    parse = CiscoConfParse(CONFIG)
+    bannerobj = parse.find_objects('^banner')[0]
+    BANNER_LINE_NUMBER = 1
+    assert bannerobj.linenum == BANNER_LINE_NUMBER
+    for obj in bannerobj.children:
+        assert obj.parent.linenum == BANNER_LINE_NUMBER
+
+def testValues_banner_delimiter_02():
+    # Test multiple banner delimiters on the same lines
+    CONFIG = ['!', 'banner motd ^   trivial banner here ^^', 'end']
+    parse = CiscoConfParse(CONFIG)
+    bannerobj = parse.find_objects('^banner')[0]
+    BANNER_LINE_NUMBER = 1
+    assert bannerobj.linenum == BANNER_LINE_NUMBER
+    for obj in bannerobj.children:
+        assert obj.parent.linenum == BANNER_LINE_NUMBER
+
+def testValues_banner_delimiter_03():
+    # Test banner delimiter on different lines
+    CONFIG = ['!', 'banner motd ^', '    trivial banner here ^', 'end']
+    parse = CiscoConfParse(CONFIG)
+    bannerobj = parse.find_objects('^banner')[0]
+    BANNER_LINE_NUMBER = 1
+    assert bannerobj.linenum == BANNER_LINE_NUMBER
+    for obj in bannerobj.children:
+        assert obj.parent.linenum == BANNER_LINE_NUMBER
+
+def testValues_banner_delimiter_04():
+    # Test multiple banner delimiters on different lines
+    CONFIG = ['!', 'banner motd ^', '    trivial banner here ^^', 'end']
+    parse = CiscoConfParse(CONFIG)
+    bannerobj = parse.find_objects('^banner')[0]
+    BANNER_LINE_NUMBER = 1
+    assert bannerobj.linenum == BANNER_LINE_NUMBER
+    for obj in bannerobj.children:
+        assert obj.parent.linenum == BANNER_LINE_NUMBER
+
+def testValues_banner_delimiter_05():
+    # Test multiple banners
+    CONFIG = ['!', 'banner motd ^', '    trivial banner1 here ^', 
+        'banner exec ^', '    trivial banner2 here ^',
+        'end']
+    parse = CiscoConfParse(CONFIG)
+    bannerobj = parse.find_objects('^banner\smotd')[0]
+    BANNER_LINE_NUMBER = 1
+    assert bannerobj.linenum == BANNER_LINE_NUMBER
+    for obj in bannerobj.children:
+        assert obj.parent.linenum == BANNER_LINE_NUMBER
+
+    bannerobj = parse.find_objects('^banner\sexec')[0]
+    BANNER_LINE_NUMBER = 3
+    assert bannerobj.linenum == BANNER_LINE_NUMBER
+    for obj in bannerobj.children:
+        assert obj.parent.linenum == BANNER_LINE_NUMBER
+
+def testValues_banner_delete_01():
+    # Ensure multiline banners are correctly deleted
+    CONFIG = ['!', 
+        'banner motd ^', '    trivial banner1 here ^', 
+        'interface GigabitEthernet0/0',
+        ' ip address 192.0.2.1 255.255.255.0',
+        'banner exec ^', '    trivial banner2 here ^',
+        'end']
+    parse = CiscoConfParse(CONFIG)
+    for obj in parse.find_objects('^banner'):
+        obj.delete()
+    parse.commit()
+    assert parse.find_objects('^banner')==[]
+
+def testValues_banner_delete_02():
+    # Ensure multiline banners are correctly deleted
+    #
+    # Check for Github issue #37
+    CONFIG = ['!', 
+        'interface GigabitEthernet0/0',
+        ' ip address 192.0.2.1 255.255.255.0',
+        'banner motd ^', '    trivial banner1 here ^', 
+        'interface GigabitEthernet0/1',
+        ' ip address 192.0.2.1 255.255.255.0',
+        'banner exec ^', '    trivial banner2 here ^',
+        'end']
+    parse = CiscoConfParse(CONFIG)
+    for obj in parse.find_objects('^banner'):
+        obj.delete()
+    parse.commit()
+
+    assert parse.find_objects('^banner')==[]
+
+    # Github issue #37 assigned Gi0/1's child to Gi0/0 after deleting
+    #  the banner motd line...
+    for obj in parse.find_objects('^interface'):
+        assert len(obj.children)==1
+
 def testValues_banner_child_parsing_01(parse_c01):
     """Associate banner lines as parent / child"""
     result_correct = {

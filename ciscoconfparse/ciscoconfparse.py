@@ -146,7 +146,8 @@ class CiscoConfParse(object):
             else:
                 raise ValueError("FATAL: '{}' is an unknown syntax".format(syntax))
 
-        elif isinstance(config, str):
+        ## Accept either a string or unicode...
+        elif getattr(config, 'encode', False):
             # Try opening as a file
             try:
                 if syntax=='ios':
@@ -2108,6 +2109,7 @@ class IOSConfigList(MutableSequence):
         self.ignore_blank_lines = ignore_blank_lines
         self.syntax = syntax
         self.dna = 'IOSConfigList'
+        self.debug = debug
 
         ## Support either a list or a generator instance
         if getattr(data, '__iter__', False):
@@ -2149,6 +2151,9 @@ class IOSConfigList(MutableSequence):
         ## reparse all objects from their text attributes... this is *very* slow
         ## Ultimate goal: get rid of all reparsing from text...
         self._list = self._bootstrap_obj_init(list(map(attrgetter('text'), self._list)))
+        if self.debug:
+            print("[DBG] _bootstrap_from_text() - self._list = {0}".format(
+                self._list))
 
     def has_line_with(self, linespec):
         return bool(filter(methodcaller('re_search', linespec), self._list))
@@ -2256,17 +2261,52 @@ class IOSConfigList(MutableSequence):
     def _banner_mark_regex(self, REGEX):
         # Build a list of all leading banner lines
         banner_objs = list(filter(lambda obj: REGEX.search(obj.text), self._list))
+
+        BANNER_STR_RE = r'^(?P<btype>(?:set\s)*banner\s\w+\s+)(?P<bchar>\S)\S*$'
         for parent in banner_objs:
-            idx = parent.linenum
             parent.oldest_ancestor = True
+<<<<<<< HEAD
             #bannerchar = parent.text.strip()[-1]
             bannerchar = parent.re_match_typed(r'^.+?\s+(\S+)$', group=1,
                 default=None)
+=======
+
+            ## Parse out the banner type and delimiting banner character
+            mm = re.search(BANNER_STR_RE, parent.text)
+            if not (mm is None):
+                (banner_lead, bannerdelimit) = (mm.group('btype').rstrip(), 
+                    mm.group('bchar'))
+            else:
+                (banner_lead, bannerdelimit) = ('', None)
+
+            if self.debug:
+                print("[DBG] _banner_mark_regex(): banner_lead = '{0}'"
+                    .format(banner_lead))
+                print("[DBG] _banner_mark_regex(): bannerdelimit = '{0}'"
+                    .format(bannerdelimit))
+                print("[DBG] _banner_mark_regex(): {0} starts at line"
+                    " {1}".format(banner_lead, parent.linenum))
+
+            idx = parent.linenum
+>>>>>>> mpenning/master
             while True:
+                ## Check whether the banner line has both begin and end delimter
+                if idx==parent.linenum:
+                    parts = parent.text.split(bannerdelimit)
+                    if len(parts)>2:
+                        ## banner has both begin and end delimiter on one line
+                        if self.debug:
+                            print("[DBG] _banner_mark_regex(): {0} ends at line"
+                                " {1}".format(banner_lead, parent.linenum))
+                        break
+
                 idx += 1
                 try:
                     obj = self._list[idx]
-                    if obj.text.strip()==bannerchar:
+                    if bannerdelimit in obj.text.strip():
+                        if self.debug:
+                            print("[DBG] _banner_mark_regex(): {0} ends at line"
+                                " {1}".format(banner_lead, obj.linenum))
                         parent.children.append(obj)
                         parent.child_indent = 0
                         obj.parent = parent
@@ -2283,7 +2323,11 @@ class IOSConfigList(MutableSequence):
         """Accept a text list and format into proper objects"""
         # Append text lines as IOSCfgLine objects...
         BANNER_STR = set(['login',
+<<<<<<< HEAD
             'motd', 'incoming', 'incoming',
+=======
+            'motd', 'incoming', 'exec', 
+>>>>>>> mpenning/master
             'telnet', 'lcd',
             ])
         BANNER_RE = re.compile('|'.join([r'^(set\s+)*banner\s+{0}'.format(ii) for ii in BANNER_STR]))
@@ -2368,16 +2412,35 @@ class IOSConfigList(MutableSequence):
         return retval
 
     def _add_child_to_parent(self, _list, idx, indent, parentobj, childobj):
+        ## parentobj could be None when trying to add a child that should not 
+        ##    have a parent
+        if parentobj is None:
+            if self.debug:
+                print("[DBG] _add_child_to_parent() - parentobj is None")
+            return
+
+        if self.debug:
+            print("[DBG] _add_child_to_parent() - Adding child '{0}' to parent"
+                " '{1}'".format(childobj, parentobj))
+            print("[DBG]     BEFORE parent.children - {0}"
+                .format(parentobj.children))
         if childobj.is_comment and (_list[idx-1].indent>indent):
             ## I *really* hate making this exception, but legacy
             ##   ciscoconfparse never marked a comment as a child
             ##   when the line immediately above it was indented more
             ##   than the comment line
             pass
-        else:
+        elif (childobj.parent is childobj):
+            # Child has not been assigned yet
             parentobj.children.append(childobj)
             childobj.parent = parentobj
             childobj.parent.child_indent = indent
+        else:
+            pass
+
+        if self.debug:
+            print("[DBG]     AFTER parent.children - {0}"
+                .format(parentobj.children))
 
     def iter_with_comments(self, begin_index=0):
         for idx, obj in enumerate(self._list):
@@ -2437,6 +2500,7 @@ class ASAConfigList(MutableSequence):
         self.ignore_blank_lines = ignore_blank_lines
         self.syntax = syntax
         self.dna = 'ASAConfigList'
+        self.debug = debug
 
         ## Support either a list or a generator instance
         if getattr(data, '__iter__', False):
@@ -2666,16 +2730,35 @@ class ASAConfigList(MutableSequence):
         return retval
 
     def _add_child_to_parent(self, _list, idx, indent, parentobj, childobj):
+        ## parentobj could be None when trying to add a child that should not 
+        ##    have a parent
+        if parentobj is None:
+            if self.debug:
+                print("[DBG] _add_child_to_parent() - parentobj is None")
+            return
+
+        if self.debug:
+            print("[DBG] _add_child_to_parent() - Adding child '{0}' to parent"
+                " '{1}'".format(childobj, parentobj))
+            print("[DBG]     BEFORE parent.children - {0}"
+                .format(parentobj.children))
         if childobj.is_comment and (_list[idx-1].indent>indent):
             ## I *really* hate making this exception, but legacy
             ##   ciscoconfparse never marked a comment as a child
             ##   when the line immediately above it was indented more
             ##   than the comment line
             pass
-        else:
+        elif (childobj.parent is childobj):
+            # Child has not been assigned yet
             parentobj.children.append(childobj)
             childobj.parent = parentobj
             childobj.parent.child_indent = indent
+        else:
+            pass
+
+        if self.debug:
+            print("[DBG]     AFTER parent.children - {0}"
+                .format(parentobj.children))
 
     def iter_with_comments(self, begin_index=0):
         for idx, obj in enumerate(self._list):
