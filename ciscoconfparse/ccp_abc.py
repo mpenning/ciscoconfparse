@@ -322,18 +322,24 @@ class BaseCfgLine(object):
            !
            >>>
         """
-        ## BaseCfgLine.append_to_family(), insert a single line after this 
-        ##  object's children
-        local_atomic=False
-        last_child = self.children[-1]
-
+        ## Build the string to insert with proper indentation...
         if auto_indent:
             insertstr = (" "*(self.indent+auto_indent_width))+insertstr.lstrip()
         elif indent>0:
             insertstr = (" "*(self.indent+indent))+insertstr.lstrip()
 
-        retval = self.confobj.insert_after(last_child, insertstr, 
-            atomic=local_atomic)
+        ## BaseCfgLine.append_to_family(), insert a single line after this 
+        ##  object's children
+        local_atomic=False
+        try:
+            last_child = self.children[-1]
+            retval = self.confobj.insert_after(last_child, insertstr, 
+                atomic=local_atomic)
+        except IndexError:
+            # The object has no children
+            retval = self.confobj.insert_after(self, insertstr, 
+                atomic=local_atomic)
+
         return retval
 
     def replace(self, linespec, replacestr, ignore_rgx=None):
