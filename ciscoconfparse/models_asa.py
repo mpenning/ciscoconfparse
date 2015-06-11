@@ -434,10 +434,13 @@ class ASAObjService(ASACfgLine):
 ##
 ##-------------  ASA object-group network
 ##
-
-_RE_NETHOST = re.compile(r'^\s*network-object\s+host\s+(\S+)')
-_RE_NETWORK1 = re.compile(r'^\s*network-object\s+(\S+)')
-_RE_NETWORK2 = re.compile(r'^\s*network-object\s+\S+\s+(\d+\.\d+\.\d+\.\d+)')
+_RE_NETOBJECT_STR = r"""(?:                         # Non-capturing parenthesis
+ (^\s*network-object\s+host\s+(?P<host>\S+))
+|(^\s*network-object\s+(?P<network>\S+)\s+(?P<netmask>\d+\.\d+\.\d+\.\d+))
+|(^\s*group-object\s+(?P<groupobject>\S+))
+)                                                   # Close non-capture parens
+"""
+_RE_NETOBJECT = re.compile(_RE_NETOBJECT_STR, re.VERBOSE)
 class ASAObjGroupNetwork(ASACfgLine):
 
     def __init__(self, *args, **kwargs):
@@ -462,21 +465,31 @@ class ASAObjGroupNetwork(ASACfgLine):
         retval = list()
         names = self.confobj.names
         for obj in self.children:
-            if 'network-object host ' in obj.text:
-                host_str = obj.re_match_typed(_RE_NETHOST, group=1, result_type=str)
-                retval.append(IPv4Obj(names.get(host_str, host_str)))
-            elif 'network-object ' in obj.text:
-                network_str = obj.re_match_typed(_RE_NETWORK1, group=1, result_type=str)
-                netmask_str = obj.re_match_typed(_RE_NETWORK2, group=1, result_type=str)
-                retval.append(IPv4Obj('{0} {1}'.format(names.get(network_str, 
-                    network_str), netmask_str)))
-            elif 'group-object ' in obj.text:
-                name = obj.re_match_typed(r'^\s*group-object\s+(\S+)', group=1, 
-                    result_type=str)
-                group_nets = self.confobj.object_group_network.get(name, None)
-                if name==self.name:
+
+            ## Parse out 'object-group ...' and 'group-object' lines...
+            mm = _RE_NETOBJECT.search(obj.text)
+            if not (mm is None):
+                net_obj = mm.groupdict()
+                if net_obj['netmask']=='255.255.255.255':
+                    net_obj['host'] = net_obj['network']
+            else:
+                net_obj = dict()
+
+            if net_obj.get('host', None):
+                ## This is some kind of host
+                retval.append(IPv4Obj(names.get(net_obj['host'], 
+                    net_obj['host'])))
+            elif net_obj.get('network', None):
+                ## This is a non-host network object
+                retval.append(IPv4Obj('{0} {1}'.format(names.get(net_obj['network'], net_obj['network']), net_obj['netmask'])))
+            elif net_obj.get('groupobject', None):
+                groupobject = net_obj['groupobject']
+                if groupobject==self.name:
                     ## Throw an error when importing self
-                    raise ValueError("FATAL: Cannot recurse through group-object {0} in object-group network {1}".format(name, self.name))
+                    raise ValueError("FATAL: Cannot recurse through group-object {0} in object-group network {1}".format(groupobject, self.name))
+
+                group_nets = self.confobj.object_group_network.get(groupobject,
+                    None)
                 if (group_nets is None):
                     raise ValueError("FATAL: Cannot find group-object named {0}".format(name))
                 else:
@@ -490,6 +503,14 @@ class ASAObjGroupNetwork(ASACfgLine):
 ##
 ##-------------  ASA object-group service
 ##
+_RE_PORTOBJ_STR = r"""(?:                            # Non-capturing parentesis
+ # service-object udp destination eq dns
+ (^\s*service-object\s+(?P<protocol>{0})\s+(?P<src_dst>\S+)\s+(?P<s_port>\S+))
+|(^\s*port-object\s+(?P<operator>eq|range)\s+(?P<p_port>\S.+))
+|(^\s*group-object\s+(?P<groupobject>\S+))
+)                                                   # Close non-capture parens
+""".format('tcp|udp|tcp-udp')
+_RE_PORTOBJECT = re.compile(_RE_PORTOBJ_STR, re.VERBOSE)
 
 class ASAObjGroupService(ASACfgLine):
 
@@ -528,16 +549,19 @@ class ASAObjGroupService(ASACfgLine):
         ## TODO: implement processing for group-objects (which obviously 
         ##    involves iteration
         #GROUP_OBJ_REGEX = r'^\s*group-object\s+(\S+)'
-        SERVICE_OBJ_REGEX = r'^\s*service-object\s+(tcp|udp|tcp-udp)\s+(\S+)\s+(\S+)'
-        PORT_OBJ_REGEX = r'^\s*port-object\s+(eq|range)\s+(\S.+)'
         for obj in self.children:
-            if 'service-object ' in obj.text:
-                protocol = obj.re_match_typed(SERVICE_OBJ_REGEX, 
-                    group=1, result_type=str)
-                src_dst = obj.re_match_typed(SERVICE_OBJ_REGEX, 
-                    group=2, result_type=str)
-                port = obj.re_match_typed(SERVICE_OBJ_REGEX, 
-                    group=3, result_type=str)
+
+            ## Parse out 'service-object ...' and 'port-object' lines...
+            mm = _RE_PORTOBJECT.search(obj.text)
+            if not (mm is None):
+                svc_obj = mm.groupdict()
+            else:
+                svc_obj = dict()
+
+            if svc_obj.get('protocol', None):
+                protocol = svc_obj.get('protocol')
+                src_dst = svc_obj.get('src_dst', '')
+                port = svc_obj.get('s_port', '')
 
                 if protocol=='tcp-udp':
                     retval.append(L4Object(protocol='tcp', 
@@ -548,13 +572,11 @@ class ASAObjGroupService(ASACfgLine):
                     retval.append(L4Object(protocol=protocol, 
                         port_spec=port, syntax='asa'))
 
-            elif 'port-object ' in obj.text:
-                op = obj.re_match_typed(PORT_OBJ_REGEX, 
-                    group=1, result_type=str)
-                port = obj.re_match_typed(PORT_OBJ_REGEX, 
-                    group=2, result_type=str)
-
+            elif svc_obj.get('operator', None):
+                op = svc_obj.get('operator', '')
+                port = svc_obj.get('p_port', '')
                 port_spec="{0} {1}".format(op, port)
+
                 if self.protocol_type=='tcp-udp':
                     retval.append(L4Object(protocol='tcp', 
                         port_spec=port_spec, syntax='asa'))
@@ -563,9 +585,9 @@ class ASAObjGroupService(ASACfgLine):
                 else:
                     retval.append(L4Object(protocol=self.protocol_type, 
                         port_spec=port_spec, syntax='asa'))
-            elif 'group-object ' in obj.text:
-                name = obj.re_match_typed(r'^\s*group-object\s+(\S+)', group=1, 
-                    result_type=str)
+
+            elif svc_obj.get('groupobject', None):
+                name = svc_obj.get('groupobject')
                 group_ports = self.confobj.object_group_service.get(name, None)
                 if name==self.name:
                     ## Throw an error when importing self
