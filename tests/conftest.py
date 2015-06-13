@@ -499,6 +499,90 @@ routing-options {
     }
 }""".splitlines()
 
+a01 = """hostname TEST-FW
+!
+name 1.1.2.20 loghost01
+name 1.1.3.10 dmzsrv00
+name 1.1.3.11 dmzsrv01
+name 1.1.3.12 dmzsrv02
+name 1.1.3.13 dmzsrv03
+!
+interface Ethernet0/0
+ description Uplink to SBC F923X2K425
+ nameif OUTSIDE
+ security-level 0
+ delay 70
+ ip address 1.1.1.1 255.255.255.252
+!
+interface Ethernet0/1
+ nameif INSIDE
+ security-level 100
+ ip address 1.1.2.1 255.255.255.0
+!
+interface Ethernet0/2
+ switchport access vlan 100
+!
+interface VLAN100
+ nameif DMZ
+ security-level 50
+ ip address 1.1.3.1 255.255.255.0
+!
+object-group network ANY_addrs
+ network-object 0.0.0.0 0.0.0.0
+!
+object-group network INSIDE_addrs1
+ network-object host 1.1.2.1
+ network-object 1.1.2.2 255.255.255.255
+ network-object 1.1.2.0 255.255.255.0
+!
+object-group network INSIDE_addrs1
+ network-object host 1.1.2.1
+ network-object 1.1.2.2 255.255.255.255
+ network-object 1.1.2.0 255.255.255.0
+!
+object-group service DNS_svc
+ service-object udp destination eq dns
+!
+object-group service NTP_svc
+ service-object udp destination eq ntp
+!
+object-group service FTP_svc
+ service-object tcp destination eq ftp
+!
+object-group service HTTP_svc
+ service-object tcp destination eq http
+!
+object-group service HTTPS_svc
+ service-object tcp destination eq https
+!
+access-list INSIDE_in extended permit object-group FTP_svc object-group INSIDE_addrs1 object-group ANY_addrs log
+access-list INSIDE_in extended remark Overlap for test purposes
+access-list INSIDE_in extended permit ip object-group INSIDE_addrs1 object-group ANY_addrs log
+access-list INSIDE_in extended deny ip any any log
+!
+!
+clock timezone CST -6
+clock summer-time CDT recurring
+!
+logging enable
+logging timestamp
+logging buffer-size 1048576
+logging buffered informational
+logging trap informational
+logging asdm informational
+logging facility 22
+logging host INSIDE loghost01
+no logging message 302021
+!
+banner login ^CThis is a router, and you cannot have it.
+Log off now while you still can type. I break the fingers
+of all tresspassers.
+^C
+!
+access-group OUTSIDE_in in interface OUTSIDE
+access-group INSIDE_in in interface INSIDE
+!""".splitlines()
+
 @pytest.yield_fixture(scope='session')
 def c01_default_gigethernets(request):
     yield config_c01_default_gige
@@ -562,10 +646,26 @@ def parse_j01(request):
 ## parse_j01_factory yields configs/sample_01.junos
 @pytest.yield_fixture(scope='function')
 def parse_j01_factory(request):
-    """Preparsed c01 with factory option"""
+    """Preparsed j01 with factory option"""
     parse_j01_factory = CiscoConfParse(j01, syntax='junos', factory=True)
      
     yield parse_j01_factory
+
+## parse_a01 yields the asa configuration
+@pytest.yield_fixture(scope='function')
+def parse_a01(request):
+    """Preparsed a01"""
+    parse_a01_factory = CiscoConfParse(a01, syntax='asa', factory=False)
+     
+    yield parse_a01_factory
+
+## parse_a01_factory yields the asa configuration
+@pytest.yield_fixture(scope='function')
+def parse_a01_factory(request):
+    """Preparsed a01 with factory option"""
+    parse_a01_factory = CiscoConfParse(a01, syntax='asa', factory=True)
+     
+    yield parse_a01_factory
 
 @pytest.mark.skipif(sys.version_info[0]>=3,
     reason="No Python3 MockSSH support")
