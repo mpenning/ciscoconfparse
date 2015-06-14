@@ -24,6 +24,7 @@ from models_asa import ASAIntfGlobal
 from models_asa import ASAIntfLine
 from models_asa import ASACfgLine
 from models_asa import ASAName
+from models_asa import ASAAclLine
 
 from models_junos import JunosCfgLine
 
@@ -2871,7 +2872,8 @@ def ConfigLineFactory(text="", comment_delimiter="!", syntax='ios'):
         classes = [ASAName, ASAObjNetwork, ASAObjService, 
             ASAObjGroupNetwork, ASAObjGroupService, 
             ASAIntfLine, ASAIntfGlobal, 
-            ASAHostnameLine, ASACfgLine]
+            ASAHostnameLine, ASAAclLine, 
+            ASACfgLine]
     for cls in classes:
         if cls.is_object_for(text):
             inst = cls(text=text, 
