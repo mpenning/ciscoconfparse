@@ -18,6 +18,29 @@
      mike [~at~] pennington [/dot\] net
 """
 
+## Ref: http://www.cisco.com/c/en/us/td/docs/security/asa/asa84/configuration/guide/asa_84_cli_config/ref_ports.html
+ASA_IP_PROTOCOLS = {
+  'ah': 51,
+  'eigrp': 88,
+  'esp': 50,
+  'gre': 47,
+  'icmp': 1,
+  'icmp6': 58,
+  'igmp': 2,
+  'igrp': 9,
+  'ip': 0,
+  'ipinip': 4,
+  'ipsec': 50,
+  'nos': 94,
+  'ospf': 89,
+  'pcp': 108,
+  'pim': 103,
+  'pptp': 47,
+  'snp': 109,
+  'tcp': 6,
+  'udp': 17,
+}
+
 ## Ref: https://supportforums.cisco.com/discussion/11242756/cisco-asa-acl-built-port-name-number-mapping
 ASA_TCP_PORTS = {
     'aol': 5190,
