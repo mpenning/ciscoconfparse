@@ -556,7 +556,7 @@ object-group service HTTPS_svc
  service-object tcp destination eq https
 !
 access-list INSIDE_in extended permit object-group FTP_svc object-group INSIDE_addrs1 object-group ANY_addrs log
-access-list INSIDE_in extended remark Overlap for test purposes
+access-list INSIDE_in remark Overlap for test purposes
 access-list INSIDE_in extended permit ip object-group INSIDE_addrs1 object-group ANY_addrs log
 access-list INSIDE_in extended deny ip any any log
 !
