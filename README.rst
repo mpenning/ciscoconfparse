@@ -113,7 +113,7 @@ already have setuptools_, you can install as usual:
 ::
 
       # Substitute whatever ciscoconfparse version you like...
-      easy_install -U ciscoconfparse==1.2.20
+      easy_install -U ciscoconfparse==1.2.21
 
 Alternatively you can install into Python2.x with pip_:
 
