@@ -1,6 +1,6 @@
 import re
 
-from protocol_values import ASA_TCP_PORTS, ASA_UDP_PORTS
+from protocol_values import ASA_TCP_PORTS, ASA_UDP_PORTS, ASA_IP_PROTOCOLS
 from ccp_abc import BaseCfgLine
 from ccp_util import L4Object
 from ccp_util import IPv4Obj
@@ -381,19 +381,38 @@ class BaseASAIntfLine(ASACfgLine):
 ##-------------  ASA name
 ##
 
+_RE_NAMEOBJECT_STR = r'^name\s+(?P<addr>\d+\.\d+\.\d+\.\d+)\s(?P<name>\S+)'
+_RE_NAMEOBJECT = re.compile(_RE_NAMEOBJECT_STR, re.VERBOSE)
 class ASAName(ASACfgLine):
 
     def __init__(self, *args, **kwargs):
         """Accept an ASA line number and initialize family relationship
         attributes"""
         super(ASAName, self).__init__(*args, **kwargs)
+        mm = _RE_NAMEOBJECT.search(self.text)
+        if not (mm is None):
+            self._mm_results = mm.groupdict()   # All regex match results
+        else:
+            raise ValueError
+
+        self.name = self._mm_results['name']
+        self.addr = self._mm_results['addr']
 
     @classmethod
     def is_object_for(cls, line="", re=re):
-        name_regex = r'^name\s+(\d+\.\d+\.\d+\.\d+)\s(\S+)'
-        if re.search(name_regex, line):
+        if 'name ' in line[0:5].lower():
             return True
         return False
+
+    @property
+    def result_dict(self):
+        mm_r = self._mm_results
+        retval = dict()
+
+        retval['name'] = self._mm_results['name']
+        retval['addr'] = self._mm_results['addr']
+
+        return retval
 
 ##
 ##-------------  ASA object network
@@ -408,8 +427,7 @@ class ASAObjNetwork(ASACfgLine):
 
     @classmethod
     def is_object_for(cls, line="", re=re):
-        obj_group_regex = r'^object\s+network\s+(\S+)'
-        if re.search(obj_group_regex, line):
+        if 'object network ' in line[0:15].lower():
             return True
         return False
 
@@ -426,8 +444,7 @@ class ASAObjService(ASACfgLine):
 
     @classmethod
     def is_object_for(cls, line="", re=re):
-        obj_group_regex = r'^object\s+service\s+(\S+)'
-        if re.search(obj_group_regex, line):
+        if 'object service ' in line[0:15].lower():
             return True
         return False
 
@@ -453,8 +470,7 @@ class ASAObjGroupNetwork(ASACfgLine):
 
     @classmethod
     def is_object_for(cls, line="", re=re):
-        obj_group_regex = r'^object-group\s+network\s+(\S+)'
-        if re.search(obj_group_regex, line):
+        if 'object-group network ' in line[0:21].lower():
             return True
         return False
 
@@ -534,8 +550,7 @@ class ASAObjGroupService(ASACfgLine):
 
     @classmethod
     def is_object_for(cls, line="", re=re):
-        obj_group_regex = r'^object-group\s+service\s+(\S+)'
-        if re.search(obj_group_regex, line):
+        if 'object-group service ' in line[0:21].lower():
             return True
         return False
 
@@ -792,6 +807,195 @@ class ASARouteLine(BaseASARouteLine):
         retval = self.re_match_typed(r'^ip(v6)*\s+route\s+.+?track\s+(\S+)',
             group=2, result_type=str, default='')
         return retval
+
+_ACL_PROTOCOLS = 'ip|tcp|udp|ah|eigrp|esp|gre|igmp|igrp|ipinip|ipsec|ospf|pcp|pim|pptp|snp|\d+'
+_RE_ACLOBJECT_STR = r"""(?:                         # Non-capturing parenthesis
+# remark
+ (^access-list\s+(?P<acl_name0>\S+)\s+(?P<action0>remark)\s+(?P<remark>\S.+?)$)
+
+# extended service object with source network object, destination network object
+|(?:^access-list\s+(?P<acl_name1>\S+)
+  \s+extended\s+(?P<action1>permit|deny)
+  \s+(?:
+     (?:object-group\s+(?P<service_object1>\S+))
+    |(?P<protocol1>{0})
+  )
+  \s+(?:                       # 10.0.0.0 255.255.255.0
+     (?:object-group\s+(?P<src_networkobject1>\S+))
+    |(?:object\s+(?P<src_object1>\S+))
+    |(?:(?P<src_network1a>\S+)\s+(?P<src_netmask1a>\d+\.\d+\.\d+\.\d+))
+  )
+  \s+(?:                       # 10.0.0.0 255.255.255.0
+     (?:object-group\s+(?P<dst_networkobject1>\S+))
+    |(?:object\s+(?P<dst_object1>\S+))
+    |(?:(?P<dst_network1a>\S+)\s+(?P<dst_netmask1a>\d+\.\d+\.\d+\.\d+))
+  )
+  (?:\s+
+    (?P<log1>log)
+    (?:\sinterval\s+(?P<log_interval1>\d+))?
+  )?
+  (?:\s+(?P<disable1>disable))?
+  (?:
+    (?:\s+(?P<inactive1>inactive))
+   |(?:\s+time-range\s+(?P<time_range1>\S+))
+  )?
+ \s*$)    # END access-list 1 parse
+
+# extended service object with source network, destination network
+# access-list TESTME1 extended permit ip any any log
+|(?:^access-list\s+(?P<acl_name2>\S+)
+  \s+extended
+  \s+(?P<action2>permit|deny)
+  \s+(?:                       # service-object or protocol
+     (?:object-group\s+(?P<service_object2>\S+))
+    |(?P<protocol2>{0})
+  )
+  (?:\s+       # any, any4, host foo, object-group FOO or 10.0.0.0 255.255.255.0
+     (?:
+       (?P<src_network2a>any|any4)
+      |(?:host\s+(?P<src_network2b>\S+))
+      |(?:object\s+(?P<src_object2>\S+))
+      |(?:object-group\s+(?P<src_networkobject2>\S+))
+      |(?:(?P<src_network2c>\S+)\s+(?P<src_netmask2c>\d+\.\d+\.\d+\.\d+))
+    )
+  )
+  (?:\s+
+    (?:
+       (?:(?P<src_port_operator>eq|neq|lt|gt)\s+(?P<src_port>\S+))
+      |(?:range\s+(?P<src_port_low>\S+)\s+(?P<src_port_high>\S+))
+      |(?:object-group\s+(?P<src_service_object>\S+))
+    )
+  )?
+  (?:\s+       # any, any4, host foo, object-group FOO or 10.0.0.0 255.255.255.0
+     (?:
+       (?P<dst_network2a>any|any4)
+      |(?:host\s+(?P<dst_network2b>\S+))
+      |(?:object\s+(?P<dst_object2>\S+))
+      |(?:object-group\s+(?P<dst_networkobject2>\S+))
+      |(?:(?P<dst_network2c>\S+)\s+(?P<dst_netmask2c>\d+\.\d+\.\d+\.\d+))
+    )
+  )
+  (?:\s+
+    (?:
+       (?:(?P<dst_port_operator>eq|neq|lt|gt)\s+(?P<dst_port>\S+))
+      |(?:range\s+(?P<dst_port_low>\S+)\s+(?P<dst_port_high>\S+))
+      |(?:object-group\s+(?P<dst_service_object>\S+))
+    )
+  )?
+  (?:\s+
+    (?P<log2>log)
+    (?:\sinterval\s+(?P<log_interval2>\d+))?
+  )?
+  (?:\s+(?P<disable2>disable))?
+  (?:
+    (?:\s+(?P<inactive2>inactive))
+   |(?:\s+time-range\s+(?P<time_range2>\S+))
+  )?
+ \s*$)    # END access-list 2 parse
+
+)                                                   # Close non-capture parens
+""".format(_ACL_PROTOCOLS)
+_RE_ACLOBJECT = re.compile(_RE_ACLOBJECT_STR, re.VERBOSE)
+
+class ASAAclLine(ASACfgLine):
+
+    def __init__(self, *args, **kwargs):
+        """Provide attributes on Cisco ASA Access-Lists"""
+        super(ASAAclLine, self).__init__(*args, **kwargs)
+        mm = _RE_ACLOBJECT.search(self.text)
+        if not (mm is None):
+            self._mm_results = mm.groupdict()   # All regex match results
+        else:
+            raise ValueError
+
+    @classmethod
+    def is_object_for(cls, line="", re=re):
+        #if _RE_ACLOBJECT.search(line):
+        if 'access-list ' in line[0:13].lower():
+            return True
+        return False
+
+    @property
+    def src_addr_method(self):
+        mm_r = self._mm_results
+        if mm_r['action0'] and (mm_r['action0']=='remark'):
+            # remarks return an empty string
+            return ''
+        elif mm_r['src_networkobject1'] or mm_r['src_networkobject2']:
+            return 'object-group'
+        elif mm_r['src_object1'] or mm_r['src_object2']:
+            return 'object'
+        elif mm_r['src_network1a'] or mm_r['src_network2a'] \
+            or mm_r['src_network2b'] or mm_r['src_network2c']:
+            return 'network'
+        else:
+            raise ValueError("Cannot parse ACL source address method for '{0}'".format(self.text))
+
+    @property
+    def dst_addr_method(self):
+        mm_r = self._mm_results
+        if mm_r['action0'] and (mm_r['action0']=='remark'):
+            # remarks return an empty string
+            return ''
+        elif mm_r['dst_networkobject1'] or mm_r['dst_networkobject2']:
+            return 'object-group'
+        elif mm_r['dst_object1'] or mm_r['dst_object2']:
+            return 'object'
+        elif mm_r['dst_network1a'] or mm_r['dst_network2a'] \
+            or mm_r['dst_network2b'] or mm_r['dst_network2c']:
+            return 'network'
+        else:
+            raise ValueError("Cannot parse ACL destination address method for '{0}'".format(self.text))
+
+    @property
+    def acl_protocol_dict(self):
+        mm_r = self._mm_results
+        retval = dict()
+
+        if mm_r['remark']:
+            # remarks get IP protocol -1
+            retval['protocol'] = -1
+            retval['protocol_object'] = ''
+            return retval
+        elif mm_r['protocol1'] or mm_r['protocol2']:
+            _proto = mm_r['protocol1'] or mm_r['protocol2'] or -1
+            retval['protocol'] = int(ASA_IP_PROTOCOLS.get(_proto, _proto))
+            retval['protocol_object'] = ''
+            return retval
+        elif mm_r['service_object1'] or mm_r['service_object2']:
+            # protocol service objects get a special protocol number
+            retval['protocol'] = 65535
+            retval['protocol_object'] = mm_r['service_object1'] \
+                or mm_r['service_object2']
+            return retval
+        else:
+            raise ValueError("Cannot parse ACL protocol value for '{0}'".format(self.text))
+
+    @property
+    def result_dict(self):
+        mm_r = self._mm_results
+        retval = dict()
+
+        proto_dict = self.acl_protocol_dict
+        retval['ip_protocol'] = proto_dict['protocol']
+        retval['ip_protocol_object'] = proto_dict['protocol_object']
+        retval['acl_name'] = mm_r['acl_name0'] or mm_r['acl_name1'] \
+            or mm_r['acl_name2']
+        retval['action'] = mm_r['action0'] or mm_r['action1'] or mm_r['action2']
+        retval['remark'] = mm_r['remark']
+        retval['src_addr_method'] = self.src_addr_method
+        retval['dst_addr_method'] = self.dst_addr_method
+        retval['disable'] = bool(mm_r['disable1'] or mm_r['disable2'])
+        retval['time_range'] = mm_r['time_range1'] or mm_r['time_range2']
+        retval['log'] = bool(mm_r['log1'] or mm_r['log2'])
+        if not retval['log']:
+            retval['log_interval'] = -1
+        else:
+            retval['log_interval'] = int(mm_r['log_interval1'] \
+                or mm_r['log_interval2'] or 300)
+
+        return retval
+
 
 ################################
 ################################ Groups ###############################
