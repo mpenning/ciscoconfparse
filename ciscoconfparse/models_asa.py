@@ -808,7 +808,8 @@ class ASARouteLine(BaseASARouteLine):
             group=2, result_type=str, default='')
         return retval
 
-_ACL_PROTOCOLS = 'ip|tcp|udp|ah|eigrp|esp|gre|igmp|igrp|ipinip|ipsec|ospf|pcp|pim|pptp|snp|\d+'
+_ACL_PROTOCOLS = 'ip|tcp|udp|ah|eigrp|esp|gre|icmp|igmp|igrp|ipinip|ipsec|ospf|pcp|pim|pptp|snp|\d+'
+_ACL_LOGLEVELS = r'alerts|critical|debugging|emergencies|errors|informational|notifications|warnings|[0-7]'
 _RE_ACLOBJECT_STR = r"""(?:                         # Non-capturing parenthesis
 # remark
  (^access-list\s+(?P<acl_name0>\S+)\s+(?P<action0>remark)\s+(?P<remark>\S.+?)$)
@@ -832,7 +833,8 @@ _RE_ACLOBJECT_STR = r"""(?:                         # Non-capturing parenthesis
   )
   (?:\s+
     (?P<log1>log)
-    (?:\sinterval\s+(?P<log_interval1>\d+))?
+    (?:\s+(?P<loglevel1>{1}))?
+    (?:\s+interval\s+(?P<log_interval1>\d+))?
   )?
   (?:\s+(?P<disable1>disable))?
   (?:
@@ -884,7 +886,8 @@ _RE_ACLOBJECT_STR = r"""(?:                         # Non-capturing parenthesis
   )?
   (?:\s+
     (?P<log2>log)
-    (?:\sinterval\s+(?P<log_interval2>\d+))?
+    (?:\s+(?P<loglevel2>{1}))?
+    (?:\s+interval\s+(?P<log_interval2>\d+))?
   )?
   (?:\s+(?P<disable2>disable))?
   (?:
@@ -894,7 +897,7 @@ _RE_ACLOBJECT_STR = r"""(?:                         # Non-capturing parenthesis
  \s*$)    # END access-list 2 parse
 
 )                                                   # Close non-capture parens
-""".format(_ACL_PROTOCOLS)
+""".format(_ACL_PROTOCOLS, _ACL_LOGLEVELS)
 _RE_ACLOBJECT = re.compile(_RE_ACLOBJECT_STR, re.VERBOSE)
 
 class ASAAclLine(ASACfgLine):
@@ -990,7 +993,9 @@ class ASAAclLine(ASACfgLine):
         retval['log'] = bool(mm_r['log1'] or mm_r['log2'])
         if not retval['log']:
             retval['log_interval'] = -1
+            retval['log_level'] = ''
         else:
+            retval['log_level'] = mm_r['loglevel1'] or mm_r['loglevel2'] or 'informational'
             retval['log_interval'] = int(mm_r['log_interval1'] \
                 or mm_r['log_interval2'] or 300)
 

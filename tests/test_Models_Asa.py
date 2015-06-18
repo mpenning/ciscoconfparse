@@ -135,66 +135,78 @@ def testVal_object_group_service_03():
     'access-list TESTME_01 extended permit ip any any',
     'access-list TESTME_01 extended permit ip any any log',
     'access-list TESTME_01 extended permit ip any any log disable time-range MYTIME',
+    'access-list TESTME_01 extended permit ip any any log informational disable time-range MYTIME',
 
     'access-list TESTME_01 extended deny ip any any',
     'access-list TESTME_01 extended deny ip any any log',
-    'access-list TESTME_01 extended deny ip any any log disable time-range MYTIME',
+    'access-list TESTME_01 extended deny ip any any log informational disable time-range MYTIME',
 
     'access-list TESTME_01 extended deny ip any4 any',
     'access-list TESTME_01 extended deny ip any any4 log',
     'access-list TESTME_01 extended deny ip any4 any4 log disable',
     'access-list TESTME_01 extended deny ip any4 any4 log disable time-range MYTIME',
+    'access-list TESTME_01 extended deny ip any4 any4 log informational disable time-range MYTIME',
 
     'access-list TESTME_01 extended deny tcp any4 eq www any',
     'access-list TESTME_01 extended deny tcp any any4 eq https log',
     'access-list TESTME_01 extended deny tcp any4 eq 1024 any4 eq www log disable',
     'access-list TESTME_01 extended deny tcp any4 eq 1024 any4 eq www log disable time-range MYTIME',
+    'access-list TESTME_01 extended deny tcp any4 eq 1024 any4 eq www log informational disable time-range MYTIME',
 
     'access-list TESTME_01 extended deny tcp any4 eq www any gt 1024',
     'access-list TESTME_01 extended deny tcp any gt 1024 any4 eq https log',
     'access-list TESTME_01 extended deny tcp any4 gt 1024 any4 eq www log disable',
     'access-list TESTME_01 extended deny tcp any4 gt 1024 any4 eq www log disable time-range MYTIME',
+    'access-list TESTME_01 extended deny tcp any4 gt 1024 any4 eq www log informational disable time-range MYTIME',
 
     'access-list TESTME_01 extended permit tcp any4 neq www any gt 1024',
     'access-list TESTME_01 extended permit tcp any gt 1024 any4 neq https log',
     'access-list TESTME_01 extended permit tcp any4 gt 1024 any4 neq www log disable',
     'access-list TESTME_01 extended permit tcp any4 gt 1024 any4 neq www log disable time-range MYTIME',
+    'access-list TESTME_01 extended permit tcp any4 gt 1024 any4 neq www log  informational disable time-range MYTIME',
 
     'access-list TESTME_01 extended permit object-group MYPROTO object SRC object DST',
     'access-list TESTME_01 extended permit object-group MYPROTO object SRC object DST log',
     'access-list TESTME_01 extended permit object-group MYPROTO object SRC object DST log disable',
     'access-list TESTME_01 extended permit object-group MYPROTO object SRC object DST log disable time-range MYTIME',
+    'access-list TESTME_01 extended permit object-group MYPROTO object SRC object DST log informational disable time-range MYTIME',
 
     'access-list TESTME_01 extended permit tcp object SRC gt 1023 object DST eq ssh',
     'access-list TESTME_01 extended permit tcp object SRC gt 1023 object DST eq ssh log',
     'access-list TESTME_01 extended permit tcp object SRC gt 1023 object DST eq ssh log disable',
     'access-list TESTME_01 extended permit tcp object SRC gt 1023 object DST eq ssh log disable time-range MYTIME',
+    'access-list TESTME_01 extended permit tcp object SRC gt 1023 object DST eq ssh log informational disable time-range MYTIME',
 
     'access-list TESTME_01 extended permit object-group MYPROTO object-group SRC object-group DST',
     'access-list TESTME_01 extended permit object-group MYPROTO object-group SRC object-group DST log',
     'access-list TESTME_01 extended permit object-group MYPROTO object-group SRC object-group DST log disable',
     'access-list TESTME_01 extended permit object-group MYPROTO object-group SRC object-group DST log disable time-range MYTIME',
+    'access-list TESTME_01 extended permit object-group MYPROTO object-group SRC object-group DST log  informational disable time-range MYTIME',
 
     'access-list TESTME_01 extended permit tcp object-group SRC object-group DST',
     'access-list TESTME_01 extended permit tcp object-group SRC object-group DST log',
     'access-list TESTME_01 extended permit tcp object-group SRC object-group DST log disable',
     'access-list TESTME_01 extended permit tcp object-group SRC object-group DST log disable time-range MYTIME',
+    'access-list TESTME_01 extended permit tcp object-group SRC object-group DST log  informational disable time-range MYTIME',
 
 
     'access-list TESTME_01 extended deny tcp object-group SRC lt 1024 object-group DST eq ssh',
     'access-list TESTME_01 extended deny tcp object-group SRC lt 1024 object-group DST eq ssh log',
     'access-list TESTME_01 extended deny tcp object-group SRC lt 1024 object-group DST eq ssh log disable',
     'access-list TESTME_01 extended deny tcp object-group SRC lt 1024 object-group DST eq ssh log disable time-range MYTIME',
+    'access-list TESTME_01 extended deny tcp object-group SRC lt 1024 object-group DST eq ssh log  informational disable time-range MYTIME',
 
     'access-list TESTME_01 extended permit tcp object-group SRC range 1 1024 object-group DST eq ssh',
     'access-list TESTME_01 extended permit tcp object-group SRC range 1 1024 object-group DST eq ssh log',
     'access-list TESTME_01 extended permit tcp object-group SRC range 1 1024 object-group DST eq ssh log disable',
     'access-list TESTME_01 extended permit tcp object-group SRC range 1 1024 object-group DST eq ssh log disable time-range MYTIME',
+    'access-list TESTME_01 extended permit tcp object-group SRC range 1 1024 object-group DST eq ssh log  informational disable time-range MYTIME',
 
     'access-list TESTME_01 extended permit 47 object-group SRC object-group DST',
     'access-list TESTME_01 extended permit 47 object-group SRC object-group DST log',
     'access-list TESTME_01 extended permit 47 object-group SRC object-group DST log disable',
     'access-list TESTME_01 extended permit 47 object-group SRC object-group DST log disable time-range MYTIME',
+    'access-list TESTME_01 extended permit 47 object-group SRC object-group DST log informational disable time-range MYTIME',
     ])
 def testVal_ASAAclLine_DNA(line):
     """Ensure that valid ACL lines are classified as an ASAAclLine"""
