@@ -1,3 +1,4 @@
+1.2.22  20150618 Improve ASAAclLine Log level parsing support
 1.2.21  20150616 Initial support for ASAAclLine parsing, partial commit for Github Issue #29
 1.2.20  20150611 Increase ASA config parse speed (when parsed with factory=True)
 1.2.19  20150418 Fix Github issue #33 - Unicode path support, Github issue #36 - Banner delimiter issues, Github issue #37 - delete() broke in some situations
