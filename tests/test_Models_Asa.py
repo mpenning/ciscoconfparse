@@ -19,11 +19,11 @@ if sys.version_info[0]<3:
 else:
     from ipaddress import IPv4Network, IPv6Network, IPv4Address, IPv6Address
 
+def testVal_Access_List(parse_a01_factory):
+    result_correct = {}
+    assert len(parse_a01_factory.objs.access_list['INSIDE_in'])==4
 
-@pytest.mark.parametrize("cfg", [
-    None,
-    ])
-def testVal_Names(cfg, parse_a01, parse_a01_factory):
+def testVal_Names(parse_a01, parse_a01_factory):
     result_correct = {'dmzsrv00': '1.1.3.10', 
         'dmzsrv01': '1.1.3.11', 
         'dmzsrv02': '1.1.3.12', 
