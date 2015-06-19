@@ -48,7 +48,17 @@ _IPV6_REGEX = r"""(?!:::\S+?$)
 _RGX_IPV6ADDR = re.compile(_IPV6_REGEX, re.VERBOSE)
 
 _RGX_IPV4ADDR = re.compile(r'^(?P<addr>\d+\.\d+\.\d+\.\d+)')
-_RGX_IPV4ADDR_NETMASK = re.compile(r'(\d+\.\d+\.\d+\.\d+)\s+(\d+\.\d+\.\d+\.\d+)')
+_RGX_IPV4ADDR_NETMASK = re.compile(
+    r"""
+     (?:
+       ^(?P<addr0>\d+\.\d+\.\d+\.\d+)$
+      |(?:^
+         (?:(?P<addr1>\d+\.\d+\.\d+\.\d+))(?:\s+|\/)(?:(?P<netmask>\d+\.\d+\.\d+\.\d+))
+       $)
+      |^(?:\s*(?P<addr2>\d+\.\d+\.\d+\.\d+)(?:\/(?P<masklen>\d+))\s*)$
+    )
+    """, 
+    re.VERBOSE)
 
 ## Emulate the old behavior of ipaddr.IPv4Network in Python2, which can use
 ##    IPv4Network with a host address.  Google removed that in Python3's 
@@ -79,12 +89,25 @@ class IPv4Obj(object):
         #RGX_IPV4ADDR = re.compile(r'^(\d+\.\d+\.\d+\.\d+)')
         #RGX_IPV4ADDR_NETMASK = re.compile(r'(\d+\.\d+\.\d+\.\d+)\s+(\d+\.\d+\.\d+\.\d+)')
 
-        arg = _RGX_IPV4ADDR_NETMASK.sub(r'\1/\2', arg) # mangle IOS: 'addr mask'
         self.arg = arg
-        mm = _RGX_IPV4ADDR.search(arg)
-        assert (not (mm is None)), "IPv4Obj couldn't parse {0}".format(arg)
-        self.network_object = IPv4Network(arg, strict=strict)
-        self.ip_object = IPv4Address(mm.group(1))
+        mm = _RGX_IPV4ADDR_NETMASK.search(arg)
+        ERROR = "IPv4Obj couldn't parse '{0}'".format(arg)
+        assert (not (mm is None)), ERROR
+
+        mm_result = mm.groupdict()
+        addr = mm_result['addr0'] or mm_result['addr1'] \
+            or mm_result['addr2'] or '127.0.0.1'
+        masklen = int(mm_result['masklen'] or 32)
+        netmask = mm_result['netmask']
+        if netmask:
+            ## ALWAYS check for the netmask first
+            self.network_object = IPv4Network('{0}/{1}'.format(addr, netmask), 
+                strict=strict)
+            self.ip_object = IPv4Address('{0}'.format(addr))
+        else:
+            self.network_object = IPv4Network('{0}/{1}'.format(addr, masklen), 
+                strict=strict)
+            self.ip_object = IPv4Address('{0}'.format(addr))
 
 
     def __repr__(self):
