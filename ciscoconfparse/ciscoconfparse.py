@@ -2476,6 +2476,7 @@ class ASAConfigList(MutableSequence):
             - names (dict): A Python dictionary, which maps a Cisco ASA name to a string representing the address
             - object_group_network (dict): A Python dictionary, which maps a Cisco ASA object-group network name to the :class:`~models_asa.ASAObjNetwork` object
             - object_group_service (dict): A Python dictionary, which maps a Cisco ASA object-group service name to the :class:`~models_asa.ASAObjService` object
+            - access_list (dict): A Python dictionary, which maps a Cisco ASA access-list name to the list of ACEs for that ACL
  
         Returns:
             - An instance of an :class:`~ciscoconfparse.ASAConfigList` object.
@@ -2503,6 +2504,7 @@ class ASAConfigList(MutableSequence):
         self._RE_NAMES = re.compile(r'^\s*name\s+(\d+\.\d+\.\d+\.\d+)\s+(\S+)')
         self._RE_OBJNET = re.compile(r'^\s*object-group\s+network\s+(\S+)')
         self._RE_OBJSVC = re.compile(r'^\s*object-group\s+service\s+(\S+)')
+        self._RE_OBJACL = re.compile(r'^\s*access-list\s+(\S+)')
 
     def __len__(self):
         return len(self._list)
@@ -2799,14 +2801,16 @@ class ASAConfigList(MutableSequence):
         return retval
 
     @property
-    def object_group_service(self):
-        """Return a dictionary of name to object-group service mappings"""
+    def access_list(self):
+        """Return a dictionary of ACL name to ACE (list) mappings"""
         retval = dict()
-        obj_rgx = self._RE_OBJSVC
-        for obj in self.CiscoConfParse.find_objects(obj_rgx):
-            name = obj.re_match_typed(obj_rgx, group=1, result_type=str)
-            retval[name] = obj
+        for obj in self.CiscoConfParse.find_objects(self._RE_OBJACL):
+            name = obj.re_match_typed(self._RE_OBJACL, group=1, result_type=str)
+            tmp = retval.get(name, [])
+            tmp.append(obj)
+            retval[name] = tmp
         return retval
+
 
 class DiffObject(object):
     """This object should be used at every level of heirarchy"""
