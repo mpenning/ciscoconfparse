@@ -71,8 +71,11 @@ class IPv4Obj(object):
 
     Attributes:
         - network_object : An IPv4Network object
-        - ip_object  : An IPAddress object
-        - ip : An IPAddress object
+        - ip_object  : An IPv4Address object
+        - ip : An IPv4Address object
+        - as_binary_tuple (tuple): The address as a tuple of zero-padded binary strings
+        - as_hex_tuple (tuple): The address as a tuple of zero-padded 8-bit hex strings
+        - as_decimal (int): The ip address as a decimal integer
         - network (str): A string representing the network address
         - netmask (str): A string representing the netmask
         - prefixlen (int): An integer representing the length of the netmask
@@ -283,12 +286,15 @@ class IPv6Obj(object):
     """An object to represent IPv6 addresses and IPv6Networks.  When :class:`~ccp_util.IPv6Obj` objects are compared or sorted, shorter masks are greater than longer masks. After comparing mask length, numerically higher IP addresses are greater than numerically lower IP addresses.
 
     Kwargs:
-        - arg (str): A string containing an IPv6 address, and optionally a netmask or masklength.  The following address/netmask formats are supported: "10.1.1.1/24", "10.1.1.1 255.255.255.0", "10.1.1.1/255.255.255.0"
+        - arg (str): A string containing an IPv6 address, and optionally a netmask or masklength.  The following address/netmask formats are supported: "2001::dead:beef", "2001::dead:beef/64",
 
     Attributes:
         - network_object : An IPv6Network object
-        - ip_object  : An IPAddress object
-        - ip : An IPAddress object
+        - ip_object  : An IPv6Address object
+        - ip : An IPv6Address object
+        - as_binary_tuple (tuple): The ipv6 address as a tuple of zero-padded binary strings
+        - as_decimal (int): The ipv6 address as a decimal integer
+        - as_hex_tuple (tuple): The ipv6 address as a tuple of zero-padded 8-bit hex strings
         - network (str): A string representing the network address
         - netmask (str): A string representing the netmask
         - prefixlen (int): An integer representing the length of the netmask
