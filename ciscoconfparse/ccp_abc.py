@@ -108,6 +108,14 @@ class BaseCfgLine(object):
         return self.classname
 
     @property
+    def hash_children(self):
+        """Return a unique hash of all children (if the number of children > 0)"""
+        if len(self.children)>0:
+            return hash(tuple(self.children))
+        else:
+            return 0
+
+    @property
     def family_endpoint(self):
         if self.children==[]:
             return 0
