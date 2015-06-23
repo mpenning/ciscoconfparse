@@ -33,7 +33,8 @@ def testVal_Names(parse_a01, parse_a01_factory):
     assert parse_a01.ConfigObjs.names==result_correct
     assert parse_a01_factory.ConfigObjs.names==result_correct
 
-def testVal_object_group_network():
+def testVal_object_group_network_01():
+    """Test object group network results"""
     conf = ['!',
         'name 1.1.2.20 loghost01',
         '!',
@@ -46,11 +47,46 @@ def testVal_object_group_network():
     cfg_factory = CiscoConfParse(conf, factory=True, syntax='asa')
     obj = cfg_factory.find_objects(r'object-group\snetwork')[0]
 
-    result_correct = [IPv4Obj('1.1.2.20/32'), IPv4Obj('1.1.2.1/32'),
+    result_correct_01 = [IPv4Obj('1.1.2.20/32'), IPv4Obj('1.1.2.1/32'),
         IPv4Obj('1.1.2.2/32'), IPv4Obj('1.1.2.0/24')]
+    result_correct_02 = ['1.1.2.20', '1.1.2.1', '1.1.2.2', 
+        '1.1.2.0/255.255.255.0']
     # Ensure obj.name is set correctly
     assert obj.name=="INSIDE_addrs"
-    assert obj.networks==result_correct
+    assert obj.networks==result_correct_01
+    assert obj.network_strings==result_correct_02
+    ## Test obj.networks again to test the result_cache
+    assert obj.networks==result_correct_01
+
+def testVal_object_group_network_02():
+    """Test recursion through a group object"""
+    conf = ['!',
+        'name 1.1.2.20 loghost01',
+        'name 1.2.2.20 loghost02',
+        '!',
+        'object-group network INSIDE_recurse',
+        ' network-object host loghost02',
+
+        'object-group network INSIDE_addrs',
+        ' network-object host loghost01',
+        ' network-object host 1.1.2.1',
+        ' network-object 1.1.2.2 255.255.255.255',
+        ' network-object 1.1.2.0 255.255.255.0',
+        ' group-object INSIDE_recurse',
+        '!',]
+    cfg_factory = CiscoConfParse(conf, factory=True, syntax='asa')
+    obj = cfg_factory.find_objects(r'object-group\snetwork')[1]
+
+    result_correct_01 = [IPv4Obj('1.1.2.20/32'), IPv4Obj('1.1.2.1/32'),
+        IPv4Obj('1.1.2.2/32'), IPv4Obj('1.1.2.0/24'), IPv4Obj('1.2.2.20/32')]
+    result_correct_02 = ['1.1.2.20', '1.1.2.1', '1.1.2.2', 
+        '1.1.2.0/255.255.255.0', '1.2.2.20']
+    # Ensure obj.name is set correctly
+    assert obj.name=="INSIDE_addrs"
+    assert obj.networks==result_correct_01
+    assert obj.network_strings==result_correct_02
+    ## Test obj.networks again to test the result_cache
+    assert obj.networks==result_correct_01
 
 def testVal_ipv4_addr():
     conf = ['!',
