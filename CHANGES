@@ -1,4 +1,5 @@
-1.2.24  20150622 Fix Github Issue #41, improve IPv4Obj docs
+1.2.25  20150623 Modest ASAObjGroupNetwork speed improvements
+1.2.24  20150622 Fix Github issue #41, improve IPv4Obj docs
 1.2.23  20150619 Improve IPv4Obj parsing speed
 1.2.22  20150618 Improve ASAAclLine Log level parsing support
 1.2.21  20150616 Initial support for ASAAclLine parsing, partial commit for Github Issue #29
