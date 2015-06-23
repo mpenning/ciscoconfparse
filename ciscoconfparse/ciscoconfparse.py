@@ -2505,6 +2505,7 @@ class ASAConfigList(MutableSequence):
         self._RE_OBJNET = re.compile(r'^\s*object-group\s+network\s+(\S+)')
         self._RE_OBJSVC = re.compile(r'^\s*object-group\s+service\s+(\S+)')
         self._RE_OBJACL = re.compile(r'^\s*access-list\s+(\S+)')
+        self._network_cache = dict()
 
     def __len__(self):
         return len(self._list)
