@@ -468,6 +468,8 @@ class ASAObjGroupNetwork(ASACfgLine):
         self.name = self.re_match_typed(r'^object-group\s+network\s+(\S+)', group=1, 
             result_type=str)
 
+        self.result_cache = dict()
+
     @classmethod
     def is_object_for(cls, line="", re=re):
         if 'object-group network ' in line[0:21].lower():
@@ -475,9 +477,22 @@ class ASAObjGroupNetwork(ASACfgLine):
         return False
 
     @property
-    def networks(self):
-        """Return a list of IPv4Obj objects which represent the address space allowed by
-        This object-group"""
+    def hash_children(self):
+        ## Manually override the BaseCfgLine method since this recurses through
+        ##    children
+        ## FIXME: Implement hash_children for ASAObjGroupService
+        return hash(tuple(self.network_strings))  # network_strings recurses...
+
+    @property
+    def network_count(self):
+        ## Return the number of discrete network objects covered by this group
+        ## FIXME: Implement port_count for ASAObjGroupService
+        return len(self.network_strings)
+
+    @property
+    def network_strings(self):
+        """Return a list of strings which represent the address space allowed by
+        this object-group"""
         retval = list()
         names = self.confobj.names
         for obj in self.children:
@@ -492,12 +507,12 @@ class ASAObjGroupNetwork(ASACfgLine):
                 net_obj = dict()
 
             if net_obj.get('host', None):
-                ## This is some kind of host
-                retval.append(IPv4Obj(names.get(net_obj['host'], 
-                    net_obj['host'])))
+                retval.append(names.get(net_obj['host'], 
+                    net_obj['host']))
             elif net_obj.get('network', None):
                 ## This is a non-host network object
-                retval.append(IPv4Obj('{0} {1}'.format(names.get(net_obj['network'], net_obj['network']), net_obj['netmask'])))
+                retval.append('{0}/{1}'.format(names.get(net_obj['network'], 
+                    net_obj['network']), net_obj['netmask']))
             elif net_obj.get('groupobject', None):
                 groupobject = net_obj['groupobject']
                 if groupobject==self.name:
@@ -509,11 +524,39 @@ class ASAObjGroupNetwork(ASACfgLine):
                 if (group_nets is None):
                     raise ValueError("FATAL: Cannot find group-object named {0}".format(name))
                 else:
-                    retval.extend(group_nets.networks)
+                    retval.extend(group_nets.network_strings)
             elif 'description ' in obj.text:
                 pass
             else:
                 raise NotImplementedError("Cannot parse '{0}'".format(obj.text))
+        return retval
+
+    @property
+    def networks(self):
+        """Return a list of IPv4Obj objects which represent the address space allowed by
+        This object-group"""
+        ## FIXME: Implement object caching for other ASAConfigList objects
+        ## Return a cached result if the networks lookup has already been done
+        child_hash = self.hash_children
+        if self.result_cache.get(child_hash, 0):
+            return self.result_cache[child_hash]
+        else:
+            # Initialize the cache to save small bits of memory
+            self.result_cache = dict()
+
+        retval = list()
+        for net_str in self.network_strings:
+            ## Check the ASACfgList cache of network objects
+            if not self.confobj._network_cache.get(net_str, False):
+                net = IPv4Obj(net_str)
+                self.confobj._network_cache[net_str] = net
+                retval.append(net)
+            else:
+                retval.append(self.confobj._network_cache[net_str])
+
+        # Update the result_cache with the latest results
+        self.result_cache[child_hash] = retval
+
         return retval
 
 ##
