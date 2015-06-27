@@ -468,8 +468,6 @@ class ASAObjGroupNetwork(ASACfgLine):
         self.name = self.re_match_typed(r'^object-group\s+network\s+(\S+)', group=1, 
             result_type=str)
 
-        self.result_cache = dict()
-
     @classmethod
     def is_object_for(cls, line="", re=re):
         if 'object-group network ' in line[0:21].lower():
@@ -537,12 +535,6 @@ class ASAObjGroupNetwork(ASACfgLine):
         This object-group"""
         ## FIXME: Implement object caching for other ASAConfigList objects
         ## Return a cached result if the networks lookup has already been done
-        child_hash = self.hash_children
-        if self.result_cache.get(child_hash, 0):
-            return self.result_cache[child_hash]
-        else:
-            # Initialize the cache to save small bits of memory
-            self.result_cache = dict()
 
         retval = list()
         for net_str in self.network_strings:
@@ -553,9 +545,6 @@ class ASAObjGroupNetwork(ASACfgLine):
                 retval.append(net)
             else:
                 retval.append(self.confobj._network_cache[net_str])
-
-        # Update the result_cache with the latest results
-        self.result_cache[child_hash] = retval
 
         return retval
 
