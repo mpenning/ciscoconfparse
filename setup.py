@@ -21,8 +21,10 @@ def read(fname):
 ## Conditionally require the correct ipaddr package in Python2 vs Python3
 if sys.version_info[0]<3:
     IPADDR = "ipaddr>=2.1.11"
+    DNSPYTHON = "dnspython"
 else:
     IPADDR = "ipaddress"
+    DNSPYTHON = "dnspython3"
 
 setup(name='ciscoconfparse',
       version=__ccpversion__,
@@ -39,7 +41,7 @@ setup(name='ciscoconfparse',
       packages=find_packages(),
       use_2to3=True,             # Reqd for Windows + Py3 - ref Github issue #32
       zip_safe=False,
-      install_requires = [IPADDR, 'colorama'],   # Package dependencies here
+      install_requires = [IPADDR, DNSPYTHON, 'colorama'],   # Package dependencies here
       setup_requires=["setuptools_hg"],  # setuptools_hg must be installed as a python module
       classifiers=[
           'Development Status :: 5 - Production/Stable',
