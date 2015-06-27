@@ -39,7 +39,7 @@ setup(name='ciscoconfparse',
       packages=find_packages(),
       use_2to3=True,             # Reqd for Windows + Py3 - ref Github issue #32
       zip_safe=False,
-      install_requires = [IPADDR],       # Package dependencies here
+      install_requires = [IPADDR, 'termcolor'],   # Package dependencies here
       setup_requires=["setuptools_hg"],  # setuptools_hg must be installed as a python module
       classifiers=[
           'Development Status :: 5 - Production/Stable',
