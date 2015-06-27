@@ -1,7 +1,10 @@
 from collections import MutableSequence, Iterator
 from operator import methodcaller, attrgetter
 from difflib import SequenceMatcher
+from termcolor import colored
+import logging
 import time
+import sys
 import re
 import os
 
@@ -59,6 +62,16 @@ __copyright__ = "2007-{0}, {1}".format(time.strftime('%Y'), __author__)
 __license__ = "GPLv3"
 __status__ = "Production"
 
+_log = logging.getLogger()
+_CCP_LOG_FORMAT_PREFIX_STR = colored('[%(module)s %(funcName)s] [%(levelname)s] ', 'white')
+_CCP_LOG_FORMAT_MSG_STR = colored('%(msg)s', 'green')
+_CCP_LOG_FORMAT_STR = _CCP_LOG_FORMAT_PREFIX_STR + _CCP_LOG_FORMAT_MSG_STR
+_ccp_log_format = logging.Formatter(_CCP_LOG_FORMAT_STR)
+_log.setLevel(logging.DEBUG)
+_LOG_CHANNEL_STDOUT = logging.StreamHandler(sys.stdout)
+_LOG_CHANNEL_STDOUT.setFormatter(_ccp_log_format)
+_log.addHandler(_LOG_CHANNEL_STDOUT)
+
 class CiscoConfParse(object):
     """Parses Cisco IOS configurations and answers queries about the configs"""
 
@@ -112,6 +125,7 @@ class CiscoConfParse(object):
         self.factory = factory
         self.ConfigObjs = None
         self.syntax = syntax
+        self.debug = debug
 
         if isinstance(config, list) or isinstance(config, Iterator):
             if syntax=='ios':
@@ -1826,8 +1840,8 @@ class CiscoConfParse(object):
                 #  - j1 and j2 are the begin and end points for arg b
                 for tag, i1, i2, j1, j2 in matcher.get_opcodes():
                     #print ("%7s a[%d:%d] (%s) b[%d:%d] (%s)" % (tag, i1, i2, a_lines[i1:i2], j1, j2, b_lines[j1:j2]))
-                    if debug:
-                        print("DBG: TAG='{0}'".format(tag))
+                    if debug or self.debug:
+                        _log.debug("TAG='{0}'".format(tag))
 
                     # if tag=='equal', check whether the parent objs are the same
                     #     if parent objects are the same, then do nothing
@@ -1855,9 +1869,9 @@ class CiscoConfParse(object):
                             #    fake some data...
                             aobj = None
                             aparent_text = '__ANOTHING__'
-                        if debug:
-                            print("    DBG: aobj:'{0}'".format(aobj))
-                            print("    DBG: aobj parents:'{0}'".format(aparent_text))
+                        if debug or self.debug:
+                            _log.debug("    aobj:'{0}'".format(aobj))
+                            _log.debug("    aobj parents:'{0}'".format(aparent_text))
 
                         try:
                             bobj = bobjs[idx]
@@ -1869,16 +1883,16 @@ class CiscoConfParse(object):
                             bobj = None
                             bparent_text = '__BNOTHING__'
 
-                        if debug:
-                            print("    DBG: bobj:'{0}'".format(bobj))
-                            print("    DBG: bobj parents:'{0}'".format(bparent_text))
+                        if debug or self.debug:
+                            _log.debug("    bobj:'{0}'".format(bobj))
+                            _log.debug("    bobj parents:'{0}'".format(bparent_text))
 
                         if (tag=='equal'):
                             # If the diff claims that these lines are equal, they
                             #   aren't truly equal unless parents match
                             if aparent_text!=bparent_text:
-                                if debug:
-                                    print("    DBG1: tagged 'equal', aparent_text!=bparent_text")
+                                if debug or self.debug:
+                                    _log.debug("    tagged 'equal', aparent_text!=bparent_text")
                                 # a & b parents are *not* the same
                                 #  therefore a & b are not equal
                                 if aobj:
@@ -1888,23 +1902,23 @@ class CiscoConfParse(object):
                                         aobj.parent.config_this = True
                                     aobj.unconfig_this = True
                                     if debug:
-                                        print("    DBG1: unconfigure aobj")
+                                        _log.debug("    unconfigure aobj")
                                 if bobj:
                                     bobj.config_this = True
                                     bobj.parent.config_this = True
                                     if debug:
-                                        print("    DBG1: configure bobj")
+                                        _log.debug("    configure bobj")
                             elif aparent_text==bparent_text:
                                 # Both a & b parents match, so these lines are equal
                                 aobj.unconfig_this = False
                                 bobj.config_this = False
                                 if debug:
-                                    print("    DBG2: tagged 'equal', aparent_text==bparent_text")
-                                    print("    DBG2:   do nothing with aobj / bobj")
+                                    _log.debug("    tagged 'equal', aparent_text==bparent_text")
+                                    _log.debug("    do nothing with aobj / bobj")
                         elif (tag=='replace'):
                             # tag: replace, I'm not going to check parents for now
                             if debug:
-                                print("    DBG3: tagged 'replace'")
+                                _log.debug("    tagged 'replace'")
                             if aobj:
                                 # Only configure parent if it's not already
                                 #    slated for removal
@@ -1912,15 +1926,15 @@ class CiscoConfParse(object):
                                     aobj.parent.config_this = True
                                 aobj.unconfig_this = True
                                 if debug:
-                                    print("    DBG3: unconfigure aobj")
+                                    _log.debug("    unconfigure aobj")
                             if bobj:
                                 bobj.config_this = True
                                 bobj.parent.config_this = True
                                 if debug:
-                                    print("    DBG3: configure bobj")
+                                    _log.debug("    configure bobj")
                         elif (tag=='insert'):
                             if debug:
-                                print("    DBG4: tagged 'insert'")
+                                _log.debug("    tagged 'insert'")
                             # I don't think tag: insert ever applies to a objects...
                             if aobj:
                                 # Only configure parent if it's not already
@@ -1929,17 +1943,17 @@ class CiscoConfParse(object):
                                     aobj.parent.config_this = True
                                 aobj.unconfig_this = True
                                 if debug:
-                                    print("    DBG4: unconfigure aobj")
+                                    _log.debug("    unconfigure aobj")
                             # tag: insert certainly applies to b objects...
                             if bobj:
                                 bobj.config_this = True
                                 bobj.parent.config_this = True
                                 if debug:
-                                    print("    DBG4: configure bobj")
+                                    _log.debug("    configure bobj")
                         elif (tag=='delete'):
                             # NOTE: I'm not deleting b objects, for now
                             if debug:
-                                print("    DBG5: tagged 'delete'")
+                                _log.debug("    tagged 'delete'")
                             if aobj:
                                 # Only configure parent if it's not already
                                 #    slated for removal
@@ -1948,7 +1962,7 @@ class CiscoConfParse(object):
                                         pobj.config_this = True
                                 aobj.unconfig_this = True
                                 if debug:
-                                    print("    DBG5: unconfigure aobj")
+                                    _log.debug("    unconfigure aobj")
                         else:
                             raise ValueError("Unknown action: {0}".format(tag))
 
@@ -1993,9 +2007,9 @@ class CiscoConfParse(object):
                 pass
 
         if debug:
-            print("DBG: Completed diff:")
+            _log.debug("Completed diff:")
             for line in retval:
-                print("DBG:'{0}'".format(line))
+                _log.debug("'{0}'".format(line))
         return retval
 
 
@@ -2152,8 +2166,7 @@ class IOSConfigList(MutableSequence):
         ## Ultimate goal: get rid of all reparsing from text... 
         self._list = self._bootstrap_obj_init(list(map(attrgetter('text'), self._list)))
         if self.debug:
-            print("[DBG] _bootstrap_from_text() - self._list = {0}".format(
-                self._list))
+            _log.debug("self._list = {0}".format(self._list))
 
     def has_line_with(self, linespec):
         return bool(filter(methodcaller('re_search', linespec), self._list))
@@ -2275,12 +2288,9 @@ class IOSConfigList(MutableSequence):
                 (banner_lead, bannerdelimit) = ('', None)
 
             if self.debug:
-                print("[DBG] _banner_mark_regex(): banner_lead = '{0}'"
-                    .format(banner_lead))
-                print("[DBG] _banner_mark_regex(): bannerdelimit = '{0}'"
-                    .format(bannerdelimit))
-                print("[DBG] _banner_mark_regex(): {0} starts at line"
-                    " {1}".format(banner_lead, parent.linenum))
+                _log.debug("banner_lead = '{0}'".format(banner_lead))
+                _log.debug("bannerdelimit = '{0}'".format(bannerdelimit))
+                _log.debug("{0} starts at line {1}".format(banner_lead, parent.linenum))
 
             idx = parent.linenum
             while True:
@@ -2290,16 +2300,20 @@ class IOSConfigList(MutableSequence):
                     if len(parts)>2:
                         ## banner has both begin and end delimiter on one line
                         if self.debug:
-                            print("[DBG] _banner_mark_regex(): {0} ends at line"
+                            _log.debug("{0} ends at line"
                                 " {1}".format(banner_lead, parent.linenum))
                         break
 
                 idx += 1
                 try:
                     obj = self._list[idx]
-                    if bannerdelimit in obj.text.strip():
+                    if (obj.text is None):
                         if self.debug:
-                            print("[DBG] _banner_mark_regex(): {0} ends at line"
+                            _log.warning("found empty text while parsing '{0}' in the banner".format(obj))
+                        pass
+                    elif bannerdelimit in obj.text.strip():
+                        if self.debug:
+                            _log.debug("{0} ends at line"
                                 " {1}".format(banner_lead, obj.linenum))
                         parent.children.append(obj)
                         parent.child_indent = 0
@@ -2406,14 +2420,15 @@ class IOSConfigList(MutableSequence):
         ##    have a parent
         if parentobj is None:
             if self.debug:
-                print("[DBG] _add_child_to_parent() - parentobj is None")
+                _log.debug("parentobj is None")
             return
 
         if self.debug:
-            print("[DBG] _add_child_to_parent() - Adding child '{0}' to parent"
-                " '{1}'".format(childobj, parentobj))
-            print("[DBG]     BEFORE parent.children - {0}"
-                .format(parentobj.children))
+            #_log.debug("Adding child '{0}' to parent"
+            #    " '{1}'".format(childobj, parentobj))
+            #_log.debug("BEFORE parent.children - {0}"
+            #    .format(parentobj.children))
+            pass
         if childobj.is_comment and (_list[idx-1].indent>indent):
             ## I *really* hate making this exception, but legacy 
             ##   ciscoconfparse never marked a comment as a child 
@@ -2429,8 +2444,9 @@ class IOSConfigList(MutableSequence):
             pass
 
         if self.debug:
-            print("[DBG]     AFTER parent.children - {0}"
-                .format(parentobj.children))
+            #_log.debug("     AFTER parent.children - {0}"
+            #    .format(parentobj.children))
+            pass
 
     def iter_with_comments(self, begin_index=0):
         for idx, obj in enumerate(self._list):
@@ -2727,13 +2743,13 @@ class ASAConfigList(MutableSequence):
         ##    have a parent
         if parentobj is None:
             if self.debug:
-                print("[DBG] _add_child_to_parent() - parentobj is None")
+                _log.debug("parentobj is None")
             return
 
         if self.debug:
-            print("[DBG] _add_child_to_parent() - Adding child '{0}' to parent"
+            _log.debug("Adding child '{0}' to parent"
                 " '{1}'".format(childobj, parentobj))
-            print("[DBG]     BEFORE parent.children - {0}"
+            _log.debug("     BEFORE parent.children - {0}"
                 .format(parentobj.children))
         if childobj.is_comment and (_list[idx-1].indent>indent):
             ## I *really* hate making this exception, but legacy 
@@ -2750,7 +2766,7 @@ class ASAConfigList(MutableSequence):
             pass
 
         if self.debug:
-            print("[DBG]     AFTER parent.children - {0}"
+            _log.debug("     AFTER parent.children - {0}"
                 .format(parentobj.children))
 
     def iter_with_comments(self, begin_index=0):
@@ -2859,7 +2875,7 @@ class CiscoPassword(object):
                 dp = dp + str(newchar)
                 s = s + 1
         #if s > 53:
-        #    print("[DEBUG] WARNING: password decryption failed.")
+        #    _log.warning("password decryption failed.")
         return dp
 
 def ConfigLineFactory(text="", comment_delimiter="!", syntax='ios'):
