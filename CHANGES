@@ -1,3 +1,5 @@
+1.2.29  20150627 Add dns_lookup and reverse_dns_lookup in ccp_util
+1.2.28  20150627 Fix build problem
 1.2.27  20150627 termcolor -> colorama
 1.2.27  20150627 Forgot to check in some updates...
 1.2.26  20150627 Update debugging code
