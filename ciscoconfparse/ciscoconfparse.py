@@ -63,10 +63,10 @@ __license__ = "GPLv3"
 __status__ = "Production"
 
 _log = logging.getLogger()
-_CCP_LOG_FORMAT_PREFIX_STR = (Fore.WHITE + '[%(module)s %(funcName)s] [%(levelname)s] ')
+_CCP_LOG_FORMAT_PREFIX_STR = (Fore.WHITE + '[%(module)s %(funcName)s] [%(levelname)s] %(asctime)s ')
 _CCP_LOG_FORMAT_MSG_STR = (Fore.GREEN + '%(msg)s' + Fore.RESET)
 _CCP_LOG_FORMAT_STR = _CCP_LOG_FORMAT_PREFIX_STR + _CCP_LOG_FORMAT_MSG_STR
-_ccp_log_format = logging.Formatter(_CCP_LOG_FORMAT_STR)
+_ccp_log_format = logging.Formatter(_CCP_LOG_FORMAT_STR, '%H:%M:%S')
 _log.setLevel(logging.DEBUG)
 _LOG_CHANNEL_STDOUT = logging.StreamHandler(sys.stdout)
 _LOG_CHANNEL_STDOUT.setFormatter(_ccp_log_format)
