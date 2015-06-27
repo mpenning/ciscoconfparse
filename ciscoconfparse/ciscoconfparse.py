@@ -1,7 +1,7 @@
 from collections import MutableSequence, Iterator
 from operator import methodcaller, attrgetter
+from colorama import Fore, Back, Style
 from difflib import SequenceMatcher
-from termcolor import colored
 import logging
 import time
 import sys
@@ -63,8 +63,8 @@ __license__ = "GPLv3"
 __status__ = "Production"
 
 _log = logging.getLogger()
-_CCP_LOG_FORMAT_PREFIX_STR = colored('[%(module)s %(funcName)s] [%(levelname)s] ', 'white')
-_CCP_LOG_FORMAT_MSG_STR = colored('%(msg)s', 'green')
+_CCP_LOG_FORMAT_PREFIX_STR = (Fore.WHITE + '[%(module)s %(funcName)s] [%(levelname)s] ')
+_CCP_LOG_FORMAT_MSG_STR = (Fore.GREEN + '%(msg)s' + Fore.RESET)
 _CCP_LOG_FORMAT_STR = _CCP_LOG_FORMAT_PREFIX_STR + _CCP_LOG_FORMAT_MSG_STR
 _ccp_log_format = logging.Formatter(_CCP_LOG_FORMAT_STR)
 _log.setLevel(logging.DEBUG)
