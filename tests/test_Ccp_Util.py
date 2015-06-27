@@ -8,6 +8,7 @@ sys.path.insert(0, os.path.join(os.path.abspath(THIS_DIR), "../ciscoconfparse/")
 
 from ccp_util import _RGX_IPV4ADDR, _RGX_IPV6ADDR
 from ccp_util import IPv4Obj, L4Object
+from ccp_util import dns_lookup, reverse_dns_lookup
 import pytest
 
 if sys.version_info[0]<3:
@@ -160,3 +161,9 @@ def testIPv4Obj_attributes():
     ]
     for attribute, result_correct in results_correct:
         assert getattr(test_object, attribute)==result_correct
+
+def test_dns_lookup():
+    # Use VMWare's opencloud A-record to test...
+    #   ref http://stackoverflow.com/a/7714208/667301
+    result_correct = {'addrs': ['127.0.0.1'], 'name': '*.vcap.me', 'error': ''}
+    assert dns_lookup('*.vcap.me')==result_correct
