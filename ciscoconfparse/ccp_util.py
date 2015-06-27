@@ -5,6 +5,9 @@ import re
 import os
 
 from protocol_values import ASA_TCP_PORTS, ASA_UDP_PORTS
+from dns.exception import DNSException
+from dns.resolver import Resolver
+from dns import reversename, query
 
 if sys.version_info[0]<3:
     from ipaddr import IPv4Network, IPv6Network, IPv4Address, IPv6Address
@@ -574,3 +577,48 @@ class L4Object(object):
 
     def __repr__(self):
         return "<L4Object {0} {1}>".format(self.protocol, self.port_list)
+
+def dns_lookup(input, timeout=3, server=''):
+    """Perform a simple DNS lookup, return results in a dictionary"""
+    resolver = Resolver()
+    resolver.timeout = float(timeout)
+    resolver.lifetime = float(timeout)
+    if server:
+        resolver.nameservers = [server]
+    try:
+        records = resolver.query(input, 'A')
+        return {'addrs': [ii.address for ii in records],
+            'error': '',
+            'name': input,
+            }
+    except DNSException as e:
+        return {'addrs': [], 
+            'error': repr(e),
+            'name': input,
+            }
+
+_REVERSE_DNS_REGEX = re.compile(r'^\s*\d+\.\d+\.\d+\.\d+\s*$')
+def reverse_dns_lookup(input, timeout=3, server=''):
+    """Perform a simple reverse DNS lookup, return results in a dictionary"""
+    assert _REVERSE_DNS_REGEX.search(input), "Invalid address format: '{0}'".format(input)
+    resolver = Resolver()
+    resolver.timeout = float(timeout)
+    resolver.lifetime = float(timeout)
+    if server:
+        resolver.nameservers = [server]
+    try:
+        tmp = input.strip().split('.')
+        tmp.reverse()
+        inaddr = '.'.join(tmp) + ".in-addr.arpa"
+        records = resolver.query(inaddr, 'PTR')
+        return {'name': records[0].to_text(),
+            'lookup': inaddr,
+            'error': '',
+            'addr': input,
+            }
+    except DNSException as e:
+        return {'addrs': [], 
+            'lookup': inaddr,
+            'error': repr(e),
+            'name': input,
+            }
