@@ -410,14 +410,14 @@ dial-peer cor custom
 !
 !
 !
-banner login 
+banner login ^C
 Router Foo. Access to this device or the attached
 networks is prohibited without express written permission from the
 legal owner of this device.  Violators will be prosecuted to the
 fullest extent of both civil and criminal law.
 
 We don't like you. Go away.
-
+^C
 !
 line con 0
  authorization exec CONSOLE
