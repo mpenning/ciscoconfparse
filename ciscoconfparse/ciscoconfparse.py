@@ -130,6 +130,8 @@ class CiscoConfParse(object):
         if isinstance(config, list) or isinstance(config, Iterator):
             if syntax=='ios':
                 # we already have a list object, simply call the parser
+                if self.debug:
+                    _log.debug("parsing from a python list with ios syntax")
                 self.ConfigObjs = IOSConfigList(data=config, 
                     comment_delimiter=comment, 
                     debug=debug, 
@@ -139,6 +141,8 @@ class CiscoConfParse(object):
                     CiscoConfParse=self)
             elif syntax=='asa':
                 # we already have a list object, simply call the parser
+                if self.debug:
+                    _log.debug("parsing from a python list with asa syntax")
                 self.ConfigObjs = ASAConfigList(data=config, 
                     comment_delimiter=comment, 
                     debug=debug, 
@@ -150,6 +154,8 @@ class CiscoConfParse(object):
                 ## FIXME I am shamelessly abusing the IOSConfigList for now...
                 # we already have a list object, simply call the parser
                 config = self.convert_braces_to_ios(config)
+                if self.debug:
+                    _log.debug("parsing from a python list with junos syntax")
                 self.ConfigObjs = IOSConfigList(data=config, 
                     comment_delimiter=comment, 
                     debug=debug, 
@@ -166,6 +172,8 @@ class CiscoConfParse(object):
             try:
                 if syntax=='ios':
                     # string - assume a filename... open file, split and parse
+                    if self.debug:
+                        _log.debug("parsing from '{0}' with ios syntax".format(config))
                     f = open(config, mode="rU")
                     text = f.read()
                     rgx = re.compile(linesplit_rgx)
@@ -178,6 +186,8 @@ class CiscoConfParse(object):
                         CiscoConfParse=self)
                 elif syntax=='asa':
                     # string - assume a filename... open file, split and parse
+                    if self.debug:
+                        _log.debug("parsing from '{0}' with asa syntax".format(config))
                     f = open(config, mode="rU")
                     text = f.read()
                     rgx = re.compile(linesplit_rgx)
@@ -191,6 +201,8 @@ class CiscoConfParse(object):
 
                 elif syntax=='junos':
                     # string - assume a filename... open file, split and parse
+                    if self.debug:
+                        _log.debug("parsing from '{0}' with junos syntax".format(config))
                     f = open(config, mode="rU")
                     text = f.read()
                     rgx = re.compile(linesplit_rgx)
@@ -2275,22 +2287,24 @@ class IOSConfigList(MutableSequence):
         # Build a list of all leading banner lines
         banner_objs = list(filter(lambda obj: REGEX.search(obj.text), self._list))
 
-        BANNER_STR_RE = r'^(?P<btype>(?:set\s)*banner\s\w+\s+)(?P<bchar>\S)\S*$'
+        BANNER_STR_RE = r'^(?:(?P<btype>(?:set\s+)*banner\s\w+\s+)(?P<bchar>\S)(?:\S)?)$'
         for parent in banner_objs:
             parent.oldest_ancestor = True
 
             ## Parse out the banner type and delimiting banner character
             mm = re.search(BANNER_STR_RE, parent.text)
             if not (mm is None):
-                (banner_lead, bannerdelimit) = (mm.group('btype').rstrip(), 
-                    mm.group('bchar'))
+                mm_results = mm.groupdict()
+                (banner_lead, bannerdelimit) = (mm_results['btype'].rstrip(), 
+                    mm_results['bchar'])
             else:
                 (banner_lead, bannerdelimit) = ('', None)
 
             if self.debug:
                 _log.debug("banner_lead = '{0}'".format(banner_lead))
                 _log.debug("bannerdelimit = '{0}'".format(bannerdelimit))
-                _log.debug("{0} starts at line {1}".format(banner_lead, parent.linenum))
+                _log.debug("{0} starts at line {1}".format(banner_lead, 
+                    parent.linenum))
 
             idx = parent.linenum
             while True:
