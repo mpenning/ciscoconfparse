@@ -2307,7 +2307,7 @@ class IOSConfigList(MutableSequence):
                     parent.linenum))
 
             idx = parent.linenum
-            while True:
+            while not (bannerdelimit is None):
                 ## Check whether the banner line has both begin and end delimter
                 if idx==parent.linenum:
                     parts = parent.text.split(bannerdelimit)
