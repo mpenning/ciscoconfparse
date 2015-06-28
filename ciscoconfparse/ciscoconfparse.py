@@ -286,7 +286,7 @@ class CiscoConfParse(object):
 
     def convert_braces_to_ios(self, input_list, stop_width=4):
         ## Note to self, I made this regex fairly junos-specific...
-        LINE_RE = re.compile(r'^\s*([^\{\}].*)*\s*([\{\}\;])(\s\#.+)*$')
+        LINE_RE = re.compile(r'^(?!#)\s*([^\{\}].*)*\s*([\{\}\;])(\s\#.+)*$')
 
         def line_level(input):
             level_offset = 0
@@ -302,6 +302,9 @@ class CiscoConfParse(object):
             elif input.strip()=='':
                 ## pass blank lines back
                 return input, 0
+            elif input[0] == '#':   
+                ## ignore any commented lines
+                return '', 0
             else:
                 raise ValueError("Could not parse: '{0}'".format(input))
 
