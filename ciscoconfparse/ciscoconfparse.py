@@ -81,7 +81,7 @@ class CiscoConfParse(object):
 
            Kwargs:
                - config (list or str): A list of configuration statements, or a configuration file path to be parsed
-               - comment (str): A comment delimiter.  This should only be changed when parsing non-Cisco IOS configurations, which do not use a !  as the comment delimiter.  ``comment`` defaults to '!'
+               - comment (str): A comment delimiter.  This should only be changed when parsing non-Cisco IOS configurations, which do not use a !  as the comment delimiter.  ``comment`` defaults to '!'.  This value can hold multiple characters in case the config uses multiple characters for comment delimiters; however, the comment delimiters are always assumed to be one character wide
                - debug (bool): ``debug`` defaults to False, and should be kept that way unless you're working on a very tricky config parsing problem.  Debug output is not particularly friendly
                - factory (bool): ``factory`` defaults to False; if set ``True``, it enables a beta-quality configuration line classifier.
                - linesplit_rgx (str): ``linesplit_rgx`` is used when parsing configuration files to find where new configuration lines are.  It is best to leave this as the default, unless you're working on a system that uses unusual line terminations (for instance something besides Unix, OSX, or Windows)
@@ -286,19 +286,39 @@ class CiscoConfParse(object):
 
     def convert_braces_to_ios(self, input_list, stop_width=4):
         ## Note to self, I made this regex fairly junos-specific...
-        LINE_RE = re.compile(r'^\s*([^\{\}].*)*\s*([\{\}\;])(\s\#.+)*$')
+        assert '{' not in set(self.comment_delimiter)
+        assert '}' not in set(self.comment_delimiter)
+
+        JUNOS_RE_STR = r"""^
+        (?:\s*
+           (?:(?P<line>[^\{{\}}[{0}].*?)(?P<braces_eol>[\{{\}}])*(?P<sc>\;)*\s*)
+          |(?P<braces_alone>[\{{\}}\;])
+          |(?:\s*[{0}](?P<comment>.+))
+        )
+        $
+        """.format(re.escape(self.comment_delimiter))
+        #LINE_RE = re.compile(r'^\s*([^\{\}].*)*\s*([\{\}\;])(\s\#.+)*$')
+        LINE_RE = re.compile(JUNOS_RE_STR, re.VERBOSE)
 
         def line_level(input):
             level_offset = 0
             mm = LINE_RE.search(input)
             if not (mm is None):
-                line = mm.group(1) or ''
-                term_char = mm.group(2).strip()
+                results = mm.groupdict()
+                line = results.get('line', '')
+                term_char = (results['braces_eol'] or results['braces_alone'] or '').strip()
+                comment = results['comment']
                 if term_char=='{':
                     level_offset = 1
                 elif term_char=='}':
                     level_offset = -1
-                return line, level_offset
+
+                ## Return values
+                if not (comment is None):
+                    return '!'+comment, level_offset
+                else:
+                    return line, level_offset
+
             elif input.strip()=='':
                 ## pass blank lines back
                 return input, 0
@@ -1861,8 +1881,8 @@ class CiscoConfParse(object):
                     # if tag=='replace'
                     #     delete a & config b
                     # if tag=='insert', then configure b
-                    aobjs = list()  # List of a IOSConfigLine objects at this level
-                    bobjs = list()  # List of b IOSConfigLine objects at this level
+                    aobjs = list()  # List of a IOSCfgLine objects at this level
+                    bobjs = list()  # List of b IOSCfgLine objects at this level
                     for num in range(i1, i2):
                         aobj = a.ConfigObjs[a_linenums[num]]
                         aobjs.append(aobj)
