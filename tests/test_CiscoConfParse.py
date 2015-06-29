@@ -15,6 +15,11 @@ from ccp_util import IPv4Obj
 from passlib.hash import cisco_type7
 import pytest
 
+def testParse_asa_as_ios(config_a02):
+    """Test for Github issue #42 parse asa banner with ios syntax"""
+    parse = CiscoConfParse(config_a02, syntax='ios', factory=False)
+    assert not (parse is None)
+
 def testValues_banner_delimiter_01():
     # Test banner delimiter on the same lines
     CONFIG = ['!', 'banner motd ^   trivial banner here ^', 'end']
