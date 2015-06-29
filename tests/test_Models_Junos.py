@@ -22,6 +22,8 @@ def testVal_JunosCfgLine_dna(parse_j01):
     obj = cfg.find_objects_w_child('interfaces', 'ge-0/0/1')[0]
     assert obj.dna == 'JunosCfgLine'
 
-def testVal_find_objects_w_child(parse_j01):
+def testVal_find_objects_w_parents(parse_j01):
     cfg = parse_j01
-    obj = cfg.find_objects_w_child('interfaces', 'ge-0/0/1')[0]
+    obj = cfg.find_objects_w_parents('interfaces', 'ge-0/0/1')[0]
+    assert not ('{' in set(obj.text))  # Ensure there are no braces on this line
+    assert len(obj.all_children)==6
