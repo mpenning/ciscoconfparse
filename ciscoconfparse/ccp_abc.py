@@ -92,14 +92,17 @@ class BaseCfgLine(object):
         return False
 
     def set_comment_bool(self):
+        delimiters = set(self.comment_delimiter)
         retval = None
         ## Use this instead of a regex... nontrivial speed enhancement
         tmp = self.text.lstrip()
-        if len(tmp)>0 and \
-            (self.comment_delimiter==tmp[len(self.comment_delimiter)-1]):
-            retval = True
-        else:
-            retval = False
+        for delimit_char in delimiters:
+            if len(tmp)>0 and \
+                (delimit_char==tmp[len(delimit_char)-1]):
+                retval = True
+                break
+            else:
+                retval = False
         self.is_comment = retval
         return retval
 
