@@ -388,7 +388,8 @@ of all tresspassers.
 !
 alias exec showthang show ip route vrf THANG""".splitlines()
 
-j01 = """system {
+j01 = """## Last commit: 2015-06-28 13:00:59 CST by mpenning
+    system {
     host-name TEST01_EX;
     domain-name pennington.net;
     domain-search [ pennington.net lab.pennington.net ];
@@ -639,16 +640,17 @@ def parse_c03_factory(request):
 @pytest.yield_fixture(scope='function')
 def parse_j01(request):
     """Preparsed j01"""
-    parse_j01 = CiscoConfParse(j01, factory=False)
-     
+    parse_j01 = CiscoConfParse(j01, syntax='junos', comment='#!', factory=False)
+
     yield parse_j01
 
 ## parse_j01_factory yields configs/sample_01.junos
 @pytest.yield_fixture(scope='function')
 def parse_j01_factory(request):
     """Preparsed j01 with factory option"""
-    parse_j01_factory = CiscoConfParse(j01, syntax='junos', factory=True)
-     
+    parse_j01_factory = CiscoConfParse(j01, syntax='junos', comment='#!',
+        factory=True)
+
     yield parse_j01_factory
 
 ## parse_a01 yields the asa configuration
