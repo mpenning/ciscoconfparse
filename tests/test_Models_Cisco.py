@@ -30,6 +30,13 @@ def testVal_IOSHostnameLine_dna(line):
     obj = cfg.ConfigObjs[0]
     assert obj.dna == 'IOSHostnameLine'
 
+def testValues_IOSIntfLine(parse_c01_factory):
+    """Test to check IOSIntfLine values"""
+    obj = parse_c01_factory.find_objects_dna('IOSIntf')[0]
+    assert obj.name=='Serial 1/0'
+    assert obj.ipv4_addr=='1.1.1.1'
+    assert obj.ipv4_netmask=='255.255.255.252'
+
 def testVal_IOSCfgLine_is_intf():
     # Map a config line to result_correct
     result_map = {
