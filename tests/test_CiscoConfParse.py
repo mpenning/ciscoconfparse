@@ -23,8 +23,14 @@ def testParse_asa_as_ios(config_a02):
 def testValues_find_objects_dna(parse_c01_factory):
     """Test to find an object by its dna"""
     obj = parse_c01_factory.find_objects_dna('IOSIntf')[0]
+    assert isinstance(obj, IOSIntfLine)
+
+def testValues_IOSIntfLine(parse_c01_factory):
+    """Test to check IOSIntfLine values"""
+    obj = parse_c01_factory.find_objects_dna('IOSIntf')[0]
     assert obj.name=='Serial 1/0'
     assert obj.ipv4_addr=='1.1.1.1'
+    assert obj.ipv4_netmask=='255.255.255.252'
 
 def testValues_banner_delimiter_01():
     # Test banner delimiter on the same lines
