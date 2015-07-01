@@ -62,7 +62,7 @@ __copyright__ = "2007-{0}, {1}".format(time.strftime('%Y'), __author__)
 __license__ = "GPLv3"
 __status__ = "Production"
 
-_log = logging.getLogger()
+_log = logging.getLogger(__file__)
 _CCP_LOG_FORMAT_PREFIX_STR = (Fore.WHITE + '[%(module)s %(funcName)s] [%(levelname)s] %(asctime)s ')
 _CCP_LOG_FORMAT_MSG_STR = (Fore.GREEN + '%(msg)s' + Fore.RESET)
 _CCP_LOG_FORMAT_STR = _CCP_LOG_FORMAT_PREFIX_STR + _CCP_LOG_FORMAT_MSG_STR
@@ -389,6 +389,17 @@ class CiscoConfParse(object):
             raise NotImplementedError
 
         return retval
+
+    def find_objects_dna(self, dnaspec, exactmatch=False, ignore_ws=False):
+        if not self.factory:
+            raise ValueError("[FATAL] find_objects_dna() must be called in conjunction with the factory configuration parsing option")
+        if not exactmatch:
+            # Return objects whose text attribute matches linespec
+            linespec_re = re.compile(dnaspec)
+        elif exactmatch:
+            # Return objects whose text attribute matches linespec exactly
+            linespec_re = re.compile("^{0}$".format(dnaspec))
+        return list(filter(lambda obj: linespec_re.search(obj.dna), self.ConfigObjs))
 
 
     def find_objects(self, linespec, exactmatch=False, ignore_ws=False):
