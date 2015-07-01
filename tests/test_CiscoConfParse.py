@@ -20,6 +20,12 @@ def testParse_asa_as_ios(config_a02):
     parse = CiscoConfParse(config_a02, syntax='ios', factory=False)
     assert not (parse is None)
 
+def testValues_find_objects_dna(parse_c01_factory):
+    """Test to find an object by its dna"""
+    obj = parse_c01_factory.find_objects_dna('IOSIntf')[0]
+    assert obj.name=='Serial 1/0'
+    assert obj.ipv4_addr=='1.1.1.1'
+
 def testValues_banner_delimiter_01():
     # Test banner delimiter on the same lines
     CONFIG = ['!', 'banner motd ^   trivial banner here ^', 'end']
