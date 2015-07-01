@@ -390,7 +390,41 @@ class CiscoConfParse(object):
 
         return retval
 
-    def find_objects_dna(self, dnaspec, exactmatch=False, ignore_ws=False):
+    def find_objects_dna(self, dnaspec, exactmatch=False):
+        """Find all :class:`~models_cisco.IOSCfgLine` objects whose text 
+        matches ``linespec`` and return the :class:`~models_cisco.IOSCfgLine` 
+        objects in a python list.  
+
+        .. note:: :func:`~ciscoconfparse.CiscoConfParse.find_objects_dna` requires the configuration to be parsed with factory=True
+        
+
+        Args:
+            - dnaspec (str): A string or python regular expression, which should be matched.  This argument will be used to match dna attribute of the object
+        Kwargs:
+            - exactmatch (bool): Defaults to False.  When set True, this option requires ``dnaspec`` match the whole configuration line, instead of a portion of the configuration line.
+
+        Returns:
+            - list.  A list of matching :class:`~ciscoconfparse.IOSCfgLine` objects
+
+        .. code-block:: python
+           :emphasize-lines: 8
+
+           >>> config = [
+           ...     '!',
+           ...     'hostname MyRouterHostname',
+           ...     '!',
+           ...     ]
+           >>> parse = CiscoConfParse(config, factory=True, syntax='ios')
+           >>>
+           >>> obj_list = parse.find_objects_dna(r'Hostname')
+           >>> obj_list
+           [<IOSHostnameLine # 1 'MyRouterHostname'>]
+           >>>
+           >>> # The IOSHostnameLine object has a hostname attribute
+           >>> obj_list[0].hostname
+           'MyRouterHostname'
+           >>>
+        """
         if not self.factory:
             raise ValueError("[FATAL] find_objects_dna() must be called in conjunction with the factory configuration parsing option")
         if not exactmatch:
