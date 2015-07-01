@@ -941,7 +941,7 @@ class ASAAclLine(ASACfgLine):
         if not (mm is None):
             self._mm_results = mm.groupdict()   # All regex match results
         else:
-            raise ValueError
+            raise ValueError("[FATAL] models_asa cannot parse '{0}'".format(self.text))
 
     @classmethod
     def is_object_for(cls, line="", re=re):
