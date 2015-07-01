@@ -392,7 +392,7 @@ class CiscoConfParse(object):
 
     def find_objects_dna(self, dnaspec, exactmatch=False):
         """Find all :class:`~models_cisco.IOSCfgLine` objects whose text 
-        matches ``linespec`` and return the :class:`~models_cisco.IOSCfgLine` 
+        matches ``dnaspec`` and return the :class:`~models_cisco.IOSCfgLine` 
         objects in a python list.  
 
         .. note:: :func:`~ciscoconfparse.CiscoConfParse.find_objects_dna` requires the configuration to be parsed with factory=True
