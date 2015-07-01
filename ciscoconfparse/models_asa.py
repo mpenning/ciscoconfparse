@@ -840,7 +840,8 @@ class ASARouteLine(BaseASARouteLine):
             group=2, result_type=str, default='')
         return retval
 
-_ACL_PROTOCOLS = 'ip|tcp|udp|ah|eigrp|esp|gre|icmp|igmp|igrp|ipinip|ipsec|ospf|pcp|pim|pptp|snp|\d+'
+_ACL_PROTOCOLS = 'ip|tcp|udp|ah|eigrp|esp|gre|igmp|igrp|ipinip|ipsec|ospf|pcp|pim|pptp|snp|\d+'
+_ACL_ICMP_PROTOCOLS = 'alternate-address|conversion-error|echo-reply|echo|information-reply|information-request|mask-reply|mask-request|mobile-redirect|parameter-problem|redirect|router-advertisement|router-solicitation|source-quench|time-exceeded|timestamp-reply|timestamp-request|traceroute|unreachable'
 _ACL_LOGLEVELS = r'alerts|critical|debugging|emergencies|errors|informational|notifications|warnings|[0-7]'
 _RE_ACLOBJECT_STR = r"""(?:                         # Non-capturing parenthesis
 # remark
@@ -928,8 +929,54 @@ _RE_ACLOBJECT_STR = r"""(?:                         # Non-capturing parenthesis
   )?
  \s*$)    # END access-list 2 parse
 
+# access-list SPLIT_TUNNEL_NETS standard permit 192.0.2.0 255.255.255.0
+|(?:^access-list\s+(?P<acl_name3>\S+)
+  \s+standard
+  \s+(?P<action3>permit|deny)
+  \s+(?:
+    (?P<dst_network3a>any|any4)
+   |(?:host\s+(?P<dst_network3b>\S+))
+   |(?:(?P<dst_network3c>\S+)\s+(?P<dst_netmask3c>\d+\.\d+\.\d+\.\d+))
+  )
+
+  )
+#access-list TESTME extended permit icmp any4 0.0.0.0 0.0.0.0 unreachable log interval 1
+|(?:^access-list\s+(?P<acl_name4>\S+)
+  \s+extended
+  \s+(?P<action4>permit|deny)
+  \s+(?P<protocol4>icmp)
+  (?:\s+       # any, any4, host foo, object-group FOO or 10.0.0.0 255.255.255.0
+     (?:
+       (?P<src_network4a>any|any4)
+      |(?:host\s+(?P<src_network4b>\S+))
+      |(?:object\s+(?P<src_object4>\S+))
+      |(?:object-group\s+(?P<src_networkobject4>\S+))
+      |(?:(?P<src_network4c>\S+)\s+(?P<src_netmask4c>\d+\.\d+\.\d+\.\d+))
+    )
+  )
+  (?:\s+       # any, any4, host foo, object-group FOO or 10.0.0.0 255.255.255.0
+     (?:
+       (?P<dst_network4a>any|any4)
+      |(?:host\s+(?P<dst_network4b>\S+))
+      |(?:object\s+(?P<dst_object4>\S+))
+      |(?:object-group\s+(?P<dst_networkobject4>\S+))
+      |(?:(?P<dst_network4c>\S+)\s+(?P<dst_netmask4c>\d+\.\d+\.\d+\.\d+))
+    )
+  )
+  (?:\s+(?P<icmp_proto4>{2}|\d+))?
+  (?:\s+
+    (?P<log4>log)
+    (?:\s+(?P<loglevel4>{1}))?
+    (?:\s+interval\s+(?P<log_interval4>\d+))?
+  )?
+  (?:\s+(?P<disable4>disable))?
+  (?:
+    (?:\s+(?P<inactive4>inactive))
+   |(?:\s+time-range\s+(?P<time_range4>\S+))
+  )?
+  )
 )                                                   # Close non-capture parens
-""".format(_ACL_PROTOCOLS, _ACL_LOGLEVELS)
+""".format(_ACL_PROTOCOLS, _ACL_LOGLEVELS, _ACL_ICMP_PROTOCOLS)
 _RE_ACLOBJECT = re.compile(_RE_ACLOBJECT_STR, re.VERBOSE)
 
 class ASAAclLine(ASACfgLine):
@@ -961,7 +1008,15 @@ class ASAAclLine(ASACfgLine):
         elif mm_r['src_object1'] or mm_r['src_object2']:
             return 'object'
         elif mm_r['src_network1a'] or mm_r['src_network2a'] \
-            or mm_r['src_network2b'] or mm_r['src_network2c']:
+            or mm_r['src_network2b'] or mm_r['src_network2c'] \
+            or mm_r['src_network4a'] or mm_r['src_network4b'] \
+            or mm_r['src_network4c']:
+            return 'network'
+        ## NOTE: I intended to match dst addrs here...
+        elif mm_r['dst_network3a'] or mm_r['dst_network3b'] \
+            or mm_r['dst_network3c']:
+            ## Special case: standard ACLs match any src implicitly
+            self._mm_results['src_network3'] = 'any4'
             return 'network'
         else:
             raise ValueError("Cannot parse ACL source address method for '{0}'".format(self.text))
@@ -977,7 +1032,12 @@ class ASAAclLine(ASACfgLine):
         elif mm_r['dst_object1'] or mm_r['dst_object2']:
             return 'object'
         elif mm_r['dst_network1a'] or mm_r['dst_network2a'] \
-            or mm_r['dst_network2b'] or mm_r['dst_network2c']:
+            or mm_r['dst_network2b'] or mm_r['dst_network2c'] \
+            or mm_r['dst_network4a'] or mm_r['dst_network4b'] \
+            or mm_r['dst_network4c']:
+            return 'network'
+        elif mm_r['dst_network3a'] or mm_r['dst_network3b'] \
+            or mm_r['dst_network3c']:
             return 'network'
         else:
             raise ValueError("Cannot parse ACL destination address method for '{0}'".format(self.text))
@@ -992,8 +1052,14 @@ class ASAAclLine(ASACfgLine):
             retval['protocol'] = -1
             retval['protocol_object'] = ''
             return retval
-        elif mm_r['protocol1'] or mm_r['protocol2']:
-            _proto = mm_r['protocol1'] or mm_r['protocol2'] or -1
+        elif mm_r['protocol1'] or mm_r['protocol2'] or mm_r['protocol4']:
+            _proto = mm_r['protocol1'] or mm_r['protocol2'] or mm_r['protocol4'] or -1
+            retval['protocol'] = int(ASA_IP_PROTOCOLS.get(_proto, _proto))
+            retval['protocol_object'] = ''
+            return retval
+        elif mm_r['acl_name3']:
+            # Special case for standard ASA ACLs
+            _proto = 'ip'
             retval['protocol'] = int(ASA_IP_PROTOCOLS.get(_proto, _proto))
             retval['protocol_object'] = ''
             return retval
@@ -1015,21 +1081,22 @@ class ASAAclLine(ASACfgLine):
         retval['ip_protocol'] = proto_dict['protocol']
         retval['ip_protocol_object'] = proto_dict['protocol_object']
         retval['acl_name'] = mm_r['acl_name0'] or mm_r['acl_name1'] \
-            or mm_r['acl_name2']
-        retval['action'] = mm_r['action0'] or mm_r['action1'] or mm_r['action2']
+            or mm_r['acl_name2'] or mm_r['acl_name3'] or mm_r['acl_name4']
+        retval['action'] = mm_r['action0'] or mm_r['action1'] \
+            or mm_r['action2'] or mm_r['action3'] or mm_r['action4']
         retval['remark'] = mm_r['remark']
         retval['src_addr_method'] = self.src_addr_method
         retval['dst_addr_method'] = self.dst_addr_method
-        retval['disable'] = bool(mm_r['disable1'] or mm_r['disable2'])
-        retval['time_range'] = mm_r['time_range1'] or mm_r['time_range2']
-        retval['log'] = bool(mm_r['log1'] or mm_r['log2'])
+        retval['disable'] = bool(mm_r['disable1'] or mm_r['disable2'] or mm_r['disable4'])
+        retval['time_range'] = mm_r['time_range1'] or mm_r['time_range2'] or mm_r['time_range4']
+        retval['log'] = bool(mm_r['log1'] or mm_r['log2'] or mm_r['log4'])
         if not retval['log']:
             retval['log_interval'] = -1
             retval['log_level'] = ''
         else:
-            retval['log_level'] = mm_r['loglevel1'] or mm_r['loglevel2'] or 'informational'
+            retval['log_level'] = mm_r['loglevel1'] or mm_r['loglevel2'] or mm_r['loglevel4'] or 'informational'
             retval['log_interval'] = int(mm_r['log_interval1'] \
-                or mm_r['log_interval2'] or 300)
+                or mm_r['log_interval2'] or mm_r['log_interval4'] or 300)
 
         return retval
 
