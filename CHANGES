@@ -1,3 +1,4 @@
+1.2.33  20150702 Expand coverage of icmp and standard ACLs in models_asa
 1.2.32  20150701 Add find_objects_dna()
 1.2.31  20150629 Fix Github issue #39 (not parsing Junos comments correctly)
 1.2.30  20150627 Enhance banner delimiter parsing
