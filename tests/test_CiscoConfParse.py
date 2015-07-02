@@ -20,6 +20,10 @@ def testParse_asa_as_ios(config_a02):
     parse = CiscoConfParse(config_a02, syntax='ios', factory=False)
     assert not (parse is None)
 
+def testParse_asa_as_asa(config_a02):
+    parse = CiscoConfParse(config_a02, syntax='asa', factory=False)
+    assert not (parse is None)
+
 def testValues_find_objects_dna(parse_c01_factory):
     """Test to find an object by its dna"""
     obj = parse_c01_factory.find_objects_dna('IOSIntf')[0]
