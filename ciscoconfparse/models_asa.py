@@ -1003,9 +1003,9 @@ class ASAAclLine(ASACfgLine):
         if mm_r['action0'] and (mm_r['action0']=='remark'):
             # remarks return an empty string
             return ''
-        elif mm_r['src_networkobject1'] or mm_r['src_networkobject2']:
+        elif mm_r['src_networkobject1'] or mm_r['src_networkobject2'] or mm_r['src_networkobject4']:
             return 'object-group'
-        elif mm_r['src_object1'] or mm_r['src_object2']:
+        elif mm_r['src_object1'] or mm_r['src_object2'] or mm_r['src_object4']:
             return 'object'
         elif mm_r['src_network1a'] or mm_r['src_network2a'] \
             or mm_r['src_network2b'] or mm_r['src_network2c'] \
@@ -1013,8 +1013,7 @@ class ASAAclLine(ASACfgLine):
             or mm_r['src_network4c']:
             return 'network'
         ## NOTE: I intended to match dst addrs here...
-        elif mm_r['dst_network3a'] or mm_r['dst_network3b'] \
-            or mm_r['dst_network3c']:
+        elif mm_r['acl_name3']:
             ## Special case: standard ACLs match any src implicitly
             self._mm_results['src_network3'] = 'any4'
             return 'network'
@@ -1027,9 +1026,9 @@ class ASAAclLine(ASACfgLine):
         if mm_r['action0'] and (mm_r['action0']=='remark'):
             # remarks return an empty string
             return ''
-        elif mm_r['dst_networkobject1'] or mm_r['dst_networkobject2']:
+        elif mm_r['dst_networkobject1'] or mm_r['dst_networkobject2'] or mm_r['dst_networkobject4']:
             return 'object-group'
-        elif mm_r['dst_object1'] or mm_r['dst_object2']:
+        elif mm_r['dst_object1'] or mm_r['dst_object2'] or mm_r['dst_object4']:
             return 'object'
         elif mm_r['dst_network1a'] or mm_r['dst_network2a'] \
             or mm_r['dst_network2b'] or mm_r['dst_network2c'] \
