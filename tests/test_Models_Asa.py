@@ -23,6 +23,10 @@ def testVal_Access_List(parse_a01_factory):
     result_correct = {}
     assert len(parse_a01_factory.objs.access_list['INSIDE_in'])==4
 
+def testParse_asa_factory(config_a02):
+    parse = CiscoConfParse(config_a02, syntax='asa', factory=True)
+    assert not (parse is None)
+
 def testVal_Names(parse_a01, parse_a01_factory):
     result_correct = {'dmzsrv00': '1.1.3.10', 
         'dmzsrv01': '1.1.3.11', 
@@ -243,11 +247,26 @@ def testVal_object_group_service_03():
     'access-list TESTME_01 extended permit 47 object-group SRC object-group DST log disable',
     'access-list TESTME_01 extended permit 47 object-group SRC object-group DST log disable time-range MYTIME',
     'access-list TESTME_01 extended permit 47 object-group SRC object-group DST log informational disable time-range MYTIME',
+
+    'access-list TESTME_01 extended permit icmp object-group SRC object-group DST',
+    'access-list TESTME_01 extended permit icmp object-group SRC object-group DST echo',
+    'access-list TESTME_01 extended permit icmp object-group SRC object-group DST echo log',
+    'access-list TESTME_01 extended permit icmp object-group SRC object-group DST echo log disable',
+    'access-list TESTME_01 extended permit icmp object-group SRC object-group DST echo log disable time-range MYTIME',
+
+    'access-list TESTME_01 extended permit icmp 10.0.0.0 255.0.0.0 object-group DST',
+    'access-list TESTME_01 extended permit icmp 10.0.0.0 255.0.0.0 object-group DST echo',
+    'access-list TESTME_01 extended permit icmp 10.0.0.0 255.0.0.0 object-group DST echo log',
+    'access-list TESTME_01 extended permit icmp 10.0.0.0 255.0.0.0 object-group DST echo log disable',
+    'access-list TESTME_01 extended permit icmp 10.0.0.0 255.0.0.0 object-group DST echo log disable time-range MYTIME',
+
+    'access-list TESTME_01 standard permit 10.0.0.0 255.0.0.0'
     ])
 def testVal_ASAAclLine_DNA(line):
     """Ensure that valid ACL lines are classified as an ASAAclLine"""
     cfg = CiscoConfParse([line], factory=True, syntax='asa')
     assert cfg.objs[0].dna=='ASAAclLine'
+    assert cfg.objs[0].result_dict!={}
 
 @pytest.mark.parametrize("line", [
     'access-list TESTME_01 extended pAAmit ip any any log deactivate',
