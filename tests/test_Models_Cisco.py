@@ -1049,6 +1049,7 @@ def testVal_IOSRouteLine_01():
     assert ''==obj.vrf
     assert '0.0.0.0'==obj.network
     assert '0.0.0.0'==obj.netmask
+    assert 0==obj.masklen
     assert ''==obj.next_hop_interface
     assert '172.16.1.254'==obj.next_hop_addr
     assert obj.multicast is False
@@ -1067,6 +1068,7 @@ def testVal_IOSRouteLine_02():
     assert 'mgmtVrf'==obj.vrf
     assert '0.0.0.0'==obj.network
     assert '0.0.0.0'==obj.netmask
+    assert 0==obj.masklen
     assert ''==obj.next_hop_interface
     assert '172.16.1.254'==obj.next_hop_addr
     assert obj.multicast is False
@@ -1085,6 +1087,7 @@ def testVal_IOSRouteLine_03():
     assert 'mgmtVrf'==obj.vrf
     assert '0.0.0.0'==obj.network
     assert '0.0.0.0'==obj.netmask
+    assert 0==obj.masklen
     assert ''==obj.next_hop_interface
     assert '172.16.1.254'==obj.next_hop_addr
     assert obj.multicast is False
@@ -1103,6 +1106,7 @@ def testVal_IOSRouteLine_04():
     assert 'mgmtVrf'==obj.vrf
     assert '0.0.0.0'==obj.network
     assert '0.0.0.0'==obj.netmask
+    assert 0==obj.masklen
     assert ''==obj.next_hop_interface
     assert '172.16.1.254'==obj.next_hop_addr
     assert obj.multicast is False
@@ -1121,6 +1125,7 @@ def testVal_IOSRouteLine_05():
     assert 'mgmtVrf'==obj.vrf
     assert '0.0.0.0'==obj.network
     assert '0.0.0.0'==obj.netmask
+    assert 0==obj.masklen
     assert ''==obj.next_hop_interface
     assert '172.16.1.254'==obj.next_hop_addr
     assert obj.multicast is False
@@ -1139,6 +1144,7 @@ def testVal_IOSRouteLine_06():
     assert 'mgmtVrf'==obj.vrf
     assert '0.0.0.0'==obj.network
     assert '0.0.0.0'==obj.netmask
+    assert 0==obj.masklen
     assert 'FastEthernet0/0'==obj.next_hop_interface
     assert '172.16.1.254'==obj.next_hop_addr
     assert obj.multicast is False
@@ -1157,6 +1163,7 @@ def testVal_IOSRouteLine_07():
     assert 'mgmtVrf'==obj.vrf
     assert '0.0.0.0'==obj.network
     assert '0.0.0.0'==obj.netmask
+    assert 0==obj.masklen
     assert 'FastEthernet0/0'==obj.next_hop_interface
     assert ''==obj.next_hop_addr
     assert obj.multicast is False
@@ -1175,6 +1182,7 @@ def testVal_IOSRouteLine_08():
     assert 'mgmtVrf'==obj.vrf
     assert '0.0.0.0'==obj.network
     assert '0.0.0.0'==obj.netmask
+    assert 0==obj.masklen
     assert 'FastEthernet0/0'==obj.next_hop_interface
     assert ''==obj.next_hop_addr
     assert obj.multicast is False
@@ -1193,6 +1201,7 @@ def testVal_IOSRouteLine_09():
     assert 'mgmtVrf'==obj.vrf
     assert '0.0.0.0'==obj.network
     assert '0.0.0.0'==obj.netmask
+    assert 0==obj.masklen
     assert 'FastEthernet0/0'==obj.next_hop_interface
     assert ''==obj.next_hop_addr
     assert obj.multicast is False
@@ -1210,7 +1219,7 @@ def testVal_IOSRouteLine_10():
     assert 'ipv6'==obj.address_family
     assert ''==obj.vrf
     assert '::'==obj.network
-    assert '0'==obj.netmask
+    assert 0==obj.masklen
     assert ''==obj.next_hop_interface
     assert '2001:DEAD:BEEF::1'==obj.next_hop_addr
     assert obj.multicast is False
@@ -1228,7 +1237,7 @@ def testVal_IOSRouteLine_11():
     assert 'ipv6'==obj.address_family
     assert ''==obj.vrf
     assert '2001:DEAD:BEEF::1'==obj.network
-    assert '32'==obj.netmask
+    assert 32==obj.masklen
     assert 'Serial 1/0'==obj.next_hop_interface
     assert ''==obj.next_hop_addr
     assert obj.multicast is False
@@ -1246,7 +1255,7 @@ def testVal_IOSRouteLine_12():
     assert 'ipv6'==obj.address_family
     assert ''==obj.vrf
     assert '2001::'==obj.network
-    assert '16'==obj.netmask
+    assert 16==obj.masklen
     assert 'Tunnel0'==obj.next_hop_interface
     assert '2002::1'==obj.next_hop_addr
     assert obj.multicast is True
