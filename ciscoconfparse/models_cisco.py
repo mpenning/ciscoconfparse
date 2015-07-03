@@ -2,8 +2,10 @@ import sys
 import re
 import os
 
-from ccp_abc import BaseCfgLine
+from ccp_util import _IPV6_REGEX_STR_COMPRESSED1, _IPV6_REGEX_STR_COMPRESSED2
+from ccp_util import _IPV6_REGEX_STR_COMPRESSED3
 from ccp_util import IPv4Obj
+from ccp_abc import BaseCfgLine
 
 ### HUGE UGLY WARNING:
 ###   Anything in models_cisco.py could change at any time, until I remove this
@@ -1538,12 +1540,31 @@ _RE_IP_ROUTE = re.compile(r"""^ip\s+route
 (?:\s+tag\s+(?P<tag>\d+))?       # Route tag
 """, re.VERBOSE)
 
+_RE_IPV6_ROUTE = re.compile(r"""^ipv6\s+route
+(?:\s+vrf\s+(?P<vrf>\S+))?
+(?:\s+(?P<prefix>{0})\/(?P<masklength>\d+))    # Prefix detection
+(?:
+  (?:\s+(?P<nh_addr1>{1}))
+  |(?:\s+(?P<nh_intf>\S+(?:\s+\d\S*?\/\S+)?)(?:\s+(?P<nh_addr2>{2}))?)
+)
+(?:\s+nexthop-vrf\s+(?P<nexthop_vrf>\S+))?
+(?:\s+(?P<ad>\d+))?              # Administrative distance
+(?:\s+(?:(?P<ucast>unicast)|(?P<mcast>multicast)))?
+(?:\s+tag\s+(?P<tag>\d+))?       # Route tag
+""".format(_IPV6_REGEX_STR_COMPRESSED1, _IPV6_REGEX_STR_COMPRESSED2,
+    _IPV6_REGEX_STR_COMPRESSED3), re.VERBOSE)
+
 class IOSRouteLine(BaseIOSRouteLine):
     def __init__(self, *args, **kwargs):
         super(IOSRouteLine, self).__init__(*args, **kwargs)
         if 'ipv6' in self.text[0:4]:
             self.feature = 'ipv6 route'
             self._address_family = "ipv6"
+            mm = _RE_IPV6_ROUTE.search(self.text)
+            if not (mm is None):
+                self.route_info = mm.groupdict()
+            else:
+                raise ValueError("Could not parse '{0}'".format(self.text))
         else:
             self.feature = 'ip route'
             self._address_family = "ip"
@@ -1551,7 +1572,7 @@ class IOSRouteLine(BaseIOSRouteLine):
             if not (mm is None):
                 self.route_info = mm.groupdict()
             else:
-                raise ValueError("Could not parse {0}".format(self.text))
+                raise ValueError("Could not parse '{0}'".format(self.text))
 
     @classmethod
     def is_object_for(cls, line="", re=re):
@@ -1621,20 +1642,18 @@ class IOSRouteLine(BaseIOSRouteLine):
             else:
                 return ''
         elif self._address_family=='ipv6':
-            raise NotImplementedError
+            if self.route_info['nh_intf']:
+                return self.route_info['nh_intf']
+            else:
+                return ''
 
     @property
     def next_hop_addr(self):
         if self._address_family=='ip':
-            if self.next_hop_interface:
-                if self.route_info['nh_addr'] is None:
-                    return ''
-                else:
-                    return self.route_info['nh_addr']
-            else:
-                return self.route_info['nh_addr']
+            return self.route_info['nh_addr'] or ''
         elif self._address_family=='ipv6':
-            raise NotImplementedError
+            return self.route_info['nh_addr1'] or self.route_info['nh_addr2'] \
+                or ''
 
     @property
     def global_next_hop(self):
@@ -1643,28 +1662,35 @@ class IOSRouteLine(BaseIOSRouteLine):
         elif self._address_family=='ip' and not bool(self.vrf):
             return True
         elif self._address_family=='ipv6':
-            # FIXME: add info for ipv6 routes
-            retval = self.re_match_typed(r'^ipv6\s+route\s+(vrf\s+)*\S+\s+(\S+)',
-                group=2, result_type=str, default='')
-        return retval
+            ## ipv6 uses nexthop_vrf
+            raise ValueError("[FATAL] ipv6 doesn't support a global_next_hop for '{0}'".format(self.text))
+        else:
+            raise ValueError("[FATAL] Could not identify global next-hop for '{0}'".format(self.text))
+
+    @property
+    def nexthop_vrf(self):
+        if self._address_family=='ipv6':
+            return self.route_info['nexthop_vrf'] or ''
+        else:
+            raise ValueError("[FATAL] ip doesn't support a global_next_hop for '{0}'".format(self.text))
 
 
     @property
     def admin_distance(self):
-        if self._address_family=='ip':
-            if self.route_info['ad']:
-                return int(self.route_info['ad'])
-            else:
-                return 1
-        elif self._address_family=='ipv6':
-            raise NotImplementedError
+        if self.route_info['ad']:
+            return int(self.route_info['ad'])
+        else:
+            return 1
 
     @property
     def multicast(self):
-        if self._address_family=='ip':
-            return bool(self.route_info['mcast'])
-        elif self._address_family=='ipv6':
-            raise NotImplementedError
+        """Return whether the multicast keyword was specified"""
+        return bool(self.route_info['mcast'])
+
+    @property
+    def unicast(self):
+        ## FIXME It's unclear how to implement this...
+        raise NotImplementedError
 
     @property
     def route_name(self):
@@ -1698,13 +1724,7 @@ class IOSRouteLine(BaseIOSRouteLine):
 
     @property
     def tag(self):
-        if self._address_family=='ip':
-            if self.route_info['tag']:
-                return self.route_info['tag']
-            else:
-                return ''
-        elif self._address_family=='ipv6':
-            raise NotImplementedError
+        return self.route_info['tag'] or ''
 
 ################################
 ################################ Groups ###############################
