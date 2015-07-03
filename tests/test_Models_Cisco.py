@@ -1051,6 +1051,7 @@ def testVal_IOSRouteLine_01():
     assert '0.0.0.0'==obj.netmask
     assert ''==obj.next_hop_interface
     assert '172.16.1.254'==obj.next_hop_addr
+    assert obj.multicast is False
     assert ''==obj.tracking_object_name
     assert ''==obj.route_name
     assert obj.permanent is False
@@ -1068,6 +1069,7 @@ def testVal_IOSRouteLine_02():
     assert '0.0.0.0'==obj.netmask
     assert ''==obj.next_hop_interface
     assert '172.16.1.254'==obj.next_hop_addr
+    assert obj.multicast is False
     assert ''==obj.tracking_object_name
     assert ''==obj.route_name
     assert obj.permanent is False
@@ -1085,6 +1087,7 @@ def testVal_IOSRouteLine_03():
     assert '0.0.0.0'==obj.netmask
     assert ''==obj.next_hop_interface
     assert '172.16.1.254'==obj.next_hop_addr
+    assert obj.multicast is False
     assert ''==obj.tracking_object_name
     assert ''==obj.route_name
     assert obj.permanent is False
@@ -1102,6 +1105,7 @@ def testVal_IOSRouteLine_04():
     assert '0.0.0.0'==obj.netmask
     assert ''==obj.next_hop_interface
     assert '172.16.1.254'==obj.next_hop_addr
+    assert obj.multicast is False
     assert ''==obj.tracking_object_name
     assert ''==obj.route_name
     assert obj.permanent is False
@@ -1119,6 +1123,7 @@ def testVal_IOSRouteLine_05():
     assert '0.0.0.0'==obj.netmask
     assert ''==obj.next_hop_interface
     assert '172.16.1.254'==obj.next_hop_addr
+    assert obj.multicast is False
     assert '35'==obj.tracking_object_name
     assert ''==obj.route_name
     assert obj.permanent is False
@@ -1136,6 +1141,7 @@ def testVal_IOSRouteLine_06():
     assert '0.0.0.0'==obj.netmask
     assert 'FastEthernet0/0'==obj.next_hop_interface
     assert '172.16.1.254'==obj.next_hop_addr
+    assert obj.multicast is False
     assert '35'==obj.tracking_object_name
     assert ''==obj.route_name
     assert obj.permanent is False
@@ -1153,6 +1159,7 @@ def testVal_IOSRouteLine_07():
     assert '0.0.0.0'==obj.netmask
     assert 'FastEthernet0/0'==obj.next_hop_interface
     assert ''==obj.next_hop_addr
+    assert obj.multicast is False
     assert '35'==obj.tracking_object_name
     assert ''==obj.route_name
     assert obj.permanent is False
@@ -1160,7 +1167,7 @@ def testVal_IOSRouteLine_07():
     assert 254==obj.admin_distance
     assert ''==obj.tag
 
-def testVal_IOSRouteLine_08(self):
+def testVal_IOSRouteLine_08():
     line = 'ip route vrf mgmtVrf 0.0.0.0 0.0.0.0 FastEthernet0/0 254 track 35 tag 20'
     cfg = CiscoConfParse([line], factory=True)
     obj = cfg.ConfigObjs[0]
@@ -1170,6 +1177,7 @@ def testVal_IOSRouteLine_08(self):
     assert '0.0.0.0'==obj.netmask
     assert 'FastEthernet0/0'==obj.next_hop_interface
     assert ''==obj.next_hop_addr
+    assert obj.multicast is False
     assert '35'==obj.tracking_object_name
     assert ''==obj.route_name
     assert obj.permanent is False
@@ -1177,7 +1185,7 @@ def testVal_IOSRouteLine_08(self):
     assert 254==obj.admin_distance
     assert '20'==obj.tag
 
-def testVal_IOSRouteLine_08():
+def testVal_IOSRouteLine_09():
     line = 'ip route vrf mgmtVrf 0.0.0.0 0.0.0.0 FastEthernet0/0 254 name foobarme tag 20'
     cfg = CiscoConfParse([line], factory=True)
     obj = cfg.ConfigObjs[0]
@@ -1187,12 +1195,67 @@ def testVal_IOSRouteLine_08():
     assert '0.0.0.0'==obj.netmask
     assert 'FastEthernet0/0'==obj.next_hop_interface
     assert ''==obj.next_hop_addr
+    assert obj.multicast is False
     assert ''==obj.tracking_object_name
     assert 'foobarme'==obj.route_name
     assert obj.permanent is False
     assert obj.global_next_hop is False # TODO: Figure out if False is right
     assert 254==obj.admin_distance
     assert '20'==obj.tag
+
+def testVal_IOSRouteLine_10():
+    line = 'ipv6 route ::/0 2001:DEAD:BEEF::1'
+    cfg = CiscoConfParse([line], factory=True)
+    obj = cfg.ConfigObjs[0]
+    assert 'ipv6'==obj.address_family
+    assert ''==obj.vrf
+    assert '::'==obj.network
+    assert '0'==obj.netmask
+    assert ''==obj.next_hop_interface
+    assert '2001:DEAD:BEEF::1'==obj.next_hop_addr
+    assert obj.multicast is False
+    #assert ''==obj.tracking_object_name
+    #assert ''==obj.route_name
+    #assert obj.permanent is False
+    #assert obj.global_next_hop is True    # All non-vrf routes have global NHs
+    assert 1==obj.admin_distance
+    assert ''==obj.tag
+
+def testVal_IOSRouteLine_11():
+    line = 'ipv6 route 2001:DEAD:BEEF::1/32 Serial 1/0 201'
+    cfg = CiscoConfParse([line], factory=True)
+    obj = cfg.ConfigObjs[0]
+    assert 'ipv6'==obj.address_family
+    assert ''==obj.vrf
+    assert '2001:DEAD:BEEF::1'==obj.network
+    assert '32'==obj.netmask
+    assert 'Serial 1/0'==obj.next_hop_interface
+    assert ''==obj.next_hop_addr
+    assert obj.multicast is False
+    #assert ''==obj.tracking_object_name
+    #assert ''==obj.route_name
+    #assert obj.permanent is False
+    #assert obj.global_next_hop is True    # All non-vrf routes have global NHs
+    assert 201==obj.admin_distance
+    assert ''==obj.tag
+
+def testVal_IOSRouteLine_12():
+    line = 'ipv6 route 2001::/16 Tunnel0 2002::1 multicast'
+    cfg = CiscoConfParse([line], factory=True)
+    obj = cfg.ConfigObjs[0]
+    assert 'ipv6'==obj.address_family
+    assert ''==obj.vrf
+    assert '2001::'==obj.network
+    assert '16'==obj.netmask
+    assert 'Tunnel0'==obj.next_hop_interface
+    assert '2002::1'==obj.next_hop_addr
+    assert obj.multicast is True
+    #assert ''==obj.tracking_object_name
+    #assert ''==obj.route_name
+    #assert obj.permanent is False
+    #assert obj.global_next_hop is True    # All non-vrf routes have global NHs
+    assert 1==obj.admin_distance
+    assert ''==obj.tag
 
 ###
 ### ------ AAA Tests --------
