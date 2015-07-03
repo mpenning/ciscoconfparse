@@ -1606,9 +1606,16 @@ class IOSRouteLine(BaseIOSRouteLine):
         if self._address_family=='ip':
             return self.route_info['netmask']
         elif self._address_family=='ipv6':
-            retval = self.re_match_typed(r'^ipv6\s+route\s+(vrf\s+)*\S+?\/(\d+)',
-                group=2, result_type=str, default='')
+            raise NotImplementedError
         return retval
+
+    @property
+    def masklen(self):
+        if self._address_family=='ip':
+            return self.network_object.prefixlen
+        elif self._address_family=='ipv6':
+            masklen_str = self.route_info['masklength'] or '128'
+            return int(masklen_str)
 
     @property
     def network_object(self):
