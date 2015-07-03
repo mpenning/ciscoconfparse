@@ -43,6 +43,7 @@ def test_IPv4_REGEX(addr):
         'FE80:AAAA:0000:0000:0000:0000:DEAD:BEEF', # Capital Letters
         '0:0:0:0:0:0:0:1',                         # Loopback
         '::1',                           # Loopback, leading double-colons
+        '::',                            # Shorthand for 0:0:0:0:0:0:0:0
     ])
 def test_IPv6_REGEX(addr):
     test_result = _RGX_IPV6ADDR.search(addr)
