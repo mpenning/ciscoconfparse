@@ -81,6 +81,30 @@ def testVal_IOSCfgLine_is_loopback_intf():
         obj = cfg.ConfigObjs[0]
         assert obj.is_loopback_intf is result_correct
 
+def testVal_IOSCfgLine_is_virtual_intf():
+    # Map a config line to result_correct
+    result_map = {
+        'interface Loopback 0': True,
+        'interface Loopback1': True,
+        'interface Tunnel 0': True,
+        'interface Tunnel0': True,
+        'interface Dialer 0': True,
+        'interface Dialer0': True,
+        'interface Port-Channel 1': True,
+        'interface Port-channel 1': True,
+        'interface Port-Channel1': True,
+        'interface Port-channel1': True,
+        'interface Serial 1/0': False,
+        'interface GigabitEthernet4/1': False,
+        'interface GigabitEthernet4/8.120': False,
+        'interface ATM5/0/0': False,
+        'interface ATM5/0/0.32 point-to-point': False,
+    }
+    for cfgline, result_correct in result_map.items():
+        cfg = CiscoConfParse([cfgline], factory=True, syntax='ios')
+        obj = cfg.ConfigObjs[0]
+        assert obj.is_virtual_intf is result_correct
+
 def testVal_IOSCfgLine_is_ethernet_intf():
     # Map a config line to result_correct
     result_map = {
@@ -1219,6 +1243,7 @@ def testVal_IOSRouteLine_10():
     assert 'ipv6'==obj.address_family
     assert ''==obj.vrf
     assert '::'==obj.network
+    assert '::'==obj.netmask
     assert 0==obj.masklen
     assert ''==obj.next_hop_interface
     assert '2001:DEAD:BEEF::1'==obj.next_hop_addr
@@ -1237,6 +1262,7 @@ def testVal_IOSRouteLine_11():
     assert 'ipv6'==obj.address_family
     assert ''==obj.vrf
     assert '2001:DEAD:BEEF::1'==obj.network
+    assert 'ffff:ffff::'==obj.netmask
     assert 32==obj.masklen
     assert 'Serial 1/0'==obj.next_hop_interface
     assert ''==obj.next_hop_addr
@@ -1255,6 +1281,7 @@ def testVal_IOSRouteLine_12():
     assert 'ipv6'==obj.address_family
     assert ''==obj.vrf
     assert '2001::'==obj.network
+    assert 'ffff::'==obj.netmask
     assert 16==obj.masklen
     assert 'Tunnel0'==obj.next_hop_interface
     assert '2002::1'==obj.next_hop_addr
