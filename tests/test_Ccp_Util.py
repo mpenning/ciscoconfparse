@@ -168,3 +168,7 @@ def test_dns_lookup():
     #   ref http://stackoverflow.com/a/7714208/667301
     result_correct = {'addrs': ['127.0.0.1'], 'name': '*.vcap.me', 'error': ''}
     assert dns_lookup('*.vcap.me')==result_correct
+
+def test_reverse_dns_lookup():
+    result_correct = {'addr': '127.0.0.1', 'name': 'localhost.', 'error': ''}
+    assert 'localhost' in reverse_dns_lookup('127.0.0.1')['name'].lower()
