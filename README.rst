@@ -6,12 +6,12 @@ ciscoconfparse
    :target: https://travis-ci.org/mpenning/ciscoconfparse
    :alt: Travis CI Status
 
-.. image:: https://badge.fury.io/py/ciscoconfparse.png
+.. image:: https://img.shields.io/pypi/v/ciscoconfparse.svg
    :target: https://pypi.python.org/pypi/ciscoconfparse/
    :alt: Version
 
-.. image:: https://pypip.in/license/ciscoconfparse/badge.png
-   :target: https://pypi.python.org/pypi/ciscoconfparse/
+.. image:: http://img.shields.io/badge/license-GPLv3-blue.svg
+   :target: https://www.gnu.org/copyleft/gpl.html
    :alt: License
 
 .. image:: https://img.shields.io/pypi/dm/ciscoconfparse.svg
