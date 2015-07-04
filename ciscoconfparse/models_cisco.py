@@ -4,7 +4,7 @@ import os
 
 from ccp_util import _IPV6_REGEX_STR_COMPRESSED1, _IPV6_REGEX_STR_COMPRESSED2
 from ccp_util import _IPV6_REGEX_STR_COMPRESSED3
-from ccp_util import IPv4Obj
+from ccp_util import IPv4Obj, IPv6Obj
 from ccp_abc import BaseCfgLine
 
 ### HUGE UGLY WARNING:
@@ -168,10 +168,11 @@ class IOSCfgLine(BaseCfgLine):
             return True
         return False
 
+    _VIRTUAL_INTF_REGEX_STR = r"""^interface\s+(Loopback|Tunnel|Dialer|Virtual-Template|Port-[Cc]hannel)"""
+    _VIRTUAL_INTF_REGEX = re.compile(_VIRTUAL_INTF_REGEX_STR)
     @property
     def is_virtual_intf(self):
-        intf_regex = r'^interface\s+(Loopback|Tunnel|Dialer|Virtual-Template|Port-Channel)'
-        if self.re_match(intf_regex):
+        if self.re_match(self._VIRTUAL_INTF_REGEX):
             return True
         return False
 
@@ -321,10 +322,12 @@ class BaseIOSIntfLine(IOSCfgLine):
 
     @property
     def abbvs(self):
-        """Build a set of valid abbreviations (lowercased) for the interface"""
+        """A python set of valid abbreviations (lowercased) for the interface"""
         return self._build_abbvs()
 
 
+    _INTF_NAME_RE_STR = r'^interface\s+(\S+[0-9\/\.\s]+)\s*'
+    _INTF_NAME_REGEX = re.compile(_INTF_NAME_RE_STR)
     @property
     def name(self):
         """Return the interface name as a string, such as 'GigabitEthernet0/1'
@@ -365,8 +368,7 @@ class BaseIOSIntfLine(IOSCfgLine):
         """
         if not self.is_intf:
             return ''
-        intf_regex = r'^interface\s+(\S+[0-9\/\.\s]+)\s*'
-        name = self.re_match(intf_regex).strip()
+        name = self.re_match(self._INTF_NAME_REGEX).strip()
         return name
 
     @property
@@ -688,11 +690,13 @@ class BaseIOSIntfLine(IOSCfgLine):
 
     @property
     def has_manual_carrierdelay(self):
+        """Return a python boolean for whether carrier delay is manually configured on the interface"""
         return bool(self.manual_carrierdelay)
 
 
     @property
     def manual_carrierdelay(self):
+        """Return the manual carrier delay (in seconds) of the interface as a python float. If there is no explicit carrier delay, return 0.0"""
         cd_seconds = self.re_match_iter_typed(r'^\s*carrier-delay\s+(\d+)$',
             result_type=float, default=0.0)
         cd_msec = self.re_match_iter_typed(r'^\s*carrier-delay\s+msec\s+(\d+)$',
@@ -708,8 +712,7 @@ class BaseIOSIntfLine(IOSCfgLine):
 
     @property
     def manual_clock_rate(self):
-        ## Due to the diverse platform defaults, this should be the
-        ##    only mtu information I plan to support
+        """Return the clock rate of the interface as a python integer. If there is no explicit clock rate, return 0"""
         retval = self.re_match_iter_typed(r'^\s*clock\s+rate\s+(\d+)$',
             result_type=int, default=0)
         return retval
@@ -1576,7 +1579,7 @@ class IOSRouteLine(BaseIOSRouteLine):
 
     @classmethod
     def is_object_for(cls, line="", re=re):
-        if re.search('^(ip|ipv6)\s+route\s+\S', line):
+        if (line[0:8]=='ip route') or (line[0:10]=='ipv6 route'):
             return True
         return False
 
@@ -1606,7 +1609,7 @@ class IOSRouteLine(BaseIOSRouteLine):
         if self._address_family=='ip':
             return self.route_info['netmask']
         elif self._address_family=='ipv6':
-            raise NotImplementedError
+            return str(self.network_object.netmask)
         return retval
 
     @property
@@ -1624,7 +1627,7 @@ class IOSRouteLine(BaseIOSRouteLine):
                 return IPv4Obj('%s/%s' % (self.network, self.netmask), 
                     strict=False)
             elif self._address_family=='ipv6':
-                return IPv6Network('%s/%s' % (self.network, self.netmask))
+                return IPv6Obj('%s/%s' % (self.network, self.masklen))
         except:
             return None
 
