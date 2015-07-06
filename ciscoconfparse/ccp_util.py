@@ -601,6 +601,25 @@ def dns_lookup(input, timeout=3, server=''):
             'name': input,
             }
 
+def dns6_lookup(input, timeout=3, server=''):
+    """Perform a simple DNS lookup, return results in a dictionary"""
+    resolver = Resolver()
+    resolver.timeout = float(timeout)
+    resolver.lifetime = float(timeout)
+    if server:
+        resolver.nameservers = [server]
+    try:
+        records = resolver.query(input, 'AAAA')
+        return {'addrs': [ii.address for ii in records],
+            'error': '',
+            'name': input,
+            }
+    except DNSException as e:
+        return {'addrs': [], 
+            'error': repr(e),
+            'name': input,
+            }
+
 _REVERSE_DNS_REGEX = re.compile(r'^\s*\d+\.\d+\.\d+\.\d+\s*$')
 def reverse_dns_lookup(input, timeout=3, server=''):
     """Perform a simple reverse DNS lookup, return results in a dictionary"""
