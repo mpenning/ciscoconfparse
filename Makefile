@@ -17,6 +17,9 @@ repo-push:
 	hg bookmark -f master
 	-hg push ssh://hg@bitbucket.org/mpenning/ciscoconfparse
 	-hg push git+ssh://git@github.com:mpenning/ciscoconfparse.git
+.PHONY: tutorial
+tutorial:
+	rst2html5 --jquery --reveal-js --pretty-print-code --embed-stylesheet --embed-content --embed-images tutorial/ccp_tutorial.rst > tutorial/ccp_tutorial.html
 .PHONY: parse-ios
 parse-ios:
 	cd tests; python parse_test.py 1 | less
@@ -44,6 +47,8 @@ devpkgs:
 	pip install --upgrade mock
 	pip install --upgrade sphinx
 	pip install --upgrade sphinx-bootstrap-theme
+	pip install --upgrade rst2html5
+	pip install --upgrade rst2html5-tools
 	pip install --upgrade pytest==2.6.4
 	pip install --upgrade mccabe
 	pip install --upgrade flake8
