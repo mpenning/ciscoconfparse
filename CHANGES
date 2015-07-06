@@ -1,3 +1,4 @@
+1.2.36  20150706 Add dns6_lookup(), add tutorial
 1.2.35  20150703 Fix issue with ipv6 route parsing
 1.2.34  20150703 Add support for ipv6 static routes in models_cisco (Github issue #34)
 1.2.33  20150702 Expand coverage of icmp and standard ACLs in models_asa

@@ -91,7 +91,8 @@ CiscoConfParse also handles anything that has a Cisco IOS style of configuration
 Docs
 ====
 
-The latest copy of the docs are `archived on the web <http://www.pennington.net/py/ciscoconfparse/>`_
+- The latest copy of the docs are `archived on the web <http://www.pennington.net/py/ciscoconfparse/>`_
+- There is also a `CiscoConfParse Tutorial <http://pennington.net/tutorial/ciscoconfparse/ccp_tutorial.html>`_
 
 .. _Pre-Requisites:
 
@@ -113,7 +114,7 @@ already have setuptools_, you can install as usual:
 ::
 
       # Substitute whatever ciscoconfparse version you like...
-      easy_install -U ciscoconfparse==1.2.35
+      easy_install -U ciscoconfparse==1.2.36
 
 Alternatively you can install into Python2.x with pip_:
 
