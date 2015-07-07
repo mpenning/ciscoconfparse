@@ -2083,6 +2083,11 @@ class CiscoConfParse(object):
             except:
                 pass
 
+        ## Strip out 'double negatives' (i.e. 'no no ')
+        for idx in range(0, len(retval)):
+            retval[idx] = re.sub(r'(\s+)no\s+no\s+(\S+.+?)$', '\g<1>\g<2>', 
+                retval[idx])
+
         if debug:
             _log.debug("Completed diff:")
             for line in retval:
