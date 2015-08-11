@@ -126,6 +126,15 @@ class BaseCfgLine(object):
             return self.children[-1].linenum
 
     @property
+    def recursive_text(self):
+        lines=list()
+        lines.append(self.text)
+        if self.has_children:
+            for child in self.children:
+                lines.append(child.recursive_text)
+        return "\r\n".join(lines)
+
+    @property
     def verbose(self):
         if self.has_children:
             return "<%s # %s '%s' (child_indent: %s / len(children): %s / family_endpoint: %s)>" % (self.classname, self.linenum, self.text, self.child_indent, len(self.children), self.family_endpoint) 
