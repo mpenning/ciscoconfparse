@@ -227,6 +227,14 @@ class CiscoConfParse(object):
                 " an invalid argument\n")
         self.ConfigObjs.CiscoConfParse = self
 
+    @classmethod
+    def from_string(cls,input_string):
+        try:
+            config_lines=input_string.splitlines() #convert string blob to list of lines
+            return cls(config_lines)
+        except Exception as e:
+            raise e
+
     def __repr__(self):
         return "<CiscoConfParse: %s lines / syntax: %s / comment delimiter: '%s' / factory: %s>" % (len(self.ConfigObjs), self.syntax, self.comment_delimiter, self.factory)
 
