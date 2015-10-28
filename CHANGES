@@ -1,3 +1,5 @@
+1.2.39  20151027 Fix TravisCI breakage
+1.2.38  20151027 Integrate PR #48, which fixes github issue #47
 1.2.37  20150706 Fix Github issue #37 (sync_diff() includes double negatives)
 1.2.36  20150706 Add dns6_lookup(), add tutorial
 1.2.35  20150703 Fix issue with ipv6 route parsing
