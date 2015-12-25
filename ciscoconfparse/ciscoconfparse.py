@@ -291,7 +291,7 @@ class CiscoConfParse(object):
 
         JUNOS_RE_STR = r"""^
         (?:\s*
-           (?:(?P<line>[^\{{\}}[{0}].*?)(?P<braces_eol>[\{{\}}])*(?P<sc>\;)*\s*)
+           (?:(?P<line>[^\{{\}}{0}].*?)(?P<braces_eol>[\{{\}}])*(?P<sc>\;)*\s*)
           |(?P<braces_alone>[\{{\}}\;])
           |(?:\s*[{0}](?P<comment>.+))
         )
