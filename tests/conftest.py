@@ -362,6 +362,10 @@ router ospf 100 vrf TEST_100_001
  router-id 1.1.2.254
  network 1.1.2.0 0.0.0.255 area 0
 !
+ipv6 router ospf 1
+ router-id 2.2.2.2
+ log-adjacency-changes
+!
 policy-map QOS_1
  class GOLD
   priority percent 10

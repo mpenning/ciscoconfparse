@@ -263,7 +263,7 @@ def testValues_find_lines(parse_c01):
         test_result = parse_c01.find_lines(**args)
         assert result_correct==test_result
 
-def testValues_find_children(parse_c01):
+def testValues_find_children_01(parse_c01):
     c01_pmap_children = [
         'policy-map QOS_1',
         ' class GOLD',
@@ -280,7 +280,22 @@ def testValues_find_children(parse_c01):
         test_result = parse_c01.find_children(**args)
         assert result_correct==test_result
 
+def testValues_find_children_02(parse_c03):
+    """Test for Github issue #44 could not parse ipv6 router ospf """
+    c01_pmap_children = [
+        'ipv6 router ospf 1',
+        ' router-id 2.2.2.2',
+        ' log-adjacency-changes',
+        ]
 
+    find_children_Values = (
+        ({'linespec': "ipv6 route", 'exactmatch': False},
+            c01_pmap_children),
+        ({'linespec': "policy-map", 'exactmatch': True}, []),
+    )
+    for args, result_correct in find_children_Values:
+        test_result = parse_c03.find_children(**args)
+        assert result_correct==test_result
 
 
 def testValues_find_all_children01(parse_c01):
