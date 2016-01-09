@@ -1579,7 +1579,7 @@ class IOSRouteLine(BaseIOSRouteLine):
 
     @classmethod
     def is_object_for(cls, line="", re=re):
-        if (line[0:8]=='ip route') or (line[0:10]=='ipv6 route'):
+        if (line[0:9]=='ip route ') or (line[0:11]=='ipv6 route '):
             return True
         return False
 
