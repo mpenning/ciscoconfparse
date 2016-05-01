@@ -255,6 +255,15 @@ class IOSCfgLine(BaseCfgLine):
             return True
         return False
 
+    @property
+    def is_portchannel(self):
+        """Return a boolean indicating whether this port is configured in a port-channel
+
+        """
+        retval = self.re_match_iter_typed(r'^\s*channel-group\s+(\d+)',
+            result_type=bool, default=False)
+        return retval
+
 ##
 ##-------------  IOS Interface ABC
 ##
@@ -1093,9 +1102,13 @@ class BaseIOSIntfLine(IOSCfgLine):
 
     @property
     def access_vlan(self):
-        """Return an integer with the access vlan number.  Return 0, if the port has no explicit vlan configured."""
+        """Return an integer with the access vlan number.  Return 1, if the switchport has no explicit vlan configured; return 0 if the port isn't a switchport"""
+        if self.is_switchport:
+            default_val = 1
+        else:
+            default_val = 0
         retval = self.re_match_iter_typed(r'^\s*switchport\s+access\s+vlan\s+(\d+)$',
-            result_type=int, default=0)
+            result_type=int, default=default_val)
         return retval
 
     ##-------------  CDP
@@ -1579,7 +1592,7 @@ class IOSRouteLine(BaseIOSRouteLine):
 
     @classmethod
     def is_object_for(cls, line="", re=re):
-        if (line[0:8]=='ip route') or (line[0:10]=='ipv6 route'):
+        if (line[0:8]=='ip route') or (line[0:11]=='ipv6 route '):
             return True
         return False
 
