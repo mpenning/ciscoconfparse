@@ -1067,6 +1067,18 @@ class BaseIOSIntfLine(IOSCfgLine):
         return retval
 
     @property
+    def trunk_allowed_vlans(self):
+        ## We can't use a simple re_match_iter_typed here as there are maybe
+        ## multiple lines of switchport trunk allowed vlan config
+        allowed_vlans = self.re_search_children(r'^\s*switchport\s+trunk\s+allowed\s+vlan')
+        if allowed_vlans:
+            allowed_vlans_parsed =  ','.join(i.re_match(r'(\d.*)') for i in allowed_vlans)
+            allowed_vlans_numbers = allowed_vlans_parsed.split(',')
+            return [j for h in [[x for x in range(int(i.split('-')[0]), int(i.split('-')[-1])+1)] for i in allowed_vlans_numbers] for j in h]
+        else:
+            return []
+
+    @property
     def has_switch_portsecurity(self):
         if not self.is_switchport:
             return False
