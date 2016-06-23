@@ -1067,14 +1067,21 @@ class BaseIOSIntfLine(IOSCfgLine):
         return retval
 
     @property
-    def trunk_allowed_vlans(self):
+    def trunk_allowed_vlan(self):
         ## We can't use a simple re_match_iter_typed here as there are maybe
         ## multiple lines of switchport trunk allowed vlan config
         allowed_vlans = self.re_search_children(r'^\s*switchport\s+trunk\s+allowed\s+vlan')
         if allowed_vlans:
             allowed_vlans_parsed =  ','.join(i.re_match(r'(\d.*)') for i in allowed_vlans)
             allowed_vlans_numbers = allowed_vlans_parsed.split(',')
-            return [j for h in [[x for x in range(int(i.split('-')[0]), int(i.split('-')[-1])+1)] for i in allowed_vlans_numbers] for j in h]
+
+            # Expand all ranges
+            for match in re.findall(r"[0-9]{1,4}-[0-9]{1,4}", allowed_vlans_numbers):
+              values = match.split("-")
+              values = ','.join( intList2strList( range(int(values[0]), int(values[1])+1)) )
+              allowed_vlans_numbers = allowed_vlans_numbers.replace(match, values)
+
+            return allowed_vlans_numbers
         else:
             return []
 
