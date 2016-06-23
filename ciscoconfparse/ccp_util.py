@@ -645,3 +645,14 @@ def reverse_dns_lookup(input, timeout=3, server=''):
             'error': repr(e),
             'name': input,
             }
+
+def range_to_list( inputRange):
+    """Convert comma seperated list to integer list"""
+    for match in re.findall(r"[0-9]{1,4}-[0-9]{1,4}", inputRange):
+      values = match.split("-")
+      return range(int(values[0]), int(values[1])+1)
+
+    if "," in inputRange:
+        return inputRange.split(",")
+    else:
+        return [inputRange]
