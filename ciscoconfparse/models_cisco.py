@@ -5,6 +5,7 @@ import os
 from ccp_util import _IPV6_REGEX_STR_COMPRESSED1, _IPV6_REGEX_STR_COMPRESSED2
 from ccp_util import _IPV6_REGEX_STR_COMPRESSED3
 from ccp_util import IPv4Obj, IPv6Obj
+from ccp_util import range_to_list
 from ccp_abc import BaseCfgLine
 
 ### HUGE UGLY WARNING:
@@ -263,6 +264,31 @@ class IOSCfgLine(BaseCfgLine):
         retval = self.re_match_iter_typed(r'^\s*channel-group\s+(\d+)',
             result_type=bool, default=False)
         return retval
+
+    @property
+    def is_l2vlan(self):
+        """Return a boolean indicating whether this is a l2 vlan configuration
+
+        """
+        retval = self.re_match_typed(r'^vlan\s([1-9]+).*',
+            result_type=bool, default=False)
+        return retval
+
+    @property
+    def l2vlan_id(self):
+        """Return a boolean indicating whether this is a l2 vlan configuration
+
+        """
+        if self.is_l2vlan:
+            retval = self.re_match_typed(r'^vlan\s([1-9].*)',
+                result_type=str, default=False)
+            print "R: " +retval
+            if retval:
+                return range_to_list(retval)
+            raise ValueError
+        else:
+            return False
+    
 
 ##
 ##-------------  IOS Interface ABC
@@ -1075,13 +1101,11 @@ class BaseIOSIntfLine(IOSCfgLine):
             allowed_vlans_parsed =  ','.join(i.re_match(r'(\d.*)') for i in allowed_vlans)
             allowed_vlans_numbers = allowed_vlans_parsed.split(',')
 
-            # Expand all ranges
-            for match in re.findall(r"[0-9]{1,4}-[0-9]{1,4}", allowed_vlans_numbers):
-              values = match.split("-")
-              values = ','.join( intList2strList( range(int(values[0]), int(values[1])+1)) )
-              allowed_vlans_numbers = allowed_vlans_numbers.replace(match, values)
+            retval = []
+            for vlan in allowed_vlans_numbers:
+                retval.extend( range_to_list(vlan) )
 
-            return allowed_vlans_numbers
+            return retval
         else:
             return []
 
