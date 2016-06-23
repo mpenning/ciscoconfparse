@@ -1780,7 +1780,7 @@ class IOSAaaGroupServerLine(BaseCfgLine):
         super(IOSAaaGroupServerLine, self).__init__(*args, **kwargs)
         self.feature = 'aaa group server'
 
-        REGEX = r'^aaa\sgroup\sserver\s(?P<protocol>\S+)\s(?P<group>\S+)$'
+        REGEX = r'^aaa\sgroup\sserver\s(?P<protocol>\S+)\s(?P<group>\S+)\s*$'
         mm = re.search(REGEX, self.text)
         if not (mm is None):
             groups = mm.groupdict()
