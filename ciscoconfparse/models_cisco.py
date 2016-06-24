@@ -1071,6 +1071,15 @@ class BaseIOSIntfLine(IOSCfgLine):
         return retval
 
     @property
+    def is_trunk(self):
+        """Return a boolean indicating whether this IF a trunk
+
+        """
+        retval = self.re_match_iter_typed(r'^\s*switchport\smode\s(trunk)\s*',
+            result_type=bool, default=False)
+        return retval
+
+    @property
     def has_manual_switch_access(self):
         retval = self.re_match_iter_typed(r'^\s*(switchport\smode\s+access)\s*$',
             result_type=bool, default=False)
@@ -1096,16 +1105,27 @@ class BaseIOSIntfLine(IOSCfgLine):
     def trunk_allowed_vlan(self):
         ## We can't use a simple re_match_iter_typed here as there are maybe
         ## multiple lines of switchport trunk allowed vlan config
-        allowed_vlans = self.re_search_children(r'^\s*switchport\s+trunk\s+allowed\s+vlan')
-        if allowed_vlans:
-            allowed_vlans_parsed =  ','.join(i.re_match(r'(\d.*)') for i in allowed_vlans)
-            allowed_vlans_numbers = allowed_vlans_parsed.split(',')
+        if self.is_l2vlan:
+            retval = self.re_match_typed(r'^vlan\s([1-9].*)',
+                result_type=str, default=False)
+            print "R: " +retval
+            if retval:
+                return range_to_list(retval)
+            raise ValueError
+        else:
+            return False
 
-            retval = []
-            for vlan in allowed_vlans_numbers:
-                retval.extend( range_to_list(vlan) )
+        if self.is_trunk:    
+            allowed_vlans = self.re_search_children(r'^\s*switchport\s+trunk\s+allowed\s+vlan')
+            if allowed_vlans:
+                allowed_vlans_parsed =  ','.join(i.re_match(r'(\d.*)') for i in allowed_vlans)
+                allowed_vlans_numbers = allowed_vlans_parsed.split(',')
 
-            return retval
+                retval = []
+                for vlan in allowed_vlans_numbers:
+                    retval.extend( range_to_list(vlan) )
+
+                return retval
         else:
             return []
 
