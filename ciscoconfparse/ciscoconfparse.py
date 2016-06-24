@@ -2099,9 +2099,13 @@ class CiscoConfParse(object):
         """Save a text copy of the configuration at ``filepath``; this
         method uses the OperatingSystem's native line separators (such as
         ``\\r\\n`` in Windows)."""
-        with open(filepath, 'w') as newconf:
-            for line in self.ioscfg:
-                newconf.write(line+'\n')
+        try:
+            with open(filepath, 'w') as newconf:
+                for line in self.ioscfg:
+                    newconf.write(line+'\n')
+            return True
+        except IOError:
+            return False
 
 
     ### The methods below are marked SEMI-PRIVATE because they return an object
