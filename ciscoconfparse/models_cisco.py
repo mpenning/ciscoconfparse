@@ -1105,16 +1105,6 @@ class BaseIOSIntfLine(IOSCfgLine):
     def trunk_allowed_vlan(self):
         ## We can't use a simple re_match_iter_typed here as there are maybe
         ## multiple lines of switchport trunk allowed vlan config
-        if self.is_l2vlan:
-            retval = self.re_match_typed(r'^vlan\s([1-9].*)',
-                result_type=str, default=False)
-            print "R: " +retval
-            if retval:
-                return range_to_list(retval)
-            raise ValueError
-        else:
-            return False
-
         if self.is_trunk:    
             allowed_vlans = self.re_search_children(r'^\s*switchport\s+trunk\s+allowed\s+vlan')
             if allowed_vlans:
