@@ -145,6 +145,8 @@ def testVal_IOSIntfLine_name():
         'interface GigabitEthernet 4/8.120': "GigabitEthernet 4/8.120",
         'interface ATM5/0/0': "ATM5/0/0",
         'interface ATM5/0/0.32 point-to-point': "ATM5/0/0.32",
+        'interface Vlan123': "Vlan123",
+        'interface Vlan 123': "Vlan 123",
     }
     for cfgline, result_correct in result_map.items():
         cfg = CiscoConfParse([cfgline], factory=True)
