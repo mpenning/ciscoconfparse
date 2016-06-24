@@ -170,4 +170,5 @@ def test_dns_lookup():
     assert dns_lookup('*.vcap.me')==result_correct
 
 def test_reverse_dns_lookup():
-    result_correct = {'addr': '8.8.8.8', 'name': 'google-public-dns-a.google.com.', 'error': ''}
+    result_correct = {'addr': '127.0.0.1', 'name': 'localhost.', 'error': ''}
+    assert 'localhost' in reverse_dns_lookup('127.0.0.1')['name'].lower()
