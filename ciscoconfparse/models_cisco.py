@@ -169,7 +169,7 @@ class IOSCfgLine(BaseCfgLine):
             return True
         return False
 
-    _VIRTUAL_INTF_REGEX_STR = r"""^interface\s+(Loopback|Tunnel|Dialer|Virtual-Template|Port-[Cc]hannel)"""
+    _VIRTUAL_INTF_REGEX_STR = r"""^interface\s+(Loopback|Tunnel|Dialer|Virtual-Template|Port-[Cc]hannel|Vlan)"""
     _VIRTUAL_INTF_REGEX = re.compile(_VIRTUAL_INTF_REGEX_STR)
     @property
     def is_virtual_intf(self):
