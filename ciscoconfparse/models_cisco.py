@@ -282,7 +282,6 @@ class IOSCfgLine(BaseCfgLine):
         if self.is_l2vlan:
             retval = self.re_match_typed(r'^vlan\s([1-9].*)',
                 result_type=str, default=False)
-            print "R: " +retval
             if retval:
                 return range_to_list(retval)
             raise ValueError
