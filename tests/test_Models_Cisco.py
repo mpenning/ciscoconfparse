@@ -99,6 +99,8 @@ def testVal_IOSCfgLine_is_virtual_intf():
         'interface GigabitEthernet4/8.120': False,
         'interface ATM5/0/0': False,
         'interface ATM5/0/0.32 point-to-point': False,
+        'interface Vlan123': True,
+        'interface Vlan 123': True,
     }
     for cfgline, result_correct in result_map.items():
         cfg = CiscoConfParse([cfgline], factory=True, syntax='ios')
