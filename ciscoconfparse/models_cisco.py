@@ -281,7 +281,7 @@ class IOSCfgLine(BaseCfgLine):
         """
         if self.is_l2vlan:
             retval = self.re_match_typed(r'^vlan\s([1-9].*)',
-                result_type=str, default=False)
+                result_type=str, default=False)   # Has to be a string to match Nexus ranges
             if retval:
                 return range_to_list(retval)
             raise ValueError
@@ -1105,7 +1105,7 @@ class BaseIOSIntfLine(IOSCfgLine):
         ## We can't use a simple re_match_iter_typed here as there are maybe
         ## multiple lines of switchport trunk allowed vlan config
         if self.is_trunk:    
-            allowed_vlans = self.re_search_children(r'^\s*switchport\s+trunk\s+allowed\s+vlan')
+            allowed_vlans = self.re_search_children(r'^\s*switchport\s+trunk\s+allowed\s+vlan\s[0-9]')  # Match at least 1 digit to circumvent matches on 'switchport trunk allowed vlan none'
             if allowed_vlans:
                 allowed_vlans_parsed =  ','.join(i.re_match(r'(\d.*)') for i in allowed_vlans)
                 allowed_vlans_numbers = allowed_vlans_parsed.split(',')
