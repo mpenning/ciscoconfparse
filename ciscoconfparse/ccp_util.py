@@ -648,6 +648,9 @@ def reverse_dns_lookup(input, timeout=3, server=''):
 
 def range_to_list( inputRange):
     """Convert comma seperated list to integer list"""
+    if re.match(r"^\d+$", inputRange):  # Check for single integer
+        return [int(inputRange)]        # Cast to integer
+
     for match in re.findall(r"[0-9]{1,4}-[0-9]{1,4}", inputRange):
       values = match.split("-")
       return range(int(values[0]), int(values[1])+1)
@@ -655,4 +658,4 @@ def range_to_list( inputRange):
     if "," in inputRange:
         return inputRange.split(",")
     else:
-        return [inputRange]
+        raise NotImplementedError("This should never happen. you shouldn't be here.")
