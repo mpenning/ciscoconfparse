@@ -1102,6 +1102,12 @@ class BaseIOSIntfLine(IOSCfgLine):
 
     @property
     def trunk_allowed_vlan(self):
+        """ Returns a list with all Vlans.
+            If there is no configuration to allow specific Vlans return an empty list.
+
+            However, if there is 'switchport trunk allowed vlan none' return None (NoneType)
+            to be able to differntiate between no configuration and explicit 'none'.
+        """
         ## We can't use a simple re_match_iter_typed here as there are maybe
         ## multiple lines of switchport trunk allowed vlan config
         if self.is_trunk:
@@ -1116,9 +1122,14 @@ class BaseIOSIntfLine(IOSCfgLine):
 
                 return retval
             else:
-                return []
+                explicitNone = self.re_match_iter_typed(r'^\s*switchport\s+trunk\s+allowed\s+vlan\s(None|none)',
+                    result_type=bool, default=False)
+                if explicitNone:
+                    return None    # to be able to differntiate between no configuration and explicit 'None'
+                else:
+                    return []   # No vlan set
         else:
-            return []
+            return []   # No trunk, no Vlan
 
     @property
     def has_switch_portsecurity(self):
