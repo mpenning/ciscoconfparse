@@ -656,6 +656,7 @@ def range_to_list( inputRange):
       return range(int(values[0]), int(values[1])+1)
 
     if "," in inputRange:
-        return inputRange.split(",")
+        inputRange = inputRange.split(",")
+        return map(int, inputRange)
     else:
         raise NotImplementedError("This should never happen. you shouldn't be here.")
