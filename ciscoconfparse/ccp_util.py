@@ -653,7 +653,10 @@ def range_to_list( inputRange):
 
     for match in re.findall(r"[0-9]{1,4}-[0-9]{1,4}", inputRange):
       values = match.split("-")
-      return range(int(values[0]), int(values[1])+1)
+      expandlist = range(int(values[0]), int(values[1])+1)
+      delimiter = ","
+      expandlist = delimiter.join(str(x) for x in expandlist)
+      inputRange = inputRange.replace(match, expandlist )
 
     if "," in inputRange:
         inputRange = inputRange.split(",")
