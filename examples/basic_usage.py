@@ -12,3 +12,4 @@ qos_intfs = parse.find_parents_w_child( "^interf", "service-policy" )
 # Return a list of all active interfaces (i.e. not shutdown)
 active_intfs = parse.find_parents_wo_child( "^interf", "shutdown" )
 
+print '\n'.join(active_intfs)
