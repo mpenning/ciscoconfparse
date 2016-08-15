@@ -5,3 +5,6 @@ build
 *.orig
 tags
 .tox
+ciscoconfparse.egg-*/
+.eggs/*
+.cache/*

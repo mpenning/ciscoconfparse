@@ -5,6 +5,7 @@ import os
 from ccp_util import _IPV6_REGEX_STR_COMPRESSED1, _IPV6_REGEX_STR_COMPRESSED2
 from ccp_util import _IPV6_REGEX_STR_COMPRESSED3
 from ccp_util import IPv4Obj, IPv6Obj
+from ccp_util import range_to_list
 from ccp_abc import BaseCfgLine
 
 ### HUGE UGLY WARNING:
@@ -168,7 +169,7 @@ class IOSCfgLine(BaseCfgLine):
             return True
         return False
 
-    _VIRTUAL_INTF_REGEX_STR = r"""^interface\s+(Loopback|Tunnel|Dialer|Virtual-Template|Port-[Cc]hannel)"""
+    _VIRTUAL_INTF_REGEX_STR = r"""^interface\s+(Loopback|Tunnel|Dialer|Virtual-Template|Port-[Cc]hannel|Vlan)"""
     _VIRTUAL_INTF_REGEX = re.compile(_VIRTUAL_INTF_REGEX_STR)
     @property
     def is_virtual_intf(self):
@@ -263,6 +264,30 @@ class IOSCfgLine(BaseCfgLine):
         retval = self.re_match_iter_typed(r'^\s*channel-group\s+(\d+)',
             result_type=bool, default=False)
         return retval
+
+    @property
+    def is_l2vlan(self):
+        """Return a boolean indicating whether this is a l2 vlan configuration
+
+        """
+        retval = self.re_match_typed(r'^vlan\s([1-9]+).*',
+            result_type=bool, default=False)
+        return retval
+
+    @property
+    def l2vlan_id(self):
+        """Return a boolean indicating whether this is a l2 vlan configuration
+
+        """
+        if self.is_l2vlan:
+            retval = self.re_match_typed(r'^vlan\s([1-9].*)',
+                result_type=str, default=False)   # Has to be a string to match Nexus ranges
+            if retval:
+                return range_to_list(retval)
+            raise ValueError
+        else:
+            return False
+    
 
 ##
 ##-------------  IOS Interface ABC
@@ -1045,6 +1070,15 @@ class BaseIOSIntfLine(IOSCfgLine):
         return retval
 
     @property
+    def is_trunk(self):
+        """Return a boolean indicating whether this IF a trunk
+
+        """
+        retval = self.re_match_iter_typed(r'^\s*switchport\smode\s(trunk)\s*',
+            result_type=bool, default=False)
+        return retval
+
+    @property
     def has_manual_switch_access(self):
         retval = self.re_match_iter_typed(r'^\s*(switchport\smode\s+access)\s*$',
             result_type=bool, default=False)
@@ -1065,6 +1099,37 @@ class BaseIOSIntfLine(IOSCfgLine):
         retval = self.re_match_iter_typed(r'^\s*(switchport\s+mode\s+trunk)\s*$',
             result_type=bool, default=False)
         return retval
+
+    @property
+    def trunk_allowed_vlan(self):
+        """ Returns a list with all Vlans.
+            If there is no configuration to allow specific Vlans return an empty list.
+
+            However, if there is 'switchport trunk allowed vlan none' return None (NoneType)
+            to be able to differntiate between no configuration and explicit 'none'.
+        """
+        ## We can't use a simple re_match_iter_typed here as there are maybe
+        ## multiple lines of switchport trunk allowed vlan config
+        if self.is_trunk:
+            allowed_vlans = self.re_search_children(r'^\s*switchport\s+trunk\s+allowed\s+vlan\s(add\s)?[0-9]')  # Match at least 1 digit to circumvent matches on 'switchport trunk allowed vlan none'
+            if allowed_vlans:
+                allowed_vlans_parsed =  ','.join(i.re_match(r'(\d.*)') for i in allowed_vlans)
+                allowed_vlans_numbers = allowed_vlans_parsed.split(',')
+
+                retval = []
+                for vlan in allowed_vlans_numbers:
+                    retval.extend( range_to_list(vlan) )
+
+                return retval
+            else:
+                explicitNone = self.re_match_iter_typed(r'^\s*switchport\s+trunk\s+allowed\s+vlan\s(None|none)',
+                    result_type=bool, default=False)
+                if explicitNone:
+                    return None    # to be able to differntiate between no configuration and explicit 'None'
+                else:
+                    return []   # No vlan set
+        else:
+            return []   # No trunk, no Vlan
 
     @property
     def has_switch_portsecurity(self):
@@ -1761,7 +1826,7 @@ class IOSAaaGroupServerLine(BaseCfgLine):
         super(IOSAaaGroupServerLine, self).__init__(*args, **kwargs)
         self.feature = 'aaa group server'
 
-        REGEX = r'^aaa\sgroup\sserver\s(?P<protocol>\S+)\s(?P<group>\S+)$'
+        REGEX = r'^aaa\sgroup\sserver\s(?P<protocol>\S+)\s(?P<group>\S+)\s*$'
         mm = re.search(REGEX, self.text)
         if not (mm is None):
             groups = mm.groupdict()

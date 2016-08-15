@@ -1,0 +1,7 @@
+colorama >= 0.3.7
+ipaddr >= 2.1.11
+mock >= 2.0.0
+passlib >= 1.6.5
+pytest >= 2.9.2
+setuptools >= 18.2
+dnspython >= 1.14.0

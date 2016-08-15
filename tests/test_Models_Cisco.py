@@ -99,6 +99,8 @@ def testVal_IOSCfgLine_is_virtual_intf():
         'interface GigabitEthernet4/8.120': False,
         'interface ATM5/0/0': False,
         'interface ATM5/0/0.32 point-to-point': False,
+        'interface Vlan123': True,
+        'interface Vlan 123': True,
     }
     for cfgline, result_correct in result_map.items():
         cfg = CiscoConfParse([cfgline], factory=True, syntax='ios')
@@ -143,6 +145,8 @@ def testVal_IOSIntfLine_name():
         'interface GigabitEthernet 4/8.120': "GigabitEthernet 4/8.120",
         'interface ATM5/0/0': "ATM5/0/0",
         'interface ATM5/0/0.32 point-to-point': "ATM5/0/0.32",
+        'interface Vlan123': "Vlan123",
+        'interface Vlan 123': "Vlan 123",
     }
     for cfgline, result_correct in result_map.items():
         cfg = CiscoConfParse([cfgline], factory=True)
@@ -410,6 +414,7 @@ def testVal_IOSIntfLine_port_type():
         'interface GigabitEthernet 4/8.120': "GigabitEthernet",
         'interface ATM5/0/0': "ATM",
         'interface ATM5/0/0.32 point-to-point': "ATM",
+        'interface Vlan123': "Vlan",
     }
     for cfgline, result_correct in result_map.items():
         cfg = CiscoConfParse([cfgline], factory=True)
