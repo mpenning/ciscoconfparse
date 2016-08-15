@@ -1111,7 +1111,7 @@ class BaseIOSIntfLine(IOSCfgLine):
         ## We can't use a simple re_match_iter_typed here as there are maybe
         ## multiple lines of switchport trunk allowed vlan config
         if self.is_trunk:
-            allowed_vlans = self.re_search_children(r'^\s*switchport\s+trunk\s+allowed\s+vlan\s[0-9]')  # Match at least 1 digit to circumvent matches on 'switchport trunk allowed vlan none'
+            allowed_vlans = self.re_search_children(r'^\s*switchport\s+trunk\s+allowed\s+vlan\s(add\s)?[0-9]')  # Match at least 1 digit to circumvent matches on 'switchport trunk allowed vlan none'
             if allowed_vlans:
                 allowed_vlans_parsed =  ','.join(i.re_match(r'(\d.*)') for i in allowed_vlans)
                 allowed_vlans_numbers = allowed_vlans_parsed.split(',')
