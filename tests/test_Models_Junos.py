@@ -27,3 +27,23 @@ def testVal_find_objects_w_parents(parse_j01):
     obj = cfg.find_objects_w_parents('interfaces', 'ge-0/0/1')[0]
     assert not ('{' in set(obj.text))  # Ensure there are no braces on this line
     assert len(obj.all_children)==6
+
+@pytest.mark.xfail(True,
+                   reason="Github issue #49")
+def testVal_parse_F5():
+    """Test for Github issue #49"""
+    config = [
+        'ltm virtual virtual1 {',
+        '    profiles {',
+        '        test1 { }',
+        '    }',
+        '}',
+        'ltm virtual virtual2 {',
+        '    profiles2 {',
+        '        test2 { }',
+        '    }',
+        '}',
+    ]
+    parse = CiscoConfParse(config, syntax='junos')
+    retval = parse.find_children_w_parents('ltm virtual virtual2', 'profiles2')[0]
+    assert retval=='    profiles2 '
