@@ -8,6 +8,7 @@ sys.path.insert(0, os.path.join(os.path.abspath(THIS_DIR), "../ciscoconfparse/")
 
 from ccp_util import _RGX_IPV4ADDR, _RGX_IPV6ADDR
 from ccp_util import IPv4Obj, L4Object
+from ccp_util import CiscoRange
 from ccp_util import IPv6Obj
 from ccp_util import dns_lookup, reverse_dns_lookup
 import pytest
@@ -185,3 +186,83 @@ def test_dns_lookup():
 def test_reverse_dns_lookup():
     result_correct = {'addr': '127.0.0.1', 'name': 'localhost.', 'error': ''}
     assert 'localhost' in reverse_dns_lookup('127.0.0.1')['name'].lower()
+
+def test_CiscoRange_01():
+    """Basic vlan range test"""
+    result_correct = ['1']
+    assert CiscoRange('1').as_list==result_correct
+
+def test_CiscoRange_02():
+    """Basic vlan range test"""
+    result_correct = ['1', '3']
+    assert CiscoRange('1,3').as_list==result_correct
+
+def test_CiscoRange_03():
+    """Basic vlan range test"""
+    result_correct = ['1', '2', '3', '4', '5']
+    assert CiscoRange('1,2-4,5').as_list==result_correct
+
+def test_CiscoRange_03():
+    """Basic vlan range test"""
+    result_correct = ['1', '2', '3', '4', '5']
+    assert CiscoRange('1-3,4,5').as_list==result_correct
+
+def test_CiscoRange_04():
+    """Basic vlan range test"""
+    result_correct = ['1', '2', '3', '4', '5']
+    assert CiscoRange('1,2,3-5').as_list==result_correct
+
+def test_CiscoRange_05():
+    """Basic slot range test"""
+    result_correct = ['1/1', '1/2', '1/3', '1/4', '1/5']
+    assert CiscoRange('1/1-3,4,5').as_list==result_correct
+
+def test_CiscoRange_06():
+    """Basic slot range test"""
+    result_correct = ['1/1', '1/2', '1/3', '1/4', '1/5']
+    assert CiscoRange('1/1,2-4,5').as_list==result_correct
+
+def test_CiscoRange_07():
+    """Basic slot range test"""
+    result_correct = ['1/1', '1/2', '1/3', '1/4', '1/5']
+    assert CiscoRange('1/1,2,3-5').as_list==result_correct
+
+def test_CiscoRange_08():
+    """Basic slot range test"""
+    result_correct = ['2/1/1', '2/1/2', '2/1/3', '2/1/4', '2/1/5']
+    assert CiscoRange('2/1/1-3,4,5').as_list==result_correct
+
+def test_CiscoRange_09():
+    """Basic slot range test"""
+    result_correct = ['2/1/1', '2/1/2', '2/1/3', '2/1/4', '2/1/5']
+    assert CiscoRange('2/1/1,2-4,5').as_list==result_correct
+
+def test_CiscoRange_10():
+    """Basic slot range test"""
+    result_correct = ['2/1/1', '2/1/2', '2/1/3', '2/1/4', '2/1/5']
+    assert CiscoRange('2/1/1,2,3-5').as_list==result_correct
+
+def test_CiscoRange_11():
+    """Basic interface slot range test"""
+    result_correct = ['interface Eth2/1/1', 'interface Eth2/1/2', 'interface Eth2/1/3', 'interface Eth2/1/4', 'interface Eth2/1/5']
+    assert CiscoRange('interface Eth2/1/1-3,4,5').as_list==result_correct
+
+def test_CiscoRange_12():
+    """Basic interface slot range test"""
+    result_correct = ['interface Eth2/1/1', 'interface Eth2/1/2', 'interface Eth2/1/3', 'interface Eth2/1/4', 'interface Eth2/1/5']
+    assert CiscoRange('interface Eth2/1/1,2-4,5').as_list==result_correct
+
+def test_CiscoRange_13():
+    """Basic interface slot range test"""
+    result_correct = ['interface Eth2/1/1', 'interface Eth2/1/2', 'interface Eth2/1/3', 'interface Eth2/1/4', 'interface Eth2/1/5']
+    assert CiscoRange('interface Eth2/1/1,2,3-5').as_list==result_correct
+
+def test_CiscoRange_14():
+    """Empty range test"""
+    result_correct = []
+    assert CiscoRange('').as_list==result_correct
+
+def test_CiscoRange_14():
+    """Append range test"""
+    result_correct = [1, 2, 3]
+    assert CiscoRange('', result_type=int).append('1-3').as_list==result_correct
