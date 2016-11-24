@@ -1111,6 +1111,17 @@ class BaseIOSIntfLine(IOSCfgLine):
             result_type=int, default=default_val)
         return retval
 
+    @property
+    def native_vlan(self):
+        """Return an integer with the native vlan number.  Return 1, if the switchport has no explicit native vlan configured; return 0 if the port isn't a switchport"""
+        if self.is_switchport:
+            default_val = 1
+        else:
+            default_val = 0
+        retval = self.re_match_iter_typed(r'^\s*switchport\s+trunk\s+native\s+vlan\s+(\d+)$',
+            result_type=int, default=default_val)
+        return retval
+
     ##-------------  CDP
 
     @property
