@@ -8,6 +8,7 @@ sys.path.insert(0, os.path.join(os.path.abspath(THIS_DIR), "../ciscoconfparse/")
 
 from ccp_util import _RGX_IPV4ADDR, _RGX_IPV6ADDR
 from ccp_util import IPv4Obj, L4Object
+from ccp_util import IPv6Obj
 from ccp_util import dns_lookup, reverse_dns_lookup
 import pytest
 
@@ -162,6 +163,18 @@ def testIPv4Obj_attributes():
     ]
     for attribute, result_correct in results_correct:
         assert getattr(test_object, attribute)==result_correct
+
+def testIPv4Obj_recursive():
+    """IPv4Obj() should be able to parse itself"""
+    obj = IPv4Obj(IPv4Obj('1.1.1.1/24'))
+    assert str(obj.ip_object)=='1.1.1.1'
+    assert obj.prefixlen==24
+
+def testIPv6Obj_recursive():
+    """IPv6Obj() should be able to parse itself"""
+    obj = IPv6Obj(IPv6Obj('fe80:a:b:c:d:e::1/64'))
+    assert str(obj.ip_object)=='fe80:a:b:c:d:e:0:1'
+    assert obj.prefixlen==64
 
 def test_dns_lookup():
     # Use VMWare's opencloud A-record to test...
