@@ -16,7 +16,7 @@ from ccp_abc import BaseCfgLine
 ###   Use models_cisco.py at your own risk.  You have been warned :-)
 
 """ models_cisco.py - Parse, Query, Build, and Modify IOS-style configurations
-     Copyright (C) 2014-2015 David Michael Pennington
+     Copyright (C) 2014-2016 David Michael Pennington
 
      This program is free software: you can redistribute it and/or modify
      it under the terms of the GNU General Public License as published by
@@ -1761,7 +1761,7 @@ class IOSAaaGroupServerLine(BaseCfgLine):
         super(IOSAaaGroupServerLine, self).__init__(*args, **kwargs)
         self.feature = 'aaa group server'
 
-        REGEX = r'^aaa\sgroup\sserver\s(?P<protocol>\S+)\s(?P<group>\S+)$'
+        REGEX = r'^aaa\sgroup\sserver\s(?P<protocol>\S+)\s(?P<group>\S+)\s*$'
         mm = re.search(REGEX, self.text)
         if not (mm is None):
             groups = mm.groupdict()
