@@ -100,7 +100,18 @@ class IPv4Obj(object):
         #RGX_IPV4ADDR_NETMASK = re.compile(r'(\d+\.\d+\.\d+\.\d+)\s+(\d+\.\d+\.\d+\.\d+)')
 
         self.arg = arg
-        mm = _RGX_IPV4ADDR_NETMASK.search(arg)
+        self.dna = "IPv4Obj"
+        try:
+            mm = _RGX_IPV4ADDR_NETMASK.search(arg)
+        except TypeError:
+            if arg.dna=="IPv4Obj":
+                ip_str = '{0}/{1}'.format(str(arg.ip_object), arg.prefixlen)
+                self.network_object = IPv4Network(ip_str)
+                self.ip_object = IPv4Address(str(arg.ip_object))
+                return None
+            else:
+                raise ValueError("IPv4Obj doesn't understand how to parse {0}".format(arg))
+
         ERROR = "IPv4Obj couldn't parse '{0}'".format(arg)
         assert (not (mm is None)), ERROR
 
@@ -122,6 +133,7 @@ class IPv4Obj(object):
 
     def __repr__(self):
         return """<IPv4Obj {0}/{1}>""".format(str(self.ip_object), self.prefixlen)
+
     def __eq__(self, val):
         try:
             if self.network_object==val.network_object:
@@ -317,7 +329,19 @@ class IPv6Obj(object):
 
         #arg= _RGX_IPV6ADDR_NETMASK.sub(r'\1/\2', arg) # mangle IOS: 'addr mask'
         self.arg = arg
-        mm = _RGX_IPV6ADDR.search(arg)
+        self.dna = "IPv6Obj"
+
+        try:
+            mm = _RGX_IPV6ADDR.search(arg)
+        except TypeError:
+            if arg.dna=="IPv6Obj":
+                ip_str = '{0}/{1}'.format(str(arg.ip_object), arg.prefixlen)
+                self.network_object = IPv6Network(ip_str)
+                self.ip_object = IPv6Address(str(arg.ip_object))
+                return None
+            else:
+                raise ValueError("IPv6Obj doesn't understand how to parse {0}".format(arg))
+
         assert (not (mm is None)), "IPv6Obj couldn't parse {0}".format(arg)
         self.network_object = IPv6Network(arg, strict=strict)
         self.ip_object = IPv6Address(mm.group(1))
@@ -645,3 +669,13 @@ def reverse_dns_lookup(input, timeout=3, server=''):
             'error': repr(e),
             'name': input,
             }
+
+class CiscoRange(object):
+    def __init__(self, text):
+        self.text = text
+        self.slot_prefix = "" # Parsed slot prefix for each number
+
+    def dash_range(self, text):
+        begin, end = text.split('-')
+        begin, end = int(begin.strip()), int(end.strip())+1
+        return range(begin, end)
