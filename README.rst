@@ -14,10 +14,6 @@ ciscoconfparse
    :target: https://www.gnu.org/copyleft/gpl.html
    :alt: License
 
-.. image:: https://img.shields.io/pypi/dm/ciscoconfparse.svg
-   :target: https://pypi.python.org/pypi/ciscoconfparse
-   :alt: Downloads
-
 .. contents::
 
 .. _introduction:
@@ -114,7 +110,7 @@ already have setuptools_, you can install as usual:
 ::
 
       # Substitute whatever ciscoconfparse version you like...
-      easy_install -U ciscoconfparse==1.2.39
+      easy_install -U ciscoconfparse==1.2.41
 
 Alternatively you can install into Python2.x with pip_:
 
