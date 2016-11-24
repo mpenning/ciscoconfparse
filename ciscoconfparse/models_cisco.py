@@ -4,7 +4,7 @@ import os
 
 from ccp_util import _IPV6_REGEX_STR_COMPRESSED1, _IPV6_REGEX_STR_COMPRESSED2
 from ccp_util import _IPV6_REGEX_STR_COMPRESSED3
-from ccp_util import IPv4Obj, IPv6Obj
+from ccp_util import CiscoRange, IPv4Obj, IPv6Obj
 from ccp_abc import BaseCfgLine
 
 ### HUGE UGLY WARNING:
@@ -1109,6 +1109,48 @@ class BaseIOSIntfLine(IOSCfgLine):
             default_val = 0
         retval = self.re_match_iter_typed(r'^\s*switchport\s+access\s+vlan\s+(\d+)$',
             result_type=int, default=default_val)
+        return retval
+
+    @property
+    def trunk_vlans_allowed(self):
+        """Return a CiscoRange() with the list of allowed vlan numbers.  Return 0 if the port isn't a switchport"""
+        if self.is_switchport:
+            default_val = '1-4094'
+        else:
+            default_val = 0
+
+        allowed = self.re_match_iter_typed(r'^\s*switchport\s+trunk\s+allowed\s+vlan\s+(\S+)$',
+            result_type=str, default='1-4094')
+        if allowed=='all':
+            allowed = '1-4094'
+        elif allowed=='none':
+            allowed = ''
+        add = self.re_match_iter_typed(r'^\s*switchport\s+trunk\s+allowed\s+vlan\s+add\s+(\S+)$',
+            result_type=str, default='')
+
+        if allowed and add:
+            combined = allowed + ',' + add
+        elif allowed:
+            combined = allowed
+        elif add:
+            combined = add
+        else:
+            combined = allowed
+
+        remove = self.re_match_iter_typed(r'^\s*switchport\s+trunk\s+allowed\s+vlan\s+remove\s+(\S+)$',
+            result_type=str, default='')
+
+        if remove:
+            retval = CiscoRange(combined, result_type=int).remove(remove)
+        else:
+            retval = CiscoRange(combined, result_type=int)
+
+        _except = self.re_match_iter_typed(r'^\s*switchport\s+trunk\s+allowed\s+vlan\s+except\s+(\S+)$',
+            result_type=str, default='')
+
+        if _except:
+            retval = CiscoRange(combined, result_type=int).remove(_except)
+
         return retval
 
     @property
