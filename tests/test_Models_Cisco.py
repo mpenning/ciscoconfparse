@@ -183,6 +183,81 @@ def testVal_IOSIntfLine_native_vlan(parse_c01_factory):
     intf_obj = cfg.find_objects('^interface')[0]
     assert intf_obj.native_vlan==911
 
+def testVal_IOSIntfLine_trunk_vlan_allowed_01():
+    lines = ['!',
+        'interface GigabitEthernet 1/1',
+        ' switchport mode trunk',
+        ' switchport trunk native vlan 911',
+        '!',
+    ]
+    cfg = CiscoConfParse(lines, factory=True)
+    intf_obj = cfg.find_objects('^interface')[0]
+    assert intf_obj.trunk_vlans_allowed.as_list==range(1, 4095)
+
+def testVal_IOSIntfLine_trunk_vlan_allowed_02():
+    lines = ['!',
+        'interface GigabitEthernet 1/1',
+        ' switchport mode trunk',
+        ' switchport trunk allowed vlan 2,4,6,911',
+        ' switchport trunk native vlan 911',
+        '!',
+    ]
+    cfg = CiscoConfParse(lines, factory=True)
+    intf_obj = cfg.find_objects('^interface')[0]
+    assert intf_obj.trunk_vlans_allowed.as_list==[2,4,6,911]
+
+def testVal_IOSIntfLine_trunk_vlan_allowed_03():
+    lines = ['!',
+        'interface GigabitEthernet 1/1',
+        ' switchport mode trunk',
+        ' switchport trunk allowed vlan 2,4,6,911',
+        ' switchport trunk allowed vlan remove 2,5',
+        ' switchport trunk native vlan 911',
+        '!',
+    ]
+    cfg = CiscoConfParse(lines, factory=True)
+    intf_obj = cfg.find_objects('^interface')[0]
+    assert intf_obj.trunk_vlans_allowed.as_list==[4, 6, 911]
+
+def testVal_IOSIntfLine_trunk_vlan_allowed_04():
+    lines = ['!',
+        'interface GigabitEthernet 1/1',
+        ' switchport mode trunk',
+        ' switchport trunk allowed vlan all',
+        ' switchport trunk allowed vlan remove 2-4094',
+        ' switchport trunk native vlan 911',
+        '!',
+    ]
+    cfg = CiscoConfParse(lines, factory=True)
+    intf_obj = cfg.find_objects('^interface')[0]
+    assert intf_obj.trunk_vlans_allowed.as_list==[1]
+
+def testVal_IOSIntfLine_trunk_vlan_allowed_04():
+    lines = ['!',
+        'interface GigabitEthernet 1/1',
+        ' switchport mode trunk',
+        ' switchport trunk allowed vlan all',
+        ' switchport trunk allowed vlan except 2-4094',
+        ' switchport trunk native vlan 911',
+        '!',
+    ]
+    cfg = CiscoConfParse(lines, factory=True)
+    intf_obj = cfg.find_objects('^interface')[0]
+    assert intf_obj.trunk_vlans_allowed.as_list==[1]
+
+def testVal_IOSIntfLine_trunk_vlan_allowed_05():
+    lines = ['!',
+        'interface GigabitEthernet 1/1',
+        ' switchport mode trunk',
+        ' switchport trunk allowed vlan none',
+        ' switchport trunk allowed vlan add 2-4094',
+        ' switchport trunk native vlan 911',
+        '!',
+    ]
+    cfg = CiscoConfParse(lines, factory=True)
+    intf_obj = cfg.find_objects('^interface')[0]
+    assert intf_obj.trunk_vlans_allowed.as_list==range(2, 4095)
+
 def testVal_IOSIntfLine_abbvs(parse_c03_factory):
     cfg = parse_c03_factory
     result_correct = {
