@@ -10,7 +10,7 @@ package:
 .PHONY: pypi
 pypi:
 	make clean
-	python setup.py sdist; python setup.py register; python setup.py sdist upload
+	python setup.py sdist bdist_wheel; python setup.py register; python setup.py bdist_wheel sdist upload
 .PHONY: repo-push
 repo-push:
 	cp .hgrc .hg/
@@ -52,6 +52,7 @@ devpkgs:
 	pip install --upgrade pytest==2.6.4
 	pip install --upgrade mccabe
 	pip install --upgrade flake8
+	pip install --upgrade yapf
 	pip install --upgrade dnspython
 	pip install --upgrade colorama
 	pip install --upgrade fabric
@@ -86,7 +87,7 @@ clean:
 	@# remove all the MockSSH keys
 	-find ./* -name '*.key' -exec rm {} \;
 	-rm -rf .eggs/
-	-rm -rf dist/ ciscoconfparse.egg-info/ setuptools*
+	-rm -rf build/ dist/ ciscoconfparse.egg-info/ setuptools*
 .PHONY: help
 help:
 	@# An @ sign prevents outputting the command itself to stdout
