@@ -172,6 +172,17 @@ def testVal_IOSIntfLine_access_vlan(parse_c01_factory):
     for intf_obj in cfg.find_objects('^interface\sGigabitEthernet4\/4$'):
         assert intf_obj.access_vlan==0
 
+def testVal_IOSIntfLine_native_vlan(parse_c01_factory):
+    lines = ['!',
+        'interface GigabitEthernet 1/1',
+        ' switchport mode trunk',
+        ' switchport trunk native vlan 911',
+        '!',
+    ]
+    cfg = CiscoConfParse(lines, factory=True)
+    intf_obj = cfg.find_objects('^interface')[0]
+    assert intf_obj.native_vlan==911
+
 def testVal_IOSIntfLine_abbvs(parse_c03_factory):
     cfg = parse_c03_factory
     result_correct = {
@@ -1363,7 +1374,7 @@ def testVal_IOSAaaExecAccountingLine():
     assert 'default'==obj.list_name
     assert 'start-stop'==obj.record_type
 
-def testVal_IOSAaaGroupServerLine():
+def testVal_IOSAaaGroupServerLine_01():
     lines = ['!',
         'aaa group server tacacs+ TACACS_01',
         ' server-private 192.0.2.10 key cisco',
@@ -1380,3 +1391,20 @@ def testVal_IOSAaaGroupServerLine():
     assert 'VRF_001'==obj.vrf
     assert 'FastEthernet0/48'==obj.source_interface
 
+def testVal_IOSAaaGroupServerLine_02():
+    """Test for Github issue #64"""
+    lines = ['!',
+        'aaa group server tacacs+ TACACS_01 ',
+        ' server-private 192.0.2.10 key cisco',
+        ' server-private 192.0.2.11 key cisco',
+        ' ip vrf forwarding VRF_001',
+        ' ip tacacs source-interface FastEthernet0/48',
+        '!',
+    ]
+    cfg = CiscoConfParse(lines, factory=True)
+    obj = cfg.ConfigObjs[1]
+    assert 'TACACS_01'==obj.group
+    assert 'tacacs+'==obj.protocol
+    assert set(['192.0.2.10', '192.0.2.11'])==obj.server_private
+    assert 'VRF_001'==obj.vrf
+    assert 'FastEthernet0/48'==obj.source_interface
