@@ -52,6 +52,10 @@ _IPV6_REGEX_STR = r"""(?!:::\S+?$)       # Negative Lookahead for 3 colons
 _IPV6_REGEX_STR_COMPRESSED1 = r"""(?!:::\S+?$)(?P<addr1>(?P<opt1_1>{0}(?::{0}){{7}})|(?P<opt1_2>(?:{0}:){{1}}(?::{0}){{1,6}})|(?P<opt1_3>(?:{0}:){{2}}(?::{0}){{1,5}})|(?P<opt1_4>(?:{0}:){{3}}(?::{0}){{1,4}})|(?P<opt1_5>(?:{0}:){{4}}(?::{0}){{1,3}})|(?P<opt1_6>(?:{0}:){{5}}(?::{0}){{1,2}})|(?P<opt1_7>(?:{0}:){{6}}(?::{0}){{1,1}})|(?P<opt1_8>:(?::{0}){{1,7}})|(?P<opt1_9>(?:{0}:){{1,7}}:)|(?P<opt1_10>(?:::)))""".format(r'[0-9a-fA-F]{1,4}')
 _IPV6_REGEX_STR_COMPRESSED2 = r"""(?!:::\S+?$)(?P<addr2>(?P<opt2_1>{0}(?::{0}){{7}})|(?P<opt2_2>(?:{0}:){{1}}(?::{0}){{1,6}})|(?P<opt2_3>(?:{0}:){{2}}(?::{0}){{1,5}})|(?P<opt2_4>(?:{0}:){{3}}(?::{0}){{1,4}})|(?P<opt2_5>(?:{0}:){{4}}(?::{0}){{1,3}})|(?P<opt2_6>(?:{0}:){{5}}(?::{0}){{1,2}})|(?P<opt2_7>(?:{0}:){{6}}(?::{0}){{1,1}})|(?P<opt2_8>:(?::{0}){{1,7}})|(?P<opt2_9>(?:{0}:){{1,7}}:)|(?P<opt2_10>(?:::)))""".format(r'[0-9a-fA-F]{1,4}')
 _IPV6_REGEX_STR_COMPRESSED3 = r"""(?!:::\S+?$)(?P<addr3>(?P<opt3_1>{0}(?::{0}){{7}})|(?P<opt3_2>(?:{0}:){{1}}(?::{0}){{1,6}})|(?P<opt3_3>(?:{0}:){{2}}(?::{0}){{1,5}})|(?P<opt3_4>(?:{0}:){{3}}(?::{0}){{1,4}})|(?P<opt3_5>(?:{0}:){{4}}(?::{0}){{1,3}})|(?P<opt3_6>(?:{0}:){{5}}(?::{0}){{1,2}})|(?P<opt3_7>(?:{0}:){{6}}(?::{0}){{1,1}})|(?P<opt3_8>:(?::{0}){{1,7}})|(?P<opt3_9>(?:{0}:){{1,7}}:)|(?P<opt3_10>(?:::)))""".format(r'[0-9a-fA-F]{1,4}')
+
+_CISCO_RANGE_ATOM_STR = r"""\d+\s*\-*\s*\d*"""
+_CISCO_RANGE_STR = r"""^(?P<line_prefix>[a-zA-Z\s]*)(?P<slot_prefix>[\d\/]*\d+\/)*(?P<range_text>(\s*{0})*)$""".format(_CISCO_RANGE_ATOM_STR)
+
 _RGX_IPV6ADDR = re.compile(_IPV6_REGEX_STR, re.VERBOSE)
 
 _RGX_IPV4ADDR = re.compile(r'^(?P<addr>\d+\.\d+\.\d+\.\d+)')
@@ -66,6 +70,8 @@ _RGX_IPV4ADDR_NETMASK = re.compile(
     )
     """, 
     re.VERBOSE)
+
+_RGX_CISCO_RANGE = re.compile(_CISCO_RANGE_STR)
 
 ## Emulate the old behavior of ipaddr.IPv4Network in Python2, which can use
 ##    IPv4Network with a host address.  Google removed that in Python3's 
@@ -670,12 +676,95 @@ def reverse_dns_lookup(input, timeout=3, server=''):
             'name': input,
             }
 
-class CiscoRange(object):
-    def __init__(self, text):
+class CiscoRange(MutableSequence):
+    def __init__(self, text, result_type=str):
+        super(CiscoRange, self).__init__()
         self.text = text
-        self.slot_prefix = "" # Parsed slot prefix for each number
+        self.result_type = result_type
+        if text:
+            self.line_prefix, self.slot_prefix, self.range_text = self._parse_range_text()
+            self._list = self._range()
+        else:
+            self._list = list()
 
-    def dash_range(self, text):
-        begin, end = text.split('-')
-        begin, end = int(begin.strip()), int(end.strip())+1
-        return range(begin, end)
+    def __repr__(self):
+        return """<CiscoRange {0}>""".format(self._list)
+
+    def __len__(self):
+        return len(self._list)
+
+    def __getitem__(self, ii):
+        return self._list[ii]
+
+    def __delitem__(self, ii):
+        del self._list[ii]
+
+    def __setitem__(self, ii, val):
+        return self._list[ii]
+
+    def __str__(self):
+        return self.__repr__()
+
+    def insert(self, ii, val):
+        ## Insert something at index ii
+        for idx, obj in enumerate(CiscoRange(val, result_type=self.result_type)):
+            self._list.insert(ii+idx, obj)
+        return self
+
+    def append(self, val):
+        list_idx = len(self._list)
+        self.insert(list_idx, val)
+        return self
+
+    def _parse_range_text(self):
+        tmp = self.text.split(',')
+        mm = _RGX_CISCO_RANGE.search(tmp[0])
+
+        ERROR = "CiscoRange() couldn't parse '{0}'".format(self.text)
+        assert (not (mm is None)), ERROR
+
+        mm_result = mm.groupdict()
+        line_prefix = mm_result.get('line_prefix', "") or ""
+        slot_prefix = mm_result.get('slot_prefix', "") or ""
+        if len(tmp[1:])>1:
+            range_text = mm_result['range_text'] + ',' + ','.join(tmp[1:])
+        elif len(tmp[1:])==1:
+            range_text = mm_result['range_text'] + ',' + tmp[1]
+        elif len(tmp[1:])==0:
+            range_text = mm_result['range_text']
+        return line_prefix, slot_prefix, range_text
+
+    def _dash_range(self, text):
+        retval = list()
+        for range_atom in text.split(','):
+            try:
+                begin, end = range_atom.split('-')
+            except ValueError:
+                ## begin and end are the same number
+                begin, end = range_atom, range_atom
+            begin, end = int(begin.strip()), int(end.strip())+1
+            assert begin>-1
+            assert end>begin
+            retval.extend(range(begin, end))
+        return list(set(retval))
+
+    def _range(self):
+        """Enumerate all values in the CiscoRange()"""
+        def combine(arg):
+            return self.line_prefix + self.slot_prefix + str(arg)
+        return map(self.result_type, 
+            map(combine, self._dash_range(self.range_text)))
+
+    def remove(self, arg):
+        remove_obj = CiscoRange(arg)
+        for ii in remove_obj:
+            try:
+                index = self.index(self.result_type(ii))
+                self.pop(index)
+            except ValueError:
+                pass
+        return self
+
+    @property
+    def as_list(self):
+        return self._list
