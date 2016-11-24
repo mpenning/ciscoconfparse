@@ -1,3 +1,5 @@
+1.2.42  20161124 Fix Github issue #62, add a new object called CiscoRange()
+1.2.41  20161124 Fix Github issue #51, Github issue #53, Github issue #57, Githbu issue #64, Github issue #65
 1.2.40  20160430 Fix Github issue #44 (Could not parse 'ipv6 router ospf 6').  Modify default value for access_vlan.  Add new is_portchannel property.  Update copyright dates.  Remove OSX from test matrix
 1.2.39  20151027 Fix TravisCI breakage
 1.2.38  20151027 Integrate PR #48, which fixes github issue #47
