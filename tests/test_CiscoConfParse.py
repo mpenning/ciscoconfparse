@@ -385,6 +385,7 @@ def testValues_find_parents_wo_child(parse_c01):
         test_result = parse_c01.find_parents_wo_child(**args)
         assert result_correct==test_result
 
+
 def testValues_find_children_w_parents(parse_c01):
     c01_children_w_parents_switchport = [
         ' switchport',
@@ -418,7 +419,11 @@ def testValues_find_objects_w_parents(parse_c01):
             parse_c01.find_objects_w_parents(**args)))
         assert result_correct==test_result
 
-
+def testValues_find_objects_w_all_children(parse_c01):
+    result_correct = parse_c01.find_objects(r'^interface GigabitEthernet4/[12]')
+    test_result = parse_c01.find_objects_w_all_children('^interface', 
+        ['switchport voice', 'power inline'])
+    assert test_result==result_correct
 
 def testValues_replace_lines_01(parse_c01):
     c01_replace_gige_no_exactmatch = [
