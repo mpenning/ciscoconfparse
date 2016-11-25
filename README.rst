@@ -185,7 +185,7 @@ Bug Tracker and Support
 Unit-Tests
 ==========
 
-`Travis CI project <https://travis-ci.org>`_ tests ciscoconfparse on Python versions 2.6 through 3.4, as well as a `pypy JIT`_ executable.
+`Travis CI project <https://travis-ci.org>`_ tests ciscoconfparse on Python versions 2.6 through 3.5, as well as a `pypy JIT`_ executable.
 
 Click the image below for details; the current build status is:
 
