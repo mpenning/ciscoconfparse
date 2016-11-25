@@ -1,5 +1,5 @@
 from operator import methodcaller, attrgetter
-from abc import ABCMeta
+from abc import ABCMeta, abstractmethod
 from copy import deepcopy
 import re
 import os
