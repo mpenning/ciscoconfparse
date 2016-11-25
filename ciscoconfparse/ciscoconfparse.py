@@ -850,6 +850,116 @@ class CiscoConfParse(object):
         return list(filter(lambda x: x.re_search_children(childspec), 
             self.find_objects(parentspec)))
 
+    def find_objects_w_all_children(self, parentspec, childspec, ignore_ws=False):
+        """Return a list of parent :class:`~models_cisco.IOSCfgLine` objects, 
+        which matched the ``parentspec`` and whose children match all elements
+        in ``childspec``.  Only the parent :class:`~models_cisco.IOSCfgLine` 
+        objects will be returned.
+
+        Args:
+            - parentspec (str): Text regular expression for the :class:`~models_cisco.IOSCfgLine` object to be matched; this must match the parent's line
+            - childspec (str): A list of text regular expressions to be matched among the children
+        Kwargs:
+            - ignore_ws (bool): boolean that controls whether whitespace is ignored
+
+        Returns:
+            - list.  A list of matching parent :class:`~models_cisco.IOSCfgLine` objects
+
+        This example uses :func:`~ciscoconfparse.find_objects_w_child()` to 
+        find all ports that are members of access vlan 300 in following 
+        config...
+
+        .. code::
+
+           !
+           interface FastEthernet0/1
+            switchport access vlan 532
+            spanning-tree vlan 532 cost 3
+           !
+           interface FastEthernet0/2
+            switchport access vlan 300
+            spanning-tree portfast
+           !
+           interface FastEthernet0/2
+            duplex full
+            speed 100
+            switchport access vlan 300
+            spanning-tree portfast
+           !
+
+        The following interfaces should be returned:
+
+        .. code::
+
+           interface FastEthernet0/2
+           interface FastEthernet0/3
+
+        We do this by quering `find_objects_w_all_children()`; we set our 
+        parent as `^interface` and set the childspec as 
+        ['switchport access vlan 300', 'spanning-tree portfast'].
+
+        .. code-block:: python
+           :emphasize-lines: 18
+
+           >>> config = ['!', 
+           ...           'interface FastEthernet0/1', 
+           ...           ' switchport access vlan 532', 
+           ...           ' spanning-tree vlan 532 cost 3', 
+           ...           '!', 
+           ...           'interface FastEthernet0/2', 
+           ...           ' switchport access vlan 300', 
+           ...           ' spanning-tree portfast', 
+           ...           '!', 
+           ...           'interface FastEthernet0/3', 
+           ...           ' duplex full', 
+           ...           ' speed 100', 
+           ...           ' switchport access vlan 300', 
+           ...           ' spanning-tree portfast', 
+           ...           '!',
+           ...     ]
+           >>> p = CiscoConfParse(config)
+           >>> p.find_objects_w_all_children('^interface', 
+           ...     ['switchport access vlan 300', 'spanning-tree portfast'])
+           ...
+           [<IOSCfgLine # 5 'interface FastEthernet0/2'>, <IOSCfgLine # 9 'interface FastEthernet0/3'>]
+           >>>
+        """
+
+        assert bool(getattr(childspec, 'append'))  # Childspec must be a list
+        retval = list()
+        if ignore_ws:
+            parentspec = self._build_space_tolerant_regex(parentspec)
+            childspec = map(self._build_space_tolerant_regex, childspec)
+
+        for parentobj in self.find_objects(parentspec):
+            results = set([])
+            for child_cfg in childspec:
+                results.add(bool(parentobj.re_search_children(child_cfg)))
+            if False in results:
+                continue
+            else:
+                retval.append(parentobj)
+
+        return retval
+
+    def find_objects_w_missing_children(self, parentspec, childspec, ignore_ws=False):
+        assert bool(getattr(childspec, 'append'))  # Childspec must be a list
+        retval = list()
+        if ignore_ws:
+            parentspec = self._build_space_tolerant_regex(parentspec)
+            childspec = map(self._build_space_tolerant_regex, childspec)
+
+        for parentobj in self.find_objects(parentspec):
+            results = set([])
+            for child_cfg in childspec:
+                results.add(bool(parentobj.re_search_children(child_cfg)))
+            if False in results:
+                retval.append(parentobj)
+            else:
+                continue
+
+        return retval
+
     def find_parents_w_child(self, parentspec, childspec, ignore_ws=False):
         """Parse through all children matching childspec, and return a list of
         parents that matched the parentspec.  Only the parent lines will be
