@@ -149,12 +149,12 @@ def testVal_IOSIntfLine_name():
         obj = cfg.ConfigObjs[0]
         assert obj.name==result_correct
 
-def testVal_IOSIntfLine_is_portchannel(parse_c01_factory):
+def testVal_IOSIntfLine_in_portchannel(parse_c01_factory):
     cfg = parse_c01_factory
     for intf_obj in cfg.find_objects('^interface\sGigabitEthernet4\/1$'):
-        assert intf_obj.is_portchannel is False
+        assert intf_obj.in_portchannel is False
     for intf_obj in cfg.find_objects('^interface\sGigabitEthernet4\/4$'):
-        assert intf_obj.is_portchannel is False
+        assert intf_obj.in_portchannel is False
 
 def testVal_IOSIntfLine_is_switchport(parse_c01_factory):
     cfg = parse_c01_factory
