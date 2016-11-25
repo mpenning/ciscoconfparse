@@ -9,11 +9,10 @@ from dns.exception import DNSException
 from dns.resolver import Resolver
 from dns import reversename, query
 
-if sys.version_info[0]<3:
+if sys.version_info[0] < 3:
     from ipaddr import IPv4Network, IPv6Network, IPv4Address, IPv6Address
 else:
     from ipaddress import IPv4Network, IPv6Network, IPv4Address, IPv6Address
-
 """ ccp_util.py - Parse, Query, Build, and Modify IOS-style configurations
      Copyright (C) 2014-2015 David Michael Pennington
 
@@ -34,7 +33,6 @@ else:
      mike [~at~] pennington [/dot\] net
 """
 
-
 _IPV6_REGEX_STR = r"""(?!:::\S+?$)       # Negative Lookahead for 3 colons
  (?P<addr>                               # Begin a group named 'addr'
  (?P<opt1>{0}(?::{0}){{7}})              # no double colons, option 1
@@ -49,18 +47,21 @@ _IPV6_REGEX_STR = r"""(?!:::\S+?$)       # Negative Lookahead for 3 colons
 |(?P<opt10>(?:::))                       # bare double colons (default route)
 )                                        # End group named 'addr'
 """.format(r'[0-9a-fA-F]{1,4}')
-_IPV6_REGEX_STR_COMPRESSED1 = r"""(?!:::\S+?$)(?P<addr1>(?P<opt1_1>{0}(?::{0}){{7}})|(?P<opt1_2>(?:{0}:){{1}}(?::{0}){{1,6}})|(?P<opt1_3>(?:{0}:){{2}}(?::{0}){{1,5}})|(?P<opt1_4>(?:{0}:){{3}}(?::{0}){{1,4}})|(?P<opt1_5>(?:{0}:){{4}}(?::{0}){{1,3}})|(?P<opt1_6>(?:{0}:){{5}}(?::{0}){{1,2}})|(?P<opt1_7>(?:{0}:){{6}}(?::{0}){{1,1}})|(?P<opt1_8>:(?::{0}){{1,7}})|(?P<opt1_9>(?:{0}:){{1,7}}:)|(?P<opt1_10>(?:::)))""".format(r'[0-9a-fA-F]{1,4}')
-_IPV6_REGEX_STR_COMPRESSED2 = r"""(?!:::\S+?$)(?P<addr2>(?P<opt2_1>{0}(?::{0}){{7}})|(?P<opt2_2>(?:{0}:){{1}}(?::{0}){{1,6}})|(?P<opt2_3>(?:{0}:){{2}}(?::{0}){{1,5}})|(?P<opt2_4>(?:{0}:){{3}}(?::{0}){{1,4}})|(?P<opt2_5>(?:{0}:){{4}}(?::{0}){{1,3}})|(?P<opt2_6>(?:{0}:){{5}}(?::{0}){{1,2}})|(?P<opt2_7>(?:{0}:){{6}}(?::{0}){{1,1}})|(?P<opt2_8>:(?::{0}){{1,7}})|(?P<opt2_9>(?:{0}:){{1,7}}:)|(?P<opt2_10>(?:::)))""".format(r'[0-9a-fA-F]{1,4}')
-_IPV6_REGEX_STR_COMPRESSED3 = r"""(?!:::\S+?$)(?P<addr3>(?P<opt3_1>{0}(?::{0}){{7}})|(?P<opt3_2>(?:{0}:){{1}}(?::{0}){{1,6}})|(?P<opt3_3>(?:{0}:){{2}}(?::{0}){{1,5}})|(?P<opt3_4>(?:{0}:){{3}}(?::{0}){{1,4}})|(?P<opt3_5>(?:{0}:){{4}}(?::{0}){{1,3}})|(?P<opt3_6>(?:{0}:){{5}}(?::{0}){{1,2}})|(?P<opt3_7>(?:{0}:){{6}}(?::{0}){{1,1}})|(?P<opt3_8>:(?::{0}){{1,7}})|(?P<opt3_9>(?:{0}:){{1,7}}:)|(?P<opt3_10>(?:::)))""".format(r'[0-9a-fA-F]{1,4}')
+_IPV6_REGEX_STR_COMPRESSED1 = r"""(?!:::\S+?$)(?P<addr1>(?P<opt1_1>{0}(?::{0}){{7}})|(?P<opt1_2>(?:{0}:){{1}}(?::{0}){{1,6}})|(?P<opt1_3>(?:{0}:){{2}}(?::{0}){{1,5}})|(?P<opt1_4>(?:{0}:){{3}}(?::{0}){{1,4}})|(?P<opt1_5>(?:{0}:){{4}}(?::{0}){{1,3}})|(?P<opt1_6>(?:{0}:){{5}}(?::{0}){{1,2}})|(?P<opt1_7>(?:{0}:){{6}}(?::{0}){{1,1}})|(?P<opt1_8>:(?::{0}){{1,7}})|(?P<opt1_9>(?:{0}:){{1,7}}:)|(?P<opt1_10>(?:::)))""".format(
+    r'[0-9a-fA-F]{1,4}')
+_IPV6_REGEX_STR_COMPRESSED2 = r"""(?!:::\S+?$)(?P<addr2>(?P<opt2_1>{0}(?::{0}){{7}})|(?P<opt2_2>(?:{0}:){{1}}(?::{0}){{1,6}})|(?P<opt2_3>(?:{0}:){{2}}(?::{0}){{1,5}})|(?P<opt2_4>(?:{0}:){{3}}(?::{0}){{1,4}})|(?P<opt2_5>(?:{0}:){{4}}(?::{0}){{1,3}})|(?P<opt2_6>(?:{0}:){{5}}(?::{0}){{1,2}})|(?P<opt2_7>(?:{0}:){{6}}(?::{0}){{1,1}})|(?P<opt2_8>:(?::{0}){{1,7}})|(?P<opt2_9>(?:{0}:){{1,7}}:)|(?P<opt2_10>(?:::)))""".format(
+    r'[0-9a-fA-F]{1,4}')
+_IPV6_REGEX_STR_COMPRESSED3 = r"""(?!:::\S+?$)(?P<addr3>(?P<opt3_1>{0}(?::{0}){{7}})|(?P<opt3_2>(?:{0}:){{1}}(?::{0}){{1,6}})|(?P<opt3_3>(?:{0}:){{2}}(?::{0}){{1,5}})|(?P<opt3_4>(?:{0}:){{3}}(?::{0}){{1,4}})|(?P<opt3_5>(?:{0}:){{4}}(?::{0}){{1,3}})|(?P<opt3_6>(?:{0}:){{5}}(?::{0}){{1,2}})|(?P<opt3_7>(?:{0}:){{6}}(?::{0}){{1,1}})|(?P<opt3_8>:(?::{0}){{1,7}})|(?P<opt3_9>(?:{0}:){{1,7}}:)|(?P<opt3_10>(?:::)))""".format(
+    r'[0-9a-fA-F]{1,4}')
 
 _CISCO_RANGE_ATOM_STR = r"""\d+\s*\-*\s*\d*"""
-_CISCO_RANGE_STR = r"""^(?P<line_prefix>[a-zA-Z\s]*)(?P<slot_prefix>[\d\/]*\d+\/)*(?P<range_text>(\s*{0})*)$""".format(_CISCO_RANGE_ATOM_STR)
+_CISCO_RANGE_STR = r"""^(?P<line_prefix>[a-zA-Z\s]*)(?P<slot_prefix>[\d\/]*\d+\/)*(?P<range_text>(\s*{0})*)$""".format(
+    _CISCO_RANGE_ATOM_STR)
 
 _RGX_IPV6ADDR = re.compile(_IPV6_REGEX_STR, re.VERBOSE)
 
 _RGX_IPV4ADDR = re.compile(r'^(?P<addr>\d+\.\d+\.\d+\.\d+)')
-_RGX_IPV4ADDR_NETMASK = re.compile(
-    r"""
+_RGX_IPV4ADDR_NETMASK = re.compile(r"""
      (?:
        ^(?P<addr0>\d+\.\d+\.\d+\.\d+)$
       |(?:^
@@ -68,10 +69,10 @@ _RGX_IPV4ADDR_NETMASK = re.compile(
        $)
       |^(?:\s*(?P<addr2>\d+\.\d+\.\d+\.\d+)(?:\/(?P<masklen>\d+))\s*)$
     )
-    """, 
-    re.VERBOSE)
+    """, re.VERBOSE)
 
 _RGX_CISCO_RANGE = re.compile(_CISCO_RANGE_STR)
+
 
 ## Emulate the old behavior of ipaddr.IPv4Network in Python2, which can use
 ##    IPv4Network with a host address.  Google removed that in Python3's 
@@ -100,6 +101,7 @@ class IPv4Obj(object):
         - an instance of :class:`~ccp_util.IPv4Obj`.
 
     """
+
     def __init__(self, arg='127.0.0.1/32', strict=False):
 
         #RGX_IPV4ADDR = re.compile(r'^(\d+\.\d+\.\d+\.\d+)')
@@ -110,13 +112,14 @@ class IPv4Obj(object):
         try:
             mm = _RGX_IPV4ADDR_NETMASK.search(arg)
         except TypeError:
-            if arg.dna=="IPv4Obj":
+            if arg.dna == "IPv4Obj":
                 ip_str = '{0}/{1}'.format(str(arg.ip_object), arg.prefixlen)
                 self.network_object = IPv4Network(ip_str)
                 self.ip_object = IPv4Address(str(arg.ip_object))
                 return None
             else:
-                raise ValueError("IPv4Obj doesn't understand how to parse {0}".format(arg))
+                raise ValueError(
+                    "IPv4Obj doesn't understand how to parse {0}".format(arg))
 
         ERROR = "IPv4Obj couldn't parse '{0}'".format(arg)
         assert (not (mm is None)), ERROR
@@ -128,25 +131,26 @@ class IPv4Obj(object):
         netmask = mm_result['netmask']
         if netmask:
             ## ALWAYS check for the netmask first
-            self.network_object = IPv4Network('{0}/{1}'.format(addr, netmask), 
-                strict=strict)
+            self.network_object = IPv4Network(
+                '{0}/{1}'.format(addr, netmask), strict=strict)
             self.ip_object = IPv4Address('{0}'.format(addr))
         else:
-            self.network_object = IPv4Network('{0}/{1}'.format(addr, masklen), 
-                strict=strict)
+            self.network_object = IPv4Network(
+                '{0}/{1}'.format(addr, masklen), strict=strict)
             self.ip_object = IPv4Address('{0}'.format(addr))
 
-
     def __repr__(self):
-        return """<IPv4Obj {0}/{1}>""".format(str(self.ip_object), self.prefixlen)
+        return """<IPv4Obj {0}/{1}>""".format(
+            str(self.ip_object), self.prefixlen)
 
     def __eq__(self, val):
         try:
-            if self.network_object==val.network_object:
+            if self.network_object == val.network_object:
                 return True
             return False
         except (Exception) as e:
-            errmsg = "'{0}' cannot compare itself to '{1}': {2}".format(self.__repr__(), val, e)
+            errmsg = "'{0}' cannot compare itself to '{1}': {2}".format(
+                self.__repr__(), val, e)
             raise ValueError(errmsg)
 
     def __gt__(self, val):
@@ -155,17 +159,18 @@ class IPv4Obj(object):
             val_nobj = getattr(val, 'network_object')
 
             self_nobj = self.network_object
-            if (self.network_object.prefixlen<val_prefixlen):
+            if (self.network_object.prefixlen < val_prefixlen):
                 # Sort shorter masks as higher...
                 return True
-            elif (self.network_object.prefixlen>val_prefixlen):
+            elif (self.network_object.prefixlen > val_prefixlen):
                 return False
-            elif (self_nobj>val_nobj):
+            elif (self_nobj > val_nobj):
                 # If masks are equal, rely on Google's sorting...
                 return True
             return False
         except:
-            errmsg = "{0} cannot compare itself to '{1}'".format(self.__repr__(), val)
+            errmsg = "{0} cannot compare itself to '{1}'".format(
+                self.__repr__(), val)
             raise ValueError(errmsg)
 
     def __lt__(self, val):
@@ -174,25 +179,26 @@ class IPv4Obj(object):
             val_nobj = getattr(val, 'network_object')
 
             self_nobj = self.network_object
-            if (self.network_object.prefixlen>val_prefixlen):
+            if (self.network_object.prefixlen > val_prefixlen):
                 # Sort shorter masks as lower...
                 return True
-            elif (self.network_object.prefixlen<val_prefixlen):
+            elif (self.network_object.prefixlen < val_prefixlen):
                 return False
-            elif (self_nobj<val_nobj):
+            elif (self_nobj < val_nobj):
                 # If masks are equal, rely on Google's sorting...
                 return True
             return False
         except:
-            errmsg = "{0} cannot compare itself to '{1}'".format(self.__repr__(), val)
+            errmsg = "{0} cannot compare itself to '{1}'".format(
+                self.__repr__(), val)
             raise ValueError(errmsg)
 
     def __contains__(self, val):
         # Used for "foo in bar"... python calls bar.__contains__(foo)
         try:
-            if (self.network_object.prefixlen==0):
+            if (self.network_object.prefixlen == 0):
                 return True
-            elif self.network_object.prefixlen>val.network_object.prefixlen:
+            elif self.network_object.prefixlen > val.network_object.prefixlen:
                 # obvious shortcut... if this object's mask is longer than
                 #    val, this object cannot contain val
                 return False
@@ -202,11 +208,13 @@ class IPv4Obj(object):
                     (self.broadcast>=val.broadcast)
 
         except (Exception) as e:
-            raise ValueError("Could not check whether '{0}' is contained in '{1}': {2}".format(val, self, e))
+            raise ValueError(
+                "Could not check whether '{0}' is contained in '{1}': {2}".
+                format(val, self, e))
 
     def __hash__(self):
         # Python3 needs __hash__()
-        return hash(str(self.ip_object))+hash(str(self.prefixlen))
+        return hash(str(self.ip_object)) + hash(str(self.prefixlen))
 
     def __iter__(self):
         return self.network_object.__iter__()
@@ -237,7 +245,7 @@ class IPv4Obj(object):
     @property
     def broadcast(self):
         """Returns the broadcast address as an IPv4Address object."""
-        if sys.version_info[0]<3:
+        if sys.version_info[0] < 3:
             return self.network_object.broadcast
         else:
             return self.network_object.broadcast_address
@@ -246,7 +254,7 @@ class IPv4Obj(object):
     def network(self):
         """Returns an IPv4Network object, which represents this network.
         """
-        if sys.version_info[0]<3:
+        if sys.version_info[0] < 3:
             return self.network_object.network
         else:
             ## The ipaddress module returns an "IPAddress" object in Python3...
@@ -265,17 +273,18 @@ class IPv4Obj(object):
     @property
     def numhosts(self):
         """Returns the total number of IP addresses in this network, including broadcast and the "subnet zero" address"""
-        if sys.version_info[0]<3:
+        if sys.version_info[0] < 3:
             return self.network_object.numhosts
         else:
-            return 2**(32-self.network_object.prefixlen)
+            return 2**(32 - self.network_object.prefixlen)
 
     @property
     def as_decimal(self):
         """Returns the IP address as a decimal integer"""
         num_strings = str(self.ip).split('.')
         num_strings.reverse()  # reverse the order
-        return sum([int(num)*(256**idx) for idx, num in enumerate(num_strings)])
+        return sum(
+            [int(num) * (256**idx) for idx, num in enumerate(num_strings)])
 
     @property
     def as_binary_tuple(self):
@@ -304,6 +313,7 @@ class IPv4Obj(object):
         """Returns a boolean for whether this is a reserved address"""
         return self.network_object.is_reserved
 
+
 ## Emulate the old behavior of ipaddr.IPv6Network in Python2, which can use
 ##    IPv6Network with a host address.  Google removed that in Python3's 
 ##    ipaddress.py module
@@ -331,6 +341,7 @@ class IPv6Obj(object):
         - an instance of :class:`~ccp_util.IPv6Obj`.
 
     """
+
     def __init__(self, arg='::1/128', strict=False):
 
         #arg= _RGX_IPV6ADDR_NETMASK.sub(r'\1/\2', arg) # mangle IOS: 'addr mask'
@@ -340,13 +351,14 @@ class IPv6Obj(object):
         try:
             mm = _RGX_IPV6ADDR.search(arg)
         except TypeError:
-            if arg.dna=="IPv6Obj":
+            if arg.dna == "IPv6Obj":
                 ip_str = '{0}/{1}'.format(str(arg.ip_object), arg.prefixlen)
                 self.network_object = IPv6Network(ip_str)
                 self.ip_object = IPv6Address(str(arg.ip_object))
                 return None
             else:
-                raise ValueError("IPv6Obj doesn't understand how to parse {0}".format(arg))
+                raise ValueError(
+                    "IPv6Obj doesn't understand how to parse {0}".format(arg))
 
         assert (not (mm is None)), "IPv6Obj couldn't parse {0}".format(arg)
         self.network_object = IPv6Network(arg, strict=strict)
@@ -354,16 +366,18 @@ class IPv6Obj(object):
 
 # 'address_exclude', 'compare_networks', 'hostmask', 'ipv4_mapped', 'iter_subnets', 'iterhosts', 'masked', 'max_prefixlen', 'netmask', 'network', 'numhosts', 'overlaps', 'prefixlen', 'sixtofour', 'subnet', 'supernet', 'teredo', 'with_hostmask', 'with_netmask', 'with_prefixlen'
 
-
     def __repr__(self):
-        return """<IPv6Obj {0}/{1}>""".format(str(self.ip_object), self.prefixlen)
+        return """<IPv6Obj {0}/{1}>""".format(
+            str(self.ip_object), self.prefixlen)
+
     def __eq__(self, val):
         try:
-            if self.network_object==val.network_object:
+            if self.network_object == val.network_object:
                 return True
             return False
         except (Exception) as e:
-            errmsg = "'{0}' cannot compare itself to '{1}': {2}".format(self.__repr__(), val, e)
+            errmsg = "'{0}' cannot compare itself to '{1}': {2}".format(
+                self.__repr__(), val, e)
             raise ValueError(errmsg)
 
     def __gt__(self, val):
@@ -372,17 +386,18 @@ class IPv6Obj(object):
             val_nobj = getattr(val, 'network_object')
 
             self_nobj = self.network_object
-            if (self.network_object.prefixlen<val_prefixlen):
+            if (self.network_object.prefixlen < val_prefixlen):
                 # Sort shorter masks as higher...
                 return True
-            elif (self.network_object.prefixlen>val_prefixlen):
+            elif (self.network_object.prefixlen > val_prefixlen):
                 return False
-            elif (self_nobj>val_nobj):
+            elif (self_nobj > val_nobj):
                 # If masks are equal, rely on Google's sorting...
                 return True
             return False
         except:
-            errmsg = "{0} cannot compare itself to '{1}'".format(self.__repr__(), val)
+            errmsg = "{0} cannot compare itself to '{1}'".format(
+                self.__repr__(), val)
             raise ValueError(errmsg)
 
     def __lt__(self, val):
@@ -391,25 +406,26 @@ class IPv6Obj(object):
             val_nobj = getattr(val, 'network_object')
 
             self_nobj = self.network_object
-            if (self.network_object.prefixlen>val_prefixlen):
+            if (self.network_object.prefixlen > val_prefixlen):
                 # Sort shorter masks as lower...
                 return True
-            elif (self.network_object.prefixlen<val_prefixlen):
+            elif (self.network_object.prefixlen < val_prefixlen):
                 return False
-            elif (self_nobj<val_nobj):
+            elif (self_nobj < val_nobj):
                 # If masks are equal, rely on Google's sorting...
                 return True
             return False
         except:
-            errmsg = "{0} cannot compare itself to '{1}'".format(self.__repr__(), val)
+            errmsg = "{0} cannot compare itself to '{1}'".format(
+                self.__repr__(), val)
             raise ValueError(errmsg)
 
     def __contains__(self, val):
         # Used for "foo in bar"... python calls bar.__contains__(foo)
         try:
-            if (self.network_object.prefixlen==0):
+            if (self.network_object.prefixlen == 0):
                 return True
-            elif self.network_object.prefixlen>val.network_object.prefixlen:
+            elif self.network_object.prefixlen > val.network_object.prefixlen:
                 # obvious shortcut... if this object's mask is longer than
                 #    val, this object cannot contain val
                 return False
@@ -419,11 +435,13 @@ class IPv6Obj(object):
                     (self.broadcast>=val.broadcast)
 
         except (Exception) as e:
-            raise ValueError("Could not check whether '{0}' is contained in '{1}': {2}".format(val, self, e))
+            raise ValueError(
+                "Could not check whether '{0}' is contained in '{1}': {2}".
+                format(val, self, e))
 
     def __hash__(self):
         # Python3 needs __hash__()
-        return hash(str(self.ip_object))+hash(str(self.prefixlen))
+        return hash(str(self.ip_object)) + hash(str(self.prefixlen))
 
     def __iter__(self):
         return self.network_object.__iter__()
@@ -474,7 +492,7 @@ class IPv6Obj(object):
     def network(self):
         """Returns an IPv6Network object, which represents this network.
         """
-        if sys.version_info[0]<3:
+        if sys.version_info[0] < 3:
             return self.network_object.network
         else:
             ## The ipaddress module returns an "IPAddress" object in Python3...
@@ -493,24 +511,26 @@ class IPv6Obj(object):
     @property
     def numhosts(self):
         """Returns the total number of IP addresses in this network, including broadcast and the "subnet zero" address"""
-        if sys.version_info[0]<3:
+        if sys.version_info[0] < 3:
             return self.network_object.numhosts
         else:
-            return 2**(128-self.network_object.prefixlen)
+            return 2**(128 - self.network_object.prefixlen)
 
     @property
     def as_decimal(self):
         """Returns the IP address as a decimal integer"""
         num_strings = str(self.ip.exploded).split(':')
         num_strings.reverse()  # reverse the order
-        return sum([int(num, 16)*(256**idx) for idx, num in enumerate(num_strings)])
+        return sum(
+            [int(num, 16) * (256**idx) for idx, num in enumerate(num_strings)])
 
     @property
     def as_binary_tuple(self):
         """Returns the IPv6 address as a tuple of zero-padded 8-bit binary strings"""
         nested_list = [
             ['{0:08b}'.format(int(ii, 16)) for ii in [num[0:2], num[2:4]]]
-            for num in str(self.ip.exploded).split(':')]
+            for num in str(self.ip.exploded).split(':')
+        ]
         return tuple(itertools.chain(*nested_list))
 
     @property
@@ -518,7 +538,8 @@ class IPv6Obj(object):
         """Returns the IPv6 address as a tuple of zero-padded 8-bit hex strings"""
         nested_list = [
             ['{0:02x}'.format(int(ii, 16)) for ii in [num[0:2], num[2:4]]]
-            for num in str(self.ip.exploded).split(':')]
+            for num in str(self.ip.exploded).split(':')
+        ]
         return tuple(itertools.chain(*nested_list))
 
     @property
@@ -560,8 +581,10 @@ class IPv6Obj(object):
     def sixtofour(self):
         return self.network_object.sixtofour
 
+
 class L4Object(object):
     """Object for Transport-layer protocols; the object ensures that logical operators (such as le, gt, eq, and ne) are parsed correctly, as well as mapping service names to port numbers"""
+
     def __init__(self, protocol='', port_spec='', syntax=''):
         self.protocol = protocol
         self.port_list = list()
@@ -572,15 +595,17 @@ class L4Object(object):
         except:
             port_spec = port_spec
 
-        if syntax=='asa':
-            if protocol=='tcp':
+        if syntax == 'asa':
+            if protocol == 'tcp':
                 ports = ASA_TCP_PORTS
-            elif protocol=='udp':
+            elif protocol == 'udp':
                 ports = ASA_UDP_PORTS
             else:
-                raise NotImplementedError("'{0}' is not supported: '{0}'".format(protocol))
+                raise NotImplementedError(
+                    "'{0}' is not supported: '{0}'".format(protocol))
         else:
-            raise NotImplementedError("This syntax is unknown: '{0}'".format(syntax))
+            raise NotImplementedError("This syntax is unknown: '{0}'".format(
+                syntax))
 
         if 'eq ' in port_spec:
             port_str = re.split('\s+', port_spec)[-1]
@@ -590,14 +615,16 @@ class L4Object(object):
             self.port_list = [int(ports.get(port_spec, port_spec))]
         elif 'range ' in port_spec:
             port_tmp = re.split('\s+', port_spec)[1:]
-            self.port_list = range(int(ports.get(port_tmp[0], port_tmp[0])), 
+            self.port_list = range(
+                int(ports.get(port_tmp[0], port_tmp[0])),
                 int(ports.get(port_tmp[1], port_tmp[1])) + 1)
         elif 'lt ' in port_spec:
             port_str = re.split('\s+', port_spec)[-1]
             self.port_list = range(1, int(ports.get(port_str, port_str)))
         elif 'gt ' in port_spec:
             port_str = re.split('\s+', port_spec)[-1]
-            self.port_list = range(int(ports.get(port_str, port_str)) + 1, 65535)
+            self.port_list = range(
+                int(ports.get(port_str, port_str)) + 1, 65535)
         elif 'neq ' in port_spec:
             port_str = re.split('\s+', port_spec)[-1]
             tmp = set(range(1, 65535))
@@ -605,12 +632,14 @@ class L4Object(object):
             self.port_list = sorted(tmp)
 
     def __eq__(self, val):
-        if (self.protocol==val.protocol) and (self.port_list==val.port_list):
+        if (self.protocol == val.protocol) and (
+                self.port_list == val.port_list):
             return True
         return False
 
     def __repr__(self):
         return "<L4Object {0} {1}>".format(self.protocol, self.port_list)
+
 
 def dns_lookup(input, timeout=3, server=''):
     """Perform a simple DNS lookup, return results in a dictionary"""
@@ -621,15 +650,18 @@ def dns_lookup(input, timeout=3, server=''):
         resolver.nameservers = [server]
     try:
         records = resolver.query(input, 'A')
-        return {'addrs': [ii.address for ii in records],
+        return {
+            'addrs': [ii.address for ii in records],
             'error': '',
             'name': input,
-            }
+        }
     except DNSException as e:
-        return {'addrs': [], 
+        return {
+            'addrs': [],
             'error': repr(e),
             'name': input,
-            }
+        }
+
 
 def dns6_lookup(input, timeout=3, server=''):
     """Perform a simple DNS lookup, return results in a dictionary"""
@@ -640,20 +672,26 @@ def dns6_lookup(input, timeout=3, server=''):
         resolver.nameservers = [server]
     try:
         records = resolver.query(input, 'AAAA')
-        return {'addrs': [ii.address for ii in records],
+        return {
+            'addrs': [ii.address for ii in records],
             'error': '',
             'name': input,
-            }
+        }
     except DNSException as e:
-        return {'addrs': [], 
+        return {
+            'addrs': [],
             'error': repr(e),
             'name': input,
-            }
+        }
+
 
 _REVERSE_DNS_REGEX = re.compile(r'^\s*\d+\.\d+\.\d+\.\d+\s*$')
+
+
 def reverse_dns_lookup(input, timeout=3, server=''):
     """Perform a simple reverse DNS lookup, return results in a dictionary"""
-    assert _REVERSE_DNS_REGEX.search(input), "Invalid address format: '{0}'".format(input)
+    assert _REVERSE_DNS_REGEX.search(
+        input), "Invalid address format: '{0}'".format(input)
     resolver = Resolver()
     resolver.timeout = float(timeout)
     resolver.lifetime = float(timeout)
@@ -664,17 +702,20 @@ def reverse_dns_lookup(input, timeout=3, server=''):
         tmp.reverse()
         inaddr = '.'.join(tmp) + ".in-addr.arpa"
         records = resolver.query(inaddr, 'PTR')
-        return {'name': records[0].to_text(),
+        return {
+            'name': records[0].to_text(),
             'lookup': inaddr,
             'error': '',
             'addr': input,
-            }
+        }
     except DNSException as e:
-        return {'addrs': [], 
+        return {
+            'addrs': [],
             'lookup': inaddr,
             'error': repr(e),
             'name': input,
-            }
+        }
+
 
 class CiscoRange(MutableSequence):
     def __init__(self, text, result_type=str):
@@ -682,7 +723,8 @@ class CiscoRange(MutableSequence):
         self.text = text
         self.result_type = result_type
         if text:
-            self.line_prefix, self.slot_prefix, self.range_text = self._parse_range_text()
+            self.line_prefix, self.slot_prefix, self.range_text = self._parse_range_text(
+            )
             self._list = self._range()
         else:
             self._list = list()
@@ -707,8 +749,10 @@ class CiscoRange(MutableSequence):
 
     def insert(self, ii, val):
         ## Insert something at index ii
-        for idx, obj in enumerate(CiscoRange(val, result_type=self.result_type)):
-            self._list.insert(ii+idx, obj)
+        for idx, obj in enumerate(
+                CiscoRange(
+                    val, result_type=self.result_type)):
+            self._list.insert(ii + idx, obj)
         return self
 
     def append(self, val):
@@ -726,11 +770,11 @@ class CiscoRange(MutableSequence):
         mm_result = mm.groupdict()
         line_prefix = mm_result.get('line_prefix', "") or ""
         slot_prefix = mm_result.get('slot_prefix', "") or ""
-        if len(tmp[1:])>1:
+        if len(tmp[1:]) > 1:
             range_text = mm_result['range_text'] + ',' + ','.join(tmp[1:])
-        elif len(tmp[1:])==1:
+        elif len(tmp[1:]) == 1:
             range_text = mm_result['range_text'] + ',' + tmp[1]
-        elif len(tmp[1:])==0:
+        elif len(tmp[1:]) == 0:
             range_text = mm_result['range_text']
         return line_prefix, slot_prefix, range_text
 
@@ -742,18 +786,20 @@ class CiscoRange(MutableSequence):
             except ValueError:
                 ## begin and end are the same number
                 begin, end = range_atom, range_atom
-            begin, end = int(begin.strip()), int(end.strip())+1
-            assert begin>-1
-            assert end>begin
+            begin, end = int(begin.strip()), int(end.strip()) + 1
+            assert begin > -1
+            assert end > begin
             retval.extend(range(begin, end))
         return list(set(retval))
 
     def _range(self):
         """Enumerate all values in the CiscoRange()"""
+
         def combine(arg):
             return self.line_prefix + self.slot_prefix + str(arg)
-        return map(self.result_type, 
-            map(combine, self._dash_range(self.range_text)))
+
+        return map(self.result_type,
+                   map(combine, self._dash_range(self.range_text)))
 
     def remove(self, arg):
         remove_obj = CiscoRange(arg)

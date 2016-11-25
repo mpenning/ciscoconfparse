@@ -14,7 +14,6 @@ from ccp_abc import BaseCfgLine
 ###   for this functionality yet, so I consider all this code alpha quality. 
 ###
 ###   Use models_cisco.py at your own risk.  You have been warned :-)
-
 """ models_cisco.py - Parse, Query, Build, and Modify IOS-style configurations
      Copyright (C) 2014-2016 David Michael Pennington
 
@@ -73,6 +72,7 @@ class IOSCfgLine(BaseCfgLine):
         - An instance of :class:`~models_cisco.IOSCfgLine`.
 
     """
+
     def __init__(self, *args, **kwargs):
         """Accept an IOS line number and initialize family relationship
         attributes"""
@@ -123,7 +123,7 @@ class IOSCfgLine(BaseCfgLine):
         """
         #intf_regex = r'^interface\s+(\S+.+)'
         #if self.re_match(intf_regex):
-        if self.text[0:10]=='interface ' and self.text[10]!=' ':
+        if self.text[0:10] == 'interface ' and self.text[10] != ' ':
             return True
         return False
 
@@ -170,6 +170,7 @@ class IOSCfgLine(BaseCfgLine):
 
     _VIRTUAL_INTF_REGEX_STR = r"""^interface\s+(Loopback|Tunnel|Dialer|Virtual-Template|Port-[Cc]hannel)"""
     _VIRTUAL_INTF_REGEX = re.compile(_VIRTUAL_INTF_REGEX_STR)
+
     @property
     def is_virtual_intf(self):
         if self.re_match(self._VIRTUAL_INTF_REGEX):
@@ -260,9 +261,10 @@ class IOSCfgLine(BaseCfgLine):
         """Return a boolean indicating whether this port is configured in a port-channel
 
         """
-        retval = self.re_match_iter_typed(r'^\s*channel-group\s+(\d+)',
-            result_type=bool, default=False)
+        retval = self.re_match_iter_typed(
+            r'^\s*channel-group\s+(\d+)', result_type=bool, default=False)
         return retval
+
 
 ##
 ##-------------  IOS Interface ABC
@@ -275,25 +277,26 @@ class IOSCfgLine(BaseCfgLine):
 #    address -> addr
 #    default -> def
 
+
 class BaseIOSIntfLine(IOSCfgLine):
     def __init__(self, *args, **kwargs):
         super(BaseIOSIntfLine, self).__init__(*args, **kwargs)
-        self.ifindex = None    # Optional, for user use
-        self.default_ipv4_addr_object = IPv4Obj('127.0.0.1/32', 
-            strict=False)
+        self.ifindex = None  # Optional, for user use
+        self.default_ipv4_addr_object = IPv4Obj('127.0.0.1/32', strict=False)
 
     def __repr__(self):
         if not self.is_switchport:
-            if self.ipv4_addr_object==self.default_ipv4_addr_object:
+            if self.ipv4_addr_object == self.default_ipv4_addr_object:
                 addr = "No IPv4"
             else:
                 ip = str(self.ipv4_addr_object.ip)
                 prefixlen = str(self.ipv4_addr_object.prefixlen)
                 addr = "{0}/{1}".format(ip, prefixlen)
-            return "<%s # %s '%s' info: '%s'>" % (self.classname, 
-                self.linenum, self.name, addr)
+            return "<%s # %s '%s' info: '%s'>" % (self.classname, self.linenum,
+                                                  self.name, addr)
         else:
-            return "<%s # %s '%s' info: 'switchport'>" % (self.classname, self.linenum, self.name)
+            return "<%s # %s '%s' info: 'switchport'>" % (
+                self.classname, self.linenum, self.name)
 
     def _build_abbvs(self):
         """Build a set of valid abbreviations (lowercased) for the interface"""
@@ -301,9 +304,9 @@ class BaseIOSIntfLine(IOSCfgLine):
         port_type_chars = self.port_type.lower()
         subinterface_number = self.subinterface_number
         for sep in ['', ' ']:
-            for ii in range(1, len(port_type_chars)+1):
-                retval.add('{0}{1}{2}'.format(port_type_chars[0:ii], sep, 
-                    subinterface_number))
+            for ii in range(1, len(port_type_chars) + 1):
+                retval.add('{0}{1}{2}'.format(port_type_chars[0:ii], sep,
+                                              subinterface_number))
         return retval
 
     def reset(self, atomic=True):
@@ -314,18 +317,21 @@ class BaseIOSIntfLine(IOSCfgLine):
         # IOS interfaces are defaulted like this...
         return "default " + self.text
 
-
     @property
     def verbose(self):
         if not self.is_switchport:
-            return "<%s # %s '%s' info: '%s' (child_indent: %s / len(children): %s / family_endpoint: %s)>" % (self.classname, self.linenum, self.text, self.ipv4_addr_object or "No IPv4", self.child_indent, len(self.children), self.family_endpoint) 
+            return "<%s # %s '%s' info: '%s' (child_indent: %s / len(children): %s / family_endpoint: %s)>" % (
+                self.classname, self.linenum, self.text, self.ipv4_addr_object
+                or "No IPv4", self.child_indent, len(self.children),
+                self.family_endpoint)
         else:
-            return "<%s # %s '%s' info: 'switchport' (child_indent: %s / len(children): %s / family_endpoint: %s)>" % (self.classname, self.linenum, self.text, self.child_indent, len(self.children), self.family_endpoint) 
+            return "<%s # %s '%s' info: 'switchport' (child_indent: %s / len(children): %s / family_endpoint: %s)>" % (
+                self.classname, self.linenum, self.text, self.child_indent,
+                len(self.children), self.family_endpoint)
 
     @classmethod
     def is_object_for(cls, line="", re=re):
         return False
-
 
     ##-------------  Basic interface properties
 
@@ -334,9 +340,9 @@ class BaseIOSIntfLine(IOSCfgLine):
         """A python set of valid abbreviations (lowercased) for the interface"""
         return self._build_abbvs()
 
-
     _INTF_NAME_RE_STR = r'^interface\s+(\S+[0-9\/\.\s]+)\s*'
     _INTF_NAME_REGEX = re.compile(_INTF_NAME_RE_STR)
+
     @property
     def name(self):
         """Return the interface name as a string, such as 'GigabitEthernet0/1'
@@ -600,54 +606,47 @@ class BaseIOSIntfLine(IOSCfgLine):
         """Return the current interface description string.
 
         """
-        retval = self.re_match_iter_typed(r'^\s*description\s+(\S.+)$',
-            result_type=str, default='')
+        retval = self.re_match_iter_typed(
+            r'^\s*description\s+(\S.+)$', result_type=str, default='')
         return retval
-
 
     @property
     def manual_bandwidth(self):
-        retval = self.re_match_iter_typed(r'^\s*bandwidth\s+(\d+)$',
-            result_type=int, default=0)
+        retval = self.re_match_iter_typed(
+            r'^\s*bandwidth\s+(\d+)$', result_type=int, default=0)
         return retval
-
 
     @property
     def manual_delay(self):
-        retval = self.re_match_iter_typed(r'^\s*delay\s+(\d+)$',
-            result_type=int, default=0)
+        retval = self.re_match_iter_typed(
+            r'^\s*delay\s+(\d+)$', result_type=int, default=0)
         return retval
-
 
     @property
     def manual_holdqueue_out(self):
         """Return the current hold-queue out depth, if default return 0"""
-        retval = self.re_match_iter_typed(r'^\s*hold-queue\s+(\d+)\s+out$',
-            result_type=int, default=0)
+        retval = self.re_match_iter_typed(
+            r'^\s*hold-queue\s+(\d+)\s+out$', result_type=int, default=0)
         return retval
-
 
     @property
     def manual_holdqueue_in(self):
         """Return the current hold-queue in depth, if default return 0"""
-        retval = self.re_match_iter_typed(r'^\s*hold-queue\s+(\d+)\s+in$',
-            result_type=int, default=0)
+        retval = self.re_match_iter_typed(
+            r'^\s*hold-queue\s+(\d+)\s+in$', result_type=int, default=0)
         return retval
-
 
     @property
     def manual_encapsulation(self):
-        retval = self.re_match_iter_typed(r'^\s*encapsulation\s+(\S+)',
-            result_type=str, default='')
+        retval = self.re_match_iter_typed(
+            r'^\s*encapsulation\s+(\S+)', result_type=str, default='')
         return retval
-
 
     @property
     def has_mpls(self):
-        retval = self.re_match_iter_typed(r'^\s*(mpls\s+ip)$',
-            result_type=bool, default=False)
+        retval = self.re_match_iter_typed(
+            r'^\s*(mpls\s+ip)$', result_type=bool, default=False)
         return retval
-
 
     @property
     def ipv4_addr_object(self):
@@ -666,17 +665,18 @@ class BaseIOSIntfLine(IOSCfgLine):
     def ip_network_object(self):
         # Simplified on 2014-12-02
         try:
-            return IPv4Obj('{0}/{1}'.format(self.ipv4_addr, self.ipv4_netmask), 
+            return IPv4Obj(
+                '{0}/{1}'.format(self.ipv4_addr, self.ipv4_netmask),
                 strict=False)
         except (Exception) as e:
             return self.default_ipv4_addr_object
-
 
     @property
     def has_autonegotiation(self):
         if not self.is_ethernet_intf:
             return False
-        elif self.is_ethernet_intf and (self.has_manual_speed or self.has_manual_duplex):
+        elif self.is_ethernet_intf and (self.has_manual_speed or
+                                        self.has_manual_duplex):
             return False
         elif self.is_ethernet_intf:
             return True
@@ -685,35 +685,34 @@ class BaseIOSIntfLine(IOSCfgLine):
 
     @property
     def has_manual_speed(self):
-        retval = self.re_match_iter_typed(r'^\s*speed\s+(\d+)$',
-            result_type=bool, default=False)
+        retval = self.re_match_iter_typed(
+            r'^\s*speed\s+(\d+)$', result_type=bool, default=False)
         return retval
-
 
     @property
     def has_manual_duplex(self):
-        retval = self.re_match_iter_typed(r'^\s*duplex\s+(\S.+)$',
-            result_type=bool, default=False)
+        retval = self.re_match_iter_typed(
+            r'^\s*duplex\s+(\S.+)$', result_type=bool, default=False)
         return retval
-
 
     @property
     def has_manual_carrierdelay(self):
         """Return a python boolean for whether carrier delay is manually configured on the interface"""
         return bool(self.manual_carrierdelay)
 
-
     @property
     def manual_carrierdelay(self):
         """Return the manual carrier delay (in seconds) of the interface as a python float. If there is no explicit carrier delay, return 0.0"""
-        cd_seconds = self.re_match_iter_typed(r'^\s*carrier-delay\s+(\d+)$',
-            result_type=float, default=0.0)
-        cd_msec = self.re_match_iter_typed(r'^\s*carrier-delay\s+msec\s+(\d+)$',
-            result_type=float, default=0.0)
-        if (cd_seconds>0.0):
+        cd_seconds = self.re_match_iter_typed(
+            r'^\s*carrier-delay\s+(\d+)$', result_type=float, default=0.0)
+        cd_msec = self.re_match_iter_typed(
+            r'^\s*carrier-delay\s+msec\s+(\d+)$',
+            result_type=float,
+            default=0.0)
+        if (cd_seconds > 0.0):
             return cd_seconds
         else:
-            return cd_msec/1000.0
+            return cd_msec / 1000.0
 
     @property
     def has_manual_clock_rate(self):
@@ -722,8 +721,8 @@ class BaseIOSIntfLine(IOSCfgLine):
     @property
     def manual_clock_rate(self):
         """Return the clock rate of the interface as a python integer. If there is no explicit clock rate, return 0"""
-        retval = self.re_match_iter_typed(r'^\s*clock\s+rate\s+(\d+)$',
-            result_type=int, default=0)
+        retval = self.re_match_iter_typed(
+            r'^\s*clock\s+rate\s+(\d+)$', result_type=int, default=0)
         return retval
 
     @property
@@ -766,24 +765,24 @@ class BaseIOSIntfLine(IOSCfgLine):
            4470
            >>>
         """
-        retval = self.re_match_iter_typed(r'^\s*mtu\s+(\d+)$',
-            result_type=int, default=0)
+        retval = self.re_match_iter_typed(
+            r'^\s*mtu\s+(\d+)$', result_type=int, default=0)
         return retval
 
     @property
     def manual_mpls_mtu(self):
         ## Due to the diverse platform defaults, this should be the
         ##    only mtu information I plan to support
-        retval = self.re_match_iter_typed(r'^\s*mpls\s+mtu\s+(\d+)$',
-            result_type=int, default=0)
+        retval = self.re_match_iter_typed(
+            r'^\s*mpls\s+mtu\s+(\d+)$', result_type=int, default=0)
         return retval
 
     @property
     def manual_ip_mtu(self):
         ## Due to the diverse platform defaults, this should be the
         ##    only mtu information I plan to support
-        retval = self.re_match_iter_typed(r'^\s*ip\s+mtu\s+(\d+)$',
-            result_type=int, default=0)
+        retval = self.re_match_iter_typed(
+            r'^\s*ip\s+mtu\s+(\d+)$', result_type=int, default=0)
         return retval
 
     @property
@@ -800,8 +799,8 @@ class BaseIOSIntfLine(IOSCfgLine):
 
     @property
     def is_shutdown(self):
-        retval = self.re_match_iter_typed(r'^\s*(shut\S*)\s*$',
-            result_type=bool, default=False)
+        retval = self.re_match_iter_typed(
+            r'^\s*(shut\S*)\s*$', result_type=bool, default=False)
         return retval
 
     @property
@@ -810,8 +809,8 @@ class BaseIOSIntfLine(IOSCfgLine):
 
     @property
     def vrf(self):
-        retval = self.re_match_iter_typed(r'^\s*ip\svrf\sforwarding\s(\S+)$',
-            result_type=str, default='')
+        retval = self.re_match_iter_typed(
+            r'^\s*ip\svrf\sforwarding\s(\S+)$', result_type=str, default='')
         return retval
 
     @property
@@ -821,29 +820,33 @@ class BaseIOSIntfLine(IOSCfgLine):
     @property
     def ipv4_addr(self):
         """Return a string with the interface's IPv4 address, or '' if there is none"""
-        retval = self.re_match_iter_typed(r'^\s+ip\s+address\s+(\d+\.\d+\.\d+\.\d+)\s+\d+\.\d+\.\d+\.\d+\s*$', 
-            result_type=str, default='')
+        retval = self.re_match_iter_typed(
+            r'^\s+ip\s+address\s+(\d+\.\d+\.\d+\.\d+)\s+\d+\.\d+\.\d+\.\d+\s*$',
+            result_type=str,
+            default='')
         return retval
 
     @property
     def ipv4_netmask(self):
         """Return a string with the interface's IPv4 netmask, or '' if there is none"""
-        retval = self.re_match_iter_typed(r'^\s+ip\s+address\s+\d+\.\d+\.\d+\.\d+\s+(\d+\.\d+\.\d+\.\d+)\s*$',
-            result_type=str, default='')
+        retval = self.re_match_iter_typed(
+            r'^\s+ip\s+address\s+\d+\.\d+\.\d+\.\d+\s+(\d+\.\d+\.\d+\.\d+)\s*$',
+            result_type=str,
+            default='')
         return retval
 
     @property
     def ipv4_masklength(self):
         """Return an integer with the interface's IPv4 mask length, or 0 if there is no IP address on the interace"""
         ipv4_addr_object = self.ipv4_addr_object
-        if ipv4_addr_object!=self.default_ipv4_addr_object:
+        if ipv4_addr_object != self.default_ipv4_addr_object:
             return ipv4_addr_object.prefixlen
         return 0
 
     def is_abbreviated_as(self, val):
         """Test whether `val` is a good abbreviation for the interface"""
         if val.lower() in self.abbvs:
-                return True
+            return True
         return False
 
     def in_ipv4_subnet(self, ipv4network=IPv4Obj('0.0.0.0/32', strict=False)):
@@ -888,20 +891,24 @@ class BaseIOSIntfLine(IOSCfgLine):
            False
            >>>
         """
-        if not (str(self.ipv4_addr_object.ip)=="127.0.0.1"):
+        if not (str(self.ipv4_addr_object.ip) == "127.0.0.1"):
             try:
                 # Return a boolean for whether the interface is in that 
                 #    network and mask
                 return self.ipv4_network_object in ipv4network
             except (Exception) as e:
-                raise ValueError("FATAL: %s.in_ipv4_subnet(ipv4network={0}) is an invalid arg: {1}".format(ipv4network, e))
+                raise ValueError(
+                    "FATAL: %s.in_ipv4_subnet(ipv4network={0}) is an invalid arg: {1}".
+                    format(ipv4network, e))
         else:
             return None
 
     def in_ipv4_subnets(self, subnets=None):
         """Accept a set or list of ccp_util.IPv4Obj objects, and return a boolean for whether this interface is within the requested subnets."""
         if (subnets is None):
-            raise ValueError("A python list or set of ccp_util.IPv4Obj objects must be supplied")
+            raise ValueError(
+                "A python list or set of ccp_util.IPv4Obj objects must be supplied"
+            )
         for subnet in subnets:
             tmp = self.in_ipv4_subnet(ipv4network=subnet)
             if (self.ipv4_addr_object in subnet):
@@ -915,11 +922,11 @@ class BaseIOSIntfLine(IOSCfgLine):
         ##     before they put them into production
 
         ## Interface must have an IP addr to respond
-        if (self.ipv4_addr==''):
+        if (self.ipv4_addr == ''):
             return False
 
-        retval = self.re_match_iter_typed(r'^\s*no\sip\s(unreachables)\s*$',
-            result_type=bool, default=False)
+        retval = self.re_match_iter_typed(
+            r'^\s*no\sip\s(unreachables)\s*$', result_type=bool, default=False)
         return retval
 
     @property
@@ -929,11 +936,11 @@ class BaseIOSIntfLine(IOSCfgLine):
         ##     before they put them into production
 
         ## Interface must have an IP addr to respond
-        if (self.ipv4_addr==''):
+        if (self.ipv4_addr == ''):
             return False
 
-        retval = self.re_match_iter_typed(r'^\s*no\sip\s(redirects)\s*$',
-            result_type=bool, default=False)
+        retval = self.re_match_iter_typed(
+            r'^\s*no\sip\s(redirects)\s*$', result_type=bool, default=False)
         return retval
 
     @property
@@ -969,14 +976,14 @@ class BaseIOSIntfLine(IOSCfgLine):
         """
 
         ## Interface must have an IP addr to respond
-        if (self.ipv4_addr==''):
+        if (self.ipv4_addr == ''):
             return False
 
         ## By default, Cisco IOS answers proxy-arp
         ## By default, Nexus disables proxy-arp
         ## By default, IOS-XR disables proxy-arp
-        retval = self.re_match_iter_typed(r'^\s*no\sip\s(proxy-arp)\s*$',
-            result_type=bool, default=False)
+        retval = self.re_match_iter_typed(
+            r'^\s*no\sip\s(proxy-arp)\s*$', result_type=bool, default=False)
         return retval
 
     @property
@@ -986,11 +993,13 @@ class BaseIOSIntfLine(IOSCfgLine):
         ##     before they put them into production
 
         ## Interface must have an IP addr to run PIM
-        if (self.ipv4_addr==''):
+        if (self.ipv4_addr == ''):
             return False
 
-        retval = self.re_match_iter_typed(r'^\s*ip\spim\sdense-mode\s*$)\s*$',
-            result_type=bool, default=False)
+        retval = self.re_match_iter_typed(
+            r'^\s*ip\spim\sdense-mode\s*$)\s*$',
+            result_type=bool,
+            default=False)
         return retval
 
     @property
@@ -1000,11 +1009,13 @@ class BaseIOSIntfLine(IOSCfgLine):
         ##     before they put them into production
 
         ## Interface must have an IP addr to run PIM
-        if (self.ipv4_addr==''):
+        if (self.ipv4_addr == ''):
             return False
 
-        retval = self.re_match_iter_typed(r'^\s*ip\spim\ssparse-mode\s*$)\s*$',
-            result_type=bool, default=False)
+        retval = self.re_match_iter_typed(
+            r'^\s*ip\spim\ssparse-mode\s*$)\s*$',
+            result_type=bool,
+            default=False)
         return retval
 
     @property
@@ -1014,11 +1025,13 @@ class BaseIOSIntfLine(IOSCfgLine):
         ##     before they put them into production
 
         ## Interface must have an IP addr to run PIM
-        if (self.ipv4_addr==''):
+        if (self.ipv4_addr == ''):
             return False
 
-        retval = self.re_match_iter_typed(r'^\s*ip\spim\ssparse-dense-mode\s*$)\s*$',
-            result_type=bool, default=False)
+        retval = self.re_match_iter_typed(
+            r'^\s*ip\spim\ssparse-dense-mode\s*$)\s*$',
+            result_type=bool,
+            default=False)
         return retval
 
     @property
@@ -1029,25 +1042,27 @@ class BaseIOSIntfLine(IOSCfgLine):
         ##     before they put them into production
 
         ## Interface must have an IP addr to respond
-        if (self.ipv4_addr==''):
+        if (self.ipv4_addr == ''):
             return -1
 
         ## By default, Cisco IOS defaults to 4 hour arp timers
         ## By default, Nexus defaults to 15 minute arp timers
-        retval = self.re_match_iter_typed(r'^\s*arp\s+timeout\s+(\d+)\s*$',
-            result_type=int, default=0)
+        retval = self.re_match_iter_typed(
+            r'^\s*arp\s+timeout\s+(\d+)\s*$', result_type=int, default=0)
         return retval
 
     @property
     def is_switchport(self):
-        retval = self.re_match_iter_typed(r'^\s*(switchport)\s*',
-            result_type=bool, default=False)
+        retval = self.re_match_iter_typed(
+            r'^\s*(switchport)\s*', result_type=bool, default=False)
         return retval
 
     @property
     def has_manual_switch_access(self):
-        retval = self.re_match_iter_typed(r'^\s*(switchport\smode\s+access)\s*$',
-            result_type=bool, default=False)
+        retval = self.re_match_iter_typed(
+            r'^\s*(switchport\smode\s+access)\s*$',
+            result_type=bool,
+            default=False)
         return retval
 
     @property
@@ -1056,14 +1071,18 @@ class BaseIOSIntfLine(IOSCfgLine):
 
     @property
     def manual_switch_trunk_encap(self):
-        retval = self.re_match_iter_typed(r'^\s*(switchport\s+trunk\s+encap\s+(\S+))\s*$',
-            result_type=str, default='')
+        retval = self.re_match_iter_typed(
+            r'^\s*(switchport\s+trunk\s+encap\s+(\S+))\s*$',
+            result_type=str,
+            default='')
         return retval
 
     @property
     def has_manual_switch_trunk(self):
-        retval = self.re_match_iter_typed(r'^\s*(switchport\s+mode\s+trunk)\s*$',
-            result_type=bool, default=False)
+        retval = self.re_match_iter_typed(
+            r'^\s*(switchport\s+mode\s+trunk)\s*$',
+            result_type=bool,
+            default=False)
         return retval
 
     @property
@@ -1073,16 +1092,18 @@ class BaseIOSIntfLine(IOSCfgLine):
         ## IMPORTANT: Cisco IOS will not enable port-security on the port
         ##    unless 'switch port-security' (with no other options)
         ##    is in the configuration
-        retval = self.re_match_iter_typed(r'^\s*(switchport\sport-security)\s*$',
-            result_type=bool, default=False)
+        retval = self.re_match_iter_typed(
+            r'^\s*(switchport\sport-security)\s*$',
+            result_type=bool,
+            default=False)
         return retval
 
     @property
     def has_switch_stormcontrol(self):
         if not self.is_switchport:
             return False
-        retval = self.re_match_iter_typed(r'^\s*(storm-control)\s*$',
-            result_type=bool, default=False)
+        retval = self.re_match_iter_typed(
+            r'^\s*(storm-control)\s*$', result_type=bool, default=False)
         return retval
 
     @property
@@ -1099,7 +1120,6 @@ class BaseIOSIntfLine(IOSCfgLine):
                 return False
         return True
 
-
     @property
     def access_vlan(self):
         """Return an integer with the access vlan number.  Return 1, if the switchport has no explicit vlan configured; return 0 if the port isn't a switchport"""
@@ -1107,8 +1127,10 @@ class BaseIOSIntfLine(IOSCfgLine):
             default_val = 1
         else:
             default_val = 0
-        retval = self.re_match_iter_typed(r'^\s*switchport\s+access\s+vlan\s+(\d+)$',
-            result_type=int, default=default_val)
+        retval = self.re_match_iter_typed(
+            r'^\s*switchport\s+access\s+vlan\s+(\d+)$',
+            result_type=int,
+            default=default_val)
         return retval
 
     @property
@@ -1119,14 +1141,18 @@ class BaseIOSIntfLine(IOSCfgLine):
         else:
             default_val = 0
 
-        allowed = self.re_match_iter_typed(r'^\s*switchport\s+trunk\s+allowed\s+vlan\s+(\S+)$',
-            result_type=str, default='1-4094')
-        if allowed=='all':
+        allowed = self.re_match_iter_typed(
+            r'^\s*switchport\s+trunk\s+allowed\s+vlan\s+(\S+)$',
+            result_type=str,
+            default='1-4094')
+        if allowed == 'all':
             allowed = '1-4094'
-        elif allowed=='none':
+        elif allowed == 'none':
             allowed = ''
-        add = self.re_match_iter_typed(r'^\s*switchport\s+trunk\s+allowed\s+vlan\s+add\s+(\S+)$',
-            result_type=str, default='')
+        add = self.re_match_iter_typed(
+            r'^\s*switchport\s+trunk\s+allowed\s+vlan\s+add\s+(\S+)$',
+            result_type=str,
+            default='')
 
         if allowed and add:
             combined = allowed + ',' + add
@@ -1137,16 +1163,20 @@ class BaseIOSIntfLine(IOSCfgLine):
         else:
             combined = allowed
 
-        remove = self.re_match_iter_typed(r'^\s*switchport\s+trunk\s+allowed\s+vlan\s+remove\s+(\S+)$',
-            result_type=str, default='')
+        remove = self.re_match_iter_typed(
+            r'^\s*switchport\s+trunk\s+allowed\s+vlan\s+remove\s+(\S+)$',
+            result_type=str,
+            default='')
 
         if remove:
             retval = CiscoRange(combined, result_type=int).remove(remove)
         else:
             retval = CiscoRange(combined, result_type=int)
 
-        _except = self.re_match_iter_typed(r'^\s*switchport\s+trunk\s+allowed\s+vlan\s+except\s+(\S+)$',
-            result_type=str, default='')
+        _except = self.re_match_iter_typed(
+            r'^\s*switchport\s+trunk\s+allowed\s+vlan\s+except\s+(\S+)$',
+            result_type=str,
+            default='')
 
         if _except:
             retval = CiscoRange(combined, result_type=int).remove(_except)
@@ -1160,16 +1190,18 @@ class BaseIOSIntfLine(IOSCfgLine):
             default_val = 1
         else:
             default_val = 0
-        retval = self.re_match_iter_typed(r'^\s*switchport\s+trunk\s+native\s+vlan\s+(\d+)$',
-            result_type=int, default=default_val)
+        retval = self.re_match_iter_typed(
+            r'^\s*switchport\s+trunk\s+native\s+vlan\s+(\d+)$',
+            result_type=int,
+            default=default_val)
         return retval
 
     ##-------------  CDP
 
     @property
     def has_manual_disable_cdp(self):
-        retval = self.re_match_iter_typed(r'^\s*(no\s+cdp\s+enable\s*)',
-            result_type=bool, default=False)
+        retval = self.re_match_iter_typed(
+            r'^\s*(no\s+cdp\s+enable\s*)', result_type=bool, default=False)
         return retval
 
     ##-------------  EoMPLS
@@ -1180,10 +1212,9 @@ class BaseIOSIntfLine(IOSCfgLine):
 
     @property
     def xconnect_vc(self):
-        retval = self.re_match_iter_typed(r'^\s*xconnect\s+\S+\s+(\d+)\s+\S+',
-            result_type=int, default=0)
+        retval = self.re_match_iter_typed(
+            r'^\s*xconnect\s+\S+\s+(\d+)\s+\S+', result_type=int, default=0)
         return retval
-
 
     ##-------------  HSRP
 
@@ -1199,11 +1230,14 @@ class BaseIOSIntfLine(IOSCfgLine):
 
         ## For API simplicity, I always assume there is only one hsrp 
         ##     group on the interface
-        if (self.ipv4_addr==''):
+        if (self.ipv4_addr == ''):
             return ''
 
-        retval = self.re_match_iter_typed(r'^\s*standby\s+(\d+\s+)*ip\s+(\S+)',
-            group=2, result_type=str, default='')
+        retval = self.re_match_iter_typed(
+            r'^\s*standby\s+(\d+\s+)*ip\s+(\S+)',
+            group=2,
+            result_type=str,
+            default='')
         return retval
 
     @property
@@ -1214,18 +1248,21 @@ class BaseIOSIntfLine(IOSCfgLine):
 
         ## For API simplicity, I always assume there is only one hsrp 
         ##     group on the interface
-        if (self.ipv4_addr==''):
+        if (self.ipv4_addr == ''):
             return ''
-        retval = self.re_match_iter_typed(r'^\s*standby\s+(\d+\s+)*ip\s+\S+\s+(\S+)\s*$',
-            group=2, result_type=str, default='')
+        retval = self.re_match_iter_typed(
+            r'^\s*standby\s+(\d+\s+)*ip\s+\S+\s+(\S+)\s*$',
+            group=2,
+            result_type=str,
+            default='')
         return retval
 
     @property
     def hsrp_group(self):
         ## For API simplicity, I always assume there is only one hsrp 
         ##     group on the interface
-        retval = self.re_match_iter_typed(r'^\s*standby\s+(\d+)\s+ip\s+\S+',
-            result_type=int, default=-1)
+        retval = self.re_match_iter_typed(
+            r'^\s*standby\s+(\d+)\s+ip\s+\S+', result_type=int, default=-1)
         return retval
 
     @property
@@ -1233,25 +1270,34 @@ class BaseIOSIntfLine(IOSCfgLine):
         ## For API simplicity, I always assume there is only one hsrp 
         ##     group on the interface
         if not self.has_ip_hsrp:
-            return 0         # Return this if there is no hsrp on the interface
-        retval = self.re_match_iter_typed(r'^\s*standby\s+(\d+\s+)*priority\s+(\d+)',
-            group=2, result_type=int, default=100)
+            return 0  # Return this if there is no hsrp on the interface
+        retval = self.re_match_iter_typed(
+            r'^\s*standby\s+(\d+\s+)*priority\s+(\d+)',
+            group=2,
+            result_type=int,
+            default=100)
         return retval
 
     @property
     def hsrp_hello_timer(self):
         ## For API simplicity, I always assume there is only one hsrp 
         ##     group on the interface
-        retval = self.re_match_iter_typed(r'^\s*standby\s+(\d+\s+)*timers\s+(\d+)\s+\d+',
-            group=2, result_type=int, default=0)
+        retval = self.re_match_iter_typed(
+            r'^\s*standby\s+(\d+\s+)*timers\s+(\d+)\s+\d+',
+            group=2,
+            result_type=int,
+            default=0)
         return retval
 
     @property
     def hsrp_hold_timer(self):
         ## For API simplicity, I always assume there is only one hsrp 
         ##     group on the interface
-        retval = self.re_match_iter_typed(r'^\s*standby\s+(\d+\s+)*timers\s+\d+\s+(\d+)',
-            group=2, result_type=int, default=0)
+        retval = self.re_match_iter_typed(
+            r'^\s*standby\s+(\d+\s+)*timers\s+\d+\s+(\d+)',
+            group=2,
+            result_type=int,
+            default=0)
         return retval
 
     @property
@@ -1262,32 +1308,44 @@ class BaseIOSIntfLine(IOSCfgLine):
     def hsrp_track(self):
         ## For API simplicity, I always assume there is only one hsrp 
         ##     group on the interface
-        retval = self.re_match_iter_typed(r'^\s*standby\s+(\d+\s+)*track\s(\S+.+?)\s+\d+\s*',
-            group=2, result_type=str, default='')
+        retval = self.re_match_iter_typed(
+            r'^\s*standby\s+(\d+\s+)*track\s(\S+.+?)\s+\d+\s*',
+            group=2,
+            result_type=str,
+            default='')
         return retval
 
     @property
     def has_hsrp_usebia(self):
         ## For API simplicity, I always assume there is only one hsrp 
         ##     group on the interface
-        retval = self.re_match_iter_typed(r'^\s*standby\s+(\d+\s+)*(use-bia)',
-            group=2, result_type=bool, default=False)
+        retval = self.re_match_iter_typed(
+            r'^\s*standby\s+(\d+\s+)*(use-bia)',
+            group=2,
+            result_type=bool,
+            default=False)
         return retval
 
     @property
     def has_hsrp_preempt(self):
         ## For API simplicity, I always assume there is only one hsrp 
         ##     group on the interface
-        retval = self.re_match_iter_typed(r'^\s*standby\s+(\d+\s+)*(use-bia)',
-            group=2, result_type=bool, default=False)
+        retval = self.re_match_iter_typed(
+            r'^\s*standby\s+(\d+\s+)*(use-bia)',
+            group=2,
+            result_type=bool,
+            default=False)
         return retval
 
     @property
     def hsrp_authentication_md5_keychain(self):
         ## For API simplicity, I always assume there is only one hsrp 
         ##     group on the interface
-        retval = self.re_match_iter_typed(r'^\s*standby\s+(\d+\s+)*authentication\s+md5\s+key-chain\s+(\S+)',
-            group=2, result_type=str, default='')
+        retval = self.re_match_iter_typed(
+            r'^\s*standby\s+(\d+\s+)*authentication\s+md5\s+key-chain\s+(\S+)',
+            group=2,
+            result_type=str,
+            default='')
         return retval
 
     @property
@@ -1298,7 +1356,6 @@ class BaseIOSIntfLine(IOSCfgLine):
     @property
     def hsrp_authentication_cleartext(self):
         pass
-
 
     ##-------------  MAC ACLs
 
@@ -1316,14 +1373,18 @@ class BaseIOSIntfLine(IOSCfgLine):
 
     @property
     def mac_accessgroup_in(self):
-        retval = self.re_match_iter_typed(r'^\s*mac\saccess-group\s+(\S+)\s+in\s*$',
-            result_type=str, default='')
+        retval = self.re_match_iter_typed(
+            r'^\s*mac\saccess-group\s+(\S+)\s+in\s*$',
+            result_type=str,
+            default='')
         return retval
 
     @property
     def mac_accessgroup_out(self):
-        retval = self.re_match_iter_typed(r'^\s*mac\saccess-group\s+(\S+)\s+out\s*$',
-            result_type=str, default='')
+        retval = self.re_match_iter_typed(
+            r'^\s*mac\saccess-group\s+(\S+)\s+out\s*$',
+            result_type=str,
+            default='')
         return retval
 
     ##-------------  IPv4 ACLs
@@ -1354,22 +1415,27 @@ class BaseIOSIntfLine(IOSCfgLine):
 
     @property
     def ipv4_accessgroup_in(self):
-        retval = self.re_match_iter_typed(r'^\s*ip\saccess-group\s+(\S+)\s+in\s*$',
-            result_type=str, default='')
+        retval = self.re_match_iter_typed(
+            r'^\s*ip\saccess-group\s+(\S+)\s+in\s*$',
+            result_type=str,
+            default='')
         return retval
 
     @property
     def ipv4_accessgroup_out(self):
-        retval = self.re_match_iter_typed(r'^\s*ip\saccess-group\s+(\S+)\s+out\s*$',
-            result_type=str, default='')
+        retval = self.re_match_iter_typed(
+            r'^\s*ip\saccess-group\s+(\S+)\s+out\s*$',
+            result_type=str,
+            default='')
         return retval
+
 
 ##
 ##-------------  IOS Interface Object
 ##
 
-class IOSIntfLine(BaseIOSIntfLine):
 
+class IOSIntfLine(BaseIOSIntfLine):
     def __init__(self, *args, **kwargs):
         """Accept an IOS line number and initialize family relationship
         attributes
@@ -1380,7 +1446,6 @@ class IOSIntfLine(BaseIOSIntfLine):
         """
         super(IOSIntfLine, self).__init__(*args, **kwargs)
 
-
     @classmethod
     def is_object_for(cls, line="", re=re):
         intf_regex = r'^interface\s+(\S+.+)'
@@ -1388,9 +1453,11 @@ class IOSIntfLine(BaseIOSIntfLine):
             return True
         return False
 
+
 ##
 ##-------------  IOS Interface Globals
 ##
+
 
 class IOSIntfGlobal(BaseCfgLine):
     def __init__(self, *args, **kwargs):
@@ -1398,12 +1465,13 @@ class IOSIntfGlobal(BaseCfgLine):
         self.feature = 'interface global'
 
     def __repr__(self):
-        return "<%s # %s '%s'>" % (self.classname, self.linenum, 
-            self.text)
+        return "<%s # %s '%s'>" % (self.classname, self.linenum, self.text)
 
     @classmethod
     def is_object_for(cls, line="", re=re):
-        if re.search('^(no\s+cdp\s+run)|(logging\s+event\s+link-status\s+global)|(spanning-tree\sportfast\sdefault)|(spanning-tree\sportfast\sbpduguard\sdefault)', line):
+        if re.search(
+                '^(no\s+cdp\s+run)|(logging\s+event\s+link-status\s+global)|(spanning-tree\sportfast\sdefault)|(spanning-tree\sportfast\sbpduguard\sdefault)',
+                line):
             return True
         return False
 
@@ -1442,14 +1510,14 @@ class IOSIntfGlobal(BaseCfgLine):
 ##-------------  IOS Hostname Line
 ##
 
+
 class IOSHostnameLine(BaseCfgLine):
     def __init__(self, *args, **kwargs):
         super(IOSHostnameLine, self).__init__(*args, **kwargs)
         self.feature = 'hostname'
 
     def __repr__(self):
-        return "<%s # %s '%s'>" % (self.classname, self.linenum, 
-            self.hostname)
+        return "<%s # %s '%s'>" % (self.classname, self.linenum, self.hostname)
 
     @classmethod
     def is_object_for(cls, line="", re=re):
@@ -1459,20 +1527,24 @@ class IOSHostnameLine(BaseCfgLine):
 
     @property
     def hostname(self):
-        retval = self.re_match_typed(r'^hostname\s+(\S+)',
-            result_type=str, default='')
+        retval = self.re_match_typed(
+            r'^hostname\s+(\S+)', result_type=str, default='')
         return retval
+
 
 ##
 ##-------------  IOS Access Line
 ##
 
+
 class IOSAccessLine(BaseCfgLine):
     def __init__(self, *args, **kwargs):
         super(IOSAccessLine, self).__init__(*args, **kwargs)
         self.feature = 'access line'
+
     def __repr__(self):
-        return "<%s # %s '%s' info: '%s'>" % (self.classname, self.linenum, self.name, self.range_str)
+        return "<%s # %s '%s' info: '%s'>" % (self.classname, self.linenum,
+                                              self.name, self.range_str)
 
     @classmethod
     def is_object_for(cls, line="", re=re):
@@ -1482,14 +1554,14 @@ class IOSAccessLine(BaseCfgLine):
 
     @property
     def is_accessline(self):
-        retval = self.re_match_typed(r'^(line\s+\S+)',
-            result_type=str, default='')
+        retval = self.re_match_typed(
+            r'^(line\s+\S+)', result_type=str, default='')
         return bool(retval)
 
     @property
     def name(self):
-        retval = self.re_match_typed(r'^line\s+(\S+)',
-            result_type=str, default='')
+        retval = self.re_match_typed(
+            r'^line\s+(\S+)', result_type=str, default='')
         # special case for IOS async lines: i.e. "line 33 48"
         if re.search('\d+', retval):
             return ''
@@ -1512,8 +1584,11 @@ class IOSAccessLine(BaseCfgLine):
         ## Return the access-line's numerical range as a list
         ## line con 0 => [0]
         ## line 33 48 => [33, 48]
-        retval = self.re_match_typed(r'([a-zA-Z]+\s+)*(\d+\s*\d*)$',
-           group=2, result_type=str, default='')
+        retval = self.re_match_typed(
+            r'([a-zA-Z]+\s+)*(\d+\s*\d*)$',
+            group=2,
+            result_type=str,
+            default='')
         tmp = map(int, retval.strip().split())
         return tmp
 
@@ -1523,14 +1598,17 @@ class IOSAccessLine(BaseCfgLine):
 
     def manual_exectimeout_sec(self):
         tmp = self.parse_exectimeout
-        if len(tmp>0):
+        if len(tmp > 0):
             return 0
         return tmp[1]
 
     @property
     def parse_exectimeout(self):
-        retval = self.re_match_iter_typed(r'^\s*exec-timeout\s+(\d+\s*\d*)\s*$',
-            group=1, result_type=str, default='')
+        retval = self.re_match_iter_typed(
+            r'^\s*exec-timeout\s+(\d+\s*\d*)\s*$',
+            group=1,
+            result_type=str,
+            default='')
         tmp = map(int, retval.strip().split())
         return tmp
 
@@ -1539,20 +1617,23 @@ class IOSAccessLine(BaseCfgLine):
 ##-------------  Base IOS Route line object
 ##
 
+
 class BaseIOSRouteLine(BaseCfgLine):
     def __init__(self, *args, **kwargs):
         super(BaseIOSRouteLine, self).__init__(*args, **kwargs)
 
     def __repr__(self):
-        return "<%s # %s '%s' info: '%s'>" % (self.classname, self.linenum, self.network_object, self.routeinfo)
+        return "<%s # %s '%s' info: '%s'>" % (
+            self.classname, self.linenum, self.network_object, self.routeinfo)
 
     @property
     def routeinfo(self):
         ### Route information for the repr string
         if self.tracking_object_name:
-            return self.nexthop_str+" AD: "+str(self.admin_distance)+" Track: "+self.tracking_object_name
+            return self.nexthop_str + " AD: " + str(
+                self.admin_distance) + " Track: " + self.tracking_object_name
         else:
-            return self.nexthop_str+" AD: "+str(self.admin_distance)
+            return self.nexthop_str + " AD: " + str(self.admin_distance)
 
     @classmethod
     def is_object_for(cls, line="", re=re):
@@ -1586,6 +1667,7 @@ class BaseIOSRouteLine(BaseCfgLine):
     @property
     def tracking_object_name(self):
         raise NotImplementedError
+
 
 ##
 ##-------------  IOS Route line object
@@ -1621,7 +1703,8 @@ _RE_IPV6_ROUTE = re.compile(r"""^ipv6\s+route
 (?:\s+(?:(?P<ucast>unicast)|(?P<mcast>multicast)))?
 (?:\s+tag\s+(?P<tag>\d+))?       # Route tag
 """.format(_IPV6_REGEX_STR_COMPRESSED1, _IPV6_REGEX_STR_COMPRESSED2,
-    _IPV6_REGEX_STR_COMPRESSED3), re.VERBOSE)
+           _IPV6_REGEX_STR_COMPRESSED3), re.VERBOSE)
+
 
 class IOSRouteLine(BaseIOSRouteLine):
     def __init__(self, *args, **kwargs):
@@ -1645,7 +1728,7 @@ class IOSRouteLine(BaseIOSRouteLine):
 
     @classmethod
     def is_object_for(cls, line="", re=re):
-        if (line[0:8]=='ip route') or (line[0:11]=='ipv6 route '):
+        if (line[0:8] == 'ip route') or (line[0:11] == 'ipv6 route '):
             return True
         return False
 
@@ -1663,61 +1746,66 @@ class IOSRouteLine(BaseIOSRouteLine):
 
     @property
     def network(self):
-        if self._address_family=='ip':
+        if self._address_family == 'ip':
             return self.route_info['prefix']
-        elif self._address_family=='ipv6':
-            retval = self.re_match_typed(r'^ipv6\s+route\s+(vrf\s+)*(\S+?)\/\d+',
-                group=2, result_type=str, default='')
+        elif self._address_family == 'ipv6':
+            retval = self.re_match_typed(
+                r'^ipv6\s+route\s+(vrf\s+)*(\S+?)\/\d+',
+                group=2,
+                result_type=str,
+                default='')
         return retval
 
     @property
     def netmask(self):
-        if self._address_family=='ip':
+        if self._address_family == 'ip':
             return self.route_info['netmask']
-        elif self._address_family=='ipv6':
+        elif self._address_family == 'ipv6':
             return str(self.network_object.netmask)
         return retval
 
     @property
     def masklen(self):
-        if self._address_family=='ip':
+        if self._address_family == 'ip':
             return self.network_object.prefixlen
-        elif self._address_family=='ipv6':
+        elif self._address_family == 'ipv6':
             masklen_str = self.route_info['masklength'] or '128'
             return int(masklen_str)
 
     @property
     def network_object(self):
         try:
-            if self._address_family=='ip':
-                return IPv4Obj('%s/%s' % (self.network, self.netmask), 
-                    strict=False)
-            elif self._address_family=='ipv6':
+            if self._address_family == 'ip':
+                return IPv4Obj(
+                    '%s/%s' % (self.network, self.netmask), strict=False)
+            elif self._address_family == 'ipv6':
                 return IPv6Obj('%s/%s' % (self.network, self.masklen))
         except:
             return None
 
     @property
     def nexthop_str(self):
-        if self._address_family=='ip':
+        if self._address_family == 'ip':
             if self.next_hop_interface:
                 return self.next_hop_interface + " " + self.next_hop_addr
             else:
                 return self.next_hop_addr
-        elif self._address_family=='ipv6':
-            retval = self.re_match_typed(r'^ipv6\s+route\s+(vrf\s+)*\S+\s+(\S+)',
-                group=2, result_type=str, default='')
+        elif self._address_family == 'ipv6':
+            retval = self.re_match_typed(
+                r'^ipv6\s+route\s+(vrf\s+)*\S+\s+(\S+)',
+                group=2,
+                result_type=str,
+                default='')
         return retval
-
 
     @property
     def next_hop_interface(self):
-        if self._address_family=='ip':
+        if self._address_family == 'ip':
             if self.route_info['nh_intf']:
                 return self.route_info['nh_intf']
             else:
                 return ''
-        elif self._address_family=='ipv6':
+        elif self._address_family == 'ipv6':
             if self.route_info['nh_intf']:
                 return self.route_info['nh_intf']
             else:
@@ -1725,31 +1813,36 @@ class IOSRouteLine(BaseIOSRouteLine):
 
     @property
     def next_hop_addr(self):
-        if self._address_family=='ip':
+        if self._address_family == 'ip':
             return self.route_info['nh_addr'] or ''
-        elif self._address_family=='ipv6':
+        elif self._address_family == 'ipv6':
             return self.route_info['nh_addr1'] or self.route_info['nh_addr2'] \
                 or ''
 
     @property
     def global_next_hop(self):
-        if self._address_family=='ip' and bool(self.vrf):
+        if self._address_family == 'ip' and bool(self.vrf):
             return bool(self.route_info['global'])
-        elif self._address_family=='ip' and not bool(self.vrf):
+        elif self._address_family == 'ip' and not bool(self.vrf):
             return True
-        elif self._address_family=='ipv6':
+        elif self._address_family == 'ipv6':
             ## ipv6 uses nexthop_vrf
-            raise ValueError("[FATAL] ipv6 doesn't support a global_next_hop for '{0}'".format(self.text))
+            raise ValueError(
+                "[FATAL] ipv6 doesn't support a global_next_hop for '{0}'".
+                format(self.text))
         else:
-            raise ValueError("[FATAL] Could not identify global next-hop for '{0}'".format(self.text))
+            raise ValueError(
+                "[FATAL] Could not identify global next-hop for '{0}'".format(
+                    self.text))
 
     @property
     def nexthop_vrf(self):
-        if self._address_family=='ipv6':
+        if self._address_family == 'ipv6':
             return self.route_info['nexthop_vrf'] or ''
         else:
-            raise ValueError("[FATAL] ip doesn't support a global_next_hop for '{0}'".format(self.text))
-
+            raise ValueError(
+                "[FATAL] ip doesn't support a global_next_hop for '{0}'".
+                format(self.text))
 
     @property
     def admin_distance(self):
@@ -1770,41 +1863,43 @@ class IOSRouteLine(BaseIOSRouteLine):
 
     @property
     def route_name(self):
-        if self._address_family=='ip':
+        if self._address_family == 'ip':
             if self.route_info['name']:
                 return self.route_info['name']
             else:
                 return ''
-        elif self._address_family=='ipv6':
+        elif self._address_family == 'ipv6':
             raise NotImplementedError
 
     @property
     def permanent(self):
-        if self._address_family=='ip':
+        if self._address_family == 'ip':
             if self.route_info['permanent']:
                 return bool(self.route_info['permanent'])
             else:
                 return False
-        elif self._address_family=='ipv6':
+        elif self._address_family == 'ipv6':
             raise NotImplementedError
 
     @property
     def tracking_object_name(self):
-        if self._address_family=='ip':
+        if self._address_family == 'ip':
             if bool(self.route_info['track']):
                 return self.route_info['track']
             else:
                 return ''
-        elif self._address_family=='ipv6':
+        elif self._address_family == 'ipv6':
             raise NotImplementedError
 
     @property
     def tag(self):
         return self.route_info['tag'] or ''
 
+
 ################################
 ################################ Groups ###############################
 ################################
+
 
 ##
 ##-------------  IOS TACACS+ Group
@@ -1823,7 +1918,6 @@ class IOSAaaGroupServerLine(BaseCfgLine):
         else:
             raise ValueError
 
-
     @classmethod
     def is_object_for(cls, line="", re=re):
         if re.search(r'^aaa\sgroup\sserver', line):
@@ -1832,13 +1926,19 @@ class IOSAaaGroupServerLine(BaseCfgLine):
 
     @property
     def vrf(self):
-        return self.re_match_iter_typed(r'^\s+ip\s+vrf\s+forwarding\s+(\S+)',
-            group=1, result_type=str, default='')
+        return self.re_match_iter_typed(
+            r'^\s+ip\s+vrf\s+forwarding\s+(\S+)',
+            group=1,
+            result_type=str,
+            default='')
 
     @property
     def source_interface(self):
-        return self.re_match_iter_typed(r'^\s+ip\s+tacacs\s+source-interface\s+(\S.+?\S)\s*$',
-            group=1, result_type=str, default='')
+        return self.re_match_iter_typed(
+            r'^\s+ip\s+tacacs\s+source-interface\s+(\S.+?\S)\s*$',
+            group=1,
+            result_type=str,
+            default='')
 
     @property
     def server_private(self, re=re):
@@ -1855,18 +1955,19 @@ class IOSAaaGroupServerLine(BaseCfgLine):
 ##-------------  IOS AAA Lines
 ##
 
+
 class IOSAaaLoginAuthenticationLine(BaseCfgLine):
     def __init__(self, *args, **kwargs):
         super(IOSAaaLoginAuthenticationLine, self).__init__(*args, **kwargs)
         self.feature = 'aaa authentication login'
 
         regex = r'^aaa\sauthentication\slogin\s(\S+)\sgroup\s(\S+)(.+?)$'
-        self.list_name = self.re_match_typed(regex, group=1, result_type=str, 
-            default='')
-        self.group = self.re_match_typed(regex, group=2, result_type=str, 
-            default='')
-        methods_str = self.re_match_typed(regex, group=3, result_type=str, 
-            default='')
+        self.list_name = self.re_match_typed(
+            regex, group=1, result_type=str, default='')
+        self.group = self.re_match_typed(
+            regex, group=2, result_type=str, default='')
+        methods_str = self.re_match_typed(
+            regex, group=3, result_type=str, default='')
         self.methods = methods_str.strip().split('\s')
 
     @classmethod
@@ -1875,18 +1976,19 @@ class IOSAaaLoginAuthenticationLine(BaseCfgLine):
             return True
         return False
 
+
 class IOSAaaEnableAuthenticationLine(BaseCfgLine):
     def __init__(self, *args, **kwargs):
         super(IOSAaaEnableAuthenticationLine, self).__init__(*args, **kwargs)
         self.feature = 'aaa authentication enable'
 
         regex = r'^aaa\sauthentication\senable\s(\S+)\sgroup\s(\S+)(.+?)$'
-        self.list_name = self.re_match_typed(regex, group=1, result_type=str, 
-            default='')
-        self.group = self.re_match_typed(regex, group=2, result_type=str, 
-            default='')
-        methods_str = self.re_match_typed(regex, group=3, result_type=str, 
-            default='')
+        self.list_name = self.re_match_typed(
+            regex, group=1, result_type=str, default='')
+        self.group = self.re_match_typed(
+            regex, group=2, result_type=str, default='')
+        methods_str = self.re_match_typed(
+            regex, group=3, result_type=str, default='')
         self.methods = methods_str.strip().split('\s')
 
     @classmethod
@@ -1895,20 +1997,21 @@ class IOSAaaEnableAuthenticationLine(BaseCfgLine):
             return True
         return False
 
+
 class IOSAaaCommandsAuthorizationLine(BaseCfgLine):
     def __init__(self, *args, **kwargs):
         super(IOSAaaCommandsAuthorizationLine, self).__init__(*args, **kwargs)
         self.feature = 'aaa authorization commands'
 
         regex = r'^aaa\sauthorization\scommands\s(\d+)\s(\S+)\sgroup\s(\S+)(.+?)$'
-        self.level = self.re_match_typed(regex, group=1, result_type=int, 
-            default=0)
-        self.list_name = self.re_match_typed(regex, group=2, result_type=str, 
-            default='')
-        self.group = self.re_match_typed(regex, group=3, result_type=str, 
-            default='')
-        methods_str = self.re_match_typed(regex, group=4, result_type=str, 
-            default='')
+        self.level = self.re_match_typed(
+            regex, group=1, result_type=int, default=0)
+        self.list_name = self.re_match_typed(
+            regex, group=2, result_type=str, default='')
+        self.group = self.re_match_typed(
+            regex, group=3, result_type=str, default='')
+        methods_str = self.re_match_typed(
+            regex, group=4, result_type=str, default='')
         self.methods = methods_str.strip().split('\s')
 
     @classmethod
@@ -1917,20 +2020,21 @@ class IOSAaaCommandsAuthorizationLine(BaseCfgLine):
             return True
         return False
 
+
 class IOSAaaCommandsAccountingLine(BaseCfgLine):
     def __init__(self, *args, **kwargs):
         super(IOSAaaCommandsAccountingLine, self).__init__(*args, **kwargs)
         self.feature = 'aaa accounting commands'
 
         regex = r'^aaa\saccounting\scommands\s(\d+)\s(\S+)\s(none|stop\-only|start\-stop)\sgroup\s(\S+)$'
-        self.level = self.re_match_typed(regex, group=1, result_type=int, 
-            default=0)
-        self.list_name = self.re_match_typed(regex, group=2, result_type=str, 
-            default='')
-        self.record_type = self.re_match_typed(regex, group=3, result_type=str,
-            default='')
-        self.group = self.re_match_typed(regex, group=4, result_type=str, 
-            default='')
+        self.level = self.re_match_typed(
+            regex, group=1, result_type=int, default=0)
+        self.list_name = self.re_match_typed(
+            regex, group=2, result_type=str, default='')
+        self.record_type = self.re_match_typed(
+            regex, group=3, result_type=str, default='')
+        self.group = self.re_match_typed(
+            regex, group=4, result_type=str, default='')
 
     @classmethod
     def is_object_for(cls, line="", re=re):
@@ -1938,18 +2042,19 @@ class IOSAaaCommandsAccountingLine(BaseCfgLine):
             return True
         return False
 
+
 class IOSAaaExecAccountingLine(BaseCfgLine):
     def __init__(self, *args, **kwargs):
         super(IOSAaaExecAccountingLine, self).__init__(*args, **kwargs)
         self.feature = 'aaa accounting exec'
 
         regex = r'^aaa\saccounting\sexec\s(\S+)\s(none|stop\-only|start\-stop)\sgroup\s(\S+)$'
-        self.list_name = self.re_match_typed(regex, group=1, result_type=str, 
-            default='')
-        self.record_type = self.re_match_typed(regex, group=2, result_type=str,
-            default='')
-        self.group = self.re_match_typed(regex, group=3, result_type=str, 
-            default='')
+        self.list_name = self.re_match_typed(
+            regex, group=1, result_type=str, default='')
+        self.record_type = self.re_match_typed(
+            regex, group=2, result_type=str, default='')
+        self.group = self.re_match_typed(
+            regex, group=3, result_type=str, default='')
 
     @classmethod
     def is_object_for(cls, line="", re=re):
