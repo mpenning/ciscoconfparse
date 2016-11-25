@@ -156,6 +156,29 @@ def testVal_IOSIntfLine_in_portchannel(parse_c01_factory):
     for intf_obj in cfg.find_objects('^interface\sGigabitEthernet4\/4$'):
         assert intf_obj.in_portchannel is False
 
+def testVal_IOSIntfLine_portchannel_number_01():
+    lines = ['!',
+        'interface GigabitEthernet 1/1',
+        ' switchport mode trunk',
+        ' switchport trunk native vlan 911',
+        ' channel-group 25 mode active',
+        '!',
+    ]
+    cfg = CiscoConfParse(lines, factory=True)
+    intf_obj = cfg.find_objects('^interface')[0]
+    assert intf_obj.portchannel_number==25
+
+def testVal_IOSIntfLine_portchannel_number_02():
+    lines = ['!',
+        'interface GigabitEthernet 1/1',
+        ' switchport mode trunk',
+        ' switchport trunk native vlan 911',
+        '!',
+    ]
+    cfg = CiscoConfParse(lines, factory=True)
+    intf_obj = cfg.find_objects('^interface')[0]
+    assert intf_obj.portchannel_number==-1
+
 def testVal_IOSIntfLine_is_switchport(parse_c01_factory):
     cfg = parse_c01_factory
     for intf_obj in cfg.find_objects('^interface\sGigabitEthernet4\/1$'):

@@ -266,6 +266,15 @@ class IOSCfgLine(BaseCfgLine):
         return retval
 
     @property
+    def portchannel_number(self):
+        """Return an integer for the port-channel which it's configured in.  Return -1 if it's not configured in a port-channel
+
+        """
+        retval = self.re_match_iter_typed(
+            r'^\s*channel-group\s+(\d+)', result_type=int, default=-1)
+        return retval
+
+    @property
     def is_portchannel(self):
         """Return a boolean indicating whether this port is a port-channel intf
 
