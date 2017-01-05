@@ -181,11 +181,19 @@ def test_dns_lookup():
     # Use VMWare's opencloud A-record to test...
     #   ref http://stackoverflow.com/a/7714208/667301
     result_correct = {'addrs': ['127.0.0.1'], 'name': '*.vcap.me', 'error': ''}
-    assert dns_lookup('*.vcap.me')==result_correct
+    test_result = dns_lookup('*.vcap.me')
+    if not test_result['error']:
+        assert dns_lookup('*.vcap.me')==result_correct
+    else:
+        pytest.skip(test_result['error'])
 
 def test_reverse_dns_lookup():
     result_correct = {'addr': '127.0.0.1', 'name': 'localhost.', 'error': ''}
-    assert 'localhost' in reverse_dns_lookup('127.0.0.1')['name'].lower()
+    test_result = reverse_dns_lookup('127.0.0.1')
+    if not test_result['error']:
+        assert 'localhost' in test_result['name'].lower()
+    else:
+        pytest.skip(test_result['error'])
 
 def test_CiscoRange_01():
     """Basic vlan range test"""
