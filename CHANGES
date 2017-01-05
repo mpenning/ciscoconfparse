@@ -1,3 +1,4 @@
+1.2.45  20170105 Add zero-padded ccp_util.IPv4Obj() strings
 1.2.44  20161125 Improve parsing speed for the factory=True parser
 1.2.43  20161125 Fix Github issue #63, add a new function: find_objects_w_all_children()
 1.2.42  20161124 Fix Github issue #62, add a new object called CiscoRange()
