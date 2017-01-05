@@ -93,6 +93,7 @@ class IPv4Obj(object):
         - network (str): A string representing the network address
         - netmask (str): A string representing the netmask
         - prefixlen (int): An integer representing the length of the netmask
+        - prefixlength (int): An integer representing the length of the netmask
         - broadcast (str): A string representing the broadcast address
         - hostmask (str): A string representing the hostmask
         - numhosts (int): An integer representing the number of hosts contained in the network
@@ -243,6 +244,11 @@ class IPv4Obj(object):
         return self.network_object.prefixlen
 
     @property
+    def prefixlength(self):
+        """Returns the length of the network mask as an integer."""
+        return self.prefixlen
+
+    @property
     def broadcast(self):
         """Returns the broadcast address as an IPv4Address object."""
         if sys.version_info[0] < 3:
@@ -285,6 +291,20 @@ class IPv4Obj(object):
         num_strings.reverse()  # reverse the order
         return sum(
             [int(num) * (256**idx) for idx, num in enumerate(num_strings)])
+
+    @property
+    def as_zeropadded(self):
+        """Returns the IP address as a zero-padded string (useful when sorting)"""
+        num_strings = str(self.ip).split('.')
+        return '.'.join(
+            ['{0:03}'.format(int(num)) for num in num_strings])
+
+    @property
+    def as_zeropadded_network(self):
+        """Returns the IP network as a zero-padded string (useful when sorting)"""
+        num_strings = str(self.network).split('.')
+        return '.'.join(
+            ['{0:03}'.format(int(num)) for num in num_strings])
 
     @property
     def as_binary_tuple(self):
@@ -468,6 +488,11 @@ class IPv6Obj(object):
     def prefixlen(self):
         """Returns the length of the network mask as an integer."""
         return self.network_object.prefixlen
+
+    @property
+    def prefixlength(self):
+        """Returns the length of the network mask as an integer."""
+        return self.prefixlen
 
     @property
     def compressed(self):
