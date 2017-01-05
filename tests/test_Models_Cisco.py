@@ -192,7 +192,7 @@ def testVal_IOSIntfLine_trunk_vlan_allowed_01():
     ]
     cfg = CiscoConfParse(lines, factory=True)
     intf_obj = cfg.find_objects('^interface')[0]
-    assert intf_obj.trunk_vlans_allowed.as_list==range(1, 4095)
+    assert intf_obj.trunk_vlans_allowed.as_list==list(range(1, 4095))
 
 def testVal_IOSIntfLine_trunk_vlan_allowed_02():
     lines = ['!',
@@ -256,7 +256,7 @@ def testVal_IOSIntfLine_trunk_vlan_allowed_05():
     ]
     cfg = CiscoConfParse(lines, factory=True)
     intf_obj = cfg.find_objects('^interface')[0]
-    assert intf_obj.trunk_vlans_allowed.as_list==range(2, 4095)
+    assert intf_obj.trunk_vlans_allowed.as_list==list(range(2, 4095))
 
 def testVal_IOSIntfLine_abbvs(parse_c03_factory):
     cfg = parse_c03_factory

@@ -115,7 +115,7 @@ class IPv4Obj(object):
         except TypeError:
             if arg.dna == "IPv4Obj":
                 ip_str = '{0}/{1}'.format(str(arg.ip_object), arg.prefixlen)
-                self.network_object = IPv4Network(ip_str)
+                self.network_object = IPv4Network(ip_str, strict=False)
                 self.ip_object = IPv4Address(str(arg.ip_object))
                 return None
             else:
@@ -373,7 +373,7 @@ class IPv6Obj(object):
         except TypeError:
             if arg.dna == "IPv6Obj":
                 ip_str = '{0}/{1}'.format(str(arg.ip_object), arg.prefixlen)
-                self.network_object = IPv6Network(ip_str)
+                self.network_object = IPv6Network(ip_str, strict = False)
                 self.ip_object = IPv6Address(str(arg.ip_object))
                 return None
             else:
@@ -823,8 +823,7 @@ class CiscoRange(MutableSequence):
         def combine(arg):
             return self.line_prefix + self.slot_prefix + str(arg)
 
-        return map(self.result_type,
-                   map(combine, self._dash_range(self.range_text)))
+        return [self.result_type(ii) for ii in map(combine, self._dash_range(self.range_text))]
 
     def remove(self, arg):
         remove_obj = CiscoRange(arg)
