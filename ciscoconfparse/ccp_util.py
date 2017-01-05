@@ -113,10 +113,18 @@ class IPv4Obj(object):
         try:
             mm = _RGX_IPV4ADDR_NETMASK.search(arg)
         except TypeError:
-            if arg.dna == "IPv4Obj":
+            if getattr(arg, 'dna', '')=="IPv4Obj":
                 ip_str = '{0}/{1}'.format(str(arg.ip_object), arg.prefixlen)
                 self.network_object = IPv4Network(ip_str, strict=False)
                 self.ip_object = IPv4Address(str(arg.ip_object))
+                return None
+            elif isinstance(arg, IPv4Network):
+                self.network_object = arg
+                self.ip_object = IPv4Address(str(arg).split('/')[0])
+                return None
+            elif isinstance(arg, IPv4Address):
+                self.network_object = IPv4Network(str(arg)+'/32')
+                self.ip_object = IPv4Address(str(arg).split('/')[0])
                 return None
             else:
                 raise ValueError(
@@ -371,10 +379,18 @@ class IPv6Obj(object):
         try:
             mm = _RGX_IPV6ADDR.search(arg)
         except TypeError:
-            if arg.dna == "IPv6Obj":
+            if getattr(arg, 'dna', '')=="IPv6Obj":
                 ip_str = '{0}/{1}'.format(str(arg.ip_object), arg.prefixlen)
                 self.network_object = IPv6Network(ip_str, strict = False)
                 self.ip_object = IPv6Address(str(arg.ip_object))
+                return None
+            elif isinstance(arg, IPv6Network):
+                self.network_object = arg
+                self.ip_object = IPv6Address(str(arg).split('/')[0])
+                return None
+            elif isinstance(arg, IPv6Address):
+                self.network_object = IPv6Network(str(arg)+'/128')
+                self.ip_object = IPv6Address(str(arg).split('/')[0])
                 return None
             else:
                 raise ValueError(
