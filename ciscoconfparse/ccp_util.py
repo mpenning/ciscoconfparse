@@ -136,6 +136,10 @@ class IPv4Obj(object):
         mm_result = mm.groupdict()
         addr = mm_result['addr0'] or mm_result['addr1'] \
             or mm_result['addr2'] or '127.0.0.1'
+
+        ## Normalize addr if we get zero-padded strings, i.e. 172.001.001.001
+        addr = '.'.join([str(int(ii)) for ii in addr.split('.')])
+
         masklen = int(mm_result['masklen'] or 32)
         netmask = mm_result['netmask']
         if netmask:
