@@ -820,6 +820,98 @@ def testVal_IOSIntfLine_has_manual_duplex(parse_c03_factory):
         test_result[intf_obj.text] = intf_obj.has_manual_duplex
     assert result_correct==test_result
 
+def testVal_IOSIntfLine_manual_speed(parse_c03_factory):
+    cfg = parse_c03_factory
+    result_correct = {
+        'interface Serial 1/0': 0,
+        'interface Serial 1/1': 0,
+        'interface GigabitEthernet4/1': 0,
+        'interface GigabitEthernet4/2': 100,
+        'interface GigabitEthernet4/3': 0,
+        'interface GigabitEthernet4/4': 0,
+        'interface GigabitEthernet4/5': 0,
+        'interface GigabitEthernet4/6': 0,
+        'interface GigabitEthernet4/7': 0,
+        'interface GigabitEthernet4/8.120': 0,
+        'interface ATM5/0/0': 0,
+        'interface ATM5/0/0.32 point-to-point': 0,
+        'interface ATM5/0/1': 0,
+    }
+    test_result = dict()
+    ## Parse all interface objects in c01 and check manual_speed
+    for intf_obj in cfg.find_objects('^interface'):
+        test_result[intf_obj.text] = intf_obj.manual_speed
+    assert result_correct==test_result
+
+def testVal_IOSIntfLine_has_manual_duplex(parse_c03_factory):
+    cfg = parse_c03_factory
+    result_correct = {
+        'interface Serial 1/0': '',
+        'interface Serial 1/1': '',
+        'interface GigabitEthernet4/1': '',
+        'interface GigabitEthernet4/2': 'full',
+        'interface GigabitEthernet4/3': '',
+        'interface GigabitEthernet4/4': '',
+        'interface GigabitEthernet4/5': '',
+        'interface GigabitEthernet4/6': '',
+        'interface GigabitEthernet4/7': '',
+        'interface GigabitEthernet4/8.120': '',
+        'interface ATM5/0/0': '',
+        'interface ATM5/0/0.32 point-to-point': '',
+        'interface ATM5/0/1': '',
+    }
+    test_result = dict()
+    ## Parse all interface objects in c01 and check manual_duplex
+    for intf_obj in cfg.find_objects('^interface'):
+        test_result[intf_obj.text] = intf_obj.manual_duplex
+    assert result_correct==test_result
+
+def testVal_IOSIntfLine_manual_duplex(parse_c03_factory):
+    cfg = parse_c03_factory
+    result_correct = {
+        'interface Serial 1/0': '',
+        'interface Serial 1/1': '',
+        'interface GigabitEthernet4/1': '',
+        'interface GigabitEthernet4/2': 'full',
+        'interface GigabitEthernet4/3': '',
+        'interface GigabitEthernet4/4': '',
+        'interface GigabitEthernet4/5': '',
+        'interface GigabitEthernet4/6': '',
+        'interface GigabitEthernet4/7': '',
+        'interface GigabitEthernet4/8.120': '',
+        'interface ATM5/0/0': '',
+        'interface ATM5/0/0.32 point-to-point': '',
+        'interface ATM5/0/1': '',
+    }
+    test_result = dict()
+    ## Parse all interface objects in c01 and check manual_duplex
+    for intf_obj in cfg.find_objects('^interface'):
+        test_result[intf_obj.text] = intf_obj.manual_duplex
+    assert result_correct==test_result
+
+def testVal_IOSIntfLine_has_manual_duplex(parse_c03_factory):
+    cfg = parse_c03_factory
+    result_correct = {
+        'interface Serial 1/0': False,
+        'interface Serial 1/1': False,
+        'interface GigabitEthernet4/1': False,
+        'interface GigabitEthernet4/2': True,
+        'interface GigabitEthernet4/3': False,
+        'interface GigabitEthernet4/4': False,
+        'interface GigabitEthernet4/5': False,
+        'interface GigabitEthernet4/6': False,
+        'interface GigabitEthernet4/7': False,
+        'interface GigabitEthernet4/8.120': False,
+        'interface ATM5/0/0': False,
+        'interface ATM5/0/0.32 point-to-point': False,
+        'interface ATM5/0/1': False,
+    }
+    test_result = dict()
+    ## Parse all interface objects in c01 and check manual_duplex
+    for intf_obj in cfg.find_objects('^interface'):
+        test_result[intf_obj.text] = intf_obj.has_manual_duplex
+    assert result_correct==test_result
+
 def testVal_IOSIntfLine_has_manual_carrierdelay(parse_c03_factory):
     cfg = parse_c03_factory
     result_correct = {
