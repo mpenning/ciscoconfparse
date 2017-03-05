@@ -87,6 +87,45 @@ def testValues_banner_delimiter_05():
     for obj in bannerobj.children:
         assert obj.parent.linenum == BANNER_LINE_NUMBER
 
+def testValues_aaa_authfailmsg_delimiter_01():
+    # Test auth fail-message delimiter on the same line...
+    CONFIG = ['!', 'aaa authentication fail-message ^   trivial banner here ^', 'end']
+    parse = CiscoConfParse(CONFIG)
+    bannerobj = parse.find_objects('^aaa\sauthentication\sfail-message')[0]
+    BANNER_LINE_NUMBER = 1
+    assert bannerobj.linenum == BANNER_LINE_NUMBER
+    for obj in bannerobj.children:
+        assert obj.parent.linenum == BANNER_LINE_NUMBER
+    assert len(bannerobj.children)==0
+
+def testValues_aaa_authfailmsg_delimiter_02():
+    # Test multiple banner delimiters on different lines
+    CONFIG = ['!', 'aaa authentication fail-message ^', 
+        '    trivial banner here ^', 
+        'end']
+    parse = CiscoConfParse(CONFIG)
+    bannerobj = parse.find_objects('^aaa\sauthentication\sfail-message')[0]
+    BANNER_LINE_NUMBER = 1
+    assert bannerobj.linenum == BANNER_LINE_NUMBER
+    for obj in bannerobj.children:
+        assert obj.parent.linenum == BANNER_LINE_NUMBER
+    assert len(bannerobj.children)==1
+
+def testValues_aaa_authfailmsg_delete_01():
+    # Ensure  aa authentication fail-message banners are correctly deleted
+    CONFIG = ['!', 
+        'aaa authentication fail-message ^', 
+        '    trivial banner1 here ^', 
+        'interface GigabitEthernet0/0',
+        ' ip address 192.0.2.1 255.255.255.0',
+        'banner exec ^', '    trivial banner2 here ^',
+        'end']
+    parse = CiscoConfParse(CONFIG)
+    for obj in parse.find_objects('^aaa\sauthentication\sfail-message'):
+        obj.delete()
+    parse.commit()
+    assert parse.find_objects('^aaa\sauthentication\sfail-message')==[]
+
 def testValues_banner_delete_01():
     # Ensure multiline banners are correctly deleted
     CONFIG = ['!', 
@@ -804,7 +843,7 @@ def testValues_req_cfgspec_excl_diff(parse_c01):
         )
     assert result_correct==test_result
 
-def testValues_req_cfgspec_all_diff(parse_c01):
+def testValues_req_cfgspec_all_diff_01(parse_c01):
     ## test req_cfgspec_all_diff
     result_correct = [
         'logging 1.1.3.4',
@@ -816,6 +855,22 @@ def testValues_req_cfgspec_all_diff(parse_c01):
         'logging 1.1.3.5',
         'logging 1.1.3.6',
         ]
+        )
+    assert result_correct==test_result
+
+def testValues_req_cfgspec_all_diff_02(parse_c01):
+    ## test req_cfgspec_all_diff
+    result_correct = [
+        'logging 1.1.3.4',
+        'logging 1.1.3.6',
+    ]
+    test_result = parse_c01.req_cfgspec_all_diff(
+        [
+        'logging 1.1.3.4',
+        'logging 1.1.3.5',
+        'logging 1.1.3.6',
+        ], 
+        ignore_ws=True
         )
     assert result_correct==test_result
 
