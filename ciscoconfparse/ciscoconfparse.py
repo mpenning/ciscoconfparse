@@ -43,7 +43,7 @@ from models_junos import JunosCfgLine
 
 from version import __version__ as __ccpversion__
 """ ciscoconfparse.py - Parse, Query, Build, and Modify IOS-style configurations
-     Copyright (C) 2007-2015 David Michael Pennington
+     Copyright (C) 2007-2017 David Michael Pennington
 
      This program is free software: you can redistribute it and/or modify
      it under the terms of the GNU General Public License as published by
@@ -2692,8 +2692,10 @@ class IOSConfigList(MutableSequence):
             'telnet',
             'lcd',
         ])
-        BANNER_RE = re.compile('|'.join(
-            [r'^(set\s+)*banner\s+{0}'.format(ii) for ii in BANNER_STR]))
+        BANNER_ALL = [r'^(set\s+)*banner\s+{0}'.format(ii) for ii in BANNER_STR]
+        BANNER_ALL.append('aaa authentication fail-message') # Github issue #76
+        BANNER_RE = re.compile('|'.join(BANNER_ALL))
+      
         retval = list()
         idx = 0
 
@@ -3082,8 +3084,11 @@ class NXOSConfigList(MutableSequence):
                         parent.child_indent = 0
                         obj.parent = parent
                         break
-                    elif obj.is_comment and (obj.indent == 0):
-                        break
+
+                    ## Fix Github issue #75 I don't think this case is reqd now
+                    #elif obj.is_comment and (obj.indent == 0):
+                    #    break
+
                     parent.children.append(obj)
                     parent.child_indent = 0
                     obj.parent = parent
