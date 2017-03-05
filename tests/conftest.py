@@ -1003,6 +1003,135 @@ call-home
 Cryptochecksum:571d01b7b08342e35db838e9acec00f6
 : end""".splitlines()
 
+n01 = """
+
+feature tacacs+
+feature interface-vlan
+feature vpc
+feature fex
+feature lacp
+feature lldp
+feature ospf
+no feature telnet
+
+ip domain-lookup
+ip domain-name pennington.net
+ip name-server 10.0.0.10
+
+vrf context management
+  ip route 0.0.0.0/0 10.0.0.1
+
+vrf context vpc-peerkeepalive
+
+tacacs-server key 0 DontTreadOnMe
+ip tacacs source-interface Vlan10
+tacacs-server host 10.0.0.32
+tacacs-server host 10.0.0.33
+aaa group server tacacs+ TACACS_GROUP
+  server 10.0.0.32
+  server 10.0.0.33
+  use-vrf management
+  source-interface mgmt0
+
+aaa authentication login default group TACACS_GROUP
+aaa authentication login console group TACACS_GROUP
+aaa authorization commands default group TACACS_GROUP
+aaa accounting default group TACACS_GROUP
+aaa authentication login error-enable
+
+logging event link-status default
+
+vpc domain 999
+  role priority 100
+  system-priority 1
+  auto-recovery
+  peer-keepalive destination 1.1.1.2
+
+fex 115
+  desc FEX115
+  pinning max-links 1
+
+interface loopback0
+  ip address 10.1.1.1/32
+
+interface mgmt0
+  ip address 10.0.0.5/24
+
+interface port-channel1
+  vpc peer-link
+  switchport mode trunk
+  spanning-tree port type network
+  description [vPC PEER LINK]
+
+interface port-channel21
+  description Uplink to core
+  switchport mode trunk
+  switchport trunk native vlan 999
+  switchport trunk allowed vlan 13,31-38,155
+  mtu 9216
+  vpc 21
+
+interface port-channel115
+  switchport mode fex-fabric
+  fex associate 115
+
+interface Ethernet1/1
+  switchport mode trunk
+  spanning-tree port type network
+  channel-group 1 mode active
+
+interface Ethernet1/2
+  switchport mode trunk
+  spanning-tree port type network
+  channel-group 1 mode active
+
+interface Ethernet1/3
+  ip address 192.0.2.0/31
+
+interface Ethernet1/4
+  switchport mode trunk
+  switchport trunk native vlan 999
+  switchport trunk allowed vlan 13,31-38,15
+  channel-group 21 mode active
+  mtu 9216
+
+interface Ethernet1/5
+  switchport mode trunk
+  switchport trunk native vlan 999
+  switchport trunk allowed vlan 13,31-38,15
+  channel-group 21 mode active
+  mtu 9216
+
+interface Ethernet1/6
+ switchport mode fex-fabric
+ fex associate 115
+ channel-group 115
+
+interface Ethernet1/7
+  switchport mode access
+  switchport access vlan 100
+  mtu 9216
+
+interface Ethernet1/8
+  switchport mode access
+  switchport access vlan 102
+  mtu 9216
+
+interface Ethernet1/9
+  ip address 10.1.2.6/30
+  mtu 9216
+
+interface Ethernet1/10
+  encapsulation dot1Q 200
+  bandwidth 100000000
+  delay 200
+  beacon
+  ip address 10.1.2.2/30
+  mpls ip
+  mtu 9216
+""".splitlines()
+
+
 @pytest.yield_fixture(scope='session')
 def c01_default_gigethernets(request):
     yield config_c01_default_gige
@@ -1109,6 +1238,28 @@ def parse_a02_factory(request):
     parse_a02_factory = CiscoConfParse(a02, syntax='asa', factory=True)
 
     yield parse_a02_factory
+
+## config_n02 yields a nexus configuration
+@pytest.yield_fixture(scope='function')
+def config_n01(request):
+    """Unparsed n01"""
+    yield n01
+
+## parse_n01 yields a nexus configuration
+@pytest.yield_fixture(scope='function')
+def parse_n01(request):
+    """Preparsed n01"""
+    parse_n01_factory = CiscoConfParse(n01, syntax='nxos', factory=False)
+
+    yield parse_n01_factory
+
+## parse_n01_factory yields a nexus configuration
+@pytest.yield_fixture(scope='function')
+def parse_n01_factory(request):
+    """Preparsed n01 with factory option"""
+    parse_n01_factory = CiscoConfParse(n01, syntax='nxos', factory=True)
+
+    yield parse_n01_factory
 
 @pytest.mark.skipif(sys.version_info[0]>=3,
     reason="No Python3 MockSSH support")
