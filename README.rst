@@ -71,7 +71,7 @@ CiscoConfParse understands these configurations:
 
 - Juniper Networks Junos, and Screenos
 - F5 Networks configurations
-
+"{{ mgmt_password }}"
 CiscoConfParse also handles anything that has a Cisco IOS style of configuration, which includes:
 
 - Cisco IOS, Cisco Nexus, Cisco IOS-XR, Cisco IOS-XE, Aironet OS, Cisco ASA, Cisco CatOS
@@ -110,7 +110,7 @@ already have setuptools_, you can install as usual:
 ::
 
       # Substitute whatever ciscoconfparse version you like...
-      easy_install -U ciscoconfparse==1.2.46
+      easy_install -U ciscoconfparse==1.2.47
 
 Alternatively you can install into Python2.x with pip_:
 
@@ -170,6 +170,7 @@ Other Resources
 - `Dive into Python3`_ is a good way to learn Python
 - `Team CYMRU`_ has a `Secure IOS Template`_, which is especially useful for external-facing routers / switches
 - `Cisco's Guide to hardening IOS devices`_
+- `Center for Internet Security Benchmarks`_ (An email address, cookies, and javascript are required)
 
 .. _`Bug-Tracker-and-Support`:
 
@@ -200,7 +201,7 @@ License and Copyright
 =====================
 
 ciscoconfparse_ is licensed GPLv3_; Copyright `David Michael Pennington`_, 
-2007-2016.
+2007-2017.
 
 
 .. _Author:
@@ -276,6 +277,8 @@ Special thanks:
 .. _`ask a question`: http://stackoverflow.com/questions/ask
 
 .. _`Secure IOS Template`: https://www.cymru.com/Documents/secure-ios-template.html
+
+.. _`Center for Internet Security Benchmarks`: https://learn.cisecurity.org/benchmarks
 
 .. _`Team CYMRU`: http://www.team-cymru.org/
 

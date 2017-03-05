@@ -1,3 +1,4 @@
+1.2.47  20170305 Fix Github issue #75, Github issue #76, Github issue #77
 1.2.46  20170109 Normalize zero-padded IP address string inputs to IPv4Obj()
 1.2.45  20170105 Add zero-padded ccp_util.IPv4Obj() strings, improve IPv4Obj() and IPv6Obj()
 1.2.44  20161125 Improve parsing speed for the factory=True parser
