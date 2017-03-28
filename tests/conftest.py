@@ -392,7 +392,8 @@ j01 = """## Last commit: 2015-06-28 13:00:59 CST by mpenning
     system {
     host-name TEST01_EX;
     domain-name pennington.net;
-    domain-search [ pennington.net lab.pennington.net ];
+    domain-search 
+           [ pennington.net lab.pennington.net ];
     location {
         country-code 001;
         building HQ_005;
