@@ -16,7 +16,7 @@ os:
  - linux
 
 install:
- - pip install --upgrade -q pip
+ - pip install --upgrade -q pip==8.1.2
  - pip install --upgrade -q ciscoconfparse
 
 
