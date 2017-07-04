@@ -826,7 +826,7 @@ class BaseIOSIntfLine(IOSCfgLine):
     @property
     def vrf(self):
         retval = self.re_match_iter_typed(
-            r'^\s*ip\svrf\sforwarding\s(\S+)$', result_type=str, default='')
+            r'^\s*(ip\s)?vrf\sforwarding\s(\S+)$', group=2, result_type=str, default='')
         return retval
 
     @property

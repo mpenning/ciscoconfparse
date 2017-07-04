@@ -995,7 +995,7 @@ def testVal_IOSIntfLine_vrf(parse_c03_factory):
         'interface GigabitEthernet4/7': '',
         'interface GigabitEthernet4/8.120': 'TEST_100_001',
         'interface ATM5/0/0': '',
-        'interface ATM5/0/0.32 point-to-point': '',
+        'interface ATM5/0/0.32 point-to-point': 'TEST_100_002',
         'interface ATM5/0/1': '',
     }
     test_result = dict()

@@ -248,6 +248,12 @@ ip vrf TEST_100_001
  route-target 100:1
  rd 100:1
 !
+vrf definition TEST_100_002
+ route-target 100:2
+ rd 100:2
+ address-family ipv4
+ exit-address-family
+!
 interface Serial 1/0
  description Uplink to SBC F923X2K425
  bandwidth 1500
@@ -347,6 +353,7 @@ interface ATM5/0/0
  hold-queue 500 in
 !
 interface ATM5/0/0.32 point-to-point
+ vrf forwarding TEST_100_002
  ip address 1.1.1.5 255.255.255.252
  no ip redirects
  no ip unreachables
