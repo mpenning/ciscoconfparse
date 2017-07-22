@@ -981,7 +981,7 @@ def testVal_IOSIntfLine_is_shutdown(parse_c03_factory):
         test_result[intf_obj.text] = intf_obj.is_shutdown
     assert result_correct==test_result
 
-def testVal_IOSIntfLine_vrf(parse_c03_factory):
+def testVal_IOSIntfLine_vrf01(parse_c03_factory):
     cfg = parse_c03_factory
     result_correct = {
         'interface Serial 1/0': '',
@@ -1003,6 +1003,19 @@ def testVal_IOSIntfLine_vrf(parse_c03_factory):
     for intf_obj in cfg.find_objects('^interface'):
         test_result[intf_obj.text] = intf_obj.vrf
     assert result_correct==test_result
+
+def testVal_IOSIntfLine_vrf02():
+    lines = ['!',
+        'interface GigabitEthernet 1/1',
+        ' vrf forwarding blue',
+        ' ip address 192.0.2.1 255.255.255.0',
+        ' no ip proxy-arp',
+        '!',
+    ]
+    cfg = CiscoConfParse(lines, factory=True)
+    intf_obj = cfg.find_objects('^interface')[0]
+    assert intf_obj.vrf=='blue'
+
 
 def testVal_IOSIntfLine_ipv4_addr(parse_c03_factory):
     cfg = parse_c03_factory
