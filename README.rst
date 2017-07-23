@@ -69,9 +69,9 @@ As of CiscoConfParse 1.2.4, you can parse `brace-delimited configurations`_
 into a Cisco IOS style (see `Github Issue #17`_), which means that 
 CiscoConfParse understands these configurations:
 
-- Juniper Networks Junos, and Screenos
+- Juniper Networks Junos
 - F5 Networks configurations
-"{{ mgmt_password }}"
+
 CiscoConfParse also handles anything that has a Cisco IOS style of configuration, which includes:
 
 - Cisco IOS, Cisco Nexus, Cisco IOS-XR, Cisco IOS-XE, Aironet OS, Cisco ASA, Cisco CatOS
@@ -82,6 +82,7 @@ CiscoConfParse also handles anything that has a Cisco IOS style of configuration
 - Dell PowerConnect Switches
 - Extreme Networks
 - Enterasys
+- Screenos
 
 
 Docs
