@@ -2034,8 +2034,6 @@ class CiscoConfParse(object):
 
         **Example**
 
-        .. doctest::
-
            >>> config = [
            ...     'logging trap debugging',
            ...     'logging 172.28.26.15',
@@ -2048,8 +2046,9 @@ class CiscoConfParse(object):
            ...     ]
            >>> linespec = "logging\s+\d+\.\d+\.\d+\.\d+"
            >>> unconfspec = linespec
-           >>> diffs = p.sync_diff(required_lines, linespec, unconfspec)
-           >>> diffs
+           >>> diffs = p.sync_diff(required_lines, 
+           ...     linespec, unconfspec) # doctest: +SKIP
+           >>> diffs                     # doctest: +SKIP
            ['no logging 172.28.26.15', 'logging 172.16.1.5', 'logging 1.10.20.30', 'logging 192.168.1.1']
            >>>
         """
