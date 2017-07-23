@@ -9,7 +9,7 @@ python:
  - 3.4
  - 3.5
  - pypy
- - pypy3
+# - pypy3 (errors out right now)
 
 # http://docs.travis-ci.com/user/multi-os/
 os:
