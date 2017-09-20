@@ -349,7 +349,7 @@ class CiscoConfParse(object):
         (?:\s*
            (?:(?P<line>[^\{{\}}{0}].*?)(?P<braces_eol>[\{{\}}])*(?P<sc>\;)*\s*)
           |(?P<braces_alone>[\{{\}}\;])
-          |(?:\s*[{0}](?P<comment>.+))
+          |(?:\s*[{0}](?P<comment>.*))
         )
         $
         """.format(re.escape(self.comment_delimiter))
