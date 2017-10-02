@@ -548,6 +548,12 @@ class ASAObjGroupNetwork(ASACfgLine):
 
         return retval
 
+    @property
+    def description(self):
+        retval = self.re_match_iter_typed(r'^\s*description\s+(\S.+)$',
+            result_type=str, default='')
+        return retval
+
 ##
 ##-------------  ASA object-group service
 ##
