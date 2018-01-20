@@ -1,3 +1,4 @@
+1.2.51  20180124 Fix packaging problem
 1.2.50  20180124 Throw a ValueError on ipv4 dhcp factory interfaces
 1.2.49  20170723 Fix doctest breakage
 1.2.48  20170723 Fix Github issue #82
