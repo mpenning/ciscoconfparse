@@ -15,7 +15,7 @@ from ccp_abc import BaseCfgLine
 ###
 ###   You have been warned :-)
 """ models_nxos.py - Parse, Query, Build, and Modify IOS-style configurations
-     Copyright (C) 2016-2017 David Michael Pennington
+     Copyright (C) 2016-2018 David Michael Pennington
 
      This program is free software: you can redistribute it and/or modify
      it under the terms of the GNU General Public License as published by
@@ -1682,23 +1682,17 @@ class BaseNXOSRouteLine(BaseCfgLine):
 ##
 
 _RE_IP_ROUTE = re.compile(r"""^ip\s+route
-(?:\s+(?:vrf\s+(?P<vrf>\S+)))?          # VRF detection
 \s+
 (?P<prefix>\d+\.\d+\.\d+\.\d+)          # Prefix detection
-\s+
-(?P<netmask>\d+\.\d+\.\d+\.\d+)         # Netmask detection
+\/
+(?P<masklen>\d+)                        # Netmask detection
 (?:\s+(?P<nh_intf>[^\d]\S+))?           # NH intf
 (?:\s+(?P<nh_addr>\d+\.\d+\.\d+\.\d+))? # NH addr
-(?:\s+(?P<dhcp>dhcp))?           # DHCP keyword       (FIXME: add unit test)
-(?:\s+(?P<global>global))?       # Global keyword
-(?:\s+(?P<ad>\d+))?              # Administrative distance
-(?:\s+(?P<mcast>multicast))?     # Multicast Keyword  (FIXME: add unit test)
 (?:\s+name\s+(?P<name>\S+))?     # Route name
-(?:\s+(?P<permanent>permanent))? # Permanent Keyword  (exclusive of track)
-(?:\s+track\s+(?P<track>\d+))?   # Track object (exclusive of permanent)
 (?:\s+tag\s+(?P<tag>\d+))?       # Route tag
 """, re.VERBOSE)
 
+## FIXME: nxos ipv6 route needs work
 _RE_IPV6_ROUTE = re.compile(r"""^ipv6\s+route
 (?:\s+vrf\s+(?P<vrf>\S+))?
 (?:\s+(?P<prefix>{0})\/(?P<masklength>\d+))    # Prefix detection
@@ -1741,13 +1735,6 @@ class NXOSRouteLine(BaseNXOSRouteLine):
         return False
 
     @property
-    def vrf(self):
-        if not (self.route_info['vrf'] is None):
-            return self.route_info['vrf']
-        else:
-            return ''
-
-    @property
     def address_family(self):
         ## ipv4, ipv6, etc
         return self._address_family
@@ -1767,7 +1754,7 @@ class NXOSRouteLine(BaseNXOSRouteLine):
     @property
     def netmask(self):
         if self._address_family == 'ip':
-            return self.route_info['netmask']
+            return str(self.network_object.netmask)
         elif self._address_family == 'ipv6':
             return str(self.network_object.netmask)
         return retval
@@ -1775,7 +1762,7 @@ class NXOSRouteLine(BaseNXOSRouteLine):
     @property
     def masklen(self):
         if self._address_family == 'ip':
-            return self.network_object.prefixlen
+            return self.network_object
         elif self._address_family == 'ipv6':
             masklen_str = self.route_info['masklength'] or '128'
             return int(masklen_str)
@@ -1785,7 +1772,7 @@ class NXOSRouteLine(BaseNXOSRouteLine):
         try:
             if self._address_family == 'ip':
                 return IPv4Obj(
-                    '%s/%s' % (self.network, self.netmask), strict=False)
+                    '%s/%s' % (self.network, self.masklen), strict=False)
             elif self._address_family == 'ipv6':
                 return IPv6Obj('%s/%s' % (self.network, self.masklen))
         except:
@@ -1828,43 +1815,6 @@ class NXOSRouteLine(BaseNXOSRouteLine):
                 or ''
 
     @property
-    def global_next_hop(self):
-        if self._address_family == 'ip' and bool(self.vrf):
-            return bool(self.route_info['global'])
-        elif self._address_family == 'ip' and not bool(self.vrf):
-            return True
-        elif self._address_family == 'ipv6':
-            ## ipv6 uses nexthop_vrf
-            raise ValueError(
-                "[FATAL] ipv6 doesn't support a global_next_hop for '{0}'".
-                format(self.text))
-        else:
-            raise ValueError(
-                "[FATAL] Could not identify global next-hop for '{0}'".format(
-                    self.text))
-
-    @property
-    def nexthop_vrf(self):
-        if self._address_family == 'ipv6':
-            return self.route_info['nexthop_vrf'] or ''
-        else:
-            raise ValueError(
-                "[FATAL] ip doesn't support a global_next_hop for '{0}'".
-                format(self.text))
-
-    @property
-    def admin_distance(self):
-        if self.route_info['ad']:
-            return int(self.route_info['ad'])
-        else:
-            return 1
-
-    @property
-    def multicast(self):
-        """Return whether the multicast keyword was specified"""
-        return bool(self.route_info['mcast'])
-
-    @property
     def unicast(self):
         ## FIXME It's unclear how to implement this...
         raise NotImplementedError
@@ -1874,26 +1824,6 @@ class NXOSRouteLine(BaseNXOSRouteLine):
         if self._address_family == 'ip':
             if self.route_info['name']:
                 return self.route_info['name']
-            else:
-                return ''
-        elif self._address_family == 'ipv6':
-            raise NotImplementedError
-
-    @property
-    def permanent(self):
-        if self._address_family == 'ip':
-            if self.route_info['permanent']:
-                return bool(self.route_info['permanent'])
-            else:
-                return False
-        elif self._address_family == 'ipv6':
-            raise NotImplementedError
-
-    @property
-    def tracking_object_name(self):
-        if self._address_family == 'ip':
-            if bool(self.route_info['track']):
-                return self.route_info['track']
             else:
                 return ''
         elif self._address_family == 'ipv6':

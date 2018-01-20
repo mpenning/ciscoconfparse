@@ -1,3 +1,4 @@
+import traceback
 import sys
 import re
 import os
@@ -15,7 +16,7 @@ from ccp_abc import BaseCfgLine
 ###
 ###   Use models_cisco.py at your own risk.  You have been warned :-)
 """ models_cisco.py - Parse, Query, Build, and Modify IOS-style configurations
-     Copyright (C) 2014-2016 David Michael Pennington
+     Copyright (C) 2014-2018 David Michael Pennington
 
      This program is free software: you can redistribute it and/or modify
      it under the terms of the GNU General Public License as published by
@@ -684,6 +685,8 @@ class BaseIOSIntfLine(IOSCfgLine):
             return IPv4Obj(
                 '{0}/{1}'.format(self.ipv4_addr, self.ipv4_netmask),
                 strict=False)
+        except ValueError as e:
+            raise ValueError(e)
         except (Exception) as e:
             return self.default_ipv4_addr_object
 
@@ -841,7 +844,16 @@ class BaseIOSIntfLine(IOSCfgLine):
             r'^\s+ip\s+address\s+(\d+\.\d+\.\d+\.\d+)\s+\d+\.\d+\.\d+\.\d+\s*$',
             result_type=str,
             default='')
-        return retval
+        condition1 = self.re_match_iter_typed(
+            r'^\s+ip\s+address\s+(dhcp)\s*$',
+            result_type=str,
+            default='')
+        if condition1.lower()=='dhcp':
+            error = "Cannot parse address from a dhcp interface: {0}".format(
+                self.name)
+            raise ValueError(error)
+        else:
+            return retval
 
     @property
     def ipv4_netmask(self):

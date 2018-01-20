@@ -41,9 +41,8 @@ from models_asa import ASAAclLine
 
 from models_junos import JunosCfgLine
 
-from version import __version__ as __ccpversion__
 """ ciscoconfparse.py - Parse, Query, Build, and Modify IOS-style configurations
-     Copyright (C) 2007-2017 David Michael Pennington
+     Copyright (C) 2007-2018 David Michael Pennington
 
      This program is free software: you can redistribute it and/or modify
      it under the terms of the GNU General Public License as published by
@@ -63,7 +62,8 @@ from version import __version__ as __ccpversion__
 """
 
 ## Docstring props: http://stackoverflow.com/a/1523456/667301
-__version__ = __ccpversion__
+__version__ = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 
+    'version')).read().strip()
 __email__ = "mike /at\ pennington [dot] net"
 __author__ = "David Michael Pennington <{0}>".format(__email__)
 __copyright__ = "2007-{0}, {1}".format(time.strftime('%Y'), __author__)
@@ -183,6 +183,8 @@ class CiscoConfParse(object):
             elif syntax == 'junos':
                 ## FIXME I am shamelessly abusing the IOSConfigList for now...
                 # we already have a list object, simply call the parser
+                error = 'junos parser factory is not yet enabled; use factory=False'
+                assert factory is False, error
                 config = self.convert_braces_to_ios(config)
                 if self.debug:
                     _log.debug("parsing from a python list with junos syntax")
@@ -349,7 +351,8 @@ class CiscoConfParse(object):
         (?:\s*
            (?:(?P<line>[^\{{\}}{0}].*?)(?P<braces_eol>[\{{\}}])*(?P<sc>\;)*\s*)
           |(?P<braces_alone>[\{{\}}\;])
-          |(?:\s*[{0}](?P<comment>.+))
+          |(?P<junos_else>^\s*\}}\s*else\s*\{{\s*$)
+          |(?:\s*[{0}](?P<comment>.*))
         )
         $
         """.format(re.escape(self.comment_delimiter))
@@ -362,6 +365,7 @@ class CiscoConfParse(object):
             if not (mm is None):
                 results = mm.groupdict()
                 line = results.get('line', '')
+                junos_else = results.get('junos_else', None)
                 term_char = (results['braces_eol'] or
                              results['braces_alone'] or '').strip()
                 comment = results['comment']
@@ -371,8 +375,10 @@ class CiscoConfParse(object):
                     level_offset = -1
 
                 ## Return values
-                if not (comment is None):
+                if comment is not None:
                     return '!' + comment, level_offset
+                elif junos_else is not None:
+                    return 'else', level_offset
                 else:
                     return line, level_offset
 
@@ -387,6 +393,8 @@ class CiscoConfParse(object):
         STOP_WIDTH = stop_width
         for tmp in input_list:
             line, line_offset = line_level(tmp.strip())
+            # Debugging here...
+            #print "FOO", tmp, "BAR", line, line_offset
             if line:
                 lines.append(" " * STOP_WIDTH * offset + line)
             offset += line_offset
@@ -3696,6 +3704,10 @@ def ConfigLineFactory(text="", comment_delimiter="!", syntax='ios'):
             ASAObjGroupService, ASAIntfLine, ASAIntfGlobal, ASAHostnameLine,
             ASAAclLine, ASACfgLine
         ]
+    elif syntax == 'junos':
+        classes = [ IOSConfigLine ]
+    else:
+        raise ValueError("'{0}' is an unknown syntax".format(syntax))
     for cls in classes:
         if cls.is_object_for(text):
             inst = cls(text=text, comment_delimiter=comment_delimiter
