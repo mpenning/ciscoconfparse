@@ -40,7 +40,7 @@ setup(name='ciscoconfparse',
       use_2to3=True,             # Reqd for Windows + Py3 - ref Github issue #32
       zip_safe=False,
       install_requires = [IPADDR, DNSPYTHON, 'colorama'],   # Package dependencies here
-      setup_requires=["setuptools_hg"],  # setuptools_hg must be installed as a python module
+      #setup_requires=["setuptools_hg"],  # setuptools_hg must be installed as a python module
       classifiers=[
           'Development Status :: 5 - Production/Stable',
           'Environment :: Plugins',
