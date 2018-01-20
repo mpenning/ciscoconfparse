@@ -25,7 +25,7 @@ else:
 
 setup(name='ciscoconfparse',
       version=open(os.path.join(os.path.dirname(os.path.abspath(__file__)),
-          'ciscoconfparse', 'version')).read().strip()
+          'ciscoconfparse', 'version')).read().strip(),
       description='Parse, Audit, Query, Build, and Modify Cisco IOS-style configurations',
       url='http://www.pennington.net/py/ciscoconfparse/',
       author='David Michael Pennington',
