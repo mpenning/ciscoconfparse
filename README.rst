@@ -111,7 +111,7 @@ already have setuptools_, you can install as usual:
 ::
 
       # Substitute whatever ciscoconfparse version you like...
-      easy_install -U ciscoconfparse==1.2.49
+      easy_install -U ciscoconfparse==1.2.50
 
 Alternatively you can install into Python2.x with pip_:
 
@@ -202,7 +202,9 @@ License and Copyright
 =====================
 
 ciscoconfparse_ is licensed GPLv3_; Copyright `David Michael Pennington`_, 
-2007-2017.
+2007-2018.
+
+ciscoconfparse_ is not affiliated with Cisco Systems in any way; the word "Cisco" is a registered trademark of Cisco Systems
 
 
 .. _Author:
