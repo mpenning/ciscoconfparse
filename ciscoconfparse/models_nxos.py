@@ -832,7 +832,17 @@ class BaseNXOSIntfLine(NXOSCfgLine):
             r'^\s+ip\s+address\s+(\d+\.\d+\.\d+\.\d+)\s*\/\d+\s*$',
             result_type=str,
             default='')
-        return retval
+        condition1 = self.re_match_iter_typed(
+            r'^\s+ip\s+address\s+(dhcp)\s*$',
+            result_type=str,
+            default='')
+        if condition1.lower()=='dhcp':
+            error = "Cannot parse address from a dhcp interface: {0}".format(
+                self.name)
+            raise ValueError(error)
+        else:
+            return retval
+
 
     @property
     def ipv4_masklength(self):
@@ -1688,8 +1698,10 @@ _RE_IP_ROUTE = re.compile(r"""^ip\s+route
 (?P<masklen>\d+)                        # Netmask detection
 (?:\s+(?P<nh_intf>[^\d]\S+))?           # NH intf
 (?:\s+(?P<nh_addr>\d+\.\d+\.\d+\.\d+))? # NH addr
+(?:\s+track\s+(?P<track_group>\d+))?    # Tracking object
 (?:\s+name\s+(?P<name>\S+))?     # Route name
 (?:\s+tag\s+(?P<tag>\d+))?       # Route tag
+(?:\s+(?P<ad>\d+))?              # Admin distance
 """, re.VERBOSE)
 
 ## FIXME: nxos ipv6 route needs work
@@ -1740,6 +1752,14 @@ class NXOSRouteLine(BaseNXOSRouteLine):
         return self._address_family
 
     @property
+    def admin_distance(self):
+        ad = self.route_info['ad']
+        if ad is None:
+            return '1'
+        else:
+            return self.route_info['ad']
+
+    @property
     def network(self):
         if self._address_family == 'ip':
             return self.route_info['prefix']
@@ -1762,7 +1782,7 @@ class NXOSRouteLine(BaseNXOSRouteLine):
     @property
     def masklen(self):
         if self._address_family == 'ip':
-            return self.network_object
+            return self.route_info['masklen']
         elif self._address_family == 'ipv6':
             masklen_str = self.route_info['masklength'] or '128'
             return int(masklen_str)
@@ -1832,6 +1852,10 @@ class NXOSRouteLine(BaseNXOSRouteLine):
     @property
     def tag(self):
         return self.route_info['tag'] or ''
+
+    @property
+    def tracking_object_name(self):
+        return self.route_info['track_group']
 
 
 ################################

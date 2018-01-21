@@ -165,7 +165,7 @@ class CiscoConfParse(object):
                     comment_delimiter=comment,
                     debug=debug,
                     factory=factory,
-                    ignore_blank_lines=ignore_blank_lines,
+                    ignore_blank_lines=False,  # NXOS always has blank lines
                     syntax='nxos',
                     CiscoConfParse=self)
             elif syntax == 'asa':
@@ -233,7 +233,7 @@ class CiscoConfParse(object):
                         comment_delimiter=comment,
                         debug=debug,
                         factory=factory,
-                        ignore_blank_lines=ignore_blank_lines,
+                        ignore_blank_lines=False,
                         syntax='nxos',
                         CiscoConfParse=self)
                 elif syntax == 'asa':
