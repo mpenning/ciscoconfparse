@@ -365,6 +365,13 @@ class CiscoConfParse(object):
             if not (mm is None):
                 results = mm.groupdict()
                 line = results.get('line', '')
+
+                ## Hack to fix Github issue #49 (empty double braces at end)
+                nn = re.search('^(.+?)\{\s*\}\s*$', input)
+                if nn is not None:
+                    # Detect double braces at the end of a line and strip them
+                    line = nn.group(1)
+
                 junos_else = results.get('junos_else', None)
                 term_char = (results['braces_eol'] or
                              results['braces_alone'] or '').strip()
