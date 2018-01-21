@@ -617,6 +617,19 @@ class BaseNXOSIntfLine(NXOSCfgLine):
         return retval
 
     @property
+    def manual_speed(self):
+        retval = self.re_match_iter_typed(
+            r'^\s*speed\s+(\d+)$', result_type=int, default=0)
+        return retval
+
+    @property
+    def manual_duplex(self):
+        retval = self.re_match_iter_typed(
+            r'^\s*duplex\s+(\S.+)$', result_type=str, default='')
+        return retval
+
+
+    @property
     def manual_beacon(self):
         retval = self.re_match_iter_typed(
             r'^\s*(beacon)\s*$', result_type=bool, default=False)
