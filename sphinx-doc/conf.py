@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.join(os.path.abspath(os.path.dirname(__file__)),
     "..", "ciscoconfparse"))
 
 from sphinx.ext.autodoc import AttributeDocumenter, ClassLevelDocumenter
-import ciscoconfparse, version, ccp_abc
+import ciscoconfparse, ccp_abc
 try:
     import sphinx_bootstrap_theme
 except:
@@ -63,7 +63,7 @@ copyright = u'2007-%s, %s' % (time.strftime('%Y'), ciscoconfparse.__author__)
 # built documents.
 #
 # The short X.Y version.
-version = '.'.join(map(str, version.__version_tuple__[:2]))
+version = '.'.join(ciscoconfparse.__version__.split('.')[0:2])
 # The full version, including alpha/beta/rc tags.
 release = ciscoconfparse.__version__
 
