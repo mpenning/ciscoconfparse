@@ -1,0 +1,272 @@
+version 7.0(3)I4(1)
+
+hostname TESTNXOS01
+policy-map type network-qos JUMBO
+  class type network-qos class-default
+    mtu 9216
+install feature-set fex
+vdc TESTNXOS01 id 1
+  allow feature-set fex
+  limit-resource vlan minimum 16 maximum 4094
+  limit-resource vrf minimum 2 maximum 4094
+  limit-resource port-channel minimum 0 maximum 511
+  limit-resource u4route-mem minimum 248 maximum 248
+  limit-resource u6route-mem minimum 96 maximum 96
+  limit-resource m4route-mem minimum 58 maximum 58
+  limit-resource m6route-mem minimum 8 maximum 8
+
+feature scp-server
+feature sftp-server
+feature tacacs+
+cfs eth distribute
+feature ospf
+feature udld
+feature interface-vlan
+feature hsrp
+feature lacp
+feature dhcp
+feature vpc
+feature lldp
+clock timezone CST -6 0
+clock summer-time CDT 2 Sun Mar 02:00 1 Sun Nov 02:00 60
+feature sla sender
+feature sflow
+
+archive
+  path bootflash:TESTNXOS01_
+  time-period 0
+  maximum 14
+
+aaa group server tacacs+ TACACS
+  server host 172.16.1.31
+  server host 172.16.1.32
+  source-interface mgmt0
+  use-vrf management
+tacacs-server key 0 Fr3eLunch
+aaa authentication login default group TACACS
+aaa authenticationlogin default fallback error local
+aaa authorization commands default group TACACS local
+aaa authorization config-commands default group TACACS local
+aaa accounting default group TACACS
+no password strength-check
+username joe password 5 5kR1QiKXsN role network-admin
+banner motd X
+Router TESTNXOS01. Access to this device or the attached
+networks is prohibited without express written permission from the
+legal owner of this device.  Violators will be prosecuted to the
+fullest extent of both civil and criminal law.
+
+We don't like you. Go away.
+X
+
+ssh login-attempts 10
+
+no ip domain-lookup
+ip name-server 172.16.1.10 172.16.1.11
+ip name-server 172.16.1.10 172.16.1.11 use-vrf management
+ip host mailer 172.16.1.32
+system default switchport
+errdisable recovery interval 30
+errdisable recovery cause link-flap
+errdisable recovery cause udld
+errdisable recovery cause bpduguard
+errdisable recovery cause loopback
+errdisable recovery cause storm-control
+errdisable recovery cause security-violation
+errdisable recovery cause psecure-violation
+errdisable recovery cause vpc-peerlink
+errdisable recovery cause failed-port-state
+vlan dot1Q tag native
+ip access-list SNMP_ACCESS
+  statistics per-entry
+  10 remark Solarwinds
+  20 permit ip 172.16.1.7/32 any
+system qos
+  service-policy type network-qos JUMBO
+track 5 ip sla 5 reachability
+ delay down 10
+
+copp profile lenient
+ip ssh source-interface mgmt0 vrf management
+snmp-server user admin network-admin auth md5 0x9efddac62a1c9 priv 0x9efddac62a1c9 localizedkey
+snmp-server community ChokeWagon group network-admin
+snmp-server community ChokeWagon use-acl SNMP_ACCESS
+callhome
+  customer-id "Pennington.net"
+  site-id Home
+  email-contact net@pennington.net
+  phone-contact 210-867-5309
+  streetaddress "123 Sesame St, Bucksnort, TN 38104"
+  destination-profile full_txt email-addr joe@aol.com
+  transport email from textnxos@pennington.net
+  transport email reply-to textnxos@pennington.net
+  transport email mail-server smtp.penington.net port 25 priority 50 use-vrf management
+  transport http use-vrf management
+  transport http proxy server web.pennington.net port 8080
+  transport http proxy enable
+  enable
+ntp server 172.16.1.16 prefer use-vrf management
+ntp source-interface mgmt0
+
+system vlan long-name
+vlan 10
+  name ThatVlan10
+vlan 11
+  name ThatVlan11
+vlan 15
+  name ThatVlan15
+vlan 911
+  name NativeVlan
+
+spanning-tree pathcost method long
+spanning-tree port type edge default
+spanning-tree port type edge bpduguard default
+spanning-tree loopguard defauolt
+ip prefix-list DEFAULT_IPv4 seq 10 permit 0.0.0.0/0
+route-map DEFAULT_RM permit 10
+  match ip address prefix-list DEFAULT_IPv4
+  set metric +1
+  set metric-type type-1
+route-map MATCH_TAG permit 10
+  match tag 2
+  set metric +1
+  set metric-type type-1
+route-map MATCH_TAG permit 20
+  match tag 3
+  set metric +1
+  set metric-type type-1
+service dhcp
+ip dhcp relay
+ipv6 dhcp relay
+vrf context management
+  ip route 0.0.0.0/0 172.30.0.1
+vrf context vpc-peerkeepalive
+vpc domain 10
+  peer-switch
+  role priority 1
+  peer-keepalive destination 169.254.0.2 source 169.254.0.1 vrf vpc-peerkeepalive
+  peer-gateway
+  layer3 peer-router
+  auto-recovery
+  ip arp synchronize
+
+
+interface Vlan10
+  description ThatVlan10
+  no shutdown
+  mtu 9216
+  ip address 172.16.1.2/24
+  ip address 192.0.2.2/24 secondary
+  ip ospf passive-interface
+  ip router ospf 100 area 0.0.0.1
+  hsrp version 2
+  hsrp 10
+    authentication md5 key-string 5kR1QiKXsN
+    preempt
+    ip 172.16.1.1
+  ip dhcp relay address 4.2.2.2
+  ip dhcp relay address 8.8.8.8
+
+interface Vlan11
+  description ThatVlan11
+  no shutdown
+  mtu 9216
+  ip address 172.16.2.2/24
+  no ip ospf passive-interface
+  ip router ospf 100 area 0.0.0.0
+
+interface port-channel1
+  description vpc peer-link to TESTNXOS02
+  switchport mode trunk
+  spanning-tree link-type point-to-point
+  spanning-tree port type network
+  vpc peer-link
+
+interface port-channel10
+  switchport mode trunk
+  switchport trunk allowed vlan 10-11,15
+  mtu 9216
+  vpc 10
+
+interface Ethernet1/1
+  switchport mode trunk
+  spanning-tree link-type point-to-point
+  spanning-tree port type network
+  channel-group 1 mode active
+  no shutdown
+
+interface Ethernet1/2
+  switchport mode trunk
+  spanning-tree link-type point-to-point
+  spanning-tree port type network
+  channel-group 1 mode active
+  no shutdown
+  
+interface Ethernet1/3
+  no switchport
+  mtu 9216
+  vrf member vpc-peerkeepalive
+  ip address 169.254.0.1/30
+  no shutdown
+
+interface Ethernet1/4
+  switchport mode trunk
+  mtu 9216
+  channel-group 10 mode active
+  no shutdown
+
+interface Ethernet1/5/1
+  no switchport
+  mtu 9216
+  no ip redirects
+  ip address 172.16.3.1/30
+  ip ospf message-digest-key 1 md5 3 5kR1QiKXsN
+  ip ospf dead-interval 4
+  ip ospf hello-interval 1
+  ip ospf network point-to-point
+  no ip ospf passive-interface
+  ip router ospf 100 area 0.0.0.0
+  no shutdown
+
+interface Ethernet1/5/2
+
+interface Ethernet1/5/3
+
+interface Ethernet1/5/4
+
+interface mgmt0
+  ip address dhcp
+  vrf member management
+
+interface loopback0
+  ip address 172.16.5.20/32
+  ip router ospf 100 area 0.0.0.0
+line console
+line vty
+  exec-timeout 5
+  access-class SNMP_ACCESS in
+boot nxos bootflash:/nxos.7.0.3.I4.1.bin sup-1
+ip route 0.0.0.0/0 172.16.2.5 track 5 name SAMPLE
+ip route 10.0.0.0/8 172.16.2.4 name SAMPLE_TAG2 tag 2
+ip route 12.0.0.0/8 172.16.2.4 name SAMPLE_TAG3 tag 3
+router ospf 100
+  router-id 172.16.5.20
+  default-information originate route-map DEFAULT_IPv4
+  redistribute static route-map MATCH_TAG
+  log-adjacency-changes detail
+  area 0.0.0.0 authentication message-digest
+  timers throttle spf 200 400 1000
+  timers lsa-arrival 50
+  timers throttle lsa 0 100 500
+  auto-cost reference-bandwidth 100 Gbps
+  passive-interface default
+ip sla 5
+  icmp-echo 172.16.2.5 source-interface Vlan11
+    verify-data
+    threshold 1000
+    timeout 1500
+    frequency 2
+ip sla schedule 5 life forever start-time now
+logging server 172.16.1.78 5
+logging source-interface mgmt0
+no logging console
