@@ -831,7 +831,7 @@ class BaseNXOSIntfLine(NXOSCfgLine):
     @property
     def vrf(self):
         retval = self.re_match_iter_typed(
-            r'^\s*ip\svrf\sforwarding\s(\S+)$', result_type=str, default='')
+            r'^\s*vrf\s+member\s(\S+)\s*$', result_type=str, default='')
         return retval
 
     @property
@@ -1902,7 +1902,7 @@ class NXOSAaaGroupServerLine(BaseCfgLine):
     @property
     def vrf(self):
         return self.re_match_iter_typed(
-            r'^\s+ip\s+vrf\s+forwarding\s+(\S+)',
+            r'^\s+use-vrf\s+(\S+)',
             group=1,
             result_type=str,
             default='')
@@ -1910,7 +1910,7 @@ class NXOSAaaGroupServerLine(BaseCfgLine):
     @property
     def source_interface(self):
         return self.re_match_iter_typed(
-            r'^\s+ip\s+tacacs\s+source-interface\s+(\S.+?\S)\s*$',
+            r'^\s+source-interface\s+(\S.+?\S)\s*$',
             group=1,
             result_type=str,
             default='')
