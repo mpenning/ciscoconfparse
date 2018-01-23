@@ -763,6 +763,14 @@ def reverse_dns_lookup(input, timeout=3, server=''):
 
 
 class CiscoRange(MutableSequence):
+    """Explode Cisco ranges into a list of explicit items... examples below...
+
+>>> from ciscoconfparse.ccp_util import CiscoRange
+>>> CiscoRange('1-3,5,9-11,13')
+<CiscoRange ['1', '2', '3', '5', '9', '10', '11', '13']>
+>>> CiscoRange('Eth1/1-3,7')
+<CiscoRange ['Eth1/1', 'Eth1/2', 'Eth1/3', 'Eth1/7']>
+    """
     def __init__(self, text, result_type=str):
         super(CiscoRange, self).__init__()
         self.text = text
