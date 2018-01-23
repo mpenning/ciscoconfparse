@@ -26,6 +26,7 @@ feature hsrp
 feature lacp
 feature dhcp
 feature vpc
+feature fex
 feature lldp
 clock timezone CST -6 0
 clock summer-time CDT 2 Sun Mar 02:00 1 Sun Nov 02:00 60
@@ -85,6 +86,12 @@ system qos
   service-policy type network-qos JUMBO
 track 5 ip sla 5 reachability
  delay down 10
+
+fex 101
+  pinning max-links 1
+  description "Row 13, Rack 5, RU 28"
+  serial FOC642122LK
+  type N2248T
 
 copp profile lenient
 ip ssh source-interface mgmt0 vrf management
@@ -188,6 +195,11 @@ interface port-channel10
   mtu 9216
   vpc 10
 
+interface port-channel101
+  switchport mode fex-fabric
+  fex associate 101
+  no shutdown
+
 interface Ethernet1/1
   switchport mode trunk
   spanning-tree link-type point-to-point
@@ -233,6 +245,18 @@ interface Ethernet1/5/2
 interface Ethernet1/5/3
 
 interface Ethernet1/5/4
+
+interface Ethernet1/6
+  switchport mode fex-fabric
+  fex associate 101
+  channel-group 101
+  no shutdown
+
+interface Ethernet1/7
+  switchport mode fex-fabric
+  fex associate 101
+  channel-group 101
+  no shutdown
 
 interface mgmt0
   ip address dhcp
