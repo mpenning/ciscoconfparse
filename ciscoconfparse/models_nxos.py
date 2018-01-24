@@ -292,7 +292,15 @@ class BaseNXOSIntfLine(NXOSCfgLine):
 
     def __repr__(self):
         if not self.is_switchport:
-            if self.ipv4_addr_object == self.default_ipv4_addr_object:
+            try:
+                ipv4_addr_object = self.ipv4_addr_object
+            except ValueError:
+                # Interface uses dhcp
+                ipv4_addr_object = None
+
+            if ipv4_addr_object is None:
+                addr = "dhcp"
+            elif ipv4_addr_object == self.default_ipv4_addr_object:
                 addr = "No IPv4"
             else:
                 ip = str(self.ipv4_addr_object.ip)
@@ -674,6 +682,8 @@ class BaseNXOSIntfLine(NXOSCfgLine):
         """Return a ccp_util.IPv4Obj object representing the address on this interface; if there is no address, return IPv4Obj('127.0.0.1/32')"""
         try:
             return IPv4Obj('%s/%s' % (self.ipv4_addr, self.ipv4_masklength))
+        except ValueError as e:
+            raise ValueError(e)
         except:
             return self.default_ipv4_addr_object
 
@@ -689,8 +699,11 @@ class BaseNXOSIntfLine(NXOSCfgLine):
             return IPv4Obj(
                 '{0}/{1}'.format(self.ipv4_addr, self.ipv4_netmask),
                 strict=False)
+        except ValueError as e:
+            raise ValueError(e)
         except (Exception) as e:
             return self.default_ipv4_addr_object
+
 
     @property
     def has_autonegotiation(self):
