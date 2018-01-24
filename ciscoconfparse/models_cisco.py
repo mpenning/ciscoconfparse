@@ -303,7 +303,14 @@ class BaseIOSIntfLine(IOSCfgLine):
 
     def __repr__(self):
         if not self.is_switchport:
-            if self.ipv4_addr_object == self.default_ipv4_addr_object:
+            try:
+                ipv4_addr_object = self.ipv4_addr_object
+            except ValueError:
+                ipv4_addr_object = None
+
+            if ipv4_addr_object is None:
+                addr = "dhcp"
+            elif ipv4_addr_object == self.default_ipv4_addr_object:
                 addr = "No IPv4"
             else:
                 ip = str(self.ipv4_addr_object.ip)
@@ -670,6 +677,8 @@ class BaseIOSIntfLine(IOSCfgLine):
         """Return a ccp_util.IPv4Obj object representing the address on this interface; if there is no address, return IPv4Obj('127.0.0.1/32')"""
         try:
             return IPv4Obj('%s/%s' % (self.ipv4_addr, self.ipv4_netmask))
+        except ValueError as e:
+            raise ValueError(e)
         except:
             return self.default_ipv4_addr_object
 
