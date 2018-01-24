@@ -6,6 +6,7 @@ import os
 THIS_DIR = os.path.dirname(__file__)
 sys.path.insert(0, os.path.join(os.path.abspath(THIS_DIR), "../ciscoconfparse/"))
 
+from errors import DynamicAddressException
 from ciscoconfparse import CiscoConfParse
 from ccp_util import IPv4Obj
 import pytest
@@ -732,15 +733,26 @@ def testVal_IOSIntfLine_ipv4_addr_object01(parse_c03_factory):
     assert result_correct==test_result
 
 def testVal_IOSIntfLine_ipv4_addr_object02():
-    """Ensure we raise an error for intf.ipv4_addr_object if it uses dhcp"""
+    """Ensure we raise an error for intf.ipv4_addr_object if the intf uses dhcp"""
     lines = ['!',
         'interface GigabitEthernet 1/1',
         ' ip address dhcp',
         '!',
     ]
     cfg = CiscoConfParse(lines, factory=True)
-    with pytest.raises(ValueError):
+    with pytest.raises(DynamicAddressException):
         cfg.find_objects('^interface')[0].ipv4_addr_object
+
+def testVal_IOSIntfLine_ip_network_object01():
+    """Ensure we raise an error for intf.ip_network_object if the intf uses dhcp"""
+    lines = ['!',
+        'interface GigabitEthernet 1/1',
+        ' ip address dhcp',
+        '!',
+    ]
+    cfg = CiscoConfParse(lines, factory=True)
+    with pytest.raises(DynamicAddressException):
+        cfg.find_objects('^interface')[0].ip_network_object
 
 def testVal_IOSIntfLine_has_autonegotiation(parse_c03_factory):
     cfg = parse_c03_factory

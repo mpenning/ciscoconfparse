@@ -3,6 +3,8 @@ import sys
 import re
 import os
 
+from errors import DynamicAddressException
+
 from ccp_util import _IPV6_REGEX_STR_COMPRESSED1, _IPV6_REGEX_STR_COMPRESSED2
 from ccp_util import _IPV6_REGEX_STR_COMPRESSED3
 from ccp_util import CiscoRange, IPv4Obj, IPv6Obj
@@ -305,11 +307,11 @@ class BaseIOSIntfLine(IOSCfgLine):
         if not self.is_switchport:
             try:
                 ipv4_addr_object = self.ipv4_addr_object
-            except ValueError:
+            except DynamicAddressException:
                 ipv4_addr_object = None
 
             if ipv4_addr_object is None:
-                addr = "dhcp"
+                addr = "IPv4 dhcp"
             elif ipv4_addr_object == self.default_ipv4_addr_object:
                 addr = "No IPv4"
             else:
@@ -677,8 +679,8 @@ class BaseIOSIntfLine(IOSCfgLine):
         """Return a ccp_util.IPv4Obj object representing the address on this interface; if there is no address, return IPv4Obj('127.0.0.1/32')"""
         try:
             return IPv4Obj('%s/%s' % (self.ipv4_addr, self.ipv4_netmask))
-        except ValueError as e:
-            raise ValueError(e)
+        except DynamicAddressException as e:
+            raise DynamicAddressException(e)
         except:
             return self.default_ipv4_addr_object
 
@@ -694,8 +696,8 @@ class BaseIOSIntfLine(IOSCfgLine):
             return IPv4Obj(
                 '{0}/{1}'.format(self.ipv4_addr, self.ipv4_netmask),
                 strict=False)
-        except ValueError as e:
-            raise ValueError(e)
+        except DynamicAddressException as e:
+            raise DynamicAddressException(e)
         except (Exception) as e:
             return self.default_ipv4_addr_object
 
@@ -872,7 +874,7 @@ class BaseIOSIntfLine(IOSCfgLine):
         if condition1.lower()=='dhcp':
             error = "Cannot parse address from a dhcp interface: {0}".format(
                 self.name)
-            raise ValueError(error)
+            raise DynamicAddressException(error)
         else:
             return retval
 
