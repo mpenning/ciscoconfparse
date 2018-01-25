@@ -701,17 +701,26 @@ class BaseIOSIntfLine(IOSCfgLine):
             return True
         else:
             raise ValueError
-
     @property
     def has_manual_speed(self):
+        return bool(self.manual_speed)
+
+    @property
+    def manual_speed(self):
+        """Return the manual speed of the interface as an int. If there is no explicit duplex set return 0"""
         retval = self.re_match_iter_typed(
-            r'^\s*speed\s+(\d+)$', result_type=bool, default=False)
+            r'^\s*speed\s+(\d+)$', result_type=int, default=0)
         return retval
 
     @property
     def has_manual_duplex(self):
+        return bool(self.manual_duplex)
+
+    @property
+    def manual_duplex(self):
+        """Return the manual duplex of the interface as a str. If there is no explicit duplex set return ''"""
         retval = self.re_match_iter_typed(
-            r'^\s*duplex\s+(\S.+)$', result_type=bool, default=False)
+            r'^\s*duplex\s+(\S.+)$', result_type=str, default='')
         return retval
 
     @property
