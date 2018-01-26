@@ -40,3 +40,4 @@ for obj in active_intfs:
     print "OBJ", obj
     print "  CONFIG:", obj.text
 
+print '\n'.join(active_intfs)
