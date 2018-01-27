@@ -70,6 +70,7 @@ into a Cisco IOS style (see `Github Issue #17`_), which means that
 CiscoConfParse understands these configurations:
 
 - Juniper Networks Junos
+- Palo Alto Networks Firewall configurations
 - F5 Networks configurations
 
 CiscoConfParse also handles anything that has a Cisco IOS style of configuration, which includes:
