@@ -589,7 +589,8 @@ class BaseCfgLine(object):
                 return result_type(default)
         return result_type(default)
 
-    def re_match_iter_typed(self, regex, group=1, result_type=str, default=''):
+    def re_match_iter_typed(self, regex, group=1, result_type=str, default='', 
+        all_children=False):
         """Use ``regex`` to search the children of 
         :class:`~models_cisco.IOSCfgLine` text and return the contents of 
         the regular expression group, at the integer ``group`` index, cast as 
@@ -601,9 +602,11 @@ class BaseCfgLine(object):
             - group (int): An integer which specifies the desired regex group to be returned.  ``group`` defaults to 1.
             - result_type (type): A type (typically one of: ``str``, ``int``, ``float``, or :class:`~ccp_util.IPv4Obj`).         All returned values are cast as ``result_type``, which defaults to ``str``.
             - default (any): The default value to be returned, if there is no match.
+            - all_children (bool): Set True if you want to search all children (children, grand children, great grand children, etc...)
 
         Returns:
             - ``result_type``.  The text matched by the regular expression group; if there is no match, ``default`` is returned.  All values are cast as ``result_type``.
+        - NOTE: This loops through the children (in order) and returns when the regex hits its first match.
 
         This example illustrates how you can use 
         :func:`~models_cisco.IOSCfgLine.re_match_iter_typed` to build an 
@@ -640,11 +643,18 @@ class BaseCfgLine(object):
             ##   this while I build the API
             raise NotImplementedError
 
-        for cobj in self.children:
-            mm = re.search(regex, cobj.text)
-            if not (mm is None):
-                return result_type(mm.group(group))
-        return result_type(default)
+        if all_children is False:
+            for cobj in self.children:
+                mm = re.search(regex, cobj.text)
+                if not (mm is None):
+                    return result_type(mm.group(group))
+            return result_type(default)
+        else:
+            for cobj in self.all_children:
+                mm = re.search(regex, cobj.text)
+                if not (mm is None):
+                    return result_type(mm.group(group))
+            return result_type(default)
 
     def reset(self):
         # For subclass APIs
