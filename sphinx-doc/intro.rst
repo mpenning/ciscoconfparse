@@ -101,6 +101,7 @@ into a Cisco IOS style (see `Github Issue #17`_), which means that
 CiscoConfParse understands these configurations too:
 
 - Juniper Networks Junos, and Screenos
+- Palo Alto Networks Firewall configurations
 - F5 Networks configurations
 
 Quotes
