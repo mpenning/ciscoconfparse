@@ -37,29 +37,6 @@ relationships.
    :target: https://raw.githubusercontent.com/mpenning/ciscoconfparse/master/sphinx-doc/_static/ciscoconfparse_overview_75pct.png
    :alt: CiscoConfParse Parent / Child relationships
 
-User Testimony
-==============
-
-These are a few selected public mentions about CiscoConfParse; I usually try not to share private emails without asking, thus the quotes aren't long at this time.
-
-.. image:: https://raw.githubusercontent.com/mpenning/ciscoconfparse/master/sphinx-doc/_static/crackerjackmack.png
-   :target: https://github.com/mpenning/ciscoconfparse/issues/13#issuecomment-71340177
-   :alt: CiscoConfParse Github Issue #17
-
-
-.. image:: https://raw.githubusercontent.com/mpenning/ciscoconfparse/master/sphinx-doc/_static/reddit_20150328.png
-   :target: http://www.reddit.com/r/Python/comments/2zxew5/interesting_dmca_notice_gplv3_license_violation/#cptgtl7
-   :alt: Reddit comment
-
-.. image:: https://raw.githubusercontent.com/mpenning/ciscoconfparse/master/sphinx-doc/_static/netnea.png
-   :target: https://www.netnea.com/cms/2014/01/20/parsing-cisco-configuration/
-   :alt: Netnea testimony
-
-
-.. image:: https://raw.githubusercontent.com/mpenning/ciscoconfparse/master/sphinx-doc/_static/twitter.png
-   :target: https://raw.githubusercontent.com/mpenning/ciscoconfparse/master/sphinx-doc/_static/twitter.png
-   :alt: Twitter mentions
-
 What if we don't use Cisco?
 ===========================
 
@@ -142,13 +119,6 @@ or `bitbucket repo`_:
       git clone git://github.com//mpenning/ciscoconfparse
 
 
-- From bitbucket_:
-  ::
-
-      hg init
-      hg clone https://bitbucket.org/mpenning/ciscoconfparse
-
-
 .. _FAQ:
 
 FAQ
@@ -188,7 +158,7 @@ Bug Tracker and Support
 Unit-Tests
 ==========
 
-`Travis CI project <https://travis-ci.org>`_ tests ciscoconfparse on Python versions 2.6 through 3.5, as well as a `pypy JIT`_ executable.
+`Travis CI project <https://travis-ci.org>`_ tests ciscoconfparse on Python versions 2.6 through 3.6, as well as a `pypy JIT`_ executable.
 
 Click the image below for details; the current build status is:
 
