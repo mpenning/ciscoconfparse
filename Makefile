@@ -10,7 +10,8 @@ package:
 .PHONY: pypi
 pypi:
 	make clean
-	python setup.py sdist bdist_wheel; python setup.py register; python setup.py bdist_wheel sdist upload
+	python setup.py sdist bdist_wheel
+	twine upload dist/*
 .PHONY: repo-push
 repo-push:
 	cp .hgrc .hg/
@@ -57,6 +58,7 @@ devpkgs:
 	pip install --upgrade colorama
 	pip install --upgrade fabric
 	pip install --upgrade ipaddr
+	pip install --upgrade twine
 .PHONY: flake
 flake:
 	flake8 --ignore E501,E226,E225,E221,E303,E302,E265,E128,E125,E124,E41,W291 --max-complexity 10 ciscoconfparse | less
