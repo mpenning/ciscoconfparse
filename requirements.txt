@@ -1,4 +1,4 @@
 ipaddr>=2.1.11
 passlib
 colorama
-dnspython
+dnspython==1.14.0
