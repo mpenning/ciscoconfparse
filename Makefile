@@ -53,11 +53,10 @@ devpkgs:
 	pip install --upgrade mccabe
 	pip install --upgrade flake8
 	pip install --upgrade yapf
-	pip install --upgrade dnspython
+	pip install dnspython==1.14.0
 	pip install --upgrade colorama
 	pip install --upgrade fabric
 	pip install --upgrade ipaddr
-	pip install --upgrade twine
 .PHONY: flake
 flake:
 	flake8 --ignore E501,E226,E225,E221,E303,E302,E265,E128,E125,E124,E41,W291 --max-complexity 10 ciscoconfparse | less
