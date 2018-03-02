@@ -208,6 +208,10 @@ class BaseCfgLine(object):
             for child in self.children:
                 child.delete()
 
+        # update parent about delete of child
+        if self.parent != self:
+            self.parent.children.remove(self)
+
         ## Consistency check to refuse deletion of the wrong object...
         ##    only delete if the line numbers are consistent
         text = self.text
@@ -215,6 +219,11 @@ class BaseCfgLine(object):
         if self.confobj._list[self.linenum].text==text:
             del self.confobj._list[self.linenum]
             self._list_reassign_linenums()
+        else:
+            # Hits error during consistency check
+            # When and why the above check of consistency really required?
+            # Ideally del and reassign good enough
+            raise NotImplementedError
 
     def delete_children_matching(self, linespec):
         """Delete any child :class:`~models_cisco.IOSCfgLine` objects which 
