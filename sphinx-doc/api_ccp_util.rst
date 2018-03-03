@@ -1,7 +1,7 @@
 .. _api_ccp_util:
 
-ciscoconfparse.ccp_util
------------------------
+ciscoconfparse.ccp_util Classes and Methods
+-------------------------------------------
 
 .. autoclass:: ccp_util.IPv4Obj
       :members:
