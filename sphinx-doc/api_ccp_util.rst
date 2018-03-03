@@ -18,5 +18,10 @@ ciscoconfparse.ccp_util Classes and Methods
       :undoc-members:
       :inherited-members:
 
+.. autoclass:: ccp_util.DNSResponse
+      :members:
+      :undoc-members:
+      :inherited-members:
+
 .. autofunction:: ccp_util.dns_query
 
