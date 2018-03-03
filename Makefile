@@ -87,6 +87,7 @@ clean:
 	@# remove all the MockSSH keys
 	-find ./* -name '*.key' -exec rm {} \;
 	-rm -rf .eggs/
+	-rm -rf .cache/
 	-rm -rf build/ dist/ ciscoconfparse.egg-info/ setuptools*
 .PHONY: help
 help:
