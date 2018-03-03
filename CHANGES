@@ -1,3 +1,4 @@
+1.3.9   20180303 Build dns_query() responses on a universal DNSResponse() object
 1.3.8   20180303 Attempt to fix Python3 packaging
 1.3.7   20180303 [RELEASE BROKEN and removed from pypi - Python3 broken]
 1.3.6   20180213 [RELEASE BROKEN and removed from pypi]
