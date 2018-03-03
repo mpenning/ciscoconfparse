@@ -1,5 +1,6 @@
 from collections import MutableSequence
 import itertools
+import socket
 import sys
 import re
 import os
@@ -73,6 +74,19 @@ _RGX_IPV4ADDR_NETMASK = re.compile(r"""
 
 _RGX_CISCO_RANGE = re.compile(_CISCO_RANGE_STR)
 
+def is_valid_ipv4_addr(input=""):
+    """Check if this is a valid IPv4 string"""
+    assert input!=""
+    if _RGX_IPV4ADDR(input):
+        return True
+    return False
+
+def is_valid_ipv6_addr(input=""):
+    """Check if this is a valid IPv6 string"""
+    assert input!=""
+    if _RGX_IPV6ADDR(input):
+        return True
+    return False
 
 ## Emulate the old behavior of ipaddr.IPv4Network in Python2, which can use
 ##    IPv4Network with a host address.  Google removed that in Python3's 
@@ -685,6 +699,114 @@ class L4Object(object):
     def __repr__(self):
         return "<L4Object {0} {1}>".format(self.protocol, self.port_list)
 
+def dns_query(input="", record_type="", server="", timeout=2.0):
+    """A unified IPv4 & IPv6 DNS lookup interface
+
+    Kwargs:
+        - input (str): A string containing the DNS record to lookup
+        - record_type (str): A string containing the DNS record type (SOA not supported)
+        - server (str): A string containing the fqdn or IP address of the dns server
+        - timeout (float): DNS lookup timeout duration
+
+    Returns:
+        - a dictionary with these keys:
+          'value': A python set() of the query answers
+          'record': The record type
+          'error': A string containing any errors reported (default: '')
+          'input': A string containing the input request
+    """
+        
+    valid_records = set(['A', 'AAAA', 'CNAME', 'MX', 'NS', 'PTR', 'TXT'])
+    record_type = record_type.upper()
+    assert record_type in valid_records
+    assert server!=""
+    assert float(timeout)>0
+    assert input != ""
+    intput = input.strip()
+    retval = set([])
+    resolver = Resolver()
+    resolver.server = [socket.gethostbyname(server)]
+    resolver.timeout = float(timeout)
+    resolver.lifetime = float(timeout)
+    if (record_type=="A") or (record_type=="AAAA"):
+        try:
+            for result in resolver.query(input, record_type):
+                retval.add(str(result.address))
+        except DNSException as e:
+            return {
+                'value': '',
+                'record': record_type,
+                'error': e,
+                'input': input,
+                }
+    elif record_type=="CNAME":
+        try:
+            for result in resolver.query(input, record_type):
+                retval.add(str(result.target))
+        except DNSException as e:
+            return {
+                'value': '',
+                'record': record_type,
+                'error': e,
+                'input': input,
+                }
+    elif record_type=="MX":
+        try:
+            for result in resolver.query(input, record_type):
+                retval.add(str(result.exchange))
+        except DNSException as e:
+            return {
+                'value': '',
+                'record': record_type,
+                'error': e,
+                'input': input,
+                }
+    elif record_type=="NS":
+        try:
+            for result in resolver.query(input, record_type):
+                retval.add(str(result.target))
+        except DNSException as e:
+            return {
+                'value': '',
+                'record': record_type,
+                'error': e,
+                'input': input,
+                }
+    elif record_type=="PTR":
+        if is_valid_ipv4_addr(input) or is_valid_ipv6_addr(input):
+            inaddr = reversename.from_address(input)
+        elif 'in-addr.arpa' in input.lower():
+            inaddr = input
+        else:
+            raise ValueError('Cannot query PTR record for "{0}"'.format(input))
+
+        try:
+            for result in resolver.query(inaddr, record_type):
+                retval.add(str(result.target))
+        except DNSException as e:
+            return {
+                'value': '',
+                'record': record_type,
+                'error': e,
+                'input': input,
+                }
+    elif record_type=="TXT":
+        try:
+            for result in resolver.query(input, record_type):
+                retval.add(str(result.strings))
+        except DNSException as e:
+            return {
+                'value': '',
+                'record': record_type,
+                'error': e,
+                'input': input,
+                }
+    return {
+        'value': retval,
+        'record': record_type,
+        'error': '',
+        'input': input,
+        }
 
 def dns_lookup(input, timeout=3, server=''):
     """Perform a simple DNS lookup, return results in a dictionary"""
