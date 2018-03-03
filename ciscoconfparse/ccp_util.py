@@ -720,6 +720,27 @@ class L4Object(object):
     def __repr__(self):
         return "<L4Object {0} {1}>".format(self.protocol, self.port_list)
 
+class DNSResponse(object):
+    """A universal DNS Response object"""
+    def __init__(self):
+        self.query_type = ""
+        self.result_str = ""
+        self.input = ""
+        self.preference = -1   # MX Preference
+        self.has_error = False
+        self.error_str = ""
+
+    def __str__(self):
+        return self.result_str
+
+    def __repr__(self):
+        if not self.has_error:
+            return "<DNSResponse '{0}' result_str='{1}'>".format(
+                self.query_type, self.result_str)
+        else:
+            return "<DNSResponse '{0}' error='{1}'>".format(
+                self.query_type, self.error_str)
+
 def dns_query(input="", record_type="", server="", timeout=2.0):
     """A unified IPv4 & IPv6 DNS lookup interface
 
@@ -730,16 +751,14 @@ def dns_query(input="", record_type="", server="", timeout=2.0):
         - timeout (float): DNS lookup timeout duration
 
     Returns:
-        A dictionary with these keys:
-
-        - 'value': A python set() of the query answers
-        - 'record': The record type
-        - 'error': A string containing any errors reported (default: '')
-        - 'input': A string containing the input request
+        A set() of DNSResponse() objects
 
 >>> from ciscoconfparse.ccp_util import dns_query
 >>> dns_query('www.pennington.net', 'A', '4.2.2.2')
-{'record': 'A', 'input': 'www.pennington.net', 'value': set(['65.19.187.2']), 'error': ''}
+set([<DNSResponse 'A' result_str='65.19.187.2'>])
+>>> answer = dns_query('www.pennington.net', 'A', '4.2.2.2')
+>>> str(answer.pop())
+'65.19.187.2'
 >>>
     """
         
@@ -758,47 +777,64 @@ def dns_query(input="", record_type="", server="", timeout=2.0):
     if (record_type=="A") or (record_type=="AAAA"):
         try:
             for result in resolver.query(input, record_type):
-                retval.add(str(result.address))
+                response = DNSResponse()
+                response.result_str = str(result.address)
+                response.query_type = record_type
+                response.input = input
+                retval.add(response)
         except DNSException as e:
-            return {
-                'value': '',
-                'record': record_type,
-                'error': e,
-                'input': input,
-                }
+                response = DNSResponse()
+                response.query_type = record_type
+                response.input = input
+                response.has_error = True
+                response.error = e
+                retval.add(response)
     elif record_type=="CNAME":
         try:
             for result in resolver.query(input, record_type):
-                retval.add(str(result.target))
+                response = DNSResponse()
+                response.result_str = str(result.target)
+                response.query_type = record_type
+                response.input = input
+                retval.add(response)
         except DNSException as e:
-            return {
-                'value': '',
-                'record': record_type,
-                'error': e,
-                'input': input,
-                }
+                response = DNSResponse()
+                response.query_type = record_type
+                response.input = input
+                response.has_error = True
+                response.error = e
+                retval.add(response)
     elif record_type=="MX":
         try:
             for result in resolver.query(input, record_type):
-                retval.add(str(result.exchange))
+                response = DNSResponse()
+                response.result_str = str(result.exchange)
+                response.query_type = record_type
+                response.preference = int(result.preference)
+                response.input = input
+                retval.add(response)
         except DNSException as e:
-            return {
-                'value': '',
-                'record': record_type,
-                'error': e,
-                'input': input,
-                }
+                response = DNSResponse()
+                response.query_type = record_type
+                response.input = input
+                response.has_error = True
+                response.error = e
+                retval.add(response)
     elif record_type=="NS":
         try:
             for result in resolver.query(input, record_type):
-                retval.add(str(result.target))
+                response = DNSResponse()
+                response.result_str = str(result.target)
+                response.query_type = record_type
+                response.input = input
+                retval.add(response)
         except DNSException as e:
-            return {
-                'value': '',
-                'record': record_type,
-                'error': e,
-                'input': input,
-                }
+                response = DNSResponse()
+                response.query_type = record_type
+                response.input = input
+                response.has_error = True
+                response.error = e
+                retval.add(response)
     elif record_type=="PTR":
         if is_valid_ipv4_addr(input) or is_valid_ipv6_addr(input):
             inaddr = reversename.from_address(input)
@@ -809,31 +845,34 @@ def dns_query(input="", record_type="", server="", timeout=2.0):
 
         try:
             for result in resolver.query(inaddr, record_type):
-                retval.add(str(result.target))
+                response = DNSResponse()
+                response.result_str = result.target
+                response.query_type = record_type
+                response.input = input
+                retval.add(response)
         except DNSException as e:
-            return {
-                'value': '',
-                'record': record_type,
-                'error': e,
-                'input': input,
-                }
+                response = DNSResponse()
+                response.query_type = record_type
+                response.input = input
+                response.has_error = True
+                response.error = e
+                retval.add(response)
     elif record_type=="TXT":
         try:
             for result in resolver.query(input, record_type):
-                retval.add(str(result.strings))
+                response = DNSResponse()
+                response.result_str = str(result.strings)
+                response.query_type = record_type
+                response.input = input
+                retval.add(response)
         except DNSException as e:
-            return {
-                'value': '',
-                'record': record_type,
-                'error': e,
-                'input': input,
-                }
-    return {
-        'value': retval,
-        'record': record_type,
-        'error': '',
-        'input': input,
-        }
+                response = DNSResponse()
+                response.query_type = record_type
+                response.input = input
+                response.has_error = True
+                response.error = e
+                retval.add(response)
+    return retval
 
 def dns_lookup(input, timeout=3, server=''):
     """Perform a simple DNS lookup, return results in a dictionary"""
