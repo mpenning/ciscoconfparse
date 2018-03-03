@@ -1,7 +1,7 @@
 .. _api_CiscoConfParse:
 
-CiscoConfParse Object
----------------------
+ciscoconfparse.CiscoConfParse Object
+------------------------------------
 
 .. autoclass:: ciscoconfparse.CiscoConfParse
       :members:

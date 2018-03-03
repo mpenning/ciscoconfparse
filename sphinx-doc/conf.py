@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.join(os.path.abspath(os.path.dirname(__file__)),
     "..", "ciscoconfparse"))
 
 from sphinx.ext.autodoc import AttributeDocumenter, ClassLevelDocumenter
-import ciscoconfparse, ccp_abc
+import ciscoconfparse, ccp_abc, ccp_util
 try:
     import sphinx_bootstrap_theme
 except:
@@ -40,7 +40,7 @@ extensions = ['sphinx.ext.autodoc',
     'sphinx.ext.doctest', 
     'sphinx.ext.intersphinx', 
     'sphinx.ext.autosummary',]
-intersphinx_mapping = {'python':('http://docs.python.org/2.6', None)}
+intersphinx_mapping = {'python':('http://docs.python.org/2.7', None)}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

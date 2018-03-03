@@ -1,7 +1,7 @@
 .. _api_IOSCfgLine:
 
-IOSCfgLine Object
------------------
+ciscoconfparse.models_cisco.IOSCfgLine Object
+---------------------------------------------
 
 .. autoclass:: models_cisco.IOSCfgLine
       :members:

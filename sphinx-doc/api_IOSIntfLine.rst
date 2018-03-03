@@ -1,7 +1,7 @@
 .. _api_IOSIntfLine:
 
-IOSIntfLine Object
------------------
+ciscoconfparse.models_cisco.IOSIntfLine Object
+----------------------------------------------
 
 .. autoclass:: models_cisco.IOSIntfLine
       :members:

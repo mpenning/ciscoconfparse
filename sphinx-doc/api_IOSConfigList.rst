@@ -1,7 +1,7 @@
 .. _api_IOSConfigList:
 
-IOSConfigList Object
---------------------
+ciscoconfparse.IOSConfigList Object
+-----------------------------------
 
 .. autoclass:: ciscoconfparse.IOSConfigList
       :members:
