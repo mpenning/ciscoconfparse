@@ -115,6 +115,27 @@ class IPv4Obj(object):
     Returns:
         - an instance of :class:`~ccp_util.IPv4Obj`.
 
+>>> from ciscoconfparse.ccp_util import IPv4Obj
+>>> net = IPv4Obj('172.16.1.0/24')
+>>> net
+<IPv4Obj 172.16.1.0/24>
+>>> net.ip
+IPv4Address('172.16.1.0')
+>>> net.ip + 1
+IPv4Address('172.16.1.1')
+>>> str(net.ip+1)
+'172.16.1.1'
+>>> net.network
+IPv4Address('172.16.1.0')
+>>> net.network_object
+IPv4Network('172.16.1.0/24')
+>>> str(net.network_object)
+'172.16.1.0'
+>>> net.prefixlen
+24
+>>> net.network_object.iterhosts()
+<generator object iterhosts at 0x7f00bfcce730>
+>>>
     """
 
     def __init__(self, arg='127.0.0.1/32', strict=False):
@@ -709,11 +730,17 @@ def dns_query(input="", record_type="", server="", timeout=2.0):
         - timeout (float): DNS lookup timeout duration
 
     Returns:
-        - a dictionary with these keys:
-          'value': A python set() of the query answers
-          'record': The record type
-          'error': A string containing any errors reported (default: '')
-          'input': A string containing the input request
+        A dictionary with these keys:
+
+        - 'value': A python set() of the query answers
+        - 'record': The record type
+        - 'error': A string containing any errors reported (default: '')
+        - 'input': A string containing the input request
+
+>>> from ciscoconfparse.ccp_util import dns_query
+>>> dns_query('www.pennington.net', 'A', '4.2.2.2')
+{'record': 'A', 'input': 'www.pennington.net', 'value': set(['65.19.187.2']), 'error': ''}
+>>>
     """
         
     valid_records = set(['A', 'AAAA', 'CNAME', 'MX', 'NS', 'PTR', 'TXT'])
