@@ -273,7 +273,7 @@ class BaseCfgLine(object):
     def insert_before(self, insertstr):
         """insert_before()"""
         ## BaseCfgLine.insert_before(), insert a single line before this object
-        retval = self.confobj.ConfigObjs.insert_before(self, insertstr, 
+        retval = self.confobj.insert_before(self, insertstr, 
             atomic=False)
         return retval
 
