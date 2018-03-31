@@ -273,15 +273,15 @@ class BaseCfgLine(object):
     def insert_before(self, insertstr):
         """insert_before()"""
         ## BaseCfgLine.insert_before(), insert a single line before this object
-        local_atomic=False
-        retval = self.confobj.insert_before(self, insertstr, atomic=local_atomic)
+        retval = self.confobj.ConfigObjs.insert_before(self, insertstr, 
+            atomic=False)
         return retval
 
     def insert_after(self, insertstr):
         """insert_after()"""
         ## BaseCfgLine.insert_after(), insert a single line after this object
-        local_atomic=False
-        retval = self.confobj.insert_after(self, insertstr, atomic=local_atomic)
+        retval = self.confobj.insert_after(self, insertstr, 
+            atomic=False)
         return retval
 
     def append_to_family(self, insertstr, indent=-1, auto_indent_width=1, 
@@ -341,15 +341,14 @@ class BaseCfgLine(object):
 
         ## BaseCfgLine.append_to_family(), insert a single line after this 
         ##  object's children
-        local_atomic=False
         try:
-            last_child = self.children[-1]
+            last_child = self.all_children[-1]
             retval = self.confobj.insert_after(last_child, insertstr, 
-                atomic=local_atomic)
+                atomic=True)
         except IndexError:
             # The object has no children
             retval = self.confobj.insert_after(self, insertstr, 
-                atomic=local_atomic)
+                atomic=True)
 
         return retval
 
