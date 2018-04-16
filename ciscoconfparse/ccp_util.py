@@ -16,7 +16,7 @@ if sys.version_info[0] < 3:
 else:
     from ipaddress import IPv4Network, IPv6Network, IPv4Address, IPv6Address
 """ ccp_util.py - Parse, Query, Build, and Modify IOS-style configurations
-     Copyright (C) 2014-2015 David Michael Pennington
+     Copyright (C) 2014-2015, 2018 David Michael Pennington
 
      This program is free software: you can redistribute it and/or modify
      it under the terms of the GNU General Public License as published by
@@ -204,19 +204,19 @@ IPv4Network('172.16.1.0/24')
 
     def __gt__(self, val):
         try:
-            val_prefixlen = int(getattr(val, 'prefixlen'))
+            val_in_self = self.__contains__(val)
             val_nobj = getattr(val, 'network_object')
+            self_nobj = getattr(self, 'network_object')
+            val_dec = getattr(val, 'as_decimal')
+            self_dec = getattr(self, 'as_decimal')
 
-            self_nobj = self.network_object
-            if (self.network_object.prefixlen < val_prefixlen):
+            if val_in_self:
                 # Sort shorter masks as higher...
-                return True
-            elif (self.network_object.prefixlen > val_prefixlen):
                 return False
-            elif (self_nobj > val_nobj):
-                # If masks are equal, rely on Google's sorting...
-                return True
-            return False
+            elif self_nobj==val_nobj:
+                return (self_dec > val_dec)
+            else:
+                return (self_nobj > val_nobj)
         except:
             errmsg = "{0} cannot compare itself to '{1}'".format(
                 self.__repr__(), val)
@@ -224,19 +224,19 @@ IPv4Network('172.16.1.0/24')
 
     def __lt__(self, val):
         try:
-            val_prefixlen = int(getattr(val, 'prefixlen'))
+            val_in_self = self.__contains__(val)
             val_nobj = getattr(val, 'network_object')
+            self_nobj = getattr(self, 'network_object')
+            val_dec = getattr(val, 'as_decimal')
+            self_dec = getattr(self, 'as_decimal')
 
-            self_nobj = self.network_object
-            if (self.network_object.prefixlen > val_prefixlen):
-                # Sort shorter masks as lower...
+            if val_in_self:
+                # Sort shorter masks as higher...
                 return True
-            elif (self.network_object.prefixlen < val_prefixlen):
-                return False
-            elif (self_nobj < val_nobj):
-                # If masks are equal, rely on Google's sorting...
-                return True
-            return False
+            elif self_nobj==val_nobj:
+                return (self_dec < val_dec)
+            else:
+                return (self_nobj < val_nobj)
         except:
             errmsg = "{0} cannot compare itself to '{1}'".format(
                 self.__repr__(), val)
@@ -458,19 +458,19 @@ class IPv6Obj(object):
 
     def __gt__(self, val):
         try:
-            val_prefixlen = int(getattr(val, 'prefixlen'))
+            val_in_self = self.__contains__(val)
             val_nobj = getattr(val, 'network_object')
+            self_nobj = getattr(self, 'network_object')
+            val_dec = getattr(val, 'as_decimal')
+            self_dec = getattr(self, 'as_decimal')
 
-            self_nobj = self.network_object
-            if (self.network_object.prefixlen < val_prefixlen):
+            if val_in_self:
                 # Sort shorter masks as higher...
-                return True
-            elif (self.network_object.prefixlen > val_prefixlen):
                 return False
-            elif (self_nobj > val_nobj):
-                # If masks are equal, rely on Google's sorting...
-                return True
-            return False
+            elif self_nobj==val_nobj:
+                return (self_dec > val_dec)
+            else:
+                return (self_nobj > val_nobj)
         except:
             errmsg = "{0} cannot compare itself to '{1}'".format(
                 self.__repr__(), val)
@@ -478,19 +478,19 @@ class IPv6Obj(object):
 
     def __lt__(self, val):
         try:
-            val_prefixlen = int(getattr(val, 'prefixlen'))
+            val_in_self = self.__contains__(val)
             val_nobj = getattr(val, 'network_object')
+            self_nobj = getattr(self, 'network_object')
+            val_dec = getattr(val, 'as_decimal')
+            self_dec = getattr(self, 'as_decimal')
 
-            self_nobj = self.network_object
-            if (self.network_object.prefixlen > val_prefixlen):
-                # Sort shorter masks as lower...
+            if val_in_self:
+                # Sort shorter masks as higher...
                 return True
-            elif (self.network_object.prefixlen < val_prefixlen):
-                return False
-            elif (self_nobj < val_nobj):
-                # If masks are equal, rely on Google's sorting...
-                return True
-            return False
+            elif self_nobj==val_nobj:
+                return (self_dec < val_dec)
+            else:
+                return (self_nobj < val_nobj)
         except:
             errmsg = "{0} cannot compare itself to '{1}'".format(
                 self.__repr__(), val)
