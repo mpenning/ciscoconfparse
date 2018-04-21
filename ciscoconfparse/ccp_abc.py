@@ -344,11 +344,11 @@ class BaseCfgLine(object):
         try:
             last_child = self.all_children[-1]
             retval = self.confobj.insert_after(last_child, insertstr, 
-                atomic=True)
+                atomic=False)
         except IndexError:
             # The object has no children
             retval = self.confobj.insert_after(self, insertstr, 
-                atomic=True)
+                atomic=False)
 
         return retval
 
