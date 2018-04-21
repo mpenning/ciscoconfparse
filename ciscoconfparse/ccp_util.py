@@ -6,7 +6,7 @@ import sys
 import re
 import os
 
-from protocol_values import ASA_TCP_PORTS, ASA_UDP_PORTS
+from .protocol_values import ASA_TCP_PORTS, ASA_UDP_PORTS
 from dns.exception import DNSException
 from dns.resolver import Resolver
 from dns import reversename, query
@@ -105,7 +105,8 @@ class IPv4Obj(object):
         - as_binary_tuple (tuple): The address as a tuple of zero-padded binary strings
         - as_hex_tuple (tuple): The address as a tuple of zero-padded 8-bit hex strings
         - as_decimal (int): The ip address as a decimal integer
-        - network (str): A string representing the network address
+        - network : An IPv4Network object
+        - network_object : An IPv4Network object
         - netmask (str): A string representing the netmask
         - prefixlen (int): An integer representing the length of the netmask
         - prefixlength (int): An integer representing the length of the netmask
@@ -211,7 +212,7 @@ IPv4Network('172.16.1.0/24')
             self_dec = getattr(self, 'as_decimal')
 
             if val_in_self:
-                # Sort shorter masks as higher...
+                # Sort shorter masks as lower...
                 return False
             elif self_nobj==val_nobj:
                 return (self_dec > val_dec)
@@ -231,7 +232,7 @@ IPv4Network('172.16.1.0/24')
             self_dec = getattr(self, 'as_decimal')
 
             if val_in_self:
-                # Sort shorter masks as higher...
+                # Sort shorter masks as lower...
                 return True
             elif self_nobj==val_nobj:
                 return (self_dec < val_dec)
