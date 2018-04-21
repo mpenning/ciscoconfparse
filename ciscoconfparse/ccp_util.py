@@ -6,7 +6,7 @@ import sys
 import re
 import os
 
-from .protocol_values import ASA_TCP_PORTS, ASA_UDP_PORTS
+from protocol_values import ASA_TCP_PORTS, ASA_UDP_PORTS
 from dns.exception import DNSException
 from dns.resolver import Resolver
 from dns import reversename, query
