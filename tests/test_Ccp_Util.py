@@ -148,10 +148,12 @@ def testIPv4Obj_attributes():
     test_object = IPv4Obj('1.0.0.1 255.255.255.0')
     results_correct = [
         ('ip',            IPv4Address('1.0.0.1')),
+        ('ip_object',     IPv4Address('1.0.0.1')),
         ('netmask',       IPv4Address('255.255.255.0')),
         ('prefixlen',     24),
         ('broadcast',     IPv4Address('1.0.0.255')),
         ('network',       IPv4Network('1.0.0.0/24')),
+        ('network_object',IPv4Network('1.0.0.0/24')),
         ('hostmask',      IPv4Address('0.0.0.255')),
         ('numhosts',      256),
         ('version',       4),
