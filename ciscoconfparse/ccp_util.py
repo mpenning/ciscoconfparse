@@ -785,8 +785,6 @@ set([<DNSResponse 'A' result_str='65.19.187.2'>])
 >>>
     """
 
-    def get_zone(input, server):
-        
     valid_records = set(['A', 'AAAA', 'AXFR', 'CNAME', 'MX', 'NS', 'PTR', 
         'TXT'])
     query_type = query_type.upper()
