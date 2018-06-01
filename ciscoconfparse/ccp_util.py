@@ -9,7 +9,7 @@ import os
 from protocol_values import ASA_TCP_PORTS, ASA_UDP_PORTS
 from dns.exception import DNSException
 from dns.resolver import Resolver
-from dns import reversename, query
+from dns import reversename, query, zone
 
 if sys.version_info[0] < 3:
     from ipaddr import IPv4Network, IPv6Network, IPv4Address, IPv6Address
@@ -784,8 +784,11 @@ set([<DNSResponse 'A' result_str='65.19.187.2'>])
 '65.19.187.2'
 >>>
     """
+
+    def get_zone(input, server):
         
-    valid_records = set(['A', 'AAAA', 'CNAME', 'MX', 'NS', 'PTR', 'TXT'])
+    valid_records = set(['A', 'AAAA', 'AXFR', 'CNAME', 'MX', 'NS', 'PTR', 
+        'TXT'])
     query_type = query_type.upper()
     assert query_type in valid_records
     assert server!=""
@@ -814,6 +817,10 @@ set([<DNSResponse 'A' result_str='65.19.187.2'>])
                 response.has_error = True
                 response.error_str = e
                 retval.add(response)
+    elif query_type=="AXFR":
+        """This is a hack: return text of zone transfer, instead of axfr objs"""
+        _zone = zone.from_xfr(query.xfr(server, input, lifetime=timeout))
+        return [_zone[node].to_text(node) for node in _zone.nodes.keys()]
     elif query_type=="CNAME":
         try:
             answer = resolver.query(input, query_type)
