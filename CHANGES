@@ -1,3 +1,4 @@
+1.3.17  20180608 Attempt to resolve Github issue #106
 1.3.16  20180601 Add dns_query() zone transfer as text
 1.3.15  20180421 Distrbution change
 1.3.14  20180421 Attempt to fix unit tests

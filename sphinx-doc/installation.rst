@@ -99,7 +99,7 @@ Alternatively you can install with pip_: ::
 If you have a specific version of ciscoconfparse in mind, you can specify that
 at the command-line ::
 
-      pip install ciscoconfparse==1.3.16
+      pip install ciscoconfparse==1.3.17
 
 
 Install with setuptools
@@ -113,7 +113,7 @@ If you don't have pip_, you can use setuptools_...  ::
 If you have a specific version of ciscoconfparse in mind, you can specify that
 at the command-line ::
 
-      easy_install -U ciscoconfparse==1.3.16
+      easy_install -U ciscoconfparse==1.3.17
 
 Install from the source
 ~~~~~~~~~~~~~~~~~~~~~~~
