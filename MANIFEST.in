@@ -5,6 +5,6 @@ recursive-exclude * *.pyo
 recursive-exclude * *.orig
 recursive-exclude * BUILD.ME
 recursive-exclude * BITBUCKET_HG
-recursive-include tests
+recursive-include tests*
 prune sphinx-doc/_static*
 prune sphinx-doc/_build*
