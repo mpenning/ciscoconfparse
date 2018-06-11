@@ -1,2 +1,2 @@
 
-- To build the slide deck, `landslide -i ccp_tutorial.md`
+- To build the slide deck, `landslide -l no -i ccp_tutorial.md`
