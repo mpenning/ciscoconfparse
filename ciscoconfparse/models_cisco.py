@@ -1201,38 +1201,29 @@ class BaseIOSIntfLine(IOSCfgLine):
             allowed = '1-4094'
         elif allowed == 'none':
             allowed = ''
-        add = self.re_match_iter_typed(
-            r'^\s*switchport\s+trunk\s+allowed\s+vlan\s+add\s+(\S+)$',
-            result_type=str,
-            default='')
 
-        if allowed and add:
-            combined = allowed + ',' + add
-        elif allowed:
-            combined = allowed
-        elif add:
-            combined = add
-        else:
-            combined = allowed
+        combined = ''
+        removed = ''
 
-        remove = self.re_match_iter_typed(
-            r'^\s*switchport\s+trunk\s+allowed\s+vlan\s+remove\s+(\S+)$',
-            result_type=str,
-            default='')
+        for line in self.children:
+            action_vlan_range = line.re_match_typed(
+                r'^\s*switchport\s+trunk\s+allowed\s+vlan\s+((?:add|remove|except)\s+\S+)$')
 
-        if remove:
-            retval = CiscoRange(combined, result_type=int).remove(remove)
-        else:
-            retval = CiscoRange(combined, result_type=int)
+            if action_vlan_range == '':
+                continue
 
-        _except = self.re_match_iter_typed(
-            r'^\s*switchport\s+trunk\s+allowed\s+vlan\s+except\s+(\S+)$',
-            result_type=str,
-            default='')
+            action, vlan_range = re.split(r'\s+', action_vlan_range)
+            action = action.lower()
 
-        if _except:
-            retval = CiscoRange(combined, result_type=int).remove(_except)
+            if action == 'add':
+                combined = combined + ',' + vlan_range if combined else vlan_range
+            elif action == 'remove':
+                removed = removed + ',' + vlan_range if removed else vlan_range
+            elif action == 'except':
+                combined = '1-4094'
+                removed = removed + ',' + vlan_range if removed else vlan_range
 
+        retval = CiscoRange(combined, result_type=int).remove(removed)
         return retval
 
     @property
