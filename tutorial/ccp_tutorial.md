@@ -4,7 +4,7 @@
 -   Code repo on [github]
 -   [Documentation]
 -   Author: Mike Pennington &lt;<mike@pennington.net>&gt;
--   Date: 2015-07-04
+-   Date: 2018-06-10
 -   This presentation created with [landslide]
 
 ---
@@ -24,7 +24,7 @@
 -   Assume you're running linux and already have `pip` installed
 -   The next command will download and install the latest version from
     [pypi]
--   `pip install --ugprade ciscoconfparse`
+-   `pip install -U ciscoconfparse`
 
 ---
 
@@ -166,7 +166,7 @@ Search configs
     !python
     >>> from ciscoconfparse import CiscoConfParse
     >>> parse = CiscoConfParse('/path/to/configfile')
-    >>> intf = parse.find_objects('interface GigabitEthernet0/1')[0]
+    >>> intf = parse.find_objects('interface GigabitEthernet0/1$')[0]
     >>> intf
     <IOSCfgLine # 0 'interface GigabitEthernet0/1'>
     >>> # NOTE: we don't get much info by default...
@@ -180,8 +180,7 @@ Search configs
 
 # `IOSCfgLine()` with `factory=True`
 
--   Most people need DNS for their router and switch addresses
--   Parsing with `CiscoConfParse('/path/to/configfile', factory=True)` gives youmore information
+-   Parsing with `CiscoConfParse('/path/to/configfile', factory=True)` gives you more information
 -   See next slide for an example
 
 ---
@@ -191,7 +190,7 @@ Search configs
     !python
     >>> from ciscoconfparse import CiscoConfParse
     >>> parse = CiscoConfParse('/path/to/configfile', factory=True)
-    >>> intf = parse.find_objects('interface GigabitEthernet0/1')[0]
+    >>> intf = parse.find_objects('interface GigabitEthernet0/1$')[0]
     >>> intf
     <IOSIntfLine # 0 'GigabitEthernet0/1' info: '10.0.0.1/24'>
     >>> intf.name
