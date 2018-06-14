@@ -49,7 +49,7 @@ def main(configpath, newconfigpath, csvpath):
                 raise ValueError(error)
             try:
                 # Find the old interface line...
-                intfobj = parse.find_objects('^interface\s+{0}\s*{1}'.format(
+                intfobj = parse.find_objects('^interface\s+{0}\s*{1}$'.format(
                     oldclass, oldnum))[0]
             except IndexError:
                 raise ValueError('Cant find "{0}" in the old config'.format(
