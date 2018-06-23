@@ -2638,7 +2638,7 @@ class IOSConfigList(MutableSequence):
         banner_objs = list(
             filter(lambda obj: REGEX.search(obj.text), self._list))
 
-        BANNER_STR_RE = r'^(?:(?P<btype>(?:set\s+)*banner\s\w+\s+)(?P<bchar>\S)(?:\S)?)$'
+        BANNER_STR_RE = r'^(?:(?P<btype>(?:set\s+)*banner\s\w+\s+)(?P<bchar>\S))'
         for parent in banner_objs:
             parent.oldest_ancestor = True
 
@@ -3049,7 +3049,7 @@ class NXOSConfigList(MutableSequence):
         banner_objs = list(
             filter(lambda obj: REGEX.search(obj.text), self._list))
 
-        BANNER_STR_RE = r'^(?:(?P<btype>(?:set\s+)*banner\s\w+\s+)(?P<bchar>\S)(?:\S)?)$'
+        BANNER_STR_RE = r'^(?:(?P<btype>(?:set\s+)*banner\s\w+\s+)(?P<bchar>\S))'
         for parent in banner_objs:
             parent.oldest_ancestor = True
 
