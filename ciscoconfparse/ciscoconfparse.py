@@ -209,7 +209,7 @@ class CiscoConfParse(object):
                     if self.debug:
                         _log.debug("parsing from '{0}' with ios syntax".format(
                             config))
-                    f = open(config, mode="rU")
+                    f = open(config, **self.openargs)
                     text = f.read()
                     rgx = re.compile(linesplit_rgx)
                     self.ConfigObjs = IOSConfigList(
@@ -225,7 +225,7 @@ class CiscoConfParse(object):
                     if self.debug:
                         _log.debug("parsing from '{0}' with nxos syntax".format(
                             config))
-                    f = open(config, mode="rU")
+                    f = open(config, **self.openargs)
                     text = f.read()
                     rgx = re.compile(linesplit_rgx)
                     self.ConfigObjs = NXOSConfigList(
@@ -241,7 +241,7 @@ class CiscoConfParse(object):
                     if self.debug:
                         _log.debug("parsing from '{0}' with asa syntax".format(
                             config))
-                    f = open(config, mode="rU")
+                    f = open(config, **self.openargs)
                     text = f.read()
                     rgx = re.compile(linesplit_rgx)
                     self.ConfigObjs = ASAConfigList(
@@ -258,7 +258,7 @@ class CiscoConfParse(object):
                     if self.debug:
                         _log.debug("parsing from '{0}' with junos syntax".
                                    format(config))
-                    f = open(config, mode="rU")
+                    f = open(config, **self.openargs)
                     text = f.read()
                     rgx = re.compile(linesplit_rgx)
 
@@ -288,6 +288,17 @@ class CiscoConfParse(object):
         return "<CiscoConfParse: %s lines / syntax: %s / comment delimiter: '%s' / factory: %s>" % (
             len(self.ConfigObjs), self.syntax, self.comment_delimiter,
             self.factory)
+
+    @property
+    def openargs(self):
+        """Fix for Py3.5 deprecation of universal newlines - Ref Github #114
+        also see https://softwareengineering.stackexchange.com/q/298677/23144
+        """
+        if (sys.version_info>=(3, 5, 0,)):
+            retval = {'mode': 'r', 'newline': None}
+        else:
+            retval = {'mode': 'rU'}
+        return retval
 
     @property
     def ioscfg(self):
