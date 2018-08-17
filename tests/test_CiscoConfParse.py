@@ -181,6 +181,33 @@ def testValues_banner_child_parsing_01(parse_c01):
         test_result = child.parent.linenum
         assert result_correct[child.linenum]==test_result
 
+def testValues_banner_child_parsing_02():
+    ## Test for Github issue #115
+    config = """!
+banner exec ^
+!!! You should leave now !!!
+In case you haven't heard me, I'll give you another reason...
+!!! I have been known to be violent when I'm hungry !!!
+This router is protected by a hungry admin
+^
+!
+"""
+    parse = CiscoConfParse(config.splitlines())
+    parent_intf = {
+        # Line 2's parent should be 1, etc...
+        2: 1,
+        3: 1,
+        4: 1,
+        5: 1,
+        6: 1,
+    }
+    for obj in parse.find_objects(''):
+        result_correct = parent_intf.get(obj.linenum, False)
+        if result_correct:
+            test_result = obj.parent.linenum
+            ## Does this object parent's line number match?
+            assert result_correct==test_result
+
 def testValues_parent_child_parsing_01(parse_c01):
     parent_intf = {
         # Line 13's parent should be 11, etc...
