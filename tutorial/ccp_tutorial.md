@@ -166,7 +166,7 @@ Search configs
     !python
     >>> from ciscoconfparse import CiscoConfParse
     >>> parse = CiscoConfParse('/path/to/configfile')
-    >>> intf = parse.find_objects('interface GigabitEthernet0/1$')[0]
+    >>> intf = parse.find_objects(r'interface GigabitEthernet0/1$')[0]
     >>> intf
     <IOSCfgLine # 0 'interface GigabitEthernet0/1'>
     >>> # NOTE: we don't get much info by default...
@@ -175,6 +175,31 @@ Search configs
       File "<stdin>", line 1, in <module>
     AttributeError: 'IOSCfgLine' object has no attribute 'name'
     >>>
+
+---
+
+# Getting info about child lines
+
+    !python
+    >>> from ciscoconfparse import CiscoConfParse
+    >>> parse = CiscoConfParse('/path/to/configfile')
+    >>> intfobj = parse.find_objects(r'interface\sGigabitEthernet0/1$')[0]
+    >>> addr = intfobj.re_match_iter_typed(r'ip\saddress\s(\d+\.\d+\.\d+\.\d+)',
+    ...     group=1, all_children=True, default='__unknown__', result_type=str)
+    >>> addr
+    '172.16.4.1'
+
+---
+
+# How does `re_match_iter_typed()` work?
+
+-   Call `re_match_iter_typed()` from a parent object
+-   `re_match_iter_typed()` loops over all the children of the parent object
+    and tries to match the given regular expression against each child's text.
+-   If it finds a match, the value inside the numbered parenthesis is returned.
+    In this case, we wanted the value inside the first set of parenthesis.
+-   `re_match_iter_typed()` then casts the result as the type supplied in the
+    `result_type` argument.
 
 ---
 
