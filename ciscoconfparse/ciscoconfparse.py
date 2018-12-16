@@ -62,8 +62,13 @@ from models_junos import JunosCfgLine
 """
 
 ## Docstring props: http://stackoverflow.com/a/1523456/667301
-__version__ = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 
-    'version')).read().strip()
+versionfilepath = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+    'version')
+if os.path.isfile(versionfilepath):
+    __version__ = open(versionfilepath).read().strip()
+else:
+    # This case is required for importing from a zipfile... Github issue #123
+    __version__ = "0.0 version read failed"
 __email__ = "mike /at\ pennington [dot] net"
 __author__ = "David Michael Pennington <{0}>".format(__email__)
 __copyright__ = "2007-{0}, {1}".format(time.strftime('%Y'), __author__)

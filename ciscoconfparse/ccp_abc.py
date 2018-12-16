@@ -589,7 +589,7 @@ class BaseCfgLine(object):
         return result_type(default)
 
     def re_match_iter_typed(self, regex, group=1, result_type=str, default='', 
-        all_children=False):
+        untyped_default=False, all_children=False):
         """Use ``regex`` to search the children of 
         :class:`~models_cisco.IOSCfgLine` text and return the contents of 
         the regular expression group, at the integer ``group`` index, cast as 
@@ -602,6 +602,7 @@ class BaseCfgLine(object):
             - result_type (type): A type (typically one of: ``str``, ``int``, ``float``, or :class:`~ccp_util.IPv4Obj`).         All returned values are cast as ``result_type``, which defaults to ``str``.
             - default (any): The default value to be returned, if there is no match.
             - all_children (bool): Set True if you want to search all children (children, grand children, great grand children, etc...)
+            - untyped_default (bool): Set True if you don't want the default value to be typed
 
         Returns:
             - ``result_type``.  The text matched by the regular expression group; if there is no match, ``default`` is returned.  All values are cast as ``result_type``.
@@ -647,13 +648,21 @@ class BaseCfgLine(object):
                 mm = re.search(regex, cobj.text)
                 if not (mm is None):
                     return result_type(mm.group(group))
-            return result_type(default)
+            ## Ref Github issue #121
+            if untyped_default:
+                return default
+            else:
+                return result_type(default)
         else:
             for cobj in self.all_children:
                 mm = re.search(regex, cobj.text)
                 if not (mm is None):
                     return result_type(mm.group(group))
-            return result_type(default)
+            ## Ref Github issue #121
+            if untyped_default:
+                return default
+            else:
+                return result_type(default)
 
     def reset(self):
         # For subclass APIs
