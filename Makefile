@@ -18,6 +18,7 @@ repo-push:
 	hg bookmark -f master
 	-hg push ssh://hg@bitbucket.org/mpenning/ciscoconfparse
 	-hg push git+ssh://git@github.com:mpenning/ciscoconfparse.git
+	git push git@github.com:mpenning/ciscoconfparse.git
 .PHONY: tutorial
 tutorial:
 	rst2html5 --jquery --reveal-js --pretty-print-code --embed-stylesheet --embed-content --embed-images tutorial/ccp_tutorial.rst > tutorial/ccp_tutorial.html
