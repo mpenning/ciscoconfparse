@@ -41,7 +41,7 @@ from models_asa import ASAAclLine
 
 from models_junos import JunosCfgLine
 
-""" ciscoconfparse.py - Parse, Query, Build, and Modify IOS-style configurations
+r""" ciscoconfparse.py - Parse, Query, Build, and Modify IOS-style configs
      Copyright (C) 2007-2018 David Michael Pennington
 
      This program is free software: you can redistribute it and/or modify
@@ -64,12 +64,13 @@ from models_junos import JunosCfgLine
 ## Docstring props: http://stackoverflow.com/a/1523456/667301
 versionfilepath = os.path.join(os.path.dirname(os.path.abspath(__file__)),
     'version')
+# __version__ if-else below fixes Github issue #123
 if os.path.isfile(versionfilepath):
     __version__ = open(versionfilepath).read().strip()
 else:
     # This case is required for importing from a zipfile... Github issue #123
-    __version__ = "0.0 version read failed"
-__email__ = "mike /at\ pennington [dot] net"
+    __version__ = "0.0.0"  # __version__ read failed
+__email__ = r"mike /at\ pennington [dot] net"
 __author__ = "David Michael Pennington <{0}>".format(__email__)
 __copyright__ = "2007-{0}, {1}".format(time.strftime('%Y'), __author__)
 __license__ = "GPLv3"
@@ -383,7 +384,7 @@ class CiscoConfParse(object):
                 line = results.get('line', '')
 
                 ## Hack to fix Github issue #49 (empty double braces at end)
-                nn = re.search('^(.+?)\{\s*\}\s*$', input)
+                nn = re.search(r'^(.+?)\{\s*\}\s*$', input)
                 if nn is not None:
                     # Detect double braces at the end of a line and strip them
                     line = nn.group(1)
@@ -1136,7 +1137,7 @@ class CiscoConfParse(object):
         return list(map(attrgetter('text'), tmp))
 
     def find_objects_wo_child(self, parentspec, childspec, ignore_ws=False):
-        """Return a list of parent :class:`~models_cisco.IOSCfgLine` objects, which matched the ``parentspec`` and whose children did not match ``childspec``.  Only the parent :class:`~models_cisco.IOSCfgLine` objects will be returned.  For simplicity, this method only finds oldest_ancestors without immediate children that match.
+        r"""Return a list of parent :class:`~models_cisco.IOSCfgLine` objects, which matched the ``parentspec`` and whose children did not match ``childspec``.  Only the parent :class:`~models_cisco.IOSCfgLine` objects will be returned.  For simplicity, this method only finds oldest_ancestors without immediate children that match.
 
         Args:
             - parentspec (str): Text regular expression for the :class:`~models_cisco.IOSCfgLine` object to be matched; this must match the parent's line
@@ -1214,7 +1215,7 @@ class CiscoConfParse(object):
         ]
 
     def find_parents_wo_child(self, parentspec, childspec, ignore_ws=False):
-        """Parse through all parents matching parentspec, and return a list of parents that did NOT have children match the childspec.  For simplicity, this method only finds oldest_ancestors without immediate children that match.
+        r"""Parse through all parents matching parentspec, and return a list of parents that did NOT have children match the childspec.  For simplicity, this method only finds oldest_ancestors without immediate children that match.
 
         Args:
             - parentspec (str): Text regular expression for the line to be matched; this must match the parent's line
@@ -1288,7 +1289,7 @@ class CiscoConfParse(object):
         return list(map(attrgetter('text'), tmp))
 
     def find_children_w_parents(self, parentspec, childspec, ignore_ws=False):
-        """Parse through the children of all parents matching parentspec, 
+        r"""Parse through the children of all parents matching parentspec, 
         and return a list of children that matched the childspec.
 
         Args:
@@ -1369,8 +1370,8 @@ class CiscoConfParse(object):
            ...           '!',
            ...     ]
            >>> p = CiscoConfParse(config)
-           >>> p.find_children_w_parents('^interface\sFastEthernet0/1', \
-           'port-security')
+           >>> p.find_children_w_parents('^interface\sFastEthernet0/1', 
+           ... 'port-security')
            [' switchport port-security', ' switchport port-security violation protect', ' switchport port-security aging time 5', ' switchport port-security aging type inactivity']
            >>>
 
@@ -1390,7 +1391,7 @@ class CiscoConfParse(object):
         return list(map(attrgetter('text'), sorted(retval)))
 
     def find_objects_w_parents(self, parentspec, childspec, ignore_ws=False):
-        """Parse through the children of all parents matching parentspec, 
+        r"""Parse through the children of all parents matching parentspec, 
         and return a list of child objects, which matched the childspec.
 
         Args:
@@ -1461,8 +1462,8 @@ class CiscoConfParse(object):
            ...           '                address 172.16.15.5/22',
            ...     ]
            >>> p = CiscoConfParse(config)
-           >>> p.find_objects_w_parents('^\s*interfaces', \
-           r'\s+ge-0/0/1')
+           >>> p.find_objects_w_parents('^\s*interfaces', 
+           ... r'\s+ge-0/0/1')
            [<IOSCfgLine # 7 '    ge-0/0/1' (parent is # 0)>]
            >>>
 
@@ -1706,7 +1707,7 @@ class CiscoConfParse(object):
                          excludespec=None,
                          exactmatch=False,
                          atomic=False):
-        """Replace lines matching `childspec` within the `parentspec`'s 
+        r"""Replace lines matching `childspec` within the `parentspec`'s 
         immediate children.
 
         Args:
@@ -1862,7 +1863,7 @@ class CiscoConfParse(object):
         return retval
 
     def req_cfgspec_excl_diff(self, linespec, uncfgspec, cfgspec):
-        """
+        r"""
         req_cfgspec_excl_diff accepts a linespec, an unconfig spec, and
         a list of required configuration elements.  Return a list of
         configuration diffs to make the configuration comply.  **All** other
@@ -2041,7 +2042,7 @@ class CiscoConfParse(object):
                   ignore_order=True,
                   remove_lines=True,
                   debug=False):
-        """
+        r"""
         ``sync_diff()`` accepts a list of required configuration elements, 
         a linespec, and an unconfig spec.  This method return a list of
         configuration diffs to make the configuration comply with cfgspec.
@@ -2357,7 +2358,7 @@ class CiscoConfParse(object):
 
         ## Strip out 'double negatives' (i.e. 'no no ')
         for idx in range(0, len(retval)):
-            retval[idx] = re.sub(r'(\s+)no\s+no\s+(\S+.+?)$', '\g<1>\g<2>',
+            retval[idx] = re.sub(r'(\s+)no\s+no\s+(\S+.+?)$', r'\g<1>\g<2>',
                                  retval[idx])
 
         if debug:
@@ -2381,7 +2382,7 @@ class CiscoConfParse(object):
     ### The methods below are marked SEMI-PRIVATE because they return an object
     ###  or iterable of objects instead of the configuration text itself.
     def _build_space_tolerant_regex(self, linespec):
-        """SEMI-PRIVATE: Accept a string, and return a string with all
+        r"""SEMI-PRIVATE: Accept a string, and return a string with all
         spaces replaced with '\s+'"""
 
         # Unicode below
@@ -2639,7 +2640,7 @@ class IOSConfigList(MutableSequence):
         parent_siblings = list()
         nonparent_siblings = list()
 
-        for obj in self.CiscoConfParse.find_objects('^\S+'):
+        for obj in self.CiscoConfParse.find_objects(r'^\S+'):
             if obj.is_comment:
                 continue
             elif len(obj.children) == 0:
@@ -2686,6 +2687,7 @@ class IOSConfigList(MutableSequence):
                                                      parent.linenum))
                         break
 
+                ## Use code below to identify children of the banner line
                 idx += 1
                 try:
                     obj = self._list[idx]
@@ -2703,8 +2705,9 @@ class IOSConfigList(MutableSequence):
                         parent.child_indent = 0
                         obj.parent = parent
                         break
-                    elif obj.is_comment and (obj.indent == 0):
-                        break
+                    # Commenting the following lines out; fix Github issue #115
+                    #elif obj.is_comment and (obj.indent == 0):
+                    #    break
                     parent.children.append(obj)
                     parent.child_indent = 0
                     obj.parent = parent
@@ -3050,7 +3053,7 @@ class NXOSConfigList(MutableSequence):
         parent_siblings = list()
         nonparent_siblings = list()
 
-        for obj in self.CiscoConfParse.find_objects('^\S+'):
+        for obj in self.CiscoConfParse.find_objects(r'^\S+'):
             if obj.is_comment:
                 continue
             elif len(obj.children) == 0:
@@ -3460,7 +3463,7 @@ class ASAConfigList(MutableSequence):
         parent_siblings = list()
         nonparent_siblings = list()
 
-        for obj in self.CiscoConfParse.find_objects('^\S+'):
+        for obj in self.CiscoConfParse.find_objects(r'^\S+'):
             if obj.is_comment:
                 continue
             elif len(obj.children) == 0:

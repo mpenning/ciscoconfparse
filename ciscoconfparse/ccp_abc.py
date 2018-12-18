@@ -6,7 +6,7 @@ import os
 
 from ccp_util import IPv4Obj
 
-""" ccp_abc.py - Parse, Query, Build, and Modify IOS-style configurations
+r""" ccp_abc.py - Parse, Query, Build, and Modify IOS-style configurations
      Copyright (C) 2014-2015 David Michael Pennington
 
      This program is free software: you can redistribute it and/or modify
@@ -197,7 +197,7 @@ class BaseCfgLine(object):
         """unconftext is defined during special method calls.  Do not assume it
         is automatically populated."""
         ## remove any preceeding "no "
-        conftext = re.sub("\s*no\s+", "", unconftext)
+        conftext = re.sub(r"\s*no\s+", "", unconftext)
         myindent = self.parent.child_indent
         self.uncfgtext = myindent * " " + "no " + conftext
 
@@ -457,7 +457,7 @@ class BaseCfgLine(object):
         return retval
 
     def re_match(self, regex, group=1, default=""):
-        """Use ``regex`` to search the :class:`~models_cisco.IOSCfgLine` text and return the regular expression group, at the integer index.
+        r"""Use ``regex`` to search the :class:`~models_cisco.IOSCfgLine` text and return the regular expression group, at the integer index.
 
         Args:
             - regex (str): A string or python regular expression, which should be matched.  This regular expression should contain parenthesis, which bound a match group.
@@ -531,7 +531,7 @@ class BaseCfgLine(object):
         return [cobj for cobj in self.children if cobj.re_search(regex)]
 
     def re_match_typed(self, regex, group=1, result_type=str, default=''):
-        """Use ``regex`` to search the :class:`~models_cisco.IOSCfgLine` text 
+        r"""Use ``regex`` to search the :class:`~models_cisco.IOSCfgLine` text 
         and return the contents of the regular expression group, at the 
         integer ``group`` index, cast as ``result_type``; if there is no match, 
         ``default`` is returned.
@@ -590,7 +590,7 @@ class BaseCfgLine(object):
 
     def re_match_iter_typed(self, regex, group=1, result_type=str, default='', 
         untyped_default=False, all_children=False):
-        """Use ``regex`` to search the children of 
+        r"""Use ``regex`` to search the children of 
         :class:`~models_cisco.IOSCfgLine` text and return the contents of 
         the regular expression group, at the integer ``group`` index, cast as 
         ``result_type``; if there is no match, ``default`` is returned.
