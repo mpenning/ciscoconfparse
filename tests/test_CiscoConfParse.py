@@ -75,13 +75,13 @@ def testValues_banner_delimiter_05():
         'banner exec ^', '    trivial banner2 here ^',
         'end']
     parse = CiscoConfParse(CONFIG)
-    bannerobj = parse.find_objects('^banner\smotd')[0]
+    bannerobj = parse.find_objects(r'^banner\smotd')[0]
     BANNER_LINE_NUMBER = 1
     assert bannerobj.linenum == BANNER_LINE_NUMBER
     for obj in bannerobj.children:
         assert obj.parent.linenum == BANNER_LINE_NUMBER
 
-    bannerobj = parse.find_objects('^banner\sexec')[0]
+    bannerobj = parse.find_objects(r'^banner\sexec')[0]
     BANNER_LINE_NUMBER = 3
     assert bannerobj.linenum == BANNER_LINE_NUMBER
     for obj in bannerobj.children:
@@ -91,7 +91,7 @@ def testValues_aaa_authfailmsg_delimiter_01():
     # Test auth fail-message delimiter on the same line...
     CONFIG = ['!', 'aaa authentication fail-message ^   trivial banner here ^', 'end']
     parse = CiscoConfParse(CONFIG)
-    bannerobj = parse.find_objects('^aaa\sauthentication\sfail-message')[0]
+    bannerobj = parse.find_objects(r'^aaa\sauthentication\sfail-message')[0]
     BANNER_LINE_NUMBER = 1
     assert bannerobj.linenum == BANNER_LINE_NUMBER
     for obj in bannerobj.children:
@@ -104,7 +104,7 @@ def testValues_aaa_authfailmsg_delimiter_02():
         '    trivial banner here ^', 
         'end']
     parse = CiscoConfParse(CONFIG)
-    bannerobj = parse.find_objects('^aaa\sauthentication\sfail-message')[0]
+    bannerobj = parse.find_objects(r'^aaa\sauthentication\sfail-message')[0]
     BANNER_LINE_NUMBER = 1
     assert bannerobj.linenum == BANNER_LINE_NUMBER
     for obj in bannerobj.children:
@@ -121,10 +121,10 @@ def testValues_aaa_authfailmsg_delete_01():
         'banner exec ^', '    trivial banner2 here ^',
         'end']
     parse = CiscoConfParse(CONFIG)
-    for obj in parse.find_objects('^aaa\sauthentication\sfail-message'):
+    for obj in parse.find_objects(r'^aaa\sauthentication\sfail-message'):
         obj.delete()
     parse.commit()
-    assert parse.find_objects('^aaa\sauthentication\sfail-message')==[]
+    assert parse.find_objects(r'^aaa\sauthentication\sfail-message')==[]
 
 def testValues_banner_delete_01():
     # Ensure multiline banners are correctly deleted
@@ -257,7 +257,7 @@ def testValues_parent_child_parsing_02(parse_c01):
             assert result_correct==test_result
 
     # Insert lines here...
-    for intf_obj in cfg.find_objects('^interface\sGigabitEthernet'):
+    for intf_obj in cfg.find_objects(r'^interface\sGigabitEthernet'):
         # Configured with an access vlan...
         if ' switchport access vlan 100' in set(map(attrgetter('text'), intf_obj.children)):
             intf_obj.insert_after(' spanning-tree portfast')
@@ -860,8 +860,8 @@ def testValues_req_cfgspec_excl_diff(parse_c01):
         'logging 1.1.3.6',
     ]
     test_result = parse_c01.req_cfgspec_excl_diff(
-        "^logging\s+",
-        "logging\s+\d+\.\d+\.\d+\.\d+",
+        r"^logging\s+",
+        r"logging\s+\d+\.\d+\.\d+\.\d+",
         [
         'logging 1.1.3.4',
         'logging 1.1.3.5',
