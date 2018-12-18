@@ -73,10 +73,10 @@ work, then you'll need to install ciscoconfparse.
 Installing :mod:`ciscoconfparse`
 --------------------------------
 
-ciscoconfparse_ needs  Python versions 2.6, 2.7 or 3.2+ (note: version 3.7.0
-has a bug - ref Github issue #117, but version 3.7.1 works); the OS should not
-matter. If you want to run it under a Python virtualenv_, it's been heavily
-tested in that environment as well. 
+As of version 1.3.21, ciscoconfparse_ requires Python versions 2.7 or 3.4+
+(note: version 3.7.0 has a bug - ref Github issue #117, but version 3.7.1
+works); the OS should not matter. If you want to run it under a Python
+virtualenv_, it's been heavily tested in that environment as well.
 
 You can check your python version with the ``-V`` switch...
 
