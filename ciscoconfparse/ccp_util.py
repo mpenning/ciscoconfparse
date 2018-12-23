@@ -132,7 +132,7 @@ IPv4Address('172.16.1.0')
 >>> net.network_object
 IPv4Network('172.16.1.0/24')
 >>> str(net.network_object)
-'172.16.1.0'
+'172.16.1.0/24'
 >>> net.prefixlen
 24
 >>> net.network_object.iterhosts()
@@ -777,8 +777,8 @@ def dns_query(input="", query_type="", server="", timeout=2.0):
         A set() of :class:`~ccp_util.DNSResponse` instances
 
 >>> from ciscoconfparse.ccp_util import dns_query
->>> dns_query('www.pennington.net', 'A', '4.2.2.2')
-set([<DNSResponse 'A' result_str='65.19.187.2'>])
+>>> dns_query('www.pennington.net', "A", "4.2.2.2")
+set([<DNSResponse "A" result_str="65.19.187.2">])
 >>> answer = dns_query('www.pennington.net', 'A', '4.2.2.2')
 >>> str(answer.pop())
 '65.19.187.2'
@@ -989,23 +989,24 @@ class CiscoRange(MutableSequence):
 
 >>> from ciscoconfparse.ccp_util import CiscoRange
 >>> CiscoRange('1-3,5,9-11,13')
-<CiscoRange ['1', '2', '3', '5', '9', '10', '11', '13']>
+<CiscoRange 1-3,5,9-11,13>
 >>> CiscoRange('Eth1/1-3,7')
-<CiscoRange ['Eth1/1', 'Eth1/2', 'Eth1/3', 'Eth1/7']>
+<CiscoRange Eth1/1-3,7>
     """
     def __init__(self, text, result_type=str):
         super(CiscoRange, self).__init__()
         self.text = text
         self.result_type = result_type
         if text:
-            self.line_prefix, self.slot_prefix, self.range_text = self._parse_range_text(
-            )
+            self.line_prefix, self.slot_prefix, self.range_text = self._parse_range_text()
             self._list = self._range()
         else:
+            self.line_prefix = ""
+            self.slot_prefix = ""
             self._list = list()
 
     def __repr__(self):
-        return """<CiscoRange {0}>""".format(self._list)
+        return """<CiscoRange {0}>""".format(self.compressed_str)
 
     def __len__(self):
         return len(self._list)
@@ -1021,6 +1022,14 @@ class CiscoRange(MutableSequence):
 
     def __str__(self):
         return self.__repr__()
+
+    # Github issue #124
+    def __eq__(self, other):
+        self_prefix_str = self.line_prefix + self.slot_prefix
+        other_prefix_str = other.line_prefix + other.slot_prefix
+        cmp1 = self_prefix_str.lower()==other_prefix_str.lower()
+        cmp2 = sorted(self._list)==sorted(other._list)
+        return cmp1 and cmp2
 
     def insert(self, ii, val):
         ## Insert something at index ii
@@ -1053,7 +1062,8 @@ class CiscoRange(MutableSequence):
             range_text = mm_result['range_text']
         return line_prefix, slot_prefix, range_text
 
-    def _dash_range(self, text):
+    def _parse_dash_range(self, text):
+        """Parse a dash Cisco range into a discrete list of items"""
         retval = list()
         for range_atom in text.split(','):
             try:
@@ -1073,14 +1083,16 @@ class CiscoRange(MutableSequence):
         def combine(arg):
             return self.line_prefix + self.slot_prefix + str(arg)
 
-        return [self.result_type(ii) for ii in map(combine, self._dash_range(self.range_text))]
+        return [self.result_type(ii) for ii in map(combine, self._parse_dash_range(self.range_text))]
 
     def remove(self, arg):
         remove_obj = CiscoRange(arg)
         for ii in remove_obj:
             try:
-                index = self.index(self.result_type(ii))
-                self.pop(index)
+                ## Remove arg, even if duplicated... Ref Github issue #126
+                while True:
+                    index = self.index(self.result_type(ii))
+                    self.pop(index)
             except ValueError:
                 pass
         return self
@@ -1088,3 +1100,48 @@ class CiscoRange(MutableSequence):
     @property
     def as_list(self):
         return self._list
+
+    ## Github issue #125
+    @property
+    def compressed_str(self):
+        """Return a text string with a compressed csv of values
+
+>>> from ciscoconfparse.ccp_util import CiscoRange
+>>> range_obj = CiscoRange('1,3,5,6,7')
+>>> range_obj.compressed_str
+'1,3,5-7'
+>>>
+        """
+        retval = list()
+        prefix_str = self.line_prefix + self.slot_prefix
+
+        # Build a list of integers (without prefix_str)
+        input = list()
+        for ii in self._list:
+            ii = re.sub(r'^{0}(\d+)$'.format(prefix_str), '\g<1>', unicode(ii))
+            input.append(int(ii))
+
+        # source - https://stackoverflow.com/a/51227915/667301
+        input = sorted(list(set(input)))
+        range_list = [input[0]]
+        for ii in range(len(input)):
+            if ii+1<len(input) and ii-1>-1:
+                if (input[ii]-input[ii-1]==1) and (input[ii+1]-input[ii]==1):
+                    if  range_list[-1]!='-':
+                        range_list += ['-']
+                    else:
+                        range_list = range_list
+                else:
+                        range_list+=[input[ii]]
+        if len(input)>1:
+            range_list+=[input[len(input)-1]]
+
+        # Build the return value from range_list...
+        retval = prefix_str + str(range_list[0])
+        for ii in range(1,len(range_list)):
+            if str(type(range_list[ii]))!=str(type(range_list[ii-1])):
+                retval += str(range_list[ii])
+            else:
+                retval += ',' + str(range_list[ii])
+
+        return retval
