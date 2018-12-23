@@ -1237,7 +1237,7 @@ class BaseIOSIntfLine(IOSCfgLine):
             if remove:
                 retval.remove(remove)
 
-        return retval
+        return CiscoRange(retval.compressed_str, result_type=int)
 
     @property
     def native_vlan(self):
