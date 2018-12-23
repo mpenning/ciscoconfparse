@@ -158,10 +158,10 @@ class IOSCfgLine(BaseCfgLine):
            ...     '!',
            ...     ]
            >>> parse = CiscoConfParse(config)
-           >>> obj = parse.find_objects('^interface\sSerial')[0]
+           >>> obj = parse.find_objects(r'^interface\sSerial')[0]
            >>> obj.is_subintf
            False
-           >>> obj = parse.find_objects('^interface\sATM')[0]
+           >>> obj = parse.find_objects(r'^interface\sATM')[0]
            >>> obj.is_subintf
            True
            >>>
@@ -203,10 +203,10 @@ class IOSCfgLine(BaseCfgLine):
            ...     '!',
            ...     ]
            >>> parse = CiscoConfParse(config)
-           >>> obj = parse.find_objects('^interface\sFast')[0]
+           >>> obj = parse.find_objects(r'^interface\sFast')[0]
            >>> obj.is_loopback_intf
            False
-           >>> obj = parse.find_objects('^interface\sLoop')[0]
+           >>> obj = parse.find_objects(r'^interface\sLoop')[0]
            >>> obj.is_loopback_intf
            True
            >>>
@@ -1225,13 +1225,17 @@ class BaseIOSIntfLine(IOSCfgLine):
         else:
             retval = CiscoRange(combined, result_type=int)
 
+        # Fix Github issue #110 (I think)
         _except = self.re_match_iter_typed(
             r'^\s*switchport\s+trunk\s+allowed\s+vlan\s+except\s+(\S+)$',
             result_type=str,
             default='')
 
-        if _except:
-            retval = CiscoRange(combined, result_type=int).remove(_except)
+        if _except!='':
+            retval.append('1-4094')
+            retval.remove(_except) # except allows all vlans except that listed
+            if remove:
+                retval.remove(remove)
 
         return retval
 
