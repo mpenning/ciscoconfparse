@@ -268,11 +268,23 @@ def test_CiscoRange_13():
     assert CiscoRange('interface Eth2/1/1,2,3-5').as_list==result_correct
 
 def test_CiscoRange_14():
+    """Basic interface slot range test"""
+    result_correct = ['interface Eth 2/1/1', 'interface Eth 2/1/2', 'interface Eth 2/1/3', 'interface Eth 2/1/4', 'interface Eth 2/1/5']
+    assert CiscoRange('interface Eth 2/1/1,2,3-5').as_list==result_correct
+
+def test_CiscoRange_15():
     """Empty range test"""
     result_correct = []
     assert CiscoRange('').as_list==result_correct
 
-def test_CiscoRange_14():
+def test_CiscoRange_16():
     """Append range test"""
     result_correct = [1, 2, 3]
     assert CiscoRange('', result_type=int).append('1-3').as_list==result_correct
+
+def test_CiscoRange_compressed_str_01():
+    """compressed_str test"""
+    assert CiscoRange('1,2, 3, 6, 7, 8, 9, 911').compressed_str=='1-3,6-9,911'
+
+def test_CiscoRange_contanis():
+    assert 'Ethernet1/2' in CiscoRange('Ethernet1/1-20')
