@@ -1025,6 +1025,7 @@ class CiscoRange(MutableSequence):
 
     # Github issue #124
     def __eq__(self, other):
+        assert hasattr(other, 'line_prefix')
         self_prefix_str = self.line_prefix + self.slot_prefix
         other_prefix_str = other.line_prefix + other.slot_prefix
         cmp1 = self_prefix_str.lower()==other_prefix_str.lower()
