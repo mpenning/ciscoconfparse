@@ -8,7 +8,7 @@ sys.path.insert(0, os.path.join(os.path.abspath(THIS_DIR), "../ciscoconfparse/")
 
 from errors import DynamicAddressException
 from ciscoconfparse import CiscoConfParse
-from ccp_util import IPv4Obj
+from ccp_util import IPv4Obj, CiscoRange
 import pytest
 
 @pytest.mark.parametrize("line", [
@@ -268,7 +268,7 @@ def testVal_IOSIntfLine_trunk_vlan_allowed_04():
     intf_obj = cfg.find_objects('^interface')[0]
     assert intf_obj.trunk_vlans_allowed.as_list==[1]
 
-def testVal_IOSIntfLine_trunk_vlan_allowed_04():
+def testVal_IOSIntfLine_trunk_vlan_allowed_05():
     lines = ['!',
         'interface GigabitEthernet 1/1',
         ' switchport mode trunk',
@@ -293,6 +293,23 @@ def testVal_IOSIntfLine_trunk_vlan_allowed_05():
     cfg = CiscoConfParse(lines, factory=True)
     intf_obj = cfg.find_objects('^interface')[0]
     assert intf_obj.trunk_vlans_allowed.as_list==list(range(2, 4095))
+
+def testVal_IOSIntfLine_trunk_vlan_allowed_06():
+    config = """!
+interface GigabitEthernet 1/1
+ switchport
+ switchport mode trunk
+ switchport trunk allowed vlan none
+ switchport trunk allowed vlan add 1-20
+ ! except 1 implicitly allows vlans 2-4094 on the trunk
+ switchport trunk allowed vlan except 1
+ switchport trunk allowed vlan remove 20
+!
+"""
+    cfg = CiscoConfParse(config.splitlines(), factory=True)
+    intf_obj = cfg.find_objects('^interface')[0]
+    assert intf_obj.trunk_vlans_allowed==CiscoRange('2-19,21-4094', 
+        result_type=int)
 
 def testVal_IOSIntfLine_abbvs(parse_c03_factory):
     cfg = parse_c03_factory
