@@ -1,3 +1,4 @@
+1.3.22  20181216 Fix Github issue #124-126 and Github issue #110
 1.3.21  20181216 Fix Github issue #121 and Github issue #123
 1.3.20  20180702 Fix Github issue #114 (Py3.5 requires different open() syntax)
 1.3.19  20180623 Fix Github issue #111 (banner parsing broken in some cases)
