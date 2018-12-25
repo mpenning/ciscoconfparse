@@ -2094,22 +2094,22 @@ class CiscoConfParse(object):
         b = CiscoConfParse(cfgspec, factory=False)
         b_lines = b.ioscfg
 
-        a_heirarchy = list()
-        b_heirarchy = list()
+        a_hierarchy = list()
+        b_hierarchy = list()
 
         ## Build heirarchical, equal-length lists of parents / non-parents
-        a_parents, a_nonparents = a.ConfigObjs.config_heirarchy()
-        b_parents, b_nonparents = b.ConfigObjs.config_heirarchy()
+        a_parents, a_nonparents = a.ConfigObjs.config_hierarchy()
+        b_parents, b_nonparents = b.ConfigObjs.config_hierarchy()
 
         obj = DiffObject(0, a_nonparents, a_parents)
-        a_heirarchy.append(obj)
+        a_hierarchy.append(obj)
 
         obj = DiffObject(0, b_nonparents, b_parents)
-        b_heirarchy.append(obj)
+        b_hierarchy.append(obj)
 
         retval = list()
         ## Assign config_this and unconfig_this attributes by "diff level"
-        for adiff_level, bdiff_level in zip(a_heirarchy, b_heirarchy):
+        for adiff_level, bdiff_level in zip(a_hierarchy, b_hierarchy):
             for attr in ['parents', 'nonparents']:
                 if attr == 'parents':
                     if ignore_order:
@@ -2632,7 +2632,7 @@ class IOSConfigList(MutableSequence):
         list_idx = len(self._list)
         self.insert(list_idx, val)
 
-    def config_heirarchy(self):
+    def config_hierarchy(self):
         """Walk this configuration and return the following tuple
         at each parent 'level':
             (list_of_parent_sibling_objs, list_of_nonparent_sibling_objs)
@@ -3045,7 +3045,7 @@ class NXOSConfigList(MutableSequence):
         list_idx = len(self._list)
         self.insert(list_idx, val)
 
-    def config_heirarchy(self):
+    def config_hierarchy(self):
         """Walk this configuration and return the following tuple
         at each parent 'level':
             (list_of_parent_sibling_objs, list_of_nonparent_sibling_objs)
@@ -3456,7 +3456,7 @@ class ASAConfigList(MutableSequence):
         list_idx = len(self._list)
         self.insert(list_idx, val, atomic)
 
-    def config_heirarchy(self):
+    def config_hierarchy(self):
         """Walk this configuration and return the following tuple
         at each parent 'level':
             (list_of_parent_siblings, list_of_nonparent_siblings)"""
@@ -3652,7 +3652,7 @@ class ASAConfigList(MutableSequence):
 
 
 class DiffObject(object):
-    """This object should be used at every level of heirarchy"""
+    """This object should be used at every level of hierarchy"""
 
     def __init__(self, level, nonparents, parents):
         self.level = level
