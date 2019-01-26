@@ -15,20 +15,11 @@ def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 
-## Comment out for Github issue #127
 ## Conditionally require the correct ipaddr package in Python2 vs Python3
-#if sys.version_info[0]<3:
-#    IPADDR = "ipaddr>=2.1.11"
-#    DNSPYTHON = "dnspython"
-#else:
-#    IPADDR = "ipaddress"
-#    DNSPYTHON = "dnspython3"
-
 # Ref Github issue #127 - sdist improvements
-REQUIRES = ['colorama', 'passlib']
+REQUIRES = ['colorama', 'passlib', 'dnspython']
 EXTRAS = {
-    ":python_version<'3'": ['ipaddr>=2.1.11', 'dnspython'],
-    ":python_version>'3.0'": ['ipaddress', 'dnspython3'],
+    ":python_version<'3'": ['ipaddr>=2.1.11'],
 }
 
 setup(name='ciscoconfparse',
