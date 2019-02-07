@@ -10,11 +10,8 @@ package:
 .PHONY: pypi
 pypi:
 	make clean
-	workon py27_test
 	python setup.py register -r pypi
 	python setup.py bdist_wheel sdist
-	workon py36_test
-	python setup.py bdist_wheel
 	twine upload dist/*
 .PHONY: repo-push
 repo-push:
