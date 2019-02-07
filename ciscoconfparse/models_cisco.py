@@ -1104,6 +1104,23 @@ class BaseIOSIntfLine(IOSCfgLine):
         return retval
 
     @property
+    def has_ip_helper_addresses(self):
+        """Return a True if the intf has helper-addresses; False if not"""
+        if len(self.ip_helper_addresses)>0:
+            return True
+        return False
+
+    @property
+    def ip_helper_addresses(self):
+        """Return a list of IP helper-addresses"""
+        retval = list()
+        for child in self.children:
+            if 'helper-address' in child.text:
+                addr = child.re_match_typed('ip\s+helper-address\s+(\S+)')
+                retval.append(addr)
+        return retval
+
+    @property
     def is_switchport(self):
         retval = self.re_match_iter_typed(
             r'^\s*(switchport)\s*', result_type=bool, default=False)
