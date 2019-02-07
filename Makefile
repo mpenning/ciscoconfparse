@@ -11,7 +11,8 @@ package:
 pypi:
 	make clean
 	python setup.py register -r pypi
-	python setup.py bdist_wheel sdist upload
+	python setup.py bdist_wheel sdist
+	twine upload dist/*
 .PHONY: repo-push
 repo-push:
 	cp .hgrc .hg/
