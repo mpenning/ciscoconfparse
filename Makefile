@@ -6,7 +6,8 @@ DOCHOST ?= $(shell bash -c 'read -p "documentation host: " dochost; echo $$docho
 .PHONY: package
 package:
 	make clean
-	python setup.py sdist
+	python setup.py bdist_wheel sdist
+	twine upload dist/*
 .PHONY: pypi
 pypi:
 	make clean
