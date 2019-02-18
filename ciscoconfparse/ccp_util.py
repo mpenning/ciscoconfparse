@@ -1119,7 +1119,11 @@ class CiscoRange(MutableSequence):
         # Build a list of integers (without prefix_str)
         input = list()
         for ii in self._list:
-            ii = re.sub(r'^{0}(\d+)$'.format(prefix_str), '\g<1>', unicode(ii))
+            try:
+                unicode_ii = str(ii, 'utf-8') # Python2.7...
+            except:
+                unicode_ii = str(ii)
+            ii = re.sub(r'^{0}(\d+)$'.format(prefix_str), '\g<1>', unicode_ii)
             input.append(int(ii))
 
         # source - https://stackoverflow.com/a/51227915/667301
