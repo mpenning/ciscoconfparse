@@ -10,10 +10,6 @@ python:
  - pypy
 # - pypy3 (errors out right now)
 
-# http://docs.travis-ci.com/user/multi-os/
-os:
- - linux
-
 install:
  - pip install --upgrade -q pip
  - pip install --upgrade -q ciscoconfparse
