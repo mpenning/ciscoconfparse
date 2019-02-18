@@ -10,12 +10,12 @@
     - pypy
 # - pypy3 (errors out right now)
 
-install:
- - pip install --upgrade -q pip
- - pip install --upgrade -q ciscoconfparse
+- install:
+  - pip install --upgrade -q pip
+  - pip install --upgrade -q ciscoconfparse
 
 
-script: make test
+- script: make test
 
 #matrix:
 #  allow_failures:
