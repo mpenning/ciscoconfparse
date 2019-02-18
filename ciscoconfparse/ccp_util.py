@@ -16,7 +16,7 @@ if sys.version_info[0] < 3:
 else:
     from ipaddress import IPv4Network, IPv6Network, IPv4Address, IPv6Address
 """ ccp_util.py - Parse, Query, Build, and Modify IOS-style configurations
-     Copyright (C) 2014-2015, 2018 David Michael Pennington
+     Copyright (C) 2014-2015, 2018-2019 David Michael Pennington
 
      This program is free software: you can redistribute it and/or modify
      it under the terms of the GNU General Public License as published by
