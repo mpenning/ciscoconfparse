@@ -1,10 +1,15 @@
-from collections import MutableSequence
 import itertools
 import socket
 import time
 import sys
 import re
 import os
+
+if (sys.version_info>=(3, 0, 0,)):
+    from collections.abc import MutableSequence
+else:
+    ## This syntax is not supported in Python 3...
+    from collections import MutableSequence
 
 from protocol_values import ASA_TCP_PORTS, ASA_UDP_PORTS
 from dns.exception import DNSException
