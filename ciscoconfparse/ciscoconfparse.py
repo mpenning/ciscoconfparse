@@ -2387,17 +2387,18 @@ class CiscoConfParse(object):
 
         # Unicode below
         backslash = '\x5c'
+        escaped_space = backslash + "s+" # equals: "\s+" (not a raw string)
 
         LINESPEC_LIST_TYPE = bool(getattr(linespec, 'append', False))
 
         if not LINESPEC_LIST_TYPE:
             assert bool(getattr(linespec, 'upper', False)) # Ensure it's a str
-            linespec = re.sub(r'\s+', backslash + "s+", linespec)
+            linespec = re.sub(r'\s+', escaped_space, linespec)
         else:
             for idx in range(0, len(linespec)):
                 ## Ensure this element is a string
                 assert bool(getattr(linespec[idx], 'upper', False))
-                linespec[idx] = re.sub(r'\s+', backslash + "s+", linespec[idx])
+                linespec[idx] = re.sub(r'\s+', escaped_space, linespec[idx])
 
         return linespec
 
