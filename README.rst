@@ -74,7 +74,7 @@ Docs
 Pre-requisites
 ==============
 
-As of version 1.3.29, ciscoconfparse_ requires Python versions 2.7 or 3.4+ 
+As of version 1.3.30, ciscoconfparse_ requires Python versions 2.7 or 3.4+ 
 (note: version 3.7.0 has a bug - ref Github issue #117, but version 3.7.1 
 works); the OS should not matter. If you want to run it under a Python 
 virtualenv_, it's been heavily tested in that environment as well.
@@ -90,7 +90,7 @@ already have setuptools_, you can install as usual:
 ::
 
       # Substitute whatever ciscoconfparse version you like...
-      easy_install -U ciscoconfparse==1.3.29
+      easy_install -U ciscoconfparse==1.3.30
 
 Alternatively you can install into Python2.x with pip_:
 
