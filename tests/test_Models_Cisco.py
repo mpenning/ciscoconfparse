@@ -152,9 +152,9 @@ def testVal_IOSIntfLine_name():
 
 def testVal_IOSIntfLine_in_portchannel01(parse_c01_factory):
     cfg = parse_c01_factory
-    for intf_obj in cfg.find_objects('^interface\sGigabitEthernet4\/1$'):
+    for intf_obj in cfg.find_objects(r'^interface\sGigabitEthernet4\/1$'):
         assert intf_obj.in_portchannel is False
-    for intf_obj in cfg.find_objects('^interface\sGigabitEthernet4\/4$'):
+    for intf_obj in cfg.find_objects(r'^interface\sGigabitEthernet4\/4$'):
         assert intf_obj.in_portchannel is False
 
 def testVal_IOSIntfLine_in_portchannel02():
@@ -194,18 +194,18 @@ def testVal_IOSIntfLine_portchannel_number_02():
 
 def testVal_IOSIntfLine_is_switchport(parse_c01_factory):
     cfg = parse_c01_factory
-    for intf_obj in cfg.find_objects('^interface\sGigabitEthernet4\/1$'):
+    for intf_obj in cfg.find_objects(r'^interface\sGigabitEthernet4\/1$'):
         assert intf_obj.is_switchport is True
-    for intf_obj in cfg.find_objects('^interface\sGigabitEthernet4\/4$'):
+    for intf_obj in cfg.find_objects(r'^interface\sGigabitEthernet4\/4$'):
         assert intf_obj.is_switchport is False
 
 def testVal_IOSIntfLine_access_vlan(parse_c01_factory):
     cfg = parse_c01_factory
-    for intf_obj in cfg.find_objects('^interface\sGigabitEthernet4\/1$'):
+    for intf_obj in cfg.find_objects(r'^interface\sGigabitEthernet4\/1$'):
         assert intf_obj.access_vlan==100
-    for intf_obj in cfg.find_objects('^interface\sGigabitEthernet4\/8$'):
+    for intf_obj in cfg.find_objects(r'^interface\sGigabitEthernet4\/8$'):
         assert intf_obj.access_vlan==110
-    for intf_obj in cfg.find_objects('^interface\sGigabitEthernet4\/4$'):
+    for intf_obj in cfg.find_objects(r'^interface\sGigabitEthernet4\/4$'):
         assert intf_obj.access_vlan==0
 
 def testVal_IOSIntfLine_native_vlan(parse_c01_factory):
