@@ -1,4 +1,3 @@
-from collections import MutableSequence, Iterator
 from operator import methodcaller, attrgetter
 from colorama import Fore, Back, Style
 from difflib import SequenceMatcher
@@ -7,6 +6,13 @@ import time
 import sys
 import re
 import os
+
+if (sys.version_info>=(3, 0, 0,)):
+    from collections.abc import MutableSequence, Iterator
+else:
+    ## This syntax is not supported in Python 3...
+    from collections import MutableSequence, Iterator
+
 
 from models_cisco import IOSHostnameLine, IOSRouteLine, IOSIntfLine
 from models_cisco import IOSAccessLine, IOSIntfGlobal
