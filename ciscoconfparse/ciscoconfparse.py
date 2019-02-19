@@ -2391,9 +2391,13 @@ class CiscoConfParse(object):
         r"""SEMI-PRIVATE: Accept a string, and return a string with all
         spaces replaced with '\s+'"""
 
-        # Unicode below
+        # Unicode below...
         backslash = '\x5c'
-        escaped_space = backslash + "s+" # equals: "\s+" (not a raw string)
+        # escaped_space = "\\s+" (not a raw string)
+        if (sys.version_info>=(3, 0, 0,)):
+            escaped_space = (backslash + backslash + "s+").translate('utf-8')
+        else:
+            escaped_space = backslash + backslash + "s+"
 
         LINESPEC_LIST_TYPE = bool(getattr(linespec, 'append', False))
 
