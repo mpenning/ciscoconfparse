@@ -17,7 +17,7 @@ from ccp_abc import BaseCfgLine
 ###
 ###   You have been warned :-)
 """ models_nxos.py - Parse, Query, Build, and Modify IOS-style configurations
-     Copyright (C) 2016-2018 David Michael Pennington
+     Copyright (C) 2016-2019 David Michael Pennington
 
      This program is free software: you can redistribute it and/or modify
      it under the terms of the GNU General Public License as published by
