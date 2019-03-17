@@ -40,6 +40,7 @@ from ccp_abc import BaseCfgLine
 ##-------------  IOS Configuration line object
 ##
 
+MAX_VLAN = 4094
 
 class NXOSCfgLine(BaseCfgLine):
     """An object for a parsed IOS-style configuration line.  
@@ -1181,53 +1182,63 @@ class BaseNXOSIntfLine(NXOSCfgLine):
 
     @property
     def trunk_vlans_allowed(self):
-        """Return a CiscoRange() with the list of allowed vlan numbers.  Return 0 if the port isn't a switchport"""
-        if self.is_switchport:
-            default_val = '1-4094'
+        """Return a CiscoRange() with the list of allowed vlan numbers (as int).  Return 0 if the port isn't a switchport in trunk mode"""
+
+        # The default values...
+        if self.is_switchport and not self.has_manual_switch_access:
+            retval = CiscoRange('1-{0}'.format(MAX_VLAN), result_type=int)
         else:
-            default_val = 0
+            return 0
 
-        allowed = self.re_match_iter_typed(
-            r'^\s*switchport\s+trunk\s+allowed\s+vlan\s+(\S+)$',
-            result_type=str,
-            default='1-4094')
-        if allowed == 'all':
-            allowed = '1-4094'
-        elif allowed == 'none':
-            allowed = ''
-        add = self.re_match_iter_typed(
-            r'^\s*switchport\s+trunk\s+allowed\s+vlan\s+add\s+(\S+)$',
-            result_type=str,
-            default='')
+        ## Iterate over switchport trunk statements
+        for obj in self.children:
 
-        if allowed and add:
-            combined = allowed + ',' + add
-        elif allowed:
-            combined = allowed
-        elif add:
-            combined = add
-        else:
-            combined = allowed
+            ## For every child object, check whether the vlan list is modified
+            abs_str = obj.re_match_typed(
+                '^\s+switchport\s+trunk\s+allowed\s+vlan\s(all|none|\d.*?)$',
+                default='_nomatch_', result_type=str).lower()
+            add_str = obj.re_match_typed(
+                '^\s+switchport\s+trunk\s+allowed\s+vlan\s+add\s+(\d.*?)$',
+                default='_nomatch_', result_type=str).lower()
+            exc_str = obj.re_match_typed(
+                '^\s+switchport\s+trunk\s+allowed\s+vlan\s+except\s+(\d.*?)$',
+                default='_nomatch_', result_type=str).lower()
+            rem_str = obj.re_match_typed(
+                '^\s+switchport\s+trunk\s+allowed\s+vlan\s+remove\s+(\d.*?)$',
+                default='_nomatch_', result_type=str).lower()
 
-        remove = self.re_match_iter_typed(
-            r'^\s*switchport\s+trunk\s+allowed\s+vlan\s+remove\s+(\S+)$',
-            result_type=str,
-            default='')
 
-        if remove:
-            retval = CiscoRange(combined, result_type=int).remove(remove)
-        else:
-            retval = CiscoRange(combined, result_type=int)
+            ## Build a vdict for each vlan modification statement
+            vdict = {
+                'absolute_str': abs_str,
+                'add_str': add_str,
+                'except_str': exc_str,
+                'remove_str': rem_str,
+            }
 
-        _except = self.re_match_iter_typed(
-            r'^\s*switchport\s+trunk\s+allowed\s+vlan\s+except\s+(\S+)$',
-            result_type=str,
-            default='')
-
-        if _except:
-            retval = CiscoRange(combined, result_type=int).remove(_except)
+            ## Analyze each vdict in sequence and apply to retval sequentially
+            for key, val in vdict.items():
+                if val!='_nomatch_':
+                    ## absolute in the key overrides previous values
+                    if 'absolute' in key:
+                        if val.lower()=='all':
+                            retval = CiscoRange('1-{0}'.format(MAX_VLAN),
+                                result_type=int)
+                        elif val.lower()=='none':
+                            retval = CiscoRange(result_type=int)
+                        else:
+                            retval = CiscoRange(val, result_type=int)
+                    elif 'add' in key:
+                        retval.append(val)
+                    elif 'except' in key:
+                        retval = CiscoRange('1-{0}'.format(MAX_VLAN),
+                            result_type=int)
+                        retval.remove(val)
+                    elif 'remove' in key:
+                        retval.remove(val)
 
         return retval
+
 
     @property
     def native_vlan(self):
