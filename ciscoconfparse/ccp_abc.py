@@ -530,7 +530,8 @@ class BaseCfgLine(object):
         """
         return [cobj for cobj in self.children if cobj.re_search(regex)]
 
-    def re_match_typed(self, regex, group=1, result_type=str, default=''):
+    def re_match_typed(self, regex, group=1, untyped_default=False, 
+        result_type=str, default=''):
         r"""Use ``regex`` to search the :class:`~models_cisco.IOSCfgLine` text 
         and return the contents of the regular expression group, at the 
         integer ``group`` index, cast as ``result_type``; if there is no match, 
@@ -542,6 +543,7 @@ class BaseCfgLine(object):
             - group (int): An integer which specifies the desired regex group to be returned.  ``group`` defaults to 1.
             - result_type (type): A type (typically one of: ``str``, ``int``, ``float``, or ``IPv4Obj``).  All returned values are cast as ``result_type``, which defaults to ``str``.
             - default (any): The default value to be returned, if there is no match.
+            - untyped_default (bool): Set True if you don't want the default value to be typed
 
         Returns:
             - ``result_type``.  The text matched by the regular expression group; if there is no match, ``default`` is returned.  All values are cast as ``result_type``.
@@ -584,9 +586,11 @@ class BaseCfgLine(object):
         if not (mm is None):
             if not (mm.group(group) is None):
                 return result_type(mm.group(group))
-            else:
-                return result_type(default)
-        return result_type(default)
+
+        if untyped_default:
+            return default
+        else:
+            return result_type(default)
 
     def re_match_iter_typed(self, regex, group=1, result_type=str, default='', 
         untyped_default=False, all_children=False):
