@@ -997,8 +997,10 @@ class CiscoRange(MutableSequence):
 <CiscoRange 1-3,5,9-11,13>
 >>> CiscoRange('Eth1/1-3,7')
 <CiscoRange Eth1/1-3,7>
+>>> CiscoRange()
+<CiscoRange none>
     """
-    def __init__(self, text, result_type=str):
+    def __init__(self, text="", result_type=str):
         super(CiscoRange, self).__init__()
         self.text = text
         self.result_type = result_type
@@ -1011,7 +1013,10 @@ class CiscoRange(MutableSequence):
             self._list = list()
 
     def __repr__(self):
-        return """<CiscoRange {0}>""".format(self.compressed_str)
+        if len(self._list)==0:
+            return """<CiscoRange none>"""
+        else:
+            return """<CiscoRange {0}>""".format(self.compressed_str)
 
     def __len__(self):
         return len(self._list)
@@ -1130,6 +1135,9 @@ class CiscoRange(MutableSequence):
                 unicode_ii = str(ii)
             ii = re.sub(r'^{0}(\d+)$'.format(prefix_str), '\g<1>', unicode_ii)
             input.append(int(ii))
+
+        if len(input)==0: # Special case, handle empty list
+            return ''
 
         # source - https://stackoverflow.com/a/51227915/667301
         input = sorted(list(set(input)))
