@@ -1048,6 +1048,9 @@ class CiscoRange(MutableSequence):
                 CiscoRange(
                     val, result_type=self.result_type)):
             self._list.insert(ii + idx, obj)
+
+        # Prune out any duplicate entries, and sort...
+        self._list = sorted(map(self.result_type, set(self._list)))
         return self
 
     def append(self, val):
