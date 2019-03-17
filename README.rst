@@ -74,10 +74,9 @@ Docs
 Pre-requisites
 ==============
 
-As of version 1.3.30, ciscoconfparse_ requires Python versions 2.7 or 3.4+ 
+As of version 1.3.31, ciscoconfparse_ requires Python versions 2.7 or 3.4+ 
 (note: version 3.7.0 has a bug - ref Github issue #117, but version 3.7.1 
-works); the OS should not matter. If you want to run it under a Python 
-virtualenv_, it's been heavily tested in that environment as well.
+works); the OS should not matter.
 
 .. _Installation:
 
@@ -90,7 +89,7 @@ already have setuptools_, you can install as usual:
 ::
 
       # Substitute whatever ciscoconfparse version you like...
-      easy_install -U ciscoconfparse==1.3.30
+      easy_install -U ciscoconfparse==1.3.31
 
 Alternatively you can install into Python2.x with pip_:
 
@@ -125,7 +124,7 @@ or `bitbucket repo`_:
 FAQ
 ===
 
-#) *QUESTION*: I want to use ciscoconfparse_ with Python3; is that safe?  *ANSWER*: As long as you're using Python 3.3 or higher, it's safe. I test every release against Python 3.2+; however, Python 3.2 is currently exposed to a small bug for some configurations (see `Github Issue #14`_).
+#) *QUESTION*: I want to use ciscoconfparse_ with Python3; is that safe?  *ANSWER*: *ANSWER*: Yes.
 
 #) *QUESTION*: Some of the code in the documentation looks different than what I'm used to seeing.  Did you change something?  *ANSWER*: Yes, starting around ciscoconfparse_ v0.9.10 I introducted more methods directly on ``IOSConfigLine()`` objects; going forward, these methods are the preferred way to use ciscoconfparse_.  Please start using the new methods shown in the example, since they're faster, and you type much less code this way.
 
@@ -159,7 +158,7 @@ Bug Tracker and Support
 Unit-Tests
 ==========
 
-`Travis CI project <https://travis-ci.org>`_ tests ciscoconfparse on Python versions 2.6 through 3.6, as well as a `pypy JIT`_ executable.
+`Travis CI project <https://travis-ci.org>`_ tests ciscoconfparse on Python versions 2.7 through 3.7, as well as a `pypy JIT`_ executable.
 
 Click the image below for details; the current build status is:
 
