@@ -281,20 +281,21 @@ def testVal_IOSIntfLine_trunk_vlan_allowed_05():
     intf_obj = cfg.find_objects('^interface')[0]
     assert intf_obj.trunk_vlans_allowed.as_list==[1]
 
-def testVal_IOSIntfLine_trunk_vlan_allowed_05():
+def testVal_IOSIntfLine_trunk_vlan_allowed_06():
     lines = ['!',
         'interface GigabitEthernet 1/1',
         ' switchport mode trunk',
         ' switchport trunk allowed vlan none',
-        ' switchport trunk allowed vlan add 2-4094',
+        ' switchport trunk allowed vlan add 2-1000',
+        ' switchport trunk allowed vlan add 1010-4094',
         ' switchport trunk native vlan 911',
         '!',
     ]
     cfg = CiscoConfParse(lines, factory=True)
     intf_obj = cfg.find_objects('^interface')[0]
-    assert intf_obj.trunk_vlans_allowed.as_list==list(range(2, 4095))
+    assert intf_obj.trunk_vlans_allowed==CiscoRange('2-1000,1010-4094', result_type=int)
 
-def testVal_IOSIntfLine_trunk_vlan_allowed_06():
+def testVal_IOSIntfLine_trunk_vlan_allowed_07():
     config = """!
 interface GigabitEthernet 1/1
  switchport
@@ -310,6 +311,18 @@ interface GigabitEthernet 1/1
     intf_obj = cfg.find_objects('^interface')[0]
     assert intf_obj.trunk_vlans_allowed==CiscoRange('2-19,21-4094', 
         result_type=int)
+
+def testVal_IOSIntfLine_trunk_vlan_allowed_08():
+    config = """!
+interface GigabitEthernet 1/1
+ switchport
+ switchport mode trunk
+ switchport trunk allowed vlan none
+!
+"""
+    cfg = CiscoConfParse(config.splitlines(), factory=True)
+    intf_obj = cfg.find_objects('^interface')[0]
+    assert intf_obj.trunk_vlans_allowed==CiscoRange()
 
 def testVal_IOSIntfLine_abbvs(parse_c03_factory):
     cfg = parse_c03_factory
