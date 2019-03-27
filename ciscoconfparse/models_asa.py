@@ -842,14 +842,14 @@ class ASARouteLine(BaseASARouteLine):
 
 _ACL_PROTOCOLS = 'ip|tcp|udp|ah|eigrp|esp|gre|igmp|igrp|ipinip|ipsec|ospf|pcp|pim|pptp|snp|\d+'
 _ACL_ICMP_PROTOCOLS = 'alternate-address|conversion-error|echo-reply|echo|information-reply|information-request|mask-reply|mask-request|mobile-redirect|parameter-problem|redirect|router-advertisement|router-solicitation|source-quench|time-exceeded|timestamp-reply|timestamp-request|traceroute|unreachable'
-_ACL_LOGLEVELS = r'alerts|critical|debugging|emergencies|errors|informational|notifications|warnings|[0-7]'
+_ACL_LOGLEVELS = r'default|alerts|critical|debugging|emergencies|errors|informational|notifications|warnings|[0-7]'
 _RE_ACLOBJECT_STR = r"""(?:                         # Non-capturing parenthesis
 # remark
- (^access-list\s+(?P<acl_name0>\S+)\s+(?P<action0>remark)\s+(?P<remark>\S.+?)$)
+ (^access-list\s+(?P<acl_name0>\S+)\s+(?P<action0>remark)\s+(?P<remark>.+?)$)
 
 # extended service object with source network object, destination network object
 |(?:^access-list\s+(?P<acl_name1>\S+)
-  \s+extended\s+(?P<action1>permit|deny)
+  (?:\s+extended)?\s+(?P<action1>permit|deny)
   \s+(?:
      (?:object-group\s+(?P<service_object1>\S+))
     |(?P<protocol1>{0})
@@ -879,7 +879,7 @@ _RE_ACLOBJECT_STR = r"""(?:                         # Non-capturing parenthesis
 # extended service object with source network, destination network
 # access-list TESTME1 extended permit ip any any log
 |(?:^access-list\s+(?P<acl_name2>\S+)
-  \s+extended
+  (?:\s+extended)?
   \s+(?P<action2>permit|deny)
   \s+(?:                       # service-object or protocol
      (?:object-group\s+(?P<service_object2>\S+))
@@ -887,11 +887,12 @@ _RE_ACLOBJECT_STR = r"""(?:                         # Non-capturing parenthesis
   )
   (?:\s+       # any, any4, host foo, object-group FOO or 10.0.0.0 255.255.255.0
      (?:
-       (?P<src_network2a>any|any4)
+       (?P<src_network2a>any|any4|any6)
       |(?:host\s+(?P<src_network2b>\S+))
       |(?:object\s+(?P<src_object2>\S+))
       |(?:object-group\s+(?P<src_networkobject2>\S+))
       |(?:(?P<src_network2c>\S+)\s+(?P<src_netmask2c>\d+\.\d+\.\d+\.\d+))
+      |(?:(?P<src_interface2>interface)\s+(?P<src_interface_name2>\S+))
     )
   )
   (?:\s+
@@ -903,13 +904,14 @@ _RE_ACLOBJECT_STR = r"""(?:                         # Non-capturing parenthesis
   )?
   (?:\s+       # any, any4, host foo, object-group FOO or 10.0.0.0 255.255.255.0
      (?:
-       (?P<dst_network2a>any|any4)
+       (?P<dst_network2a>any|any4|any6)
       |(?:host\s+(?P<dst_network2b>\S+))
       |(?:object\s+(?P<dst_object2>\S+))
       |(?:object-group\s+(?P<dst_networkobject2>\S+))
       |(?:(?P<dst_network2c>\S+)\s+(?P<dst_netmask2c>\d+\.\d+\.\d+\.\d+))
+      |(?:(?P<dst_interface2>interface)\s+(?P<dst_interface_name2>\S+))
     )
-  )
+  )?
   (?:\s+
     (?:
        (?:(?P<dst_port_operator>eq|neq|lt|gt)\s+(?P<dst_port>\S+))
@@ -920,7 +922,10 @@ _RE_ACLOBJECT_STR = r"""(?:                         # Non-capturing parenthesis
   (?:\s+
     (?P<log2>log)
     (?:\s+(?P<loglevel2>{1}))?
-    (?:\s+interval\s+(?P<log_interval2>\d+))?
+  )?
+  (?:\s+
+    (?P<interval2>interval)
+    (?:\s+(?P<interval_time2>\d+))?
   )?
   (?:\s+(?P<disable2>disable))?
   (?:
@@ -934,7 +939,7 @@ _RE_ACLOBJECT_STR = r"""(?:                         # Non-capturing parenthesis
   \s+standard
   \s+(?P<action3>permit|deny)
   \s+(?:
-    (?P<dst_network3a>any|any4)
+    (?P<dst_network3a>any|any4|any6)
    |(?:host\s+(?P<dst_network3b>\S+))
    |(?:(?P<dst_network3c>\S+)\s+(?P<dst_netmask3c>\d+\.\d+\.\d+\.\d+))
   )
@@ -942,25 +947,27 @@ _RE_ACLOBJECT_STR = r"""(?:                         # Non-capturing parenthesis
   )
 #access-list TESTME extended permit icmp any4 0.0.0.0 0.0.0.0 unreachable log interval 1
 |(?:^access-list\s+(?P<acl_name4>\S+)
-  \s+extended
+  (?:\s+extended)?
   \s+(?P<action4>permit|deny)
   \s+(?P<protocol4>icmp)
   (?:\s+       # any, any4, host foo, object-group FOO or 10.0.0.0 255.255.255.0
      (?:
-       (?P<src_network4a>any|any4)
+       (?P<src_network4a>any|any4|any6)
       |(?:host\s+(?P<src_network4b>\S+))
       |(?:object\s+(?P<src_object4>\S+))
       |(?:object-group\s+(?P<src_networkobject4>\S+))
       |(?:(?P<src_network4c>\S+)\s+(?P<src_netmask4c>\d+\.\d+\.\d+\.\d+))
+      |(?:(?P<src_interface4>interface)\s+(?P<src_interface_name4>\S+))
     )
   )
   (?:\s+       # any, any4, host foo, object-group FOO or 10.0.0.0 255.255.255.0
      (?:
-       (?P<dst_network4a>any|any4)
+       (?P<dst_network4a>any|any4|any6)
       |(?:host\s+(?P<dst_network4b>\S+))
       |(?:object\s+(?P<dst_object4>\S+))
       |(?:object-group\s+(?P<dst_networkobject4>\S+))
       |(?:(?P<dst_network4c>\S+)\s+(?P<dst_netmask4c>\d+\.\d+\.\d+\.\d+))
+      |(?:(?P<dst_interface4>interface)\s+(?P<dst_interface_name4>\S+))
     )
   )
   (?:\s+(?P<icmp_proto4>{2}|\d+))?
