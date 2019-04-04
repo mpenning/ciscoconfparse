@@ -40,8 +40,8 @@ ip ssh logging events
 no ip http server
 no ip http secure-server
 !
-! default critical memory reservation is 100KB, this reserves 4MB
-memory reserve critical 4096
+! default critical memory reservation is 100KB, this reserves 2MB
+memory reserve critical 2048
 !
 no logging console
 ! log buffer at debug level
@@ -50,9 +50,11 @@ logging buffered 500000
 logging trap debugging
 !
 line con 0
+ exec-timeout 5 0
  logging synchronous
  transport preferred none
 line vty 0 4
+ exec-timeout 5 0
  logging synchronous
  transport preferred none
 !""".splitlines()
