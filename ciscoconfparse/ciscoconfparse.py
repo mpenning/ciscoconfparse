@@ -1575,7 +1575,7 @@ class CiscoConfParse(object):
         matches linespec, and delete the object"""
         objs = self.find_objects(linespec, exactmatch, ignore_ws)
         #atomic = False
-        for idx, obj in enumerate(objs):
+        for idx, obj in enumerate(reversed(objs)):
             #if idx==last_idx:
             #    atomic = True
             del self.ConfigObjs[obj.linenum]
