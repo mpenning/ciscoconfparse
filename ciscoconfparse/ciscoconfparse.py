@@ -898,7 +898,7 @@ class CiscoConfParse(object):
             switchport access vlan 300
             spanning-tree portfast
            !
-           interface FastEthernet0/2
+           interface FastEthernet0/3
             duplex full
             speed 100
             switchport access vlan 300
