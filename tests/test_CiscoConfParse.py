@@ -545,6 +545,47 @@ def testValues_delete_lines_02():
     parse.delete_lines('port-security')  # Delete lines from config
     assert parse.ioscfg==result_correct
 
+def testValues_delete_lines_03():
+    """Catch bugs similar to those fixed by https://github.com/mpenning/ciscoconfparse/pull/140"""
+    config = [
+    '! port-security',
+    'interface FastEthernet0/2',
+    ' switchport port-security maximum 2',
+    ' switchport port-security violation restrict',
+    ' switchport port-security',
+    ' switchport mode trunk',
+    ' switchport trunk allowed 300,532',
+    ' switchport nonegotiate',
+    '!',
+    'interface FastEthernet0/3',
+    ' switchport port-security maximum 2',
+    ' switchport port-security violation restrict',
+    ' switchport port-security',
+    ' switchport mode trunk',
+    ' switchport trunk allowed 300,532',
+    ' switchport nonegotiate',
+    '!',
+    'end'
+    ]
+
+    result_correct = [
+    'interface FastEthernet0/2',
+    ' switchport mode trunk',
+    ' switchport trunk allowed 300,532',
+    ' switchport nonegotiate',
+    '!',
+    'interface FastEthernet0/3',
+    ' switchport mode trunk',
+    ' switchport trunk allowed 300,532',
+    ' switchport nonegotiate',
+    '!',
+    'end'
+    ]
+
+    parse = CiscoConfParse(config, syntax='ios')
+    parse.delete_lines('port-security')  # Delete lines from config
+    assert parse.ioscfg==result_correct
+
 def testValues_replace_lines_01(parse_c01):
     c01_replace_gige_no_exactmatch = [
             'interface GigabitEthernet8/1',
