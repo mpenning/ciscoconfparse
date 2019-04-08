@@ -1574,10 +1574,7 @@ class CiscoConfParse(object):
         """Find all :class:`~models_cisco.IOSCfgLine` objects whose text 
         matches linespec, and delete the object"""
         objs = self.find_objects(linespec, exactmatch, ignore_ws)
-        #atomic = False
-        for idx, obj in enumerate(reversed(objs)):
-            #if idx==last_idx:
-            #    atomic = True
+        for obj in reversed(objs):
             del self.ConfigObjs[obj.linenum]
 
     def prepend_line(self, linespec):
