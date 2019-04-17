@@ -37,6 +37,7 @@ ip tcp queuemax 50
 ip ssh version 2
 ip ssh logging events
 ip ssh authentication-retries 4
+login block-for 30 attempts 5 within 60
 !
 no ip http server
 no ip http secure-server
