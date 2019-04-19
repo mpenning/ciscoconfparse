@@ -29,6 +29,36 @@ def testValues_find_objects_dna(parse_c01_factory):
     obj = parse_c01_factory.find_objects_dna('IOSIntf')[0]
     assert isinstance(obj, IOSIntfLine)
 
+def testValues_macro_01():
+    CONFIG = """!
+interface FastEthernet 0/1
+ ip address 172.16.1.1 255.255.255.0
+ no ip proxy-arp
+!
+macro name THIS_MACRO
+do sh ip int brief
+@
+macro name THAT_MACRO
+do sh int status
+@
+line vty 0 4
+ transport preferred none
+end""".splitlines()
+    parse = CiscoConfParse(CONFIG)
+    mobjs = parse.find_objects('^macro')
+
+    assert mobjs[0].linenum == 5
+    assert parse.objs[6].parent == mobjs[0]
+    assert parse.objs[6].linenum == 6
+    assert parse.objs[7].parent == mobjs[0]
+    assert parse.objs[7].linenum == 7
+
+    assert mobjs[1].linenum == 8
+    assert parse.objs[9].parent == mobjs[1]
+    assert parse.objs[9].linenum == 9
+    assert parse.objs[10].parent == mobjs[1]
+    assert parse.objs[10].linenum == 10
+
 def testValues_banner_delimiter_01():
     # Test banner delimiter on the same lines
     CONFIG = ['!', 'banner motd ^   trivial banner here ^', 'end']
