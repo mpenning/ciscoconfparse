@@ -2722,8 +2722,25 @@ class IOSConfigList(MutableSequence):
                 except IndexError:
                     break
 
+    def _macro_mark_children(self, macro_parent_idx_list):
+        # Mark macro children appropriately...
+        for idx in macro_parent_idx_list:
+            pobj = self._list[idx]
+            pobj.child_indent = 0
+
+            # Walk the next configuration lines looking for the macro's children
+            finished = False
+            while not finished:
+                idx += 1
+                cobj = self._list[idx]
+                cobj.parent = pobj
+                pobj.children.append(cobj)
+                # If we hit the end of the macro, break out of the loop
+                if cobj.text.rstrip()=='@':
+                    finished = True
+
     def _bootstrap_obj_init(self, text_list):
-        """Accept a text list and format into proper objects"""
+        """Accept a text list and format into proper IOSCfgLine() objects"""
         # Append text lines as IOSCfgLine objects...
         BANNER_STR = set([
             'login',
@@ -2741,6 +2758,7 @@ class IOSConfigList(MutableSequence):
         idx = 0
 
         max_indent = 0
+        macro_parent_idx_list = list()
         parents = dict()
         for line in text_list:
             # Reject empty lines if ignore_blank_lines...
@@ -2761,6 +2779,10 @@ class IOSConfigList(MutableSequence):
             obj.indent = indent
 
             is_config_line = obj.is_config_line
+
+            # list out macro parent line numbers...
+            if obj.text[0:5]=='macro':
+                macro_parent_idx_list.append(obj.linenum)
 
             ## Parent cache:
             ## Maintain indent vs max_indent in a family and
@@ -2818,6 +2840,10 @@ class IOSConfigList(MutableSequence):
 
         self._list = retval
         self._banner_mark_regex(BANNER_RE)
+        # We need to use a different method for macros than banners because
+        #   macros don't specify a delimiter on their parent line, but
+        #   banners call out a delimiter.
+        self._macro_mark_children(macro_parent_idx_list) # Process macros
         return retval
 
     def _add_child_to_parent(self, _list, idx, indent, parentobj, childobj):
@@ -3136,6 +3162,7 @@ class NXOSConfigList(MutableSequence):
                 except IndexError:
                     break
 
+
     def _bootstrap_obj_init(self, text_list):
         """Accept a text list and format into proper objects"""
         # Append text lines as NXOSCfgLine objects...
@@ -3173,6 +3200,7 @@ class NXOSConfigList(MutableSequence):
             obj.indent = indent
 
             is_config_line = obj.is_config_line
+
 
             ## Parent cache:
             ## Maintain indent vs max_indent in a family and
@@ -3229,7 +3257,7 @@ class NXOSConfigList(MutableSequence):
             idx += 1
 
         self._list = retval
-        self._banner_mark_regex(BANNER_RE)
+        self._banner_mark_regex(BANNER_RE) # Process IOS banners
         return retval
 
     def _add_child_to_parent(self, _list, idx, indent, parentobj, childobj):
