@@ -2781,7 +2781,7 @@ class IOSConfigList(MutableSequence):
             is_config_line = obj.is_config_line
 
             # list out macro parent line numbers...
-            if obj.text[0:5]=='macro':
+            if obj.text[0:11]=='macro name ':
                 macro_parent_idx_list.append(obj.linenum)
 
             ## Parent cache:
