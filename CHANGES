@@ -1,3 +1,4 @@
+1.3.35  20190420 Refine IOS macro parsing (Github issue #144)
 1.3.34  20190419 Add support for IOS macros (Github issue #143)
 1.3.33  20190407 Merge Github PR #140 (delete_lines() bug)
 1.3.32  20190317 Fix Github issue #135
