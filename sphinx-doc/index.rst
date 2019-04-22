@@ -1,10 +1,9 @@
 Welcome to ciscoconfparse's documentation!
-==========================================
-
-Contents:
+******************************************
 
 .. toctree::
    :maxdepth: 4
+   :caption: Contents:
 
    intro
    history

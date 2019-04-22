@@ -4,6 +4,6 @@ ciscoconfparse.CiscoConfParse Object
 ------------------------------------
 
 .. autoclass:: ciscoconfparse.CiscoConfParse
-      :members:
-      :undoc-members:
-      :inherited-members:
+   :members:
+   :undoc-members:
+   :inherited-members:

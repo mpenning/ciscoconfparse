@@ -8,10 +8,9 @@ API
 
 This part of the documentation covers all the significant Python classes and methods used in :class:`~ciscoconfparse.CiscoConfParse()`.
 
-Contents:
-
 .. toctree::
    :maxdepth: 4
+   :caption: Contents:
 
    api_CiscoConfParse.rst
    api_IOSConfigList.rst

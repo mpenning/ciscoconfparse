@@ -4,5 +4,5 @@ ciscoconfparse.models_cisco.IOSIntfLine Object
 ----------------------------------------------
 
 .. autoclass:: models_cisco.IOSIntfLine
-      :members:
-      :inherited-members:
+   :members:
+   :inherited-members:
