@@ -80,7 +80,7 @@ devtest:
 .PHONY: test
 test:
 	# Run the doc tests and unit tests
-	cd tests; python ../ciscoconfparse/ciscoconfparse.py; ./runtests.sh
+	cd tests; ./runtests.sh
 .PHONY: clean
 clean:
 	find ./* -name '*.pyc' -exec rm {} \;
