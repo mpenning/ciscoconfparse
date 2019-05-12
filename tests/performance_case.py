@@ -4,11 +4,12 @@ from cProfile import run
 import sys
 import os
 THIS_DIR = os.path.dirname(__file__)
-sys.path.insert(0, os.path.join(os.path.abspath(THIS_DIR), "../ciscoconfparse/"))
+#sys.path.insert(0, os.path.join(os.path.abspath(THIS_DIR), "../ciscoconfparse/"))
+sys.path.insert(0, "..")
 
 
 # IGNORE PyFlake's barking here
-from ciscoconfparse import CiscoConfParse
+from ciscoconfparse.ciscoconfparse import CiscoConfParse
 
 if sys.argv[1]=="1":
     run("CiscoConfParse('../configs/sample_01.ios')", sort=2)

@@ -3,14 +3,13 @@
 import sys
 import re
 import os
-THIS_DIR = os.path.dirname(__file__)
-sys.path.insert(0, os.path.join(os.path.abspath(THIS_DIR), "../ciscoconfparse/"))
+sys.path.insert(0, "..")
 
-from ccp_util import _RGX_IPV4ADDR, _RGX_IPV6ADDR
-from ccp_util import IPv4Obj, L4Object
-from ccp_util import CiscoRange
-from ccp_util import IPv6Obj
-from ccp_util import dns_lookup, reverse_dns_lookup
+from ciscoconfparse.ccp_util import _RGX_IPV4ADDR, _RGX_IPV6ADDR
+from ciscoconfparse.ccp_util import IPv4Obj, L4Object
+from ciscoconfparse.ccp_util import CiscoRange
+from ciscoconfparse.ccp_util import IPv6Obj
+from ciscoconfparse.ccp_util import dns_lookup, reverse_dns_lookup
 import pytest
 
 if sys.version_info[0]<3:

@@ -1,3 +1,5 @@
+from __future__  import absolute_import
+
 class BaseError(Exception):
     def __init__(self, msg=""):
         super(BaseError, self).__init__(msg)

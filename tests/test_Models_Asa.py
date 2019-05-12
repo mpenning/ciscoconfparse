@@ -3,16 +3,15 @@
 import sys
 import re
 import os
-THIS_DIR = os.path.dirname(__file__)
-sys.path.insert(0, os.path.join(os.path.abspath(THIS_DIR), "../ciscoconfparse/"))
+sys.path.insert(0, "..")
 
 import pytest
 from conftest import parse_a01, parse_a01_factory
 
-from ciscoconfparse import CiscoConfParse
-from models_asa import ASAObjGroupService
-from ccp_util import L4Object
-from ccp_util import IPv4Obj
+from ciscoconfparse.ciscoconfparse import CiscoConfParse
+from ciscoconfparse.models_asa import ASAObjGroupService
+from ciscoconfparse.ccp_util import L4Object
+from ciscoconfparse.ccp_util import IPv4Obj
 
 if sys.version_info[0]<3:
     from ipaddr import IPv4Network, IPv6Network, IPv4Address, IPv6Address

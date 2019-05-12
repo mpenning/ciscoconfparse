@@ -6,12 +6,11 @@ import platform
 import sys
 import re
 import os
-THIS_DIR = os.path.dirname(__file__)
-sys.path.insert(0, os.path.join(os.path.abspath(THIS_DIR), "../ciscoconfparse/"))
+sys.path.insert(0, "..")
 
-from ciscoconfparse import CiscoConfParse, IOSCfgLine, IOSIntfLine
-from ciscoconfparse import CiscoPassword
-from ccp_util import IPv4Obj
+from ciscoconfparse.ciscoconfparse import CiscoConfParse, IOSCfgLine, IOSIntfLine
+from ciscoconfparse.ciscoconfparse import CiscoPassword
+from ciscoconfparse.ccp_util import IPv4Obj
 from passlib.hash import cisco_type7
 import pytest
 

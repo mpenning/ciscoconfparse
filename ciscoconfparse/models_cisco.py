@@ -1,14 +1,15 @@
+from __future__  import absolute_import
 import traceback
 import sys
 import re
 import os
 
-from errors import DynamicAddressException
+from ciscoconfparse.errors import DynamicAddressException
 
-from ccp_util import _IPV6_REGEX_STR_COMPRESSED1, _IPV6_REGEX_STR_COMPRESSED2
-from ccp_util import _IPV6_REGEX_STR_COMPRESSED3
-from ccp_util import CiscoRange, IPv4Obj, IPv6Obj
-from ccp_abc import BaseCfgLine
+from ciscoconfparse.ccp_util import _IPV6_REGEX_STR_COMPRESSED1, _IPV6_REGEX_STR_COMPRESSED2
+from ciscoconfparse.ccp_util import _IPV6_REGEX_STR_COMPRESSED3
+from ciscoconfparse.ccp_util import CiscoRange, IPv4Obj, IPv6Obj
+from ciscoconfparse.ccp_abc import BaseCfgLine
 
 ### HUGE UGLY WARNING:
 ###   Anything in models_cisco.py could change at any time, until I remove this

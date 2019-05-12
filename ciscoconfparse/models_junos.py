@@ -1,9 +1,10 @@
+from __future__  import absolute_import
 import sys
 import re
 import os
 
-from ccp_abc import BaseCfgLine
-from ccp_util import IPv4Obj
+from ciscoconfparse.ccp_abc import BaseCfgLine
+from ciscoconfparse.ccp_util import IPv4Obj
 
 ### HUGE UGLY WARNING:
 ###   Anything in models_junos.py could change at any time, until I remove this

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from operator import methodcaller, attrgetter
 from colorama import Fore, Back, Style
 from difflib import SequenceMatcher
@@ -14,38 +15,39 @@ else:
     from collections import MutableSequence, Iterator
 
 
-from models_cisco import IOSHostnameLine, IOSRouteLine, IOSIntfLine
-from models_cisco import IOSAccessLine, IOSIntfGlobal
-from models_cisco import IOSAaaLoginAuthenticationLine
-from models_cisco import IOSAaaEnableAuthenticationLine
-from models_cisco import IOSAaaCommandsAuthorizationLine
-from models_cisco import IOSAaaCommandsAccountingLine
-from models_cisco import IOSAaaExecAccountingLine
-from models_cisco import IOSAaaGroupServerLine
-from models_cisco import IOSCfgLine
+from ciscoconfparse.models_cisco import IOSHostnameLine, IOSRouteLine
+from ciscoconfparse.models_cisco import IOSIntfLine
+from ciscoconfparse.models_cisco import IOSAccessLine, IOSIntfGlobal
+from ciscoconfparse.models_cisco import IOSAaaLoginAuthenticationLine
+from ciscoconfparse.models_cisco import IOSAaaEnableAuthenticationLine
+from ciscoconfparse.models_cisco import IOSAaaCommandsAuthorizationLine
+from ciscoconfparse.models_cisco import IOSAaaCommandsAccountingLine
+from ciscoconfparse.models_cisco import IOSAaaExecAccountingLine
+from ciscoconfparse.models_cisco import IOSAaaGroupServerLine
+from ciscoconfparse.models_cisco import IOSCfgLine
 
-from models_nxos import NXOSHostnameLine, NXOSRouteLine, NXOSIntfLine
-from models_nxos import NXOSAccessLine, NXOSIntfGlobal
-from models_nxos import NXOSAaaLoginAuthenticationLine
-from models_nxos import NXOSAaaEnableAuthenticationLine
-from models_nxos import NXOSAaaCommandsAuthorizationLine
-from models_nxos import NXOSAaaCommandsAccountingLine
-from models_nxos import NXOSAaaExecAccountingLine
-from models_nxos import NXOSAaaGroupServerLine
-from models_nxos import NXOSCfgLine
+from ciscoconfparse.models_nxos import NXOSHostnameLine, NXOSRouteLine, NXOSIntfLine
+from ciscoconfparse.models_nxos import NXOSAccessLine, NXOSIntfGlobal
+from ciscoconfparse.models_nxos import NXOSAaaLoginAuthenticationLine
+from ciscoconfparse.models_nxos import NXOSAaaEnableAuthenticationLine
+from ciscoconfparse.models_nxos import NXOSAaaCommandsAuthorizationLine
+from ciscoconfparse.models_nxos import NXOSAaaCommandsAccountingLine
+from ciscoconfparse.models_nxos import NXOSAaaExecAccountingLine
+from ciscoconfparse.models_nxos import NXOSAaaGroupServerLine
+from ciscoconfparse.models_nxos import NXOSCfgLine
 
-from models_asa import ASAObjGroupNetwork
-from models_asa import ASAObjGroupService
-from models_asa import ASAHostnameLine
-from models_asa import ASAObjNetwork
-from models_asa import ASAObjService
-from models_asa import ASAIntfGlobal
-from models_asa import ASAIntfLine
-from models_asa import ASACfgLine
-from models_asa import ASAName
-from models_asa import ASAAclLine
+from ciscoconfparse.models_asa import ASAObjGroupNetwork
+from ciscoconfparse.models_asa import ASAObjGroupService
+from ciscoconfparse.models_asa import ASAHostnameLine
+from ciscoconfparse.models_asa import ASAObjNetwork
+from ciscoconfparse.models_asa import ASAObjService
+from ciscoconfparse.models_asa import ASAIntfGlobal
+from ciscoconfparse.models_asa import ASAIntfLine
+from ciscoconfparse.models_asa import ASACfgLine
+from ciscoconfparse.models_asa import ASAName
+from ciscoconfparse.models_asa import ASAAclLine
 
-from models_junos import JunosCfgLine
+from ciscoconfparse.models_junos import JunosCfgLine
 
 r""" ciscoconfparse.py - Parse, Query, Build, and Modify IOS-style configs
      Copyright (C) 2007-2019 David Michael Pennington

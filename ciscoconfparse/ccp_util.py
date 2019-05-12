@@ -1,3 +1,4 @@
+from __future__  import absolute_import
 import itertools
 import socket
 import time
@@ -11,7 +12,7 @@ else:
     ## This syntax is not supported in Python 3...
     from collections import MutableSequence
 
-from protocol_values import ASA_TCP_PORTS, ASA_UDP_PORTS
+from ciscoconfparse.protocol_values import ASA_TCP_PORTS, ASA_UDP_PORTS
 from dns.exception import DNSException
 from dns.resolver import Resolver
 from dns import reversename, query, zone

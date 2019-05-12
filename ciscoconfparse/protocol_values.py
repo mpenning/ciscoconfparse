@@ -1,3 +1,4 @@
+from __future__  import absolute_import
 """ protocol_values.py - Parse, Query, Build, and Modify IOS-style configurations
      Copyright (C) 2014-2015 David Michael Pennington
 

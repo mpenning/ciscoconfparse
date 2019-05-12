@@ -1,7 +1,8 @@
 # Follow PEP366...
 #     Credit (the question): http://stackoverflow.com/q/2943847/667301
 __package__ = "ciscoconfparse"
-from .ciscoconfparse import *
+from __future__  import absolute_import
+from ciscoconfparse.ciscoconfparse import *
 
 """ __main__.py - Parse, Query, Build, and Modify IOS-style configurations
      Copyright (C) 2014-2015 David Michael Pennington
