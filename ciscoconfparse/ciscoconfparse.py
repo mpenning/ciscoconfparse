@@ -376,6 +376,7 @@ class CiscoConfParse(object):
         (?:\s*
            (?:(?P<line>[^\{{\}}{0}].*?)(?P<braces_eol>[\{{\}}])*(?P<sc>\;)*\s*)
           |(?P<braces_alone>[\{{\}}\;])
+          |(?P<brace_sc>\}}\;)\s*
           |(?P<junos_else>^\s*\}}\s*else\s*\{{\s*$)
           |(?:\s*[{0}](?P<comment>.*))
         )
@@ -399,11 +400,14 @@ class CiscoConfParse(object):
 
                 junos_else = results.get('junos_else', None)
                 term_char = (results['braces_eol'] or
+                             results.get('braces_sc', None) or
                              results['braces_alone'] or '').strip()
                 comment = results['comment']
                 if term_char == '{':
                     level_offset = 1
                 elif term_char == '}':
+                    level_offset = -1
+                elif term_char == '};':
                     level_offset = -1
 
                 ## Return values
@@ -418,12 +422,14 @@ class CiscoConfParse(object):
                 ## pass blank lines back
                 return input, 0
             else:
-                raise ValueError("Could not parse: '{0}'".format(input))
+                raise ValueError("LINE_RE Regex fail - Could not parse: '{0}'".format(input))
 
         lines = list()
         offset = 0
         STOP_WIDTH = stop_width
-        for tmp in input_list:
+        for idx, tmp in enumerate(input_list):
+            if self.debug is True:
+                _log.debug("Parse line {0}:'{1}'".format(idx+1, tmp.strip()))
             line, line_offset = line_level(tmp.strip())
             if line is None:
                 line = ""
