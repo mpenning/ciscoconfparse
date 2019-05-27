@@ -641,13 +641,13 @@ class BaseCfgLine(object):
         ## iterate through children, and return the matching value 
         ##  (cast as result_type) from the first child.text that matches regex
 
-        if (default is True):
+        #if (default is True):
             ## Not using self.re_match_iter_typed(default=True), because I want
             ##   to be sure I build the correct API for match=False
             ##
             ## Ref IOSIntfLine.has_dtp for an example of how to code around
             ##   this while I build the API
-            raise NotImplementedError
+        #    raise NotImplementedError
 
         if all_children is False:
             for cobj in self.children:

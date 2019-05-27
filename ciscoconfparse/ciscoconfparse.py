@@ -1838,11 +1838,9 @@ class CiscoConfParse(object):
         Returns:
             - ``result_type``.  The text matched by the regular expression group; if there is no match, ``default`` is returned.  All values are cast as ``result_type``.
 
-        - NOTE: This loops through the children (in order) and returns when the regex hits its first match.
-
 
         This example illustrates how you can use
-        :func:`~models_cisco.IOSCfgLine.re_match_iter_typed` to get the
+        :func:`~ciscoconfparse.re_match_iter_typed` to get the
         first interface name listed in the config.
 
            >>> from ciscoconfparse import CiscoConfParse
@@ -1865,13 +1863,13 @@ class CiscoConfParse(object):
         ## iterate through root objects, and return the matching value
         ##  (cast as result_type) from the first object.text that matches regex
 
-        if (default is True):
+        #if (default is True):
             ## Not using self.re_match_iter_typed(default=True), because I want
             ##   to be sure I build the correct API for match=False
             ##
             ## Ref IOSIntfLine.has_dtp for an example of how to code around
             ##   this while I build the API
-            raise NotImplementedError
+        #    raise NotImplementedError
 
         for cobj in self.ConfigObjs:
 
