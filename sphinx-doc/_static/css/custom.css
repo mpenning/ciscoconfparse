@@ -1,0 +1,5 @@
+dl.method, div.section {
+  /* Add 4em bottom padding around each method and each section's block */
+  padding-top: 2em;    /* Keep this split up at top and bottom... */
+  padding-bottom: 2em;
+}
