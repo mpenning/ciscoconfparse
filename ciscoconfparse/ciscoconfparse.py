@@ -1820,6 +1820,72 @@ class CiscoConfParse(object):
 
         return retval
 
+    def re_match_iter_typed(self, regex, group=1, result_type=str, default='',
+        untyped_default=False):
+        r"""Use ``regex`` to search the root parents in the config
+        and return the contents of the regular expression group, at the 
+        integer ``group`` index, cast as ``result_type``; if there is no 
+        match, ``default`` is returned.
+
+        Args:
+            - regex (str): A string or python compiled regular expression, which should be matched.  This regular expression should contain parenthesis, which bound a match group.
+        Kwargs:
+            - group (int): An integer which specifies the desired regex group to be returned.  ``group`` defaults to 1.
+            - result_type (type): A type (typically one of: ``str``, ``int``, ``float``, or :class:`~ccp_util.IPv4Obj`).         All returned values are cast as ``result_type``, which defaults to ``str``.
+            - default (any): The default value to be returned, if there is no match.
+            - untyped_default (bool): Set True if you don't want the default value to be typed
+
+        Returns:
+            - ``result_type``.  The text matched by the regular expression group; if there is no match, ``default`` is returned.  All values are cast as ``result_type``.
+        - NOTE: This loops through the children (in order) and returns when the regex hits its first match.
+
+
+        This example illustrates how you can use
+        :func:`~models_cisco.IOSCfgLine.re_match_iter_typed` to get the
+        first interface name listed in the config.
+
+           >>> from ciscoconfparse import CiscoConfParse
+           >>> config = [
+           ...     '!',
+           ...     'interface Serial1/0',
+           ...     ' ip address 1.1.1.1 255.255.255.252',
+           ...     '!',
+           ...     'interface Serial2/0',
+           ...     ' ip address 1.1.1.5 255.255.255.252',
+           ...     '!',
+           ...     ]
+           >>> parse = CiscoConfParse(config)
+           >>> INTF_RE = re.compile(r'interface\s(\S+)')
+           >>> parse.re_match_iter_typed(INTF_RE)
+           Serial1/0
+           >>>
+        """
+        ## iterate through root objects, and return the matching value
+        ##  (cast as result_type) from the first object.text that matches regex
+
+        if (default is True):
+            ## Not using self.re_match_iter_typed(default=True), because I want
+            ##   to be sure I build the correct API for match=False
+            ##
+            ## Ref IOSIntfLine.has_dtp for an example of how to code around
+            ##   this while I build the API
+            raise NotImplementedError
+
+        for cobj in self.ConfigObjs:
+
+            # Only process parent objects at the root of the tree...
+            if cobj.parent is not cobj:
+                continue
+
+            mm = re.search(regex, cobj.text)
+            if not (mm is None):
+                return result_type(mm.group(group))
+        ## Ref Github issue #121
+        if untyped_default:
+            return default
+        else:
+            return result_type(default)
+
     def req_cfgspec_all_diff(self, cfgspec, ignore_ws=False):
         """
         req_cfgspec_all_diff takes a list of required configuration lines,
