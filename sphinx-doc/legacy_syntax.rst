@@ -193,19 +193,6 @@ If you *do* want the children (recursively), then use
    ['policy-map QOS_1', ' class GOLD', '  priority percent 10', ' class SILVER', '  bandwidth 30', '  random-detect', ' class default']
 
 
-CiscoConfParse options
-~~~~~~~~~~~~~~~~~~~~~~
-
-Several of :class:`~ciscoconfparse.CiscoConfParse`'s functions support one of these options:
-
-- exactmatch
-- ignore_ws
-
-:option:`exactmatch` - This can either be :const:`True` or :const:`False` (the default).  When :option:`exactmatch` is set :const:`True`, CiscoConfParse requires an exact match of the whole string (instead of a sub-string match, which is the default).
-
-:option:`ignore_ws` - This can either be :const:`True` or :const:`False` (the default).  When :option:`ignore_ws` is set :const:`True`, CiscoConfParse will ignore differences in whitespace between the query string and the IOS configuration.
-
-Not all functions support the options above; please consult the API documentation for specifics.
 
 Checking Passwords
 ------------------------------
