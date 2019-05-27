@@ -611,6 +611,7 @@ class BaseCfgLine(object):
 
         Returns:
             - ``result_type``.  The text matched by the regular expression group; if there is no match, ``default`` is returned.  All values are cast as ``result_type``.
+
         - NOTE: This loops through the children (in order) and returns when the regex hits its first match.
 
         This example illustrates how you can use 

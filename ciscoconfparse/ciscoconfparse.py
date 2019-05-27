@@ -458,7 +458,7 @@ class CiscoConfParse(object):
             - list.  A list of matching :class:`~ciscoconfparse.IOSIntfLine` objects
 
         .. code-block:: python
-           :emphasize-lines: 12,15
+           :emphasize-lines: 12
 
            >>> config = [
            ...     '!',
@@ -1837,6 +1837,7 @@ class CiscoConfParse(object):
 
         Returns:
             - ``result_type``.  The text matched by the regular expression group; if there is no match, ``default`` is returned.  All values are cast as ``result_type``.
+
         - NOTE: This loops through the children (in order) and returns when the regex hits its first match.
 
 
@@ -1859,6 +1860,7 @@ class CiscoConfParse(object):
            >>> parse.re_match_iter_typed(INTF_RE)
            Serial1/0
            >>>
+
         """
         ## iterate through root objects, and return the matching value
         ##  (cast as result_type) from the first object.text that matches regex
@@ -2717,8 +2719,8 @@ class IOSConfigList(MutableSequence):
 
     def config_hierarchy(self):
         """Walk this configuration and return the following tuple
-        at each parent 'level':
-            (list_of_parent_sibling_objs, list_of_nonparent_sibling_objs)
+        at each parent 'level': (list_of_parent_sibling_objs, list_of_nonparent_sibling_objs)
+
         """
         parent_siblings = list()
         nonparent_siblings = list()
