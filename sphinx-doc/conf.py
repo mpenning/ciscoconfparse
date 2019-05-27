@@ -24,6 +24,10 @@ try:
 except:
     pass
 
+def setup(app):
+    ## add a stylesheet to add more whitespace around method and section docs
+    app.add_stylesheet('css/custom.css')
+
 ## http://ericholscher.com/blog/2013/nov/4/new-theme-read-the-docs/
 RTD_NEW_THEME = True
 
@@ -118,7 +122,12 @@ else:
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-#html_theme_options = {}
+html_theme_options = {
+  'navbar_title': 'ciscoconfparse',
+  'navbar_site_name': 'ciscoconfparse',
+  'globaltoc_depth': 2,
+  'bootswatch_theme': "united",
+}
 
 # Add any paths that contain custom themes here, relative to this directory.
 #html_theme_path = []
