@@ -7,7 +7,7 @@ from setuptools import setup, find_packages
 import sys
 import os
 CURRENT_PATH=os.path.join(os.path.dirname(__file__))
-sys.path.insert(1,CURRENT_PATH)
+sys.path.insert(1, CURRENT_PATH)
 
 
 def read(fname):
