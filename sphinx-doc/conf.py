@@ -13,9 +13,7 @@
 
 import sys, os
 import time
-# Relative import path referenced to this sphinx-doc directory
-#sys.path.insert(0, os.path.join(os.path.abspath(os.path.dirname(__file__)), 
-#    "..", "ciscoconfparse"))
+# Absolute import path referenced to this sphinx-doc directory
 sys.path.insert(0, os.path.join(os.path.abspath(os.path.dirname(__file__)), 
     ".."))
 
