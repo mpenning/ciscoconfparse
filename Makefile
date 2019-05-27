@@ -90,6 +90,7 @@ clean:
 	-find ./* -path '*__pycache__' -exec rm -rf {} \;
 	@# remove all the MockSSH keys
 	-find ./* -name '*.key' -exec rm {} \;
+	-rm -rf .pytest_cache/
 	-rm -rf .eggs/
 	-rm -rf .cache/
 	-rm -rf build/ dist/ ciscoconfparse.egg-info/ setuptools*
