@@ -104,7 +104,7 @@ class CiscoConfParse(object):
                  comment="!",
                  debug=False,
                  factory=False,
-                 linesplit_rgx=r"\r*\n+",
+                 linesplit_rgx=r"(?:\r*\n+|\003+)",
                  ignore_blank_lines=True,
                  syntax='ios'):
         """Initialize CiscoConfParse.
