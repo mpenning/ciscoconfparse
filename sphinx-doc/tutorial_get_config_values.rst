@@ -1,13 +1,13 @@
-=============================================================
-:class:`~ciscoconfparse.CiscoConfParse` Getting Config Values
-=============================================================
+==================================================================
+Getting Config Values with :class:`~ciscoconfparse.CiscoConfParse`
+==================================================================
 
 Now that we're familiar with parent / child relationships, let's tackle another
 common problem.  How do you get specific values from a configuration?
 
 For sure, you could use traditional Python techniques, such as Python's 
-:any:`re` module; however, the :any:`re` module is cumbersome when you're 
-retrieving a lot of config values.
+:any:`re` module; however, the :any:`re` module is rather cumbersome when 
+you're retrieving a lot of config values.
 
 :class:`~ciscoconfparse.CiscoConfParse` introduces methods directly on
 CiscoConfParse objects which simplify getting values from a configuration:
@@ -161,6 +161,41 @@ as `result_type`.  If you find yourself in that situation, you can call
            untyped_default=True, default='__no_explicit_value__')
    >>> arp_timeout
    '__no_explicit_value__'
+   >>>
+
+
+Getting multiple values from an interface with :func:`~ciscoconfparse.models_cisco.IOSCfgLine.re_match_typed()`
+---------------------------------------------------------------------------------------------------------------
+
+:func:`~ciscoconfparse.models_cisco.IOSCfgLine.re_match_typed()` and
+:func:`~ciscoconfparse.models_cisco.IOSCfgLine.re_match_iter_typed()` *cannot
+get mutliple values*.
+
+Suppose we want to get all the DHCP helper-addresses from an interface.  The
+best way to do this is to manually iterate over the children and append
+the values we want to a list.
+
+This script will get all the DHCP helper-addresses from Vlan10:
+
+.. code-block:: python
+   :emphasize-lines: 11
+
+   >>> from ciscoconfparse import CiscoConfParse
+   >>> parse = CiscoConfParse('short.conf')
+   >>> retval = list()
+   >>>
+   >>> HELPER_REGEX = r'ip\s+helper-address\s+(\S+)$'
+   >>> NO_MATCH = '__no_match__'
+   >>> 
+   >>> # Iterate over matching interfaces
+   >>> for intf_obj in parse.find_objects(r'^interface\s+Vlan10$'):
+   ...     for child_obj in intf_obj.children:  # Iterate over intf children
+   ...         val = child_obj.re_match_typed(HELPER_REGEX, default=NO_MATCH)
+   ...         if val!=NO_MATCH:
+   ...             retval.append(val)
+   ...
+   >>> retval
+   ['198.51.100.12', '203.0.113.12']
    >>>
 
 .. _`str`: https://docs.python.org/3/library/stdtypes.html#text-sequence-type-str
