@@ -47,7 +47,7 @@ html:
 	cd _build/html; tar cvfz $(USERHOME)/ccp.tar.gz *
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
-	@echo "                The HTML tarball is in $(HOME)/ccp.tar.gz."
+	@echo "                The HTML tarball is in $(USERHOME)/ccp.tar.gz."
 
 wwwhtml:
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
