@@ -251,7 +251,7 @@ class BaseCfgLine(object):
            ...     obj.delete_children_matching(r'description')
            >>>
            >>> for line in parse.ioscfg:
-           ...     print line
+           ...     print(line)
            ...
            !
            interface Serial1/0
@@ -321,7 +321,7 @@ class BaseCfgLine(object):
            ...     obj.append_to_family(' carrier-delay msec 500')
            >>>
            >>> for line in parse.ioscfg:
-           ...     print line
+           ...     print(line)
            ...
            !
            interface Serial1/0
@@ -388,9 +388,9 @@ class BaseCfgLine(object):
            >>> parse = CiscoConfParse(config)
            >>>
            >>> for obj in parse.find_objects('Serial'):
-           ...     print "OLD", obj.text
+           ...     print("OLD {}".format(obj.text))
            ...     obj.replace(r'Serial1', r'Serial0')
-           ...     print "  NEW", obj.text
+           ...     print("  NEW {}".format(obj.text))
            OLD interface Serial1/0
              NEW interface Serial0/0
            OLD interface Serial1/1
@@ -433,9 +433,9 @@ class BaseCfgLine(object):
            >>> parse = CiscoConfParse(config)
            >>>
            >>> for obj in parse.find_objects('Serial'):
-           ...     print "OLD", obj.text
-           ...     obj.re_sub(r'Serial1', r'Serial0')
-           ...     print "  NEW", obj.text
+           ...     print("OLD {}".format(obj.text))
+           ...     obj.replace(r'Serial1', r'Serial0')
+           ...     print("  NEW {}".format(obj.text))
            OLD interface Serial1/0
              NEW interface Serial0/0
            OLD interface Serial1/1
@@ -490,7 +490,7 @@ class BaseCfgLine(object):
            >>> for obj in parse.find_objects(r'ip\saddress'):
            ...     netmask = obj.re_match(r'1\.1\.1\.5\s(\S+)')
            >>>
-           >>> print "The netmask is", netmask
+           >>> print("The netmask is", netmask)
            The netmask is 255.255.255.252
            >>>
         """
@@ -547,7 +547,7 @@ class BaseCfgLine(object):
             - untyped_default (bool): Set True if you don't want the default value to be typed
 
         Returns:
-            - ``result_type``.  The text matched by the regular expression group; if there is no match, ``default`` is returned.  All values are cast as ``result_type``.
+            - ``result_type``.  The text matched by the regular expression group; if there is no match, ``default`` is returned.  All values are cast as ``result_type``, unless `untyped_default` is True.
 
         This example illustrates how you can use 
         :func:`~models_cisco.IOSCfgLine.re_match_typed` to build an 
@@ -576,7 +576,7 @@ class BaseCfgLine(object):
            ...     slot = obj.re_match_typed(regex=r'Serial(\d+)',
            ...         result_type=int,
            ...         default=-1)
-           ...     print "Interface {0} is in slot {1}".format(name, slot)
+           ...     print("Interface {0} is in slot {1}".format(name, slot))
            ...
            Interface Serial1/0 is in slot 1
            Interface Serial2/0 is in slot 2
@@ -610,7 +610,7 @@ class BaseCfgLine(object):
             - untyped_default (bool): Set True if you don't want the default value to be typed
 
         Returns:
-            - ``result_type``.  The text matched by the regular expression group; if there is no match, ``default`` is returned.  All values are cast as ``result_type``.
+            - ``result_type``.  The text matched by the regular expression group; if there is no match, ``default`` is returned.  All values are cast as ``result_type``, unless `untyped_default` is True.
 
         - NOTE: This loops through the children (in order) and returns when the regex hits its first match.
 
@@ -633,7 +633,7 @@ class BaseCfgLine(object):
            >>> INTF_RE = re.compile(r'interface\s\S+')
            >>> ADDR_RE = re.compile(r'ip\saddress\s(\S+\s+\S+)')
            >>> for obj in parse.find_objects(INTF_RE):
-           ...     print obj.text, obj.re_match_iter_typed(ADDR_RE, result_type=IPv4Obj)
+           ...     print("{} {}".format(obj.text, obj.re_match_iter_typed(ADDR_RE, result_type=IPv4Obj)))
            interface Serial1/0 <IPv4Obj 1.1.1.1/30>
            interface Serial2/0 <IPv4Obj 1.1.1.5/30>
            >>>
