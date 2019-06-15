@@ -116,6 +116,49 @@ def testValues_banner_delimiter_05():
     for obj in bannerobj.children:
         assert obj.parent.linenum == BANNER_LINE_NUMBER
 
+def testValues_banner_delimiter_06():
+    """Test banners with a literal cntl-c delimiter"""
+    ### WARNING: Be very careful editing this because vim eats cntl-c easily
+    CONFIG = """!
+banner motd 
+================================================================================
+# #
+# This banner uses a literal control-c character to test cntl-c handling #
+# #
+================================================================================
+
+!
+line con 0
+ authorization exec AAA_METHOD
+ login authentication AAA_METHOD
+!
+end""".splitlines()
+    parse = CiscoConfParse(CONFIG, ignore_blank_lines=True)
+    assert parse.find_objects(r'banner')[0].text=='banner motd '
+    assert parse.find_objects(r'banner')[0].children[-1].text==''
+
+def testValues_banner_delimiter_07():
+    """Test banners with blank lines in them and ignore_blank_lines=False"""
+    CONFIG = """!
+banner motd z
+
+================================================================================
+
+# This banner has blank lines to ensure that parsing this preserves the blanks
+
+================================================================================
+
+z
+!
+line con 0
+ authorization exec AAA_METHOD
+ login authentication AAA_METHOD
+!
+end""".splitlines()
+    parse = CiscoConfParse(CONFIG, ignore_blank_lines=False)
+    assert len(parse.find_objects(r'banner')[0].children)==8
+
+
 def testValues_aaa_authfailmsg_delimiter_01():
     # Test auth fail-message delimiter on the same line...
     CONFIG = ['!', 'aaa authentication fail-message ^   trivial banner here ^', 'end']
