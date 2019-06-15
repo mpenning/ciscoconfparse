@@ -15,6 +15,7 @@ Assume that you start with the following Cisco IOS configuration saved as ``shor
 
 .. code-block:: none
 
+    ! Filename: short.conf
     !
     interface FastEthernet0/1
      switchport mode access
@@ -130,4 +131,4 @@ The script:
  * *Removed* ``port-security`` from Fa0/2
  * *Added* ``timestamps`` to logs and debug messages
 
-.. _`regular expressions`: https://docs.python.org/2/howto/regex.html
+.. _`regular expressions`: https://docs.python.org/3/howto/regex.html

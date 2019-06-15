@@ -170,7 +170,7 @@ changes were made:
 .. _`This project [ciscoconfparse] has really been a lifesaver`: https://github.com/mpenning/ciscoconfparse/issues/13#issuecomment-71340177
 .. _`Dive into Python`: http://www.diveintopython.net/
 .. _`Dive into Python3`: http://www.diveintopython3.net/
-.. _`regular expressions`: https://docs.python.org/2/howto/regex.html
+.. _`regular expressions`: https://docs.python.org/3/howto/regex.html
 .. _Python: http://python.org/
 
 .. |br| raw:: html

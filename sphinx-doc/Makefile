@@ -32,6 +32,7 @@ clean:
 
 html:
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
+	cd _build/html; tar cvfz ~/ccp.tar.gz *
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
 

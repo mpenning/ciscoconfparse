@@ -312,4 +312,4 @@ Results:
    >>> cdp_intfs
    [<IOSCfgLine # 14 'interface Serial1/0'>, <IOSCfgLine # 18 'interface Serial1/1'>, <IOSCfgLine # 23 'interface Serial1/2'>]
 
-.. _`list-comprehension`: https://docs.python.org/2/tutorial/datastructures.html#list-comprehensions
+.. _`list-comprehension`: https://docs.python.org/3/tutorial/datastructures.html#list-comprehensions
