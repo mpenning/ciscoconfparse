@@ -12,6 +12,18 @@ PAPEROPT_a4     = -D latex_paper_size=a4
 PAPEROPT_letter = -D latex_paper_size=letter
 ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
 
+USERHOME = $(shell getent passwd $(USER) | cut -d: -f6)
+
+# Check python version (Latest Sphinx requires at least Python 3.5)
+#    ref - https://stackoverflow.com/a/56283401/667301
+PYTHON_VERSION_MIN = 3.5
+PYTHON_VERSION = $(shell python -c 'import sys; print("%d.%d" % sys.version_info[0:2])')
+TEST_PYTHON_VERSION_OK = $(shell python -c 'import sys;\
+print(int(float("%d.%d"% sys.version_info[0:2]) >= $(PYTHON_VERSION_MIN)))')
+ifeq ($(TEST_PYTHON_VERSION_OK),0)
+    $(error "Latest Sphinx req python version >= $(PYTHON_VERSION_MIN)")
+endif
+
 .PHONY: help clean html dirhtml pickle json htmlhelp qthelp latex changes linkcheck doctest
 
 help:
@@ -32,9 +44,10 @@ clean:
 
 html:
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
-	cd _build/html; tar cvfz ~/ccp.tar.gz *
+	cd _build/html; tar cvfz $(USERHOME)/ccp.tar.gz *
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
+	@echo "                The HTML tarball is in $(HOME)/ccp.tar.gz."
 
 wwwhtml:
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
