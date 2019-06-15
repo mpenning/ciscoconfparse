@@ -125,17 +125,10 @@ run the ``setup.py`` script in the tarball: ::
 
       python setup.py install
 
-Github and Bitbucket
-~~~~~~~~~~~~~~~~~~~~
+Github
+~~~~~~
 
-If you're interested in the source, you can always pull from the `github repo`_
-or `bitbucket repo`_:
-
-- From bitbucket_ (this also assumes you have mercurial_):
-  ::
-
-      hg init
-      hg clone https://bitbucket.org/mpenning/ciscoconfparse
+If you're interested in the source, you can always pull from the `github repo`_:
 
 - From github_:
   ::
