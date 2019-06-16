@@ -64,6 +64,12 @@ hostname:
    'IAHS1MDF-AR01A'
    >>>
 
+Take note of the regex we used: ``r'hostname\s+(\S+)'``.  This regex has a
+capture group (bounded by the parenthesis), which 
+:func:`~ciscoconfparse.models_cisco.IOSCfgLine.re_match_typed()` requires.  
+:func:`~ciscoconfparse.models_cisco.IOSCfgLine.re_match_typed()` uses the 
+contents of this capture group to return the value.
+
 This technique is fine, but we have to tell Python to iterate over all config
 objects with :func:`~ciscoconfparse.CiscoConfParse.find_objects()` and then
 we extract the hostname from that object.
@@ -73,8 +79,8 @@ What if there was a way to get the hostname without calling :func:`~ciscoconfpar
 it for you.
 
 
-:func:`~ciscoconfparse.models_cisco.IOSCfgLine.re_match_iter_typed()`: Iterate over all objects and get a value
----------------------------------------------------------------------------------------------------------------
+:func:`~ciscoconfparse.models_cisco.IOSCfgLine.re_match_iter_typed()`: Iterate over all children and get a value
+----------------------------------------------------------------------------------------------------------------
 
 :func:`~ciscoconfparse.models_cisco.IOSCfgLine.re_match_iter_typed()` 
 iterates over child objects and returns the *first* value it finds.  This is 
@@ -92,8 +98,14 @@ all the iteration for us.
    'IAHS1MDF-AR01A'
    >>>
 
-This is much better, because it eliminates the call to 
-:func:`~ciscoconfparse.CiscoConfParse.find_objects()` that we used above.
+Take note of the regex we used: ``r'hostname\s+(\S+)'``.  This regex has a
+capture group (bounded by the parenthesis), which 
+:func:`~ciscoconfparse.models_cisco.IOSCfgLine.re_match_iter_typed()` requires. 
+:func:`~ciscoconfparse.models_cisco.IOSCfgLine.re_match_iter_typed()` uses the 
+contents of this capture group to return the value.
+
+This code is better than the previous example, because it eliminates the call 
+to :func:`~ciscoconfparse.CiscoConfParse.find_objects()` that we used above.
 
 However, there are still times when you need to call 
 :func:`~ciscoconfparse.CiscoConfParse.find_objects()`; one example is when you 
