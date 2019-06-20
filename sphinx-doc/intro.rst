@@ -148,7 +148,7 @@ These are a few selected public mentions about CiscoConfParse; I usually try not
 What's new in version 1.0.0
 ---------------------------
 
-I wrote :mod:`ciscoconfparse` seven years ago as literally my first Python 
+I wrote :mod:`ciscoconfparse` in 2007 as literally my first Python 
 project; through the years, my understanding of Python improved, and I also 
 found many missing features along the way. Some of these features, like 
 changing a configuration after it was parsed, required non-trivial changes to 
