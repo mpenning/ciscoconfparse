@@ -74,7 +74,8 @@ versionfilepath = os.path.join(os.path.dirname(os.path.abspath(__file__)),
     'version')
 # __version__ if-else below fixes Github issue #123
 if os.path.isfile(versionfilepath):
-    __version__ = open(versionfilepath).read().strip()
+    with open(versionfilepath) as vh:
+        __version__ = vh.read().strip()
 else:
     # This case is required for importing from a zipfile... Github issue #123
     __version__ = "0.0.0"  # __version__ read failed
