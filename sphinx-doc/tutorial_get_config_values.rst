@@ -180,8 +180,8 @@ Getting multiple values from an interface with :func:`~ciscoconfparse.models_cis
 ---------------------------------------------------------------------------------------------------------------
 
 :func:`~ciscoconfparse.models_cisco.IOSCfgLine.re_match_typed()` and
-:func:`~ciscoconfparse.models_cisco.IOSCfgLine.re_match_iter_typed()` *cannot
-get mutliple values*.
+:func:`~ciscoconfparse.models_cisco.IOSCfgLine.re_match_iter_typed()` *does not`
+return mutliple values*.
 
 Suppose we want to get all the DHCP helper-addresses from an interface.  The
 best way to do this is to manually iterate over the children and append
