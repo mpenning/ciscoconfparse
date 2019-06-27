@@ -742,10 +742,14 @@ class BaseIOSIntfLine(IOSCfgLine):
             r'^\s*carrier-delay\s+msec\s+(\d+)$',
             result_type=float,
             default=0.0)
+
         if (cd_seconds > 0.0):
             return cd_seconds
-        else:
+        elif (cd_msec > 0.0):
             return cd_msec / 1000.0
+        else:
+            return 0.0
+
 
     @property
     def has_manual_clock_rate(self):
@@ -1363,22 +1367,26 @@ class BaseIOSIntfLine(IOSCfgLine):
     def hsrp_hello_timer(self):
         ## For API simplicity, I always assume there is only one hsrp 
         ##     group on the interface
+
+        # FIXME: handle msec timers...
         retval = self.re_match_iter_typed(
             r'^\s*standby\s+(\d+\s+)*timers\s+(\d+)\s+\d+',
             group=2,
-            result_type=int,
-            default=0)
+            result_type=float,
+            default=0.0)
         return retval
 
     @property
     def hsrp_hold_timer(self):
         ## For API simplicity, I always assume there is only one hsrp 
         ##     group on the interface
+
+        # FIXME: this should be a float (in case of msec timers)
         retval = self.re_match_iter_typed(
             r'^\s*standby\s+(\d+\s+)*timers\s+\d+\s+(\d+)',
             group=2,
-            result_type=int,
-            default=0)
+            result_type=float,
+            default=0.0)
         return retval
 
     @property
