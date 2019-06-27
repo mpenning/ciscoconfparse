@@ -1431,7 +1431,7 @@ class BaseNXOSIntfLine(NXOSCfgLine):
         for hsrpobj in self.children:
             if hsrpobj.re_match_typed(r'^\s+hsrp\s+(\d+)'):
                 retval = hsrpobj.re_match_iter_typed(
-                    r'^\s+(preempt)'
+                    r'^\s+(preempt)',
                     group=1,
                     result_type=bool,
                     default=False)
