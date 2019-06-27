@@ -749,8 +749,10 @@ class BaseNXOSIntfLine(NXOSCfgLine):
             default=0.0)
         if (cd_seconds > 0.0):
             return cd_seconds
-        else:
+        elif (cd_msec > 0.0):
             return cd_msec / 1000.0
+        else:
+            return 0.0
 
     @property
     def has_manual_clock_rate(self):
@@ -1291,11 +1293,12 @@ class BaseNXOSIntfLine(NXOSCfgLine):
         if (self.ipv4_addr == ''):
             return ''
 
-        retval = self.re_match_iter_typed(
-            r'^\s*standby\s+(\d+\s+)*ip\s+(\S+)',
-            group=2,
-            result_type=str,
-            default='')
+        for hsrpobj in self.children:
+            if hsrpobj.re_match_typed(r'^\s+hsrp\s+(\d+)'):
+                for child in hsrpobj.children:
+                    retval = child.re_match_typed(r'^\s+ip\s+(\S+)')
+                    if retval: 
+                        return retval
         return retval
 
     @property
@@ -1319,43 +1322,78 @@ class BaseNXOSIntfLine(NXOSCfgLine):
     def hsrp_group(self):
         ## For API simplicity, I always assume there is only one hsrp 
         ##     group on the interface
-        retval = self.re_match_iter_typed(
-            r'^\s*standby\s+(\d+)\s+ip\s+\S+', result_type=int, default=-1)
+        retval = ''
+        for hsrpobj in self.children:
+            retval = hsrpobj.re_match_typed(r'^\s+hsrp\s+(\d+)')
+            if retval:
+                return retval
         return retval
 
     @property
     def hsrp_priority(self):
         ## For API simplicity, I always assume there is only one hsrp 
         ##     group on the interface
+        DEFAULT_PRI = 100
         if not self.has_ip_hsrp:
             return 0  # Return this if there is no hsrp on the interface
-        retval = self.re_match_iter_typed(
-            r'^\s*standby\s+(\d+\s+)*priority\s+(\d+)',
-            group=2,
-            result_type=int,
-            default=100)
-        return retval
+        for hsrpobj in self.children:
+            if hsrpobj.re_match_typed(r'^\s+hsrp\s+(\d+)'):
+                retval = hsrpobj.re_match_iter_typed(r'^\s+priority\s+(\d+)',
+                    result_type=int,
+                    default=DEFAULT_PRI)
+                if retval!=DEFAULT_PRI:
+                    return retval
 
     @property
     def hsrp_hello_timer(self):
         ## For API simplicity, I always assume there is only one hsrp 
         ##     group on the interface
-        retval = self.re_match_iter_typed(
-            r'^\s*standby\s+(\d+\s+)*timers\s+(\d+)\s+\d+',
-            group=2,
-            result_type=int,
-            default=0)
+
+        #timers msec 250 msec 750
+        for hsrpobj in self.children:
+            if hsrpobj.re_match_typed(r'^\s+hsrp\s+(\d+)'):
+                timer_sec = hsrpobj.re_match_iter_typed(
+                    r'^\s+timers\s+(\d+)\s+\d+',
+                    result_type=float,
+                    default=0.0
+                    )
+                timer_msec = hsrpobj.re_match_iter_typed(
+                    r'^\s+timers\s+msec\s+(\d+)\s+msec\s+\d+',
+                    result_type=float,
+                    default=0.0
+                    )
+                if (timer_sec > 0.0):
+                    return timer_sec
+                elif (timer_msec > 0.0):
+                    return timer_msec / 1000.0
+                return 0.0
+
         return retval
 
     @property
     def hsrp_hold_timer(self):
         ## For API simplicity, I always assume there is only one hsrp 
         ##     group on the interface
-        retval = self.re_match_iter_typed(
-            r'^\s*standby\s+(\d+\s+)*timers\s+\d+\s+(\d+)',
-            group=2,
-            result_type=int,
-            default=0)
+
+        #timers msec 250 msec 750
+        for hsrpobj in self.children:
+            if hsrpobj.re_match_typed(r'^\s+hsrp\s+(\d+)'):
+                timer_sec = hsrpobj.re_match_iter_typed(
+                    r'^\s+timers\s+\d+\s+(\d+)',
+                    result_type=float,
+                    default=0.0
+                    )
+                timer_msec = hsrpobj.re_match_iter_typed(
+                    r'^\s+timers\s+msec\s+\d+\s+msec\s+(\d+)',
+                    result_type=float,
+                    default=0.0
+                    )
+                if (timer_sec > 0.0):
+                    return timer_sec
+                elif (timer_msec > 0.0):
+                    return timer_msec / 1000.0
+                return 0.0
+
         return retval
 
     @property
@@ -1366,11 +1404,12 @@ class BaseNXOSIntfLine(NXOSCfgLine):
     def hsrp_track(self):
         ## For API simplicity, I always assume there is only one hsrp 
         ##     group on the interface
-        retval = self.re_match_iter_typed(
-            r'^\s*standby\s+(\d+\s+)*track\s(\S+.+?)\s+\d+\s*',
-            group=2,
-            result_type=str,
-            default='')
+        retval = ''
+        for hsrpobj in self.children:
+            if hsrpobj.re_match_typed(r'^\s+hsrp\s+(\d+)'):
+                retval = hsrpobj.re_match_iter_typed(r'^\s+track\s+(\d+)',
+                    result_type=str,
+                    default='')
         return retval
 
     @property
@@ -1378,8 +1417,8 @@ class BaseNXOSIntfLine(NXOSCfgLine):
         ## For API simplicity, I always assume there is only one hsrp 
         ##     group on the interface
         retval = self.re_match_iter_typed(
-            r'^\s*standby\s+(\d+\s+)*(use-bia)',
-            group=2,
+            r'^\s*hsrp\s+(use-bia)',
+            group=1,
             result_type=bool,
             default=False)
         return retval
@@ -1388,15 +1427,19 @@ class BaseNXOSIntfLine(NXOSCfgLine):
     def has_hsrp_preempt(self):
         ## For API simplicity, I always assume there is only one hsrp 
         ##     group on the interface
-        retval = self.re_match_iter_typed(
-            r'^\s*standby\s+(\d+\s+)*(use-bia)',
-            group=2,
-            result_type=bool,
-            default=False)
+        retval = False
+        for hsrpobj in self.children:
+            if hsrpobj.re_match_typed(r'^\s+hsrp\s+(\d+)'):
+                retval = hsrpobj.re_match_iter_typed(
+                    r'^\s+(preempt)'
+                    group=1,
+                    result_type=bool,
+                    default=False)
         return retval
 
     @property
     def hsrp_authentication_md5_keychain(self):
+        ## FIXME nxos
         ## For API simplicity, I always assume there is only one hsrp 
         ##     group on the interface
         retval = self.re_match_iter_typed(
@@ -1408,6 +1451,7 @@ class BaseNXOSIntfLine(NXOSCfgLine):
 
     @property
     def has_hsrp_authentication_md5(self):
+        ## FIXME nxos
         keychain = self.hsrp_authentication_md5_keychain
         return bool(keychain)
 
