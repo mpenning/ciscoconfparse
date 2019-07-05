@@ -1,11 +1,6 @@
-# Follow PEP366...
-#     Credit (the question): http://stackoverflow.com/q/2943847/667301
-__package__ = "ciscoconfparse"
 from __future__  import absolute_import
-from ciscoconfparse.ciscoconfparse import *
-
 """ __main__.py - Parse, Query, Build, and Modify IOS-style configurations
-     Copyright (C) 2014-2015 David Michael Pennington
+     Copyright (C) 2014-2019 David Michael Pennington
 
      This program is free software: you can redistribute it and/or modify
      it under the terms of the GNU General Public License as published by
@@ -23,3 +18,15 @@ from ciscoconfparse.ciscoconfparse import *
      If you need to contact the author, you can do so by emailing:
      mike [~at~] pennington [/dot\] net
 """
+# Follow PEP366...
+# https://stackoverflow.com/a/6655098/667301
+if (__name__=='__main__') and (__package__ is None):
+    import sys
+    import os
+
+    parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    sys.path.insert(1, parent_dir)
+    import ciscoconfparse
+    __package__ = str("ciscoconfparse")
+    del sys, os
+
