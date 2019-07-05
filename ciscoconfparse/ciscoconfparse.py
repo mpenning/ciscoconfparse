@@ -1060,6 +1060,19 @@ class CiscoConfParse(object):
                                         parentspec,
                                         childspec,
                                         ignore_ws=False):
+        """Return a list of parent :class:`~models_cisco.IOSCfgLine` objects,
+        which matched the ``parentspec`` and whose children do not match 
+        all elements in ``childspec``.  Only the parent 
+        :class:`~models_cisco.IOSCfgLine` objects will be returned.
+
+        Args:
+            - parentspec (str): Text regular expression for the :class:`~models_cisco.IOSCfgLine` object to be matched; this must match the parent's line
+            - childspec (str): A list of text regular expressions to be matched among the children
+        Kwargs:
+            - ignore_ws (bool): boolean that controls whether whitespace is ignored
+
+        Returns:
+            - list.  A list of matching parent :class:`~models_cisco.IOSCfgLine` objects"""
         assert bool(getattr(childspec, 'append'))  # Childspec must be a list
         retval = list()
         if ignore_ws:
