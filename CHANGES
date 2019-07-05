@@ -1,4 +1,4 @@
-1.3.43  20190627 Attempt to fix Github issue #154
+1.3.43  20190705 Attempt to fix Github issue #154
 1.3.42  20190627 Fix Github issue #153
 1.3.41  20190627 [RELEASE BROKEN] HSRP timers now return a float (used to return int).  NXOS support for HSRP (Github issue #152)
 1.3.40  20190620 
