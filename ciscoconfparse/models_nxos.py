@@ -1287,6 +1287,7 @@ class BaseNXOSIntfLine(NXOSCfgLine):
         ## NOTE: I have no intention of checking self.is_shutdown here
         ##     People should be able to check the sanity of interfaces
         ##     before they put them into production
+        retval = ''
 
         ## For API simplicity, I always assume there is only one hsrp 
         ##     group on the interface
@@ -1306,6 +1307,7 @@ class BaseNXOSIntfLine(NXOSCfgLine):
         ## NOTE: I have no intention of checking self.is_shutdown here
         ##     People should be able to check the sanity of interfaces
         ##     before they put them into production
+        retval = ''
 
         ## For API simplicity, I always assume there is only one hsrp 
         ##     group on the interface
