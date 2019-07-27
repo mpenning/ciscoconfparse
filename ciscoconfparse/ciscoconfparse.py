@@ -878,7 +878,8 @@ class CiscoConfParse(object):
 
         return list(map(attrgetter('text'), sorted(tmp)))
 
-    def find_objects_w_child(self, parentspec, childspec, ignore_ws=False):
+    def find_objects_w_child(self, parentspec, childspec, ignore_ws=False,
+        recurse=False):
         """Return a list of parent :class:`~models_cisco.IOSCfgLine` objects, 
         which matched the ``parentspec`` and whose children match ``childspec``.
         Only the parent :class:`~models_cisco.IOSCfgLine` objects will be 
@@ -889,6 +890,7 @@ class CiscoConfParse(object):
             - childspec (str): Text regular expression for the line to be matched; this must match the child's line
         Kwargs:
             - ignore_ws (bool): boolean that controls whether whitespace is ignored
+            - recurse (bool): Set True if you want to search all children (children, grand children, great grand children, etc...)
 
         Returns:
             - list.  A list of matching parent :class:`~models_cisco.IOSCfgLine` objects
@@ -958,13 +960,14 @@ class CiscoConfParse(object):
             childspec = self._build_space_tolerant_regex(childspec)
 
         return list(
-            filter(lambda x: x.re_search_children(childspec),
-                   self.find_objects(parentspec)))
+            filter(lambda x: x.re_search_children(childspec, 
+                    recurse=recurse), self.find_objects(parentspec)))
 
     def find_objects_w_all_children(self,
                                     parentspec,
                                     childspec,
-                                    ignore_ws=False):
+                                    ignore_ws=False,
+                                    recurse=False):
         """Return a list of parent :class:`~models_cisco.IOSCfgLine` objects, 
         which matched the ``parentspec`` and whose children match all elements
         in ``childspec``.  Only the parent :class:`~models_cisco.IOSCfgLine` 
@@ -975,6 +978,7 @@ class CiscoConfParse(object):
             - childspec (str): A list of text regular expressions to be matched among the children
         Kwargs:
             - ignore_ws (bool): boolean that controls whether whitespace is ignored
+            - recurse (bool): Set True if you want to search all children (children, grand children, great grand children, etc...)
 
         Returns:
             - list.  A list of matching parent :class:`~models_cisco.IOSCfgLine` objects
@@ -1048,7 +1052,8 @@ class CiscoConfParse(object):
         for parentobj in self.find_objects(parentspec):
             results = set([])
             for child_cfg in childspec:
-                results.add(bool(parentobj.re_search_children(child_cfg)))
+                results.add(bool(parentobj.re_search_children(child_cfg,
+                    recurse=recurse)))
             if False in results:
                 continue
             else:
