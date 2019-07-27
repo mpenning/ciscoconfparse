@@ -518,18 +518,22 @@ class BaseCfgLine(object):
             return self.text
         return default
 
-    def re_search_children(self, regex):
+    def re_search_children(self, regex, all_children=False):
         """Use ``regex`` to search the text contained in the children of 
         this :class:`~models_cisco.IOSCfgLine`.
 
         Args:
             - regex (str): A string or python regular expression, which should be matched.  
+            - all_children (bool): Set True if you want to search all children (children, grand children, great grand children, etc...)
 
         Returns:
             - list.  A list of matching :class:`~models_cisco.IOSCfgLine` objects which matched.  If there is no match, an empty :py:func:`list` is returned.
 
         """
-        return [cobj for cobj in self.children if cobj.re_search(regex)]
+        if all_children is False:
+            return [cobj for cobj in self.children if cobj.re_search(regex)]
+        else:
+            return [cobj for cobj in self.all_children if cobj.re_search(regex)]
 
     def re_match_typed(self, regex, group=1, untyped_default=False, 
         result_type=str, default=''):
