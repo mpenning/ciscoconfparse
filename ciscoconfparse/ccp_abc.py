@@ -518,19 +518,19 @@ class BaseCfgLine(object):
             return self.text
         return default
 
-    def re_search_children(self, regex, all_children=False):
+    def re_search_children(self, regex, recurse=False):
         """Use ``regex`` to search the text contained in the children of 
         this :class:`~models_cisco.IOSCfgLine`.
 
         Args:
             - regex (str): A string or python regular expression, which should be matched.  
-            - all_children (bool): Set True if you want to search all children (children, grand children, great grand children, etc...)
+            - recurse (bool): Set True if you want to search all children (children, grand children, great grand children, etc...)
 
         Returns:
             - list.  A list of matching :class:`~models_cisco.IOSCfgLine` objects which matched.  If there is no match, an empty :py:func:`list` is returned.
 
         """
-        if all_children is False:
+        if recurse is False:
             return [cobj for cobj in self.children if cobj.re_search(regex)]
         else:
             return [cobj for cobj in self.all_children if cobj.re_search(regex)]
@@ -598,7 +598,7 @@ class BaseCfgLine(object):
             return result_type(default)
 
     def re_match_iter_typed(self, regex, group=1, result_type=str, default='', 
-        untyped_default=False, all_children=False):
+        untyped_default=False, recurse=False):
         r"""Use ``regex`` to search the children of 
         :class:`~models_cisco.IOSCfgLine` text and return the contents of 
         the regular expression group, at the integer ``group`` index, cast as 
@@ -610,7 +610,7 @@ class BaseCfgLine(object):
             - group (int): An integer which specifies the desired regex group to be returned.  ``group`` defaults to 1.
             - result_type (type): A type (typically one of: ``str``, ``int``, ``float``, or :class:`~ccp_util.IPv4Obj`).         All returned values are cast as ``result_type``, which defaults to ``str``.
             - default (any): The default value to be returned, if there is no match.
-            - all_children (bool): Set True if you want to search all children (children, grand children, great grand children, etc...)
+            - recurse (bool): Set True if you want to search all children (children, grand children, great grand children, etc...)
             - untyped_default (bool): Set True if you don't want the default value to be typed
 
         Returns:
@@ -653,7 +653,7 @@ class BaseCfgLine(object):
             ##   this while I build the API
         #    raise NotImplementedError
 
-        if all_children is False:
+        if recurse is False:
             for cobj in self.children:
                 mm = re.search(regex, cobj.text)
                 if not (mm is None):
