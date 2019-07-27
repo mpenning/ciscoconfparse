@@ -131,7 +131,7 @@ Use `re_match_iter_typed()` to extract an interface address
     >>> 
     >>> ## re_match_iter_typed() will extract results from the re group, below
     >>> addr = intfobj.re_match_iter_typed(r'ip\saddress\s(\d+\.\d+\.\d+\.\d+)',
-    ...     group=1, all_children=True, default='__unknown__', result_type=str,
+    ...     group=1, recurse=True, default='__unknown__', result_type=str,
     ...     untyped_default=True)
     >>> addr
     '172.16.4.1'
