@@ -1839,6 +1839,18 @@ class CiscoConfParse(object):
 
         return retval
 
+    def re_search_children(self, regex):
+        """Use ``regex`` to search for objects with text matching regex.
+
+        Args:
+            - regex (str): A string or python regular expression, which should be matched.
+
+        Returns:
+            - list.  A list of matching :class:`~models_cisco.IOSCfgLine` objects which matched.  If there is no match, an empty :py:func:`list` is returned.
+
+        """
+        return [obj in self.find_objects(regex)]
+
     def re_match_iter_typed(self, regex, group=1, result_type=str, default='',
         untyped_default=False):
         r"""Use ``regex`` to search the root parents in the config
