@@ -1471,6 +1471,27 @@ def testVal_IOSRouteLine_12():
     assert ''==obj.tag
 
 ###
+### ------ IPv4 Helper-Addresses --------
+###
+
+def testVal_IOSIPv4HelperAddress_01():
+    CONFIG = [
+        'interface GigabitEthernet0/1',
+        ' ip address 172.16.30.1 255.255.255.0',
+        ' ip helper-address global 10.1.1.1',
+        ' ip helper-address 10.1.1.2',
+        ' ip helper-address vrf FOO 10.1.1.3',
+        ]
+    result_correct = [
+        {'global': True, 'addr': '10.1.1.1', 'vrf': ''},
+        {'global': False, 'addr': '10.1.1.2', 'vrf': ''},
+        {'global': False, 'addr': '10.1.1.3', 'vrf': 'FOO'},
+        ]
+    parse = CiscoConfParse(CONFIG, syntax='ios', factory=True)
+    obj = parse.find_objects('^interface')[0]
+    assert obj.ip_helper_addresses==result_correct
+
+###
 ### ------ AAA Tests --------
 ###
 

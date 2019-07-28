@@ -1119,12 +1119,15 @@ class BaseIOSIntfLine(IOSCfgLine):
 
     @property
     def ip_helper_addresses(self):
-        """Return a list of IP helper-addresses"""
+        """Return a list of dicts with IP helper-addresses.  Each helper-address is in a dictionary"""
         retval = list()
         for child in self.children:
             if 'helper-address' in child.text:
-                addr = child.re_match_typed('ip\s+helper-address\s+(\S+)')
-                retval.append(addr)
+                addr = child.re_match_typed(r'ip\s+helper-address\s.*?(\d+\.\d+\.\d+\.\d+)')
+                global_addr = child.re_match_typed(r'ip\s+helper-address\s+(global)', result_type=bool, default=False)
+                vrf = child.re_match_typed(r'ip\s+helper-address\s+vrf\s+(\S+)',
+                    default='')
+                retval.append({'addr': addr, 'vrf': vrf, 'global': bool(global_addr)})
         return retval
 
     @property
