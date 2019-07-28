@@ -1,3 +1,4 @@
+1.4.2   20190728 Fix Github issue #141; NOTE - This will break parsing helper-addresses under factory=True.  If you use this feature, please migrate your scripts to the new format
 1.4.1   20190728 Implement re_search_children() directly on the CiscoConfParse() object
 1.4.0   20190727 Fix Github issue #158, *KEYWORD CHANGE WARNING:* some methods formrely used a keyword called 'all_children'.  The new syntax is 'recurse' (ref: Github issue #159)
 1.3.43  20190705 Attempt to fix Github issue #154
