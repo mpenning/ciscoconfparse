@@ -1850,6 +1850,7 @@ class CiscoConfParse(object):
             - list.  A list of matching :class:`~models_cisco.IOSCfgLine` objects which matched.  If there is no match, an empty :py:func:`list` is returned.
 
         """
+        ## I implemented this method in response to Github issue #156
         if recurse is False:
             # Only return the matching oldest ancestor objects...
             return [obj for obj in self.find_objects(regex) \
