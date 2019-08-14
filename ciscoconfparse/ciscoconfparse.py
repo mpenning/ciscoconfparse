@@ -34,6 +34,7 @@ from ciscoconfparse.models_nxos import NXOSAaaCommandsAuthorizationLine
 from ciscoconfparse.models_nxos import NXOSAaaCommandsAccountingLine
 from ciscoconfparse.models_nxos import NXOSAaaExecAccountingLine
 from ciscoconfparse.models_nxos import NXOSAaaGroupServerLine
+from ciscoconfparse.models_nxos import NXOSvPCLine
 from ciscoconfparse.models_nxos import NXOSCfgLine
 
 from ciscoconfparse.models_asa import ASAObjGroupNetwork
@@ -3871,8 +3872,8 @@ def ConfigLineFactory(text="", comment_delimiter="!", syntax='ios'):
             NXOSIntfLine, NXOSRouteLine, NXOSAccessLine,
             NXOSAaaLoginAuthenticationLine, NXOSAaaEnableAuthenticationLine,
             NXOSAaaCommandsAuthorizationLine, NXOSAaaCommandsAccountingLine,
-            NXOSAaaExecAccountingLine, NXOSAaaGroupServerLine, NXOSHostnameLine,
-            NXOSIntfGlobal, NXOSCfgLine
+            NXOSAaaExecAccountingLine, NXOSAaaGroupServerLine, 
+            NXOSvPCLine, NXOSHostnameLine, NXOSIntfGlobal, NXOSCfgLine
         ]  # This is simple
     elif syntax == 'asa':
         classes = [
