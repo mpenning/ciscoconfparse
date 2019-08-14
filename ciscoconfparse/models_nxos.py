@@ -89,27 +89,24 @@ class NXOSCfgLine(BaseCfgLine):
         This example illustrates use of the method.
 
         .. code-block:: python
-           :emphasize-lines: 17,20
+           :emphasize-lines: 17
 
            >>> config = [
            ...     '!',
-           ...     'interface Serial1/0',
+           ...     'interface Ethernet1/1',
            ...     ' ip address 1.1.1.1 255.255.255.252',
            ...     '!',
-           ...     'interface ATM2/0',
+           ...     'interface Ethernet1/2',
            ...     ' no ip address',
            ...     '!',
-           ...     'interface ATM2/0.100 point-to-point',
+           ...     'interface Ethernet1/3',
            ...     ' ip address 1.1.1.5 255.255.255.252',
-           ...     ' pvc 0/100',
-           ...     '  vbr-nrt 704 704',
+           ...     ' ip helper-address 172.16.1.12'
+           ...     ' ip helper-address 172.19.200.84',
            ...     '!',
            ...     ]
            >>> parse = CiscoConfParse(config)
-           >>> obj = parse.find_objects('^interface\sSerial')[0]
-           >>> obj.is_intf
-           True
-           >>> obj = parse.find_objects('^interface\sATM')[0]
+           >>> obj = parse.find_objects('^interface\sEthernet')[0]
            >>> obj.is_intf
            True
            >>>
@@ -131,27 +128,24 @@ class NXOSCfgLine(BaseCfgLine):
         This example illustrates use of the method.
 
         .. code-block:: python
-           :emphasize-lines: 17,20
+           :emphasize-lines: 17
 
            >>> config = [
            ...     '!',
-           ...     'interface Serial1/0',
+           ...     'interface Ethernet1/1',
            ...     ' ip address 1.1.1.1 255.255.255.252',
            ...     '!',
-           ...     'interface ATM2/0',
+           ...     'interface Ethernet1/2',
            ...     ' no ip address',
            ...     '!',
-           ...     'interface ATM2/0.100 point-to-point',
+           ...     'interface Ethernet1/3.100',
            ...     ' ip address 1.1.1.5 255.255.255.252',
-           ...     ' pvc 0/100',
-           ...     '  vbr-nrt 704 704',
+           ...     ' ip helper-address 172.16.1.12'
+           ...     ' ip helper-address 172.19.200.84',
            ...     '!',
            ...     ]
            >>> parse = CiscoConfParse(config)
-           >>> obj = parse.find_objects('^interface\sSerial')[0]
-           >>> obj.is_subintf
-           False
-           >>> obj = parse.find_objects('^interface\sATM')[0]
+           >>> obj = parse.find_objects('^interface\sEthernet')[-1]
            >>> obj.is_subintf
            True
            >>>
@@ -185,7 +179,7 @@ class NXOSCfgLine(BaseCfgLine):
 
            >>> config = [
            ...     '!',
-           ...     'interface FastEthernet1/0',
+           ...     'interface Ethernet1/1',
            ...     ' ip address 1.1.1.1 255.255.255.252',
            ...     '!',
            ...     'interface Loopback0',
@@ -193,7 +187,7 @@ class NXOSCfgLine(BaseCfgLine):
            ...     '!',
            ...     ]
            >>> parse = CiscoConfParse(config)
-           >>> obj = parse.find_objects('^interface\sFast')[0]
+           >>> obj = parse.find_objects('^interface\sEthernet')[0]
            >>> obj.is_loopback_intf
            False
            >>> obj = parse.find_objects('^interface\sLoop')[0]
@@ -275,14 +269,21 @@ urn -1 if it's not configured in a port-channel
         """
         return ('channel' in self.name.lower())
 
+    @property
+    def is_vpc_peerlink(self):
+        """Return a boolean indicating whether this port is configured as a vpc peer-link port"""
+        retval = self.re_match_iter_typed(
+            r'^\s*vpc\s+peer-link', result_type=str, default='')
+        return retval
+
 
 ##
-##-------------  IOS Interface ABC
+##-------------  NXOS Interface ABC
 ##
 
 # Valid method name substitutions:
 #    switchport -> switch
-#    spanningtree -> stp
+#    spanning-tree -> stp
 #    interfce -> intf
 #    address -> addr
 #    default -> def
@@ -481,7 +482,7 @@ class BaseNXOSIntfLine(NXOSCfgLine):
 
     @property
     def ordinal_list(self):
-        """Return a tuple of numbers representing card, slot, port for this interface.  If you call ordinal_list on GigabitEthernet2/25.100, you'll get this python tuple of integers: (2, 25).  If you call ordinal_list on GigabitEthernet2/0/25.100 you'll get this python list of integers: (2, 0, 25).  This method strips all subinterface information in the returned value.
+        """Return a tuple of numbers representing card, slot, port for this interface.  This method strips all subinterface information in the returned value.  If you call ordinal_list on GigabitEthernet2/25.100, you'll get this python tuple of integers: (2, 25).  If you call ordinal_list on GigabitEthernet2/0/25.100 you'll get this python list of integers: (2, 0, 25).
 
         Returns:
             - tuple.  A tuple of port numbers as integers.
@@ -678,7 +679,7 @@ class BaseNXOSIntfLine(NXOSCfgLine):
     @property
     def has_mpls(self):
         retval = self.re_match_iter_typed(
-            r'^\s*(mpls\s+ip)$', result_type=bool, default=False)
+            r'^\s*(mpls\s+ip\s+forwarding)$', result_type=bool, default=False)
         return retval
 
     @property
@@ -1121,10 +1122,20 @@ class BaseNXOSIntfLine(NXOSCfgLine):
 
     @property
     def manual_switch_trunk_encap(self):
+        """Return a string with the switchport encapsulation type; if there is no manual trunk encapsulation, return ''."""
         retval = self.re_match_iter_typed(
-            r'^\s*(switchport\s+trunk\s+encap\s+(\S+))\s*$',
+            r'^\s*(switchport\s+trunk\s+encapsulation\s+(\S+))\s*$',
             result_type=str,
             default='')
+        return retval
+
+    @property
+    def has_manual_switch_fex_fabric(self):
+        """Return a boolean indicating whether this port is configured in fex-fabric mode"""
+        retval = self.re_match_iter_typed(
+            r'^\s*(switchport\smode\s+fex-fabric)\s*$',
+            result_type=bool,
+            default=False)
         return retval
 
     @property
@@ -1134,6 +1145,7 @@ class BaseNXOSIntfLine(NXOSCfgLine):
             result_type=bool,
             default=False)
         return retval
+
 
     @property
     def has_switch_portsecurity(self):
@@ -1181,6 +1193,42 @@ class BaseNXOSIntfLine(NXOSCfgLine):
             r'^\s*switchport\s+access\s+vlan\s+(\d+)$',
             result_type=int,
             default=default_val)
+        return retval
+
+    @property
+    def manual_stp_link_type(self):
+        """Return a string with the spanning-tree link  type configured on this switchport; if there is no STP link type configured, return ''."""
+        retval = self.re_match_iter_typed(
+            r'^\s*spanning-tree\s+link-type\s+(\S.+?)$',
+            result_type=str,
+            default='')
+        return retval
+
+    @property
+    def manual_stp_port_type(self):
+        """Return a string with the spanning-tree port type configured on this switchport; if there is no STP port type configured, return '' (by default NXOS assigns this as 'normal', but this property is for a *manual* assignment)."""
+        retval = self.re_match_iter_typed(
+            r'^\s*spanning-tree\s+port\s+type\s+(\S.+?)$',
+            result_type=str,
+            default='')
+        return retval
+
+    @property
+    def vpc(self):
+        """Return an integer with the vpc id; Return 0 if there is no vpc id on this port"""
+        retval = self.re_match_iter_typed(
+            r'^\s*vpc\s+(\d+)$',
+            result_type=int,
+            default=0)
+        return retval
+
+    @property
+    def fex_associate_chassis_id(self):
+        """Return an integer with the fex chassis-id, return 0 if there is no 'fex associate' command on this switchport"""
+        retval = self.re_match_iter_typed(
+            r'^\s*fex\s+associate\s+(\d+)$',
+            result_type=int,
+            default=0)
         return retval
 
     @property
@@ -1549,17 +1597,17 @@ class NXOSIntfLine(BaseNXOSIntfLine):
           All :class:`~models_nxos.NXOSIntfLine` methods are still considered beta-quality, until this notice is removed.  The behavior of APIs on this object could change at any time.
         """
         super(NXOSIntfLine, self).__init__(*args, **kwargs)
+        self.feature = 'interface'
 
     @classmethod
     def is_object_for(cls, line="", re=re):
-        intf_regex = r'^interface\s+(\S+.+)'
-        if re.search(intf_regex, line):
+        if re.search(r'^interface\s+(\S.+)', line):
             return True
         return False
 
 
 ##
-##-------------  IOS Interface Globals
+##-------------  NXOS Interface Globals
 ##
 
 
@@ -1592,12 +1640,6 @@ class NXOSIntfGlobal(BaseCfgLine):
         return False
 
     @property
-    def has_stp_portfast_def(self):
-        if self.re_search('^spanning-tree\sportfast\sdefault'):
-            return True
-        return False
-
-    @property
     def has_stp_portfast_bpduguard_def(self):
         if self.re_search('^spanning-tree\sportfast\sbpduguard\sdefault'):
             return True
@@ -1609,9 +1651,139 @@ class NXOSIntfGlobal(BaseCfgLine):
             return True
         return False
 
+##
+##-------------  NXOS vPC line
+##
+class NXOSvPCLine(BaseCfgLine):
+    def __init__(self, *args, **kwargs):
+        super(NXOSvPCLine, self).__init__(*args, **kwargs)
+        self.feature = 'vpc'
+
+    def __repr__(self):
+        return "<%s # %s '%s'>" % (self.classname, self.linenum, self.vpc_domain_id)
+
+    @classmethod
+    def is_object_for(cls, line="", re=re):
+        if re.search(r'^vpc\s+domain', line):
+            return True
+        return False
+
+    @property
+    def vpc_domain_id(self):
+        retval = self.re_match_typed(r'^vpc\s+domain\s+(\d+)$',
+            result_type=str, default=0)
+        return retval
+
+    @property
+    def vpc_role_priority(self):
+        retval = self.re_match_iter_typed(r'^\s+role\s+priority\s+(\d+)',
+            result_type=int, default=-1)
+        return retval
+
+    @property
+    def vpc_system_priority(self):
+        retval = self.re_match_iter_typed(r'^\s+system-priority\s+(\d+)',
+            result_type=int, default=-1)
+        return retval
+
+    @property
+    def vpc_system_mac(self):
+        retval = self.re_match_iter_typed(r'^\s+system-mac\s+(\S+)',
+            result_type=str, default='')
+        return retval
+
+    @property
+    def has_peer_config_check_bypass(self):
+        retval = self.re_match_iter_typed(r'^\s+(peer-config-check-bypass)',
+            result_type=bool, default=False)
+        return retval
+
+    @property
+    def has_peer_switch(self):
+        retval = self.re_match_iter_typed(r'^\s+(peer-switch)',
+            result_type=bool, default=False)
+        return retval
+
+    @property
+    def has_layer3_peer_router(self):
+        retval = self.re_match_iter_typed(r'^\s+(layer3\s+peer-router)',
+            result_type=bool, default=False)
+        return retval
+
+    @property
+    def has_peer_gateway(self):
+        retval = self.re_match_iter_typed(r'^\s+(peer-gateway)',
+            result_type=bool, default=False)
+        return retval
+
+    @property
+    def has_auto_recovery(self):
+        retval = self.re_match_iter_typed(r'^\s+(auto-recovery)',
+            result_type=bool, default=False)
+        return retval
+
+    @property
+    def vpc_auto_recovery_reload_delay(self):
+        reload_delay_regex = r'^\s+auto-recovery\s+reload-delay\s+(\d+)'
+        retval = self.re_match_iter_typed(reload_delay_regex,
+            result_type=int, default=-1)
+        return retval
+
+    @property
+    def has_ip_arp_synchronize(self):
+        retval = self.re_match_iter_typed(r'(ip\s+arp\s+synchronize)',
+            result_type=bool, default=False)
+        return retval
+
+    @property
+    def vpc_peer_keepalive(self):
+        """Return a dictionary with the configured vPC peer-keepalive parameters"""
+        dest = self.re_match_iter_typed(
+            r'peer-keepalive\s+.*?destination\s+(\d+\.\d+\.\d+\.\d+)',
+            result_type=str, default="")
+        hold_timeout = self.re_match_iter_typed(
+            r'peer-keepalive\s+.*?hold-timeout\s+(\d+)',
+            result_type=int, default=-1)
+        interval = self.re_match_iter_typed(
+            r'peer-keepalive\s+.*?interval\s+(\d+)',
+            result_type=int, default=-1)
+        timeout = self.re_match_iter_typed(
+            r'peer-keepalive\s+.*?timeout\s+(\d+)',
+            result_type=int, default=-1)
+        prec = self.re_match_iter_typed(
+            r'peer-keepalive\s+.*?precedence\s+(\S+)',
+            result_type=str, default="")
+        source = self.re_match_iter_typed(
+            r'peer-keepalive\s+.*?source\s+(\d+\.\d+\.\d+\.\d+)',
+            result_type=str, default="")
+        tos = self.re_match_iter_typed(
+            r'peer-keepalive\s+.*?tos\s+(\S+)',
+            result_type=str, default="")
+        tos_byte = self.re_match_iter_typed(
+            r'peer-keepalive\s+.*?tos-byte\s+(\S+)',
+            result_type=int, default=-1)
+        udp_port = self.re_match_iter_typed(
+            r'peer-keepalive\s+.*?udp-port\s+(\d+)',
+            result_type=int, default=-1)
+        vrf = self.re_match_iter_typed(
+            r'peer-keepalive\s+.*?vrf\s+(\S+)',
+            result_type=str, default="")
+        retval = {
+            'destination': dest,
+            'hold-timeout': hold_timeout,
+            'interval': interval,
+            'timeout': timeout,
+            'precedence': prec,
+            'source': source,
+            'tos': tos,
+            'tos-byte': tos_byte,
+            'udp-port': udp_port,
+            'vrf': vrf,
+            }
+        return retval
 
 ##
-##-------------  IOS Hostname Line
+##-------------  NXOS Hostname Line
 ##
 
 
@@ -1637,7 +1809,7 @@ class NXOSHostnameLine(BaseCfgLine):
 
 
 ##
-##-------------  IOS Access Line
+##-------------  NXOS Access Line
 ##
 
 
@@ -1718,7 +1890,7 @@ class NXOSAccessLine(BaseCfgLine):
 
 
 ##
-##-------------  Base IOS Route line object
+##-------------  Base NXOS Route line object
 ##
 
 
@@ -1774,7 +1946,7 @@ class BaseNXOSRouteLine(BaseCfgLine):
 
 
 ##
-##-------------  IOS Route line object
+##-------------  NXOS Route line object
 ##
 
 _RE_IP_ROUTE = re.compile(r"""^ip\s+route
@@ -1950,7 +2122,7 @@ class NXOSRouteLine(BaseNXOSRouteLine):
 
 
 ##
-##-------------  IOS TACACS+ Group
+##-------------  NXOS TACACS+ Group
 ##
 class NXOSAaaGroupServerLine(BaseCfgLine):
     def __init__(self, *args, **kwargs):
@@ -2000,7 +2172,7 @@ class NXOSAaaGroupServerLine(BaseCfgLine):
 
 
 ##
-##-------------  IOS AAA Lines
+##-------------  NXOS AAA Lines
 ##
 
 
