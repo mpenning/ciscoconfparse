@@ -1119,7 +1119,24 @@ class BaseIOSIntfLine(IOSCfgLine):
 
     @property
     def ip_helper_addresses(self):
-        """Return a list of dicts with IP helper-addresses.  Each helper-address is in a dictionary"""
+        """Return a list of dicts with IP helper-addresses.  Each helper-address is in a dictionary.  The dictionary is in this format:
+
+        .. code-block:: python
+           :emphasize-lines: 11
+
+           >>> config = [
+           ...     '!',
+           ...     'interface FastEthernet1/1',
+           ...     ' ip address 1.1.1.1 255.255.255.0',
+           ...     ' ip helper-address 172.16.20.12',
+           ...     ' ip helper-address 172.19.185.91',
+           ...     '!',
+           ...     ]
+           >>> parse = CiscoConfParse(config)
+           >>> obj = parse.find_objects('^interface\sFastEthernet1/1$')[0]
+           >>> obj.ip_helper_addresses
+           [{'addr': '172.16.20.12', 'vrf': '', 'global': False}, {'addr': '172.19.185.91', 'vrf': '', 'global': False}]
+           >>>"""
         retval = list()
         for child in self.children:
             if 'helper-address' in child.text:
@@ -1537,6 +1554,7 @@ class IOSIntfLine(BaseIOSIntfLine):
           All :class:`~models_cisco.IOSIntfLine` methods are still considered beta-quality, until this notice is removed.  The behavior of APIs on this object could change at any time.
         """
         super(IOSIntfLine, self).__init__(*args, **kwargs)
+        self.feature = 'interface'
 
     @classmethod
     def is_object_for(cls, line="", re=re):
