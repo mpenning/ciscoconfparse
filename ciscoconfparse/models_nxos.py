@@ -1671,7 +1671,7 @@ class NXOSvPCLine(BaseCfgLine):
     @property
     def vpc_domain_id(self):
         retval = self.re_match_typed(r'^vpc\s+domain\s+(\d+)$',
-            result_type=str, default=0)
+            result_type=str, default=-1)
         return retval
 
     @property
