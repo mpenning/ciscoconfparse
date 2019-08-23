@@ -477,6 +477,21 @@ class CiscoConfParse(object):
            [<IOSIntfLine # 1 'Serial1/0' info: '1.1.1.1/30'>]
            >>>
 
+           >>> config_nxos = [
+           ...     '!',
+           ...     'interface Ethernet1/1',
+           ...     ' ip address 1.1.1.1/30',
+           ...     '!',
+           ...     'interface Vlan1',
+           ...     ' ip address 1.1.1.5/30',
+           ...     '!',
+           ...     ]
+           >>> parse_nxos = CiscoConfParse(config_nxos, factory=True, syntax='nxos')
+           >>>
+           >>> parse_nxos.find_interface_objects('Eth 1/1')
+           [<NXOSIntfLine # 1 'Ethernet1/1' info: '1.1.1.1/30'>]
+           >>>
+
         """
         if not (self.factory is True):
             raise ValueError(
@@ -484,7 +499,7 @@ class CiscoConfParse(object):
             )
 
         retval = list()
-        if self.syntax == 'ios':
+        if self.syntax == 'ios' or self.syntax == 'nxos':
             if exactmatch:
                 for obj in self.find_objects('^interface'):
                     if intfspec.lower() in obj.abbvs:
