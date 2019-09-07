@@ -442,9 +442,10 @@ class CiscoConfParse(object):
         return lines
 
     def find_interface_objects(self, intfspec, exactmatch=True):
-        """Find all :class:`~models_cisco.IOSCfgLine` objects whose text 
+        """Find all :class:`~models_cisco.IOSCfgLine` or 
+        :class:`~models_cisco.NXOSCfgLine` objects whose text 
         is an abbreviation for ``intfspec`` and return the 
-        :class:`~models_cisco.IOSIntfLine` objects in a python list.
+        objects in a python list.
 
         .. note::
 
@@ -484,7 +485,7 @@ class CiscoConfParse(object):
             )
 
         retval = list()
-        if self.syntax == 'ios':
+        if (self.syntax=='ios') or (self.syntax=='nxos'):
             if exactmatch:
                 for obj in self.find_objects('^interface'):
                     if intfspec.lower() in obj.abbvs:
