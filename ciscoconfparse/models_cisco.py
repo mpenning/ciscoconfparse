@@ -1056,7 +1056,7 @@ class BaseIOSIntfLine(IOSCfgLine):
             return False
 
         retval = self.re_match_iter_typed(
-            r'^\s*ip\spim\sdense-mode\s*$)\s*$',
+            r'^\s*(ip\spim\sdense-mode)\s*$',
             result_type=bool,
             default=False)
         return retval
@@ -1072,7 +1072,7 @@ class BaseIOSIntfLine(IOSCfgLine):
             return False
 
         retval = self.re_match_iter_typed(
-            r'^\s*ip\spim\ssparse-mode\s*$)\s*$',
+            r'^\s*(ip\spim\ssparse-mode)\s*$',
             result_type=bool,
             default=False)
         return retval
@@ -1088,7 +1088,7 @@ class BaseIOSIntfLine(IOSCfgLine):
             return False
 
         retval = self.re_match_iter_typed(
-            r'^\s*ip\spim\ssparse-dense-mode\s*$)\s*$',
+            r'^\s*(ip\spim\ssparse-dense-mode)\s*$',
             result_type=bool,
             default=False)
         return retval
