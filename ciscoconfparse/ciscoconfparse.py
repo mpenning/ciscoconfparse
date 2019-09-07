@@ -3605,7 +3605,7 @@ class ASAConfigList(MutableSequence):
 
     def append(self, val, atomic=False):
         list_idx = len(self._list)
-        self.insert(list_idx, val, atomic)
+        self.insert(list_idx, val)
 
     def config_hierarchy(self):
         """Walk this configuration and return the following tuple
