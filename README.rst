@@ -29,13 +29,9 @@ Short answer: ciscoconfparse is a Python_ library that helps you quickly answer 
 - Which interfaces are missing a critical command?
 - Is this configuration missing a standard config line?
 
-Longer answer:
-
-ciscoconfparse is a Python_ library, which parses through Cisco IOS-style
-(and other vendor) configurations.  It can:
+It can also do the following:
 
 - Audit existing router / switch / firewall / wlc configurations
-- Retrieve portions of the configuration
 - Modify existing configurations
 - Build new configurations
 
