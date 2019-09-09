@@ -69,7 +69,7 @@ The next example will find the IP address assigned to interfaces.
 
     for intf_obj in parse.find_objects('^interface'):
 
-        intf_name = intf_obj.re_match_typed('^interface\s+(\S+.?)$')
+        intf_name = intf_obj.re_match_typed('^interface\s+(\S.+?)$')
 
         # Search children of GigabitEthernet1/3 for a regex match and return 
         # the value matched in regex match group 1.  If there is no match, 
