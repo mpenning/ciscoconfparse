@@ -49,7 +49,7 @@ Usage
 The following code will parse a configuration stored in 'exampleswitch.conf'
 and select interfaces that are shutdown.
 
-.. codeblock:: python
+.. code:: python
 
   from ciscoconfparse import CiscoConfParse
 
@@ -61,7 +61,7 @@ and select interfaces that are shutdown.
 
 The next example will find the IP address assigned to interfaces.
 
-.. codeblock:: python
+.. code:: python
 
   from ciscoconfparse import CiscoConfParse
 
