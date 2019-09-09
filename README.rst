@@ -51,32 +51,33 @@ and select interfaces that are shutdown.
 
 .. code:: python
 
-  from ciscoconfparse import CiscoConfParse
+    from ciscoconfparse import CiscoConfParse
 
-  parse = CiscoConfParse('exampleswitch.conf', syntax='ios')
+    parse = CiscoConfParse('exampleswitch.conf', syntax='ios')
 
-  for intf_obj in parse.find_objects_w_child('^interface', '^\s+shutdown'):
-      print("Shutdown: " + intf_obj.text)
+    for intf_obj in parse.find_objects_w_child('^interface', '^\s+shutdown'):
+        print("Shutdown: " + intf_obj.text)
 
 
 The next example will find the IP address assigned to interfaces.
 
 .. code:: python
 
-  from ciscoconfparse import CiscoConfParse
+    from ciscoconfparse import CiscoConfParse
 
-  parse = CiscoConfParse('exampleswitch.conf', syntax='ios')
+    parse = CiscoConfParse('exampleswitch.conf', syntax='ios')
 
-  intf_obj = parse.find_objects('interface\s+GigabitEthernet1\/3$')
+    for intf_obj in parse.find_objects('^interface'):
 
-  # Search children of GigabitEthernet1/3 for a regex match and return 
-  # the value matched in regex match group 1.  If there is no match, return a
-  # default value: ''
-  intf_ip_addr = intf_obj.re_match_iter_typed(
-      r'ip\saddress\s(\d+\.\d+\.\d+\.\d+)\s', result_type=str,
-      group=1, default='')
-  print("ip addr: " + intf_ip_addr)
+        intf_name = intf_obj.re_match_typed('^interface\s+(\S+.?)$')
 
+        # Search children of GigabitEthernet1/3 for a regex match and return 
+        # the value matched in regex match group 1.  If there is no match, 
+        # return a default value: ''
+        intf_ip_addr = intf_obj.re_match_iter_typed(
+            r'ip\saddress\s(\d+\.\d+\.\d+\.\d+)\s', result_type=str,
+            group=1, default='')
+        print("{0}: {1}".format(intf_name, intf_ip_addr))
 
 What if we don't use Cisco?
 ===========================
