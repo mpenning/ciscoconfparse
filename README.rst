@@ -29,19 +29,54 @@ Short answer: ciscoconfparse is a Python_ library that helps you quickly answer 
 - Which interfaces are missing a critical command?
 - Is this configuration missing a standard config line?
 
-It can also do the following:
+It can help you:
 
 - Audit existing router / switch / firewall / wlc configurations
 - Modify existing configurations
 - Build new configurations
 
-The library examines an IOS-style config and breaks it into a set of linked
-parent / child relationships.  You can perform complex queries about these 
-relationships.
+Speaking generally, the library examines an IOS-style config and breaks it 
+into a set of linked parent / child relationships.  You can perform complex 
+queries about these relationships.
 
 .. image:: https://raw.githubusercontent.com/mpenning/ciscoconfparse/master/sphinx-doc/_static/ciscoconfparse_overview_75pct.png
    :target: https://raw.githubusercontent.com/mpenning/ciscoconfparse/master/sphinx-doc/_static/ciscoconfparse_overview_75pct.png
    :alt: CiscoConfParse Parent / Child relationships
+
+Usage
+=====
+
+The following code will parse a configuration stored in 'exampleswitch.conf'
+and select interfaces that are shutdown.
+
+.. codeblock:: python
+
+   from ciscoconfparse import CiscoConfParse
+
+   parse = CiscoConfParse('exampleswitch.conf', syntax='ios')
+
+   for intf_obj in parse.find_objects_w_child('^interface', '^\s+shutdown'):
+       print("Shutdown: " + intf_obj.text)
+
+
+The next example will find the IP address assigned to interfaces.
+
+.. codeblock:: python
+
+   from ciscoconfparse import CiscoConfParse
+
+   parse = CiscoConfParse('exampleswitch.conf', syntax='ios')
+
+   intf_obj = parse.find_objects('interface\s+GigabitEthernet1\/3$')
+
+   # Search children of GigabitEthernet1/3 for a regex match and return 
+   # the value matched in regex match group 1.  If there is no match, return a
+   # default value: ''
+   intf_ip_addr = intf_obj.re_match_iter_typed(
+       r'ip\saddress\s(\d+\.\d+\.\d+\.\d+)\s', result_type=str,
+       group=1, default='')
+   print("ip addr: " + intf_ip_addr)
+
 
 What if we don't use Cisco?
 ===========================
