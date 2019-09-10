@@ -1130,11 +1130,16 @@ class BaseNXOSIntfLine(NXOSCfgLine):
            [{'addr': '172.16.20.12', 'vrf': '', 'global': False}, {'addr': '172.19.185.91', 'vrf': '', 'global': False}]
            >>>"""
         retval = list()
+
+        for child in self.children:
+            if 'vrf member' in child.text:
+                vrf = child.re_match_typed(r'vrf\s+member\s+(\S+)', default='')
+                break
+
         for child in self.children:
             if 'dhcp relay address' in child.text:
                 addr = child.re_match_typed(r'ip\s+dhcp\s+relay\s+address\s+(\d+\.\d+\.\d+\.\d+)')
                 global_addr = ''
-                vrf = ''
                 retval.append({'addr': addr, 'vrf': vrf, 'global': bool(global_addr)})
         return retval
 
