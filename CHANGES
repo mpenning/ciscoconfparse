@@ -1,3 +1,4 @@
+1.4.6   20190910 Add support for NXOS dhcp helper-address (w/ factory=True)
 1.4.5   20190907 Add support for NXOS in find_interface_objects()
 1.4.4   20190907 Fix Github issue #162 and Github issue #164
 1.4.3   20190814 Fix Github issue #160; Add parser for various NXOS features
