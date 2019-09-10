@@ -94,15 +94,15 @@ class NXOSCfgLine(BaseCfgLine):
            >>> config = [
            ...     '!',
            ...     'interface Ethernet1/1',
-           ...     ' ip address 1.1.1.1 255.255.255.252',
+           ...     ' ip address 1.1.1.1/30',
            ...     '!',
            ...     'interface Ethernet1/2',
            ...     ' no ip address',
            ...     '!',
            ...     'interface Ethernet1/3',
-           ...     ' ip address 1.1.1.5 255.255.255.252',
-           ...     ' ip helper-address 172.16.1.12'
-           ...     ' ip helper-address 172.19.200.84',
+           ...     ' ip address 1.1.1.5/30',
+           ...     ' ip dhcp relay address 172.16.1.12'
+           ...     ' ip dhcp relay address 172.19.200.84',
            ...     '!',
            ...     ]
            >>> parse = CiscoConfParse(config)
@@ -133,15 +133,15 @@ class NXOSCfgLine(BaseCfgLine):
            >>> config = [
            ...     '!',
            ...     'interface Ethernet1/1',
-           ...     ' ip address 1.1.1.1 255.255.255.252',
+           ...     ' ip address 1.1.1.1/30',
            ...     '!',
            ...     'interface Ethernet1/2',
            ...     ' no ip address',
            ...     '!',
            ...     'interface Ethernet1/3.100',
-           ...     ' ip address 1.1.1.5 255.255.255.252',
-           ...     ' ip helper-address 172.16.1.12'
-           ...     ' ip helper-address 172.19.200.84',
+           ...     ' ip address 1.1.1.5/30',
+           ...     ' ip dhcp relay address 172.16.1.12'
+           ...     ' ip dhcp relay address 172.19.200.84',
            ...     '!',
            ...     ]
            >>> parse = CiscoConfParse(config)
@@ -1100,6 +1100,42 @@ class BaseNXOSIntfLine(NXOSCfgLine):
         ## By default, Nexus defaults to 15 minute arp timers
         retval = self.re_match_iter_typed(
             r'^\s*arp\s+timeout\s+(\d+)\s*$', result_type=int, default=0)
+        return retval
+
+    @property
+    def has_ip_helper_addresses(self):
+        """Return a True if the intf has helper-addresses; False if not"""
+        if len(self.ip_helper_addresses)>0:
+            return True
+        return False
+
+    @property
+    def ip_helper_addresses(self):
+        """Return a list of dicts with IP helper-addresses.  Each helper-address is in a dictionary.  The dictionary is in this format:
+
+        .. code-block:: python
+           :emphasize-lines: 11
+
+           >>> config = [
+           ...     '!',
+           ...     'interface Ethernet1/1',
+           ...     ' ip address 1.1.1.1/24',
+           ...     ' ip dhcp relay address 172.16.20.12',
+           ...     ' ip dhcp relay address 172.19.185.91',
+           ...     '!',
+           ...     ]
+           >>> parse = CiscoConfParse(config)
+           >>> obj = parse.find_objects('^interface\sEthernet1/1$')[0]
+           >>> obj.ip_helper_addresses
+           [{'addr': '172.16.20.12', 'vrf': '', 'global': False}, {'addr': '172.19.185.91', 'vrf': '', 'global': False}]
+           >>>"""
+        retval = list()
+        for child in self.children:
+            if 'dhcp relay address' in child.text:
+                addr = child.re_match_typed(r'ip\s+dhcp\s+relay\s+address\s+(\d+\.\d+\.\d+\.\d+)')
+                global_addr = ''
+                vrf = ''
+                retval.append({'addr': addr, 'vrf': vrf, 'global': bool(global_addr)})
         return retval
 
     @property
