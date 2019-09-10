@@ -9,15 +9,6 @@
 
 ---
 
-# Why CiscoConfParse?
-
--   Do you think python is useful?
--   Do you manage a lot of routers, switches or firewalls?
--   If you answered yes to both questions, use CiscoConfParse. It helps
-    python understand Cisco (and other vendor) text configs
-
----
-
 # Installation
 
 -   Assume you're running linux and already have `pip` installed
@@ -28,150 +19,163 @@
 
 ---
 
-# Config Parsing Notes
+# Example Configuration
 
-- Configurations can be parsed from a file
-- Configurations can also be parsed from a list of strings
-- Sometimes you should declare the syntax of config being parsed
-- After parsing, the parse variable contains a list of [IOSCfgLine] objects
+The following examples will use this configuration:
+
+    ! filename:exampleswitch.conf
+    !
+    hostname ExampleSwitch
+    !
+    interface GigabitEthernet 1/1
+     switchport mode trunk
+     shutdown
+    !
+    interface GigabitEthernet 1/2
+     switchport mode access
+     switchport access vlan 20
+     switchport nonegotiate
+     no cdp enable
+    !
+    interface GigabitEthernet 1/3
+     no switchport
+     ip address 192.0.2.1 255.255.255.0
 
 ---
 
-# Declare the config syntax
+# Example: Find interfaces
 
-- When parsing, you can declare the syntax as: ios, nxos, asa, or junos
-- Default syntax is ios
-- The syntax changes how banners are parsed
-- For ASA configs, if you don't declare the syntax, you may [run into parsing problems]
-
-An ASA Config example:
+Use `find_objects()` to give us a list of interface objects:
 
     !python
-    >>> from ciscoconfparse import CiscoConfParse
-    >>> parse = CiscoConfParse('/path/to/configfile', syntax='asa')
+    from ciscoconfparse import CiscoConfParse
+
+    # Parse the config into objects
+    parse = CiscoConfParse('exampleswitch.conf', syntax='ios')
+
+    # Iterate over all the interface objects
+    for intf_obj in parse.find_objects('^interface'):
+        print("ciscoconfparse object: " + intf_obj)
+
+Output:
+
+    ciscoconfparse object: <IOSCfgLine # 4 'interface GigabitEthernet 1/1'>
+    ciscoconfparse object: <IOSCfgLine # 8 'interface GigabitEthernet 1/2'>
+    ciscoconfparse object: <IOSCfgLine # 14 'interface GigabitEthernet 1/3'>
 
 ---
 
-# `IOSCfgLine()` objects
+# Example: Use object properties
 
-- [IOSCfgLine] objects know the config's line number
-- [IOSCfgLine] objects know where the parents and children of that line are
-- [IOSCfgLine] objects have special methods to retrieve information about the line and its children
-- [IOSCfgLine] objects *don't automatically know details such as what IP address is on an interface, or whether proxy-arp is configured on it*
-
----
-
-# `IOSCfgLine()` Example
+Use `intf_obj.children` to iterate over an object's children:
 
     !python
-    >>> from ciscoconfparse import CiscoConfParse
-    >>> parse = CiscoConfParse('/path/to/configfile')
-    >>> intf = parse.find_objects(r'interface GigabitEthernet0/1$')[0]
-    >>> intf
-    <IOSCfgLine # 0 'interface GigabitEthernet0/1'>
-    >>> # Use the text property on a `IOSCfgLine()` to get the config text
-    >>> intf.text
-    'interface GigabitEthernet0/1'
-    >>>
+    from ciscoconfparse import CiscoConfParse
+
+    parse = CiscoConfParse('exampleswitch.conf', sytax='ios')
+
+    # Choose the first interface (parent) object
+    for intf_obj in parse.find_objects('^interface')[0:1]:
+        print("Parent obj: " + str(intf_obj))
+
+        # Iterate over all the child objects of that parent object
+        for c_obj in intf_obj.children:
+            print("Child obj :    " + str(c_obj))
+
+
+Output:
+
+    Parent obj: <IOSCfgLine # 4 'interface GigabitEthernet 1/1'>
+    Child obj :    <IOSCfgLine # 5 ' switchport mode trunk' (parent is # 4)>
+    Child obj :    <IOSCfgLine # 6 ' shutdown' (parent is # 4)>
 
 ---
 
-# Examples
+# Example: Use object properties
 
-Parsing configurations
-----------------------
+Use `intf_obj.text` to get the object's configuration text
 
     !python
-    [mpenning@localhost]$ python
-    Python 2.7.3 (default, Mar 14 2014, 11:57:14) 
-    [GCC 4.7.2] on linux2
-    Type "help", "copyright", "credits" or "license" for more information.
-    >>>
-    >>> from ciscoconfparse import CiscoConfParse
-    >>> parse = CiscoConfParse('/path/to/the/config', syntax='ios')
-    >>>
+    from ciscoconfparse import CiscoConfParse
 
+    parse = CiscoConfParse('exampleswitch.conf', syntax='ios')
+
+    # Choose the first interface (parent) object
+    for intf_obj in parse.find_objects('^interface')[0:1]:
+        print(intf_obj.text)
+
+Output:
+
+    interface GigabitEthernet 1/1
 
 ---
 
-# Examples
+# Example: Find shutdown interfaces
 
-Use `find_objects_w_child()` to identify ports that are shutdown
-----------------------------------------------------------------
+Use `find_objects_w_child()` to give us a list of shutdown interfaces:
 
     !python
-    >>> # Find all interfaces IOSCfgLine() objects that are shutdown
-    >>> shutdown_objs = parse.find_objects_w_child(r'^interface', r'shutdown')
-    >>>
+    from ciscoconfparse import CiscoConfParse
+
+    parse = CiscoConfParse('exampleswitch.conf', syntax='ios')
+
+    for intf_obj in parse.find_objects_w_child('^interface', '^\s+shutdown'):
+        print("Shutdown: " + intf_obj.text)
+
+Output:
+
+    Shutdown: interface GigabitEthernet1/1
 
 ---
 
-# Examples
+# Example: Extract an interface address
 
-Use `find_objects_wo_child()` to identify ports that are not shutdown
----------------------------------------------------------------------
+Use `re_match_iter_typed()` to extract values with a regex match group
+----------------------------------------------------------------------
 
     !python
-    >>> # Find all interfaces IOSCfgLine() objects that are not shutdown
-    >>> unshut_objs = parse.find_objects_wo_child(r'^interface', r'shutdown')
-    >>>
+    from ciscoconfparse import CiscoConfParse
 
+    parse = CiscoConfParse('exampleswitch.conf', syntax='ios')
 
----
+    intf_obj = parse.find_objects('interface\s+GigabitEthernet1\/3$')
 
-# Examples
+    # Search children of GigabitEthernet1/3 for a regex match and return 
+    # the value matched in regex match group 1.  If there is no match, return a
+    # default value: ''
+    intf_ip_addr = intf_obj.re_match_iter_typed(
+        r'ip\saddress\s(\d+\.\d+\.\d+\.\d+)\s', result_type=str,
+        group=1, default='')
+    print("ip addr: " + intf_ip_addr)
 
-Use `re_match_iter_typed()` to extract an interface address
------------------------------------------------------------
+Output:
 
-    !python
-    >>> from ciscoconfparse import CiscoConfParse
-    >>> parse = CiscoConfParse('/path/to/configfile')
-    >>> intfobj = parse.find_objects(r'interface\sGigabitEthernet0/1$')[0]
-    >>> 
-    >>> ## re_match_iter_typed() will extract results from the re group, below
-    >>> addr = intfobj.re_match_iter_typed(r'ip\saddress\s(\d+\.\d+\.\d+\.\d+)',
-    ...     group=1, recurse=True, default='__unknown__', result_type=str,
-    ...     untyped_default=True)
-    >>> addr
-    '172.16.4.1'
+    ip addr: 192.0.2.1
 
 ---
 
-# How does `re_match_iter_typed()` work?
+# Using `factory=True`
 
--   Call `re_match_iter_typed()` from a parent object
--   `re_match_iter_typed()` loops over all the children of the parent object
-    and tries to match the given regular expression against each child's text.
--   If it finds a match, the value inside the regexp parenthesis is returned.
-    In this case, we wanted the value inside the first set of parenthesis.
--   `re_match_iter_typed()` then casts the result as the type supplied in the
-    `result_type` argument.
-
----
-
-# `IOSCfgLine()` with `factory=True`
-
--   Parsing with `CiscoConfParse('/path/to/configfile', factory=True)` gives you more information
+-   Parsing with `CiscoConfParse('exampleswitch.conf', syntax='ios', factory=True)` gives you more information
 -   See next slide for an example
 
 ---
 
 # Example: `factory=True`
 
-parsing with `factory=True` automatically parses interface values
------------------------------------------------------------------
+parsing with `factory=True` automatically extracts interface values
+-------------------------------------------------------------------
 
     !python
     >>> from ciscoconfparse import CiscoConfParse
-    >>> parse = CiscoConfParse('/path/to/configfile', factory=True)
-    >>> intf = parse.find_objects('interface GigabitEthernet0/1$')[0]
+    >>> parse = CiscoConfParse('exampleswitch', syntax='ios', factory=True)
+    >>> intf = parse.find_objects('interface\sGigabitEthernet0/3$')[0]
     >>> intf
-    <IOSIntfLine # 0 'GigabitEthernet0/1' info: '10.0.0.1/24'>
+    <IOSIntfLine # 14 'GigabitEthernet1/3' info: '192.0.2.1/24'>
     >>> intf.name
-    'GigabitEthernet0/1'
+    'GigabitEthernet1/3'
     >>> intf.ipv4_addr
-    '10.0.0.1'
+    '192.0.2.1'
     >>> intf.ipv4_netmask
     '255.255.255.0
     >>>
