@@ -1812,6 +1812,8 @@ _RE_IPV6_ROUTE = re.compile(r"""^ipv6\s+route
 (?:\s+(?P<ad>\d+))?              # Administrative distance
 (?:\s+(?:(?P<ucast>unicast)|(?P<mcast>multicast)))?
 (?:\s+tag\s+(?P<tag>\d+))?       # Route tag
+(?:\s+track\s+(?P<track>\d+))?   # Track object
+(?:\s+name\s+(?P<name>\S+))?     # Route name
 """.format(_IPV6_REGEX_STR_COMPRESSED1, _IPV6_REGEX_STR_COMPRESSED2,
            _IPV6_REGEX_STR_COMPRESSED3), re.VERBOSE)
 
@@ -1973,13 +1975,10 @@ class IOSRouteLine(BaseIOSRouteLine):
 
     @property
     def route_name(self):
-        if self._address_family == 'ip':
-            if self.route_info['name']:
-                return self.route_info['name']
-            else:
-                return ''
-        elif self._address_family == 'ipv6':
-            raise NotImplementedError
+        if self.route_info['name']:
+            return self.route_info['name']
+        else:
+            return ''
 
     @property
     def permanent(self):
@@ -1993,13 +1992,10 @@ class IOSRouteLine(BaseIOSRouteLine):
 
     @property
     def tracking_object_name(self):
-        if self._address_family == 'ip':
-            if bool(self.route_info['track']):
-                return self.route_info['track']
-            else:
-                return ''
-        elif self._address_family == 'ipv6':
-            raise NotImplementedError
+        if bool(self.route_info['track']):
+            return self.route_info['track']
+        else:
+            return ''
 
     @property
     def tag(self):
