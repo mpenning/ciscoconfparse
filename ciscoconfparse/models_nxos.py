@@ -244,7 +244,7 @@ class NXOSCfgLine(BaseCfgLine):
         return False
 
     @property
-    def in_portchannel(self):
+    def intf_in_portchannel(self):
         """Return a boolean indicating whether this port is configured in a port-channel
 
         """
@@ -263,7 +263,7 @@ urn -1 if it's not configured in a port-channel
         return retval
 
     @property
-    def is_portchannel(self):
+    def is_portchannel_intf(self):
         """Return a boolean indicating whether this port is a port-channel intf
 
         """
