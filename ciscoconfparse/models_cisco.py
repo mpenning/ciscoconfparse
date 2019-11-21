@@ -1975,13 +1975,10 @@ class IOSRouteLine(BaseIOSRouteLine):
 
     @property
     def route_name(self):
-        if self._address_family == 'ip':
-            if self.route_info['name']:
-                return self.route_info['name']
-            else:
-                return ''
-        elif self._address_family == 'ipv6':
-            raise NotImplementedError
+        if self.route_info['name']:
+            return self.route_info['name']
+        else:
+            return ''
 
     @property
     def permanent(self):
