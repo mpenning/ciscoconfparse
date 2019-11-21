@@ -149,12 +149,12 @@ def testVal_IOSIntfLine_name():
         obj = cfg.ConfigObjs[0]
         assert obj.name==result_correct
 
-def testVal_IOSIntfLine_in_portchannel01(parse_c01_factory):
+def testVal_IOSIntfLine_intf_in_portchannel01(parse_c01_factory):
     cfg = parse_c01_factory
     for intf_obj in cfg.find_objects(r'^interface\sGigabitEthernet4\/1$'):
-        assert intf_obj.in_portchannel is False
+        assert intf_obj.intf_in_portchannel is False
     for intf_obj in cfg.find_objects(r'^interface\sGigabitEthernet4\/4$'):
-        assert intf_obj.in_portchannel is False
+        assert intf_obj.intf_in_portchannel is False
 
 def testVal_IOSIntfLine_in_portchannel02():
     lines = ['!',
@@ -166,7 +166,7 @@ def testVal_IOSIntfLine_in_portchannel02():
     ]
     cfg = CiscoConfParse(lines, factory=True)
     intf_obj = cfg.find_objects('^interface')[0]
-    assert intf_obj.in_portchannel is True
+    assert intf_obj.intf_in_portchannel is True
 
 def testVal_IOSIntfLine_portchannel_number_01():
     lines = ['!',
