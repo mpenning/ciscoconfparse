@@ -78,8 +78,7 @@ ciscoconfparse, it's really this easy...
 
 So you may be saying, that all sounds great, but I have no idea what you did 
 with that code up there.  If so, don't worry... There is a tutorial following 
-this intro.  For more depth, I highly recommend `Dive into Python`_ and 
-`Dive into Python3`_.
+this intro.  For more depth, I highly recommend `Dive into Python3`_.
 
 We don't have Ciscos
 --------------------
@@ -168,8 +167,7 @@ changes were made:
 .. _`brace-delimited configurations`: https://github.com/mpenning/ciscoconfparse/blob/81cb4bee7c5ad95301b9e8b3562d70f11fa32505/configs/sample_01.junos
 .. _`Github Issue #17`: https://github.com/mpenning/ciscoconfparse/issues/17
 .. _`This project [ciscoconfparse] has really been a lifesaver`: https://github.com/mpenning/ciscoconfparse/issues/13#issuecomment-71340177
-.. _`Dive into Python`: http://www.diveintopython.net/
-.. _`Dive into Python3`: http://www.diveintopython3.net/
+.. _`Dive into Python3`: https://diveintopython3.problemsolving.io/
 .. _`regular expressions`: https://docs.python.org/3/howto/regex.html
 .. _Python: http://python.org/
 
