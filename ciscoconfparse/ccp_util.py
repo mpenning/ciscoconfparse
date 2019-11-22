@@ -374,6 +374,16 @@ IPv4Network('172.16.1.0/24')
             str(self.ip).split('.')])
 
     @property
+    def as_cidr_addr(self):
+        """Returns a string with the address in CIDR notation"""
+        return str(self.ip)+'/'+str(self.prefixlen)
+
+    @property
+    def as_cidr_net(self):
+        """Returns a string with the network in CIDR notation"""
+        return str(self.network)
+
+    @property
     def is_multicast(self):
         """Returns a boolean for whether this is a multicast address"""
         return self.network_object.is_multicast
@@ -629,6 +639,16 @@ class IPv6Obj(object):
             for num in str(self.ip.exploded).split(':')
         ]
         return tuple(itertools.chain(*nested_list))
+
+    @property
+    def as_cidr_addr(self):
+        """Returns a string with the address in CIDR notation"""
+        return str(self.ip)+'/'+str(self.prefixlen)
+
+    @property
+    def as_cidr_net(self):
+        """Returns a string with the network in CIDR notation"""
+        return str(self.network)
 
     @property
     def is_multicast(self):
