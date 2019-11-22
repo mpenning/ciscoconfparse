@@ -1,4 +1,4 @@
-1.4.9   20191122 Add as_cidr_net() and as_cidr_addr() on IPv4Obj and IPv6Obj
+1.4.9   20191122 Add .as_cidr_net and .as_cidr_addr on IPv4Obj and IPv6Obj
 1.4.8   20191121 Merge Github PR #168; rename in_portchannel and is_portchannel
 1.4.7   20190910 Add support for NXOS vrf with dhcp helper-address
 1.4.6   20190910 Add support for NXOS dhcp helper-address (w/ factory=True)
