@@ -216,8 +216,8 @@ class CiscoConfParse(object):
                 raise ValueError("FATAL: '{}' is an unknown syntax".format(
                     syntax))
 
-        ## Accept either a string or unicode...
-        elif getattr(config, 'encode', False):
+        ## Accept either a string, unicode, or a pathlib.Path instance...
+        elif getattr(config, 'encode', False) or getattr(config, 'is_file'):
             # Try opening as a file
             try:
                 if syntax == 'ios':
