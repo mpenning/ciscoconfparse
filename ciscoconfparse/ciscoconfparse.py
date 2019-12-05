@@ -227,6 +227,7 @@ class CiscoConfParse(object):
                             config))
                     f = open(config, **self.openargs)
                     text = f.read()
+                    f.close()
                     rgx = re.compile(linesplit_rgx)
                     self.ConfigObjs = IOSConfigList(
                         rgx.split(text),
@@ -243,6 +244,7 @@ class CiscoConfParse(object):
                             config))
                     f = open(config, **self.openargs)
                     text = f.read()
+                    f.close()
                     rgx = re.compile(linesplit_rgx)
                     self.ConfigObjs = NXOSConfigList(
                         rgx.split(text),
@@ -259,6 +261,7 @@ class CiscoConfParse(object):
                             config))
                     f = open(config, **self.openargs)
                     text = f.read()
+                    f.close()
                     rgx = re.compile(linesplit_rgx)
                     self.ConfigObjs = ASAConfigList(
                         rgx.split(text),
@@ -276,6 +279,7 @@ class CiscoConfParse(object):
                                    format(config))
                     f = open(config, **self.openargs)
                     text = f.read()
+                    f.close()
                     rgx = re.compile(linesplit_rgx)
 
                     config = self.convert_braces_to_ios(rgx.split(text))
