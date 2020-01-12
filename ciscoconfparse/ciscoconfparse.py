@@ -1961,7 +1961,7 @@ class CiscoConfParse(object):
         """
 
         rgx = dict()
-        if ignore_ws: # value not needed; means:: IF ignore_ws has ANY value assigned DO ....
+        if ignore_ws: True # either TRUE or FALSE; lets assume TRUE
             for line in cfgspec:
                 rgx[line] = self._build_space_tolerant_regex(line)
 
