@@ -4,42 +4,10 @@ import re
 import os
 
 from ciscoconfparse.errors import DynamicAddressException
-
 from ciscoconfparse.ccp_util import _IPV6_REGEX_STR_COMPRESSED1, _IPV6_REGEX_STR_COMPRESSED2
 from ciscoconfparse.ccp_util import _IPV6_REGEX_STR_COMPRESSED3
 from ciscoconfparse.ccp_util import CiscoRange, IPv4Obj, IPv6Obj
 from ciscoconfparse.ccp_abc import BaseCfgLine
-
-### HUGE UGLY WARNING:
-###   Anything in models_nxos.py could change at any time, until I remove this
-###   warning.
-###   
-###   THIS FILE IS NOT FULLY FUNCTIONAL.  IT IS INCOMPLETE
-###
-###   You have been warned :-)
-""" models_nxos.py - Parse, Query, Build, and Modify IOS-style configurations
-     Copyright (C) 2016-2019 David Michael Pennington
-
-     This program is free software: you can redistribute it and/or modify
-     it under the terms of the GNU General Public License as published by
-     the Free Software Foundation, either version 3 of the License, or
-     (at your option) any later version.
-
-     This program is distributed in the hope that it will be useful,
-     but WITHOUT ANY WARRANTY; without even the implied warranty of
-     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-     GNU General Public License for more details.
-
-     You should have received a copy of the GNU General Public License
-     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-     If you need to contact the author, you can do so by emailing:
-     mike [~at~] pennington [/dot\] net
-"""
-
-##
-##-------------  IOS Configuration line object
-##
 
 MAX_VLAN = 4094
 

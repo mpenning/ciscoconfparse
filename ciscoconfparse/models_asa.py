@@ -6,38 +6,6 @@ from ciscoconfparse.ccp_abc import BaseCfgLine
 from ciscoconfparse.ccp_util import L4Object
 from ciscoconfparse.ccp_util import IPv4Obj
 
-### HUGE UGLY WARNING:
-###   Anything in models_asa.py could change at any time, until I remove this
-###   warning.  I have good reason to believe that these methods 
-###   function correctly, but I've been wrong before.  There are no unit tests
-###   for this functionality yet, so I consider all this code alpha quality. 
-###
-###   Use models_asa.py at your own risk.  You have been warned :-)
-
-""" models_asa.py - Parse, Query, Build, and Modify IOS-style configurations
-     Copyright (C) 2014-2015 David Michael Pennington
-
-     This program is free software: you can redistribute it and/or modify
-     it under the terms of the GNU General Public License as published by
-     the Free Software Foundation, either version 3 of the License, or
-     (at your option) any later version.
-
-     This program is distributed in the hope that it will be useful,
-     but WITHOUT ANY WARRANTY; without even the implied warranty of
-     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-     GNU General Public License for more details.
-
-     You should have received a copy of the GNU General Public License
-     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-     If you need to contact the author, you can do so by emailing:
-     mike [~at~] pennington [/dot\] net
-"""
-
-##
-##-------------  ASA Configuration line object
-##
-
 
 class ASACfgLine(BaseCfgLine):
     """An object for a parsed ASA-style configuration line.  
@@ -74,18 +42,14 @@ class ASACfgLine(BaseCfgLine):
 
     """
     def __init__(self, *args, **kwargs):
-        """Accept an ASA line number and initialize family relationship
-        attributes"""
         super(ASACfgLine, self).__init__(*args, **kwargs)
 
     @classmethod
     def is_object_for(cls, line="", re=re):
-        ## Default object, for now
         return True
 
     @property
     def is_intf(self):
-        # Includes subinterfaces
         intf_regex = r'^interface\s+(\S+.+)'
         if self.re_match(intf_regex):
             return True
@@ -119,10 +83,6 @@ class ASACfgLine(BaseCfgLine):
             return True
         return False
 
-##
-##-------------  ASA Interface ABC
-##
-
 # Valid method name substitutions:
 #    switchport -> switch
 #    spanningtree -> stp
@@ -153,7 +113,6 @@ class BaseASAIntfLine(ASACfgLine):
         self.insert_before(self.build_reset_string(), atomic=atomic)
 
     def build_reset_string(self):
-        # ASA interfaces are defaulted like this...
         raise NotImplementedError
 
     @property
@@ -168,10 +127,8 @@ class BaseASAIntfLine(ASACfgLine):
         return False
 
     ##-------------  Basic interface properties
-
     @property
     def name(self):
-        """Return a string, such as 'GigabitEthernet0/1'"""
         if not self.is_intf:
             return ''
         intf_regex = r'^interface\s+(\S+[0-9\/\.\s]+)\s*'
@@ -180,12 +137,10 @@ class BaseASAIntfLine(ASACfgLine):
 
     @property
     def port(self):
-        """Return the interface's port number"""
         return self.ordinal_list[-1]
 
     @property
     def port_type(self):
-        """Return Loopback, GigabitEthernet, etc..."""
         port_type_regex = r'^interface\s+([A-Za-z\-]+)'
         return self.re_match(port_type_regex, group=1, default='')
 

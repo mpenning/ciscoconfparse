@@ -6,39 +6,6 @@ import os
 from ciscoconfparse.ccp_abc import BaseCfgLine
 from ciscoconfparse.ccp_util import IPv4Obj
 
-### HUGE UGLY WARNING:
-###   Anything in models_junos.py could change at any time, until I remove this
-###   warning.  I have good reason to believe that these methods are stable and 
-###   function correctly, but I've been wrong before.  There are no unit tests
-###   for this functionality yet, so I consider all this code alpha quality. 
-###
-###   Use models_junos.py at your own risk.  You have been warned :-)
-
-""" models_junos.py - Parse, Query, Build, and Modify Junos-style configurations
-     Copyright (C) 2015 David Michael Pennington
-
-     This program is free software: you can redistribute it and/or modify
-     it under the terms of the GNU General Public License as published by
-     the Free Software Foundation, either version 3 of the License, or
-     (at your option) any later version.
-
-     This program is distributed in the hope that it will be useful,
-     but WITHOUT ANY WARRANTY; without even the implied warranty of
-     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-     GNU General Public License for more details.
-
-     You should have received a copy of the GNU General Public License
-     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-     If you need to contact the author, you can do so by emailing:
-     mike [~at~] pennington [/dot\] net
-"""
-
-##
-##-------------  Junos Configuration line object
-##
-
-
 class JunosCfgLine(BaseCfgLine):
     """An object for a parsed Junos-style configuration line.  
     :class:`~models_junos.JunosCfgLine` objects contain references to other 

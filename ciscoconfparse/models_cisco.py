@@ -11,39 +11,7 @@ from ciscoconfparse.ccp_util import _IPV6_REGEX_STR_COMPRESSED3
 from ciscoconfparse.ccp_util import CiscoRange, IPv4Obj, IPv6Obj
 from ciscoconfparse.ccp_abc import BaseCfgLine
 
-### HUGE UGLY WARNING:
-###   Anything in models_cisco.py could change at any time, until I remove this
-###   warning.  I have good reason to believe that these methods are stable and 
-###   function correctly, but I've been wrong before.  There are no unit tests
-###   for this functionality yet, so I consider all this code alpha quality. 
-###
-###   Use models_cisco.py at your own risk.  You have been warned :-)
-""" models_cisco.py - Parse, Query, Build, and Modify IOS-style configurations
-     Copyright (C) 2014-2019 David Michael Pennington
-
-     This program is free software: you can redistribute it and/or modify
-     it under the terms of the GNU General Public License as published by
-     the Free Software Foundation, either version 3 of the License, or
-     (at your option) any later version.
-
-     This program is distributed in the hope that it will be useful,
-     but WITHOUT ANY WARRANTY; without even the implied warranty of
-     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-     GNU General Public License for more details.
-
-     You should have received a copy of the GNU General Public License
-     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-     If you need to contact the author, you can do so by emailing:
-     mike [~at~] pennington [/dot\] net
-"""
-
-MAX_VLAN = 4094
-
-##
-##-------------  IOS Configuration line object
-##
-
+MAX_VLAN = 4094 ## Excuse me, what?
 
 class IOSCfgLine(BaseCfgLine):
     """An object for a parsed IOS-style configuration line.  
