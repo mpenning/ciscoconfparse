@@ -175,7 +175,6 @@ def recurse_tree(path, excludes, opts):
         # remove hidden ('.') and private ('_') directories
         subs = sorted([sub for sub in subs if sub[0] not in ['.', '_']])
         # check if there are valid files to process
-        # TODO: could add check for windows hidden files
         if "/." in root or "/_" in root \
         or not py_files \
         or is_excluded(root, excludes):
