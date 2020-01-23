@@ -1,22 +1,13 @@
-#!/usr/bin/env python
-## Ref https://docs.python.org/2/distutils/introduction.html
-## Ref https://the-hitchhikers-guide-to-packaging.readthedocs.org/en/latest/
-## Ref http://www.ibm.com/developerworks/library/os-pythonpackaging/
-
 from setuptools import setup, find_packages
 import sys
 import os
 CURRENT_PATH=os.path.join(os.path.dirname(__file__))
 sys.path.insert(1, CURRENT_PATH)
 
-
 def read(fname):
     # Dynamically generate setup(long_description)
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
-
-## Conditionally require the correct ipaddr package in Python2 vs Python3
-# Ref Github issue #127 - sdist improvements
 REQUIRES = ['colorama', 'passlib', 'dnspython']
 EXTRAS = {
     ":python_version<'3'": ['ipaddr>=2.1.11'],

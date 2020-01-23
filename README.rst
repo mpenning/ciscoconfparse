@@ -5,17 +5,13 @@ ciscoconfparse
 .. image:: https://travis-ci.org/mpenning/ciscoconfparse.png?branch=master
    :target: https://travis-ci.org/mpenning/ciscoconfparse
    :alt: Travis CI Status
-
 .. image:: https://img.shields.io/pypi/v/ciscoconfparse.svg
    :target: https://pypi.python.org/pypi/ciscoconfparse/
    :alt: Version
-
 .. image:: http://img.shields.io/badge/license-GPLv3-blue.svg
    :target: https://www.gnu.org/copyleft/gpl.html
    :alt: License
-
 .. contents::
-
 .. _introduction:
 
 Introduction: What is ciscoconfparse?

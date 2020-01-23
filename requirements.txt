@@ -1,6 +1,5 @@
 colorama
 passlib
 dnspython
-
 [:python_version<'3']
 ipaddr>=2.1.11

@@ -6,4 +6,3 @@
 * Add IOS / CatOS classification (experimental)
 * Add intelligence to automatically detect whether to "clear" or "no" in the
   uncfg() method.
-* IOS diffs between two different configs.  Output similarities or differences
