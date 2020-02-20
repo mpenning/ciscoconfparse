@@ -44,4 +44,4 @@ def testVal_parse_F5():
     ]
     parse = CiscoConfParse(config, syntax='junos')
     retval = parse.find_objects('profiles2')[0].children
-    assert retval[0].text=='    test2 '
+    assert retval[0].text.strip()=='test2'

@@ -380,55 +380,105 @@ class CiscoConfParse(object):
 
         JUNOS_RE_STR = r"""^
         (?:\s*
-           (?:(?P<line>[^\{{\}}{0}].*?)(?P<braces_eol>[\{{\}}])*(?P<sc>\;)*\s*)
-          |(?P<braces_alone>[\{{\}}\;])
-          |(?P<brace_sc>\}}\;)\s*
-          |(?P<junos_else>^\s*\}}\s*else\s*\{{\s*$)
-          |(?:\s*[{0}](?P<comment>.*))
-        )
-        $
-        """.format(re.escape(self.comment_delimiter))
-        #LINE_RE = re.compile(r'^\s*([^\{\}].*)*\s*([\{\}\;])(\s\#.+)*$')
+            (?P<braces_close_left>\})*(?P<line1>.*?)(?P<braces_open_right>\{)*;*
+           |(?P<line2>[^\{\}]*?)(?P<braces_open_left>\{)(?P<condition2>.*?)(?P<braces_close_right>\});*\s*
+           |(?P<line3>[^\{\}]*?);*\s*
+        )$
+        """
         LINE_RE = re.compile(JUNOS_RE_STR, re.VERBOSE)
 
-        def line_level(input):
-            level_offset = 0
-            mm = LINE_RE.search(input)
-            if not (mm is None):
+        COMMENT_RE = re.compile(r'^\s*(?P<delimiter>[{0}]+)(?P<comment>[^{0}]*)$'.format(re.escape(self.comment_delimiter)))
+
+        def parse_line_braces(input):
+            assert input is not None
+            indent_child = 0
+            indent_this_line = 0
+
+            mm = LINE_RE.search(input.strip())
+            nn = COMMENT_RE.search(input.strip())
+
+            if nn is not None:
+                results = nn.groupdict()
+                return (indent_this_line, indent_child, results.get('delimiter')+results.get('comment', ''))
+
+            elif mm is not None:
                 results = mm.groupdict()
-                line = results.get('line', '')
 
-                ## Hack to fix Github issue #49 (empty double braces at end)
-                nn = re.search(r'^(.+?)\{\s*\}\s*$', input)
-                if nn is not None:
-                    # Detect double braces at the end of a line and strip them
-                    line = nn.group(1)
+                # } line1 { foo bar this } {
+                braces_close_left = bool(results.get('braces_close_left', ''))
+                braces_open_right = bool(results.get('braces_open_right', ''))
 
-                junos_else = results.get('junos_else', None)
-                term_char = (results['braces_eol'] or
-                             results.get('braces_sc', None) or
-                             results['braces_alone'] or '').strip()
-                comment = results['comment']
-                if term_char == '{':
-                    level_offset = 1
-                elif term_char == '}':
-                    level_offset = -1
-                elif term_char == '};':
-                    level_offset = -1
+                # line2
+                braces_open_left = bool(results.get('braces_open_left', ''))
+                braces_close_right = bool(results.get('braces_close_right', ''))
 
-                ## Return values
-                if comment is not None:
-                    return '!' + comment, level_offset
-                elif junos_else is not None:
-                    return 'else', level_offset
+                # line3
+                line1_str = results.get('line1', '')
+                line3_str = results.get('line3', '')
+
+                if braces_close_left and braces_open_right:
+                    # Based off line1
+                    #     } elseif { bar baz } {
+                    indent_this_line -= 1
+                    indent_child     += 0
+                    retval = results.get('line1', None)
+                    return (indent_this_line, indent_child, retval)
+
+                elif bool(line1_str) and (braces_close_left is False) and (braces_open_right is False):
+                    # Based off line1:
+                    #     address 1.1.1.1
+                    indent_this_line -= 0
+                    indent_child     += 0
+                    retval = results.get('line1', '').strip()
+                    # Strip empty braces here
+                    retval = re.sub(r'\s*\{\s*\}\s*', '', retval)
+                    return (indent_this_line, indent_child, retval)
+
+                elif (line1_str == '') and (braces_close_left is False) and (braces_open_right is False):
+                    # Based off line1:
+                    #     return empty string
+                    indent_this_line -= 0
+                    indent_child     += 0
+                    return (indent_this_line, indent_child, '')
+
+                elif braces_open_left and braces_close_right:
+                    # Based off line2
+                    #    this { bar baz }
+                    indent_this_line -= 0
+                    indent_child     += 0
+                    line = results.get('line2', None) or ''
+                    condition = results.get('condition2', None) or ''
+                    if condition.strip() == '': 
+                        retval = line
+                    else:
+                        retval = line + " {" + condition + " }"
+                    return (indent_this_line, indent_child, retval)
+
+                elif braces_close_left:
+                    # Based off line1
+                    #   }
+                    indent_this_line -= 1
+                    indent_child     -= 1
+                    return (indent_this_line, indent_child, '')
+
+                elif braces_open_right:
+                    # Based off line1
+                    #   this that foo {
+                    indent_this_line -= 0
+                    indent_child     += 1
+                    line = results.get('line1', None) or 'foobar'
+                    return (indent_this_line, indent_child, line)
+
+                elif (line3_str != '') and (line3_str is not None):
+                    indent_this_line += 0
+                    indent_child     += 0
+                    return (indent_this_line, indent_child, '')
+
                 else:
-                    return line, level_offset
+                    raise ValueError('Cannot parse junos match:"{0}"'.format(input))
 
-            elif input.strip() == '':
-                ## pass blank lines back
-                return input, 0
             else:
-                raise ValueError("LINE_RE Regex fail - Could not parse: '{0}'".format(input))
+                raise ValueError('Cannot parse junos:"{0}"'.format(input))
 
         lines = list()
         offset = 0
@@ -436,13 +486,10 @@ class CiscoConfParse(object):
         for idx, tmp in enumerate(input_list):
             if self.debug is True:
                 _log.debug("Parse line {0}:'{1}'".format(idx+1, tmp.strip()))
-            line, line_offset = line_level(tmp.strip())
-            if line is None:
-                line = ""
-            # Debugging here...
-            #print "FOO", tmp, "BAR", line, line_offset
-            lines.append(" " * STOP_WIDTH * offset + line)
-            offset += line_offset
+            (indent_this_line, indent_child, line) = parse_line_braces(
+                tmp.strip())
+            lines.append((" " * STOP_WIDTH * (offset + indent_this_line)) + line.strip())
+            offset += indent_child
         return lines
 
     def find_interface_objects(self, intfspec, exactmatch=True):
