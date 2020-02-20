@@ -1,4 +1,4 @@
-1.5.0   20200223 Complete rewrite of junos parser (fix Github issue #70)
+1.5.0   20200223 Complete rewrite of junos parser (fix Github issue #70); deprecate support for Python 3.4
 1.4.11  20191205 Github issue #170 Explicitly close() open filehandles
 1.4.10  20191125 Integrate Github issue #169, add support for parsing pathlib.Path objects which contain a configuration
 1.4.9   20191122 Add .as_cidr_net and .as_cidr_addr on IPv4Obj and IPv6Obj
