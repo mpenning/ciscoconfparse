@@ -466,7 +466,7 @@ class CiscoConfParse(object):
                     #   this that foo {
                     indent_this_line -= 0
                     indent_child     += 1
-                    line = results.get('line1', None) or 'foobar'
+                    line = results.get('line1', None) or ''
                     return (indent_this_line, indent_child, line)
 
                 elif (line3_str != '') and (line3_str is not None):
