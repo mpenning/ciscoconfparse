@@ -1,3 +1,4 @@
+1.5.2   20200412 Add __add__() and __sub__() to IPv4Obj() and IPv6Obj(); remove use of IPv6Obj().broadcast in IPv6Obj().__contains__()
 1.5.1   20200223 Remove embedded junos debugging
 1.5.0   20200223 Complete rewrite of junos parser (fix Github issue #70); deprecate support for Python 3.4
 1.4.11  20191205 Github issue #170 Explicitly close() open filehandles
