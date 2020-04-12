@@ -169,6 +169,10 @@ IPv4Network('172.16.1.0/24')
                 self.network_object = IPv4Network(str(arg)+'/32')
                 self.ip_object = IPv4Address(str(arg).split('/')[0])
                 return None
+            elif isinstance(arg, int):
+                self.ip_object = IPv4Address(arg)
+                self.network_object = IPv4Network(str(self.ip_object)+'/32', strict=False)
+                return None
             else:
                 raise ValueError(
                     "IPv4Obj doesn't understand how to parse {0}".format(arg))
@@ -248,6 +252,16 @@ IPv4Network('172.16.1.0/24')
             errmsg = "{0} cannot compare itself to '{1}'".format(
                 self.__repr__(), val)
             raise ValueError(errmsg)
+
+    def __add__(self, val):
+        """Add an integer to IPv4Obj() and return an integer"""
+        assert isinstance(val, int)
+        return self.as_decimal + val
+
+    def __sub__(self, val):
+        """Subtract an integer from IPv4Obj() and return an integer"""
+        assert isinstance(val, int)
+        return self.as_decimal - val
 
     def __contains__(self, val):
         # Used for "foo in bar"... python calls bar.__contains__(foo)
@@ -449,6 +463,11 @@ class IPv6Obj(object):
                 self.network_object = IPv6Network(str(arg)+'/128')
                 self.ip_object = IPv6Address(str(arg).split('/')[0])
                 return None
+            elif isinstance(arg, int):
+                self.ip_object = IPv6Address(arg)
+                self.network_object = IPv6Network(str(self.ip_object)+'/128',
+                    strict=False)
+                return None
             else:
                 raise ValueError(
                     "IPv6Obj doesn't understand how to parse {0}".format(arg))
@@ -513,6 +532,16 @@ class IPv6Obj(object):
                 self.__repr__(), val)
             raise ValueError(errmsg)
 
+    def __add__(self, val):
+        """Add an integer to IPv6Obj() and return an integer"""
+        assert isinstance(val, int)
+        return self.as_decimal + val
+
+    def __sub__(self, val):
+        """Subtract an integer from IPv6Obj() and return an integer"""
+        assert isinstance(val, int)
+        return self.as_decimal - val
+
     def __contains__(self, val):
         # Used for "foo in bar"... python calls bar.__contains__(foo)
         try:
@@ -523,9 +552,10 @@ class IPv6Obj(object):
                 #    val, this object cannot contain val
                 return False
             else:
+                # NOTE: We cannot use the same algorithm as IPv4Obj.__contains__() because IPv6Obj doesn't have .broadcast
                 #return (val.network in self.network)
                 return (self.network<=val.network) and \
-                    (self.broadcast>=val.broadcast)
+                    ((self.as_decimal+self.numhosts-1)>=(val.as_decimal+val.numhosts-1))
 
         except (Exception) as e:
             raise ValueError(
