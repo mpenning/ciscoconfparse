@@ -318,6 +318,16 @@ IPv4Network('172.16.1.0/24')
         return self.prefixlen
 
     @property
+    def exploded(self):
+        """Returns the IPv4 object in exploded form"""
+        return self.ip_object.exploded
+
+    @property
+    def packed(self):
+        """Returns the IPv4 object in packed binary form"""
+        return self.ip_object.packed
+
+    @property
     def broadcast(self):
         """Returns the broadcast address as an IPv4Address object."""
         if sys.version_info[0] < 3:
@@ -605,12 +615,12 @@ class IPv6Obj(object):
     @property
     def exploded(self):
         """Returns the IPv6 object in exploded form"""
-        return self.network_object.exploded
+        return self.ip_object.exploded
 
     @property
     def packed(self):
-        """Returns the IPv6 object in packed form"""
-        return self.network_object.packed
+        """Returns the IPv6 object in packed binary form"""
+        return self.ip_object.packed
 
     @property
     def broadcast(self):
