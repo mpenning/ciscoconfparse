@@ -253,15 +253,35 @@ IPv4Network('172.16.1.0/24')
                 self.__repr__(), val)
             raise ValueError(errmsg)
 
+    def __int__(self):
+        """Return this object as an integer"""
+        return self.as_decimal
+
+    def __index__(self):
+        """Return this object as an integer (used for hex() and bin() operations)"""
+        return self.as_decimal
+
     def __add__(self, val):
-        """Add an integer to IPv4Obj() and return an integer"""
-        assert isinstance(val, int)
-        return self.as_decimal + val
+        """Add an integer to IPv4Obj() and return an IPv4Obj()"""
+        assert isinstance(val, int), "Cannot add type: '{}' to {}".format(type(val), self)
+        orig_prefixlen = self.prefixlen
+        total = self.as_decimal + val
+        assert total <= 4294967295, "Max IPv4 integer exceeded"
+        assert total >= 0, "Min IPv4 integer exceeded"
+        retval = IPv4Obj(total)
+        retval.prefixlen = orig_prefixlen
+        return retval
 
     def __sub__(self, val):
-        """Subtract an integer from IPv4Obj() and return an integer"""
-        assert isinstance(val, int)
-        return self.as_decimal - val
+        """Subtract an integer from IPv4Obj() and return an IPv4Obj()"""
+        assert isinstance(val, int), "Cannot subtract type: '{}' from {}".format(type(val), self)
+        orig_prefixlen = self.prefixlen
+        total = self.as_decimal - val
+        assert total <= 4294967295, "Max IPv4 integer exceeded"
+        assert total >= 0, "Min IPv4 integer exceeded"
+        retval = IPv4Obj(total)
+        retval.prefixlen = orig_prefixlen
+        return retval
 
     def __contains__(self, val):
         # Used for "foo in bar"... python calls bar.__contains__(foo)
@@ -311,6 +331,12 @@ IPv4Network('172.16.1.0/24')
     def prefixlen(self):
         """Returns the length of the network mask as an integer."""
         return self.network_object.prefixlen
+
+    @prefixlen.setter
+    def prefixlen(self, arg):
+        """prefixlen setter method"""
+        self.network_object = IPv4Network('{0}/{1}'.format(str(self.ip_object),
+            arg), strict=False)
 
     @property
     def prefixlength(self):
@@ -462,7 +488,7 @@ class IPv6Obj(object):
         except TypeError:
             if getattr(arg, 'dna', '')=="IPv6Obj":
                 ip_str = '{0}/{1}'.format(str(arg.ip_object), arg.prefixlen)
-                self.network_object = IPv6Network(ip_str, strict = False)
+                self.network_object = IPv6Network(ip_str, strict=False)
                 self.ip_object = IPv6Address(str(arg.ip_object))
                 return None
             elif isinstance(arg, IPv6Network):
@@ -542,15 +568,37 @@ class IPv6Obj(object):
                 self.__repr__(), val)
             raise ValueError(errmsg)
 
+    def __int__(self):
+        """Return this object as an integer"""
+        return self.as_decimal
+
+    def __index__(self):
+        """Return this object as an integer (used for hex() and bin() operations)"""
+        return self.as_decimal
+
     def __add__(self, val):
-        """Add an integer to IPv6Obj() and return an integer"""
-        assert isinstance(val, int)
-        return self.as_decimal + val
+        """Add an integer to IPv6Obj() and return an IPv6Obj()"""
+        assert isinstance(val, int), "Cannot add type: '{}' to {}".format(type(val), self)
+        orig_prefixlen = self.prefixlen
+        total = self.as_decimal + val
+        error = "Max IPv6 integer exceeded"
+        assert total <= 340282366920938463463374607431768211455, error
+        assert total >= 0, "Min IPv4 integer exceeded"
+        retval = IPv6Obj(total)
+        retval.prefixlen = orig_prefixlen
+        return retval
 
     def __sub__(self, val):
-        """Subtract an integer from IPv6Obj() and return an integer"""
-        assert isinstance(val, int)
-        return self.as_decimal - val
+        """Subtract an integer from IPv6Obj() and return an IPv6Obj()"""
+        assert isinstance(val, int), "Cannot subtract type: '{}' from {}".format(type(val), self)
+        orig_prefixlen = self.prefixlen
+        total = self.as_decimal - val
+        error = "Max IPv6 integer exceeded"
+        assert total <= 340282366920938463463374607431768211455, error
+        assert total >= 0, "Min IPv4 integer exceeded"
+        retval = IPv6Obj(total)
+        retval.prefixlen = orig_prefixlen
+        return retval
 
     def __contains__(self, val):
         # Used for "foo in bar"... python calls bar.__contains__(foo)
@@ -601,6 +649,12 @@ class IPv6Obj(object):
     def prefixlen(self):
         """Returns the length of the network mask as an integer."""
         return self.network_object.prefixlen
+
+    @prefixlen.setter
+    def prefixlen(self, arg):
+        """prefixlen setter method"""
+        self.network_object = IPv6Network('{0}/{1}'.format(str(self.ip_object),
+            arg), strict=False)
 
     @property
     def prefixlength(self):
@@ -660,7 +714,7 @@ class IPv6Obj(object):
         num_strings = str(self.ip.exploded).split(':')
         num_strings.reverse()  # reverse the order
         return sum(
-            [int(num, 16) * (256**idx) for idx, num in enumerate(num_strings)])
+            [int(num, 16) * (65536**idx) for idx, num in enumerate(num_strings)])
 
     @property
     def as_binary_tuple(self):
