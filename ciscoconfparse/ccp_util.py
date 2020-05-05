@@ -894,14 +894,17 @@ def dns_query(input="", query_type="", server="", timeout=2.0):
         - timeout (float): DNS lookup timeout duration (default: 2.0 seconds)
 
     Returns:
-        A set() of :class:`~ccp_util.DNSResponse` instances
+        A set([]) of :class:`~ccp_util.DNSResponse` instances.  Refer to the DNSResponse object in these docs for more information.
 
 >>> from ciscoconfparse.ccp_util import dns_query
->>> dns_query('www.pennington.net', "A", "4.2.2.2")
+>>> dns_query('www.pennington.net', "A", "4.2.2.2", timeout=0.5)
 set([<DNSResponse "A" result_str="65.19.187.2">])
->>> answer = dns_query('www.pennington.net', 'A', '4.2.2.2')
->>> str(answer.pop())
+>>> response_set = dns_query('www.pennington.net', 'A', '4.2.2.2')
+>>> aa = response_set.pop()
+>>> aa.result_str
 '65.19.187.2'
+>>> aa.error_str
+''
 >>>
     """
 
