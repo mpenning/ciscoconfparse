@@ -194,6 +194,8 @@ Bug Tracker and Support
 - If you're having problems with general python issues, consider searching for a solution on `Stack Overflow`_.  If you can't find a solution for your problem or need more help, you can `ask a question`_.
 - If you're having problems with your Cisco devices, you can open a case with `Cisco TAC`_; if you prefer crowd-sourcing, you can ask on the Stack Exchange `Network Engineering`_ site.
 
+If you like slack, we also have a `ciscoconfparse NetworkToCode slack channel`_, where new releases are announced.
+
 .. _Unit-Tests:
 
 Unit-Tests
@@ -290,6 +292,8 @@ Special thanks:
 .. _`Stack Overflow`: http://stackoverflow.com/
 
 .. _`ask a question`: http://stackoverflow.com/questions/ask
+
+.. _`ciscoconfparse NetworkToCode slack channel`: https://app.slack.com/client/T09LQ7E9E/C015B4U8MMF/
 
 .. _`Secure IOS Template`: https://www.cymru.com/Documents/secure-ios-template.html
 
