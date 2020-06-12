@@ -546,7 +546,7 @@ class CiscoConfParse(object):
            >>> # We found three branches which matched all regexes...
            >>> len(branches)
            3
-           >>> # This will always match the length of branchspec
+           >>> # Each branch will always match the length of branchspec
            >>> len(branches[0])
            4
            >>> # Print out one object 'branch'
