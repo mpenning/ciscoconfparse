@@ -553,6 +553,10 @@ class CiscoConfParse(object):
            >>> branches[0]
            [<IOSCfgLine # 0 'ltm pool FOO'>, <IOSCfgLine # 1 '    members' (parent is # 0)>, <IOSCfgLine # 2 '        k8s-05.localdomain:8443' (parent is # 1)>, <IOSCfgLine # 5 '            state up' (parent is # 2)>]
            >>>
+           >>> # Get the config text of the root object of the branch...
+           >>> branches[0][0].text
+           'ltm pool FOO'
+           >>>
            >>> # Note: `None` in branches[1][-1] because of no regex match
            >>> branches[1]
            [<IOSCfgLine # 0 'ltm pool FOO'>, <IOSCfgLine # 1 '    members' (parent is # 0)>, <IOSCfgLine # 6 '        k8s-06.localdomain:8443' (parent is # 1)>, None]
