@@ -498,9 +498,9 @@ class CiscoConfParse(object):
 
         Previous CiscoConfParse() methods only handled a single parent regex and single child regex (such as :func:`~ciscoconfparse.CiscoConfParse.find_parents_w_child`).
 
-        If one only handles the parent and child objects, it makes parsing heavily-nested configuratations like Palo-Alto and F5 more challenging because one winds up with several layers for `for` loops for 'simple' tasks.  This method dives beyond a simple parent-child relationship to include entire family 'branches' (i.e. parent, child, grand-children, great-grand-children, etc).
+        This method dives beyond a simple parent-child relationship to include entire family 'branches' (i.e. parent, child, grand-children, great-grand-children, etc).  The net result of handling longer chains of objects is it flattens what would otherwise be nested loops in your scripts; this makes parsing heavily-nested configuratations like Palo-Alto and F5 much simpler.  Of course, there are plenty of applications for "flatter" config formats like IOS.
         
-        This method returns a list of lists (of object 'branches') which are nested to the same depth required in `branchspec`.  However, it returns `None` if there is no object match unlike most other CiscoConfParse() methods.  Returning `None` allows a single search over configs that may not be uniformly nested in every branch.
+        This method returns a list of lists (of object 'branches') which are nested to the same depth required in `branchspec`.  However, unlike most other CiscoConfParse() methods, it returns an explicit `None` if there is no object match.  Returning `None` allows a single search over configs that may not be uniformly nested in every branch.
 
         Args:
             - branchspec (tuple): A tuple of python regular expressions to be matched.
