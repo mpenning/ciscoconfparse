@@ -540,6 +540,186 @@ def testValues_find_children_w_parents(parse_c01):
         test_result = parse_c01.find_children_w_parents(**args)
         assert result_correct==test_result
 
+def testValues_find_object_branches_01():
+    """Basic test: find_object_branches() - only look for object text matching (90% solution)"""
+    config = [
+	'ltm pool FOO {',
+	'  members {',
+	'    k8s-05.localdomain:8443 {',
+	'      address 192.0.2.5',
+	'      session monitor-enabled',
+	'      state up',
+	'    }',
+	'    k8s-06.localdomain:8443 {',
+	'      address 192.0.2.6',
+	'      session monitor-enabled',
+	'      state down',
+	'    }',
+	'  }',
+	'}',
+	'ltm pool BAR {',
+	'  members {',
+	'    k8s-07.localdomain:8443 {',
+	'      address 192.0.2.7',
+	'      session monitor-enabled',
+	'      state down',
+	'    }',
+	'  }',
+	'}',
+	]
+    parse = CiscoConfParse(config, syntax='junos', comment='#')
+    branchspec = (r'ltm\spool', r'members', r'\S+?:\d+', r'state\sup')
+    test_result = parse.find_object_branches(branchspec=branchspec)
+
+    assert len(test_result)==3
+
+    # Test first family branch result...
+    assert test_result[0][0].text.strip()=='ltm pool FOO'
+    assert test_result[0][1].text.strip()=='members'
+    assert test_result[0][2].text.strip()=='k8s-05.localdomain:8443'
+    assert test_result[0][3].text.strip()=='state up'
+
+    # Test second family branch result...
+    assert test_result[1][0].text.strip()=='ltm pool FOO'
+    assert test_result[1][1].text.strip()=='members'
+    assert test_result[1][2].text.strip()=='k8s-06.localdomain:8443'
+    assert test_result[1][3] is None   # 'state down' != 'state up'
+    
+    # Test third family branch result...
+    assert test_result[2][0].text.strip()=='ltm pool BAR'
+    assert test_result[2][1].text.strip()=='members'
+    assert test_result[2][2].text.strip()=='k8s-07.localdomain:8443'
+    assert test_result[2][3] is None   # 'state down' != 'state up'
+
+def testValues_find_object_branches_02():
+    """Basic test: find_object_branches() - only look for object text matching (90% solution)"""
+    config = [
+	'ltm pool FOO {',
+	'  members {',
+	'    k8s-05.localdomain:8443 {',
+	'      address 192.0.2.5',
+	'      session monitor-enabled',
+	'      state up',
+	'    }',
+	'    k8s-06.localdomain:8443 {',
+	'      address 192.0.2.6',
+	'      session monitor-enabled',
+	'      state down',
+	'    }',
+	'  }',
+	'}',
+	'ltm pool BAR {',
+	'  members {',
+	'    k8s-07.localdomain:8443 {',
+	'      address 192.0.2.7',
+	'      session monitor-enabled',
+	'      state down',
+	'    }',
+	'  }',
+	'}',
+	]
+
+    parse = CiscoConfParse(config, syntax='junos', comment='#')
+    # Test negative lookahead matching in the first regex term... Dont match
+    # 'ltm pool BAR'...
+    branchspec = (r'ltm\spool\s(?!BAR)', r'members', r'\S+?:\d+', r'state\sup')
+    test_result = parse.find_object_branches(branchspec=branchspec)
+
+    assert len(test_result)==2
+
+    # Test first family branch result...
+    assert test_result[0][0].text.strip()=='ltm pool FOO'
+    assert test_result[0][1].text.strip()=='members'
+    assert test_result[0][2].text.strip()=='k8s-05.localdomain:8443'
+    assert test_result[0][3].text.strip()=='state up'
+
+    # Test second family branch result...
+    assert test_result[1][0].text.strip()=='ltm pool FOO'
+    assert test_result[1][1].text.strip()=='members'
+    assert test_result[1][2].text.strip()=='k8s-06.localdomain:8443'
+    assert test_result[1][3] is None   # 'state down' != 'state up'
+
+    
+def testValues_find_object_branches_03(parse_c01):
+    """Basic test: find_object_branches() - Test for multiple matches to a vague branchspec term..."""
+
+    # NOTE This is NOT a good example of how to use find_object_branches... I'm
+    # testing to ensure we get the right matches for a vague regular expression...
+    # this winds up returning a lot of different match object types in the 
+    # last branch term
+    branchspec = (r'^interface', r'switchport',)
+    test_result = parse_c01.find_object_branches(branchspec=branchspec)
+
+    assert len(test_result)==19
+
+    assert test_result[0][0].text.strip()=='interface Serial 1/0'
+    assert test_result[0][1] is None # Serial is not a switchport :)
+
+    assert test_result[1][0].text.strip()=='interface GigabitEthernet4/1'
+    assert test_result[1][1].text.strip()=='switchport'
+
+    assert test_result[2][0].text.strip()=='interface GigabitEthernet4/1'
+    assert test_result[2][1].text.strip()=='switchport access vlan 100'
+
+    assert test_result[3][0].text.strip()=='interface GigabitEthernet4/1'
+    assert test_result[3][1].text.strip()=='switchport voice vlan 150'
+
+    assert test_result[4][0].text.strip()=='interface GigabitEthernet4/2'
+    assert test_result[4][1].text.strip()=='switchport'
+
+    assert test_result[5][0].text.strip()=='interface GigabitEthernet4/2'
+    assert test_result[5][1].text.strip()=='switchport access vlan 100'
+
+    assert test_result[6][0].text.strip()=='interface GigabitEthernet4/2'
+    assert test_result[6][1].text.strip()=='switchport voice vlan 150'
+
+    assert test_result[7][0].text.strip()=='interface GigabitEthernet4/3'
+    assert test_result[7][1].text.strip()=='switchport'
+
+    assert test_result[8][0].text.strip()=='interface GigabitEthernet4/3'
+    assert test_result[8][1].text.strip()=='switchport access vlan 100'
+
+    assert test_result[9][0].text.strip()=='interface GigabitEthernet4/3'
+    assert test_result[9][1].text.strip()=='switchport voice vlan 150'
+
+    assert test_result[10][0].text.strip()=='interface GigabitEthernet4/4'
+    assert test_result[10][1] is None #Gi4/4 isn't a switchport (ref regex term)
+
+    assert test_result[11][0].text.strip()=='interface GigabitEthernet4/5'
+    assert test_result[11][1].text.strip()=='switchport'
+
+    assert test_result[12][0].text.strip()=='interface GigabitEthernet4/5'
+    assert test_result[12][1].text.strip()=='switchport access vlan 110'
+
+    assert test_result[13][0].text.strip()=='interface GigabitEthernet4/6'
+    assert test_result[13][1].text.strip()=='switchport'
+
+    assert test_result[14][0].text.strip()=='interface GigabitEthernet4/6'
+    assert test_result[14][1].text.strip()=='switchport access vlan 110'
+
+    assert test_result[15][0].text.strip()=='interface GigabitEthernet4/7'
+    assert test_result[15][1].text.strip()=='switchport'
+
+    assert test_result[16][0].text.strip()=='interface GigabitEthernet4/7'
+    assert test_result[16][1].text.strip()=='switchport access vlan 110'
+
+    assert test_result[17][0].text.strip()=='interface GigabitEthernet4/8'
+    assert test_result[17][1].text.strip()=='switchport'
+
+    assert test_result[18][0].text.strip()=='interface GigabitEthernet4/8'
+    assert test_result[18][1].text.strip()=='switchport access vlan 110'
+
+def testValues_find_object_branches_04(parse_c01):
+    """Basic test: find_object_branches() - Test that non-existent regex child levels return `None`"""
+
+    # NOTE This is NOT a good example of using find_object_branches()... I'm
+    # negative testing to ensure we get the right matches for NO regex
+    # matches...
+    branchspec = (r'this', r'dont', 'match', 'at', 'all')
+    test_result = parse_c01.find_object_branches(branchspec=branchspec)
+    result_correct = [[None, None, None, None, None]]
+    assert test_result==result_correct
+
 def testValues_find_objects_w_parents(parse_c01):
     c01_children_w_parents_switchport = [
         ' switchport',

@@ -4,6 +4,7 @@ from colorama import Fore, Back, Style
 from difflib import SequenceMatcher
 import logging
 import time
+import copy
 import sys
 import re
 import os
@@ -51,7 +52,7 @@ from ciscoconfparse.models_asa import ASAAclLine
 from ciscoconfparse.models_junos import JunosCfgLine
 
 r""" ciscoconfparse.py - Parse, Query, Build, and Modify IOS-style configs
-     Copyright (C) 2007-2019 David Michael Pennington
+     Copyright (C) 2007-2020 David Michael Pennington
 
      This program is free software: you can redistribute it and/or modify
      it under the terms of the GNU General Public License as published by
@@ -492,6 +493,139 @@ class CiscoConfParse(object):
             offset += indent_child
         return lines
 
+    def find_object_branches(self, branchspec=(), regex_flags=0):
+        """This method iterates over a tuple of regular expressions in `branchspec` and returns the matching objects in a list of lists. `branchspec` expects to start at some root ancestor and walk through the nested object hierarchy (with no limit on depth).
+
+        Previous CiscoConfParse() methods only handled a single parent regex and single child regex (such as :func:`~ciscoconfparse.CiscoConfParse.find_parents_w_child`).
+
+        If one only handles the parent and child objects, it makes parsing heavily-nested configuratations like Palo-Alto and F5 more challenging because one winds up with several layers for `for` loops for 'simple' tasks.  This method dives beyond a simple parent-child relationship to include entire family 'branches' (i.e. parent, child, grand-children, great-grand-children, etc).
+        
+        This method returns a list of lists (of object 'branches') which are nested to the same depth required in `branchspec`.  However, it returns `None` if there is no object match unlike most other CiscoConfParse() methods.  Returning `None` allows a single search over configs that may not be uniformly nested in every branch.
+
+        Args:
+            - branchspec (tuple): A tuple of python regular expressions to be matched.
+        Kwargs:
+            - regex_flags : Defaults to 0.
+
+        Returns:
+            - list.  A list of lists of matching :class:`~ciscoconfparse.IOSCfgLine` objects
+
+        .. code-block:: python
+           :emphasize-lines: 28, 29
+
+           >>> config = [
+           ...     'ltm pool FOO {',
+           ...     '  members {',
+           ...     '    k8s-05.localdomain:8443 {',
+           ...     '      address 192.0.2.5',
+           ...     '      session monitor-enabled',
+           ...     '      state up',
+           ...     '    }',
+           ...     '    k8s-06.localdomain:8443 {',
+           ...     '      address 192.0.2.6',
+           ...     '      session monitor-enabled',
+           ...     '      state down',
+           ...     '    }',
+           ...     '  }',
+           ...     '}',
+           ...     'ltm pool BAR {',
+           ...     '  members {',
+           ...     '    k8s-07.localdomain:8443 {',
+           ...     '      address 192.0.2.7',
+           ...     '      session monitor-enabled',
+           ...     '      state down',
+           ...     '    }',
+           ...     '  }',
+           ...     '}',
+           ...     ]
+           >>> parse = CiscoConfParse(config, syntax='junos', comment='#')
+           >>>
+           >>> branchspec = (r'ltm\spool', r'members', r'\S+?:\d+', r'state\sup')
+           >>> branches = parse.find_object_branches(branchspec=branchspec)
+           >>>
+           >>> # We found three branches which matched all regexes...
+           >>> len(branches)
+           3
+           >>> # This will always match the length of branchspec
+           >>> len(branches[0])
+           4
+           >>> # Print out one object 'branch'
+           >>> branches[0]
+           [<IOSCfgLine # 0 'ltm pool FOO'>, <IOSCfgLine # 1 '    members' (parent is # 0)>, <IOSCfgLine # 2 '        k8s-05.localdomain:8443' (parent is # 1)>, <IOSCfgLine # 5 '            state up' (parent is # 2)>]
+           >>>
+           >>> # Note: `None` in branches[1][-1] because of no regex match
+           >>> branches[1]
+           [<IOSCfgLine # 0 'ltm pool FOO'>, <IOSCfgLine # 1 '    members' (parent is # 0)>, <IOSCfgLine # 6 '        k8s-06.localdomain:8443' (parent is # 1)>, None]
+           >>>
+           >>> branches[2]
+           [<IOSCfgLine # 10 'ltm pool BAR'>, <IOSCfgLine # 11 '    members' (parent is # 10)>, <IOSCfgLine # 12 '        k8s-07.localdomain:8443' (parent is # 11)>, None]
+        """
+        assert isinstance(branchspec, tuple), "Please enclose the regular expressions in a Python tuple"
+
+        def list_matching_children(parent_obj, childspec, regex_flags):
+            ## I'm not using parent_obj.re_search_children() because
+            ## re_search_children() doesn't return None for no match...
+
+            # FIXME: Insert debugging here...
+            #print("PARENT "+str(parent_obj))
+
+            # Get the child objects from parent objects
+            if parent_obj is None:
+                children =  self._find_line_OBJ(linespec=childspec,
+                    exactmatch=False)
+            else:
+                children = parent_obj.children
+
+            # Find all child objects which match childspec...
+            segment_list = [cobj for cobj in children if re.search(childspec, cobj.text, regex_flags)]
+            # Return [None] if no children matched...
+            if len(segment_list)==0:
+                segment_list = [None]
+
+            # FIXME: Insert debugging here...
+            #print("    SEGMENTS "+str(segment_list))
+            return segment_list
+
+        branches = list()
+        # iterate over the regular expressions in branchspec
+        for idx, childspec in enumerate(branchspec):
+            # FIXME: Insert debugging here...
+            #print("CHILDSPEC "+childspec)
+            if idx==0:
+                # Get matching 'root' objects from the config
+                next_kids = list_matching_children(parent_obj=None,
+                    childspec=childspec, regex_flags=regex_flags)
+                # Start growing branches from the segments we received...
+                branches = [[kid] for kid in next_kids]
+
+            else:
+                new_branches = list()
+                for branch in branches:
+                    # Extend existing branches into the new_branches
+                    if branch[-1] is not None:
+                        # Find children to extend the family branch...
+                        next_kids = list_matching_children(
+                            parent_obj=branch[-1], childspec=childspec,
+                            regex_flags=regex_flags)
+
+                        # branches 'grow' here with the matching kids above...
+                        branch.append('__INSERT_KID_HERE__')
+                        for kid in next_kids:
+                            # Fork off a new branch for each matching kid...
+                            # If there's a faster alternative to deepcopy(), I
+                            # haven't found it...
+                            tmp = copy.deepcopy(branch)
+                            tmp[-1] = kid
+                            new_branches.append(tmp)
+                    else:
+                        branch.append(None)
+                        new_branches.append(branch)
+
+                # Ensure we have the most recent branches...
+                branches = new_branches
+
+        return branches
+
     def find_interface_objects(self, intfspec, exactmatch=True):
         """Find all :class:`~models_cisco.IOSCfgLine` or 
         :class:`~models_cisco.NXOSCfgLine` objects whose text 
@@ -583,7 +717,6 @@ class CiscoConfParse(object):
            >>> # The IOSHostnameLine object has a hostname attribute
            >>> obj_list[0].hostname
            'MyRouterHostname'
-           >>>
         """
         if not self.factory:
             raise ValueError(
