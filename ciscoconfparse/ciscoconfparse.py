@@ -494,11 +494,11 @@ class CiscoConfParse(object):
         return lines
 
     def find_object_branches(self, branchspec=(), regex_flags=0):
-        """This method iterates over a tuple of regular expressions in `branchspec` and returns the matching objects in a list of lists. `branchspec` expects to start at some root ancestor and walk through the nested object hierarchy (with no limit on depth).
+        """This method iterates over a tuple of regular expressions in `branchspec` and returns the matching objects in a list of lists (consider it a table of matching config objects). `branchspec` expects to start at some root ancestor and walk through the nested object hierarchy (with no limit on depth).
 
         Previous CiscoConfParse() methods only handled a single parent regex and single child regex (such as :func:`~ciscoconfparse.CiscoConfParse.find_parents_w_child`).
 
-        This method dives beyond a simple parent-child relationship to include entire family 'branches' (i.e. parent, child, grand-children, great-grand-children, etc).  The net result of handling longer chains of objects is it flattens what would otherwise be nested loops in your scripts; this makes parsing heavily-nested configuratations like Palo-Alto and F5 much simpler.  Of course, there are plenty of applications for "flatter" config formats like IOS.
+        This method dives beyond a simple parent-child relationship to include entire family 'branches' (i.e. parents, children, grand-children, great-grand-children, etc).  The net result of handling longer chains of objects is it flattens what would otherwise be nested loops in your scripts; this makes parsing heavily-nested configuratations like Palo-Alto and F5 much simpler.  Of course, there are plenty of applications for "flatter" config formats like IOS.
         
         This method returns a list of lists (of object 'branches') which are nested to the same depth required in `branchspec`.  However, unlike most other CiscoConfParse() methods, it returns an explicit `None` if there is no object match.  Returning `None` allows a single search over configs that may not be uniformly nested in every branch.
 
@@ -564,7 +564,8 @@ class CiscoConfParse(object):
            >>> branches[2]
            [<IOSCfgLine # 10 'ltm pool BAR'>, <IOSCfgLine # 11 '    members' (parent is # 10)>, <IOSCfgLine # 12 '        k8s-07.localdomain:8443' (parent is # 11)>, None]
         """
-        assert isinstance(branchspec, tuple), "Please enclose the regular expressions in a Python tuple"
+        assert isinstance(branchspec, tuple), "find_object_branches(): Please enclose the regular expressions in a Python tuple"
+        assert branchspec!=(), "find_object_branches(): branchspec must not be empty"
 
         def list_matching_children(parent_obj, childspec, regex_flags):
             ## I'm not using parent_obj.re_search_children() because
@@ -581,7 +582,8 @@ class CiscoConfParse(object):
                 children = parent_obj.children
 
             # Find all child objects which match childspec...
-            segment_list = [cobj for cobj in children if re.search(childspec, cobj.text, regex_flags)]
+            segment_list = [cobj for cobj in children if re.search(childspec,
+                cobj.text, regex_flags)]
             # Return [None] if no children matched...
             if len(segment_list)==0:
                 segment_list = [None]
@@ -612,13 +614,16 @@ class CiscoConfParse(object):
                             parent_obj=branch[-1], childspec=childspec,
                             regex_flags=regex_flags)
 
-                        # branches 'grow' here with the matching kids above...
-                        branch.append('__INSERT_KID_HERE__')
+                        # As the number of next_kids gets larger, it's 
+                        # significantly faster to append once before the loop
+                        # and replace the last element in the loop when compared
+                        # with appending each kid inside the for-loop.
+                        branch.append('__INSERT_NEW_KID_HERE__')
                         for kid in next_kids:
-                            # Fork off a new branch for each matching kid...
-                            # If there's a faster alternative to deepcopy(), I
-                            # haven't found it...
-                            tmp = copy.deepcopy(branch)
+                            # Fork off a new branch and add each matching kid...
+                            # Use copy.copy() for a "shallow copy" of branch:
+                            #    https://realpython.com/copying-python-objects/
+                            tmp = copy.copy(branch)
                             tmp[-1] = kid
                             new_branches.append(tmp)
                     else:
