@@ -616,8 +616,8 @@ class CiscoConfParse(object):
 
                         # As the number of next_kids gets larger, it's 
                         # significantly faster to append once before the loop
-                        # and replace the last element in the loop when compared
-                        # with appending each kid inside the for-loop.
+                        # and copy/replace the last element in the loop when
+                        # compared with appending each kid inside the for-loop.
                         branch.append('__INSERT_NEW_KID_HERE__')
                         for kid in next_kids:
                             # Fork off a new branch and add each matching kid...
