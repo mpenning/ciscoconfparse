@@ -614,17 +614,12 @@ class CiscoConfParse(object):
                             parent_obj=branch[-1], childspec=childspec,
                             regex_flags=regex_flags)
 
-                        # As the number of next_kids gets larger, it's 
-                        # significantly faster to append once before the loop
-                        # and copy/replace the last element in the loop when
-                        # compared with appending each kid inside the for-loop.
-                        branch.append('__INSERT_NEW_KID_HERE__')
                         for kid in next_kids:
                             # Fork off a new branch and add each matching kid...
                             # Use copy.copy() for a "shallow copy" of branch:
                             #    https://realpython.com/copying-python-objects/
                             tmp = copy.copy(branch)
-                            tmp[-1] = kid
+                            tmp.append(kid)
                             new_branches.append(tmp)
                     else:
                         branch.append(None)
