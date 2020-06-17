@@ -1,7 +1,16 @@
 
+Table of Contents
+=================
+
+  * [Examples](#examples)
+    * [Basic Usage](#basic_usage)
+    * [Lazy IOS Audit](#lazy_ios_audit)
+
+<a name="examples"/>
 Examples
 ========
 
+<a name="basic_usage"/>
 Basic Usage
 -----------
 
@@ -29,6 +38,7 @@ Object: <IOSCfgLine # 11 'interface GigabitEthernet4/2'>
   IP mask: N/A
 ```
 
+<a name="lazy_ios_audit"/>
 Lazy IOS Audit
 --------------
 
