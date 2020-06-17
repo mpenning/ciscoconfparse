@@ -7,10 +7,14 @@ Table of Contents
     * [Lazy IOS Audit](#lazy_ios_audit)
 
 <a name="examples"/>
+
 Examples
 ========
 
+The following examples should get you started using [`ciscoconfparse`][ciscoconfparse]
+
 <a name="basic_usage"/>
+
 Basic Usage
 -----------
 
@@ -39,6 +43,7 @@ Object: <IOSCfgLine # 11 'interface GigabitEthernet4/2'>
 ```
 
 <a name="lazy_ios_audit"/>
+
 Lazy IOS Audit
 --------------
 
@@ -50,5 +55,6 @@ Syntax:
 python lazy_ios_audit.py ~/ciscoconfparse/configs/sample_01.ios
 ```
 
+[ciscoconfparse]: https://github.com/mpenning/ciscoconfparse
 [basic_usage]: https://github.com/mpenning/ciscoconfparse/blob/master/examples/basic_usage.py
 [lazy_ios_audit]: https://github.com/mpenning/ciscoconfparse/blob/master/examples/lazy_ios_audit.py
