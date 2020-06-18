@@ -8,7 +8,7 @@ import os
 from ciscoconfparse.ccp_util import IPv4Obj
 
 r""" ccp_abc.py - Parse, Query, Build, and Modify IOS-style configurations
-     Copyright (C) 2014-2015, 2019 David Michael Pennington
+     Copyright (C) 2014-2015, 2019, 2020 David Michael Pennington
 
      This program is free software: you can redistribute it and/or modify
      it under the terms of the GNU General Public License as published by
@@ -26,9 +26,6 @@ r""" ccp_abc.py - Parse, Query, Build, and Modify IOS-style configurations
      If you need to contact the author, you can do so by emailing:
      mike [~at~] pennington [/dot\] net
 """
-
-### TODO: Implement a findall function which matches a regex and returns a list
-
 
 ##
 ##-------------  Config Line ABC
