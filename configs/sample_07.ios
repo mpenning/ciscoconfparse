@@ -148,7 +148,6 @@ ip ssh time-out 30
 interface FastEthernet0/0
  ip address 172.16.2.1 255.255.255.0
  ip access-group ETH0_0_IN in
- ip access-group BLACKHOLE out
  no ip unreachables
  no ip proxy-arp
  ip virtual-reassembly
@@ -168,7 +167,6 @@ interface FastEthernet1/0
 interface FastEthernet1/1
  ip address 172.16.6.1 255.255.255.0
  no ip unreachables
- ip access-group BLACKHOLD in
 !
 interface FastEthernet2/0
  shutdown
