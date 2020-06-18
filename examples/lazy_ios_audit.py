@@ -68,11 +68,11 @@ except IndexError:
 secret = getpass('Enable Secret: ')
 
 for filename in CONFIG_PATH:
-    print "--- {0} ---".format(filename)
+    print("--- {0} ---".format(filename))
     parse = CiscoConfParse(filename)
 
     # Print out simple diff conditions - i.e. no regexp matching...
-    print os.linesep.join(parse.sync_diff(RECOMMENDED, '', remove_lines=False))
+    print(os.linesep.join(parse.sync_diff(RECOMMENDED, '', remove_lines=False)))
 
     # Default enable secret config...
     default_enab_sec = 'enable secret {0}'.format(secret)
@@ -84,6 +84,6 @@ for filename in CONFIG_PATH:
             )[0].re_match_typed(enab_sec_regex, group=1, default=-1, 
             result_type=int)
         if enab_sec_level==0:
-            print default_enab_sec
+            print(default_enab_sec)
     except IndexError:
-        print default_enab_sec
+        print(default_enab_sec)

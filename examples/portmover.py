@@ -1,8 +1,13 @@
+from argparse import ArgumentParser
+import shlex
 import csv
+import sys
 import re
 import os
 
 from ciscoconfparse import CiscoConfParse
+
+assert sys.version_info>=(3, 0, 0), "Error.  Please install Python 3"
 
 """
 Author: David Michael Pennington <mike@pennington.net>
@@ -14,28 +19,51 @@ Move ports from an 'old' switch to a new switch:
     output a new switch config
 """
 
-def main(configpath, newconfigpath, csvpath):
-    """Read a Cisco IOS config and a csv containing port mappings; output a new config"""
-    parse = CiscoConfParse(configpath) # parse the old config
+def parse_args(input=""):
+    """Parse CLI arguments, or parse args from the input variable"""
+
+    ## input is useful if you don't want to parse args from the shell
+    if input!="":
+        # Example: parse_args("create -f this.txt -b")
+        sys.argv = [input]   # sys.argv[0] is always the whole list of args
+        sys.argv.extend(shlex.split(input))   # shlex adds the rest of argv
+
+    parser = ArgumentParser(prog=os.path.basename(__file__), 
+        description='Move ports in a new switch configuration', add_help=True)
+
+    parser_required = parser.add_argument_group('required')
+    parser_required.add_argument('-o', '--old', required=True, 
+        help='Old config filename')
+    parser_required.add_argument('-n', '--new', required=True, 
+        help='New config filename')
+    parser_required.add_argument('-m', '--map', required=True, 
+        help='CSV file which maps old to new ports')
+
+    return parser.parse_args()
+
+
+def main(args):
+    """Read a old Cisco IOS config and a csv containing port mappings; output a new config"""
+    parse = CiscoConfParse(args.old) # parse the old config
     config = list()  # Initialize a container for the new config
 
     # Open the csv... 
-    with open(csvpath) as csvfh:
+    with open(args.map) as csvfh:
         reader = csv.reader(csvfh)
 
         # iterate over the port mappings in the csv...
-        for idx, line in enumerate(reader):
-            if idx==0:  # Skip the header line
+        for idx, row in enumerate(reader):
+            if idx==0:  # Skip the CSV header row
                 continue
-            elif line==[]:  # Skip empty lines
+            elif row==[]:  # Skip empty CSV rows
                 continue
 
-            # Ensure there are two columns on this csv line
-            assert len(line)==2, "CSV line: '{0}' must have two columns".format(
-                line)
+            # Ensure there are two columns on this csv row
+            assert len(row)==2, "CSV row: '{0}' must have two columns".format(
+                row)
 
             ## Read the old & new interface info from the csv file
-            oldport, newport = line[0], line[1]
+            oldport, newport = row[0], row[1]
 
             ## Parse out the interface class & number via regex...
             mm = re.search(r'^(\w+?)\s*(\d\S+)$', oldport.strip())
@@ -48,7 +76,7 @@ def main(configpath, newconfigpath, csvpath):
                     oldport)
                 raise ValueError(error)
             try:
-                # Find the old interface line...
+                # Find the old interface...
                 intfobj = parse.find_objects('^interface\s+{0}\s*{1}$'.format(
                     oldclass, oldnum))[0]
             except IndexError:
@@ -65,15 +93,11 @@ def main(configpath, newconfigpath, csvpath):
             config.append('!')
 
     ## Write the new config file
-    with open(newconfigpath, 'w') as newconffh:
+    with open(args.new, 'w') as newconffh:
         for line in config:
             newconffh.write(line+os.linesep)
 
 if __name__=='__main__':
     """Read a Cisco IOS config and a csv containing port mappings; output a new config"""
-    configpath = raw_input('Path to the old config: ')
-    newconfigpath = raw_input('Path to the new config: ')
-    ## See example port_move.csv in this directory
-    csvpath = raw_input('Path to the csv port mapping old -> new config: ')
-    main(configpath, newconfigpath, csvpath)
-    
+    args = parse_args()
+    main(args)

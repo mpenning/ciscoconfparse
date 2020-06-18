@@ -28,7 +28,7 @@ def switchport_vlans(parse):
             intf = obj.re_match_typed(INTF_RE)
             retval[intf] = vlans
             access[intf] = bool(vlans_access)
-        except Exception, e:
+        except(Exception, e):
             raise ValueError("FATAL error while parsing switchport vlans on {0}: {1}".format(obj, e))
     return retval, access
 
