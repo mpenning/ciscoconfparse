@@ -220,7 +220,7 @@ License and Copyright
 =====================
 
 ciscoconfparse_ is licensed GPLv3_; Copyright `David Michael Pennington`_, 
-2007-2019.
+2007-2020.
 
 ciscoconfparse_ is not affiliated with Cisco Systems in any way; the word "Cisco" is a registered trademark of Cisco Systems
 
