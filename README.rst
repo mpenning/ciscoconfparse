@@ -11,7 +11,7 @@ ciscoconfparse
    :alt: Version
 
 .. image:: https://pepy.tech/badge/ciscoconfparse
-   :target: https://static.pepy.tech/badge/ciscoconfparse
+   :target: https://pepy.tech/badge/ciscoconfparse
    :alt: Downloads
 
 .. image:: http://img.shields.io/badge/license-GPLv3-blue.svg
