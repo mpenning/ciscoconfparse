@@ -1,6 +1,7 @@
 import platform
 import sys
 import os
+
 THIS_DIR = os.path.dirname(__file__)
 sys.path.insert(0, "..")
 
@@ -1131,140 +1132,157 @@ interface Ethernet1/10
 """.splitlines()
 
 
-@pytest.yield_fixture(scope='session')
+@pytest.yield_fixture(scope="session")
 def c01_default_gigethernets(request):
     yield config_c01_default_gige
 
-@pytest.yield_fixture(scope='session')
+
+@pytest.yield_fixture(scope="session")
 def c01_insert_serial_replace(request):
     yield config_c01_insert_serial_replace
 
-@pytest.yield_fixture(scope='function')
+
+@pytest.yield_fixture(scope="function")
 def parse_c01(request):
     """Preparsed c01"""
     parse_c01 = CiscoConfParse(c01, factory=False)
-     
+
     yield parse_c01
 
-@pytest.yield_fixture(scope='function')
+
+@pytest.yield_fixture(scope="function")
 def parse_c01_factory(request):
     """Preparsed c01 with factory option"""
     parse_c01_factory = CiscoConfParse(c01, factory=True)
-     
+
     yield parse_c01_factory
 
-@pytest.yield_fixture(scope='function')
+
+@pytest.yield_fixture(scope="function")
 def parse_c02(request):
     """Preparsed c02"""
     parse_c02 = CiscoConfParse(c02, factory=False)
-     
+
     yield parse_c02
 
-@pytest.yield_fixture(scope='function')
+
+@pytest.yield_fixture(scope="function")
 def parse_c02_factory(request):
     """Preparsed c02"""
     parse_c02 = CiscoConfParse(c02, factory=True)
-     
+
     yield parse_c02
 
+
 ## parse_c03 yields configs/sample_01.ios
-@pytest.yield_fixture(scope='function')
+@pytest.yield_fixture(scope="function")
 def parse_c03(request):
     """Preparsed c03"""
     parse_c03 = CiscoConfParse(c03, factory=False)
-     
+
     yield parse_c03
 
+
 ## parse_c03_factory yields configs/sample_01.ios
-@pytest.yield_fixture(scope='function')
+@pytest.yield_fixture(scope="function")
 def parse_c03_factory(request):
     """Preparsed c01 with factory option"""
     parse_c03_factory = CiscoConfParse(c03, factory=True)
-     
+
     yield parse_c03_factory
 
+
 ## parse_j01 yields configs/sample_01.junos
-@pytest.yield_fixture(scope='function')
+@pytest.yield_fixture(scope="function")
 def parse_j01(request):
     """Preparsed j01"""
-    parse_j01 = CiscoConfParse(j01, syntax='junos', comment='#!', factory=False)
+    parse_j01 = CiscoConfParse(j01, syntax="junos", comment="#!", factory=False)
 
     yield parse_j01
 
+
 ## parse_j01_factory yields configs/sample_01.junos
-@pytest.yield_fixture(scope='function')
+@pytest.yield_fixture(scope="function")
 def parse_j01_factory(request):
     """Preparsed j01 with factory option"""
-    parse_j01_factory = CiscoConfParse(j01, syntax='junos', comment='#!',
-        factory=True)
+    parse_j01_factory = CiscoConfParse(j01, syntax="junos", comment="#!", factory=True)
 
     yield parse_j01_factory
 
+
 ## parse_a01 yields the asa configuration
-@pytest.yield_fixture(scope='function')
+@pytest.yield_fixture(scope="function")
 def parse_a01(request):
     """Preparsed a01"""
-    parse_a01_factory = CiscoConfParse(a01, syntax='asa', factory=False)
+    parse_a01_factory = CiscoConfParse(a01, syntax="asa", factory=False)
 
     yield parse_a01_factory
+
 
 ## parse_a01_factory yields the asa configuration
-@pytest.yield_fixture(scope='function')
+@pytest.yield_fixture(scope="function")
 def parse_a01_factory(request):
     """Preparsed a01 with factory option"""
-    parse_a01_factory = CiscoConfParse(a01, syntax='asa', factory=True)
+    parse_a01_factory = CiscoConfParse(a01, syntax="asa", factory=True)
 
     yield parse_a01_factory
 
+
 ## config_a02 yields an asa configuration
-@pytest.yield_fixture(scope='function')
+@pytest.yield_fixture(scope="function")
 def config_a02(request):
     """Unparsed a02"""
     yield a02
 
+
 ## parse_a02 yields an asa configuration
-@pytest.yield_fixture(scope='function')
+@pytest.yield_fixture(scope="function")
 def parse_a02(request):
     """Preparsed a02"""
-    parse_a02_factory = CiscoConfParse(a02, syntax='asa', factory=False)
+    parse_a02_factory = CiscoConfParse(a02, syntax="asa", factory=False)
 
     yield parse_a02_factory
+
 
 ## parse_a02_factory yields an asa configuration
-@pytest.yield_fixture(scope='function')
+@pytest.yield_fixture(scope="function")
 def parse_a02_factory(request):
     """Preparsed a02 with factory option"""
-    parse_a02_factory = CiscoConfParse(a02, syntax='asa', factory=True)
+    parse_a02_factory = CiscoConfParse(a02, syntax="asa", factory=True)
 
     yield parse_a02_factory
 
+
 ## config_n02 yields a nexus configuration
-@pytest.yield_fixture(scope='function')
+@pytest.yield_fixture(scope="function")
 def config_n01(request):
     """Unparsed n01"""
     yield n01
 
+
 ## parse_n01 yields a nexus configuration
-@pytest.yield_fixture(scope='function')
+@pytest.yield_fixture(scope="function")
 def parse_n01(request):
     """Preparsed n01"""
-    parse_n01_factory = CiscoConfParse(n01, syntax='nxos', factory=False)
+    parse_n01_factory = CiscoConfParse(n01, syntax="nxos", factory=False)
 
     yield parse_n01_factory
+
 
 ## parse_n01_factory yields a nexus configuration
-@pytest.yield_fixture(scope='function')
+@pytest.yield_fixture(scope="function")
 def parse_n01_factory(request):
     """Preparsed n01 with factory option"""
-    parse_n01_factory = CiscoConfParse(n01, syntax='nxos', factory=True)
+    parse_n01_factory = CiscoConfParse(n01, syntax="nxos", factory=True)
 
     yield parse_n01_factory
 
-@pytest.mark.skipif(sys.version_info[0]>=3,
-    reason="No Python3 MockSSH support")
-@pytest.mark.skipif('windows' in platform.system().lower(),
-    reason="No Windows MockSSH support")
-@pytest.yield_fixture(scope='session')
+
+@pytest.mark.skipif(sys.version_info[0] >= 3, reason="No Python3 MockSSH support")
+@pytest.mark.skipif(
+    "windows" in platform.system().lower(), reason="No Windows MockSSH support"
+)
+@pytest.yield_fixture(scope="session")
 def cisco_sshd_mocked(request):
     """Mock Cisco IOS SSH"""
     from fixtures.devices.mock_cisco import start_cisco_mock, stop_cisco_mock

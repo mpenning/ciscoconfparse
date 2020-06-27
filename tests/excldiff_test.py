@@ -4,24 +4,24 @@ from ciscoconfparse import CiscoConfParse
 ## that is missing (i.e. 'no passive-interface Vlan500' below)
 
 config = [
-    '!',
-    'router ospf 102',
-    ' ispf',
-    ' passive-interface default',
-    ' no passive-interface TenGigabitEthernet1/49',
-    ' auto-cost reference-bandwidth 100000',
-    '!',
-    ]
+    "!",
+    "router ospf 102",
+    " ispf",
+    " passive-interface default",
+    " no passive-interface TenGigabitEthernet1/49",
+    " auto-cost reference-bandwidth 100000",
+    "!",
+]
 p = CiscoConfParse(config)
 
 required_lines = [
-    'router ospf 102',
-    ' ispf',
-    ' passive-interface default',
-    ' no passive-interface TenGigabitEthernet1/49',
-    ' no passive-interface Vlan500',
-    ' auto-cost reference-bandwidth 1000000'
-    ]
+    "router ospf 102",
+    " ispf",
+    " passive-interface default",
+    " no passive-interface TenGigabitEthernet1/49",
+    " no passive-interface Vlan500",
+    " auto-cost reference-bandwidth 1000000",
+]
 # lines matching linespec are enforced
 linespec = "router ospf 102|ispf|passive-interface.+?|auto-cost\sreference.+?"
 
