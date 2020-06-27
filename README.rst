@@ -10,8 +10,8 @@ ciscoconfparse
    :target: https://pypi.python.org/pypi/ciscoconfparse/
    :alt: Version
 
-.. image:: https://static.pepy.tech/badge/ciscoconfparse
-   :target: https://pepy.tech/badge/ciscoconfparse
+.. image:: https://pepy.tech/badge/ciscoconfparse
+   :target: https://static.pepy.tech/badge/ciscoconfparse
    :alt: Downloads
 
 .. image:: http://img.shields.io/badge/license-GPLv3-blue.svg
