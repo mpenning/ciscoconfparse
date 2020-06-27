@@ -1,4 +1,4 @@
-from __future__  import absolute_import
+from __future__ import absolute_import
 import sys
 import re
 import os
@@ -8,9 +8,9 @@ from ciscoconfparse.ccp_util import IPv4Obj
 
 ### HUGE UGLY WARNING:
 ###   Anything in models_junos.py could change at any time, until I remove this
-###   warning.  I have good reason to believe that these methods are stable and 
+###   warning.  I have good reason to believe that these methods are stable and
 ###   function correctly, but I've been wrong before.  There are no unit tests
-###   for this functionality yet, so I consider all this code alpha quality. 
+###   for this functionality yet, so I consider all this code alpha quality.
 ###
 ###   Use models_junos.py at your own risk.  You have been warned :-)
 
@@ -72,6 +72,7 @@ class JunosCfgLine(BaseCfgLine):
         - An instance of :class:`~models_junos.JunosCfgLine`.
 
     """
+
     def __init__(self, *args, **kwargs):
         """Accept an Junos line number and initialize family relationship
         attributes"""
@@ -120,7 +121,7 @@ class JunosCfgLine(BaseCfgLine):
            True
            >>>
         """
-        intf_regex = r'^interface\s+(\S+.+)'
+        intf_regex = r"^interface\s+(\S+.+)"
         if self.re_match(intf_regex):
             return True
         return False
@@ -161,14 +162,16 @@ class JunosCfgLine(BaseCfgLine):
            True
            >>>
         """
-        intf_regex = r'^interface\s+(\S+?\.\d+)'
+        intf_regex = r"^interface\s+(\S+?\.\d+)"
         if self.re_match(intf_regex):
             return True
         return False
 
     @property
     def is_virtual_intf(self):
-        intf_regex = r'^interface\s+(Loopback|Tunnel|Dialer|Virtual-Template|Port-Channel)'
+        intf_regex = (
+            r"^interface\s+(Loopback|Tunnel|Dialer|Virtual-Template|Port-Channel)"
+        )
         if self.re_match(intf_regex):
             return True
         return False
@@ -204,7 +207,7 @@ class JunosCfgLine(BaseCfgLine):
            True
            >>>
         """
-        intf_regex = r'^interface\s+(\Soopback)'
+        intf_regex = r"^interface\s+(\Soopback)"
         if self.re_match(intf_regex):
             return True
         return False
@@ -247,10 +250,11 @@ class JunosCfgLine(BaseCfgLine):
            False
            >>>
         """
-        intf_regex = r'^interface\s+(.*?\Sthernet)'
+        intf_regex = r"^interface\s+(.*?\Sthernet)"
         if self.re_match(intf_regex):
             return True
         return False
+
 
 ##
 ##-------------  Junos Interface ABC
@@ -263,25 +267,33 @@ class JunosCfgLine(BaseCfgLine):
 #    address -> addr
 #    default -> def
 
+
 class BaseJunosIntfLine(JunosCfgLine):
     def __init__(self, *args, **kwargs):
         super(BaseJunosIntfLine, self).__init__(*args, **kwargs)
-        self.ifindex = None    # Optional, for user use
-        self.default_ipv4_addr_object = IPv4Obj('127.0.0.1/32', 
-            strict=False)
+        self.ifindex = None  # Optional, for user use
+        self.default_ipv4_addr_object = IPv4Obj("127.0.0.1/32", strict=False)
 
     def __repr__(self):
         if not self.is_switchport:
-            if self.ipv4_addr_object==self.default_ipv4_addr_object:
+            if self.ipv4_addr_object == self.default_ipv4_addr_object:
                 addr = "No IPv4"
             else:
                 ip = str(self.ipv4_addr_object.ip)
                 prefixlen = str(self.ipv4_addr_object.prefixlen)
                 addr = "{0}/{1}".format(ip, prefixlen)
-            return "<%s # %s '%s' info: '%s'>" % (self.classname, 
-                self.linenum, self.name, addr)
+            return "<%s # %s '%s' info: '%s'>" % (
+                self.classname,
+                self.linenum,
+                self.name,
+                addr,
+            )
         else:
-            return "<%s # %s '%s' info: 'switchport'>" % (self.classname, self.linenum, self.name)
+            return "<%s # %s '%s' info: 'switchport'>" % (
+                self.classname,
+                self.linenum,
+                self.name,
+            )
 
     def reset(self, atomic=True):
         # Insert build_reset_string() before this line...
@@ -294,18 +306,36 @@ class BaseJunosIntfLine(JunosCfgLine):
     @property
     def verbose(self):
         if not self.is_switchport:
-            return "<%s # %s '%s' info: '%s' (child_indent: %s / len(children): %s / family_endpoint: %s)>" % (self.classname, self.linenum, self.text, self.ipv4_addr_object or "No IPv4", self.child_indent, len(self.children), self.family_endpoint) 
+            return (
+                "<%s # %s '%s' info: '%s' (child_indent: %s / len(children): %s / family_endpoint: %s)>"
+                % (
+                    self.classname,
+                    self.linenum,
+                    self.text,
+                    self.ipv4_addr_object or "No IPv4",
+                    self.child_indent,
+                    len(self.children),
+                    self.family_endpoint,
+                )
+            )
         else:
-            return "<%s # %s '%s' info: 'switchport' (child_indent: %s / len(children): %s / family_endpoint: %s)>" % (self.classname, self.linenum, self.text, self.child_indent, len(self.children), self.family_endpoint) 
+            return (
+                "<%s # %s '%s' info: 'switchport' (child_indent: %s / len(children): %s / family_endpoint: %s)>"
+                % (
+                    self.classname,
+                    self.linenum,
+                    self.text,
+                    self.child_indent,
+                    len(self.children),
+                    self.family_endpoint,
+                )
+            )
 
     @classmethod
     def is_object_for(cls, line="", re=re):
         return False
 
-
     ##-------------  Basic interface properties
-
-
 
     @property
     def name(self):
@@ -346,8 +376,8 @@ class BaseJunosIntfLine(JunosCfgLine):
            >>>
         """
         if not self.is_intf:
-            return ''
-        intf_regex = r'^interface\s+(\S+[0-9\/\.\s]+)\s*'
+            return ""
+        intf_regex = r"^interface\s+(\S+[0-9\/\.\s]+)\s*"
         name = self.re_match(intf_regex).strip()
         return name
 
@@ -423,8 +453,8 @@ class BaseJunosIntfLine(JunosCfgLine):
            'ATM'
            >>>
         """
-        port_type_regex = r'^interface\s+([A-Za-z\-]+)'
-        return self.re_match(port_type_regex, group=1, default='')
+        port_type_regex = r"^interface\s+([A-Za-z\-]+)"
+        return self.re_match(port_type_regex, group=1, default="")
 
     @property
     def ordinal_list(self):
@@ -468,10 +498,10 @@ class BaseJunosIntfLine(JunosCfgLine):
         if not self.is_intf:
             return ()
         else:
-            intf_regex = r'^interface\s+[A-Za-z\-]+\s*(\d+.*?)(\.\d+)*(\s\S+)*\s*$'
-            intf_number = self.re_match(intf_regex, group=1, default='')
+            intf_regex = r"^interface\s+[A-Za-z\-]+\s*(\d+.*?)(\.\d+)*(\s\S+)*\s*$"
+            intf_number = self.re_match(intf_regex, group=1, default="")
             if intf_number:
-                return tuple([int(ii) for ii in intf_number.split('/')])
+                return tuple([int(ii) for ii in intf_number.split("/")])
             else:
                 return ()
 
@@ -480,22 +510,23 @@ class BaseJunosIntfLine(JunosCfgLine):
         """Return the current interface description string.
 
         """
-        retval = self.re_match_iter_typed(r'^\s*description\s+(\S.+)$',
-            result_type=str, default='')
+        retval = self.re_match_iter_typed(
+            r"^\s*description\s+(\S.+)$", result_type=str, default=""
+        )
         return retval
-
 
     @property
     def manual_bandwidth(self):
-        retval = self.re_match_iter_typed(r'^\s*bandwidth\s+(\d+)$',
-            result_type=int, default=0)
+        retval = self.re_match_iter_typed(
+            r"^\s*bandwidth\s+(\d+)$", result_type=int, default=0
+        )
         return retval
-
 
     @property
     def manual_delay(self):
-        retval = self.re_match_iter_typed(r'^\s*delay\s+(\d+)$',
-            result_type=int, default=0)
+        retval = self.re_match_iter_typed(
+            r"^\s*delay\s+(\d+)$", result_type=int, default=0
+        )
         return retval
 
 
@@ -503,48 +534,51 @@ class BaseJunosIntfLine(JunosCfgLine):
 ##-------------  Junos Interface Globals
 ##
 
+
 class JunosIntfGlobal(BaseCfgLine):
     def __init__(self, *args, **kwargs):
         super(JunosIntfGlobal, self).__init__(*args, **kwargs)
-        self.feature = 'interface global'
+        self.feature = "interface global"
 
     def __repr__(self):
-        return "<%s # %s '%s'>" % (self.classname, self.linenum, 
-            self.text)
+        return "<%s # %s '%s'>" % (self.classname, self.linenum, self.text)
 
     @classmethod
     def is_object_for(cls, line="", re=re):
-        if re.search('^(no\s+cdp\s+run)|(logging\s+event\s+link-status\s+global)|(spanning-tree\sportfast\sdefault)|(spanning-tree\sportfast\sbpduguard\sdefault)', line):
+        if re.search(
+            "^(no\s+cdp\s+run)|(logging\s+event\s+link-status\s+global)|(spanning-tree\sportfast\sdefault)|(spanning-tree\sportfast\sbpduguard\sdefault)",
+            line,
+        ):
             return True
         return False
 
     @property
     def has_cdp_disabled(self):
-        if self.re_search('^no\s+cdp\s+run\s*'):
+        if self.re_search("^no\s+cdp\s+run\s*"):
             return True
         return False
 
     @property
     def has_intf_logging_def(self):
-        if self.re_search('^logging\s+event\s+link-status\s+global'):
+        if self.re_search("^logging\s+event\s+link-status\s+global"):
             return True
         return False
 
     @property
     def has_stp_portfast_def(self):
-        if self.re_search('^spanning-tree\sportfast\sdefault'):
+        if self.re_search("^spanning-tree\sportfast\sdefault"):
             return True
         return False
 
     @property
     def has_stp_portfast_bpduguard_def(self):
-        if self.re_search('^spanning-tree\sportfast\sbpduguard\sdefault'):
+        if self.re_search("^spanning-tree\sportfast\sbpduguard\sdefault"):
             return True
         return False
 
     @property
     def has_stp_mode_rapidpvst(self):
-        if self.re_search('^spanning-tree\smode\srapid-pvst'):
+        if self.re_search("^spanning-tree\smode\srapid-pvst"):
             return True
         return False
 
@@ -553,25 +587,24 @@ class JunosIntfGlobal(BaseCfgLine):
 ##-------------  Junos Hostname Line
 ##
 
+
 class JunosHostnameLine(BaseCfgLine):
     def __init__(self, *args, **kwargs):
         super(JunosHostnameLine, self).__init__(*args, **kwargs)
-        self.feature = 'hostname'
+        self.feature = "hostname"
 
     def __repr__(self):
-        return "<%s # %s '%s'>" % (self.classname, self.linenum, 
-            self.hostname)
+        return "<%s # %s '%s'>" % (self.classname, self.linenum, self.hostname)
 
     @classmethod
     def is_object_for(cls, line="", re=re):
-        if re.search('^hostname', line):
+        if re.search("^hostname", line):
             return True
         return False
 
     @property
     def hostname(self):
-        retval = self.re_match_typed(r'^hostname\s+(\S+)',
-            result_type=str, default='')
+        retval = self.re_match_typed(r"^hostname\s+(\S+)", result_type=str, default="")
         return retval
 
 
@@ -579,20 +612,32 @@ class JunosHostnameLine(BaseCfgLine):
 ##-------------  Base Junos Route line object
 ##
 
+
 class BaseJunosRouteLine(BaseCfgLine):
     def __init__(self, *args, **kwargs):
         super(BaseJunosRouteLine, self).__init__(*args, **kwargs)
 
     def __repr__(self):
-        return "<%s # %s '%s' info: '%s'>" % (self.classname, self.linenum, self.network_object, self.routeinfo)
+        return "<%s # %s '%s' info: '%s'>" % (
+            self.classname,
+            self.linenum,
+            self.network_object,
+            self.routeinfo,
+        )
 
     @property
     def routeinfo(self):
         ### Route information for the repr string
         if self.tracking_object_name:
-            return self.nexthop_str+" AD: "+str(self.admin_distance)+" Track: "+self.tracking_object_name
+            return (
+                self.nexthop_str
+                + " AD: "
+                + str(self.admin_distance)
+                + " Track: "
+                + self.tracking_object_name
+            )
         else:
-            return self.nexthop_str+" AD: "+str(self.admin_distance)
+            return self.nexthop_str + " AD: " + str(self.admin_distance)
 
     @classmethod
     def is_object_for(cls, line="", re=re):
@@ -626,88 +671,111 @@ class BaseJunosRouteLine(BaseCfgLine):
     @property
     def tracking_object_name(self):
         raise NotImplementedError
+
 
 ##
 ##-------------  Junos Configuration line object
 ##
 
+
 class JunosRouteLine(BaseJunosRouteLine):
     def __init__(self, *args, **kwargs):
         super(JunosRouteLine, self).__init__(*args, **kwargs)
-        if 'ipv6' in self.text:
-            self.feature = 'ipv6 route'
+        if "ipv6" in self.text:
+            self.feature = "ipv6 route"
         else:
-            self.feature = 'ip route'
+            self.feature = "ip route"
 
     @classmethod
     def is_object_for(cls, line="", re=re):
-        if re.search('^(ip|ipv6)\s+route\s+\S', line):
+        if re.search("^(ip|ipv6)\s+route\s+\S", line):
             return True
         return False
 
     @property
     def vrf(self):
-        retval = self.re_match_typed(r'^(ip|ipv6)\s+route\s+(vrf\s+)*(\S+)',
-            group=3, result_type=str, default='')
+        retval = self.re_match_typed(
+            r"^(ip|ipv6)\s+route\s+(vrf\s+)*(\S+)", group=3, result_type=str, default=""
+        )
         return retval
 
     @property
     def address_family(self):
         ## ipv4, ipv6, etc
-        retval = self.re_match_typed(r'^(ip|ipv6)\s+route\s+(vrf\s+)*(\S+)',
-            group=1, result_type=str, default='')
+        retval = self.re_match_typed(
+            r"^(ip|ipv6)\s+route\s+(vrf\s+)*(\S+)", group=1, result_type=str, default=""
+        )
         return retval
 
     @property
     def network(self):
-        if self.address_family=='ip':
-            retval = self.re_match_typed(r'^ip\s+route\s+(vrf\s+)*(\S+)',
-                group=2, result_type=str, default='')
-        elif self.address_family=='ipv6':
-            retval = self.re_match_typed(r'^ipv6\s+route\s+(vrf\s+)*(\S+?)\/\d+',
-                group=2, result_type=str, default='')
+        if self.address_family == "ip":
+            retval = self.re_match_typed(
+                r"^ip\s+route\s+(vrf\s+)*(\S+)", group=2, result_type=str, default=""
+            )
+        elif self.address_family == "ipv6":
+            retval = self.re_match_typed(
+                r"^ipv6\s+route\s+(vrf\s+)*(\S+?)\/\d+",
+                group=2,
+                result_type=str,
+                default="",
+            )
         return retval
 
     @property
     def netmask(self):
-        if self.address_family=='ip':
-            retval = self.re_match_typed(r'^ip\s+route\s+(vrf\s+)*\S+\s+(\S+)',
-                group=2, result_type=str, default='')
-        elif self.address_family=='ipv6':
-            retval = self.re_match_typed(r'^ipv6\s+route\s+(vrf\s+)*\S+?\/(\d+)',
-                group=2, result_type=str, default='')
+        if self.address_family == "ip":
+            retval = self.re_match_typed(
+                r"^ip\s+route\s+(vrf\s+)*\S+\s+(\S+)",
+                group=2,
+                result_type=str,
+                default="",
+            )
+        elif self.address_family == "ipv6":
+            retval = self.re_match_typed(
+                r"^ipv6\s+route\s+(vrf\s+)*\S+?\/(\d+)",
+                group=2,
+                result_type=str,
+                default="",
+            )
         return retval
 
     @property
     def network_object(self):
         try:
-            if self.address_family=='ip':
-                return IPv4Obj('%s/%s' % (self.network, self.netmask), 
-                    strict=False)
-            elif self.address_family=='ipv6':
-                return IPv6Network('%s/%s' % (self.network, self.netmask))
+            if self.address_family == "ip":
+                return IPv4Obj("%s/%s" % (self.network, self.netmask), strict=False)
+            elif self.address_family == "ipv6":
+                return IPv6Network("%s/%s" % (self.network, self.netmask))
         except:
             return None
 
     @property
     def nexthop_str(self):
-        if self.address_family=='ip':
-            retval = self.re_match_typed(r'^ip\s+route\s+(vrf\s+)*\S+\s+\S+\s+(\S+)',
-                group=2, result_type=str, default='')
-        elif self.address_family=='ipv6':
-            retval = self.re_match_typed(r'^ipv6\s+route\s+(vrf\s+)*\S+\s+(\S+)',
-                group=2, result_type=str, default='')
+        if self.address_family == "ip":
+            retval = self.re_match_typed(
+                r"^ip\s+route\s+(vrf\s+)*\S+\s+\S+\s+(\S+)",
+                group=2,
+                result_type=str,
+                default="",
+            )
+        elif self.address_family == "ipv6":
+            retval = self.re_match_typed(
+                r"^ipv6\s+route\s+(vrf\s+)*\S+\s+(\S+)",
+                group=2,
+                result_type=str,
+                default="",
+            )
         return retval
 
     @property
     def admin_distance(self):
-        retval = self.re_match_typed(r'(\d+)$',
-            group=1, result_type=int, default=1)
+        retval = self.re_match_typed(r"(\d+)$", group=1, result_type=int, default=1)
         return retval
-
 
     @property
     def tracking_object_name(self):
-        retval = self.re_match_typed(r'^ip(v6)*\s+route\s+.+?track\s+(\S+)',
-            group=2, result_type=str, default='')
+        retval = self.re_match_typed(
+            r"^ip(v6)*\s+route\s+.+?track\s+(\S+)", group=2, result_type=str, default=""
+        )
         return retval

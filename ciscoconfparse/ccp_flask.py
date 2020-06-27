@@ -21,19 +21,23 @@ from flask import Flask, g, request, session
      mike [~at~] pennington [/dot\] net
 """
 
-ALL_CHARS = r'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
-ALL_NUMS = r'1234567890'
+ALL_CHARS = r"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+ALL_NUMS = r"1234567890"
+
+
 def _random_secret_key():
     ## Build a random key for flask if it wasn't already specified
-    return ''.join(choice(ALL_CHARS + ALL_NUMS) for ii in range(48))
+    return "".join(choice(ALL_CHARS + ALL_NUMS) for ii in range(48))
 
-def run(password='', debug=False, host='127.0.0.1', port=8282):
-    SECRET_KEY = os.environ.get('CCP_FLASK_KEY', False) or _random_secret_key()
-    USERNAME = os.environ.get('CCP_FLASK_ADMIN_USER', False) or 'admin'
-    PASSWORD = password or 'ciscoconfparse'
+
+def run(password="", debug=False, host="127.0.0.1", port=8282):
+    SECRET_KEY = os.environ.get("CCP_FLASK_KEY", False) or _random_secret_key()
+    USERNAME = os.environ.get("CCP_FLASK_ADMIN_USER", False) or "admin"
+    PASSWORD = password or "ciscoconfparse"
     app = Flask(__name__)
     app.config.from_object(__name__)
     app.run(host=host, port=port, debug=False)
 
-if __name__=='__main__':
+
+if __name__ == "__main__":
     run()

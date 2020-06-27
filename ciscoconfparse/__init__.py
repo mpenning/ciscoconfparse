@@ -1,4 +1,4 @@
-from __future__  import absolute_import
+from __future__ import absolute_import
 from ciscoconfparse.ciscoconfparse import *
 
 """ __init__.py - Parse, Query, Build, and Modify IOS-style configurations

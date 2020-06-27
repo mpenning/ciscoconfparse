@@ -1,4 +1,4 @@
-from __future__  import absolute_import
+from __future__ import absolute_import
 from operator import methodcaller, attrgetter
 from abc import ABCMeta, abstractmethod
 from copy import deepcopy
@@ -46,11 +46,11 @@ class BaseCfgLine(object):
         self.is_comment = None
         self.children = list()
         self.oldest_ancestor = False
-        self.indent = 0            # Whitespace indentation on the object
-        self.confobj = None        # Reference to the list object which owns it
-        self.feature   = ''        # Major feature description
-        self.feature_param1 = ''   # Parameter1 of the feature
-        self.feature_param2 = ''   # Parameter2 of the feature (if req'd)
+        self.indent = 0  # Whitespace indentation on the object
+        self.confobj = None  # Reference to the list object which owns it
+        self.feature = ""  # Major feature description
+        self.feature_param1 = ""  # Parameter1 of the feature
+        self.feature_param2 = ""  # Parameter2 of the feature (if req'd)
 
         self.set_comment_bool()
 
@@ -58,8 +58,12 @@ class BaseCfgLine(object):
         if not self.is_child:
             return "<%s # %s '%s'>" % (self.classname, self.linenum, self.text)
         else:
-            return "<%s # %s '%s' (parent is # %s)>" % (self.classname, 
-                self.linenum, self.text, self.parent.linenum)
+            return "<%s # %s '%s' (parent is # %s)>" % (
+                self.classname,
+                self.linenum,
+                self.text,
+                self.parent.linenum,
+            )
 
     def __str__(self):
         return self.__repr__()
@@ -67,10 +71,10 @@ class BaseCfgLine(object):
     def __hash__(self):
         ##   I inlined the hash() argument below for speed... whenever I change
         ##   self.__eq__() I *must* change this
-        return hash(str(self.linenum)+self.text)
+        return hash(str(self.linenum) + self.text)
 
     def __gt__(self, val):
-        if (self.linenum>val.linenum):
+        if self.linenum > val.linenum:
             return True
         return False
 
@@ -79,13 +83,13 @@ class BaseCfgLine(object):
             ##   try / except is much faster than isinstance();
             ##   I added hash_arg() inline below for speed... whenever I change
             ##   self.__hash__() I *must* change this
-            return (str(self.linenum)+self.text)==(str(val.linenum)+val.text)
+            return (str(self.linenum) + self.text) == (str(val.linenum) + val.text)
         except:
             return False
 
     def __lt__(self, val):
         # Ref: http://stackoverflow.com/a/7152796/667301
-        if (self.linenum<val.linenum):
+        if self.linenum < val.linenum:
             return True
         return False
 
@@ -95,8 +99,7 @@ class BaseCfgLine(object):
         ## Use this instead of a regex... nontrivial speed enhancement
         tmp = self.text.lstrip()
         for delimit_char in delimiters:
-            if len(tmp)>0 and \
-                (delimit_char==tmp[len(delimit_char)-1]):
+            if len(tmp) > 0 and (delimit_char == tmp[len(delimit_char) - 1]):
                 retval = True
                 break
             else:
@@ -111,14 +114,14 @@ class BaseCfgLine(object):
     @property
     def hash_children(self):
         """Return a unique hash of all children (if the number of children > 0)"""
-        if len(self.children)>0:
+        if len(self.children) > 0:
             return hash(tuple(self.children))
         else:
             return 0
 
     @property
     def family_endpoint(self):
-        if self.children==[]:
+        if self.children == []:
             return 0
         else:
             return self.children[-1].linenum
@@ -126,15 +129,30 @@ class BaseCfgLine(object):
     @property
     def verbose(self):
         if self.has_children:
-            return "<%s # %s '%s' (child_indent: %s / len(children): %s / family_endpoint: %s)>" % (self.classname, self.linenum, self.text, self.child_indent, len(self.children), self.family_endpoint) 
+            return (
+                "<%s # %s '%s' (child_indent: %s / len(children): %s / family_endpoint: %s)>"
+                % (
+                    self.classname,
+                    self.linenum,
+                    self.text,
+                    self.child_indent,
+                    len(self.children),
+                    self.family_endpoint,
+                )
+            )
         else:
-            return "<%s # %s '%s' (no_children / family_endpoint: %s)>" % (self.classname, self.linenum, self.text, self.family_endpoint) 
+            return "<%s # %s '%s' (no_children / family_endpoint: %s)>" % (
+                self.classname,
+                self.linenum,
+                self.text,
+                self.family_endpoint,
+            )
 
     @property
     def all_parents(self):
         retval = set([])
         me = self
-        while (me.parent!=me):
+        while me.parent != me:
             retval.add(me.parent)
             me = me.parent
         return sorted(retval)
@@ -154,17 +172,16 @@ class BaseCfgLine(object):
 
     @property
     def has_children(self):
-        if len(self.children)>0:
+        if len(self.children) > 0:
             return True
         return False
 
     @property
     def is_config_line(self):
         """Return a boolean for whether this is a config statement; returns False if this object is a blank line, or a comment"""
-        if len(self.text.strip())>0 and not self.is_comment:
+        if len(self.text.strip()) > 0 and not self.is_comment:
             return True
         return False
-
 
     def _list_reassign_linenums(self):
         # Call this when I want to reparse everything
@@ -210,7 +227,7 @@ class BaseCfgLine(object):
         ##    only delete if the line numbers are consistent
         text = self.text
         linenum = self.linenum
-        if self.confobj._list[self.linenum].text==text:
+        if self.confobj._list[self.linenum].text == text:
             del self.confobj._list[self.linenum]
             self._list_reassign_linenums()
 
@@ -259,31 +276,30 @@ class BaseCfgLine(object):
            !
            >>>
         """
-        cobjs = filter(methodcaller('re_search', linespec), self.children)
-        retval = map(attrgetter('text'), cobjs)
+        cobjs = filter(methodcaller("re_search", linespec), self.children)
+        retval = map(attrgetter("text"), cobjs)
         # Delete the children
-        map(methodcaller('delete'), cobjs)
+        map(methodcaller("delete"), cobjs)
         return retval
 
     def has_child_with(self, linespec):
-        return bool(filter(methodcaller('re_search', linespec), self.children))
+        return bool(filter(methodcaller("re_search", linespec), self.children))
 
     def insert_before(self, insertstr):
         """insert_before()"""
         ## BaseCfgLine.insert_before(), insert a single line before this object
-        retval = self.confobj.insert_before(self, insertstr, 
-            atomic=False)
+        retval = self.confobj.insert_before(self, insertstr, atomic=False)
         return retval
 
     def insert_after(self, insertstr):
         """insert_after()"""
         ## BaseCfgLine.insert_after(), insert a single line after this object
-        retval = self.confobj.insert_after(self, insertstr, 
-            atomic=False)
+        retval = self.confobj.insert_after(self, insertstr, atomic=False)
         return retval
 
-    def append_to_family(self, insertstr, indent=-1, auto_indent_width=1, 
-        auto_indent=False):
+    def append_to_family(
+        self, insertstr, indent=-1, auto_indent_width=1, auto_indent=False
+    ):
         """Append an :class:`~models_cisco.IOSCfgLine` object with ``insertstr``
         as a child at the bottom of the current configuration family.
 
@@ -333,20 +349,18 @@ class BaseCfgLine(object):
         """
         ## Build the string to insert with proper indentation...
         if auto_indent:
-            insertstr = (" "*(self.indent+auto_indent_width))+insertstr.lstrip()
-        elif indent>0:
-            insertstr = (" "*(self.indent+indent))+insertstr.lstrip()
+            insertstr = (" " * (self.indent + auto_indent_width)) + insertstr.lstrip()
+        elif indent > 0:
+            insertstr = (" " * (self.indent + indent)) + insertstr.lstrip()
 
-        ## BaseCfgLine.append_to_family(), insert a single line after this 
+        ## BaseCfgLine.append_to_family(), insert a single line after this
         ##  object's children
         try:
             last_child = self.all_children[-1]
-            retval = self.confobj.insert_after(last_child, insertstr, 
-                atomic=False)
+            retval = self.confobj.insert_after(last_child, insertstr, atomic=False)
         except IndexError:
             # The object has no children
-            retval = self.confobj.insert_after(self, insertstr, 
-                atomic=False)
+            retval = self.confobj.insert_after(self, insertstr, atomic=False)
 
         return retval
 
@@ -439,7 +453,7 @@ class BaseCfgLine(object):
              NEW interface Serial0/1
            >>>
         """
-        # When replacing objects, check whether they should be deleted, or 
+        # When replacing objects, check whether they should be deleted, or
         #   whether they are a comment
 
         if ignore_rgx and re.search(ignore_rgx, self.text):
@@ -447,7 +461,7 @@ class BaseCfgLine(object):
 
         retval = re.sub(regex, replacergx, self.text)
         # Delete empty lines
-        if retval.strip()=='':
+        if retval.strip() == "":
             self.delete()
             return
         self.text = retval
@@ -532,8 +546,9 @@ class BaseCfgLine(object):
         else:
             return [cobj for cobj in self.all_children if cobj.re_search(regex)]
 
-    def re_match_typed(self, regex, group=1, untyped_default=False, 
-        result_type=str, default=''):
+    def re_match_typed(
+        self, regex, group=1, untyped_default=False, result_type=str, default=""
+    ):
         r"""Use ``regex`` to search the :class:`~models_cisco.IOSCfgLine` text 
         and return the contents of the regular expression group, at the 
         integer ``group`` index, cast as ``result_type``; if there is no match, 
@@ -594,8 +609,15 @@ class BaseCfgLine(object):
         else:
             return result_type(default)
 
-    def re_match_iter_typed(self, regex, group=1, result_type=str, default='', 
-        untyped_default=False, recurse=False):
+    def re_match_iter_typed(
+        self,
+        regex,
+        group=1,
+        result_type=str,
+        default="",
+        untyped_default=False,
+        recurse=False,
+    ):
         r"""Use ``regex`` to search the children of 
         :class:`~models_cisco.IOSCfgLine` text and return the contents of 
         the regular expression group, at the integer ``group`` index, cast as 
@@ -639,15 +661,15 @@ class BaseCfgLine(object):
            interface Serial2/0 <IPv4Obj 1.1.1.5/30>
            >>>
         """
-        ## iterate through children, and return the matching value 
+        ## iterate through children, and return the matching value
         ##  (cast as result_type) from the first child.text that matches regex
 
-        #if (default is True):
-            ## Not using self.re_match_iter_typed(default=True), because I want
-            ##   to be sure I build the correct API for match=False
-            ##
-            ## Ref IOSIntfLine.has_dtp for an example of how to code around
-            ##   this while I build the API
+        # if (default is True):
+        ## Not using self.re_match_iter_typed(default=True), because I want
+        ##   to be sure I build the correct API for match=False
+        ##
+        ## Ref IOSIntfLine.has_dtp for an example of how to code around
+        ##   this while I build the API
         #    raise NotImplementedError
 
         if recurse is False:
@@ -684,7 +706,7 @@ class BaseCfgLine(object):
         """Return a list with this the text of this object, and 
         with all children in the direct line."""
         retval = [self.text]
-        retval.extend(list(map(attrgetter('text'), self.all_children)))
+        retval.extend(list(map(attrgetter("text"), self.all_children)))
         return retval
 
     @property
@@ -725,14 +747,13 @@ class BaseCfgLine(object):
 
     @property
     def is_child(self):
-        return not bool(self.parent==self)
+        return not bool(self.parent == self)
 
     @property
     def siblings(self):
         indent = self.indent
-        return [obj for obj in self.parent.children if (obj.indent==indent)]
+        return [obj for obj in self.parent.children if (obj.indent == indent)]
 
     @classmethod
     def is_object_for(cls, line=""):
         return False
-

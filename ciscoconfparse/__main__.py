@@ -1,4 +1,5 @@
-from __future__  import absolute_import
+from __future__ import absolute_import
+
 """ __main__.py - Parse, Query, Build, and Modify IOS-style configurations
      Copyright (C) 2014-2019 David Michael Pennington
 
@@ -20,13 +21,13 @@ from __future__  import absolute_import
 """
 # Follow PEP366...
 # https://stackoverflow.com/a/6655098/667301
-if (__name__=='__main__') and (__package__ is None):
+if (__name__ == "__main__") and (__package__ is None):
     import sys
     import os
 
     parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     sys.path.insert(1, parent_dir)
     import ciscoconfparse
+
     __package__ = str("ciscoconfparse")
     del sys, os
-
