@@ -10,7 +10,7 @@ ciscoconfparse
    :target: https://pypi.python.org/pypi/ciscoconfparse/
    :alt: Version
 
-.. image:: https://pepy.tech/badge/ciscoconfparse
+.. image:: https://static.pepy.tech/badge/ciscoconfparse
    :target: https://pepy.tech/badge/ciscoconfparse
    :alt: Downloads
 
