@@ -75,9 +75,13 @@ devtest:
 	#/opt/virtual_env/py34_test/bin/python ciscoconfparse/ciscoconfparse.py
 	$(PY34DEVTESTS)
 	make clean
+.PHONY: doctest
+doctest:
+	# Run the doc tests
+	cd sphinx-doc; make doctest
 .PHONY: test
 test:
-	# Run the doc tests and unit tests
+	# Run the unit tests
 	cd tests; ./runtests.sh
 .PHONY: clean
 clean:
