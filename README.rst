@@ -162,6 +162,7 @@ or `bitbucket repo`_:
   ::
 
       git clone git://github.com/mpenning/ciscoconfparse
+      cd ciscoconfparse/
       pip install .
 
 
