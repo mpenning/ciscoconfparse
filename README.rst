@@ -161,7 +161,8 @@ or `bitbucket repo`_:
 - From github_:
   ::
 
-      git clone git://github.com//mpenning/ciscoconfparse
+      git clone git://github.com/mpenning/ciscoconfparse
+      pip install .
 
 
 .. _FAQ:
@@ -198,7 +199,7 @@ Bug Tracker and Support
 - If you're having problems with general python issues, consider searching for a solution on `Stack Overflow`_.  If you can't find a solution for your problem or need more help, you can `ask a question`_.
 - If you're having problems with your Cisco devices, you can open a case with `Cisco TAC`_; if you prefer crowd-sourcing, you can ask on the Stack Exchange `Network Engineering`_ site.
 
-If you like slack, we also have a `ciscoconfparse NetworkToCode slack channel`_, where new releases are announced.
+If you like slack, we also have a `ciscoconfparse NetworkToCode slack channel`_, where ideas, problems and releases are discussed.
 
 .. _Unit-Tests:
 
