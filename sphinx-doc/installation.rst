@@ -134,6 +134,7 @@ If want to install from the most recent source, you can always clone and install
   ::
 
       git clone git://github.com/mpenning/ciscoconfparse
+      cd ciscoconfparse
       pip install .
 
 
