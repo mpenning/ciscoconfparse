@@ -442,12 +442,12 @@ class BaseCfgLine(object):
 
         Parameters
         ----------
-        linespec : str
+        regex : str
             A string or python regular expression, which should be matched.
-        replacestr : str
-            A string or python regular expression, which should replace the text matched by ``linespec``.
+        replacergx : str
+            A string or python regular expression, which should replace the text matched by ``regex``.
         ignore_rgx : str
-            A string or python regular expression; the replacement is skipped if :class:`~models_cisco.IOSCfgLine` text matches ``ignore_rgx``.  ``ignore_rgx`` defaults to None, which means no lines matching ``linespec`` are skipped.
+            A string or python regular expression; the replacement is skipped if :class:`~models_cisco.IOSCfgLine` text matches ``ignore_rgx``.  ``ignore_rgx`` defaults to None, which means no lines matching ``regex`` are skipped.
              
 
         Returns
@@ -478,7 +478,7 @@ class BaseCfgLine(object):
            >>>
            >>> for obj in parse.find_objects('Serial'):
            ...     print("OLD {}".format(obj.text))
-           ...     obj.replace(r'Serial1', r'Serial0')
+           ...     obj.re_sub(r'Serial1', r'Serial0')
            ...     print("  NEW {}".format(obj.text))
            OLD interface Serial1/0
              NEW interface Serial0/0
