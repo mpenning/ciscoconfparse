@@ -140,7 +140,7 @@ If want to install from the most recent source, you can always clone and install
 
 .. _`download the ciscoconfparse compressed tarball`: https://pypi.python.org/pypi/ciscoconfparse/ 
 
-.. _`Python on Windows`: https://docs.python.org/2/faq/windows.html
+.. _`Python on Windows`: https://docs.python.org/3/faq/windows.html
 
 .. _setuptools: https://pypi.python.org/pypi/setuptools
 
