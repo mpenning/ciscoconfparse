@@ -8,10 +8,10 @@ from fabric import Connection
 from invoke import run
 
 def deploy_ccp_docs(ccp_doc_root="public_html/py/ciscoconfparse",
-    ccp_bundle_name="ccp.tar.gz", doc_host=""):
+    ccp_bundle_name="ccp.tar.gz", doc_host="", password=""):
 
     # Run 'make html' in directory: sphinx-doc/
-    run('cd sphinx-doc && make html')  # local command
+    run('cd sphinx-doc && make clean && make html')  # local command
 
     run('cd sphinx-doc/_build/html && tar cvfz {0} *'.format(
         os.path.expanduser("~/"+ccp_bundle_name)))
@@ -21,7 +21,7 @@ def deploy_ccp_docs(ccp_doc_root="public_html/py/ciscoconfparse",
 
     # ssh with a password...
     conn = Connection('mpenning@{}'.format(doc_host),
-        connect_kwargs={"password": getpass()})
+        connect_kwargs={"password": password})
     conn.put(local=os.path.expanduser("~/{0}".format(ccp_bundle_name)), 
         remote=ccp_bundle_name)
 
@@ -39,4 +39,5 @@ if __name__=="__main__":
         doc_host = input("Documentation host: ")
     else:
         doc_host = raw_input("Documentation host: ")
-    deploy_ccp_docs(doc_host=doc_host.strip())
+    password = getpass()
+    deploy_ccp_docs(doc_host=doc_host.strip(), password=password)
