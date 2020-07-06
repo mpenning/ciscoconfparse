@@ -585,8 +585,8 @@ class CiscoConfParse(object):
         Examples
         --------
 
-        >>> from ciscoconfparse import CiscoConfParse
         >>> from operator import attrgetter
+        >>> from ciscoconfparse import CiscoConfParse
         >>> config = [
         ...     'ltm pool FOO {',
         ...     '  members {',
@@ -2214,7 +2214,9 @@ class CiscoConfParse(object):
         return retval
 
     def re_search_children(self, regex, recurse=False):
-        """Use ``regex`` to search for root parents in the config with text matching regex.  If recurse is False, only root parent objects are returned.
+        """Use ``regex`` to search for root parents in the config with text matching regex.  If `recurse` is False, only root parent objects are returned.  A list of matching objects is returned.
+
+        This method is very similar to :func:`~ciscoconfparse.CiscoConfParse.find_objects` (when `recurse` is True); however it was written in response to the use-case described in `Github Issue #156 <https://github.com/mpenning/ciscoconfparse/issues/156>`_.
 
         Parameters
         ----------
@@ -2245,6 +2247,10 @@ class CiscoConfParse(object):
         integer ``group`` index, cast as ``result_type``; if there is no 
         match, ``default`` is returned.
 
+        Notes
+        -----
+        Only the first regex match is returned.
+
         Parameters
         ----------
         regex : str
@@ -2270,22 +2276,40 @@ class CiscoConfParse(object):
         :func:`~ciscoconfparse.re_match_iter_typed` to get the
         first interface name listed in the config.
 
-           >>> import re
-           >>> from ciscoconfparse import CiscoConfParse
-           >>> config = [
-           ...     '!',
-           ...     'interface Serial1/0',
-           ...     ' ip address 1.1.1.1 255.255.255.252',
-           ...     '!',
-           ...     'interface Serial2/0',
-           ...     ' ip address 1.1.1.5 255.255.255.252',
-           ...     '!',
-           ...     ]
-           >>> parse = CiscoConfParse(config)
-           >>> INTF_RE = re.compile(r'interface\s(\S+)')
-           >>> parse.re_match_iter_typed(INTF_RE)
-           'Serial1/0'
-           >>>
+        >>> import re
+        >>> from ciscoconfparse import CiscoConfParse
+        >>> config = [
+        ...     '!',
+        ...     'interface Serial1/0',
+        ...     ' ip address 1.1.1.1 255.255.255.252',
+        ...     '!',
+        ...     'interface Serial2/0',
+        ...     ' ip address 1.1.1.5 255.255.255.252',
+        ...     '!',
+        ...     ]
+        >>> parse = CiscoConfParse(config)
+        >>> parse.re_match_iter_typed(r'interface\s(\S+)')
+        'Serial1/0'
+        >>>
+
+        The following example retrieves the hostname from the configuration
+
+        >>> from ciscoconfparse import CiscoConfParse
+        >>> config = [
+        ...     '!',
+        ...     'hostname DEN-EDGE-01',
+        ...     '!',
+        ...     'interface Serial1/0',
+        ...     ' ip address 1.1.1.1 255.255.255.252',
+        ...     '!',
+        ...     'interface Serial2/0',
+        ...     ' ip address 1.1.1.5 255.255.255.252',
+        ...     '!',
+        ...     ]
+        >>> parse = CiscoConfParse(config)
+        >>> parse.re_match_iter_typed(r'^hostname\s+(\S+)')
+        'DEN-EDGE-01'
+        >>>
 
         """
         ## iterate through root objects, and return the matching value
