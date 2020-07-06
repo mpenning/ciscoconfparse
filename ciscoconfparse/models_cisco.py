@@ -22,7 +22,7 @@ from ciscoconfparse.ccp_abc import BaseCfgLine
 ###
 ###   Use models_cisco.py at your own risk.  You have been warned :-)
 """ models_cisco.py - Parse, Query, Build, and Modify IOS-style configurations
-     Copyright (C) 2014-2019 David Michael Pennington
+     Copyright (C) 2014-2020 David Michael Pennington
 
      This program is free software: you can redistribute it and/or modify
      it under the terms of the GNU General Public License as published by
@@ -53,32 +53,44 @@ class IOSCfgLine(BaseCfgLine):
     :class:`~models_cisco.IOSCfgLine` objects contain references to other 
     parent and child :class:`~models_cisco.IOSCfgLine` objects.
 
-    .. note::
+    Notes
+    -----
+    Originally, :class:`~models_cisco.IOSCfgLine` objects were only 
+    intended for advanced ciscoconfparse users.  As of ciscoconfparse 
+    version 0.9.10, *all users* are strongly encouraged to prefer the 
+    methods directly on :class:`~models_cisco.IOSCfgLine` objects.  
+    Ultimately, if you write scripts which call methods on 
+    :class:`~models_cisco.IOSCfgLine` objects, your scripts will be much 
+    more efficient than if you stick strictly to the classic 
+    :class:`~ciscoconfparse.CiscoConfParse` methods.
 
-       Originally, :class:`~models_cisco.IOSCfgLine` objects were only 
-       intended for advanced ciscoconfparse users.  As of ciscoconfparse 
-       version 0.9.10, *all users* are strongly encouraged to prefer the 
-       methods directly on :class:`~models_cisco.IOSCfgLine` objects.  
-       Ultimately, if you write scripts which call methods on 
-       :class:`~models_cisco.IOSCfgLine` objects, your scripts will be much 
-       more efficient than if you stick strictly to the classic 
-       :class:`~ciscoconfparse.CiscoConfParse` methods.
+    Parameters
+    ----------
+    text : str
+        A string containing a text copy of the IOS configuration line.  :class:`~ciscoconfparse.CiscoConfParse` will automatically identify the parent and children (if any) when it parses the configuration. 
+    comment_delimiter : str
+        A string which is considered a comment for the configuration format.  Since this is for Cisco IOS-style configurations, it defaults to ``!``.
 
-    Args:
-        - text (str): A string containing a text copy of the IOS configuration line.  :class:`~ciscoconfparse.CiscoConfParse` will automatically identify the parent and children (if any) when it parses the configuration. 
-        - comment_delimiter (str): A string which is considered a comment for the configuration format.  Since this is for Cisco IOS-style configurations, it defaults to ``!``.
+    Attributes
+    ----------
+    text : str
+        A string containing the parsed IOS configuration statement
+    linenum : int
+        The line number of this configuration statement in the original config; default is -1 when first initialized.
+    parent : (:class:`~models_cisco.IOSCfgLine()`)
+        The parent of this object; defaults to ``self``.
+    children : list
+        A list of ``IOSCfgLine()`` objects which are children of this object.
+    child_indent : int
+        An integer with the indentation of this object's children
+    indent : int
+        An integer with the indentation of this object's ``text`` oldest_ancestor (bool): A boolean indicating whether this is the oldest ancestor in a family
+    is_comment : bool
+        A boolean indicating whether this is a comment
 
-    Attributes:
-        - text     (str): A string containing the parsed IOS configuration statement
-        - linenum  (int): The line number of this configuration statement in the original config; default is -1 when first initialized.
-        - parent (:class:`~models_cisco.IOSCfgLine()`): The parent of this object; defaults to ``self``.
-        - children (list): A list of ``IOSCfgLine()`` objects which are children of this object.
-        - child_indent (int): An integer with the indentation of this object's children
-        - indent (int): An integer with the indentation of this object's ``text`` oldest_ancestor (bool): A boolean indicating whether this is the oldest ancestor in a family
-        - is_comment (bool): A boolean indicating whether this is a comment
-
-    Returns:
-        - An instance of :class:`~models_cisco.IOSCfgLine`.
+    Returns
+    -------
+    An instance of :class:`~models_cisco.IOSCfgLine`.
 
     """
 
@@ -99,14 +111,18 @@ class IOSCfgLine(BaseCfgLine):
         :class:`~models_cisco.IOSCfgLine` is an interface; subinterfaces
         also return True.
 
-        Returns:
-            - bool.
+        Returns
+        -------
+        bool
 
+        Examples
+        --------
         This example illustrates use of the method.
 
         .. code-block:: python
-           :emphasize-lines: 17,20
+           :emphasize-lines: 18,21
 
+           >>> from ciscoconfparse import CiscoConfParse
            >>> config = [
            ...     '!',
            ...     'interface Serial1/0',
@@ -141,14 +157,18 @@ class IOSCfgLine(BaseCfgLine):
         """Returns a boolean (True or False) to answer whether this 
         :class:`~models_cisco.IOSCfgLine` is a subinterface.
 
-        Returns:
-            - bool.
+        Returns
+        -------
+        bool
 
+        Examples
+        --------
         This example illustrates use of the method.
 
         .. code-block:: python
-           :emphasize-lines: 17,20
+           :emphasize-lines: 18,21
 
+           >>> from ciscoconfparse import CiscoConfParse
            >>> config = [
            ...     '!',
            ...     'interface Serial1/0',
@@ -193,14 +213,18 @@ class IOSCfgLine(BaseCfgLine):
         """Returns a boolean (True or False) to answer whether this 
         :class:`~models_cisco.IOSCfgLine` is a loopback interface.
 
-        Returns:
-            - bool.
+        Returns
+        -------
+        bool
 
+        Examples
+        --------
         This example illustrates use of the method.
 
         .. code-block:: python
-           :emphasize-lines: 11,14
+           :emphasize-lines: 13,16
 
+           >>> from ciscoconfparse import CiscoConfParse
            >>> config = [
            ...     '!',
            ...     'interface FastEthernet1/0',
@@ -231,14 +255,18 @@ class IOSCfgLine(BaseCfgLine):
         Any ethernet interface (10M through 10G) is considered an ethernet
         interface.
 
-        Returns:
-            - bool.
+        Returns
+        -------
+        bool
 
+        Examples
+        --------
         This example illustrates use of the method.
 
         .. code-block:: python
-           :emphasize-lines: 17,20
+           :emphasize-lines: 18,21
 
+           >>> from ciscoconfparse import CiscoConfParse
            >>> config = [
            ...     '!',
            ...     'interface FastEthernet1/0',
@@ -271,6 +299,9 @@ class IOSCfgLine(BaseCfgLine):
     def intf_in_portchannel(self):
         """Return a boolean indicating whether this port is configured in a port-channel
 
+        Returns
+        -------
+        bool
         """
         retval = self.re_match_iter_typed(
             r"^\s*channel-group\s+(\d+)", result_type=bool, default=False
@@ -281,6 +312,9 @@ class IOSCfgLine(BaseCfgLine):
     def portchannel_number(self):
         """Return an integer for the port-channel which it's configured in.  Return -1 if it's not configured in a port-channel
 
+        Returns
+        -------
+        bool
         """
         retval = self.re_match_iter_typed(
             r"^\s*channel-group\s+(\d+)", result_type=int, default=-1
@@ -291,6 +325,9 @@ class IOSCfgLine(BaseCfgLine):
     def is_portchannel_intf(self):
         """Return a boolean indicating whether this port is a port-channel intf
 
+        Returns
+        -------
+        bool
         """
         return "channel" in self.name.lower()
 
@@ -407,14 +444,19 @@ class BaseIOSIntfLine(IOSCfgLine):
     def name(self):
         """Return the interface name as a string, such as 'GigabitEthernet0/1'
 
-        Returns:
-            - str.  The interface name as a string, or '' if the object is not an interface.
+        Returns
+        -------
+        str
+            The interface name as a string, or '' if the object is not an interface.
 
+        Examples
+        --------
         This example illustrates use of the method.
 
         .. code-block:: python
            :emphasize-lines: 17,20,23
 
+           >>> from ciscoconfparse import CiscoConfParse
            >>> config = [
            ...     '!',
            ...     'interface FastEthernet1/0',
@@ -450,14 +492,19 @@ class BaseIOSIntfLine(IOSCfgLine):
     def port(self):
         """Return the interface's port number
 
-        Returns:
-            - int.  The interface number.
+        Returns
+        -------
+        int
+            The interface number.
 
+        Examples
+        --------
         This example illustrates use of the method.
 
         .. code-block:: python
            :emphasize-lines: 17,20
 
+           >>> from ciscoconfparse import CiscoConfParse
            >>> config = [
            ...     '!',
            ...     'interface FastEthernet1/0',
@@ -487,14 +534,19 @@ class BaseIOSIntfLine(IOSCfgLine):
     def port_type(self):
         """Return Loopback, ATM, GigabitEthernet, Virtual-Template, etc...
 
-        Returns:
-            - str.  The port type.
+        Returns
+        -------
+        str
+            The port type.
 
+        Examples
+        --------
         This example illustrates use of the method.
 
         .. code-block:: python
            :emphasize-lines: 17,20
 
+           >>> from ciscoconfparse import CiscoConfParse
            >>> config = [
            ...     '!',
            ...     'interface FastEthernet1/0',
@@ -525,18 +577,23 @@ class BaseIOSIntfLine(IOSCfgLine):
     def ordinal_list(self):
         """Return a tuple of numbers representing card, slot, port for this interface.  If you call ordinal_list on GigabitEthernet2/25.100, you'll get this python tuple of integers: (2, 25).  If you call ordinal_list on GigabitEthernet2/0/25.100 you'll get this python list of integers: (2, 0, 25).  This method strips all subinterface information in the returned value.
 
-        Returns:
-            - tuple.  A tuple of port numbers as integers.
+        Returns
+        -------
+        tuple
+            A tuple of port numbers as integers.
 
-        .. warning::
+        Warnings
+        --------
+        ordinal_list should silently fail (returning an empty python list) if the interface doesn't parse correctly
 
-           ordinal_list should silently fail (returning an empty python list) if the interface doesn't parse correctly
-
+        Examples
+        --------
         This example illustrates use of the method.
 
         .. code-block:: python
            :emphasize-lines: 17,20
 
+           >>> from ciscoconfparse import CiscoConfParse
            >>> config = [
            ...     '!',
            ...     'interface FastEthernet1/0',
@@ -573,18 +630,22 @@ class BaseIOSIntfLine(IOSCfgLine):
     def interface_number(self):
         """Return a string representing the card, slot, port for this interface.  If you call interface_number on GigabitEthernet2/25.100, you'll get this python string: '2/25'.  If you call interface_number on GigabitEthernet2/0/25.100 you'll get this python string '2/0/25'.  This method strips all subinterface information in the returned value.
 
-        Returns:
-            - string.
+        Returns
+        -------
+        str
 
-        .. warning::
+        Warnings
+        --------
+        interface_number should silently fail (returning an empty python string) if the interface doesn't parse correctly
 
-           interface_number should silently fail (returning an empty python string) if the interface doesn't parse correctly
-
+        Examples
+        --------
         This example illustrates use of the method.
 
         .. code-block:: python
            :emphasize-lines: 17,20
 
+           >>> from ciscoconfparse import CiscoConfParse
            >>> config = [
            ...     '!',
            ...     'interface FastEthernet1/0',
@@ -619,18 +680,22 @@ class BaseIOSIntfLine(IOSCfgLine):
     def subinterface_number(self):
         """Return a string representing the card, slot, port for this interface or subinterface.  If you call subinterface_number on GigabitEthernet2/25.100, you'll get this python string: '2/25.100'.  If you call interface_number on GigabitEthernet2/0/25 you'll get this python string '2/0/25'.  This method strips all subinterface information in the returned value.
 
-        Returns:
-            - string.
+        Returns
+        -------
+        str
 
-        .. warning::
+        Warnings
+        --------
+        subinterface_number should silently fail (returning an empty python string) if the interface doesn't parse correctly
 
-           subinterface_number should silently fail (returning an empty python string) if the interface doesn't parse correctly
-
+        Examples
+        --------
         This example illustrates use of the method.
 
         .. code-block:: python
            :emphasize-lines: 17,20
 
+           >>> from ciscoconfparse import CiscoConfParse
            >>> config = [
            ...     '!',
            ...     'interface FastEthernet1/0',
@@ -811,14 +876,18 @@ class BaseIOSIntfLine(IOSCfgLine):
         :class:`~models_cisco.IOSIntfLine` object.  Interfaces without a
         manual MTU configuration return 0.
 
-        Returns:
-            - integer.
+        Returns
+        -------
+        int
 
+        Examples
+        --------
         This example illustrates use of the method.
 
         .. code-block:: python
            :emphasize-lines: 18,21
 
+           >>> from ciscoconfparse import CiscoConfParse
            >>> config = [
            ...     '!',
            ...     'interface FastEthernet1/0',
@@ -960,12 +1029,18 @@ class BaseIOSIntfLine(IOSCfgLine):
         considered, and return a boolean for whether this interface is within 
         the requested :class:`~ccp_util.IPv4Obj`.
 
-        Kwargs:
-           - ipv4network (:class:`~ccp_util.IPv4Obj`): An object to compare against IP addresses configured on this :class:`~models_cisco.IOSIntfLine` object.
+        Parameters
+        ----------
+        ipv4network : :class:`~ccp_util.IPv4Obj`
+            An object to compare against IP addresses configured on this :class:`~models_cisco.IOSIntfLine` object.
 
-        Returns:
-            - bool if there is an ip address, or None if there is no ip address.
+        Returns
+        -------
+        bool
+            If there is an ip address, or None if there is no ip address.
 
+        Examples
+        --------
         This example illustrates use of the method.
 
         .. code-block:: python
@@ -1061,9 +1136,12 @@ class BaseIOSIntfLine(IOSCfgLine):
         """Return a boolean for whether no ip proxy-arp is configured on the 
         interface.
 
-        Returns:
-            - bool.
+        Returns
+        -------
+        bool
 
+        Examples
+        --------
         This example illustrates use of the method.
 
         .. code-block:: python
@@ -1171,9 +1249,13 @@ class BaseIOSIntfLine(IOSCfgLine):
     def ip_helper_addresses(self):
         """Return a list of dicts with IP helper-addresses.  Each helper-address is in a dictionary.  The dictionary is in this format:
 
+        Examples
+        --------
+
         .. code-block:: python
            :emphasize-lines: 11
 
+           >>> from ciscoconfparse import CiscoConfParse
            >>> config = [
            ...     '!',
            ...     'interface FastEthernet1/1',
@@ -1616,9 +1698,9 @@ class IOSIntfLine(BaseIOSIntfLine):
         """Accept an IOS line number and initialize family relationship
         attributes
 
-        .. warning::
-
-          All :class:`~models_cisco.IOSIntfLine` methods are still considered beta-quality, until this notice is removed.  The behavior of APIs on this object could change at any time.
+        Warnings
+        --------
+        All :class:`~models_cisco.IOSIntfLine` methods are still considered beta-quality, until this notice is removed.  The behavior of APIs on this object could change at any time.
         """
         super(IOSIntfLine, self).__init__(*args, **kwargs)
         self.feature = "interface"
