@@ -1224,7 +1224,7 @@ class CiscoConfParse(object):
         vlan 300`.
 
         .. code-block:: python
-           :emphasize-lines: 18
+           :emphasize-lines: 20
 
            >>> from ciscoconfparse import CiscoConfParse
            >>> config = ['!', 
@@ -1538,7 +1538,7 @@ class CiscoConfParse(object):
         an integer).
 
         .. code-block:: python
-           :emphasize-lines: 18
+           :emphasize-lines: 19
 
            >>> from ciscoconfparse import CiscoConfParse
            >>> config = ['!', 
@@ -1626,7 +1626,7 @@ class CiscoConfParse(object):
         an integer).
 
         .. code-block:: python
-           :emphasize-lines: 18
+           :emphasize-lines: 19
 
            >>> from ciscoconfparse import CiscoConfParse
            >>> config = ['!', 
@@ -1716,7 +1716,7 @@ class CiscoConfParse(object):
         `switchport port-security`.
 
         .. code-block:: python
-           :emphasize-lines: 25
+           :emphasize-lines: 26
 
            >>> from ciscoconfparse import CiscoConfParse
            >>> config = ['!', 
@@ -1814,12 +1814,12 @@ class CiscoConfParse(object):
 
             <IOSCfgLine # 7 '    ge-0/0/1' (parent is # 0)>
 
-        We do this by quering `find_childobj_w_parents()`; we set our 
+        We do this by quering `find_objects_w_parents()`; we set our 
         parent as `^\s*interface` and set the child as 
         `^\s+ge-0/0/1`.
 
         .. code-block:: python
-           :emphasize-lines: 21,22
+           :emphasize-lines: 22,23
 
            >>> from ciscoconfparse import CiscoConfParse
            >>> config = ['interfaces',
