@@ -1322,7 +1322,7 @@ class CiscoConfParse(object):
         ['switchport access vlan 300', 'spanning-tree portfast'].
 
         .. code-block:: python
-           :emphasize-lines: 18
+           :emphasize-lines: 19
 
            >>> from ciscoconfparse import CiscoConfParse
            >>> config = ['!', 
