@@ -84,10 +84,6 @@ def test_negative_IPv6_REGEX(addr):
     assert test_result is None  # The regex *should* fail on these addrs
 
 
-@pytest.mark.xfail(
-    sys.version_info[0] == 3 and sys.version_info[1] == 2,
-    reason="Known failure in Python3.2",
-)
 def testL4Object_asa_eq01():
     pp = L4Object(protocol="tcp", port_spec="eq smtp", syntax="asa")
     assert pp.protocol == "tcp"
@@ -100,10 +96,10 @@ def testL4Object_asa_eq02():
     assert pp.port_list == [25]
 
 
-@pytest.mark.xfail(
-    sys.version_info[0] == 3 and sys.version_info[1] == 2,
-    reason="Known failure in Python3.2 due to range()",
-)
+#@pytest.mark.xfail(
+#    sys.version_info[0] == 3 and sys.version_info[1] == 2,
+#    reason="Known failure in Python3.2 due to range()",
+#)
 def testL4Object_asa_range01():
     pp = L4Object(protocol="tcp", port_spec="range smtp 32", syntax="asa")
     assert pp.protocol == "tcp"
@@ -181,12 +177,68 @@ def testIPv4Obj_attributes():
         ("is_reserved", False),
         ("is_multicast", False),
         ("is_private", False),
+        ("as_cidr_addr", "1.0.0.1/24"),
+        ("as_cidr_net", "1.0.0.0/24"),
         ("as_decimal", 16777217),
         ("as_hex_tuple", ("01", "00", "00", "01")),
         ("as_binary_tuple", ("00000001", "00000000", "00000000", "00000001")),
+        ("as_zeropadded", "001.000.000.001"),
+        ("as_zeropadded_network", "001.000.000.000/24"),
     ]
     for attribute, result_correct in results_correct:
         assert getattr(test_object, attribute) == result_correct
+
+
+def testIPv4Obj_sort_01():
+    """Simple IPv4Obj sorting test"""
+    cidr_addrs_list = [
+        "192.168.1.3/32",
+        "192.168.1.2/32",
+        "192.168.1.1/32",
+        "192.168.1.4/15",
+    ]
+
+    result_correct = [
+        "192.168.1.4/15",  # Shorter prefixes are "lower" than longer prefixes
+        "192.168.1.1/32",
+        "192.168.1.2/32",
+        "192.168.1.3/32",
+    ]
+
+    obj_list = [IPv4Obj(ii) for ii in cidr_addrs_list]
+    # Ensure we get the correct sorted order for this list
+    assert [ii.as_cidr_addr for ii in sorted(obj_list)] == result_correct
+
+
+def testIPv4Obj_sort_02():
+    """Complex IPv4Obj sorting test"""
+    cidr_addrs_list = [
+        "192.168.1.1/32",
+        "192.168.0.1/32",
+        "192.168.0.2/16",
+        "192.168.0.3/15",
+        "16.0.0.1/8",
+        "16.0.0.0/4",
+        "16.0.0.3/4",
+        "0.0.0.0/0",
+        "0.0.0.0/8",
+    ]
+
+    result_correct = [
+        "0.0.0.0/0",
+        "0.0.0.0/8",
+        "16.0.0.0/4",
+        "16.0.0.3/4",
+        "16.0.0.1/8",
+        "192.168.0.3/15",
+        "192.168.0.2/16",
+        "192.168.0.1/32",
+        "192.168.1.1/32",
+    ]
+
+    obj_list = [IPv4Obj(ii) for ii in cidr_addrs_list]
+    # Ensure we get the correct sorted order for this list
+    assert [ii.as_cidr_addr for ii in sorted(obj_list)] == result_correct
 
 
 def testIPv4Obj_recursive():
@@ -354,5 +406,5 @@ def test_CiscoRange_compressed_str_01():
     assert CiscoRange("1,2, 3, 6, 7, 8, 9, 911").compressed_str == "1-3,6-9,911"
 
 
-def test_CiscoRange_contanis():
+def test_CiscoRange_contains():
     assert "Ethernet1/2" in CiscoRange("Ethernet1/1-20")
