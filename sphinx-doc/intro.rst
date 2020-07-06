@@ -67,7 +67,7 @@ ciscoconfparse, it's really this easy...
    >>> parse = CiscoConfParse('/tftpboot/largeConfig.conf')
    >>> trunks = parse.find_parents_w_child("^interface", "switchport trunk")
    >>> for intf in trunks:
-   ...     print intf
+   ...     print(intf)
    interface GigabitEthernet 1/7
    interface GigabitEthernet 1/23
    interface GigabitEthernet 1/24

@@ -86,7 +86,7 @@ Result:
    >>> cfgdiffs.ioscfg
    ['interface Serial1/0', ' mpls ip', 'interface Serial1/1', ' mpls ip', 'interface Serial1/2', ' mpls ip']
    >>> for line in cfgdiffs.ioscfg:
-   ...     print line
+   ...     print(line)
    ... 
    !
    interface Serial1/0

@@ -104,8 +104,8 @@ This example:
    ...     ' ip address 1.1.1.5 255.255.255.252'
    ...     ])
    >>> for obj in parse.find_objects(r"interface"):
-   ...     print "Object:", obj
-   ...     print "Config text:", obj.text
+   ...     print("Object: " + str(obj))
+   ...     print("Config text: " + str(obj.text))
    ...
    Object: <IOSCfgLine # 1 'interface Serial1/0'>
    Config text: interface Serial1/0
@@ -198,7 +198,7 @@ text inside the :class:`~models_cisco.IOSCfgLine` objects, just call their
    :emphasize-lines: 2
 
    >>> for obj in serial_objs:
-   ...     print obj.text
+   ...     print(obj.text)
    ...
    interface Serial1/0
    interface Serial1/1

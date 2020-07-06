@@ -16,17 +16,17 @@ from within the python interpreter.
 .. code-block:: python
 
    >>>
-   >>> print "Hello world"
+   >>> print("Hello world")
 
 If you don't see ``>>>`` preceding python statements, that means the example
 is run from a file saved to disk.
 
-Using the Python in Unix
-~~~~~~~~~~~~~~~~~~~~~~~~
+Using Python in Unix
+~~~~~~~~~~~~~~~~~~~~
 
 This is a "Hello World" example from within a unix Python interpreter.
 
-.. code-block:: python
+.. code-block:: none
    :emphasize-lines: 3,8
 
    [mpenning@mpenning-S10 ~]$ which python
@@ -36,7 +36,7 @@ This is a "Hello World" example from within a unix Python interpreter.
    [GCC 3.4.6 [FreeBSD] 20060305] on freebsd6
    Type "help", "copyright", "credits" or "license" for more information.
    >>>
-   >>> print "Hello world"
+   >>> print("Hello world")
    Hello world
    >>> quit()
    [mpenning@mpenning-S10 ~]$
@@ -48,10 +48,10 @@ disk... and run from the unix shell.
 
    #!/usr/bin/env python
 
-   print "Hello world"
+   print("Hello world")
 
-Using the Python in Windows
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Using Python in Windows
+~~~~~~~~~~~~~~~~~~~~~~~
 
 Please see the official `Python on Windows`_ documentation.
 
@@ -100,7 +100,7 @@ Alternatively you can install with pip_: ::
 If you have a specific version of ciscoconfparse in mind, you can specify that
 at the command-line ::
 
-      pip install ciscoconfparse==1.3.22
+      pip install ciscoconfparse==1.5.6
 
 
 Install with setuptools
@@ -114,7 +114,7 @@ If you don't have pip_, you can use setuptools_...  ::
 If you have a specific version of ciscoconfparse in mind, you can specify that
 at the command-line ::
 
-      easy_install -U ciscoconfparse==1.3.22
+      easy_install -U ciscoconfparse==1.5.6
 
 Install from the source
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -128,12 +128,13 @@ run the ``setup.py`` script in the tarball: ::
 Github
 ~~~~~~
 
-If you're interested in the source, you can always pull from the `github repo`_:
+If want to install from the most recent source, you can always clone and install from the `github repo`_:
 
 - From github_:
   ::
 
-      git clone git://github.com//mpenning/ciscoconfparse
+      git clone git://github.com/mpenning/ciscoconfparse
+      pip install .
 
 
 .. _`download the ciscoconfparse compressed tarball`: https://pypi.python.org/pypi/ciscoconfparse/ 
