@@ -22,7 +22,7 @@ if sys.version_info[0] < 3:
 else:
     from ipaddress import IPv4Network, IPv6Network, IPv4Address, IPv6Address
 """ ccp_util.py - Parse, Query, Build, and Modify IOS-style configurations
-     Copyright (C) 2014-2015, 2018-2019 David Michael Pennington
+     Copyright (C) 2014-2015, 2018-2020 David Michael Pennington
 
      This program is free software: you can redistribute it and/or modify
      it under the terms of the GNU General Public License as published by
@@ -92,7 +92,13 @@ _RGX_CISCO_RANGE = re.compile(_CISCO_RANGE_STR)
 
 
 def is_valid_ipv4_addr(input=""):
-    """Check if this is a valid IPv4 string"""
+    """Check if this is a valid IPv4 string.
+
+    Returns
+    -------
+    bool
+        A boolean indicating whether this is a valid IPv4 string
+    """
     assert input != ""
     if _RGX_IPV4ADDR.search(input):
         return True
@@ -100,7 +106,13 @@ def is_valid_ipv4_addr(input=""):
 
 
 def is_valid_ipv6_addr(input=""):
-    """Check if this is a valid IPv6 string"""
+    """Check if this is a valid IPv6 string.
+
+    Returns
+    -------
+    bool
+        A boolean indicating whether this is a valid IPv6 string
+    """
     assert input != ""
     if _RGX_IPV6ADDR.search(input):
         return True
@@ -111,54 +123,77 @@ def is_valid_ipv6_addr(input=""):
 ##    IPv4Network with a host address.  Google removed that in Python3's
 ##    ipaddress.py module
 class IPv4Obj(object):
-    """An object to represent IPv4 addresses and IPv4Networks.  When :class:`~ccp_util.IPv4Obj` objects are compared or sorted, shorter masks are greater than longer masks. After comparing mask length, numerically higher IP addresses are greater than numerically lower IP addresses.
-
-    Kwargs:
-        - arg (str): A string containing an IPv4 address, and optionally a netmask or masklength.  The following address/netmask formats are supported: "10.1.1.1/24", "10.1.1.1 255.255.255.0", "10.1.1.1/255.255.255.0"
-
-    Attributes:
-        - network_object : An IPv4Network object
-        - ip_object  : An IPv4Address object
-        - ip : An IPv4Address object
-        - as_binary_tuple (tuple): The address as a tuple of zero-padded binary strings
-        - as_hex_tuple (tuple): The address as a tuple of zero-padded 8-bit hex strings
-        - as_decimal (int): The ip address as a decimal integer
-        - network : An IPv4Network object
-        - network_object : An IPv4Network object
-        - netmask (str): A string representing the netmask
-        - prefixlen (int): An integer representing the length of the netmask
-        - prefixlength (int): An integer representing the length of the netmask
-        - broadcast (str): A string representing the broadcast address
-        - hostmask (str): A string representing the hostmask
-        - numhosts (int): An integer representing the number of hosts contained in the network
-
-    Returns:
-        - an instance of :class:`~ccp_util.IPv4Obj`.
-
->>> from ciscoconfparse.ccp_util import IPv4Obj
->>> net = IPv4Obj('172.16.1.0/24')
->>> net
-<IPv4Obj 172.16.1.0/24>
->>> net.ip
-IPv4Address('172.16.1.0')
->>> net.ip + 1
-IPv4Address('172.16.1.1')
->>> str(net.ip+1)
-'172.16.1.1'
->>> net.network
-IPv4Address('172.16.1.0')
->>> net.network_object
-IPv4Network('172.16.1.0/24')
->>> str(net.network_object)
-'172.16.1.0/24'
->>> net.prefixlen
-24
->>> net.network_object.iterhosts()
-<generator object iterhosts at 0x7f00bfcce730>
->>>
-    """
-
     def __init__(self, arg="127.0.0.1/32", strict=False):
+        """An object to represent IPv4 addresses and IPv4Networks.  When :class:`~ccp_util.IPv4Obj` objects are compared or sorted, shorter masks are greater than longer masks. After comparing mask length, numerically higher IP addresses are greater than numerically lower IP addresses.
+
+        Parameters
+        ----------
+        arg : str or int
+            A string (or integer) containing an IPv4 address, and optionally a netmask or masklength.  Integers are also accepted.  The following address/netmask formats are supported: "10.1.1.1/24", "10.1.1.1 255.255.255.0", "10.1.1.1/255.255.255.0"
+
+        Attributes
+        ----------
+        network_object : An IPv4Network object
+        ip_object  : An IPv4Address object
+        ip : An IPv4Address object
+        as_binary_tuple : tuple
+            The address as a tuple of zero-padded binary strings
+        as_hex_tuple : tuple
+            The address as a tuple of zero-padded 8-bit hex strings
+        as_decimal : int
+            The ip address as a decimal integer
+        as_zeropadded : str
+            Return a zero-padded string of the ip address (example: '10.1.1.1' returns '010.001.001.001')
+        as_zeropadded_network : str
+            Return a zero-padded string of the ip network (example: '10.1.1.1' returns '010.001.001.000')
+        network : An IPv4Network object
+        network_object : An IPv4Network object
+        netmask : str
+            A string representing the netmask
+        prefixlen : int
+            An integer representing the length of the netmask
+        prefixlength : int
+            An integer representing the length of the netmask
+        broadcast : str
+            A string representing the broadcast address
+        hostmask : str
+            A string representing the hostmask
+        numhosts : int
+            An integer representing the number of hosts contained in the network
+
+        Examples
+        --------
+
+        >>> from ciscoconfparse.ccp_util import IPv4Obj
+        >>> ## Parse from an integer...
+        >>> net = IPv4Obj(2886729984)
+        >>> net
+        <IPv4Obj 172.16.1.0/32>
+        >>> net.prefixlen = 24
+        >>> net
+        <IPv4Obj 172.16.1.0/24>
+        >>> ## Parse from an string...
+        >>> net = IPv4Obj('172.16.1.0/24')
+        >>> net
+        <IPv4Obj 172.16.1.0/24>
+        >>> net.ip
+        IPv4Address('172.16.1.0')
+        >>> net.ip + 1
+        IPv4Address('172.16.1.1')
+        >>> str(net.ip+1)
+        '172.16.1.1'
+        >>> net.network
+        IPv4Network('172.16.1.0/24')
+        >>> net.network_object
+        IPv4Network('172.16.1.0/24')
+        >>> str(net.network_object)
+        '172.16.1.0/24'
+        >>> net.prefixlen
+        24
+        >>> net.network_object.iterhosts()
+        <generator object iterhosts at 0x7f00bfcce730>
+        >>>
+        """
 
         # RGX_IPV4ADDR = re.compile(r'^(\d+\.\d+\.\d+\.\d+)')
         # RGX_IPV4ADDR_NETMASK = re.compile(r'(\d+\.\d+\.\d+\.\d+)\s+(\d+\.\d+\.\d+\.\d+)')
@@ -242,7 +277,7 @@ IPv4Network('172.16.1.0/24')
             val_dec = getattr(val, "as_decimal")
             self_dec = getattr(self, "as_decimal")
 
-            if val_in_self:
+            if self_nobj != val_nobj and val_in_self:
                 # Sort shorter masks as lower...
                 return False
             elif self_nobj == val_nobj:
@@ -261,7 +296,7 @@ IPv4Network('172.16.1.0/24')
             val_dec = getattr(val, "as_decimal")
             self_dec = getattr(self, "as_decimal")
 
-            if val_in_self:
+            if self_nobj != val_nobj and val_in_self:
                 # Sort shorter masks as lower...
                 return True
             elif self_nobj == val_nobj:
@@ -372,7 +407,7 @@ IPv4Network('172.16.1.0/24')
 
     @property
     def exploded(self):
-        """Returns the IPv4 object in exploded form"""
+        """Returns the IPv4 Address object in exploded form"""
         return self.ip_object.exploded
 
     @property
@@ -425,15 +460,19 @@ IPv4Network('172.16.1.0/24')
 
     @property
     def as_zeropadded(self):
-        """Returns the IP address as a zero-padded string (useful when sorting)"""
+        """Returns the IP address as a zero-padded string (useful when sorting in a text-file)"""
         num_strings = str(self.ip).split(".")
         return ".".join(["{0:03}".format(int(num)) for num in num_strings])
 
     @property
     def as_zeropadded_network(self):
-        """Returns the IP network as a zero-padded string (useful when sorting)"""
-        num_strings = str(self.network).split(".")
-        return ".".join(["{0:03}".format(int(num)) for num in num_strings])
+        """Returns the IP network as a zero-padded string (useful when sorting in a text-file)"""
+        num_strings = self.as_cidr_net.split("/")[0].split(".")
+        return (
+            ".".join(["{0:03}".format(int(num)) for num in num_strings])
+            + "/"
+            + str(self.prefixlen)
+        )
 
     @property
     def as_binary_tuple(self):
@@ -475,31 +514,51 @@ IPv4Network('172.16.1.0/24')
 ##    IPv6Network with a host address.  Google removed that in Python3's
 ##    ipaddress.py module
 class IPv6Obj(object):
-    """An object to represent IPv6 addresses and IPv6Networks.  When :class:`~ccp_util.IPv6Obj` objects are compared or sorted, shorter masks are greater than longer masks. After comparing mask length, numerically higher IP addresses are greater than numerically lower IP addresses.
-
-    Kwargs:
-        - arg (str): A string containing an IPv6 address, and optionally a netmask or masklength.  The following address/netmask formats are supported: "2001::dead:beef", "2001::dead:beef/64",
-
-    Attributes:
-        - network_object : An IPv6Network object
-        - ip_object  : An IPv6Address object
-        - ip : An IPv6Address object
-        - as_binary_tuple (tuple): The ipv6 address as a tuple of zero-padded binary strings
-        - as_decimal (int): The ipv6 address as a decimal integer
-        - as_hex_tuple (tuple): The ipv6 address as a tuple of zero-padded 8-bit hex strings
-        - network (str): A string representing the network address
-        - netmask (str): A string representing the netmask
-        - prefixlen (int): An integer representing the length of the netmask
-        - broadcast: raises `NotImplementedError`; IPv6 doesn't use broadcast
-        - hostmask (str): A string representing the hostmask
-        - numhosts (int): An integer representing the number of hosts contained in the network
-
-    Returns:
-        - an instance of :class:`~ccp_util.IPv6Obj`.
-
-    """
 
     def __init__(self, arg="::1/128", strict=False):
+        """An object to represent IPv6 addresses and IPv6Networks.  When :class:`~ccp_util.IPv6Obj` objects are compared or sorted, shorter masks are greater than longer masks. After comparing mask length, numerically higher IP addresses are greater than numerically lower IP addresses.
+
+        Parameters
+        ----------
+        arg : str or int
+            A string containing an IPv6 address, and optionally a netmask or masklength.  Integers are also accepted. The following address/netmask formats are supported: "2001::dead:beef", "2001::dead:beef/64",
+
+        Examples
+        --------
+
+        >>> from ciscoconfparse.ccp_util import IPv6Obj
+        >>> net = IPv6Obj(42540488161975842760550356429036175087)
+        >>> net
+        <IPv6Obj 2001::dead:beef/64>
+        >>> net = IPv6Obj("2001::dead:beef/128")
+        >>> net
+        <IPv6Obj 2001::dead:beef/128>
+        >>>
+
+        Attributes
+        ----------
+        network_object : An IPv6Network object
+        ip_object  : An IPv6Address object
+        ip : An IPv6Address object
+        as_binary_tuple : tuple
+            The ipv6 address as a tuple of zero-padded binary strings
+        as_decimal : int
+            The ipv6 address as a decimal integer
+        as_hex_tuple : tuple
+            The ipv6 address as a tuple of zero-padded 8-bit hex strings
+        network : An IPv6Network object
+        network_object : An IPv6Network object
+        netmask : str
+            A string representing the netmask
+        prefixlen : int
+            An integer representing the length of the netmask
+        broadcast: raises `NotImplementedError`; IPv6 doesn't use broadcast addresses
+        hostmask : str
+            A string representing the hostmask
+        numhosts : int
+            An integer representing the number of hosts contained in the network
+
+        """
 
         # arg= _RGX_IPV6ADDR_NETMASK.sub(r'\1/\2', arg) # mangle IOS: 'addr mask'
         self.arg = arg
@@ -560,7 +619,7 @@ class IPv6Obj(object):
             val_dec = getattr(val, "as_decimal")
             self_dec = getattr(self, "as_decimal")
 
-            if val_in_self:
+            if self_nobj != val_nobj and val_in_self:
                 # Sort shorter masks as higher...
                 return False
             elif self_nobj == val_nobj:
@@ -579,7 +638,7 @@ class IPv6Obj(object):
             val_dec = getattr(val, "as_decimal")
             self_dec = getattr(self, "as_decimal")
 
-            if val_in_self:
+            if self_nobj != val_nobj and val_in_self:
                 # Sort shorter masks as higher...
                 return True
             elif self_nobj == val_nobj:
@@ -607,7 +666,7 @@ class IPv6Obj(object):
         total = self.as_decimal + val
         error = "Max IPv6 integer exceeded"
         assert total <= 340282366920938463463374607431768211455, error
-        assert total >= 0, "Min IPv4 integer exceeded"
+        assert total >= 0, "Min IPv6 integer exceeded"
         retval = IPv6Obj(total)
         retval.prefixlen = orig_prefixlen
         return retval
@@ -621,7 +680,7 @@ class IPv6Obj(object):
         total = self.as_decimal - val
         error = "Max IPv6 integer exceeded"
         assert total <= 340282366920938463463374607431768211455, error
-        assert total >= 0, "Min IPv4 integer exceeded"
+        assert total >= 0, "Min IPv6 integer exceeded"
         retval = IPv6Obj(total)
         retval.prefixlen = orig_prefixlen
         return retval
@@ -694,17 +753,17 @@ class IPv6Obj(object):
 
     @property
     def compressed(self):
-        """Returns the IPv6 object in compressed form"""
+        """Returns the IPv6 Network object in compressed form"""
         return self.network_object.compressed
 
     @property
     def exploded(self):
-        """Returns the IPv6 object in exploded form"""
+        """Returns the IPv6 Address object in exploded form"""
         return self.ip_object.exploded
 
     @property
     def packed(self):
-        """Returns the IPv6 object in packed binary form"""
+        """Returns the IPv6 Address object in packed binary form"""
         return self.ip_object.packed
 
     @property
@@ -934,7 +993,7 @@ def dns_query(input="", query_type="", server="", timeout=2.0):
 
 >>> from ciscoconfparse.ccp_util import dns_query
 >>> dns_query('www.pennington.net', "A", "4.2.2.2", timeout=0.5)
-set([<DNSResponse "A" result_str="65.19.187.2">])
+{<DNSResponse "A" result_str="65.19.187.2">}
 >>> response_set = dns_query('www.pennington.net', 'A', '4.2.2.2')
 >>> aa = response_set.pop()
 >>> aa.result_str
