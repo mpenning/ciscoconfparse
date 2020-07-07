@@ -514,7 +514,6 @@ class IPv4Obj(object):
 ##    IPv6Network with a host address.  Google removed that in Python3's
 ##    ipaddress.py module
 class IPv6Obj(object):
-
     def __init__(self, arg="::1/128", strict=False):
         """An object to represent IPv6 addresses and IPv6Networks.  When :class:`~ccp_util.IPv6Obj` objects are compared or sorted, shorter masks are greater than longer masks. After comparing mask length, numerically higher IP addresses are greater than numerically lower IP addresses.
 
