@@ -98,6 +98,7 @@ _LOG_CHANNEL_STDOUT = logging.StreamHandler(sys.stdout)
 _LOG_CHANNEL_STDOUT.setFormatter(_ccp_log_format)
 _log.addHandler(_LOG_CHANNEL_STDOUT)
 
+
 class CiscoConfParse(object):
     """Parses Cisco IOS configurations and answers queries about the configs."""
 
@@ -562,11 +563,11 @@ class CiscoConfParse(object):
         return lines
 
     def find_object_branches(self, branchspec=(), regex_flags=0):
-        """This method iterates over a tuple of regular expressions in `branchspec` and returns the matching objects in a list of lists (consider it a table of matching config objects). `branchspec` expects to start at some root ancestor and walk through the nested object hierarchy (with no limit on depth).
+        """This method iterates over a tuple of regular expressions in `branchspec` and returns the matching objects in a list of lists (consider it similar to a table of matching config objects). `branchspec` expects to start at some ancestor and walk through the nested object hierarchy (with no limit on depth).
 
         Previous CiscoConfParse() methods only handled a single parent regex and single child regex (such as :func:`~ciscoconfparse.CiscoConfParse.find_parents_w_child`).
 
-        This method dives beyond a simple parent-child relationship to include entire family 'branches' (i.e. parents, children, grand-children, great-grand-children, etc).  The net result of handling longer chains of objects is it flattens what would otherwise be nested loops in your scripts; this makes parsing heavily-nested configuratations like Palo-Alto and F5 much simpler.  Of course, there are plenty of applications for "flatter" config formats like IOS.
+        This method dives beyond a simple parent-child relationship to include entire family 'branches' (i.e. parents, children, grand-children, great-grand-children, etc).  The result of handling longer regex chains is that it flattens what would otherwise be nested loops in your scripts; this makes parsing heavily-nested configuratations like Palo-Alto and F5 much simpler.  Of course, there are plenty of applications for "flatter" config formats like IOS.
         
         This method returns a list of lists (of object 'branches') which are nested to the same depth required in `branchspec`.  However, unlike most other CiscoConfParse() methods, it returns an explicit `None` if there is no object match.  Returning `None` allows a single search over configs that may not be uniformly nested in every branch.
 
@@ -617,10 +618,10 @@ class CiscoConfParse(object):
         >>> branchspec = (r'ltm\spool', r'members', r'\S+?:\d+', r'state\sup')
         >>> branches = parse.find_object_branches(branchspec=branchspec)
         >>>
-        >>> # We found three branches which matched all regexes...
+        >>> # We found three branches
         >>> len(branches)
         3
-        >>> # Each branch will always match the length of branchspec
+        >>> # Each branch must match the length of branchspec
         >>> len(branches[0])
         4
         >>> # Print out one object 'branch'
