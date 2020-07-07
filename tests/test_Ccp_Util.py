@@ -96,20 +96,12 @@ def testL4Object_asa_eq02():
     assert pp.port_list == [25]
 
 
-#@pytest.mark.xfail(
-#    sys.version_info[0] == 3 and sys.version_info[1] == 2,
-#    reason="Known failure in Python3.2 due to range()",
-#)
 def testL4Object_asa_range01():
     pp = L4Object(protocol="tcp", port_spec="range smtp 32", syntax="asa")
     assert pp.protocol == "tcp"
     assert pp.port_list == range(25, 33)
 
 
-@pytest.mark.xfail(
-    sys.version_info[0] == 3 and sys.version_info[1] == 2,
-    reason="Known failure in Python3.2 due to range()",
-)
 def testL4Object_asa_lt01():
     pp = L4Object(protocol="tcp", port_spec="lt echo", syntax="asa")
     assert pp.protocol == "tcp"
