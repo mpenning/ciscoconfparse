@@ -209,19 +209,30 @@ def testIPv4Obj_sort_02():
         "192.168.0.1/32",
         "192.168.0.2/16",
         "192.168.0.3/15",
+        "0.0.0.0/32",
+        "0.0.0.1/31",
         "16.0.0.1/8",
+        "0.0.0.2/30",
+        "127.0.0.0/0",
+        "128.0.0.0/1",
         "16.0.0.0/4",
         "16.0.0.3/4",
         "0.0.0.0/0",
         "0.0.0.0/8",
     ]
 
+    #(IPv4Obj('0.0.0.2/30') > (IPv4Obj('0.0.0.0/31')))
     result_correct = [
         "0.0.0.0/0",
-        "0.0.0.0/8",
+        "127.0.0.0/0",
+        "0.0.0.0/8",   # for the same network, longer prefixlens sort "higher" than shorter prefixlens
+        "0.0.0.2/30",  # for the same network, longer prefixlens sort "higher" than shorter prefixlens
+        "0.0.0.1/31",  # for the same network, longer prefixlens sort "higher" than shorter prefixlens
+        "0.0.0.0/32",
         "16.0.0.0/4",
         "16.0.0.3/4",
-        "16.0.0.1/8",
+        "16.0.0.1/8",  # for the same network, longer prefixlens sort "higher" than shorter prefixlens
+        "128.0.0.0/1",
         "192.168.0.3/15",
         "192.168.0.2/16",
         "192.168.0.1/32",

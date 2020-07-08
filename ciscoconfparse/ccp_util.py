@@ -260,7 +260,8 @@ class IPv4Obj(object):
 
     def __eq__(self, val):
         try:
-            if self.network_object == val.network_object:
+            # Compare objects numerically...
+            if self.as_decimal == val.as_decimal:
                 return True
             return False
         except (Exception) as e:
@@ -271,38 +272,39 @@ class IPv4Obj(object):
 
     def __gt__(self, val):
         try:
-            val_in_self = self.__contains__(val)
+            val_prefixlen = int(getattr(val, "prefixlen"))
+            self_prefixlen = int(getattr(self, "prefixlen"))
             val_nobj = getattr(val, "network_object")
             self_nobj = getattr(self, "network_object")
-            val_dec = getattr(val, "as_decimal")
-            self_dec = getattr(self, "as_decimal")
+            val_dec = int(getattr(val, "as_decimal"))
+            self_dec = int(getattr(self, "as_decimal"))
 
-            if self_nobj != val_nobj and val_in_self:
-                # Sort shorter masks as lower...
-                return False
-            elif self_nobj == val_nobj:
+            if self_nobj == val_nobj and self_prefixlen > val_prefixlen:
                 return self_dec > val_dec
+
             else:
                 return self_nobj > val_nobj
+
         except:
             errmsg = "{0} cannot compare itself to '{1}'".format(self.__repr__(), val)
             raise ValueError(errmsg)
 
     def __lt__(self, val):
         try:
-            val_in_self = self.__contains__(val)
+            val_prefixlen = int(getattr(val, "prefixlen"))
+            self_prefixlen = int(getattr(self, "prefixlen"))
             val_nobj = getattr(val, "network_object")
             self_nobj = getattr(self, "network_object")
-            val_dec = getattr(val, "as_decimal")
-            self_dec = getattr(self, "as_decimal")
+            val_dec = int(getattr(val, "as_decimal"))
+            self_dec = int(getattr(self, "as_decimal"))
 
-            if self_nobj != val_nobj and val_in_self:
-                # Sort shorter masks as lower...
-                return True
-            elif self_nobj == val_nobj:
+            # for the same network, longer prefixlens sort "higher" than shorter prefixlens
+            if self_nobj == val_nobj and self_prefixlen <= val_prefixlen:
                 return self_dec < val_dec
+
             else:
                 return self_nobj < val_nobj
+
         except:
             errmsg = "{0} cannot compare itself to '{1}'".format(self.__repr__(), val)
             raise ValueError(errmsg)
@@ -601,7 +603,8 @@ class IPv6Obj(object):
 
     def __eq__(self, val):
         try:
-            if self.network_object == val.network_object:
+            # Compare objects numerically...
+            if self.as_decimal == val.as_decimal:
                 return True
             return False
         except (Exception) as e:
@@ -612,38 +615,39 @@ class IPv6Obj(object):
 
     def __gt__(self, val):
         try:
-            val_in_self = self.__contains__(val)
+            val_prefixlen = int(getattr(val, "prefixlen"))
+            self_prefixlen = int(getattr(self, "prefixlen"))
             val_nobj = getattr(val, "network_object")
             self_nobj = getattr(self, "network_object")
-            val_dec = getattr(val, "as_decimal")
-            self_dec = getattr(self, "as_decimal")
+            val_dec = int(getattr(val, "as_decimal"))
+            self_dec = int(getattr(self, "as_decimal"))
 
-            if self_nobj != val_nobj and val_in_self:
-                # Sort shorter masks as higher...
-                return False
-            elif self_nobj == val_nobj:
+            if self_nobj == val_nobj and self_prefixlen > val_prefixlen:
                 return self_dec > val_dec
+
             else:
                 return self_nobj > val_nobj
+
         except:
             errmsg = "{0} cannot compare itself to '{1}'".format(self.__repr__(), val)
             raise ValueError(errmsg)
 
     def __lt__(self, val):
         try:
-            val_in_self = self.__contains__(val)
+            val_prefixlen = int(getattr(val, "prefixlen"))
+            self_prefixlen = int(getattr(self, "prefixlen"))
             val_nobj = getattr(val, "network_object")
             self_nobj = getattr(self, "network_object")
-            val_dec = getattr(val, "as_decimal")
-            self_dec = getattr(self, "as_decimal")
+            val_dec = int(getattr(val, "as_decimal"))
+            self_dec = int(getattr(self, "as_decimal"))
 
-            if self_nobj != val_nobj and val_in_self:
-                # Sort shorter masks as higher...
-                return True
-            elif self_nobj == val_nobj:
+            # for the same network, longer prefixlens sort "higher" than shorter prefixlens
+            if self_nobj == val_nobj and self_prefixlen <= val_prefixlen:
                 return self_dec < val_dec
+
             else:
                 return self_nobj < val_nobj
+
         except:
             errmsg = "{0} cannot compare itself to '{1}'".format(self.__repr__(), val)
             raise ValueError(errmsg)
