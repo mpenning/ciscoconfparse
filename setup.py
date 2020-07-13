@@ -15,7 +15,6 @@ def read(fname):
     # Dynamically generate setup(long_description)
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
-
 ## Conditionally require the correct ipaddr package in Python2 vs Python3
 # Ref Github issue #127 - sdist improvements
 REQUIRES = ["colorama", "passlib", "dnspython"]
@@ -23,15 +22,17 @@ EXTRAS = {
     ":python_version<'3'": ["ipaddr>=2.1.11"],
 }
 
+## Retrieve the version number from json...
+version_json_path = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "ciscoconfparse", "version.json"
+)
+with open(version_json_path) as vh:
+    version_dict = json.load(vh)
+
+## Setup ciscoconfparse
 setup(
     name="ciscoconfparse",
-    version=open(
-        os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), "ciscoconfparse", "version"
-        )
-    )
-    .read()
-    .strip(),
+    version=version_dict.get("version"),
     description="Parse, Audit, Query, Build, and Modify Cisco IOS-style configurations",
     url="http://www.pennington.net/py/ciscoconfparse/",
     author="David Michael Pennington",
