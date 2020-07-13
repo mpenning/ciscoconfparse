@@ -4,6 +4,7 @@
 ## Ref http://www.ibm.com/developerworks/library/os-pythonpackaging/
 
 from setuptools import setup, find_packages
+import json
 import sys
 import os
 
