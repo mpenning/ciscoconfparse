@@ -172,12 +172,58 @@ def testIPv4Obj_attributes():
         ("as_cidr_addr", "1.0.0.1/24"),
         ("as_cidr_net", "1.0.0.0/24"),
         ("as_decimal", 16777217),
+        ("as_decimal_network", 16777216),
         ("as_hex_tuple", ("01", "00", "00", "01")),
         ("as_binary_tuple", ("00000001", "00000000", "00000000", "00000001")),
         ("as_zeropadded", "001.000.000.001"),
         ("as_zeropadded_network", "001.000.000.000/24"),
     ]
     for attribute, result_correct in results_correct:
+
+        assert getattr(test_object, attribute) == result_correct
+
+
+def testIPv6Obj_attributes():
+    ## Ensure that attributes are accessible and pass the smell test
+    test_object = IPv6Obj("2001::dead:beef/64")
+    results_correct = [
+        ("ip", IPv6Address("2001::dead:beef")),
+        ("ip_object", IPv6Address("2001::dead:beef")),
+        ("netmask", IPv6Address("ffff:ffff:ffff:ffff::")),
+        ("prefixlen", 64),
+        ("network", IPv6Network("2001::/64")),
+        ("network_object", IPv6Network("2001::/64")),
+        ("hostmask", IPv6Address("::ffff:ffff:ffff:ffff")),
+        ("numhosts", 18446744073709551616),
+        ("version", 6),
+        ("is_reserved", False),
+        ("is_multicast", False),
+        # ("is_private", False),  # FIXME: disabling this for now...
+        # py2.7 and py3.x produce different results
+        ("as_cidr_addr", "2001::dead:beef/64"),
+        ("as_cidr_net", "2001::/64"),
+        ("as_decimal", 42540488161975842760550356429036175087),
+        ("as_decimal_network", 42540488161975842760550356425300246528),
+        (
+            "as_hex_tuple",
+            ("2001", "0000", "0000", "0000", "0000", "0000", "dead", "beef"),
+        ),
+        (
+            "as_binary_tuple",
+            (
+                "0010000000000001",
+                "0000000000000000",
+                "0000000000000000",
+                "0000000000000000",
+                "0000000000000000",
+                "0000000000000000",
+                "1101111010101101",
+                "1011111011101111",
+            ),
+        ),
+    ]
+    for attribute, result_correct in results_correct:
+
         assert getattr(test_object, attribute) == result_correct
 
 
@@ -214,6 +260,7 @@ def testIPv4Obj_sort_02():
         "16.0.0.1/8",
         "0.0.0.2/30",
         "127.0.0.0/0",
+        "16.0.0.0/1",
         "128.0.0.0/1",
         "16.0.0.0/4",
         "16.0.0.3/4",
@@ -221,11 +268,11 @@ def testIPv4Obj_sort_02():
         "0.0.0.0/8",
     ]
 
-    #(IPv4Obj('0.0.0.2/30') > (IPv4Obj('0.0.0.0/31')))
     result_correct = [
         "0.0.0.0/0",
         "127.0.0.0/0",
-        "0.0.0.0/8",   # for the same network, longer prefixlens sort "higher" than shorter prefixlens
+        "16.0.0.0/1",
+        "0.0.0.0/8",  # for the same network, longer prefixlens sort "higher" than shorter prefixlens
         "0.0.0.2/30",  # for the same network, longer prefixlens sort "higher" than shorter prefixlens
         "0.0.0.1/31",  # for the same network, longer prefixlens sort "higher" than shorter prefixlens
         "0.0.0.0/32",
@@ -249,6 +296,83 @@ def testIPv4Obj_recursive():
     obj = IPv4Obj(IPv4Obj("1.1.1.1/24"))
     assert str(obj.ip_object) == "1.1.1.1"
     assert obj.prefixlen == 24
+
+
+def testIPv4Obj_eq_01():
+    """Simple equality test"""
+    obj1 = IPv4Obj("1.1.1.1/24")
+    obj2 = IPv4Obj("1.1.1.1/24")
+    assert obj1 == obj2
+
+
+def testIPv4Obj_eq_02():
+    """Simple in-equality test"""
+    obj1 = IPv4Obj("1.1.1.1/24")
+    obj2 = IPv4Obj("1.1.1.0/24")
+    assert obj1 != obj2
+
+
+def testIPv4Obj_gt_01():
+    """Simple greater-than test - same network number"""
+    obj1 = IPv4Obj("1.1.1.1/24")
+    obj2 = IPv4Obj("1.1.1.0/24")
+    assert obj1 > obj2
+
+
+def testIPv4Obj_gt_02():
+    """Simple greater-than test - different network number"""
+    obj1 = IPv4Obj("1.1.1.0/24")
+    obj2 = IPv4Obj("1.1.0.0/24")
+    assert obj1 > obj2
+
+
+def testIPv4Obj_gt_03():
+    """Simple greater-than test - different prefixlen"""
+    obj1 = IPv4Obj("1.1.1.0/24")
+    obj2 = IPv4Obj("1.1.0.0/23")
+    assert obj1 > obj2
+
+
+def testIPv4Obj_lt_01():
+    """Simple less-than test - same network number"""
+    obj1 = IPv4Obj("1.1.1.1/24")
+    obj2 = IPv4Obj("1.1.1.0/24")
+    assert obj2 < obj1
+
+
+def testIPv4Obj_lt_02():
+    """Simple less-than test - different network number"""
+    obj1 = IPv4Obj("1.1.1.0/24")
+    obj2 = IPv4Obj("1.1.0.0/24")
+    assert obj2 < obj1
+
+
+def testIPv4Obj_lt_03():
+    """Simple less-than test - different prefixlen"""
+    obj1 = IPv4Obj("1.1.1.0/24")
+    obj2 = IPv4Obj("1.1.0.0/23")
+    assert obj2 < obj1
+
+
+def testIPv4Obj_contains_01():
+    """Test __contains__ method"""
+    obj1 = IPv4Obj("1.1.1.0/24")
+    obj2 = IPv4Obj("1.1.0.0/23")
+    assert obj1 in obj2
+
+
+def testIPv4Obj_contains_02():
+    """Test __contains__ method"""
+    obj1 = IPv4Obj("1.1.1.1/32")
+    obj2 = IPv4Obj("1.1.1.0/24")
+    assert obj1 in obj2
+
+
+def testIPv4Obj_contains_03():
+    """Test __contains__ method"""
+    obj1 = IPv4Obj("1.1.1.255/32")
+    obj2 = IPv4Obj("1.1.1.0/24")
+    assert obj1 in obj2
 
 
 def testIPv6Obj_recursive():
