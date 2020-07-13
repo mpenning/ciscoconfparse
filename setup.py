@@ -27,10 +27,13 @@ EXTRAS = {
 
 def version_json_path():
     base_path = os.path.dirname(os.path.abspath(__file__))
-    for current_path, directores, files in os.walk(base_path):
+    print("BASE_PATH "+str(base_path))
+    for current_path, directories, files in os.walk(base_path):
         for filename in files:
             if filename=="version.json":
                 return os.path.join(current_path, "version.json")
+            else:
+                print("    FILEPATH "+os.path.join(current_path, filename))
     raise OSError("version.json not found")
 
 ## Setup ciscoconfparse
