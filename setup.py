@@ -15,6 +15,7 @@ def read(fname):
     # Dynamically generate setup(long_description)
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
+
 ## Conditionally require the correct ipaddr package in Python2 vs Python3
 # Ref Github issue #127 - sdist improvements
 REQUIRES = ["colorama", "passlib", "dnspython"]
