@@ -55,6 +55,26 @@ numpydoc_show_class_members = False
 numpydoc_attributes_as_param_list = False
 numpydoc_show_inherited_class_members = False
 
+# autodoc parameters...
+autodoc_default_options = {
+    "members": None,  # Include all members (methods).
+    "special-members": None,
+    #  Exclude "standard" methods...
+    "exclude-members": ",".join(
+        [
+            "__init__",
+            "__dict__",
+            "__module__",
+            "__subclasshook__",
+            "__abstractmethods__",
+            "__weakref__",
+        ]
+    ),
+}
+
+# autosummary parameters...
+autosummary_generate = True
+
 intersphinx_mapping = {"python": ("https://docs.python.org/3", None)}
 
 # Add any paths that contain templates here, relative to this directory.
