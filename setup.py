@@ -26,22 +26,21 @@ EXTRAS = {
 }
 
 ## Retrieve the version number from json...
-version_json_path = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "ciscoconfparse", "version.json"
-)
+if sys.version_info >= (3, 0, 0):
+    # Python 3.x
+    version_json_path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "ciscoconfparse", "version.json"
+    )
+else:
+    # Python 2.7...
+    version_json_path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "ciscoconfparse", "ciscoconfparse", "version.json"
+    )
 
 ## Setup ciscoconfparse
 setup(
     name="ciscoconfparse",
-    version=json.load(
-        open(
-            os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                "ciscoconfparse",
-                "version.json",
-            )
-        )
-    ).get("version"),
+    version=json.loads(open(version_json_path).read()).get("version"),
     description="Parse, Audit, Query, Build, and Modify Cisco IOS-style configurations",
     url="http://www.pennington.net/py/ciscoconfparse/",
     author="David Michael Pennington",
