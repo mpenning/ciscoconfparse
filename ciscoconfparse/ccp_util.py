@@ -124,42 +124,17 @@ def is_valid_ipv6_addr(input=""):
 ##    ipaddress.py module
 class IPv4Obj(object):
     def __init__(self, arg="127.0.0.1/32", strict=False):
-        """An object to represent IPv4 addresses and IPv4Networks.  When :class:`~ccp_util.IPv4Obj` objects are compared or sorted, shorter masks are greater than longer masks. After comparing mask length, numerically higher IP addresses are greater than numerically lower IP addresses.
+        """An object to represent IPv4 addresses and IPv4 networks.  When :class:`~ccp_util.IPv4Obj` objects are compared or sorted, shorter masks are lower than longer masks (for the same network number). After comparing mask length, numerically higher IP addresses are greater than numerically lower IP addresses.
+
+        This object emulates the behavior of ipaddr.IPv4Network (in Python2) where host-bits were retained in the IPv4Network() object.  :class:`ipaddress.IPv4Network` in Python3 does not retain host-bits; the desire to retain host-bits in both Python2 and Python3 ip network objects was the genesis of this API.
 
         Parameters
         ----------
         arg : str or int
             A string (or integer) containing an IPv4 address, and optionally a netmask or masklength.  Integers are also accepted.  The following address/netmask formats are supported: "10.1.1.1/24", "10.1.1.1 255.255.255.0", "10.1.1.1/255.255.255.0"
+        strict: bool
+            When `strict` is True, the value of `arg` must not have host-bits set.  The default value is False.
 
-        Attributes
-        ----------
-        network_object : An IPv4Network object
-        ip_object  : An IPv4Address object
-        ip : An IPv4Address object
-        as_binary_tuple : tuple
-            The address as a tuple of zero-padded binary strings
-        as_hex_tuple : tuple
-            The address as a tuple of zero-padded 8-bit hex strings
-        as_decimal : int
-            The ip address as a decimal integer
-        as_zeropadded : str
-            Return a zero-padded string of the ip address (example: '10.1.1.1' returns '010.001.001.001')
-        as_zeropadded_network : str
-            Return a zero-padded string of the ip network (example: '10.1.1.1' returns '010.001.001.000')
-        network : An IPv4Network object
-        network_object : An IPv4Network object
-        netmask : str
-            A string representing the netmask
-        prefixlen : int
-            An integer representing the length of the netmask
-        prefixlength : int
-            An integer representing the length of the netmask
-        broadcast : str
-            A string representing the broadcast address
-        hostmask : str
-            A string representing the hostmask
-        numhosts : int
-            An integer representing the number of hosts contained in the network
 
         Examples
         --------
@@ -193,6 +168,42 @@ class IPv4Obj(object):
         >>> net.network_object.iterhosts()
         <generator object iterhosts at 0x7f00bfcce730>
         >>>
+
+        Attributes
+        ----------
+        network : :class:`ipaddress.IPv4Network`
+            Returns an :class:`ipaddress.IPv4Network` with the network of this object
+        network_object : :class:`ipaddress.IPv4Network`
+            Returns an :class:`ipaddress.IPv4Network` with the network of this object
+        ip_object  : :class:`ipaddress.IPv4Address`
+            Returns an :class:`ipaddress.IPv4Address` with the host address of this object
+        ip : :class:`ipaddress.IPv4Address`
+            Returns an :class:`ipaddress.IPv4Address` with the host address of this object
+        as_binary_tuple : :py:class:`tuple`
+            The address as a tuple of zero-padded binary strings
+        as_hex_tuple : tuple
+            The address as a tuple of zero-padded 8-bit hex strings
+        as_decimal : int
+            The ip address as a decimal integer
+        as_decimal_network : int
+            The network address as a decimal integer
+        as_zeropadded : str
+            Return a zero-padded string of the ip address (example: '10.1.1.1' returns '010.001.001.001')
+        as_zeropadded_network : str
+            Return a zero-padded string of the ip network (example: '10.1.1.1' returns '010.001.001.000')
+        netmask : :class:`ipaddress.IPv4Address`
+            An :class:`ipaddress.IPv4Address` object containing the netmask
+        prefixlen : int
+            An integer representing the length of the netmask
+        prefixlength : int
+            An integer representing the length of the netmask
+        broadcast : str
+            A string representing the broadcast address
+        hostmask : :class:`ipaddress.IPv4Address`
+            A :class:`ipaddress.IPv4Address` representing the hostmask
+        numhosts : int
+            An integer representing the number of hosts contained in the network
+
         """
 
         # RGX_IPV4ADDR = re.compile(r'^(\d+\.\d+\.\d+\.\d+)')
@@ -200,10 +211,19 @@ class IPv4Obj(object):
 
         self.arg = arg
         self.dna = "IPv4Obj"
+        self.ip_object = None
+        self.network_object = None
+
         try:
             mm = _RGX_IPV4ADDR_NETMASK.search(arg)
         except TypeError:
-            if getattr(arg, "dna", "") == "IPv4Obj":
+            if isinstance(arg, int):
+                self.ip_object = IPv4Address(arg)
+                self.network_object = IPv4Network(
+                    str(self.ip_object) + "/32", strict=False
+                )
+                return None
+            elif getattr(arg, "dna", "") == "IPv4Obj":
                 ip_str = "{0}/{1}".format(str(arg.ip_object), arg.prefixlen)
                 self.network_object = IPv4Network(ip_str, strict=False)
                 self.ip_object = IPv4Address(str(arg.ip_object))
@@ -215,12 +235,6 @@ class IPv4Obj(object):
             elif isinstance(arg, IPv4Address):
                 self.network_object = IPv4Network(str(arg) + "/32")
                 self.ip_object = IPv4Address(str(arg).split("/")[0])
-                return None
-            elif isinstance(arg, int):
-                self.ip_object = IPv4Address(arg)
-                self.network_object = IPv4Network(
-                    str(self.ip_object) + "/32", strict=False
-                )
                 return None
             else:
                 raise ValueError(
@@ -261,7 +275,7 @@ class IPv4Obj(object):
     def __eq__(self, val):
         try:
             # Compare objects numerically...
-            if self.as_decimal == val.as_decimal:
+            if self.as_decimal == val.as_decimal and self.prefixlen == val.prefixlen:
                 return True
             return False
         except (Exception) as e:
@@ -274,16 +288,20 @@ class IPv4Obj(object):
         try:
             val_prefixlen = int(getattr(val, "prefixlen"))
             self_prefixlen = int(getattr(self, "prefixlen"))
-            val_nobj = getattr(val, "network_object")
-            self_nobj = getattr(self, "network_object")
+            val_ndec = int(getattr(val, "as_decimal_network"))
+            self_ndec = int(getattr(self, "as_decimal_network"))
             val_dec = int(getattr(val, "as_decimal"))
             self_dec = int(getattr(self, "as_decimal"))
 
-            if self_nobj == val_nobj and self_prefixlen > val_prefixlen:
+            if self_ndec == val_ndec and self_prefixlen == val_prefixlen:
                 return self_dec > val_dec
 
+            # for the same network, longer prefixlens sort "higher" than shorter prefixlens
+            elif self_ndec == val_ndec:
+                return self_prefixlen > val_prefixlen
+
             else:
-                return self_nobj > val_nobj
+                return self_ndec > val_ndec
 
         except:
             errmsg = "{0} cannot compare itself to '{1}'".format(self.__repr__(), val)
@@ -293,19 +311,23 @@ class IPv4Obj(object):
         try:
             val_prefixlen = int(getattr(val, "prefixlen"))
             self_prefixlen = int(getattr(self, "prefixlen"))
-            val_nobj = getattr(val, "network_object")
-            self_nobj = getattr(self, "network_object")
+            val_ndec = int(getattr(val, "as_decimal_network"))
+            self_ndec = int(getattr(self, "as_decimal_network"))
             val_dec = int(getattr(val, "as_decimal"))
             self_dec = int(getattr(self, "as_decimal"))
 
-            # for the same network, longer prefixlens sort "higher" than shorter prefixlens
-            if self_nobj == val_nobj and self_prefixlen <= val_prefixlen:
+            if self_ndec == val_ndec and self_prefixlen == val_prefixlen:
                 return self_dec < val_dec
 
-            else:
-                return self_nobj < val_nobj
+            # for the same network, longer prefixlens sort "higher" than shorter prefixlens
+            elif self_ndec == val_ndec:
+                return self_prefixlen < val_prefixlen
 
-        except:
+            else:
+                return self_ndec < val_ndec
+
+        except Exception as ee:
+            print(ee)
             errmsg = "{0} cannot compare itself to '{1}'".format(self.__repr__(), val)
             raise ValueError(errmsg)
 
@@ -354,8 +376,14 @@ class IPv4Obj(object):
                 return False
             else:
                 # return (val.network in self.network)
-                return (self.network <= val.network) and (
-                    self.broadcast >= val.broadcast
+                #
+                ## Last used: 2020-07-12... version 1.5.6
+                # return (self.network <= val.network) and (
+                #    self.broadcast >= val.broadcast
+                # )
+                return (self.as_decimal_network <= val.as_decimal_network) and (
+                    (self.as_decimal_network + self.numhosts - 1)
+                    >= (val.as_decimal_network + val.numhosts - 1)
                 )
 
         except (Exception) as e:
@@ -382,18 +410,18 @@ class IPv4Obj(object):
 
     @property
     def ip(self):
-        """Returns the address as an IPv4Address object."""
+        """Returns the address as an :class:`ipaddress.IPv4Address` object."""
         return self.ip_object
 
     @property
     def netmask(self):
-        """Returns the network mask as an IPv4Address object."""
+        """Returns the network mask as an :class:`ipaddress.IPv4Address` object."""
         return self.network_object.netmask
 
     @property
     def prefixlen(self):
         """Returns the length of the network mask as an integer."""
-        return self.network_object.prefixlen
+        return int(self.network_object.prefixlen)
 
     @prefixlen.setter
     def prefixlen(self, arg):
@@ -419,7 +447,7 @@ class IPv4Obj(object):
 
     @property
     def broadcast(self):
-        """Returns the broadcast address as an IPv4Address object."""
+        """Returns the broadcast address as an :class:`ipaddress.IPv4Address` object."""
         if sys.version_info[0] < 3:
             return self.network_object.broadcast
         else:
@@ -427,7 +455,7 @@ class IPv4Obj(object):
 
     @property
     def network(self):
-        """Returns an IPv4Network object, which represents this network.
+        """Returns an :class:`ipaddress.IPv4Network` object, which represents this network.
         """
         if sys.version_info[0] < 3:
             return self.network_object.network
@@ -436,13 +464,23 @@ class IPv4Obj(object):
             return IPv4Network("{0}".format(self.network_object.compressed))
 
     @property
+    def as_decimal_network(self):
+        """Returns an integer calculated from the network address...
+        """
+        num_strings = str(self.network).split(".")
+        num_strings.reverse()  # reverse the order
+        return sum(
+            [int(num, 16) * (65536 ** idx) for idx, num in enumerate(num_strings)]
+        )
+
+    @property
     def hostmask(self):
-        """Returns the host mask as an IPv4Address object."""
+        """Returns the host mask as an :class:`ipaddress.IPv4Address` object."""
         return self.network_object.hostmask
 
     @property
     def version(self):
-        """Returns the version of the object as an integer.  i.e. 4"""
+        """Returns the IP version of the object as an integer.  i.e. 4"""
         return 4
 
     @property
@@ -457,6 +495,13 @@ class IPv4Obj(object):
     def as_decimal(self):
         """Returns the IP address as a decimal integer"""
         num_strings = str(self.ip).split(".")
+        num_strings.reverse()  # reverse the order
+        return sum([int(num) * (256 ** idx) for idx, num in enumerate(num_strings)])
+
+    @property
+    def as_decimal_network(self):
+        """Returns the IP address as a decimal integer"""
+        num_strings = str(self.network).split("/")[0].split(".")
         num_strings.reverse()  # reverse the order
         return sum([int(num) * (256 ** idx) for idx, num in enumerate(num_strings)])
 
@@ -494,7 +539,10 @@ class IPv4Obj(object):
     @property
     def as_cidr_net(self):
         """Returns a string with the network in CIDR notation"""
-        return str(self.network)
+        if sys.version_info[0] < 3:
+            return str(self.network) + "/" + str(self.prefixlen)
+        else:
+            return str(self.network)
 
     @property
     def is_multicast(self):
@@ -517,12 +565,16 @@ class IPv4Obj(object):
 ##    ipaddress.py module
 class IPv6Obj(object):
     def __init__(self, arg="::1/128", strict=False):
-        """An object to represent IPv6 addresses and IPv6Networks.  When :class:`~ccp_util.IPv6Obj` objects are compared or sorted, shorter masks are greater than longer masks. After comparing mask length, numerically higher IP addresses are greater than numerically lower IP addresses.
+        """An object to represent IPv6 addresses and IPv6 networks.  When :class:`~ccp_util.IPv6Obj` objects are compared or sorted, shorter masks are greater than longer masks. After comparing mask length, numerically higher IP addresses are greater than numerically lower IP addresses.
+
+        This object emulates the behavior of ipaddr.IPv6Network() (in Python2) where host-bits were retained in the IPv6Network() object.  :class:`ipaddress.IPv6Network` in Python3 does not retain host-bits; the desire to retain host-bits in both Python2 and Python3 ip network objects was the genesis of this API.
 
         Parameters
         ----------
         arg : str or int
             A string containing an IPv6 address, and optionally a netmask or masklength.  Integers are also accepted. The following address/netmask formats are supported: "2001::dead:beef", "2001::dead:beef/64",
+        strict : bool
+            When `strict` is True, the value of `arg` must not have host-bits set.  The default value is False.
 
         Examples
         --------
@@ -531,31 +583,36 @@ class IPv6Obj(object):
         >>> net = IPv6Obj(42540488161975842760550356429036175087)
         >>> net
         <IPv6Obj 2001::dead:beef/64>
-        >>> net = IPv6Obj("2001::dead:beef/128")
+        >>> net = IPv6Obj("2001::dead:beef/64")
         >>> net
-        <IPv6Obj 2001::dead:beef/128>
+        <IPv6Obj 2001::dead:beef/64>
         >>>
 
         Attributes
         ----------
-        network_object : An IPv6Network object
-        ip_object  : An IPv6Address object
-        ip : An IPv6Address object
+        network : :class:`ipaddress.IPv6Network`
+            Returns an :class:`ipaddress.IPv6Network` with the network of this object
+        network_object : :class:`ipaddress.IPv6Network`
+            Returns an :class:`ipaddress.IPv6Network` with the network of this object
+        ip_object  : :class:`ipaddress.IPv6Address`
+            Returns an :class:`ipaddress.IPv6Address` with the host address of this object
+        ip : :class:`ipaddress.IPv6Address`
+            Returns an :class:`ipaddress.IPv6Address` with the host address of this object
         as_binary_tuple : tuple
             The ipv6 address as a tuple of zero-padded binary strings
         as_decimal : int
             The ipv6 address as a decimal integer
+        as_decimal_network : int
+            The network address as a decimal integer
         as_hex_tuple : tuple
             The ipv6 address as a tuple of zero-padded 8-bit hex strings
-        network : An IPv6Network object
-        network_object : An IPv6Network object
-        netmask : str
-            A string representing the netmask
+        netmask : :class:`ipaddress.IPv6Address`
+            An :class:`ipaddress.IPv6Address` object containing the netmask
         prefixlen : int
             An integer representing the length of the netmask
         broadcast: raises `NotImplementedError`; IPv6 doesn't use broadcast addresses
-        hostmask : str
-            A string representing the hostmask
+        hostmask : :class:`ipaddress.IPv6Address`
+            An :class:`ipaddress.IPv6Address` representing the hostmask
         numhosts : int
             An integer representing the number of hosts contained in the network
 
@@ -564,11 +621,19 @@ class IPv6Obj(object):
         # arg= _RGX_IPV6ADDR_NETMASK.sub(r'\1/\2', arg) # mangle IOS: 'addr mask'
         self.arg = arg
         self.dna = "IPv6Obj"
+        self.ip_object = None
+        self.network_object = None
 
         try:
             mm = _RGX_IPV6ADDR.search(arg)
         except TypeError:
-            if getattr(arg, "dna", "") == "IPv6Obj":
+            if isinstance(arg, int):
+                self.ip_object = IPv6Address(arg)
+                self.network_object = IPv6Network(
+                    str(self.ip_object) + "/128", strict=False
+                )
+                return None
+            elif getattr(arg, "dna", "") == "IPv6Obj":
                 ip_str = "{0}/{1}".format(str(arg.ip_object), arg.prefixlen)
                 self.network_object = IPv6Network(ip_str, strict=False)
                 self.ip_object = IPv6Address(str(arg.ip_object))
@@ -580,12 +645,6 @@ class IPv6Obj(object):
             elif isinstance(arg, IPv6Address):
                 self.network_object = IPv6Network(str(arg) + "/128")
                 self.ip_object = IPv6Address(str(arg).split("/")[0])
-                return None
-            elif isinstance(arg, int):
-                self.ip_object = IPv6Address(arg)
-                self.network_object = IPv6Network(
-                    str(self.ip_object) + "/128", strict=False
-                )
                 return None
             else:
                 raise ValueError(
@@ -604,7 +663,7 @@ class IPv6Obj(object):
     def __eq__(self, val):
         try:
             # Compare objects numerically...
-            if self.as_decimal == val.as_decimal:
+            if self.as_decimal == val.as_decimal and self.prefixlen == val.prefixlen:
                 return True
             return False
         except (Exception) as e:
@@ -617,16 +676,20 @@ class IPv6Obj(object):
         try:
             val_prefixlen = int(getattr(val, "prefixlen"))
             self_prefixlen = int(getattr(self, "prefixlen"))
-            val_nobj = getattr(val, "network_object")
-            self_nobj = getattr(self, "network_object")
+            val_ndec = int(getattr(val, "as_decimal_network"))
+            self_ndec = int(getattr(self, "as_decimal_network"))
             val_dec = int(getattr(val, "as_decimal"))
             self_dec = int(getattr(self, "as_decimal"))
 
-            if self_nobj == val_nobj and self_prefixlen > val_prefixlen:
+            if self_ndec == val_ndec and self_prefixlen == val_prefixlen:
                 return self_dec > val_dec
 
+            # for the same network, longer prefixlens sort "higher" than shorter prefixlens
+            elif self_ndec == val_ndec:
+                return self_prefixlen > val_prefixlen
+
             else:
-                return self_nobj > val_nobj
+                return self_ndec > val_ndec
 
         except:
             errmsg = "{0} cannot compare itself to '{1}'".format(self.__repr__(), val)
@@ -636,17 +699,20 @@ class IPv6Obj(object):
         try:
             val_prefixlen = int(getattr(val, "prefixlen"))
             self_prefixlen = int(getattr(self, "prefixlen"))
-            val_nobj = getattr(val, "network_object")
-            self_nobj = getattr(self, "network_object")
+            val_ndec = int(getattr(val, "as_decimal_network"))
+            self_ndec = int(getattr(self, "as_decimal_network"))
             val_dec = int(getattr(val, "as_decimal"))
             self_dec = int(getattr(self, "as_decimal"))
 
-            # for the same network, longer prefixlens sort "higher" than shorter prefixlens
-            if self_nobj == val_nobj and self_prefixlen <= val_prefixlen:
+            if self_ndec == val_ndec and self_prefixlen == val_prefixlen:
                 return self_dec < val_dec
 
+            # for the same network, longer prefixlens sort "higher" than shorter prefixlens
+            elif self_ndec == val_ndec:
+                return self_prefixlen < val_prefixlen
+
             else:
-                return self_nobj < val_nobj
+                return self_ndec < val_ndec
 
         except:
             errmsg = "{0} cannot compare itself to '{1}'".format(self.__repr__(), val)
@@ -700,9 +766,15 @@ class IPv6Obj(object):
             else:
                 # NOTE: We cannot use the same algorithm as IPv4Obj.__contains__() because IPv6Obj doesn't have .broadcast
                 # return (val.network in self.network)
-                return (self.network <= val.network) and (
-                    (self.as_decimal + self.numhosts - 1)
-                    >= (val.as_decimal + val.numhosts - 1)
+                #
+                ## Last used: 2020-07-12... version 1.5.6
+                # return (self.network <= val.network) and (
+                #    (self.as_decimal + self.numhosts - 1)
+                #    >= (val.as_decimal + val.numhosts - 1)
+                # )
+                return (self.as_decimal_network <= val.as_decimal_network) and (
+                    (self.as_decimal_network + self.numhosts - 1)
+                    >= (val.as_decimal_network + val.numhosts - 1)
                 )
 
         except (Exception) as e:
@@ -729,18 +801,18 @@ class IPv6Obj(object):
 
     @property
     def ip(self):
-        """Returns the address as an IPv6Address object."""
+        """Returns the address as an :class:`ipaddress.IPv6Address` object."""
         return self.ip_object
 
     @property
     def netmask(self):
-        """Returns the network mask as an IPv6Address object."""
+        """Returns the network mask as an :class:`ipaddress.IPv6Address` object."""
         return self.network_object.netmask
 
     @property
     def prefixlen(self):
         """Returns the length of the network mask as an integer."""
-        return self.network_object.prefixlen
+        return int(self.network_object.prefixlen)
 
     @prefixlen.setter
     def prefixlen(self, arg):
@@ -775,7 +847,7 @@ class IPv6Obj(object):
 
     @property
     def network(self):
-        """Returns an IPv6Network object, which represents this network.
+        """Returns an :class:`ipaddress.IPv6Network` object, which represents this network.
         """
         if sys.version_info[0] < 3:
             return self.network_object.network
@@ -784,13 +856,22 @@ class IPv6Obj(object):
             return IPv6Network("{0}".format(self.network_object.compressed))
 
     @property
+    def as_decimal_network(self):
+        """Returns the IP network as a decimal integer"""
+        num_strings = str(self.network.exploded).split("/")[0].split(":")
+        num_strings.reverse()  # reverse the order
+        return sum(
+            [int(num, 16) * (65536 ** idx) for idx, num in enumerate(num_strings)]
+        )
+
+    @property
     def hostmask(self):
-        """Returns the host mask as an IPv6Address object."""
+        """Returns the host mask as an :class:`ipaddress.IPv6Address` object."""
         return self.network_object.hostmask
 
     @property
     def version(self):
-        """Returns the version of the object as an integer.  i.e. 4"""
+        """Returns the IP version of the object as an integer.  i.e. 6"""
         return 6
 
     @property
@@ -812,21 +893,15 @@ class IPv6Obj(object):
 
     @property
     def as_binary_tuple(self):
-        """Returns the IPv6 address as a tuple of zero-padded 8-bit binary strings"""
-        nested_list = [
-            ["{0:08b}".format(int(ii, 16)) for ii in [num[0:2], num[2:4]]]
-            for num in str(self.ip.exploded).split(":")
-        ]
-        return tuple(itertools.chain(*nested_list))
+        """Returns the IPv6 address as a tuple of zero-padded 16-bit binary strings"""
+        result_list = ["{0:016b}".format(int(ii, 16)) for ii in self.as_hex_tuple]
+        return tuple(result_list)
 
     @property
     def as_hex_tuple(self):
-        """Returns the IPv6 address as a tuple of zero-padded 8-bit hex strings"""
-        nested_list = [
-            ["{0:02x}".format(int(ii, 16)) for ii in [num[0:2], num[2:4]]]
-            for num in str(self.ip.exploded).split(":")
-        ]
-        return tuple(itertools.chain(*nested_list))
+        """Returns the IPv6 address as a tuple of zero-padded 16-bit hex strings"""
+        result_list = str(self.ip.exploded).split(":")
+        return tuple(result_list)
 
     @property
     def as_cidr_addr(self):
@@ -836,7 +911,10 @@ class IPv6Obj(object):
     @property
     def as_cidr_net(self):
         """Returns a string with the network in CIDR notation"""
-        return str(self.network)
+        if sys.version_info[0] < 3:
+            return str(self.network) + "/" + str(self.prefixlen)
+        else:
+            return str(self.network)
 
     @property
     def is_multicast(self):
@@ -939,23 +1017,37 @@ class L4Object(object):
 class DNSResponse(object):
     """A universal DNS Response object
 
-    Kwargs:
-        - query_type (str): A string containing the DNS record to lookup
-        - result_str (str): A string containing the DNS Response
-        - input (str): The DNS query string
-        - duration (float): The query duration in seconds 
+    Parameters
+    ----------
+    query_type : str
+        A string containing the DNS record type to lookup
+    result_str : str
+        A string containing the DNS Response
+    input : str
+        The DNS query string
+    duration : float
+        The query duration in seconds 
 
-    Attributes:
-        - query_type (str): A string containing the DNS record to lookup
-        - result_str (str): A string containing the DNS Response
-        - input (str): The DNS query string
-        - has_error (bool): Indicates the query resulted in an error when True
-        - error_str (str): The error returned by dnspython
-        - duration (float): The query duration in seconds 
-        - preference (int): The MX record's preference (default: -1)
+    Attributes
+    ----------
+    query_type : str
+        A string containing the DNS record type to lookup
+    result_str : str
+        A string containing the DNS Response
+    input : str
+        The DNS query string
+    has_error : bool
+        Indicates the query resulted in an error when True
+    error_str : str
+        The error returned by dnspython
+    duration : float
+        The query duration in seconds 
+    preference : int
+        The MX record's preference (default: -1)
 
-    Returns:
-        A :class:`~ccp_util.DNSResponse` instance
+    Returns
+    -------
+    A :class:`~ccp_util.DNSResponse` instance
 """
 
     def __init__(self, query_type="", result_str="", input="", duration=0.0):
@@ -985,25 +1077,33 @@ class DNSResponse(object):
 def dns_query(input="", query_type="", server="", timeout=2.0):
     """A unified IPv4 & IPv6 DNS lookup interface; this is essentially just a wrapper around dnspython's API.  When you query a PTR record, you can use an IPv4 or IPv6 address (which will automatically be converted into an in-addr.arpa name.  This wrapper only supports a subset of DNS records: 'A', 'AAAA', 'CNAME', 'MX', 'NS', 'PTR', and 'TXT'
 
-    Kwargs:
-        - input (str): A string containing the DNS record to lookup
-        - query_type (str): A string containing the DNS record type (SOA not supported)
-        - server (str): A string containing the fqdn or IP address of the dns server
-        - timeout (float): DNS lookup timeout duration (default: 2.0 seconds)
+    Paremeters
+    ----------
+    input : str
+        A string containing the DNS record to lookup
+    query_type : str
+        A string containing the DNS record type (SOA not supported)
+    server : str
+        A string containing the fqdn or IP address of the dns server
+    timeout : float
+        DNS lookup timeout duration (default: 2.0 seconds)
 
-    Returns:
-        A set([]) of :class:`~ccp_util.DNSResponse` instances.  Refer to the DNSResponse object in these docs for more information.
+    Returns
+    -------
+    A set([]) of :class:`~ccp_util.DNSResponse` instances.  Refer to the DNSResponse object in these docs for more information.
 
->>> from ciscoconfparse.ccp_util import dns_query
->>> dns_query('www.pennington.net', "A", "4.2.2.2", timeout=0.5)
-{<DNSResponse "A" result_str="65.19.187.2">}
->>> response_set = dns_query('www.pennington.net', 'A', '4.2.2.2')
->>> aa = response_set.pop()
->>> aa.result_str
-'65.19.187.2'
->>> aa.error_str
-''
->>>
+    Examples
+    --------
+    >>> from ciscoconfparse.ccp_util import dns_query
+    >>> dns_query('www.pennington.net', "A", "4.2.2.2", timeout=0.5)
+    {<DNSResponse "A" result_str="65.19.187.2">}
+    >>> response_set = dns_query('www.pennington.net', 'A', '4.2.2.2')
+    >>> aa = response_set.pop()
+    >>> aa.result_str
+    '65.19.187.2'
+    >>> aa.error_str
+    ''
+    >>>
     """
 
     valid_records = set(["A", "AAAA", "AXFR", "CNAME", "MX", "NS", "PTR", "TXT"])
@@ -1231,13 +1331,25 @@ def reverse_dns_lookup(input, timeout=3, server=""):
 class CiscoRange(MutableSequence):
     """Explode Cisco ranges into a list of explicit items... examples below...
 
->>> from ciscoconfparse.ccp_util import CiscoRange
->>> CiscoRange('1-3,5,9-11,13')
-<CiscoRange 1-3,5,9-11,13>
->>> CiscoRange('Eth1/1-3,7')
-<CiscoRange Eth1/1-3,7>
->>> CiscoRange()
-<CiscoRange none>
+    Examples
+    --------
+
+    >>> from ciscoconfparse.ccp_util import CiscoRange
+    >>> CiscoRange('1-3,5,9-11,13')
+    <CiscoRange 1-3,5,9-11,13>
+    >>> for ii in CiscoRange('Eth2/1-3,5,9-10'):
+    ...     print(ii)
+    ...
+    Eth2/1
+    Eth2/2
+    Eth2/3
+    Eth2/5
+    Eth2/9
+    Eth2/10
+    >>> CiscoRange('Eth2/1-3,7')
+    <CiscoRange Eth2/1-3,7>
+    >>> CiscoRange()
+    <CiscoRange []>
     """
 
     def __init__(self, text="", result_type=str):
@@ -1258,7 +1370,7 @@ class CiscoRange(MutableSequence):
 
     def __repr__(self):
         if len(self._list) == 0:
-            return """<CiscoRange none>"""
+            return """<CiscoRange []>"""
         else:
             return """<CiscoRange {0}>""".format(self.compressed_str)
 
