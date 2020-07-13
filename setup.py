@@ -41,7 +41,6 @@ setup(
                 "version.json",
             )
         )
-        .read()
     ).get("version"),
     description="Parse, Audit, Query, Build, and Modify Cisco IOS-style configurations",
     url="http://www.pennington.net/py/ciscoconfparse/",
