@@ -1,4 +1,4 @@
-1.5.16  20200711 Fix Python 2.7 packaging
+1.5.17  20200711 Fix Python 2.7 packaging
 1.5.7   20200711 Revise IPv4Obj & IPv6Obj __lt__(), __gt__(), and __contains__() methods (impacts sorting behavior); reformatted documentation to latest numpydoc format.  Add version number as json data instead of raw text...
 1.5.6   20200627 Improve find_object_branches() speed; reformat with black
 1.5.5   20200612 Beta-test new function: find_object_branches()
