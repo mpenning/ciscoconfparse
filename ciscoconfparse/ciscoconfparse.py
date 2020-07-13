@@ -3,6 +3,7 @@ from operator import methodcaller, attrgetter
 from colorama import Fore, Back, Style
 from difflib import SequenceMatcher
 import logging
+import json
 import time
 import copy
 import sys
@@ -71,12 +72,17 @@ r""" ciscoconfparse.py - Parse, Query, Build, and Modify IOS-style configs
      mike [~at~] pennington [/dot\] net
 """
 
+
 ## Docstring props: http://stackoverflow.com/a/1523456/667301
-versionfilepath = os.path.join(os.path.dirname(os.path.abspath(__file__)), "version")
 # __version__ if-else below fixes Github issue #123
-if os.path.isfile(versionfilepath):
-    with open(versionfilepath) as vh:
-        __version__ = vh.read().strip()
+version_json_path = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "version.json"
+)
+if os.path.isfile(version_json_path):
+    ## Retrieve the version number from json...
+    with open(version_json_path) as vh:
+        version_dict = json.load(vh)
+    __version__ = version_dict.get("version")
 else:
     # This case is required for importing from a zipfile... Github issue #123
     __version__ = "0.0.0"  # __version__ read failed
