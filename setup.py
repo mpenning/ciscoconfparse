@@ -25,17 +25,9 @@ EXTRAS = {
     ":python_version<'3'": ["ipaddr>=2.1.11"],
 }
 
-## Retrieve the version number from json...
-if sys.version_info >= (3, 0, 0):
-    # Python 3.x
-    version_json_path = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "ciscoconfparse", "version.json"
-    )
-else:
-    # Python 2.7...
-    version_json_path = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "ciscoconfparse", "ciscoconfparse", "version.json"
-    )
+version_json_path = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "ciscoconfparse", "version.json"
+)
 
 ## Setup ciscoconfparse
 setup(
