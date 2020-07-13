@@ -25,14 +25,18 @@ EXTRAS = {
     ":python_version<'3'": ["ipaddr>=2.1.11"],
 }
 
-version_json_path = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "version.json"
-)
+def version_json_path():
+    base_path = os.path.dirname(os.path.abspath(__file__))
+    for current_path, directores, files in os.walk(base_path):
+        for filename in files:
+            if filename=="version.json":
+                return os.path.join(current_path, "version.json")
+    raise OSError("version.json not found")
 
 ## Setup ciscoconfparse
 setup(
     name="ciscoconfparse",
-    version=json.loads(open(version_json_path).read()).get("version"),
+    version=json.loads(open(version_json_path()).read()).get("version"),
     description="Parse, Audit, Query, Build, and Modify Cisco IOS-style configurations",
     url="http://www.pennington.net/py/ciscoconfparse/",
     author="David Michael Pennington",
