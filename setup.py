@@ -26,7 +26,7 @@ EXTRAS = {
 }
 
 version_json_path = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "ciscoconfparse", "version.json"
+    os.path.dirname(os.path.abspath(__file__)), "version.json"
 )
 
 ## Setup ciscoconfparse
