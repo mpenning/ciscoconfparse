@@ -124,7 +124,9 @@ def is_valid_ipv6_addr(input=""):
 ##    ipaddress.py module
 class IPv4Obj(object):
     def __init__(self, arg="127.0.0.1/32", strict=False):
-        """An object to represent IPv4 addresses and IPv4 networks.  When :class:`~ccp_util.IPv4Obj` objects are compared or sorted, shorter masks are lower than longer masks (for the same network number). After comparing mask length, numerically higher IP addresses are greater than numerically lower IP addresses.
+        """An object to represent IPv4 addresses and IPv4 networks.
+        
+        When :class:`~ccp_util.IPv4Obj` objects are compared or sorted, network numbers are sorted lower to higher.  If network numbers are the same, shorter masks are lower than longer masks. After comparing mask length, numerically higher IP addresses are greater than numerically lower IP addresses.
 
         This object emulates the behavior of ipaddr.IPv4Network (in Python2) where host-bits were retained in the IPv4Network() object.  :class:`ipaddress.IPv4Network` in Python3 does not retain host-bits; the desire to retain host-bits in both Python2 and Python3 ip network objects was the genesis of this API.
 
@@ -565,7 +567,9 @@ class IPv4Obj(object):
 ##    ipaddress.py module
 class IPv6Obj(object):
     def __init__(self, arg="::1/128", strict=False):
-        """An object to represent IPv6 addresses and IPv6 networks.  When :class:`~ccp_util.IPv6Obj` objects are compared or sorted, shorter masks are greater than longer masks. After comparing mask length, numerically higher IP addresses are greater than numerically lower IP addresses.
+        """An object to represent IPv6 addresses and IPv6 networks.
+
+        When :class:`~ccp_util.IPv6Obj` objects are compared or sorted, network numbers are sorted lower to higher.  If network numbers are the same, shorter masks are lower than longer masks. After comparing mask length, numerically higher IP addresses are greater than numerically lower IP addresses.
 
         This object emulates the behavior of ipaddr.IPv6Network() (in Python2) where host-bits were retained in the IPv6Network() object.  :class:`ipaddress.IPv6Network` in Python3 does not retain host-bits; the desire to retain host-bits in both Python2 and Python3 ip network objects was the genesis of this API.
 
