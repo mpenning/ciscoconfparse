@@ -126,7 +126,7 @@ class IPv4Obj(object):
     def __init__(self, arg="127.0.0.1/32", strict=False):
         """An object to represent IPv4 addresses and IPv4 networks.
         
-        When :class:`~ccp_util.IPv4Obj` objects are compared or sorted, network numbers are sorted lower to higher.  If network numbers are the same, shorter masks are lower than longer masks. After comparing mask length, numerically higher IP addresses are greater than numerically lower IP addresses.
+        When :class:`~ccp_util.IPv4Obj` objects are compared or sorted, network numbers are sorted lower to higher.  If network numbers are the same, shorter masks are lower than longer masks. After comparing mask length, numerically higher IP addresses are greater than numerically lower IP addresses..  Comparisons between :class:`~ccp_util.IPv4Obj` instances was chosen so it's easy to find the longest-match for a given prefix (see examples below).
 
         This object emulates the behavior of ipaddr.IPv4Network (in Python2) where host-bits were retained in the IPv4Network() object.  :class:`ipaddress.IPv4Network` in Python3 does not retain host-bits; the desire to retain host-bits in both Python2 and Python3 ip network objects was the genesis of this API.
 
@@ -170,6 +170,18 @@ class IPv4Obj(object):
         >>> net.network_object.iterhosts()
         <generator object iterhosts at 0x7f00bfcce730>
         >>>
+        >>> # Example of finding the longest-match IPv4 route for an addr...
+        >>> prefix_list = ['0.0.0.0/0', '4.0.0.0/8', '2.0.0.0/7', '4.0.0.0/16', '2.0.0.0/32']
+        >>> rt_table = sorted([IPv4Obj(ii) for ii in prefix_list], reverse=True)
+        >>> addr = IPv4Obj('4.0.1.1')
+        >>> for route in rt_table:
+        >>>     if addr in route:
+        >>>         break
+        >>> # The longest match is contained in route
+        >>> route
+        <IPv4Obj 4.0.0.0/16>
+        >>>
+
 
         Attributes
         ----------
@@ -569,7 +581,7 @@ class IPv6Obj(object):
     def __init__(self, arg="::1/128", strict=False):
         """An object to represent IPv6 addresses and IPv6 networks.
 
-        When :class:`~ccp_util.IPv6Obj` objects are compared or sorted, network numbers are sorted lower to higher.  If network numbers are the same, shorter masks are lower than longer masks. After comparing mask length, numerically higher IP addresses are greater than numerically lower IP addresses.
+        When :class:`~ccp_util.IPv6Obj` objects are compared or sorted, network numbers are sorted lower to higher.  If network numbers are the same, shorter masks are lower than longer masks. After comparing mask length, numerically higher IP addresses are greater than numerically lower IP addresses.  Comparisons between :class:`~ccp_util.IPv6Obj` instances was chosen so it's easy to find the longest-match for a given prefix.
 
         This object emulates the behavior of ipaddr.IPv6Network() (in Python2) where host-bits were retained in the IPv6Network() object.  :class:`ipaddress.IPv6Network` in Python3 does not retain host-bits; the desire to retain host-bits in both Python2 and Python3 ip network objects was the genesis of this API.
 
