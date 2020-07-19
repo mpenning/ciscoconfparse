@@ -175,8 +175,9 @@ class IPv4Obj(object):
         >>> rt_table = sorted([IPv4Obj(ii) for ii in prefix_list], reverse=True)
         >>> addr = IPv4Obj('4.0.1.1')
         >>> for route in rt_table:
-        >>>     if addr in route:
-        >>>         break
+        ...     if addr in route:
+        ...         break
+        ...
         >>> # The longest match is contained in route
         >>> route
         <IPv4Obj 4.0.0.0/16>
