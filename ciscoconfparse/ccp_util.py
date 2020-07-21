@@ -289,18 +289,34 @@ class IPv4Obj(object):
 
     def __eq__(self, val):
         try:
+            # Code to fix Github issue #180
+            for obj in [self, val]:
+                for attr_name in ["as_decimal", "prefixlen"]:
+                    try:
+                        assert getattr(obj, attr_name, None) is not None
+                    except AssertionError:
+                        return False
+
             # Compare objects numerically...
             if self.as_decimal == val.as_decimal and self.prefixlen == val.prefixlen:
                 return True
             return False
-        except (Exception) as e:
+        except AttributeError as e:
             errmsg = "'{0}' cannot compare itself to '{1}': {2}".format(
                 self.__repr__(), val, e
             )
-            raise ValueError(errmsg)
+            raise AttributeError(errmsg)
 
     def __gt__(self, val):
         try:
+            for obj in [self, val]:
+                for attr_name in ["as_decimal", "as_decimal_network", "prefixlen"]:
+                    try:
+                        assert getattr(obj, attr_name, None) is not None
+                    except (AssertionError) as ee:
+                        error_str = "Cannot compare {} with '{}'".format(self, type(obj))
+                        raise AssertionError(error_str)
+
             val_prefixlen = int(getattr(val, "prefixlen"))
             self_prefixlen = int(getattr(self, "prefixlen"))
             val_ndec = int(getattr(val, "as_decimal_network"))
@@ -324,6 +340,14 @@ class IPv4Obj(object):
 
     def __lt__(self, val):
         try:
+            for obj in [self, val]:
+                for attr_name in ["as_decimal", "as_decimal_network", "prefixlen"]:
+                    try:
+                        assert getattr(obj, attr_name, None) is not None
+                    except (AssertionError) as ee:
+                        error_str = "Cannot compare {} with '{}'".format(self, type(obj))
+                        raise AssertionError(error_str)
+
             val_prefixlen = int(getattr(val, "prefixlen"))
             self_prefixlen = int(getattr(self, "prefixlen"))
             val_ndec = int(getattr(val, "as_decimal_network"))
@@ -348,10 +372,22 @@ class IPv4Obj(object):
 
     def __int__(self):
         """Return this object as an integer"""
+        for obj in [self, val]:
+            try:
+                assert getattr(obj, "as_decimal", None) is not None
+            except AssertionError:
+                return False
+
         return self.as_decimal
 
     def __index__(self):
         """Return this object as an integer (used for hex() and bin() operations)"""
+        for obj in [self, val]:
+            try:
+                assert getattr(obj, "as_decimal", None) is not None
+            except AssertionError:
+                return False
+
         return self.as_decimal
 
     def __add__(self, val):
@@ -401,7 +437,7 @@ class IPv4Obj(object):
                     >= (val.as_decimal_network + val.numhosts - 1)
                 )
 
-        except (Exception) as e:
+        except ValueError as e:
             raise ValueError(
                 "Could not check whether '{0}' is contained in '{1}': {2}".format(
                     val, self, e
@@ -679,6 +715,13 @@ class IPv6Obj(object):
 
     def __eq__(self, val):
         try:
+            for obj in [self, val]:
+                for attr_name in ["as_decimal", "prefixlen"]:
+                    try:
+                        assert getattr(obj, attr_name, None) is not None
+                    except AssertionError:
+                        return False
+
             # Compare objects numerically...
             if self.as_decimal == val.as_decimal and self.prefixlen == val.prefixlen:
                 return True
@@ -691,6 +734,14 @@ class IPv6Obj(object):
 
     def __gt__(self, val):
         try:
+            for obj in [self, val]:
+                for attr_name in ["as_decimal", "as_decimal_network", "prefixlen"]:
+                    try:
+                        assert getattr(obj, attr_name, None) is not None
+                    except (AssertionError) as ee:
+                        error_str = "Cannot compare {} with '{}'".format(self, type(obj))
+                        raise AssertionError(error_str)
+
             val_prefixlen = int(getattr(val, "prefixlen"))
             self_prefixlen = int(getattr(self, "prefixlen"))
             val_ndec = int(getattr(val, "as_decimal_network"))
@@ -714,6 +765,14 @@ class IPv6Obj(object):
 
     def __lt__(self, val):
         try:
+            for obj in [self, val]:
+                for attr_name in ["as_decimal", "prefixlen"]:
+                    try:
+                        assert getattr(obj, attr_name, None) is not None
+                    except (AssertionError) as ee:
+                        error_str = "Cannot compare {} with '{}'".format(self, type(obj))
+                        raise AssertionError(error_str)
+
             val_prefixlen = int(getattr(val, "prefixlen"))
             self_prefixlen = int(getattr(self, "prefixlen"))
             val_ndec = int(getattr(val, "as_decimal_network"))
