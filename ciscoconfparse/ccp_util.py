@@ -307,6 +307,9 @@ class IPv4Obj(object):
             )
             raise AttributeError(errmsg)
 
+    def __ne__(self, val):
+        return not self.__eq__(val)
+
     def __gt__(self, val):
         try:
             for obj in [self, val]:
@@ -731,6 +734,9 @@ class IPv6Obj(object):
                 self.__repr__(), val, e
             )
             raise ValueError(errmsg)
+
+    def __ne__(self, val):
+        return not self.__eq__(val)
 
     def __gt__(self, val):
         try:

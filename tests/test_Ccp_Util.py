@@ -302,17 +302,20 @@ def testIPv4Obj_neq_01():
     """Simple in-equality test fail (ref - Github issue #180)"""
     assert IPv4Obj("1.1.1.1/24") != ""
 
+
 def testIPv4Obj_neq_02():
     """Simple in-equality test"""
     obj1 = IPv4Obj("1.1.1.1/24")
     obj2 = IPv4Obj("1.1.1.2/24")
     assert obj1 != obj2
 
+
 def testIPv4Obj_eq_01():
     """Simple equality test"""
     obj1 = IPv4Obj("1.1.1.1/24")
     obj2 = IPv4Obj("1.1.1.1/24")
     assert obj1 == obj2
+
 
 def testIPv4Obj_eq_02():
     """Simple equality test"""
@@ -323,23 +326,17 @@ def testIPv4Obj_eq_02():
 
 def testIPv4Obj_gt_01():
     """Simple greater-than test - same network number"""
-    obj1 = IPv4Obj("1.1.1.1/24")
-    obj2 = IPv4Obj("1.1.1.0/24")
-    assert obj1 > obj2
+    assert IPv4Obj("1.1.1.1/24") > IPv4Obj("1.1.1.0/24")
 
 
 def testIPv4Obj_gt_02():
     """Simple greater-than test - different network number"""
-    obj1 = IPv4Obj("1.1.1.0/24")
-    obj2 = IPv4Obj("1.1.0.0/24")
-    assert obj1 > obj2
+    assert IPv4Obj("1.1.1.0/24") > IPv4Obj("1.1.0.0/24")
 
 
 def testIPv4Obj_gt_03():
     """Simple greater-than test - different prefixlen"""
-    obj1 = IPv4Obj("1.1.1.0/24")
-    obj2 = IPv4Obj("1.1.0.0/23")
-    assert obj1 > obj2
+    assert IPv4Obj("1.1.1.0/24") > IPv4Obj("1.1.0.0/23")
 
 
 def testIPv4Obj_lt_01():
@@ -390,17 +387,26 @@ def testIPv6Obj_recursive():
     assert str(obj.ip_object) == "fe80:a:b:c:d:e:0:1"
     assert obj.prefixlen == 64
 
+
 def testIPv6Obj_neq_01():
     """Simple in-equality test fail (ref - Github issue #180)"""
     assert IPv6Obj("::1") != ""
+
 
 def testIPv6Obj_neq_02():
     """Simple in-equality test"""
     assert IPv6Obj("::1") != IPv6Obj("::2")
 
+
 def testIPv6Obj_eq_01():
     """Simple equality test"""
     assert IPv6Obj("::1") == IPv6Obj("::1")
+
+
+def testIPv6Obj_gt_01():
+    """Simple greater_than test"""
+    assert IPv6Obj("::2") > IPv6Obj("::1")
+
 
 def test_dns_lookup():
     # Use VMWare's opencloud A-record to test...
