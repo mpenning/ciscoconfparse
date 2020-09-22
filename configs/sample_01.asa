@@ -279,7 +279,10 @@ access-list MAINTENANCE extended deny ip any4 any4 log
 access-list OUTSIDE_in extended deny ip host 4.2.2.2 any4 log 
 access-list OUTSIDE_in extended permit icmp any4 0.0.0.0 0.0.0.0 unreachable log interval 1 
 access-list OUTSIDE_in extended permit icmp any4 0.0.0.0 0.0.0.0 time-exceeded log interval 1 
-access-list OUTSIDE_in extended deny ip any4 any4 log 
+access-list OUTSIDE_in extended deny ip any4 any4 log
+access-list GLOBAL-IN extended deny ip object-group-security OBJ_src any any log
+access-list GLOBAL-IN extended deny ip any object-group-security OBJ_dest any log
+access-list GLOBAL-IN extended permit object OBJ_service object OBJ_src object OBJ_dest log
 pager lines 23
 logging enable
 logging timestamp

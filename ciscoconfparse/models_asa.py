@@ -1010,8 +1010,9 @@ _RE_ACLOBJECT_STR = r"""(?:                         # Non-capturing parenthesis
   \s+extended
   \s+(?P<action2>permit|deny)
   \s+(?:                       # service-object or protocol
-     (?:object-group\s+(?P<service_object2>\S+))
+     (?:object-group\s+(?P<service_group_object2>\S+))
     |(?P<protocol2>{0})
+    |(?:object\s+(?P<service_object2>\S+))
   )
   (?:\s+       # any, any4, host foo, object-group FOO or 10.0.0.0 255.255.255.0
      (?:
@@ -1101,6 +1102,30 @@ _RE_ACLOBJECT_STR = r"""(?:                         # Non-capturing parenthesis
   (?:
     (?:\s+(?P<inactive4>inactive))
    |(?:\s+time-range\s+(?P<time_range4>\S+))
+  )?
+  )
+
+# access-list INSIDE_IN extended permit ip object-group-security my-group any any
+|(?:^access-list\s+(?P<acl_name5>\S+)
+  \s+extended\s+(?P<action5>permit|deny)
+  \s+(?P<protocol5>\S+)
+  \s+(?:
+     (?:object-group-security\s+(?P<src_security_group>\S+))
+     |(?P<src_security_objecta>any)
+  )
+  \s+(?:
+     (?:object-group-security\s+(?P<dst_security_group>\S+))
+    |(?P<dst_security_object>\S+)\s+(?P<dst_security_port>\S+)
+  )
+  (?:\s+
+    (?P<log5>log)
+    (?:\s+(?P<loglevel5>{1}))?
+    (?:\s+interval\s+(?P<log_interval5>\d+))?
+  )?
+  (?:\s+(?P<disable5>disable))?
+  (?:
+    (?:\s+(?P<inactive5>inactive))
+   |(?:\s+time-range\s+(?P<time_range5>\S+))
   )?
   )
 )                                                   # Close non-capture parens
