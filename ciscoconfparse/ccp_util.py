@@ -1,5 +1,7 @@
 from __future__ import absolute_import
+from colorama import Fore
 import itertools
+import warnings
 import socket
 import time
 import sys
@@ -13,6 +15,7 @@ else:
     from collections import MutableSequence
 
 from ciscoconfparse.protocol_values import ASA_TCP_PORTS, ASA_UDP_PORTS
+import ciscoconfparse
 from dns.exception import DNSException
 from dns.resolver import Resolver
 from dns import reversename, query, zone
@@ -40,6 +43,26 @@ else:
      If you need to contact the author, you can do so by emailing:
      mike [~at~] pennington [/dot\] net
 """
+
+class UnsupportedFeatureWarning(SyntaxWarning):
+    pass
+
+def junos_unsupported(func):
+    """A function wrapper to warn junos users of unsupported features"""
+    def wrapper(*args, **kwargs):
+        color_warn = Fore.YELLOW+"syntax='junos' does not fully support config modifications such as .{}(); see Github Issue #185.  https://github.com/mpenning/ciscoconfparse/issues/185".format(func.__name__)+Fore.RESET
+        syntax = ""
+        if len(args)>=1:
+            if isinstance(args[0], ciscoconfparse.IOSConfigList):
+                syntax = args[0].syntax
+            else:
+                #print("TYPE", type(args[0]))
+                syntax = args[0].confobj.syntax
+        if syntax=="junos":
+            warnings.warn(color_warn, UnsupportedFeatureWarning)
+        func(*args, **kwargs)
+    return wrapper
+
 
 _IPV6_REGEX_STR = r"""(?!:::\S+?$)       # Negative Lookahead for 3 colons
  (?P<addr>                               # Begin a group named 'addr'

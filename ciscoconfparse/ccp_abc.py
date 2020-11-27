@@ -5,6 +5,7 @@ from copy import deepcopy
 import re
 import os
 
+from ciscoconfparse.ccp_util import junos_unsupported, UnsupportedFeatureWarning
 from ciscoconfparse.ccp_util import IPv4Obj
 
 r""" ccp_abc.py - Parse, Query, Build, and Modify IOS-style configurations
@@ -188,6 +189,7 @@ class BaseCfgLine(object):
         #     (which is very slow)
         self.confobj._reassign_linenums()
 
+    @junos_unsupported
     def add_parent(self, parentobj):
         """Add a reference to parentobj, on this object"""
         ## In a perfect world, I would check parentobj's type
@@ -195,6 +197,7 @@ class BaseCfgLine(object):
         self.parent = parentobj
         return True
 
+    @junos_unsupported
     def add_child(self, childobj):
         """Add references to childobj, on this object"""
         ## In a perfect world, I would check childobj's type
@@ -208,6 +211,7 @@ class BaseCfgLine(object):
         else:
             return False
 
+    @junos_unsupported
     def add_uncfgtext(self, unconftext):
         """unconftext is defined during special method calls.  Do not assume it
         is automatically populated."""
@@ -216,6 +220,7 @@ class BaseCfgLine(object):
         myindent = self.parent.child_indent
         self.uncfgtext = myindent * " " + "no " + conftext
 
+    @junos_unsupported
     def delete(self, recurse=True):
         """Delete this object.  By default, if a parent object is deleted, the child objects are also deleted; this happens because ``recurse`` defaults True.
         """
@@ -231,6 +236,7 @@ class BaseCfgLine(object):
             del self.confobj._list[self.linenum]
             self._list_reassign_linenums()
 
+    @junos_unsupported
     def delete_children_matching(self, linespec):
         """Delete any child :class:`~models_cisco.IOSCfgLine` objects which 
         match ``linespec``.
@@ -292,18 +298,21 @@ class BaseCfgLine(object):
     def has_child_with(self, linespec):
         return bool(filter(methodcaller("re_search", linespec), self.children))
 
+    @junos_unsupported
     def insert_before(self, insertstr):
         """insert_before()"""
         ## BaseCfgLine.insert_before(), insert a single line before this object
         retval = self.confobj.insert_before(self, insertstr, atomic=False)
         return retval
 
+    @junos_unsupported
     def insert_after(self, insertstr):
         """insert_after()"""
         ## BaseCfgLine.insert_after(), insert a single line after this object
         retval = self.confobj.insert_after(self, insertstr, atomic=False)
         return retval
 
+    @junos_unsupported
     def append_to_family(
         self, insertstr, indent=-1, auto_indent_width=1, auto_indent=False
     ):
@@ -381,6 +390,7 @@ class BaseCfgLine(object):
 
         return retval
 
+    @junos_unsupported
     def replace(self, linespec, replacestr, ignore_rgx=None):
         """Replace all strings matching ``linespec`` with ``replacestr`` in 
         the :class:`~models_cisco.IOSCfgLine` object; however, if the 
