@@ -1,3 +1,5 @@
+1.5.20  20201127 Fix Github issue #185
+1.5.19  20200722 Add __ne__() support to IPv4Obj and IPv6Obj
 1.5.18  20200721 Fix Github issue #180 - IPv4Obj() and IPv6Obj() cannot use logical compare ops with certain Python objects
 1.5.17  20200711 Fix Python 2.7 packaging
 1.5.7   20200711 Revise IPv4Obj & IPv6Obj __lt__(), __gt__(), and __contains__() methods (impacts sorting behavior); reformatted documentation to latest numpydoc format.  Add version number as json data instead of raw text...
