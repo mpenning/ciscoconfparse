@@ -4435,7 +4435,7 @@ def ConfigLineFactory(text="", comment_delimiter="!", syntax="ios"):
             ASACfgLine,
         ]
     elif syntax == "junos":
-        classes = [IOSConfigLine]
+        classes = [IOSCfgLine]
     else:
         raise ValueError("'{0}' is an unknown syntax".format(syntax))
     for cls in classes:

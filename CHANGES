@@ -1,3 +1,4 @@
+1.5.21  20201127 Fix Github issue #187
 1.5.20  20201127 Fix Github issue #185
 1.5.19  20200722 Add __ne__() support to IPv4Obj and IPv6Obj
 1.5.18  20200721 Fix Github issue #180 - IPv4Obj() and IPv6Obj() cannot use logical compare ops with certain Python objects

@@ -1984,7 +1984,7 @@ def testValues_IOSConfigList_insert02(parse_c02):
     assert test_result == result_correct
 
 
-def testValues_IOSConfigLine_ioscfg01(parse_c02):
+def testValues_IOSCfgLine_ioscfg01(parse_c02):
     result_correct = [
         "interface GigabitEthernet4/1",
         " switchport",
