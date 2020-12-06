@@ -114,7 +114,7 @@ _RGX_IPV4ADDR_NETMASK = re.compile(
 _RGX_CISCO_RANGE = re.compile(_CISCO_RANGE_STR)
 
 
-def is_valid_ipv4_addr(input=""):
+def is_valid_ipv4_addr(input_str=""):
     """Check if this is a valid IPv4 string.
 
     Returns
@@ -122,13 +122,13 @@ def is_valid_ipv4_addr(input=""):
     bool
         A boolean indicating whether this is a valid IPv4 string
     """
-    assert input != ""
-    if _RGX_IPV4ADDR.search(input):
+    assert input_str != ""
+    if _RGX_IPV4ADDR.search(input_str):
         return True
     return False
 
 
-def is_valid_ipv6_addr(input=""):
+def is_valid_ipv6_addr(input_str=""):
     """Check if this is a valid IPv6 string.
 
     Returns
@@ -136,8 +136,8 @@ def is_valid_ipv6_addr(input=""):
     bool
         A boolean indicating whether this is a valid IPv6 string
     """
-    assert input != ""
-    if _RGX_IPV6ADDR.search(input):
+    assert input_str != ""
+    if _RGX_IPV6ADDR.search(input_str):
         return True
     return False
 
@@ -1128,7 +1128,7 @@ class DNSResponse(object):
         A string containing the DNS record type to lookup
     result_str : str
         A string containing the DNS Response
-    input : str
+    input_str : str
         The DNS query string
     duration : float
         The query duration in seconds 
@@ -1139,7 +1139,7 @@ class DNSResponse(object):
         A string containing the DNS record type to lookup
     result_str : str
         A string containing the DNS Response
-    input : str
+    input_str : str
         The DNS query string
     has_error : bool
         Indicates the query resulted in an error when True
@@ -1155,10 +1155,10 @@ class DNSResponse(object):
     A :class:`~ccp_util.DNSResponse` instance
 """
 
-    def __init__(self, query_type="", result_str="", input="", duration=0.0):
+    def __init__(self, query_type="", result_str="", input_str="", duration=0.0):
         self.query_type = query_type
         self.result_str = result_str
-        self.input = input
+        self.input_str = input_str
         self.duration = duration  # Query duration in seconds
 
         self.has_error = False
@@ -1179,12 +1179,12 @@ class DNSResponse(object):
             )
 
 
-def dns_query(input="", query_type="", server="", timeout=2.0):
+def dns_query(input_str="", query_type="", server="", timeout=2.0):
     """A unified IPv4 & IPv6 DNS lookup interface; this is essentially just a wrapper around dnspython's API.  When you query a PTR record, you can use an IPv4 or IPv6 address (which will automatically be converted into an in-addr.arpa name.  This wrapper only supports a subset of DNS records: 'A', 'AAAA', 'CNAME', 'MX', 'NS', 'PTR', and 'TXT'
 
     Paremeters
     ----------
-    input : str
+    input_str : str
         A string containing the DNS record to lookup
     query_type : str
         A string containing the DNS record type (SOA not supported)
@@ -1216,8 +1216,8 @@ def dns_query(input="", query_type="", server="", timeout=2.0):
     assert query_type in valid_records
     assert server != ""
     assert float(timeout) > 0
-    assert input != ""
-    intput = input.strip()
+    assert input_str != ""
+    intput = input_str.strip()
     retval = set([])
     resolver = Resolver()
     resolver.server = [socket.gethostbyname(server)]
@@ -1226,93 +1226,93 @@ def dns_query(input="", query_type="", server="", timeout=2.0):
     start = time.time()
     if (query_type == "A") or (query_type == "AAAA"):
         try:
-            answer = resolver.query(input, query_type)
+            answer = resolver.query(input_str, query_type)
             duration = time.time() - start
             for result in answer:
                 response = DNSResponse(
                     query_type=query_type,
                     duration=duration,
-                    input=input,
+                    input_str=input_str,
                     result_str=str(result.address),
                 )
                 retval.add(response)
         except DNSException as e:
             duration = time.time() - start
             response = DNSResponse(
-                input=input, duration=duration, query_type=query_type
+                input_str=input_str, duration=duration, query_type=query_type
             )
             response.has_error = True
             response.error_str = e
             retval.add(response)
     elif query_type == "AXFR":
         """This is a hack: return text of zone transfer, instead of axfr objs"""
-        _zone = zone.from_xfr(query.xfr(server, input, lifetime=timeout))
+        _zone = zone.from_xfr(query.xfr(server, input_str, lifetime=timeout))
         return [_zone[node].to_text(node) for node in _zone.nodes.keys()]
     elif query_type == "CNAME":
         try:
-            answer = resolver.query(input, query_type)
+            answer = resolver.query(input_str, query_type)
             duration = time.time() - start
             for result in answer:
                 response = DNSResponse(
                     query_type=query_type,
                     duration=duration,
-                    input=input,
+                    input_str=input_str,
                     result_str=str(result.target),
                 )
                 retval.add(response)
         except DNSException as e:
             duration = time.time() - start
             response = DNSResponse(
-                input=input, duration=duration, query_type=query_type
+                input_str=input_str, duration=duration, query_type=query_type
             )
             response.has_error = True
             response.error_str = e
             retval.add(response)
     elif query_type == "MX":
         try:
-            answer = resolver.query(input, query_type)
+            answer = resolver.query(input_str, query_type)
             duration = time.time() - start
             for result in answer:
                 response = DNSResponse(
-                    query_type=query_type, input=input, result_str=str(result.target)
+                    query_type=query_type, input_str=input_str, result_str=str(result.target)
                 )
                 response.preference = int(result.preference)
                 retval.add(response)
         except DNSException as e:
             duration = time.time() - start
             response = DNSResponse(
-                input=input, duration=duration, query_type=query_type
+                input_str=input_str, duration=duration, query_type=query_type
             )
             response.has_error = True
             response.error_str = e
             retval.add(response)
     elif query_type == "NS":
         try:
-            answer = resolver.query(input, query_type)
+            answer = resolver.query(input_str, query_type)
             duration = time.time() - start
             for result in answer:
                 response = DNSResponse(
                     query_type=query_type,
                     duration=duration,
-                    input=input,
+                    input_str=input_str,
                     result_str=str(result.target),
                 )
                 retval.add(response)
         except DNSException as e:
             duration = time.time() - start
             response = DNSResponse(
-                input=input, duration=duration, query_type=query_type
+                input_str=input_str, duration=duration, query_type=query_type
             )
             response.has_error = True
             response.error_str = e
             retval.add(response)
     elif query_type == "PTR":
-        if is_valid_ipv4_addr(input) or is_valid_ipv6_addr(input):
-            inaddr = reversename.from_address(input)
-        elif "in-addr.arpa" in input.lower():
-            inaddr = input
+        if is_valid_ipv4_addr(input_str) or is_valid_ipv6_addr(input_str):
+            inaddr = reversename.from_address(input_str)
+        elif "in-addr.arpa" in input_str.lower():
+            inaddr = input_str
         else:
-            raise ValueError('Cannot query PTR record for "{0}"'.format(input))
+            raise ValueError('Cannot query PTR record for "{0}"'.format(input_str))
 
         try:
             answer = resolver.query(inaddr, query_type)
@@ -1321,34 +1321,34 @@ def dns_query(input="", query_type="", server="", timeout=2.0):
                 response = DNSResponse(
                     query_type=query_type,
                     duration=duration,
-                    input=inaddr,
+                    input_str=inaddr,
                     result_str=str(result.target),
                 )
                 retval.add(response)
         except DNSException as e:
             duration = time.time() - start
             response = DNSResponse(
-                input=input, duration=duration, query_type=query_type
+                input_str=input_str, duration=duration, query_type=query_type
             )
             response.has_error = True
             response.error_str = e
             retval.add(response)
     elif query_type == "TXT":
         try:
-            answer = resolver.query(input, query_type)
+            answer = resolver.query(input_str, query_type)
             duration = time.time() - start
             for result in answer:
                 response = DNSResponse(
                     query_type=query_type,
                     duration=duration,
-                    input=inaddr,
+                    input_str=inaddr,
                     result_str=str(result.strings),
                 )
                 retval.add(response)
         except DNSException as e:
             duration = time.time() - start
             response = DNSResponse(
-                input=input, duration=duration, query_type=query_type
+                input_str=input_str, duration=duration, query_type=query_type
             )
             response.has_error = True
             response.error_str = e
@@ -1356,7 +1356,7 @@ def dns_query(input="", query_type="", server="", timeout=2.0):
     return retval
 
 
-def dns_lookup(input, timeout=3, server=""):
+def dns_lookup(input_str, timeout=3, server=""):
     """Perform a simple DNS lookup, return results in a dictionary"""
     resolver = Resolver()
     resolver.timeout = float(timeout)
@@ -1364,21 +1364,21 @@ def dns_lookup(input, timeout=3, server=""):
     if server:
         resolver.nameservers = [server]
     try:
-        records = resolver.query(input, "A")
+        records = resolver.query(input_str, "A")
         return {
             "addrs": [ii.address for ii in records],
             "error": "",
-            "name": input,
+            "name": input_str,
         }
     except DNSException as e:
         return {
             "addrs": [],
             "error": repr(e),
-            "name": input,
+            "name": input_str,
         }
 
 
-def dns6_lookup(input, timeout=3, server=""):
+def dns6_lookup(input_str, timeout=3, server=""):
     """Perform a simple DNS lookup, return results in a dictionary"""
     resolver = Resolver()
     resolver.timeout = float(timeout)
@@ -1386,27 +1386,27 @@ def dns6_lookup(input, timeout=3, server=""):
     if server:
         resolver.nameservers = [server]
     try:
-        records = resolver.query(input, "AAAA")
+        records = resolver.query(input_str, "AAAA")
         return {
             "addrs": [ii.address for ii in records],
             "error": "",
-            "name": input,
+            "name": input_str,
         }
     except DNSException as e:
         return {
             "addrs": [],
             "error": repr(e),
-            "name": input,
+            "name": input_str,
         }
 
 
 _REVERSE_DNS_REGEX = re.compile(r"^\s*\d+\.\d+\.\d+\.\d+\s*$")
 
 
-def reverse_dns_lookup(input, timeout=3, server=""):
+def reverse_dns_lookup(input_str, timeout=3, server=""):
     """Perform a simple reverse DNS lookup, return results in a dictionary"""
-    assert _REVERSE_DNS_REGEX.search(input), "Invalid address format: '{0}'".format(
-        input
+    assert _REVERSE_DNS_REGEX.search(input_str), "Invalid address format: '{0}'".format(
+        input_str
     )
     resolver = Resolver()
     resolver.timeout = float(timeout)
@@ -1414,7 +1414,7 @@ def reverse_dns_lookup(input, timeout=3, server=""):
     if server:
         resolver.nameservers = [server]
     try:
-        tmp = input.strip().split(".")
+        tmp = input_str.strip().split(".")
         tmp.reverse()
         inaddr = ".".join(tmp) + ".in-addr.arpa"
         records = resolver.query(inaddr, "PTR")
@@ -1422,14 +1422,14 @@ def reverse_dns_lookup(input, timeout=3, server=""):
             "name": records[0].to_text(),
             "lookup": inaddr,
             "error": "",
-            "addr": input,
+            "addr": input_str,
         }
     except DNSException as e:
         return {
             "addrs": [],
             "lookup": inaddr,
             "error": repr(e),
-            "name": input,
+            "name": input_str,
         }
 
 
@@ -1592,34 +1592,34 @@ class CiscoRange(MutableSequence):
         prefix_str = self.line_prefix + self.slot_prefix
 
         # Build a list of integers (without prefix_str)
-        input = list()
+        input_str = list()
         for ii in self._list:
             try:
                 unicode_ii = str(ii, "utf-8")  # Python2.7...
             except:
                 unicode_ii = str(ii)
             ii = re.sub(r"^{0}(\d+)$".format(prefix_str), "\g<1>", unicode_ii)
-            input.append(int(ii))
+            input_str.append(int(ii))
 
-        if len(input) == 0:  # Special case, handle empty list
+        if len(input_str) == 0:  # Special case, handle empty list
             return ""
 
         # source - https://stackoverflow.com/a/51227915/667301
-        input = sorted(list(set(input)))
-        range_list = [input[0]]
-        for ii in range(len(input)):
-            if ii + 1 < len(input) and ii - 1 > -1:
-                if (input[ii] - input[ii - 1] == 1) and (
-                    input[ii + 1] - input[ii] == 1
+        input_str = sorted(list(set(input_str)))
+        range_list = [input_str[0]]
+        for ii in range(len(input_str)):
+            if ii + 1 < len(input_str) and ii - 1 > -1:
+                if (input_str[ii] - input_str[ii - 1] == 1) and (
+                    input_str[ii + 1] - input_str[ii] == 1
                 ):
                     if range_list[-1] != "-":
                         range_list += ["-"]
                     else:
                         range_list = range_list
                 else:
-                    range_list += [input[ii]]
-        if len(input) > 1:
-            range_list += [input[len(input) - 1]]
+                    range_list += [input_str[ii]]
+        if len(input_str) > 1:
+            range_list += [input_str[len(input_str) - 1]]
 
         # Build the return value from range_list...
         retval = prefix_str + str(range_list[0])

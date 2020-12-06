@@ -19,14 +19,14 @@ Move ports from an 'old' switch to a new switch:
     output a new switch config
 """
 
-def parse_args(input=""):
-    """Parse CLI arguments, or parse args from the input variable"""
+def parse_args(input_str=""):
+    """Parse CLI arguments, or parse args from the input_str variable"""
 
-    ## input is useful if you don't want to parse args from the shell
-    if input!="":
+    ## input_str is useful if you don't want to parse args from the shell
+    if input_str!="":
         # Example: parse_args("create -f this.txt -b")
-        sys.argv = [input]   # sys.argv[0] is always the whole list of args
-        sys.argv.extend(shlex.split(input))   # shlex adds the rest of argv
+        sys.argv = [input_str]   # sys.argv[0] is always the whole list of args
+        sys.argv.extend(shlex.split(input_str))   # shlex adds the rest of argv
 
     parser = ArgumentParser(prog=os.path.basename(__file__), 
         description='Move ports in a new switch configuration', add_help=True)

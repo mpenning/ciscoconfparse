@@ -462,13 +462,13 @@ class CiscoConfParse(object):
             )
         )
 
-        def parse_line_braces(input):
-            assert input is not None
+        def parse_line_braces(input_str):
+            assert input_str is not None
             indent_child = 0
             indent_this_line = 0
 
-            mm = LINE_RE.search(input.strip())
-            nn = COMMENT_RE.search(input.strip())
+            mm = LINE_RE.search(input_str.strip())
+            nn = COMMENT_RE.search(input_str.strip())
 
             if nn is not None:
                 results = nn.groupdict()
@@ -560,10 +560,10 @@ class CiscoConfParse(object):
                     return (indent_this_line, indent_child, "")
 
                 else:
-                    raise ValueError('Cannot parse junos match:"{0}"'.format(input))
+                    raise ValueError('Cannot parse junos match:"{0}"'.format(input_str))
 
             else:
-                raise ValueError('Cannot parse junos:"{0}"'.format(input))
+                raise ValueError('Cannot parse junos:"{0}"'.format(input_str))
 
         lines = list()
         offset = 0
