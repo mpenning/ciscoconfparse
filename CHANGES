@@ -1,3 +1,4 @@
+1.5.22  20201127 Fix Github issue #186 (replace variables named input)
 1.5.21  20201127 Fix Github issue #187
 1.5.20  20201127 Fix Github issue #185
 1.5.19  20200722 Add __ne__() support to IPv4Obj and IPv6Obj
