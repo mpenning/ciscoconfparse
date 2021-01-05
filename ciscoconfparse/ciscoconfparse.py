@@ -58,6 +58,7 @@ from ciscoconfparse.models_junos import JunosCfgLine
 
 from ciscoconfparse.ccp_util import junos_unsupported, UnsupportedFeatureWarning
 
+
 r""" ciscoconfparse.py - Parse, Query, Build, and Modify IOS-style configs
      Copyright (C) 2007-2020 David Michael Pennington
 
@@ -578,7 +579,7 @@ class CiscoConfParse(object):
             offset += indent_child
         return lines
 
-    def find_object_branches(self, branchspec=(), regex_flags=0):
+    def find_object_branches(self, branchspec=(), regex_flags=0, allow_none=True):
         """This method iterates over a tuple of regular expressions in `branchspec` and returns the matching objects in a list of lists (consider it similar to a table of matching config objects). `branchspec` expects to start at some ancestor and walk through the nested object hierarchy (with no limit on depth).
 
         Previous CiscoConfParse() methods only handled a single parent regex and single child regex (such as :func:`~ciscoconfparse.CiscoConfParse.find_parents_w_child`).
@@ -593,6 +594,8 @@ class CiscoConfParse(object):
             A tuple of python regular expressions to be matched.
         regex_flags :
             Chained regular expression flags, such as `re.IGNORECASE|re.MULTILINE`
+        allow_none :
+            Set False if you don't want an explicit `None` for missing branch elements (default is allow_none=True)
 
         Returns
         -------
@@ -701,8 +704,11 @@ class CiscoConfParse(object):
                 next_kids = list_matching_children(
                     parent_obj=None, childspec=childspec, regex_flags=regex_flags
                 )
-                # Start growing branches from the segments we received...
-                branches = [[kid] for kid in next_kids]
+                if (allow_none is True):
+                    # Start growing branches from the segments we received...
+                    branches = [[kid] for kid in next_kids]
+                else:
+                    branches = [[kid] for kid in next_kids if kid is not None]
 
             else:
                 new_branches = list()
@@ -723,7 +729,7 @@ class CiscoConfParse(object):
                             tmp = copy.copy(branch)
                             tmp.append(kid)
                             new_branches.append(tmp)
-                    else:
+                    elif allow_none is True:
                         branch.append(None)
                         new_branches.append(branch)
 
