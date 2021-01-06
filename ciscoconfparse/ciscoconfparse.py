@@ -667,7 +667,7 @@ class CiscoConfParse(object):
         ), "find_object_branches(): Please enclose the regular expressions in a Python tuple"
         assert branchspec != (), "find_object_branches(): branchspec must not be empty"
 
-        def list_matching_children(parent_obj, childspec, regex_flags):
+        def list_matching_children(parent_obj, childspec, regex_flags, allow_none=True):
             ## I'm not using parent_obj.re_search_children() because
             ## re_search_children() doesn't return None for no match...
 
@@ -687,7 +687,7 @@ class CiscoConfParse(object):
                 if re.search(childspec, cobj.text, regex_flags)
             ]
             # Return [None] if no children matched...
-            if len(segment_list) == 0:
+            if (allow_none is True) and len(segment_list) == 0:
                 segment_list = [None]
 
             # FIXME: Insert debugging here...
@@ -702,7 +702,7 @@ class CiscoConfParse(object):
             if idx == 0:
                 # Get matching 'root' objects from the config
                 next_kids = list_matching_children(
-                    parent_obj=None, childspec=childspec, regex_flags=regex_flags
+                    parent_obj=None, childspec=childspec, regex_flags=regex_flags, allow_none=allow_none
                 )
                 if (allow_none is True):
                     # Start growing branches from the segments we received...
@@ -720,6 +720,7 @@ class CiscoConfParse(object):
                             parent_obj=branch[-1],
                             childspec=childspec,
                             regex_flags=regex_flags,
+                            allow_none = allow_none
                         )
 
                         for kid in next_kids:
