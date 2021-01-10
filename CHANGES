@@ -1,4 +1,4 @@
-1.5.23  20210106 Fix Github Issue #178
+1.5.24  20210106 Fix Github Issue #178
 1.5.23  20210105 Prevent find_object_branches() from using None
 1.5.22  20201127 Fix Github issue #186 (replace variables named input)
 1.5.21  20201127 Fix Github issue #187
