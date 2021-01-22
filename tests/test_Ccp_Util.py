@@ -99,13 +99,13 @@ def testL4Object_asa_eq02():
 def testL4Object_asa_range01():
     pp = L4Object(protocol="tcp", port_spec="range smtp 32", syntax="asa")
     assert pp.protocol == "tcp"
-    assert pp.port_list == range(25, 33)
+    assert pp.port_list == list(range(25, 33))
 
 
 def testL4Object_asa_lt01():
     pp = L4Object(protocol="tcp", port_spec="lt echo", syntax="asa")
     assert pp.protocol == "tcp"
-    assert pp.port_list == range(1, 7)
+    assert pp.port_list == list(range(1, 7))
 
 
 @pytest.mark.xfail(
@@ -115,7 +115,7 @@ def testL4Object_asa_lt01():
 def testL4Object_asa_lt02():
     pp = L4Object(protocol="tcp", port_spec="lt 7", syntax="asa")
     assert pp.protocol == "tcp"
-    assert pp.port_list == range(1, 7)
+    assert pp.port_list == list(range(1, 7))
 
 
 def testIPv4Obj_contain():
