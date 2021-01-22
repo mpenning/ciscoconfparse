@@ -1,7 +1,10 @@
 from operator import attrgetter
 from itertools import repeat
 from copy import deepcopy
-from mock import patch
+try:
+    from unittest.mock import patch
+except ImportError:
+    from mock import patch
 import platform
 import sys
 import re
