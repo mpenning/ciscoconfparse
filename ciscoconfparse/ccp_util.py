@@ -1071,7 +1071,7 @@ class L4Object(object):
     >>> obj
     <L4Object tcp ports: 22-25>
     >>> obj.protocol
-    "tcp"
+    'tcp'
     >>> 25 in obj.port_list
     True
     >>>
@@ -1118,7 +1118,7 @@ class L4Object(object):
         elif "lt " in port_spec.strip():
             port_tmp = re.split("\s+", port_spec)[-1]
             high_port = int(ports.get(port_tmp, port_tmp))
-            assert 65535 >= high_port >= 2
+            assert 65536 >= high_port >= 2
             self.port_list = sorted(range(1, high_port))
         elif "gt " in port_spec.strip():
             port_tmp = re.split("\s+", port_spec)[-1]
@@ -1614,17 +1614,27 @@ class CiscoRange(MutableSequence):
 >>>
         """
         retval = list()
-        prefix_str = self.line_prefix + self.slot_prefix
+        prefix_str = self.line_prefix.strip() + self.slot_prefix.strip()
+        prefix_str_len = len(prefix_str)
 
         # Build a list of integers (without prefix_str)
         input_str = list()
         for ii in self._list:
-            try:
-                unicode_ii = str(ii, "utf-8")  # Python2.7...
-            except:
+            # Removed try / except which is slower than sys.version_info
+            if sys.version_info < (3, 0, 0):
+                unicode_ii = unicode(str(ii))  # Python2.7...
+            else:
                 unicode_ii = str(ii)
-            ii = re.sub(r"^{0}(\d+)$".format(prefix_str), "\g<1>", unicode_ii)
-            input_str.append(int(ii))
+
+            # Removed this in version 1.5.27 because it's so slow...
+            #trailing_digits = re.sub(r"^{0}(\d+)$".format(prefix_str), "\g<1>", unicode_ii)
+
+            complete_len = len(unicode_ii)
+            # Assign ii to the trailing number after prefix_str...
+            #    this is much faster than regexp processing...
+            trailing_digits_len = complete_len - prefix_str_len
+            trailing_digits = unicode_ii[-1*trailing_digits_len:]
+            input_str.append(int(trailing_digits))
 
         if len(input_str) == 0:  # Special case, handle empty list
             return ""
