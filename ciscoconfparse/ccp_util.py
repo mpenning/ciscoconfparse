@@ -25,7 +25,7 @@ if sys.version_info[0] < 3:
 else:
     from ipaddress import IPv4Network, IPv6Network, IPv4Address, IPv6Address
 """ ccp_util.py - Parse, Query, Build, and Modify IOS-style configurations
-     Copyright (C) 2014-2015, 2018-2020 David Michael Pennington
+     Copyright (C) 2014-2015, 2018-2021 David Michael Pennington
 
      This program is free software: you can redistribute it and/or modify
      it under the terms of the GNU General Public License as published by
@@ -1069,7 +1069,7 @@ class L4Object(object):
     >>> from ciscoconfparse.ccp_util import L4Object
     >>> obj = L4Object(protocol="tcp", port_spec="range ssh smtp", syntax="asa")
     >>> obj
-    <L4Object tcp [22, 23, 24, 25]>
+    <L4Object tcp ports: 22-25>
     >>> obj.protocol
     "tcp"
     >>> 25 in obj.port_list
@@ -1139,7 +1139,9 @@ class L4Object(object):
         return False
 
     def __repr__(self):
-        return "<L4Object {0} {1}>".format(self.protocol, self.port_list)
+        crobj = CiscoRange()
+        crobj._list = self.port_list
+        return "<L4Object {0} ports: {1}>".format(self.protocol, crobj.compressed_str)
 
 
 class DNSResponse(object):
