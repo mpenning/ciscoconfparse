@@ -1062,7 +1062,20 @@ class IPv6Obj(object):
 
 
 class L4Object(object):
-    """Object for Transport-layer protocols; the object ensures that logical operators (such as le, gt, eq, and ne) are parsed correctly, as well as mapping service names to port numbers"""
+    """Object for Transport-layer protocols; the object ensures that logical operators (such as le, gt, eq, and ne) are parsed correctly, as well as mapping service names to port numbers
+    
+    Examples
+    --------
+    >>> from ciscoconfparse.ccp_util import L4Object
+    >>> obj = L4Object(protocol="tcp", port_spec="range ssh smtp", syntax="asa")
+    >>> obj
+    <L4Object tcp [22, 23, 24, 25]>
+    >>> obj.protocol
+    "tcp"
+    >>> 25 in obj.port_list
+    True
+    >>>
+    """
 
     def __init__(self, protocol="", port_spec="", syntax=""):
         self.protocol = protocol
@@ -1086,29 +1099,39 @@ class L4Object(object):
         else:
             raise NotImplementedError("This syntax is unknown: '{0}'".format(syntax))
 
-        if "eq " in port_spec:
-            port_str = re.split("\s+", port_spec)[-1]
-            self.port_list = [int(ports.get(port_str, port_str))]
-        elif re.search(r"^\S+$", port_spec):
+        if "eq " in port_spec.strip():
+            port_tmp = re.split("\s+", port_spec)[-1].strip()
+            eq_port = int(ports.get(port_tmp, port_tmp))
+            assert 1 <= eq_port <= 65535
+            self.port_list = [eq_port]
+        elif re.search(r"^\S+$", port_spec.strip()):
             # Technically, 'eq ' is optional...
-            self.port_list = [int(ports.get(port_spec, port_spec))]
-        elif "range " in port_spec:
+            eq_port = int(ports.get(port_spec.strip(), port_spec.strip()))
+            assert 1 <= eq_port <= 65535
+            self.port_list = [eq_port]
+        elif "range " in port_spec.strip():
             port_tmp = re.split("\s+", port_spec)[1:]
-            self.port_list = range(
-                int(ports.get(port_tmp[0], port_tmp[0])),
-                int(ports.get(port_tmp[1], port_tmp[1])) + 1,
-            )
-        elif "lt " in port_spec:
+            low_port = int(ports.get(port_tmp[0], port_tmp[0]))
+            high_port = int(ports.get(port_tmp[1], port_tmp[1]))
+            assert low_port <= high_port
+            self.port_list = sorted(range(low_port, high_port+1))
+        elif "lt " in port_spec.strip():
+            port_tmp = re.split("\s+", port_spec)[-1]
+            high_port = int(ports.get(port_tmp, port_tmp))
+            assert 65535 >= high_port >= 2
+            self.port_list = sorted(range(1, high_port))
+        elif "gt " in port_spec.strip():
+            port_tmp = re.split("\s+", port_spec)[-1]
+            low_port = int(ports.get(port_tmp, port_tmp))
+            assert 0 < low_port < 65535
+            self.port_list = sorted(range(low_port+1, 65536))
+        elif "neq " in port_spec.strip():
             port_str = re.split("\s+", port_spec)[-1]
-            self.port_list = range(1, int(ports.get(port_str, port_str)))
-        elif "gt " in port_spec:
-            port_str = re.split("\s+", port_spec)[-1]
-            self.port_list = range(int(ports.get(port_str, port_str)) + 1, 65535)
-        elif "neq " in port_spec:
-            port_str = re.split("\s+", port_spec)[-1]
-            tmp = set(range(1, 65535))
+            tmp = set(range(1, 65536))
             tmp.remove(int(port_str))
             self.port_list = sorted(tmp)
+        else:
+            raise NotImplementedError("This port_spec is unknown: '{0}'".format(port_spec))
 
     def __eq__(self, val):
         if (self.protocol == val.protocol) and (self.port_list == val.port_list):
