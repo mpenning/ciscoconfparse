@@ -1,3 +1,4 @@
+1.5.28  20210123 Enhance ccp_util.CiscoRange() to parse a wider variety of string inputs
 1.5.27  20210123 Remove slow code from ccp_util.CiscoRange()
 1.5.26  20210123 Make ccp_util.L4Object().__repr__() more friendly
 1.5.25  20210123 Fix Github Issue #195, merge PR #194, fix multiple unreported bugs in ccp_util.L4Object()

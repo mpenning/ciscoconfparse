@@ -1542,12 +1542,47 @@ class CiscoRange(MutableSequence):
         self.insert(list_idx, val)
         return self
 
-    def _parse_range_text(self):
+    def _normalize_and_split_text(self):
+        """Split self.text on commas, then remove all common string prefixes in the list (except on the first element).  Return a 'normalized' list of strings with common_prefix removed except on the first element in the list (i.e. "Eth1/1,Eth1/4,Eth1/7" -> ["Eth1/1", "4", "7"])."""
         tmp = self.text.split(",")
+
+        # Handle case of "Eth1/1,Eth1/5-7"... remove the common_prefix...
+        common_prefix = os.path.commonprefix(tmp)
+
+        # Ensure that we don't capture trailing digits into common_prefix
+        mm = re.search(r"^(\D.*?)\d*$", common_prefix.strip())
+        if mm is not None:
+            common_prefix = mm.group(1)
+            # Keep the common_prefix on the first element...
+            _tmp = [tmp[0]]
+
+            # Remove the common_prefix from all other list elements...
+            for idx, ii in enumerate(tmp):
+                if idx > 0:
+
+                    # Unicode is the only type with .isnumeric()...
+                    if sys.version_info < (3, 0, 0):
+                        prefix_removed = unicode(ii[len(common_prefix):], "utf-8")
+                    else:
+                        prefix_removed = ii[len(common_prefix):]
+
+                    if prefix_removed.isnumeric():
+                        _tmp.append(prefix_removed)
+                    elif re.search(r"^\d+\s*-\s*\d+$", prefix_removed.strip()):
+                        _tmp.append(prefix_removed)
+                    else:
+                        ERROR = "CiscoRange() couldn't parse '{0}'".format(self.text)
+                        raise ValueError(ERROR)
+            tmp = _tmp
+        return tmp
+
+    def _parse_range_text(self):
+        tmp = self._normalize_and_split_text()
+
         mm = _RGX_CISCO_RANGE.search(tmp[0])
 
         ERROR = "CiscoRange() couldn't parse '{0}'".format(self.text)
-        assert not (mm is None), ERROR
+        assert (mm is not None), ERROR
 
         mm_result = mm.groupdict()
         line_prefix = mm_result.get("line_prefix", "") or ""
