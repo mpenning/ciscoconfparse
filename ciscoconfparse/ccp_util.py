@@ -398,23 +398,17 @@ class IPv4Obj(object):
 
     def __int__(self):
         """Return this object as an integer"""
-        for obj in [self, val]:
-            try:
-                assert getattr(obj, "as_decimal", None) is not None
-            except AssertionError:
-                return False
-
-        return self.as_decimal
+        if getattr(self, "as_decimal", None) is not None:
+            return self.as_decimal
+        else:
+            return False
 
     def __index__(self):
         """Return this object as an integer (used for hex() and bin() operations)"""
-        for obj in [self, val]:
-            try:
-                assert getattr(obj, "as_decimal", None) is not None
-            except AssertionError:
-                return False
-
-        return self.as_decimal
+        if getattr(self, "as_decimal", None) is not None:
+            return self.as_decimal
+        else:
+            return False
 
     def __add__(self, val):
         """Add an integer to IPv4Obj() and return an IPv4Obj()"""
@@ -825,11 +819,17 @@ class IPv6Obj(object):
 
     def __int__(self):
         """Return this object as an integer"""
-        return self.as_decimal
+        if getattr(self, "as_decimal", None) is not None:
+            return self.as_decimal
+        else:
+            return False
 
     def __index__(self):
         """Return this object as an integer (used for hex() and bin() operations)"""
-        return self.as_decimal
+        if getattr(self, "as_decimal", None) is not None:
+            return self.as_decimal
+        else:
+            return False
 
     def __add__(self, val):
         """Add an integer to IPv6Obj() and return an IPv6Obj()"""
