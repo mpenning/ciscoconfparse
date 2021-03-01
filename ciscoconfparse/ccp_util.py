@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from operator import attrgetter
 from colorama import Fore
 import itertools
 import warnings
@@ -46,6 +47,39 @@ else:
 
 class UnsupportedFeatureWarning(SyntaxWarning):
     pass
+
+def as_text_list(object_list):
+    """This is a helper-function to convert a list of configuration objects into a list of text config lines.
+
+        Examples
+        --------
+
+        >>> from ciscoconfparse.ccp_util import as_text_list
+        >>> from ciscoconfparse import CiscoConfParse
+        >>> 
+        >>> config = [
+        ... 'interface GigabitEthernet1/13',
+        ... '  ip address 192.0.2.1/30',
+        ... '  vrf member ThisRestrictedVrf',
+        ... '  no ip redirects',
+        ... '  no ipv6 redirects',
+        ... ]
+        >>> parse = CiscoConfParse(config)
+        >>> interface_object = parse.find_objects("^interface")[0]
+        >>> interface_config_objects = interface_object.all_children
+        >>> interface_config_objects
+        [<IOSCfgLine # 1 '  ip address 192.0.2.1/30' (parent is # 0)>, <IOSCfgLine # 2 '  vrf member ThisRestrictedVrf' (parent is # 0)>, <IOSCfgLine # 3 '  no ip redirects' (parent is # 0)>, <IOSCfgLine # 4 '  no ipv6 redirects' (parent is # 0)>]
+        >>>
+        >>> as_text_list(interface_config_objects)
+        ['  ip address 192.0.2.1/30', '  vrf member ThisRestrictedVrf', '  no ip redirects', '  no ipv6 redirects']
+        >>>
+
+    """
+    assert isinstance(object_list, list) or isinstance(object_list, tuple)
+    for obj in object_list:
+        assert isinstance(obj.linenum, int)
+        assert isinstance(obj.text, str)
+    return list(map(attrgetter("text"), object_list))
 
 def junos_unsupported(func):
     """A function wrapper to warn junos users of unsupported features"""
