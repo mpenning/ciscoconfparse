@@ -60,7 +60,7 @@ from ciscoconfparse.ccp_util import junos_unsupported, UnsupportedFeatureWarning
 
 
 r""" ciscoconfparse.py - Parse, Query, Build, and Modify IOS-style configs
-     Copyright (C) 2007-2020 David Michael Pennington
+     Copyright (C) 2007-2021 David Michael Pennington
 
      This program is free software: you can redistribute it and/or modify
      it under the terms of the GNU General Public License as published by
@@ -1983,7 +1983,10 @@ class CiscoConfParse(object):
         matches linespec, and delete the object"""
         objs = self.find_objects(linespec, exactmatch, ignore_ws)
         for obj in reversed(objs):
-            del self.ConfigObjs[obj.linenum]
+            # NOTE - 'del self.ConfigObjs...' was replaced in version 1.5.30
+            #    with a simpler approach
+            # del self.ConfigObjs[obj.linenum]
+            obj.delete()
 
     def prepend_line(self, linespec):
         """Unconditionally insert an :class:`~models_cisco.IOSCfgLine` object
