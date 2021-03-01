@@ -187,7 +187,14 @@ class BaseCfgLine(object):
     def _list_reassign_linenums(self):
         # Call this when I want to reparse everything
         #     (which is very slow)
-        self.confobj._reassign_linenums()
+
+        # NOTE - 1.5.30 removed this method (which was only called 
+        #     by confobj.delete()) in favor of a simpler approach
+        #     in confobj.delete()
+        #
+        # def _list_reassign_linenums(self):
+        #     self.confobj._reassign_linenums()
+        raise NotImplementedError()
 
     @junos_unsupported
     def add_parent(self, parentobj):
@@ -225,7 +232,10 @@ class BaseCfgLine(object):
         """Delete this object.  By default, if a parent object is deleted, the child objects are also deleted; this happens because ``recurse`` defaults True.
         """
         if recurse:
-            for child in self.children:
+            # NOTE - 1.5.30 changed this from iterating over self.children
+            #        to self.all_children
+            #for child in self.children:
+            for child in sorted(self.all_children, reverse=True):
                 child.delete()
 
         ## Consistency check to refuse deletion of the wrong object...
@@ -234,7 +244,17 @@ class BaseCfgLine(object):
         linenum = self.linenum
         if self.confobj._list[self.linenum].text == text:
             del self.confobj._list[self.linenum]
-            self._list_reassign_linenums()
+
+            # renumber remaining objects after this deletion...
+            #
+            # NOTE 1.5.30 removed self._list_reassign_linenums() to speed up
+            #     obj.delete() behavior... instead we just iterate through
+            #     the list of remaining objects and renumber them
+            # 
+            #self._list_reassign_linenums()
+            for obj in self.confobj._list[self.linenum:]:
+                obj.linenum = linenum
+                linenum += 1
 
     @junos_unsupported
     def delete_children_matching(self, linespec):
@@ -300,14 +320,16 @@ class BaseCfgLine(object):
 
     @junos_unsupported
     def insert_before(self, insertstr):
-        """insert_before()"""
+        """Usage:
+            confobj.insert_before('! insert text before this confobj')"""
         ## BaseCfgLine.insert_before(), insert a single line before this object
         retval = self.confobj.insert_before(self, insertstr, atomic=False)
         return retval
 
     @junos_unsupported
     def insert_after(self, insertstr):
-        """insert_after()"""
+        """Usage:
+            confobj.insert_after('! insert text after this confobj')"""
         ## BaseCfgLine.insert_after(), insert a single line after this object
         retval = self.confobj.insert_after(self, insertstr, atomic=False)
         return retval
@@ -358,6 +380,8 @@ class BaseCfgLine(object):
            >>>
            >>> for obj in parse.find_objects(r'^interface'):
            ...     obj.append_to_family(' carrier-delay msec 500')
+           ...
+           >>> parse.commit()
            >>>
            >>> for line in parse.ioscfg:
            ...     print(line)
