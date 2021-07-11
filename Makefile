@@ -2,6 +2,7 @@ PY27DEVTESTS=cd tests;find ./* -name 'test_*.py' -exec /opt/virtual_env/py27_tes
 PY34DEVTESTS=cd tests;find ./* -name 'test_*.py' -exec /opt/virtual_env/py34_test/bin/py.test -s {} \;
 BITBUCKETPUSH = $(shell bash -c 'read -s -p "Bitbucket Password: " pwd; hg push "https://mpenning:$$pwd@bitbucket.org/mpenning/ciscoconfparse"')
 DOCHOST ?= $(shell bash -c 'read -p "documentation host: " dochost; echo $$dochost')
+VERSION := $(shell python -c "import json;v_dict=json.loads(open('ciscoconfparse/version.json').read());print('v'+v_dict.get('version'))")
 
 .PHONY: package
 package:
@@ -20,7 +21,9 @@ repo-push:
 	-hg bookmark -f master
 	-hg push ssh://hg@bitbucket.org/mpenning/ciscoconfparse
 	-hg push git+ssh://git@github.com:mpenning/ciscoconfparse.git
+	git tag -a ${VERSION} -m "Tag with ${VERSION}"
 	git push git@github.com:mpenning/ciscoconfparse.git
+	git push origin ${VERSION}
 .PHONY: tutorial
 tutorial:
 	rst2html5 --jquery --reveal-js --pretty-print-code --embed-stylesheet --embed-content --embed-images tutorial/ccp_tutorial.rst > tutorial/ccp_tutorial.html
