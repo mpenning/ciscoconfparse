@@ -102,6 +102,7 @@ CiscoConfParse understands these configurations too:
 - Juniper Networks Junos, and Screenos
 - Palo Alto Networks Firewall configurations
 - F5 Networks configurations
+- Terraform .tf files
 
 Quotes
 ------
