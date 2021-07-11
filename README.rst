@@ -90,11 +90,12 @@ Don't let that stop you.
 
 As of CiscoConfParse 1.2.4, you can parse `brace-delimited configurations`_ 
 into a Cisco IOS style (see `Github Issue #17`_), which means that 
-CiscoConfParse understands these configurations:
+CiscoConfParse can parse these configurations:
 
 - Juniper Networks Junos
 - Palo Alto Networks Firewall configurations
 - F5 Networks configurations
+- Terraform .tf files
 
 CiscoConfParse also handles anything that has a Cisco IOS style of configuration, which includes:
 
