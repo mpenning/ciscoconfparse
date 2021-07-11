@@ -1,3 +1,4 @@
+1.5.36  20210711 Rework git remote (i.e. origin) logic
 1.5.35  20210711 Fix git tags in Makefile
 1.5.30  20210301 Add a helper-function: as_text_list(); improve performance of .delete()
 1.5.29  20210128 Fix __int__() and __index__() on IPv4Obj() and IPv6Obj()

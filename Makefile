@@ -21,6 +21,8 @@ repo-push:
 	-hg bookmark -f master
 	-hg push ssh://hg@bitbucket.org/mpenning/ciscoconfparse
 	-hg push git+ssh://git@github.com:mpenning/ciscoconfparse.git
+	git remote remove origin
+	git remote add origin "git@github.com:mpenning/ciscoconfparse" 
 	git tag -a ${VERSION} -m "Tag with ${VERSION}"
 	git push git@github.com:mpenning/ciscoconfparse.git
 	git push origin ${VERSION}
