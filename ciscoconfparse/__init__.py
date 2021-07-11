@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from ciscoconfparse.ciscoconfparse import *
+from ciscoconfparse.ccp_util import *
 
 """ __init__.py - Parse, Query, Build, and Modify IOS-style configurations
      Copyright (C) 2007-2021 David Michael Pennington
