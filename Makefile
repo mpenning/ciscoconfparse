@@ -16,8 +16,8 @@ pypi:
 	twine upload dist/*
 .PHONY: repo-push
 repo-push:
-	cp .hgrc .hg/
-	hg bookmark -f master
+	-cp .hgrc .hg/
+	-hg bookmark -f master
 	-hg push ssh://hg@bitbucket.org/mpenning/ciscoconfparse
 	-hg push git+ssh://git@github.com:mpenning/ciscoconfparse.git
 	git push git@github.com:mpenning/ciscoconfparse.git
