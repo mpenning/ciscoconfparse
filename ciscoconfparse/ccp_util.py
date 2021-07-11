@@ -584,6 +584,11 @@ class IPv4Obj(object):
         return self.network_object.hostmask
 
     @property
+    def inverse_netmask(self):
+        """Returns the host mask as an :class:`ipaddress.IPv4Address` object."""
+        return self.network_object.hostmask
+
+    @property
     def version(self):
         """Returns the IP version of the object as an integer.  i.e. 4"""
         return 4
@@ -1006,6 +1011,11 @@ class IPv6Obj(object):
     @property
     def hostmask(self):
         """Returns the host mask as an :class:`ipaddress.IPv6Address` object."""
+        return self.network_object.hostmask
+
+    @property
+    def inverse_netmask(self):
+        """Returns the host mask as an :class:`ipaddress.IPv4Address` object."""
         return self.network_object.hostmask
 
     @property
