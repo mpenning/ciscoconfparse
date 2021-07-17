@@ -25,25 +25,30 @@ EXTRAS = {
     ":python_version<'3'": ["ipaddr>=2.1.11"],
 }
 
-def version_json_path():
+def metadata_json_path():
+    """Return the PATH to metadata.json as a python string"""
     base_path = os.path.dirname(os.path.abspath(__file__))
     for current_path, directories, files in os.walk(base_path):
         for filename in files:
-            if filename=="version.json":
-                return os.path.join(current_path, "version.json")
-    raise OSError("version.json not found")
+            if filename=="metadata.json":
+                return os.path.join(current_path, "metadata.json")
+    raise OSError("metadata.json not found")
+
+def get_metadata(attr_name):
+    """Open metadata.json and return attr_name (as a python string)"""
+    return json.loads(open(metadata_json_path()).read()).get(attr_name),
 
 ## Setup ciscoconfparse
 setup(
-    name="ciscoconfparse",
-    version=json.loads(open(version_json_path()).read()).get("version"),
-    description="Parse, Audit, Query, Build, and Modify Cisco IOS-style configurations",
-    url="http://www.pennington.net/py/ciscoconfparse/",
-    author="David Michael Pennington",
-    author_email="mike@pennington.net",
-    license="GPLv3",
-    platforms="any",
-    keywords="Parse audit query modify Cisco IOS configuration",
+    name=get_metadata("name"),
+    version=get_metadata("version")
+    description=get_metadata("description")
+    url=get_metadata("url")
+    author=get_metadata("author")
+    author_email=get_metadata("author_email")
+    license=get_metadata("license")
+    platforms=get_metadata("platforms")
+    keywords=get_metadata("keywords")
     entry_points="",
     long_description=read("README.rst"),
     include_package_data=True,  # See MANIFEST.in for explicit rules

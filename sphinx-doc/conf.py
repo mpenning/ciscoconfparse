@@ -147,9 +147,11 @@ pygments_style = "tango"
 
 # The theme to use for HTML and HTML Help pages.  Major themes that come with
 # Sphinx are currently 'default' and 'sphinxdoc'.
-if sys.modules.get("sphinx_bootstrap_theme", False):
-    html_theme = "bootstrap"
-    html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
+#if sys.modules.get("sphinx_bootstrap_theme", False):
+if sys.modules.get("sphinx_press_theme", False):
+    html_theme = "press"
+    #html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
+    html_theme_path = sphinx_press_theme.get_html_theme_path()
 else:
     html_theme = "default"
 
@@ -160,7 +162,7 @@ html_theme_options = {
     "navbar_title": "ciscoconfparse",
     "navbar_site_name": "ciscoconfparse",
     "globaltoc_depth": 2,
-    "bootswatch_theme": "united",
+    #"bootswatch_theme": "united",
 }
 
 # Add any paths that contain custom themes here, relative to this directory.

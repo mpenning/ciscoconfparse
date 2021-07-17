@@ -90,12 +90,13 @@ if os.path.isfile(metadata_json_path):
     with open(metadata_json_path) as mh:
         metadata_dict = json.load(mh)
         __author__ = metadata_dict.get("author")
+        __author_email__ = metadata_dict.get("author_email")
         __version__ = metadata_dict.get("version")
 else:
     # This case is required for importing from a zipfile... Github issue #123
     __version__ = "0.0.0"  # __version__ read failed
-__email__ = r"mike /at\ pennington [dot] net"
-__author__ = "David Michael Pennington <{0}>".format(__email__)
+__author_email__ = r"mike /at\ pennington [dot] net"
+__author__ = "David Michael Pennington <{0}>".format(__author_email__)
 __copyright__ = "2007-{0}, {1}".format(time.strftime("%Y"), __author__)
 __license__ = "GPLv3"
 __status__ = "Production"

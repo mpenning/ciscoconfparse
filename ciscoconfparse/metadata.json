@@ -1,5 +1,10 @@
 {
+    "name": "ciscoconfparse",
     "author": "David Michael Pennington",
     "author_email": "mike@pennington.net",
-    "version": "1.5.36"
+    "url": "http://www.pennington.net/py/ciscoconfparse/",
+    "license": "GPLv3",
+    "version": "1.5.36",
+    "platforms": "any",
+    "keywords": "Parse audit query modify Cisco IOS configuration"
 }
