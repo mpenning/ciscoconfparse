@@ -25,20 +25,21 @@ EXTRAS = {
     ":python_version<'3'": ["ipaddr>=2.1.11"],
 }
 
+
 def metadata_json_path():
     """Return the PATH to metadata.json as a python string"""
     base_path = os.path.dirname(os.path.abspath(__file__))
     for current_path, directories, files in os.walk(base_path):
         for filename in files:
-            if filename=="metadata.json":
+            if filename == "metadata.json":
                 return os.path.join(current_path, "metadata.json")
     raise OSError("metadata.json not found")
 
+
 def get_metadata(attr_name):
     """Open metadata.json and return attr_name (as a python string)"""
-    return json.loads(open(metadata_json_path()).read()).get(attr_name),
+    return (json.loads(open(metadata_json_path()).read()).get(attr_name),)
 
-print("FOO", get_metadata("version"))
 
 ## Setup ciscoconfparse
 setup(
