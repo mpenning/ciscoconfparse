@@ -76,6 +76,6 @@ setup(
         "Topic :: Internet",
         "Topic :: System :: Networking",
         "Topic :: System :: Networking :: Monitoring",
-        "Topic :: Software Development :: Libraries :: Python Modules",
+        #"Topic :: Software Development :: Libraries :: Python Modules",
     ],
 )
