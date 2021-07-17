@@ -1,4 +1,4 @@
-1.5.42  20210717 Roll version number and modify CHANGES
+1.5.43  20210717 Roll version number and modify CHANGES
 1.5.37  20210717 Rework version.json to metadata.json
 1.5.36  20210711 Rework git remote (i.e. origin) logic
 1.5.35  20210711 Fix git tags in Makefile
