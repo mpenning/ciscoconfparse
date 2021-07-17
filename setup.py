@@ -3,11 +3,23 @@
 ## Ref https://the-hitchhikers-guide-to-packaging.readthedocs.org/en/latest/
 ## Ref http://www.ibm.com/developerworks/library/os-pythonpackaging/
 
-from setuptools import setup, find_packages
+from setuptools import setup as _setup
+from setuptools import find_packages
 import json
 import sys
 import re
 import os
+
+from loguru import logger
+
+logger.add(
+    sys.stdout,
+    colorize=True,
+    diagnose = True,
+    backtrace = True,
+    level = "DEBUG",
+    format="<green>{time}</green> <level>{message}</level>",
+)
 
 CURRENT_PATH = os.path.join(os.path.dirname(__file__))
 sys.path.insert(1, CURRENT_PATH)
@@ -38,11 +50,16 @@ def metadata_json_path():
 
 def get_metadata(attr_name):
     """Open metadata.json and return attr_name (as a python string)"""
-    return (json.loads(open(metadata_json_path()).read()).get(attr_name),)
+    return json.loads(open(metadata_json_path()).read()).get(attr_name)
 
+@logger.catch(level="CRITICAL")
+def main(var=""):
+    return var
 
 ## Setup ciscoconfparse
-setup(
+main()
+
+_setup(
     name=get_metadata("name"),
     version=get_metadata("version"),
     description=get_metadata("description"),
@@ -50,8 +67,8 @@ setup(
     author=get_metadata("author"),
     author_email=get_metadata("author_email"),
     license=get_metadata("license"),
-    platforms=get_metadata("platforms"),
-    keywords=get_metadata("keywords"),
+    platforms=[get_metadata("platforms")],
+    keywords=[get_metadata("keywords")],
     entry_points="",
     long_description=read("README.rst"),
     include_package_data=True,  # See MANIFEST.in for explicit rules
@@ -76,6 +93,6 @@ setup(
         "Topic :: Internet",
         "Topic :: System :: Networking",
         "Topic :: System :: Networking :: Monitoring",
-        #"Topic :: Software Development :: Libraries :: Python Modules",
+        "Topic :: Software Development :: Libraries :: Python Modules",
     ],
 )
