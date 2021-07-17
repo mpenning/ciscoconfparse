@@ -5,6 +5,6 @@
     "url": "http://www.pennington.net/py/ciscoconfparse/",
     "license": "GPLv3",
     "version": "1.5.39",
-    "platforms": "any",
-    "keywords": "Parse audit query modify Cisco IOS configuration"
+    "platforms": ["any"],
+    "keywords": ["Parse", "audit", "query", "modify", "Cisco IOS", "configuration"]
 }
