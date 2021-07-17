@@ -82,14 +82,15 @@ r""" ciscoconfparse.py - Parse, Query, Build, and Modify IOS-style configs
 
 ## Docstring props: http://stackoverflow.com/a/1523456/667301
 # __version__ if-else below fixes Github issue #123
-version_json_path = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "version.json"
+metadata_json_path = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "metadata.json"
 )
-if os.path.isfile(version_json_path):
+if os.path.isfile(metadata_json_path):
     ## Retrieve the version number from json...
-    with open(version_json_path) as vh:
-        version_dict = json.load(vh)
-    __version__ = version_dict.get("version")
+    with open(metadata_json_path) as mh:
+        metadata_dict = json.load(mh)
+        __author__ = metadata_dict.get("author")
+        __version__ = metadata_dict.get("version")
 else:
     # This case is required for importing from a zipfile... Github issue #123
     __version__ = "0.0.0"  # __version__ read failed
