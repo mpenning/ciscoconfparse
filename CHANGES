@@ -1,4 +1,6 @@
-1.5.44  20210717 Roll version number and modify CHANGES
+1.5.46  20210717 More logging work... prepare for debugging overhaul
+1.5.45  20210717 Refine error logging in setup.py
+1.5.44  20210717 Fix get_metadata() returned value in setup.py
 1.5.37  20210717 Rework version.json to metadata.json
 1.5.36  20210711 Rework git remote (i.e. origin) logic
 1.5.35  20210711 Fix git tags in Makefile
