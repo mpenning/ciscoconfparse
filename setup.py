@@ -38,6 +38,8 @@ def get_metadata(attr_name):
     """Open metadata.json and return attr_name (as a python string)"""
     return json.loads(open(metadata_json_path()).read()).get(attr_name),
 
+print("FOO", get_metadata("version"))
+
 ## Setup ciscoconfparse
 setup(
     name=get_metadata("name"),
