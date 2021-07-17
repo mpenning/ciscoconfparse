@@ -41,14 +41,14 @@ def get_metadata(attr_name):
 ## Setup ciscoconfparse
 setup(
     name=get_metadata("name"),
-    version=get_metadata("version")
-    description=get_metadata("description")
-    url=get_metadata("url")
-    author=get_metadata("author")
-    author_email=get_metadata("author_email")
-    license=get_metadata("license")
-    platforms=get_metadata("platforms")
-    keywords=get_metadata("keywords")
+    version=get_metadata("version"),
+    description=get_metadata("description"),
+    url=get_metadata("url"),
+    author=get_metadata("author"),
+    author_email=get_metadata("author_email"),
+    license=get_metadata("license"),
+    platforms=get_metadata("platforms"),
+    keywords=get_metadata("keywords"),
     entry_points="",
     long_description=read("README.rst"),
     include_package_data=True,  # See MANIFEST.in for explicit rules
