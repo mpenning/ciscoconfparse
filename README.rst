@@ -121,7 +121,7 @@ Docs
 Pre-requisites
 ==============
 
-ciscoconfparse_ requires Python versions 2.7 or 3.5+ (note: version 3.7.0 has 
+ciscoconfparse_ requires Python versions 3.5+ (note: version 3.7.0 has 
 a bug - ref Github issue #117, but version 3.7.1 works); the OS should not 
 matter.
 
@@ -191,7 +191,7 @@ Bug Tracker and Support
 Unit-Tests
 ==========
 
-`Travis CI project <https://travis-ci.org>`_ tests ciscoconfparse on Python versions 2.7 through 3.8, as well as a `pypy JIT`_ executable.
+`Travis CI project <https://travis-ci.org>`_ tests ciscoconfparse on Python versions 3.5 and higher, as well as a `pypy JIT`_ executable.
 
 Click the image below for details; the current build status is:
 
