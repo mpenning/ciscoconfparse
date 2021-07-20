@@ -1,9 +1,9 @@
-1.5.46  20210717 More logging work... prepare for debugging overhaul
+1.5.46  20210717 More logging work... prepare for debugging overhaul.
 1.5.45  20210717 Refine error logging in setup.py
 1.5.44  20210717 Fix get_metadata() returned value in setup.py
 1.5.37  20210717 Rework version.json to metadata.json
 1.5.36  20210711 Rework git remote (i.e. origin) logic
-1.5.35  20210711 Fix git tags in Makefile
+1.5.35  20210711 Fix git tags in Makefile.    Deprecate py2.7 support
 1.5.30  20210301 Add a helper-function: as_text_list(); improve performance of .delete()
 1.5.29  20210128 Fix __int__() and __index__() on IPv4Obj() and IPv6Obj()
 1.5.28  20210123 Enhance ccp_util.CiscoRange() to parse a wider variety of string inputs
