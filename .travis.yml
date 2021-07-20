@@ -8,7 +8,6 @@ python:
 - 3.7
 - 3.6
 - 3.5
-- 2.7
 #- pypy   (pypy doesn't build under xenial)
 # - pypy3 (errors out right now)
 
