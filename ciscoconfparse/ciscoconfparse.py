@@ -58,6 +58,8 @@ from ciscoconfparse.models_junos import JunosCfgLine
 
 from ciscoconfparse.ccp_util import junos_unsupported, UnsupportedFeatureWarning
 
+from loguru import logger
+
 
 r""" ciscoconfparse.py - Parse, Query, Build, and Modify IOS-style configs
      Copyright (C) 2007-2021 David Michael Pennington
@@ -101,17 +103,57 @@ __copyright__ = "2007-{0}, {1}".format(time.strftime("%Y"), __author__)
 __license__ = "GPLv3"
 __status__ = "Production"
 
-_log = logging.getLogger(__file__)
-_CCP_LOG_FORMAT_PREFIX_STR = (
-    Fore.WHITE + "[%(module)s %(funcName)s] [%(levelname)s] %(asctime)s "
+#_log = logging.getLogger(__file__)
+#_CCP_LOG_FORMAT_PREFIX_STR = (
+#    Fore.WHITE + "[%(module)s %(funcName)s] [%(levelname)s] %(asctime)s "
+#)
+#_CCP_LOG_FORMAT_MSG_STR = Fore.GREEN + "%(msg)s" + Fore.RESET
+#_CCP_LOG_FORMAT_STR = _CCP_LOG_FORMAT_PREFIX_STR + _CCP_LOG_FORMAT_MSG_STR
+#_ccp_log_format = logging.Formatter(_CCP_LOG_FORMAT_STR, "%H:%M:%S")
+#_log.setLevel(logging.DEBUG)
+#_LOG_CHANNEL_STDOUT = logging.StreamHandler(sys.stdout)
+#_LOG_CHANNEL_STDOUT.setFormatter(_ccp_log_format)
+#_log.addHandler(_LOG_CHANNEL_STDOUT)
+
+def logger_format_string(record):
+    """A loguru helper method to format log strings"""
+    assert isinstance(record, dict)
+
+    if "classname" in record.keys():
+        keyname = "classname"
+    else:
+        keyname = "name"
+
+    message = "<green>{time:YYYY-MM-DD_HH:mm:ss.SSS}</green> | <lvl>{level: <8}</lvl> | <c>%s:{function}:{line}</c> - <level>{message} ~~~ {exception}</level>%s" % (record.get(keyname), os.linesep)
+    return message
+
+def logger_retention(files, max_log_size=20*1024**3):
+    """Specify logfile retention policy, per file"""
+    stats = [(_file, os.stat(_file)) for _file in files]
+    stats.sort(key=lambda s: -s[1].st_mtime)  # Sort files from newest to oldest
+    while sum(s[1].st_size for s in stats) > max_log_size:
+        _file, _ = stats.pop()
+        os.remove(_file)
+
+logger.remove()
+# Send logs to sys.stderr by default
+logger.add(
+    sink=sys.stderr,
+    colorize=True,
+    diagnose=True,
+    backtrace=True,
+    enqueue=True,
+    serialize=False,
+    catch=True,
+    level="DEBUG",
+    # compression, encoding, and retention throw errors in logger.add()
+    #compression="gzip",
+    #encoding="utf-8",
+    #retention="3 months",  # also see log_retention()
+    # logger_format_string(record)
+    format=logger_format_string,
 )
-_CCP_LOG_FORMAT_MSG_STR = Fore.GREEN + "%(msg)s" + Fore.RESET
-_CCP_LOG_FORMAT_STR = _CCP_LOG_FORMAT_PREFIX_STR + _CCP_LOG_FORMAT_MSG_STR
-_ccp_log_format = logging.Formatter(_CCP_LOG_FORMAT_STR, "%H:%M:%S")
-_log.setLevel(logging.DEBUG)
-_LOG_CHANNEL_STDOUT = logging.StreamHandler(sys.stdout)
-_LOG_CHANNEL_STDOUT.setFormatter(_ccp_log_format)
-_log.addHandler(_LOG_CHANNEL_STDOUT)
+
 
 
 class CiscoConfParse(object):
