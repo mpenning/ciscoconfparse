@@ -103,18 +103,6 @@ __copyright__ = "2007-{0}, {1}".format(time.strftime("%Y"), __author__)
 __license__ = "GPLv3"
 __status__ = "Production"
 
-#_log = logging.getLogger(__file__)
-#_CCP_LOG_FORMAT_PREFIX_STR = (
-#    Fore.WHITE + "[%(module)s %(funcName)s] [%(levelname)s] %(asctime)s "
-#)
-#_CCP_LOG_FORMAT_MSG_STR = Fore.GREEN + "%(msg)s" + Fore.RESET
-#_CCP_LOG_FORMAT_STR = _CCP_LOG_FORMAT_PREFIX_STR + _CCP_LOG_FORMAT_MSG_STR
-#_ccp_log_format = logging.Formatter(_CCP_LOG_FORMAT_STR, "%H:%M:%S")
-#_log.setLevel(logging.DEBUG)
-#_LOG_CHANNEL_STDOUT = logging.StreamHandler(sys.stdout)
-#_LOG_CHANNEL_STDOUT.setFormatter(_ccp_log_format)
-#_log.addHandler(_LOG_CHANNEL_STDOUT)
-
 def logger_format_string(record):
     """A loguru helper method to format log strings"""
     assert isinstance(record, dict)
@@ -163,7 +151,7 @@ class CiscoConfParse(object):
         self,
         config="",
         comment="!",
-        debug=False,
+        debug=0,
         factory=False,
         linesplit_rgx=r"\r*\n+",
         ignore_blank_lines=True,
@@ -178,8 +166,8 @@ class CiscoConfParse(object):
             A list of configuration statements, or a configuration file path to be parsed
         comment : str
             A comment delimiter.  This should only be changed when parsing non-Cisco IOS configurations, which do not use a !  as the comment delimiter.  ``comment`` defaults to '!'.  This value can hold multiple characters in case the config uses multiple characters for comment delimiters; however, the comment delimiters are always assumed to be one character wide
-        debug : bool
-            ``debug`` defaults to False, and should be kept that way unless you're working on a very tricky config parsing problem.  Debug output is not particularly friendly
+        debug : int
+            ``debug`` defaults to 0, and should be kept that way unless you're working on a very tricky config parsing problem.  Debug range goes from 0 (no debugging) to 5 (max debugging).  Debug output is not particularly friendly.
         factory : bool
             ``factory`` defaults to False; if set ``True``, it enables a beta-quality configuration line classifier.
         linesplit_rgx : str
@@ -220,8 +208,8 @@ class CiscoConfParse(object):
             A string containing the comment-delimiter.  Default: "!"
         ConfigObjs : :class:`~ciscoconfparse.IOSConfigList`
             A custom list, which contains all parsed :class:`~models_cisco.IOSCfgLine` instances.
-        debug : bool
-            A boolean to enable verbose config parsing debugs. Default False.
+        debug : int
+            An int to enable verbose config parsing debugs. Default 0.
         ioscfg : list
             A list of text configuration strings
         objs
@@ -244,8 +232,8 @@ class CiscoConfParse(object):
         if isinstance(config, list) or isinstance(config, Iterator):
             if syntax == "ios":
                 # we already have a list object, simply call the parser
-                if self.debug:
-                    _log.debug("parsing from a python list with ios syntax")
+                if self.debug > 0:
+                    logger.debug("parsing from a python list with ios syntax")
                 self.ConfigObjs = IOSConfigList(
                     data=config,
                     comment_delimiter=comment,
@@ -257,8 +245,8 @@ class CiscoConfParse(object):
                 )
             elif syntax == "nxos":
                 # we already have a list object, simply call the parser
-                if self.debug:
-                    _log.debug("parsing from a python list with nxos syntax")
+                if self.debug > 0:
+                    logger.debug("parsing from a python list with nxos syntax")
                 self.ConfigObjs = NXOSConfigList(
                     data=config,
                     comment_delimiter=comment,
@@ -270,8 +258,8 @@ class CiscoConfParse(object):
                 )
             elif syntax == "asa":
                 # we already have a list object, simply call the parser
-                if self.debug:
-                    _log.debug("parsing from a python list with asa syntax")
+                if self.debug > 0:
+                    logger.debug("parsing from a python list with asa syntax")
                 self.ConfigObjs = ASAConfigList(
                     data=config,
                     comment_delimiter=comment,
@@ -287,8 +275,8 @@ class CiscoConfParse(object):
                 error = "junos parser factory is not yet enabled; use factory=False"
                 assert factory is False, error
                 config = self.convert_braces_to_ios(config)
-                if self.debug:
-                    _log.debug("parsing from a python list with junos syntax")
+                if self.debug > 0:
+                    logger.debug("parsing from a python list with junos syntax")
                 self.ConfigObjs = IOSConfigList(
                     data=config,
                     comment_delimiter=comment,
@@ -307,8 +295,8 @@ class CiscoConfParse(object):
             try:
                 if syntax == "ios":
                     # string - assume a filename... open file, split and parse
-                    if self.debug:
-                        _log.debug("parsing from '{0}' with ios syntax".format(config))
+                    if self.debug > 0:
+                        logger.debug("parsing from '{0}' with ios syntax".format(config))
                     f = open(config, **self.openargs)
                     text = f.read()
                     f.close()
@@ -324,8 +312,8 @@ class CiscoConfParse(object):
                     )
                 elif syntax == "nxos":
                     # string - assume a filename... open file, split and parse
-                    if self.debug:
-                        _log.debug("parsing from '{0}' with nxos syntax".format(config))
+                    if self.debug > 0:
+                        logger.debug("parsing from '{0}' with nxos syntax".format(config))
                     f = open(config, **self.openargs)
                     text = f.read()
                     f.close()
@@ -341,8 +329,8 @@ class CiscoConfParse(object):
                     )
                 elif syntax == "asa":
                     # string - assume a filename... open file, split and parse
-                    if self.debug:
-                        _log.debug("parsing from '{0}' with asa syntax".format(config))
+                    if self.debug > 0:
+                        logger.debug("parsing from '{0}' with asa syntax".format(config))
                     f = open(config, **self.openargs)
                     text = f.read()
                     f.close()
@@ -359,8 +347,8 @@ class CiscoConfParse(object):
 
                 elif syntax == "junos":
                     # string - assume a filename... open file, split and parse
-                    if self.debug:
-                        _log.debug(
+                    if self.debug > 0:
+                        logger.debug(
                             "parsing from '{0}' with junos syntax".format(config)
                         )
                     f = open(config, **self.openargs)
@@ -614,8 +602,8 @@ class CiscoConfParse(object):
         offset = 0
         STOP_WIDTH = stop_width
         for idx, tmp in enumerate(input_list):
-            if self.debug is True:
-                _log.debug("Parse line {0}:'{1}'".format(idx + 1, tmp.strip()))
+            if self.debug > 0:
+                logger.debug("Parse line {0}:'{1}'".format(idx + 1, tmp.strip()))
             (indent_this_line, indent_child, line) = parse_line_braces(tmp.strip())
             lines.append(
                 (" " * STOP_WIDTH * (offset + indent_this_line)) + line.strip()
@@ -2644,7 +2632,7 @@ class CiscoConfParse(object):
         uncfgspec=None,
         ignore_order=True,
         remove_lines=True,
-        debug=False,
+        debug=0,
     ):
         r"""
         ``sync_diff()`` accepts a list of required configuration elements,
@@ -2663,8 +2651,8 @@ class CiscoConfParse(object):
             Indicates whether the configuration should be reordered to minimize the number of diffs.  Default: True (usually it's a good idea to leave ``ignore_order`` True, except for ACL comparisions)
         remove_lines : bool
             Indicates whether the lines which are *not* in ``cfgspec`` should be removed.  Default: True.  When ``remove_lines`` is True, all other config lines matching the linespec that are *not* listed in the cfgspec will be removed with the uncfgspec regex.
-        debug : bool
-            Miscellaneous debugging; Default: False
+        debug : int
+            Miscellaneous debugging; Default: 0
 
         Returns
         -------
@@ -2794,8 +2782,8 @@ class CiscoConfParse(object):
                 #  - j1 and j2 are the begin and end points for arg b
                 for tag, i1, i2, j1, j2 in matcher.get_opcodes():
                     # print ("%7s a[%d:%d] (%s) b[%d:%d] (%s)" % (tag, i1, i2, a_lines[i1:i2], j1, j2, b_lines[j1:j2]))
-                    if debug or self.debug:
-                        _log.debug("TAG='{0}'".format(tag))
+                    if (debug > 0) or (self.debug > 0):
+                        logger.debug("TAG='{0}'".format(tag))
 
                     # if tag=='equal', check whether the parent objs are the same
                     #     if parent objects are the same, then do nothing
@@ -2825,9 +2813,9 @@ class CiscoConfParse(object):
                             #    fake some data...
                             aobj = None
                             aparent_text = "__ANOTHING__"
-                        if debug or self.debug:
-                            _log.debug("    aobj:'{0}'".format(aobj))
-                            _log.debug("    aobj parents:'{0}'".format(aparent_text))
+                        if (debug > 0) or (self.debug > 0):
+                            logger.debug("    aobj:'{0}'".format(aobj))
+                            logger.debug("    aobj parents:'{0}'".format(aparent_text))
 
                         try:
                             bobj = bobjs[idx]
@@ -2841,16 +2829,16 @@ class CiscoConfParse(object):
                             bobj = None
                             bparent_text = "__BNOTHING__"
 
-                        if debug or self.debug:
-                            _log.debug("    bobj:'{0}'".format(bobj))
-                            _log.debug("    bobj parents:'{0}'".format(bparent_text))
+                        if (debug > 0) or (self.debug > 0):
+                            logger.debug("    bobj:'{0}'".format(bobj))
+                            logger.debug("    bobj parents:'{0}'".format(bparent_text))
 
                         if tag == "equal":
                             # If the diff claims that these lines are equal, they
                             #   aren't truly equal unless parents match
                             if aparent_text != bparent_text:
-                                if debug or self.debug:
-                                    _log.debug(
+                                if (debug > 0) or (self.debug > 0):
+                                    logger.debug(
                                         "    tagged 'equal', aparent_text!=bparent_text"
                                     )
                                 # a & b parents are *not* the same
@@ -2861,42 +2849,42 @@ class CiscoConfParse(object):
                                     if not getattr(aobj.parent, "unconfig_this", False):
                                         aobj.parent.config_this = True
                                     aobj.unconfig_this = True
-                                    if debug:
-                                        _log.debug("    unconfigure aobj")
+                                    if (debug > 0):
+                                        logger.debug("    unconfigure aobj")
                                 if bobj:
                                     bobj.config_this = True
                                     bobj.parent.config_this = True
-                                    if debug:
-                                        _log.debug("    configure bobj")
+                                    if (debug > 0):
+                                        logger.debug("    configure bobj")
                             elif aparent_text == bparent_text:
                                 # Both a & b parents match, so these lines are equal
                                 aobj.unconfig_this = False
                                 bobj.config_this = False
-                                if debug:
-                                    _log.debug(
+                                if (debug > 0):
+                                    logger.debug(
                                         "    tagged 'equal', aparent_text==bparent_text"
                                     )
-                                    _log.debug("    do nothing with aobj / bobj")
+                                    logger.debug("    do nothing with aobj / bobj")
                         elif tag == "replace":
                             # tag: replace, I'm not going to check parents for now
-                            if debug:
-                                _log.debug("    tagged 'replace'")
+                            if (debug > 0):
+                                logger.debug("    tagged 'replace'")
                             if aobj:
                                 # Only configure parent if it's not already
                                 #    slated for removal
                                 if not getattr(aobj.parent, "unconfig_this", False):
                                     aobj.parent.config_this = True
                                 aobj.unconfig_this = True
-                                if debug:
-                                    _log.debug("    unconfigure aobj")
+                                if (debug > 0):
+                                    logger.debug("    unconfigure aobj")
                             if bobj:
                                 bobj.config_this = True
                                 bobj.parent.config_this = True
-                                if debug:
-                                    _log.debug("    configure bobj")
+                                if (debug > 0):
+                                    logger.debug("    configure bobj")
                         elif tag == "insert":
-                            if debug:
-                                _log.debug("    tagged 'insert'")
+                            if (debug > 0):
+                                logger.debug("    tagged 'insert'")
                             # I don't think tag: insert ever applies to a objects...
                             if aobj:
                                 # Only configure parent if it's not already
@@ -2904,18 +2892,18 @@ class CiscoConfParse(object):
                                 if not getattr(aobj.parent, "unconfig_this", False):
                                     aobj.parent.config_this = True
                                 aobj.unconfig_this = True
-                                if debug:
-                                    _log.debug("    unconfigure aobj")
+                                if (debug > 0):
+                                    logger.debug("    unconfigure aobj")
                             # tag: insert certainly applies to b objects...
                             if bobj:
                                 bobj.config_this = True
                                 bobj.parent.config_this = True
-                                if debug:
-                                    _log.debug("    configure bobj")
+                                if (debug > 0):
+                                    logger.debug("    configure bobj")
                         elif tag == "delete":
                             # NOTE: I'm not deleting b objects, for now
-                            if debug:
-                                _log.debug("    tagged 'delete'")
+                            if (debug > 0):
+                                logger.debug("    tagged 'delete'")
                             if aobj:
                                 # Only configure parent if it's not already
                                 #    slated for removal
@@ -2923,8 +2911,8 @@ class CiscoConfParse(object):
                                     if not getattr(pobj, "unconfig_this", False):
                                         pobj.config_this = True
                                 aobj.unconfig_this = True
-                                if debug:
-                                    _log.debug("    unconfigure aobj")
+                                if (debug > 0):
+                                    logger.debug("    unconfigure aobj")
                         else:
                             raise ValueError("Unknown action: {0}".format(tag))
 
@@ -2976,10 +2964,10 @@ class CiscoConfParse(object):
                 r"(\s+)no\s+no\s+(\S+.+?)$", r"\g<1>\g<2>", retval[idx]
             )
 
-        if debug:
-            _log.debug("Completed diff:")
+        if (debug > 0):
+            logger.debug("Completed diff:")
             for line in retval:
-                _log.debug("'{0}'".format(line))
+                logger.debug("'{0}'".format(line))
         return retval
 
     def save_as(self, filepath):
@@ -3089,7 +3077,7 @@ class IOSConfigList(MutableSequence):
         self,
         data=None,
         comment_delimiter="!",
-        debug=False,
+        debug=0,
         factory=False,
         ignore_blank_lines=True,
         syntax="ios",
@@ -3103,8 +3091,8 @@ class IOSConfigList(MutableSequence):
             A list of parsed :class:`~models_cisco.IOSCfgLine` objects
         comment_delimiter : str
             A comment delimiter.  This should only be changed when parsing non-Cisco IOS configurations, which do not use a !  as the comment delimiter.  ``comment`` defaults to '!'
-        debug : bool
-            ``debug`` defaults to False, and should be kept that way unless you're working on a very tricky config parsing problem.  Debug output is not particularly friendly
+        debug : int
+            ``debug`` defaults to 0, and should be kept that way unless you're working on a very tricky config parsing problem.  Debug output is not particularly friendly
         ignore_blank_lines : bool
             ``ignore_blank_lines`` defaults to True; when this is set True, ciscoconfparse ignores blank configuration lines.  You might want to set ``ignore_blank_lines`` to False if you intentionally use blank lines in your configuration (ref: Github Issue #2).
 
@@ -3173,8 +3161,8 @@ class IOSConfigList(MutableSequence):
         ## reparse all objects from their text attributes... this is *very* slow
         ## Ultimate goal: get rid of all reparsing from text...
         self._list = self._bootstrap_obj_init(list(map(attrgetter("text"), self._list)))
-        if self.debug:
-            _log.debug("self._list = {0}".format(self._list))
+        if self.debug > 0:
+            logger.debug("self._list = {0}".format(self._list))
 
     def has_line_with(self, linespec):
         return bool(filter(methodcaller("re_search", linespec), self._list))
@@ -3307,10 +3295,10 @@ class IOSConfigList(MutableSequence):
             else:
                 (banner_lead, bannerdelimit) = ("", None)
 
-            if self.debug:
-                _log.debug("banner_lead = '{0}'".format(banner_lead))
-                _log.debug("bannerdelimit = '{0}'".format(bannerdelimit))
-                _log.debug("{0} starts at line {1}".format(banner_lead, parent.linenum))
+            if self.debug > 0:
+                logger.debug("banner_lead = '{0}'".format(banner_lead))
+                logger.debug("bannerdelimit = '{0}'".format(bannerdelimit))
+                logger.debug("{0} starts at line {1}".format(banner_lead, parent.linenum))
 
             idx = parent.linenum
             while not (bannerdelimit is None):
@@ -3319,8 +3307,8 @@ class IOSConfigList(MutableSequence):
                     parts = parent.text.split(bannerdelimit)
                     if len(parts) > 2:
                         ## banner has both begin and end delimiter on one line
-                        if self.debug:
-                            _log.debug(
+                        if self.debug > 0:
+                            logger.debug(
                                 "{0} ends at line"
                                 " {1}".format(banner_lead, parent.linenum)
                             )
@@ -3331,16 +3319,16 @@ class IOSConfigList(MutableSequence):
                 try:
                     obj = self._list[idx]
                     if obj.text is None:
-                        if self.debug:
-                            _log.warning(
+                        if self.debug > 0:
+                            logger.warning(
                                 "found empty text while parsing '{0}' in the banner".format(
                                     obj
                                 )
                             )
                         pass
                     elif bannerdelimit in obj.text.strip():
-                        if self.debug:
-                            _log.debug(
+                        if self.debug > 0:
+                            logger.debug(
                                 "{0} ends at line"
                                 " {1}".format(banner_lead, obj.linenum)
                             )
@@ -3486,14 +3474,14 @@ class IOSConfigList(MutableSequence):
         ## parentobj could be None when trying to add a child that should not
         ##    have a parent
         if parentobj is None:
-            if self.debug:
-                _log.debug("parentobj is None")
+            if self.debug > 0:
+                logger.debug("parentobj is None")
             return
 
-        if self.debug:
-            # _log.debug("Adding child '{0}' to parent"
+        if self.debug > 0:
+            # logger.debug("Adding child '{0}' to parent"
             #    " '{1}'".format(childobj, parentobj))
-            # _log.debug("BEFORE parent.children - {0}"
+            # logger.debug("BEFORE parent.children - {0}"
             #    .format(parentobj.children))
             pass
         if childobj.is_comment and (_list[idx - 1].indent > indent):
@@ -3510,8 +3498,8 @@ class IOSConfigList(MutableSequence):
         else:
             pass
 
-        if self.debug:
-            # _log.debug("     AFTER parent.children - {0}"
+        if self.debug > 0:
+            # logger.debug("     AFTER parent.children - {0}"
             #    .format(parentobj.children))
             pass
 
@@ -3549,7 +3537,7 @@ class NXOSConfigList(MutableSequence):
         self,
         data=None,
         comment_delimiter="!",
-        debug=False,
+        debug=0,
         factory=False,
         ignore_blank_lines=True,
         syntax="nxos",
@@ -3563,8 +3551,8 @@ class NXOSConfigList(MutableSequence):
             A list of parsed :class:`~models_cisco.IOSCfgLine` objects
         comment_delimiter : str
             A comment delimiter.  This should only be changed when parsing non-Cisco IOS configurations, which do not use a !  as the comment delimiter.  ``comment`` defaults to '!'
-        debug : bool
-            ``debug`` defaults to False, and should be kept that way unless you're working on a very tricky config parsing problem.  Debug output is not particularly friendly
+        debug : int
+            ``debug`` defaults to 0, and should be kept that way unless you're working on a very tricky config parsing problem.  Debug output is not particularly friendly
         ignore_blank_lines : bool
             ``ignore_blank_lines`` defaults to True; when this is set True, ciscoconfparse ignores blank configuration lines.  You might want to set ``ignore_blank_lines`` to False if you intentionally use blank lines in your configuration (ref: Github Issue #2).
 
@@ -3633,8 +3621,8 @@ class NXOSConfigList(MutableSequence):
         ## reparse all objects from their text attributes... this is *very* slow
         ## Ultimate goal: get rid of all reparsing from text...
         self._list = self._bootstrap_obj_init(list(map(attrgetter("text"), self._list)))
-        if self.debug:
-            _log.debug("self._list = {0}".format(self._list))
+        if self.debug > 0:
+            logger.debug("self._list = {0}".format(self._list))
 
     def has_line_with(self, linespec):
         return bool(filter(methodcaller("re_search", linespec), self._list))
@@ -3763,10 +3751,10 @@ class NXOSConfigList(MutableSequence):
             else:
                 (banner_lead, bannerdelimit) = ("", None)
 
-            if self.debug:
-                _log.debug("banner_lead = '{0}'".format(banner_lead))
-                _log.debug("bannerdelimit = '{0}'".format(bannerdelimit))
-                _log.debug("{0} starts at line {1}".format(banner_lead, parent.linenum))
+            if self.debug > 0:
+                logger.debug("banner_lead = '{0}'".format(banner_lead))
+                logger.debug("bannerdelimit = '{0}'".format(bannerdelimit))
+                logger.debug("{0} starts at line {1}".format(banner_lead, parent.linenum))
 
             idx = parent.linenum
             while not (bannerdelimit is None):
@@ -3775,8 +3763,8 @@ class NXOSConfigList(MutableSequence):
                     parts = parent.text.split(bannerdelimit)
                     if len(parts) > 2:
                         ## banner has both begin and end delimiter on one line
-                        if self.debug:
-                            _log.debug(
+                        if self.debug > 0:
+                            logger.debug(
                                 "{0} ends at line"
                                 " {1}".format(banner_lead, parent.linenum)
                             )
@@ -3786,16 +3774,16 @@ class NXOSConfigList(MutableSequence):
                 try:
                     obj = self._list[idx]
                     if obj.text is None:
-                        if self.debug:
-                            _log.warning(
+                        if self.debug > 0:
+                            logger.warning(
                                 "found empty text while parsing '{0}' in the banner".format(
                                     obj
                                 )
                             )
                         pass
                     elif bannerdelimit in obj.text.strip():
-                        if self.debug:
-                            _log.debug(
+                        if self.debug > 0:
+                            logger.debug(
                                 "{0} ends at line"
                                 " {1}".format(banner_lead, obj.linenum)
                             )
@@ -3916,14 +3904,14 @@ class NXOSConfigList(MutableSequence):
         ## parentobj could be None when trying to add a child that should not
         ##    have a parent
         if parentobj is None:
-            if self.debug:
-                _log.debug("parentobj is None")
+            if self.debug > 0:
+                logger.debug("parentobj is None")
             return
 
-        if self.debug:
-            # _log.debug("Adding child '{0}' to parent"
+        if self.debug > 0:
+            # logger.debug("Adding child '{0}' to parent"
             #    " '{1}'".format(childobj, parentobj))
-            # _log.debug("BEFORE parent.children - {0}"
+            # logger.debug("BEFORE parent.children - {0}"
             #    .format(parentobj.children))
             pass
         if childobj.is_comment and (_list[idx - 1].indent > indent):
@@ -3940,8 +3928,8 @@ class NXOSConfigList(MutableSequence):
         else:
             pass
 
-        if self.debug:
-            # _log.debug("     AFTER parent.children - {0}"
+        if self.debug > 0:
+            # logger.debug("     AFTER parent.children - {0}"
             #    .format(parentobj.children))
             pass
 
@@ -3980,7 +3968,7 @@ class ASAConfigList(MutableSequence):
         self,
         data=None,
         comment_delimiter="!",
-        debug=False,
+        debug=0,
         factory=False,
         ignore_blank_lines=True,
         syntax="asa",
@@ -3994,8 +3982,8 @@ class ASAConfigList(MutableSequence):
             A list of parsed :class:`~models_cisco.IOSCfgLine` objects
         comment_delimiter : str
             A comment delimiter.  This should only be changed when parsing non-Cisco IOS configurations, which do not use a !  as the comment delimiter.  ``comment`` defaults to '!'
-        debug : bool
-            ``debug`` defaults to False, and should be kept that way unless you're working on a very tricky config parsing problem.  Debug output is not particularly friendly
+        debug : int
+            ``debug`` defaults to 0, and should be kept that way unless you're working on a very tricky config parsing problem.  Debug output is not particularly friendly
         ignore_blank_lines : bool
             ``ignore_blank_lines`` defaults to True; when this is set True, ciscoconfparse ignores blank configuration lines.  You might want to set ``ignore_blank_lines`` to False if you intentionally use blank lines in your configuration (ref: Github Issue #2).
 
@@ -4253,15 +4241,15 @@ class ASAConfigList(MutableSequence):
         ## parentobj could be None when trying to add a child that should not
         ##    have a parent
         if parentobj is None:
-            if self.debug:
-                _log.debug("parentobj is None")
+            if self.debug > 0:
+                logger.debug("parentobj is None")
             return
 
-        if self.debug:
-            _log.debug(
+        if self.debug > 0:
+            logger.debug(
                 "Adding child '{0}' to parent" " '{1}'".format(childobj, parentobj)
             )
-            _log.debug("     BEFORE parent.children - {0}".format(parentobj.children))
+            logger.debug("     BEFORE parent.children - {0}".format(parentobj.children))
         if childobj.is_comment and (_list[idx - 1].indent > indent):
             ## I *really* hate making this exception, but legacy
             ##   ciscoconfparse never marked a comment as a child
@@ -4276,8 +4264,8 @@ class ASAConfigList(MutableSequence):
         else:
             pass
 
-        if self.debug:
-            _log.debug("     AFTER parent.children - {0}".format(parentobj.children))
+        if self.debug > 0:
+            logger.debug("     AFTER parent.children - {0}".format(parentobj.children))
 
     def iter_with_comments(self, begin_index=0):
         for idx, obj in enumerate(self._list):
@@ -4435,7 +4423,7 @@ class CiscoPassword(object):
                 dp = dp + str(newchar)
                 s = s + 1
         # if s > 53:
-        #    _log.warning("password decryption failed.")
+        #    logger.warning("password decryption failed.")
         return dp
 
 
