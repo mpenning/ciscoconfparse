@@ -95,7 +95,6 @@ CiscoConfParse can parse these configurations:
 - Juniper Networks Junos
 - Palo Alto Networks Firewall configurations
 - F5 Networks configurations
-- Terraform .tf files
 
 CiscoConfParse also handles anything that has a Cisco IOS style of configuration, which includes:
 
@@ -108,7 +107,6 @@ CiscoConfParse also handles anything that has a Cisco IOS style of configuration
 - Extreme Networks
 - Enterasys
 - Screenos
-
 
 Docs
 ====

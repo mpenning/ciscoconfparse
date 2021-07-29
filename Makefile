@@ -56,7 +56,7 @@ devpkgs:
 	pip install --upgrade sphinx-bootstrap-theme
 	pip install --upgrade rst2html5
 	pip install --upgrade rst2html5-tools
-	pip install --upgrade pytest==2.6.4
+	pip install --upgrade pytest==6.2.4
 	pip install --upgrade mccabe
 	pip install --upgrade flake8
 	pip install --upgrade yapf
