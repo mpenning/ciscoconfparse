@@ -1,4 +1,4 @@
-include LICENSE CHANGES README.rst requirements.txt ciscoconfparse/version.json
+include LICENSE CHANGES README.rst requirements.txt ciscoconfparse/metadata.json
 recursive-exclude * __pycache__
 recursive-exclude * *.pyc
 recursive-exclude * *.pyo
