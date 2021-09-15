@@ -15,8 +15,10 @@ import pytest
 
 if sys.version_info[0] < 3:
     from ipaddr import IPv4Network, IPv6Network, IPv4Address, IPv6Address
+    import ipaddr
 else:
     from ipaddress import IPv4Network, IPv6Network, IPv4Address, IPv6Address
+    import ipaddress
 
 
 @pytest.mark.parametrize(
@@ -410,6 +412,18 @@ def testIPv6Obj_eq_01():
 def testIPv6Obj_gt_01():
     """Simple greater_than test"""
     assert IPv6Obj("::2") > IPv6Obj("::1")
+
+def test_collapse_addresses_01():
+
+    if sys.version_info >= (3, 0, 0):
+        net_collapsed = ipaddress.collapse_addresses([IPv4Network('192.0.0.0/22'), IPv4Network('192.0.2.128/25')])
+
+    else:
+        net_collapsed = ipaddr.collapse_addresses([IPv4Network('192.0.0.0/22'), IPv4Network('192.0.2.128/25')])
+
+    for idx, entry in enumerate(net_collapsed):
+        if idx==0:
+            assert entry == IPv4Network("192.0.0.0/22")
 
 
 def test_dns_lookup():
