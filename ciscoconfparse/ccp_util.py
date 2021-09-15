@@ -23,8 +23,12 @@ from dns import reversename, query, zone
 
 if sys.version_info[0] < 3:
     from ipaddr import IPv4Network, IPv6Network, IPv4Address, IPv6Address
+    import ipaddr
+
 else:
     from ipaddress import IPv4Network, IPv6Network, IPv4Address, IPv6Address
+    import ipaddress
+
 """ ccp_util.py - Parse, Query, Build, and Modify IOS-style configurations
      Copyright (C) 2014-2015, 2018-2021 David Michael Pennington
 
@@ -175,6 +179,32 @@ def is_valid_ipv6_addr(input_str=""):
         return True
     return False
 
+def collapse_addresses(network_list):
+    """
+    This is a ciscoconfparse proxy for ipaddress.collapse_addresses()
+
+    It attempts to summarize network_list into the closest network(s)
+    containing prefixes in `network_list`.
+
+    Return an iterator of the collapsed IPv4Network or IPv6Network objects. 
+    addresses is an iterator of IPv4Network or IPv6Network objects. A
+    TypeError is raised if addresses contains mixed version objects.
+    """
+    assert isinstance(network_list, list) or isinstance(network_list, tuple)
+
+    def ip_net(arg):
+        if isinstance(arg, IPv4Obj):
+            return arg.network
+        elif isinstance(arg, IPv4Network):
+            return arg
+        elif isinstance(arg, IPv6Obj):
+            return arg.network
+        elif isinstance(arg, IPv6Network):
+            return arg
+        else:
+            ValueError("collapse_addresses() isn't sure how to handle %s" % arg)
+
+    return ipaddress.collapse_addresses([ip_net(ii) for ii in network_list])
 
 ## Emulate the old behavior of ipaddr.IPv4Network in Python2, which can use
 ##    IPv4Network with a host address.  Google removed that in Python3's
@@ -514,6 +544,30 @@ class IPv4Obj(object):
         return self.network_object.__next__()
 
     @property
+    def _version(self):
+        """
+        Fix github issue #203... build a `_prefixlen` attribute...
+        """
+        return self.version
+
+    @property
+    def _prefixlen(self):
+        """
+        Fix github issue #203... build a `_prefixlen` attribute...
+        """
+        return self.prefixlen
+
+    @property
+    def _max_prefixlen(self):
+        """
+        Fix github issue #203... build a `_prefixlen` attribute...
+        """
+        if self.version == 4:
+            return 32
+        else:
+            return 128
+
+    @property
     def ip(self):
         """Returns the address as an :class:`ipaddress.IPv4Address` object."""
         return self.ip_object
@@ -763,7 +817,9 @@ class IPv6Obj(object):
                     "IPv6Obj doesn't understand how to parse {0}".format(arg)
                 )
 
-        assert not (mm is None), "IPv6Obj couldn't parse {0}".format(arg)
+        
+        ERROR = "IPv6Obj couldn't parse {0}".format(arg)
+        assert not (mm is None), ERROR
         self.network_object = IPv6Network(arg, strict=strict)
         self.ip_object = IPv6Address(mm.group(1))
 
@@ -942,6 +998,30 @@ class IPv6Obj(object):
     def next(self):
         ## For Python2 iteration...
         return self.network_object.__next__()
+
+    @property
+    def _version(self):
+        """
+        Fix github issue #203... build a `_prefixlen` attribute...
+        """
+        return self.version
+
+    @property
+    def _prefixlen(self):
+        """
+        Fix github issue #203... build a `_prefixlen` attribute...
+        """
+        return self.prefixlen
+
+    @property
+    def _max_prefixlen(self):
+        """
+        Fix github issue #203... build a `_prefixlen` attribute...
+        """
+        if self.version == 4:
+            return 32
+        else:
+            return 128
 
     @property
     def ip(self):
