@@ -203,8 +203,13 @@ Click the image below for details; the current build status is:
 License and Copyright
 =====================
 
-ciscoconfparse_ is licensed GPLv3_; Copyright `David Michael Pennington`_, 
-2007-2021.
+ciscoconfparse_ is licensed GPLv3_
+
+     Copyright (C) 2020-2021 Cisco Systems
+     Copyright (C) 2019      ThousandEyes
+     Copyright (C) 2012-2019 Samsung Data Services
+     Copyright (C) 2011-2012 Dell Computer Corporation
+     Copyright (C) 2007-2011 David Michael Pennington
 
 ciscoconfparse_ is not affiliated with Cisco Systems in any way; the word "Cisco" is a registered trademark of Cisco Systems
 
