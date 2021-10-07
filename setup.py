@@ -12,7 +12,6 @@ import os
 
 from loguru import logger
 
-ENCODING = "latin-1"
 ENCODING = "utf-8"
 
 def log_format_string(record):
@@ -105,6 +104,7 @@ def setup_packages():
         packages=find_packages(),
         use_2to3=True,  # Reqd for Windows + Py3 - ref Github issue #32
         zip_safe=False,
+        python_requires='>=3.5',
         install_requires=REQUIRES,
         extras_require=EXTRAS,  # Conditional dependencies Github isssue #127
         # setup_requires=["setuptools_hg"],  # setuptools_hg must be installed as a python module

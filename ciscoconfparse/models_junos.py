@@ -15,7 +15,10 @@ from ciscoconfparse.ccp_util import IPv4Obj
 ###   Use models_junos.py at your own risk.  You have been warned :-)
 
 """ models_junos.py - Parse, Query, Build, and Modify Junos-style configurations
-     Copyright (C) 2015 David Michael Pennington
+
+     Copyright (C) 2020-2021 Cisco Systems
+     Copyright (C) 2019      ThousandEyes
+     Copyright (C) 2015-2019 Samsung Data Services
 
      This program is free software: you can redistribute it and/or modify
      it under the terms of the GNU General Public License as published by

@@ -11,6 +11,7 @@ from ciscoconfparse.ccp_util import IPv4Obj, L4Object
 from ciscoconfparse.ccp_util import CiscoRange
 from ciscoconfparse.ccp_util import IPv6Obj
 from ciscoconfparse.ccp_util import dns_lookup, reverse_dns_lookup
+from ciscoconfparse.ccp_util import collapse_addresses
 import pytest
 
 if sys.version_info[0] < 3:
@@ -19,6 +20,30 @@ if sys.version_info[0] < 3:
 else:
     from ipaddress import IPv4Network, IPv6Network, IPv4Address, IPv6Address
     import ipaddress
+
+r""" test_Ccp_Util.py - Parse, Query, Build, and Modify IOS-style configs
+
+     Copyright (C) 2020-2021 Cisco Systems
+     Copyright (C) 2019      ThousandEyes
+     Copyright (C) 2014-2019 Samsung Data Services
+
+     This program is free software: you can redistribute it and/or modify
+     it under the terms of the GNU General Public License as published by
+     the Free Software Foundation, either version 3 of the License, or
+     (at your option) any later version.
+
+     This program is distributed in the hope that it will be useful,
+     but WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+     GNU General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+     If you need to contact the author, you can do so by emailing:
+     mike [~at~] pennington [/dot\] net
+"""
+
 
 
 @pytest.mark.parametrize(
@@ -303,6 +328,8 @@ def testIPv4Obj_recursive():
     assert str(obj.ip_object) == "1.1.1.1"
     assert obj.prefixlen == 24
 
+def testIPv4Obj_from_int():
+    assert IPv4Obj(2886729984).ip == IPv4Address('172.16.1.0')
 
 def testIPv4Obj_neq_01():
     """Simple in-equality test fail (ref - Github issue #180)"""
@@ -424,6 +451,12 @@ def test_collapse_addresses_01():
     for idx, entry in enumerate(net_collapsed):
         if idx==0:
             assert entry == IPv4Network("192.0.0.0/22")
+
+def test_collapse_addresses_02():
+    net_list = [IPv4Obj('192.0.2.128/25'), IPv4Obj('192.0.0.0/26')]
+    collapsed_list = sorted(collapse_addresses(net_list))
+    assert collapsed_list[0].network_address==IPv4Obj('192.0.0.0/26').ip
+    assert collapsed_list[1].network_address==IPv4Obj('192.0.2.128/25').ip
 
 
 def test_dns_lookup():

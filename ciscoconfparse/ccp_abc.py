@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from operator import methodcaller, attrgetter
 from abc import ABCMeta, abstractmethod
 from copy import deepcopy
+import inspect
 import re
 import os
 
@@ -9,7 +10,10 @@ from ciscoconfparse.ccp_util import junos_unsupported, UnsupportedFeatureWarning
 from ciscoconfparse.ccp_util import IPv4Obj
 
 r""" ccp_abc.py - Parse, Query, Build, and Modify IOS-style configurations
-     Copyright (C) 2014-2015, 2019-2020 David Michael Pennington
+
+     Copyright (C) 2020-2021 Cisco Systems
+     Copyright (C) 2019      ThousandEyes
+     Copyright (C) 2014-2019 Samsung Data Services
 
      This program is free software: you can redistribute it and/or modify
      it under the terms of the GNU General Public License as published by
@@ -322,16 +326,44 @@ class BaseCfgLine(object):
     def insert_before(self, insertstr):
         """Usage:
             confobj.insert_before('! insert text before this confobj')"""
-        ## BaseCfgLine.insert_before(), insert a single line before this object
-        retval = self.confobj.insert_before(self, insertstr, atomic=False)
+        retval = None
+
+        calling_fn_index = 1
+        calling_filename = inspect.stack()[calling_fn_index].filename
+        calling_function = inspect.stack()[calling_fn_index].function
+        calling_lineno = inspect.stack()[calling_fn_index].lineno
+        error =  "FATAL CALL: in %s line %s %s(insertstr='%s')" % (calling_filename, calling_lineno, calling_function, insertstr)
+        if isinstance(insertstr, str) is True:
+            retval = self.confobj.insert_before(self, insertstr, atomic=False)
+
+        elif isinstance(insertstr, IOSCfgLine) is True:
+            retval = self.confobj.insert_before(self, insertstr.text, atomic=False)
+        else:
+            raise ValueError(error)
+        #retval = self.confobj.insert_after(self, insertstr, atomic=False)
         return retval
 
     @junos_unsupported
     def insert_after(self, insertstr):
         """Usage:
             confobj.insert_after('! insert text after this confobj')"""
-        ## BaseCfgLine.insert_after(), insert a single line after this object
-        retval = self.confobj.insert_after(self, insertstr, atomic=False)
+
+        retval = None
+
+        calling_fn_index = 1
+        calling_filename = inspect.stack()[calling_fn_index].filename
+        calling_function = inspect.stack()[calling_fn_index].function
+        calling_lineno = inspect.stack()[calling_fn_index].lineno
+        error =  "FATAL CALL: in %s line %s %s(insertstr='%s')" % (calling_filename, calling_lineno, calling_function, insertstr)
+        if isinstance(insertstr, str) is True:
+            retval = self.confobj.insert_after(self, insertstr, atomic=False)
+
+        elif isinstance(insertstr, IOSCfgLine) is True:
+            retval = self.confobj.insert_after(self, insertstr.text, atomic=False)
+        else:
+            raise ValueError(error)
+
+        #retval = self.confobj.insert_after(self, insertstr, atomic=False)
         return retval
 
     @junos_unsupported

@@ -30,7 +30,10 @@ else:
     import ipaddress
 
 """ ccp_util.py - Parse, Query, Build, and Modify IOS-style configurations
-     Copyright (C) 2014-2015, 2018-2021 David Michael Pennington
+
+     Copyright (C) 2020-2021 Cisco Systems
+     Copyright (C) 2019      ThousandEyes
+     Copyright (C) 2014-2019 Samsung Data Services
 
      This program is free software: you can redistribute it and/or modify
      it under the terms of the GNU General Public License as published by

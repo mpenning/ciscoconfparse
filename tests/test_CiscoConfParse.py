@@ -17,6 +17,32 @@ from ciscoconfparse.ciscoconfparse import CiscoPassword
 from ciscoconfparse.ccp_util import IPv4Obj
 from passlib.hash import cisco_type7
 import pytest
+from loguru import logger
+
+r""" test_CiscoConfParse.py - Parse, Query, Build, and Modify IOS-style configs
+
+     Copyright (C) 2020-2021 Cisco Systems
+     Copyright (C) 2019      ThousandEyes
+     Copyright (C) 2012-2019 Samsung Data Services
+     Copyright (C) 2011-2012 Dell Computer Corporation
+
+     This program is free software: you can redistribute it and/or modify
+     it under the terms of the GNU General Public License as published by
+     the Free Software Foundation, either version 3 of the License, or
+     (at your option) any later version.
+
+     This program is distributed in the hope that it will be useful,
+     but WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+     GNU General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+     If you need to contact the author, you can do so by emailing:
+     mike [~at~] pennington [/dot\] net
+"""
+
 
 
 def testParse_asa_as_ios(config_a02):
@@ -524,6 +550,59 @@ def testValues_find_blocks(parse_c01):
     test_result = parse_c01.find_blocks("tresspasser")
     assert result_correct == test_result
 
+def testValues_list_insert_before_01():
+    """test whether we can insert list elements"""
+    c01 = [
+        "b",
+        "c",
+        "d",
+        "e",
+    ]
+    confobjs = CiscoConfParse(c01, syntax="ios")
+    confobjs.insert_before('b', 'a')
+    assert confobjs.ConfigObjs[0].text=='a'
+
+def testValues_list_insert_01():
+    """test whether we can insert list elements"""
+    c01 = [
+        "b",
+        "c",
+        "d",
+        "e",
+    ]
+    confobjs = CiscoConfParse(c01, syntax="ios")
+    confobjs.insert_before('b', 'a')
+    confobjs.insert_after('e', 'f')
+    assert confobjs.ConfigObjs[0].text=='a'
+    assert confobjs.ConfigObjs[-1].text=='f'
+
+def testValues_list_insert_01():
+    """test whether we can insert list elements"""
+    c01 = [
+        "b",
+        "c",
+        "d",
+        "e",
+    ]
+    confobjs = CiscoConfParse(c01, syntax="ios")
+    confobjs.insert_before('b', 'a')
+    confobjs.insert_after('e', 'f')
+    obj = confobjs.find_objects(r"^e")
+    assert confobjs.ConfigObjs[0].text=='a'
+    assert confobjs.ConfigObjs[-1].text=='f'
+
+def testValues_list_insert_02():
+    """test whether we can insert child list elements"""
+    c01 = ["b", "c", "d", "e",]
+    confobjs = CiscoConfParse(c01, syntax="ios")
+
+    # ' f' is the child of 'e'...
+    confobjs.insert_after('e', ' f')
+    confobjs.commit()
+    assert confobjs.ConfigObjs[-1].text == ' f'
+
+    obj = confobjs.find_objects(r"^e")[0]
+    assert obj.all_children[0].text==' f'
 
 def testValues_find_parents_w_child(parse_c01):
     c01_parents_w_child_power = [
@@ -1705,6 +1784,7 @@ def testValues_insert_after_nonatomic_02(parse_c01):
 
 
 def testValues_insert_after_child_atomic_01(parse_c01):
+    # FIXME
     """We expect insert_after_child(atomic=True) to correctly parse children"""
     result_correct = [
         "interface GigabitEthernet4/1",

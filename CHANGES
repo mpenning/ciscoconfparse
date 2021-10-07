@@ -1,3 +1,5 @@
+1.5.48  20211007 Fix insert_before() and insert_after(), update Copyrights
+1.5.47  20210915 Expose a proxy function to call ipaddress.collapse_addresses()
 1.5.46  20210717 More logging work... prepare for debugging overhaul.
 1.5.45  20210717 Refine error logging in setup.py
 1.5.44  20210717 Fix get_metadata() returned value in setup.py

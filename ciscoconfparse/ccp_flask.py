@@ -6,7 +6,11 @@ from flask import render_template, redirect, url_for, abort, flash
 from flask import Flask, g, request, session
 
 """ ccp_flask.py - Parse, Query, Build, and Modify IOS-style configurations
-     Copyright (c) 2015 David Michael Pennington
+
+     Copyright (C) 2020-2021 Cisco Systems
+     Copyright (C) 2019      ThousandEyes
+     Copyright (C) 2015-2019 Samsung Data Services
+
      This program is free software: you can redistribute it and/or modify
      it under the terms of the GNU General Public License as published by
      the Free Software Foundation, either version 3 of the License, or
