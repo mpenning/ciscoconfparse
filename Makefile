@@ -25,6 +25,7 @@ repo-push:
 	git remote add origin "git@github.com:mpenning/ciscoconfparse" 
 	git tag -a ${VERSION} -m "Tag with ${VERSION}"
 	git push git@github.com:mpenning/ciscoconfparse.git
+	git push --force-with-lease --tags origin +master
 	git push origin ${VERSION}
 .PHONY: tutorial
 tutorial:

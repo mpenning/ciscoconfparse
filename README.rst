@@ -211,7 +211,7 @@ ciscoconfparse_ is licensed GPLv3_
 - Copyright (C) 2011-2012 Dell Computer Corporation
 - Copyright (C) 2007-2011 David Michael Pennington
 
-ciscoconfparse_ is not affiliated with Cisco Systems in any way; the word "Cisco" is a registered trademark of Cisco Systems
+The word "Cisco" is a registered trademark of Cisco Systems
 
 
 .. _Author:
