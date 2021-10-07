@@ -329,7 +329,7 @@ class BaseASAIntfLine(ASACfgLine):
     def ipv4_addr(self):
         """Return a string with the interface's IPv4 address, or '' if there is none"""
         retval = self.re_match_iter_typed(
-            r"^\s+ip\s+address\s+(\d+\.\d+\.\d+\.\d+)\s+\d+\.\d+\.\d+\.\d+(\sstandby\s+\S+\s*)*$",
+            r"^\s+ip\s+address\s+(\d+\.\d+\.\d+\.\d+)"
             result_type=str,
             default="",
         )
@@ -349,7 +349,7 @@ class BaseASAIntfLine(ASACfgLine):
     def ipv4_netmask(self):
         """Return a string with the interface's IPv4 netmask, or '' if there is none"""
         retval = self.re_match_iter_typed(
-            r"^\s+ip\s+address\s+\d+\.\d+\.\d+\.\d+\s+(\d+\.\d+\.\d+\.\d+)(\sstandby\s+\S+\s*)*$",
+            r"^\s+ip\s+address\s+\d+\.\d+\.\d+\.\d+\s+(\d+\.\d+\.\d+\.\d+)",
             result_type=str,
             default="",
         )
