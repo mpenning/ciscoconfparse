@@ -3,7 +3,7 @@
 set -eu
 
 # Change into your virtualenv before running the script
-py.test -s -x -l --cov=cisco --show-capture=all --tb=long test_CiscoConfParse.py
+py.test -s -x -l --show-capture=all --tb=long test_CiscoConfParse.py
 sleep 0.05
 py.test -s -x -l --show-capture=all --tb=long test_Ccp_Util.py
 sleep 0.05
