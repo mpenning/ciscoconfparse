@@ -4,7 +4,7 @@
     "author_email": "mike@pennington.net",
     "url": "http://www.pennington.net/py/ciscoconfparse/",
     "license": "GPLv3",
-    "version": "1.5.48",
+    "version": "1.5.49",
     "platforms": "any",
     "keywords": "Parse, audit, query, modify, Cisco IOS configuration"
 }
