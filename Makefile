@@ -26,7 +26,7 @@ repo-push:
 	git tag -a ${VERSION} -m "Tag with ${VERSION}"
 	git push git@github.com:mpenning/ciscoconfparse.git
 	git push --force-with-lease --tags origin +master
-	git push origin ${VERSION}
+	git push --force-with-lease --tags origin ${VERSION}
 .PHONY: tutorial
 tutorial:
 	rst2html5 --jquery --reveal-js --pretty-print-code --embed-stylesheet --embed-content --embed-images tutorial/ccp_tutorial.rst > tutorial/ccp_tutorial.html
