@@ -20,9 +20,9 @@ from ciscoconfparse.ccp_util import IPv4Obj
 
 """ models_asa.py - Parse, Query, Build, and Modify IOS-style configurations
 
-     Copyright (C) 2020-2021 Cisco Systems
-     Copyright (C) 2019      ThousandEyes
-     Copyright (C) 2014-2019 Samsung Data Services
+     Copyright (C) 2020-2021 Cisco Systems and David Michael Pennington
+     Copyright (C) 2019      ThousandEyes and David Michael Pennington
+     Copyright (C) 2014-2019 Samsung Data Services and David Michael Pennington
 
      This program is free software: you can redistribute it and/or modify
      it under the terms of the GNU General Public License as published by
