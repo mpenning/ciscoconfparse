@@ -114,6 +114,15 @@ Docs
 - The latest copy of the docs are `archived on the web <http://www.pennington.net/py/ciscoconfparse/>`_
 - There is also a `CiscoConfParse Tutorial <http://pennington.net/tutorial/ciscoconfparse/ccp_tutorial.html>`_
 
+Building the Package
+====================
+
+- `cd` into the root ciscoconfparse directory
+- Edit the version number in `ciscoconfparse/metadata.json` (as required)
+- `git commit` all pending changes
+- `make repo-push`
+- `make pypi`
+
 .. _Pre-Requisites:
 
 Pre-requisites
