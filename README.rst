@@ -120,6 +120,7 @@ Building the Package
 - ``cd`` into the root ciscoconfparse directory
 - Edit the version number in `ciscoconfparse/metadata.json` (as required)
 - ``git commit`` all pending changes
+- ``make test``
 - ``make repo-push``
 - ``make pypi``
 
