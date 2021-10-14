@@ -27,6 +27,10 @@ repo-push:
 	git push git@github.com:mpenning/ciscoconfparse.git
 	git push --force-with-lease --tags origin +master
 	git push --force-with-lease --tags origin ${VERSION}
+.PHONY: pylint
+pylint:
+	# Good usability info here -> https://pythonspeed.com/articles/pylint/
+	pylint --rcfile=./utils/pylintrc --ignore-patterns='^build|^dist|utils/pylintrc|README.rst|CHANGES|LICENSE|MANIFEST.in|Makefile|TODO' --output-format=colorized * | less -XR
 .PHONY: tutorial
 tutorial:
 	rst2html5 --jquery --reveal-js --pretty-print-code --embed-stylesheet --embed-content --embed-images tutorial/ccp_tutorial.rst > tutorial/ccp_tutorial.html
