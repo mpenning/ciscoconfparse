@@ -1,26 +1,7 @@
+
 from __future__ import absolute_import
-from operator import methodcaller, attrgetter
-from colorama import Fore, Back, Style
-from difflib import SequenceMatcher
-import logging
-import inspect
-import json
-import time
-import copy
-import sys
-import re
-import os
 
-if sys.version_info >= (
-    3,
-    0,
-    0,
-):
-    from collections.abc import MutableSequence, Iterator
-else:
-    ## This syntax is not supported in Python 3...
-    from collections import MutableSequence, Iterator
-
+from loguru import logger
 
 from ciscoconfparse.models_cisco import IOSHostnameLine, IOSRouteLine
 from ciscoconfparse.models_cisco import IOSIntfLine
@@ -59,7 +40,28 @@ from ciscoconfparse.models_junos import JunosCfgLine
 
 from ciscoconfparse.ccp_util import junos_unsupported, UnsupportedFeatureWarning
 
-from loguru import logger
+from operator import methodcaller, attrgetter
+from colorama import Fore, Back, Style
+from difflib import SequenceMatcher
+import inspect
+import json
+import time
+import copy
+import sys
+import re
+import os
+
+if sys.version_info >= (
+    3,
+    0,
+    0,
+):
+    from collections.abc import MutableSequence, Iterator
+else:
+    ## This syntax is not supported in Python 3...
+    from collections import MutableSequence, Iterator
+
+
 
 
 r""" ciscoconfparse.py - Parse, Query, Build, and Modify IOS-style configs
@@ -3557,7 +3559,7 @@ class IOSConfigList(MutableSequence):
             elif self.syntax == "ios":
                 obj = ConfigLineFactory(line, self.comment_delimiter, syntax="ios")
             else:
-                error = ("Cannot classify config list item '%s' " 
+                error = ("Cannot classify config list item '%s' "
                     "into a proper configuration object line" % line)
                 if self.debug > 0:
                     logger.error(error)
