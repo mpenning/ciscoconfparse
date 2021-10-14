@@ -117,11 +117,11 @@ Docs
 Building the Package
 ====================
 
-- `cd` into the root ciscoconfparse directory
+- ``cd`` into the root ciscoconfparse directory
 - Edit the version number in `ciscoconfparse/metadata.json` (as required)
-- `git commit` all pending changes
-- `make repo-push`
-- `make pypi`
+- ``git commit`` all pending changes
+- ``make repo-push``
+- ``make pypi``
 
 .. _Pre-Requisites:
 
