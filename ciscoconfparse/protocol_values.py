@@ -1,9 +1,9 @@
 from __future__ import absolute_import
 
 """ protocol_values.py - Parse, Query, Build, and Modify IOS-style configurations
-     Copyright (C) 2020-2021 Cisco Systems and David Michael Pennington
-     Copyright (C) 2019      ThousandEyes and David Michael Pennington
-     Copyright (C) 2014-2019 Samsung Data Services and David Michael Pennington
+     Copyright (C) 2020-2021 David Michael Pennington at Cisco Systems
+     Copyright (C) 2019      David Michael Pennington at ThousandEyes
+     Copyright (C) 2014-2019 David Michael Pennington at Samsung Data Services
 
 
      This program is free software: you can redistribute it and/or modify

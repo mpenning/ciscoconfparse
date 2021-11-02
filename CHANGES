@@ -1,4 +1,5 @@
-1.5.50  20211008 Update copyrights, fix Github issue #208
+1.5.51  20211101 New release with modified copyrights
+1.5.50  20211008 NOTE - MODIFIED RELEASE. Update copyrights, fix Github issue #208.  Also see https://stackoverflow.com/q/21064581/667301 as an alternative to deleting the original pypi package data
 1.5.49  20211008 Fix typos and syntax
 1.5.48  20211007 Fix insert_before() and insert_after(), update Copyrights
 1.5.47  20210915 Expose a proxy function to call ipaddress.collapse_addresses()
