@@ -14,7 +14,7 @@ from ciscoconfparse.ccp_util import IPv4Obj
 ###
 ###   Use models_junos.py at your own risk.  You have been warned :-)
 
-""" models_junos.py - Parse, Query, Build, and Modify Junos-style configurations
+r""" models_junos.py - Parse, Query, Build, and Modify Junos-style configurations
 
      Copyright (C) 2020-2021 David Michael Pennington at Cisco Systems
      Copyright (C) 2019      David Michael Pennington at ThousandEyes
@@ -101,7 +101,7 @@ class JunosCfgLine(BaseCfgLine):
     @property
     def is_intf(self):
         # Includes subinterfaces
-        """Returns a boolean (True or False) to answer whether this 
+        r"""Returns a boolean (True or False) to answer whether this
         :class:`~models_junos.JunosCfgLine` is an interface; subinterfaces
         also return True.
 
@@ -145,7 +145,7 @@ class JunosCfgLine(BaseCfgLine):
 
     @property
     def is_subintf(self):
-        """Returns a boolean (True or False) to answer whether this 
+        r"""Returns a boolean (True or False) to answer whether this
         :class:`~models_junos.JunosCfgLine` is a subinterface.
 
         Returns:
@@ -195,7 +195,7 @@ class JunosCfgLine(BaseCfgLine):
 
     @property
     def is_loopback_intf(self):
-        """Returns a boolean (True or False) to answer whether this 
+        r"""Returns a boolean (True or False) to answer whether this
         :class:`~models_junos.JunosCfgLine` is a loopback interface.
 
         Returns:
@@ -231,7 +231,7 @@ class JunosCfgLine(BaseCfgLine):
 
     @property
     def is_ethernet_intf(self):
-        """Returns a boolean (True or False) to answer whether this 
+        r"""Returns a boolean (True or False) to answer whether this
         :class:`~models_junos.JunosCfgLine` is an ethernet interface.
         Any ethernet interface (10M through 10G) is considered an ethernet
         interface.
@@ -356,7 +356,7 @@ class BaseJunosIntfLine(JunosCfgLine):
 
     @property
     def name(self):
-        """Return the interface name as a string, such as 'GigabitEthernet0/1'
+        r"""Return the interface name as a string, such as 'GigabitEthernet0/1'
 
         Returns:
             - str.  The interface name as a string, or '' if the object is not an interface.
@@ -400,7 +400,7 @@ class BaseJunosIntfLine(JunosCfgLine):
 
     @property
     def port(self):
-        """Return the interface's port number
+        r"""Return the interface's port number
 
         Returns:
             - int.  The interface number.
@@ -437,7 +437,7 @@ class BaseJunosIntfLine(JunosCfgLine):
 
     @property
     def port_type(self):
-        """Return Loopback, ATM, GigabitEthernet, Virtual-Template, etc...
+        r"""Return Loopback, ATM, GigabitEthernet, Virtual-Template, etc...
 
         Returns:
             - str.  The port type.
@@ -475,7 +475,7 @@ class BaseJunosIntfLine(JunosCfgLine):
 
     @property
     def ordinal_list(self):
-        """Return a tuple of numbers representing card, slot, port for this interface.  If you call ordinal_list on GigabitEthernet2/25.100, you'll get this python tuple of integers: (2, 25).  If you call ordinal_list on GigabitEthernet2/0/25.100 you'll get this python list of integers: (2, 0, 25).  This method strips all subinterface information in the returned value.
+        r"""Return a tuple of numbers representing card, slot, port for this interface.  If you call ordinal_list on GigabitEthernet2/25.100, you'll get this python tuple of integers: (2, 25).  If you call ordinal_list on GigabitEthernet2/0/25.100 you'll get this python list of integers: (2, 0, 25).  This method strips all subinterface information in the returned value.
 
         Returns:
             - tuple.  A tuple of port numbers as integers.
@@ -563,7 +563,7 @@ class JunosIntfGlobal(BaseCfgLine):
     @classmethod
     def is_object_for(cls, line="", re=re):
         if re.search(
-            "^(no\s+cdp\s+run)|(logging\s+event\s+link-status\s+global)|(spanning-tree\sportfast\sdefault)|(spanning-tree\sportfast\sbpduguard\sdefault)",
+            r"^(no\s+cdp\s+run)|(logging\s+event\s+link-status\s+global)|(spanning-tree\sportfast\sdefault)|(spanning-tree\sportfast\sbpduguard\sdefault)",
             line,
         ):
             return True
@@ -571,31 +571,31 @@ class JunosIntfGlobal(BaseCfgLine):
 
     @property
     def has_cdp_disabled(self):
-        if self.re_search("^no\s+cdp\s+run\s*"):
+        if self.re_search(r"^no\s+cdp\s+run\s*"):
             return True
         return False
 
     @property
     def has_intf_logging_def(self):
-        if self.re_search("^logging\s+event\s+link-status\s+global"):
+        if self.re_search(r"^logging\s+event\s+link-status\s+global"):
             return True
         return False
 
     @property
     def has_stp_portfast_def(self):
-        if self.re_search("^spanning-tree\sportfast\sdefault"):
+        if self.re_search(r"^spanning-tree\sportfast\sdefault"):
             return True
         return False
 
     @property
     def has_stp_portfast_bpduguard_def(self):
-        if self.re_search("^spanning-tree\sportfast\sbpduguard\sdefault"):
+        if self.re_search(r"^spanning-tree\sportfast\sbpduguard\sdefault"):
             return True
         return False
 
     @property
     def has_stp_mode_rapidpvst(self):
-        if self.re_search("^spanning-tree\smode\srapid-pvst"):
+        if self.re_search(r"^spanning-tree\smode\srapid-pvst"):
             return True
         return False
 
@@ -705,7 +705,7 @@ class JunosRouteLine(BaseJunosRouteLine):
 
     @classmethod
     def is_object_for(cls, line="", re=re):
-        if re.search("^(ip|ipv6)\s+route\s+\S", line):
+        if re.search(r"^(ip|ipv6)\s+route\s+\S", line):
             return True
         return False
 

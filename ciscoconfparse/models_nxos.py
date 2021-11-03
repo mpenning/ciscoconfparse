@@ -20,7 +20,7 @@ from ciscoconfparse.ccp_abc import BaseCfgLine
 ###   THIS FILE IS NOT FULLY FUNCTIONAL.  IT IS INCOMPLETE
 ###
 ###   You have been warned :-)
-""" models_nxos.py - Parse, Query, Build, and Modify IOS-style configurations
+r""" models_nxos.py - Parse, Query, Build, and Modify IOS-style configurations
 
      Copyright (C) 2020-2021 David Michael Pennington at Cisco Systems
      Copyright (C) 2019      David Michael Pennington at ThousandEyes
@@ -87,7 +87,7 @@ class NXOSCfgLine(BaseCfgLine):
     @property
     def is_intf(self):
         # Includes subinterfaces
-        """Returns a boolean (True or False) to answer whether this 
+        r"""Returns a boolean (True or False) to answer whether this
         :class:`~models_nxos.NXOSCfgLine` is an interface; subinterfaces
         also return True.
 
@@ -127,7 +127,7 @@ class NXOSCfgLine(BaseCfgLine):
 
     @property
     def is_subintf(self):
-        """Returns a boolean (True or False) to answer whether this 
+        r"""Returns a boolean (True or False) to answer whether this
         :class:`~models_nxos.NXOSCfgLine` is a subinterface.
 
         Returns:
@@ -174,7 +174,7 @@ class NXOSCfgLine(BaseCfgLine):
 
     @property
     def is_loopback_intf(self):
-        """Returns a boolean (True or False) to answer whether this 
+        r"""Returns a boolean (True or False) to answer whether this
         :class:`~models_nxos.NXOSCfgLine` is a loopback interface.
 
         Returns:
@@ -210,7 +210,7 @@ class NXOSCfgLine(BaseCfgLine):
 
     @property
     def is_ethernet_intf(self):
-        """Returns a boolean (True or False) to answer whether this 
+        r"""Returns a boolean (True or False) to answer whether this
         :class:`~models_nxos.NXOSCfgLine` is an ethernet interface.
         Any ethernet interface (10M through 10G) is considered an ethernet
         interface.
@@ -399,7 +399,7 @@ class BaseNXOSIntfLine(NXOSCfgLine):
 
     @property
     def name(self):
-        """Return the interface name as a string, such as 'GigabitEthernet0/1'
+        r"""Return the interface name as a string, such as 'GigabitEthernet0/1'
 
         Returns:
             - str.  The interface name as a string, or '' if the object is not an interface.
@@ -442,7 +442,7 @@ class BaseNXOSIntfLine(NXOSCfgLine):
 
     @property
     def port(self):
-        """Return the interface's port number
+        r"""Return the interface's port number
 
         Returns:
             - int.  The interface number.
@@ -479,7 +479,7 @@ class BaseNXOSIntfLine(NXOSCfgLine):
 
     @property
     def port_type(self):
-        """Return Loopback, ATM, GigabitEthernet, Virtual-Template, etc...
+        r"""Return Loopback, ATM, GigabitEthernet, Virtual-Template, etc...
 
         Returns:
             - str.  The port type.
@@ -517,7 +517,7 @@ class BaseNXOSIntfLine(NXOSCfgLine):
 
     @property
     def ordinal_list(self):
-        """Return a tuple of numbers representing card, slot, port for this interface.  This method strips all subinterface information in the returned value.  If you call ordinal_list on GigabitEthernet2/25.100, you'll get this python tuple of integers: (2, 25).  If you call ordinal_list on GigabitEthernet2/0/25.100 you'll get this python list of integers: (2, 0, 25).
+        r"""Return a tuple of numbers representing card, slot, port for this interface.  This method strips all subinterface information in the returned value.  If you call ordinal_list on GigabitEthernet2/25.100, you'll get this python tuple of integers: (2, 25).  If you call ordinal_list on GigabitEthernet2/0/25.100 you'll get this python list of integers: (2, 0, 25).
 
         Returns:
             - tuple.  A tuple of port numbers as integers.
@@ -565,7 +565,7 @@ class BaseNXOSIntfLine(NXOSCfgLine):
 
     @property
     def interface_number(self):
-        """Return a string representing the card, slot, port for this interface.  If you call interface_number on GigabitEthernet2/25.100, you'll get this python string: '2/25'.  If you call interface_number on GigabitEthernet2/0/25.100 you'll get this python string '2/0/25'.  This method strips all subinterface information in the returned value.
+        r"""Return a string representing the card, slot, port for this interface.  If you call interface_number on GigabitEthernet2/25.100, you'll get this python string: '2/25'.  If you call interface_number on GigabitEthernet2/0/25.100 you'll get this python string '2/0/25'.  This method strips all subinterface information in the returned value.
 
         Returns:
             - string.
@@ -611,7 +611,7 @@ class BaseNXOSIntfLine(NXOSCfgLine):
 
     @property
     def subinterface_number(self):
-        """Return a string representing the card, slot, port for this interface or subinterface.  If you call subinterface_number on GigabitEthernet2/25.100, you'll get this python string: '2/25.100'.  If you call interface_number on GigabitEthernet2/0/25 you'll get this python string '2/0/25'.  This method strips all subinterface information in the returned value.
+        r"""Return a string representing the card, slot, port for this interface or subinterface.  If you call subinterface_number on GigabitEthernet2/25.100, you'll get this python string: '2/25.100'.  If you call interface_number on GigabitEthernet2/0/25 you'll get this python string '2/0/25'.  This method strips all subinterface information in the returned value.
 
         Returns:
             - string.
@@ -815,7 +815,7 @@ class BaseNXOSIntfLine(NXOSCfgLine):
     def manual_mtu(self):
         ## Due to the diverse platform defaults, this should be the
         ##    only mtu information I plan to support
-        """Returns a integer value for the manual MTU configured on an
+        r"""Returns a integer value for the manual MTU configured on an
         :class:`~models_nxos.NXOSIntfLine` object.  Interfaces without a
         manual MTU configuration return 0.
 
@@ -950,7 +950,7 @@ class BaseNXOSIntfLine(NXOSCfgLine):
         return False
 
     def in_ipv4_subnet(self, ipv4network=IPv4Obj("0.0.0.0/32", strict=False)):
-        """Accept an argument for the :class:`~ccp_util.IPv4Obj` to be 
+        r"""Accept an argument for the :class:`~ccp_util.IPv4Obj` to be
         considered, and return a boolean for whether this interface is within 
         the requested :class:`~ccp_util.IPv4Obj`.
 
@@ -1052,7 +1052,7 @@ class BaseNXOSIntfLine(NXOSCfgLine):
         ## NOTE: I have no intention of checking self.is_shutdown here
         ##     People should be able to check the sanity of interfaces
         ##     before they put them into production
-        """Return a boolean for whether no ip proxy-arp is configured on the 
+        r"""Return a boolean for whether no ip proxy-arp is configured on the
         interface.
 
         Returns:
@@ -1163,7 +1163,7 @@ class BaseNXOSIntfLine(NXOSCfgLine):
 
     @property
     def ip_helper_addresses(self):
-        """Return a list of dicts with IP helper-addresses.  Each helper-address is in a dictionary.  The dictionary is in this format:
+        r"""Return a list of dicts with IP helper-addresses.  Each helper-address is in a dictionary.  The dictionary is in this format:
 
         .. code-block:: python
            :emphasize-lines: 11
@@ -1336,22 +1336,22 @@ class BaseNXOSIntfLine(NXOSCfgLine):
 
             ## For every child object, check whether the vlan list is modified
             abs_str = obj.re_match_typed(
-                "^\s+switchport\s+trunk\s+allowed\s+vlan\s(all|none|\d.*?)$",
+                r"^\s+switchport\s+trunk\s+allowed\s+vlan\s(all|none|\d.*?)$",
                 default="_nomatch_",
                 result_type=str,
             ).lower()
             add_str = obj.re_match_typed(
-                "^\s+switchport\s+trunk\s+allowed\s+vlan\s+add\s+(\d.*?)$",
+                r"^\s+switchport\s+trunk\s+allowed\s+vlan\s+add\s+(\d.*?)$",
                 default="_nomatch_",
                 result_type=str,
             ).lower()
             exc_str = obj.re_match_typed(
-                "^\s+switchport\s+trunk\s+allowed\s+vlan\s+except\s+(\d.*?)$",
+                r"^\s+switchport\s+trunk\s+allowed\s+vlan\s+except\s+(\d.*?)$",
                 default="_nomatch_",
                 result_type=str,
             ).lower()
             rem_str = obj.re_match_typed(
-                "^\s+switchport\s+trunk\s+allowed\s+vlan\s+remove\s+(\d.*?)$",
+                r"^\s+switchport\s+trunk\s+allowed\s+vlan\s+remove\s+(\d.*?)$",
                 default="_nomatch_",
                 result_type=str,
             ).lower()
@@ -1711,7 +1711,7 @@ class NXOSIntfGlobal(BaseCfgLine):
     @classmethod
     def is_object_for(cls, line="", re=re):
         if re.search(
-            "^(no\s+cdp\s+run)|(logging\s+event\s+link-status\s+global)|(spanning-tree\sportfast\sdefault)|(spanning-tree\sportfast\sbpduguard\sdefault)",
+            r"^(no\s+cdp\s+run)|(logging\s+event\s+link-status\s+global)|(spanning-tree\sportfast\sdefault)|(spanning-tree\sportfast\sbpduguard\sdefault)",
             line,
         ):
             return True
@@ -1719,25 +1719,25 @@ class NXOSIntfGlobal(BaseCfgLine):
 
     @property
     def has_cdp_disabled(self):
-        if self.re_search("^no\s+cdp\s+run\s*"):
+        if self.re_search(r"^no\s+cdp\s+run\s*"):
             return True
         return False
 
     @property
     def has_intf_logging_def(self):
-        if self.re_search("^logging\s+event\s+link-status\s+global"):
+        if self.re_search(r"^logging\s+event\s+link-status\s+global"):
             return True
         return False
 
     @property
     def has_stp_portfast_bpduguard_def(self):
-        if self.re_search("^spanning-tree\sportfast\sbpduguard\sdefault"):
+        if self.re_search(r"^spanning-tree\sportfast\sbpduguard\sdefault"):
             return True
         return False
 
     @property
     def has_stp_mode_rapidpvst(self):
-        if self.re_search("^spanning-tree\smode\srapid-pvst"):
+        if self.re_search(r"^spanning-tree\smode\srapid-pvst"):
             return True
         return False
 
@@ -1947,7 +1947,7 @@ class NXOSAccessLine(BaseCfgLine):
     def name(self):
         retval = self.re_match_typed(r"^line\s+(\S+)", result_type=str, default="")
         # special case for IOS async lines: i.e. "line 33 48"
-        if re.search("\d+", retval):
+        if re.search(r"\d+", retval):
             return ""
         return retval
 
@@ -2284,7 +2284,7 @@ class NXOSAaaGroupServerLine(BaseCfgLine):
     @property
     def server_private(self, re=re):
         retval = set([])
-        rgx_priv = re.compile("^\s+server-private\s+(\S+)\s")
+        rgx_priv = re.compile(r"^\s+server-private\s+(\S+)\s")
         for cobj in self.children:
             mm = rgx_priv.search(cobj.text)
             if not (mm is None):
@@ -2308,7 +2308,7 @@ class NXOSAaaLoginAuthenticationLine(BaseCfgLine):
         )
         self.group = self.re_match_typed(regex, group=2, result_type=str, default="")
         methods_str = self.re_match_typed(regex, group=3, result_type=str, default="")
-        self.methods = methods_str.strip().split("\s")
+        self.methods = methods_str.strip().split(r"\s")
 
     @classmethod
     def is_object_for(cls, line="", re=re):
@@ -2328,7 +2328,7 @@ class NXOSAaaEnableAuthenticationLine(BaseCfgLine):
         )
         self.group = self.re_match_typed(regex, group=2, result_type=str, default="")
         methods_str = self.re_match_typed(regex, group=3, result_type=str, default="")
-        self.methods = methods_str.strip().split("\s")
+        self.methods = methods_str.strip().split(r"\s")
 
     @classmethod
     def is_object_for(cls, line="", re=re):
@@ -2349,7 +2349,7 @@ class NXOSAaaCommandsAuthorizationLine(BaseCfgLine):
         )
         self.group = self.re_match_typed(regex, group=3, result_type=str, default="")
         methods_str = self.re_match_typed(regex, group=4, result_type=str, default="")
-        self.methods = methods_str.strip().split("\s")
+        self.methods = methods_str.strip().split(r"\s")
 
     @classmethod
     def is_object_for(cls, line="", re=re):

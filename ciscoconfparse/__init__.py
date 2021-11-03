@@ -6,7 +6,7 @@ from ciscoconfparse.ciscoconfparse import __version__
 from ciscoconfparse.ciscoconfparse import *
 from ciscoconfparse.ccp_util import *
 
-""" __init__.py - Parse, Query, Build, and Modify IOS-style configurations
+r""" __init__.py - Parse, Query, Build, and Modify IOS-style configurations
 
      Copyright (C) 2020-2021 David Michael Pennington at Cisco Systems
      Copyright (C) 2019      David Michael Pennington at ThousandEyes

@@ -29,7 +29,7 @@ else:
     from ipaddress import IPv4Network, IPv6Network, IPv4Address, IPv6Address
     import ipaddress
 
-""" ccp_util.py - Parse, Query, Build, and Modify IOS-style configurations
+r""" ccp_util.py - Parse, Query, Build, and Modify IOS-style configurations
 
      Copyright (C) 2020-2021 David Michael Pennington at Cisco Systems
      Copyright (C) 2019      David Michael Pennington at ThousandEyes
@@ -1227,7 +1227,7 @@ class L4Object(object):
             raise NotImplementedError("This syntax is unknown: '{0}'".format(syntax))
 
         if "eq " in port_spec.strip():
-            port_tmp = re.split("\s+", port_spec)[-1].strip()
+            port_tmp = re.split(r"\s+", port_spec)[-1].strip()
             eq_port = int(ports.get(port_tmp, port_tmp))
             assert 1 <= eq_port <= 65535
             self.port_list = [eq_port]
@@ -1237,23 +1237,23 @@ class L4Object(object):
             assert 1 <= eq_port <= 65535
             self.port_list = [eq_port]
         elif "range " in port_spec.strip():
-            port_tmp = re.split("\s+", port_spec)[1:]
+            port_tmp = re.split(r"\s+", port_spec)[1:]
             low_port = int(ports.get(port_tmp[0], port_tmp[0]))
             high_port = int(ports.get(port_tmp[1], port_tmp[1]))
             assert low_port <= high_port
             self.port_list = sorted(range(low_port, high_port+1))
         elif "lt " in port_spec.strip():
-            port_tmp = re.split("\s+", port_spec)[-1]
+            port_tmp = re.split(r"\s+", port_spec)[-1]
             high_port = int(ports.get(port_tmp, port_tmp))
             assert 65536 >= high_port >= 2
             self.port_list = sorted(range(1, high_port))
         elif "gt " in port_spec.strip():
-            port_tmp = re.split("\s+", port_spec)[-1]
+            port_tmp = re.split(r"\s+", port_spec)[-1]
             low_port = int(ports.get(port_tmp, port_tmp))
             assert 0 < low_port < 65535
             self.port_list = sorted(range(low_port+1, 65536))
         elif "neq " in port_spec.strip():
-            port_str = re.split("\s+", port_spec)[-1]
+            port_str = re.split(r"\s+", port_spec)[-1]
             tmp = set(range(1, 65536))
             tmp.remove(int(port_str))
             self.port_list = sorted(tmp)
