@@ -11,7 +11,7 @@ import sys
 import re
 import os
 
-from loguru import logger
+from loguru import logger as ccp_logger
 
 ENCODING = "utf-8"
 
@@ -56,9 +56,9 @@ def log_retention(files, max_log_size=20*1024**3):
         _file, _ = stats.pop()
         os.remove(_file)
 
-logger.remove()  # Disable intrusive loguru defaults... ref
+ccp_logger.remove()  # Disable intrusive loguru defaults... ref
 #     https://github.com/Delgan/loguru/issues/208
-logger.add(
+ccp_logger.add(
     sink=sys.stderr,
     colorize=True,
     diagnose=True,
@@ -79,7 +79,7 @@ CURRENT_PATH = os.path.join(os.path.dirname(__file__))
 sys.path.insert(1, CURRENT_PATH)
 ENCODING = locale.getpreferredencoding()
 
-@logger.catch(level="WARNING")
+@ccp_logger.catch(level="WARNING")
 def read(fname):
     # Dynamically generate setup(long_description)
     filepath = os.path.join(os.path.dirname(__file__), fname)
@@ -94,7 +94,7 @@ EXTRAS = {
 }
 
 
-@logger.catch(level="WARNING")
+@ccp_logger.catch(level="WARNING")
 def metadata_json_path():
     """Return the full filepath to metadata.json as a python string"""
     config_filename = "metadata.json"
@@ -108,13 +108,13 @@ def metadata_json_path():
     raise OSError("The file named {} was not found" % config_filename)
 
 
-@logger.catch(level="WARNING")
+@ccp_logger.catch(level="WARNING")
 def get_metadata(attr_name):
     """Open metadata.json and return attr_name (as a python string)"""
     return json.loads(open(metadata_json_path(), encoding=ENCODING).read()).get(attr_name)
 
 
-@logger.catch(level="WARNING")
+@ccp_logger.catch(level="WARNING")
 def setup_packages():
     setuptools_setup(
         name=get_metadata("name"),
@@ -130,7 +130,7 @@ def setup_packages():
         long_description=read("README.rst"),
         include_package_data=True,  # See MANIFEST.in for explicit rules
         packages=find_packages(),
-        use_2to3=True,  # Reqd for Windows + Py3 - ref Github issue #32
+        use_2to3=True,      # Reqd for Windows + Py3 - ref Github issue #32
         zip_safe=False,
         python_requires='>=3.5',
         install_requires=REQUIRES,
