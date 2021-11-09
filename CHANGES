@@ -1,8 +1,8 @@
 1.6.0   20211108 Fix race-condition for `CiscoConfParse` kwarg in IOSConfigList, NXOSConfigList, and ASAConfigList.  Add explicit configuration file encoding with default encoding from python's locale module.  Add tests to catch breakage similar to Github Issue #209.  Remove colorama dependency.
-1.5.51  20211101 [Partially broken release - See Github issue #209] New release with modified copyrights
-1.5.50  20211008 [Partially broken release - See Github issue #209] NOTE - MODIFIED RELEASE. Update copyrights, fix Github issue #208.  Also see https://stackoverflow.com/q/21064581/667301 as an alternative to deleting the original pypi package data
-1.5.49  20211008 [Partially broken release - See Github issue #209] Fix typos and syntax
-1.5.48  20211007 [Partially broken release - See Github issue #209] Changes to insert_before() and insert_after(), update Copyrights
+1.5.51  20211101 [config insert()s are broken - See Github issue #209] New release with modified copyrights
+1.5.50  20211008 [config insert()s are broken - See Github issue #209] NOTE - MODIFIED RELEASE. Update copyrights, fix Github issue #208.  Also see https://stackoverflow.com/q/21064581/667301 as an alternative to deleting the original pypi package data
+1.5.49  20211008 [config insert()s are broken - See Github issue #209] Fix typos and syntax
+1.5.48  20211007 [config insert()s are broken - See Github issue #209] Changes to insert_before() and insert_after(), update Copyrights
 1.5.47  20210915 Expose a proxy function to call ipaddress.collapse_addresses()
 1.5.46  20210717 More logging work... prepare for debugging overhaul.
 1.5.45  20210717 Refine error logging in setup.py
