@@ -1,7 +1,6 @@
-colorama
 passlib
 dnspython
-loguru=='0.5.3'
+loguru==0.5.3
 pytest
 edx-lint  # for pylint plugins...
 

@@ -18,7 +18,7 @@ from ciscoconfparse.ccp_util import IPv4Obj
 ###
 ###   Use models_asa.py at your own risk.  You have been warned :-)
 
-""" models_asa.py - Parse, Query, Build, and Modify IOS-style configurations
+r""" models_asa.py - Parse, Query, Build, and Modify IOS-style configurations
 
      Copyright (C) 2020-2021 David Michael Pennington at Cisco Systems
      Copyright (C) 2019      David Michael Pennington at ThousandEyes
@@ -895,7 +895,7 @@ class ASARouteLine(BaseASARouteLine):
 
     @classmethod
     def is_object_for(cls, line="", re=re):
-        if re.search("^(ip|ipv6)\s+route\s+\S", line):
+        if re.search(r"^(ip|ipv6)\s+route\s+\S", line):
             return True
         return False
 
@@ -970,7 +970,7 @@ class ASARouteLine(BaseASARouteLine):
 
 
 _ACL_PROTOCOLS = (
-    "ip|tcp|udp|ah|eigrp|esp|gre|igmp|igrp|ipinip|ipsec|ospf|pcp|pim|pptp|snp|\d+"
+    r"ip|tcp|udp|ah|eigrp|esp|gre|igmp|igrp|ipinip|ipsec|ospf|pcp|pim|pptp|snp|\d+"
 )
 _ACL_ICMP_PROTOCOLS = "alternate-address|conversion-error|echo-reply|echo|information-reply|information-request|mask-reply|mask-request|mobile-redirect|parameter-problem|redirect|router-advertisement|router-solicitation|source-quench|time-exceeded|timestamp-reply|timestamp-request|traceroute|unreachable"
 _ACL_LOGLEVELS = r"alerts|critical|debugging|emergencies|errors|informational|notifications|warnings|[0-7]"

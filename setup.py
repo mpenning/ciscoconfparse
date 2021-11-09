@@ -5,6 +5,7 @@
 
 from setuptools import setup as setuptools_setup
 from setuptools import find_packages
+import locale
 import json
 import sys
 import re
@@ -76,16 +77,18 @@ logger.add(
 
 CURRENT_PATH = os.path.join(os.path.dirname(__file__))
 sys.path.insert(1, CURRENT_PATH)
+ENCODING = locale.getpreferredencoding()
 
 @logger.catch(level="WARNING")
 def read(fname):
     # Dynamically generate setup(long_description)
-    return open(os.path.join(os.path.dirname(__file__), fname)).read()
+    filepath = os.path.join(os.path.dirname(__file__), fname)
+    return open(filepath, encoding=ENCODING).read()
 
 
 ## Conditionally require the correct ipaddr package in Python2 vs Python3
 # Ref Github issue #127 - sdist improvements
-REQUIRES = ["colorama", "passlib", "dnspython", "loguru"]
+REQUIRES = ["passlib", "dnspython", "loguru"]
 EXTRAS = {
     ":python_version<'3'": ["ipaddr>=2.1.11"],
 }
@@ -108,7 +111,7 @@ def metadata_json_path():
 @logger.catch(level="WARNING")
 def get_metadata(attr_name):
     """Open metadata.json and return attr_name (as a python string)"""
-    return json.loads(open(metadata_json_path()).read()).get(attr_name)
+    return json.loads(open(metadata_json_path(), encoding=ENCODING).read()).get(attr_name)
 
 
 @logger.catch(level="WARNING")

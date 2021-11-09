@@ -66,7 +66,6 @@ devpkgs:
 	pip install --upgrade flake8
 	pip install --upgrade yapf
 	pip install dnspython==1.14.0
-	pip install --upgrade colorama
 	pip install --upgrade fabric
 	pip install --upgrade ipaddr
 .PHONY: flake
@@ -92,6 +91,7 @@ doctest:
 .PHONY: test
 test:
 	# Run the unit tests
+	make clean
 	cd tests; ./runtests.sh
 .PHONY: clean
 clean:

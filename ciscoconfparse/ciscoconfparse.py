@@ -1,7 +1,7 @@
 
 from __future__ import absolute_import
 
-from loguru import logger
+from loguru import logger as ccp_logger
 
 from ciscoconfparse.models_cisco import IOSHostnameLine, IOSRouteLine
 from ciscoconfparse.models_cisco import IOSIntfLine
@@ -38,12 +38,16 @@ from ciscoconfparse.models_asa import ASAAclLine
 
 from ciscoconfparse.models_junos import JunosCfgLine
 
+from ciscoconfparse.ccp_abc import BaseCfgLine
+
 from ciscoconfparse.ccp_util import junos_unsupported, UnsupportedFeatureWarning
+from ciscoconfparse.ccp_util import log_function_call
 
 from operator import methodcaller, attrgetter
-from colorama import Fore, Back, Style
 from difflib import SequenceMatcher
+from functools import wraps
 import inspect
+import locale
 import json
 import time
 import copy
@@ -60,9 +64,6 @@ if sys.version_info >= (
 else:
     ## This syntax is not supported in Python 3...
     from collections import MutableSequence, Iterator
-
-
-
 
 r""" ciscoconfparse.py - Parse, Query, Build, and Modify IOS-style configs
 
@@ -89,6 +90,8 @@ r""" ciscoconfparse.py - Parse, Query, Build, and Modify IOS-style configs
      mike [~at~] pennington [/dot\] net
 """
 
+ENCODING = locale.getpreferredencoding()
+ALL_VALID_SYNTAX = ('ios', 'nxos', 'asa', 'junos',)
 
 ## Docstring props: http://stackoverflow.com/a/1523456/667301
 # __version__ if-else below fixes Github issue #123
@@ -97,7 +100,7 @@ metadata_json_path = os.path.join(
 )
 if os.path.isfile(metadata_json_path):
     ## Retrieve the version number from json...
-    with open(metadata_json_path) as mh:
+    with open(metadata_json_path, encoding=ENCODING) as mh:
         metadata_dict = json.load(mh)
         __author__ = metadata_dict.get("author")
         __author_email__ = metadata_dict.get("author_email")
@@ -112,9 +115,9 @@ __license__ = "GPLv3"
 __status__ = "Production"
 
 
-logger.remove()
+ccp_logger.remove()
 # Send logs to sys.stderr by default
-logger.add(
+ccp_logger.add(
     sink=sys.stderr,
     colorize=True,
     diagnose=True,
@@ -138,6 +141,7 @@ class CiscoConfParse(object):
         linesplit_rgx=r"\r*\n+",
         ignore_blank_lines=True,
         syntax="ios",
+        encoding=locale.getpreferredencoding()
     ):
         """
         Initialize CiscoConfParse.
@@ -158,6 +162,8 @@ class CiscoConfParse(object):
             ``ignore_blank_lines`` defaults to True; when this is set True, ciscoconfparse ignores blank configuration lines.  You might want to set ``ignore_blank_lines`` to False if you intentionally use blank lines in your configuration (ref: Github Issue #2), or you are parsing configurations which naturally have blank lines (such as Cisco Nexus configurations).
         syntax : str
             A string holding the configuration type.  Default: 'ios'.  Must be one of: 'ios', 'nxos', 'asa', 'junos'.  Use 'junos' for any brace-delimited configuration (including F5, Palo Alto, etc...).
+        encoding : str
+            A string holding the coding type.  Default is `locale.getpreferredencoding()`
 
         Returns
         -------
@@ -179,7 +185,7 @@ class CiscoConfParse(object):
         >>> parse
         <CiscoConfParse: 2 lines / syntax: ios / comment delimiter: '!' / factory: False>
         >>> parse.ConfigObjs
-        <IOSConfigList, comment='!', conf=[<IOSCfgLine # 0 'logging trap debugging'>, <IOSCfgLine # 1 'logging 172.28.26.15'>]>
+        <ConfigList, comment='!', conf=[<IOSCfgLine # 0 'logging trap debugging'>, <IOSCfgLine # 1 'logging 172.28.26.15'>]>
         >>> parse.ioscfg
         ['logging trap debugging', 'logging 172.28.26.15']
         >>>
@@ -188,7 +194,7 @@ class CiscoConfParse(object):
         ----------
         comment_delimiter : str
             A string containing the comment-delimiter.  Default: "!"
-        ConfigObjs : :class:`~ciscoconfparse.IOSConfigList`
+        ConfigObjs : :class:`~ciscoconfparse.ConfigList`
             A custom list, which contains all parsed :class:`~models_cisco.IOSCfgLine` instances.
         debug : int
             An int to enable verbose config parsing debugs. Default 0.
@@ -201,7 +207,6 @@ class CiscoConfParse(object):
         syntax : str
             A string holding the configuration type.  Default: 'ios'.  Must be one of: 'ios', 'nxos', 'asa', 'junos'.  Use 'junos' for any brace-delimited configuration (including F5, Palo Alto, etc...).
 
-
         """
 
         # all IOSCfgLine object instances...
@@ -209,133 +214,149 @@ class CiscoConfParse(object):
         self.factory = factory
         self.ConfigObjs = None
         self.syntax = syntax
+        self.encoding = encoding or ENCODING
         self.debug = debug
 
         if isinstance(config, list) or isinstance(config, Iterator):
+
+            if self.debug > 0:
+                message = "CiscoConfParse(config, syntax='%s', factory=%s) was called with `config` as a list" % (self.syntax, self.factory)
+                ccp_logger.info(message)
+
             if syntax == "ios":
                 # we already have a list object, simply call the parser
                 if self.debug > 0:
-                    logger.debug("parsing from a python list with ios syntax")
-                self.ConfigObjs = IOSConfigList(
+                    ccp_logger.info("assigning self.ConfigObjs = ConfigList(syntax='ios')")
+                self.ConfigObjs = ConfigList(
                     data=config,
                     comment_delimiter=comment,
                     debug=debug,
                     factory=factory,
                     ignore_blank_lines=ignore_blank_lines,
                     syntax="ios",
-                    CiscoConfParse=self,
+                    ccp_ref=self,
                 )
             elif syntax == "nxos":
                 # we already have a list object, simply call the parser
                 if self.debug > 0:
-                    logger.debug("parsing from a python list with nxos syntax")
-                self.ConfigObjs = NXOSConfigList(
+                    ccp_logger.info("assigning self.ConfigObjs = ConfigList(syntax='nxos')")
+                self.ConfigObjs = ConfigList(
                     data=config,
                     comment_delimiter=comment,
                     debug=debug,
                     factory=factory,
                     ignore_blank_lines=False,  # NXOS always has blank lines
                     syntax="nxos",
-                    CiscoConfParse=self,
+                    ccp_ref=self,
                 )
             elif syntax == "asa":
                 # we already have a list object, simply call the parser
                 if self.debug > 0:
-                    logger.debug("parsing from a python list with asa syntax")
-                self.ConfigObjs = ASAConfigList(
+                    ccp_logger.info("assigning self.ConfigObjs = ConfigList(syntax='asa')")
+
+                self.ConfigObjs = ConfigList(
                     data=config,
                     comment_delimiter=comment,
                     debug=debug,
                     factory=factory,
                     ignore_blank_lines=ignore_blank_lines,
                     syntax="asa",
-                    CiscoConfParse=self,
+                    ccp_ref=self,
                 )
             elif syntax == "junos":
-                ## FIXME I am shamelessly abusing the IOSConfigList for now...
-                # we already have a list object, simply call the parser
                 error = "junos parser factory is not yet enabled; use factory=False"
                 assert factory is False, error
                 config = self.convert_braces_to_ios(config)
                 if self.debug > 0:
-                    logger.debug("parsing from a python list with junos syntax")
-                self.ConfigObjs = IOSConfigList(
+                    ccp_logger.info("assigning self.ConfigObjs = ConfigList()")
+                self.ConfigObjs = ConfigList(
                     data=config,
                     comment_delimiter=comment,
                     debug=debug,
                     factory=factory,
                     ignore_blank_lines=ignore_blank_lines,
                     syntax="junos",
-                    CiscoConfParse=self,
+                    ccp_ref=self,
                 )
             else:
                 error = "'{}' is an unknown syntax".format(syntax)
-                logger.critical(error)
+                ccp_logger.error(error)
                 raise ValueError(error)
 
         ## Accept either a string, unicode, or a pathlib.Path instance...
         elif getattr(config, "encode", False) or getattr(config, "is_file"):
+
+            if self.debug > 0:
+                message = "CiscoConfParse(config, syntax='%s', factory=%s) was called with `config` as filename:%s" % (self.syntax, self.factory, config)
+                ccp_logger.info(message)
+
             # Try opening as a file
             try:
                 if syntax == "ios":
                     # string - assume a filename... open file, split and parse
                     if self.debug > 0:
-                        logger.debug(
+                        ccp_logger.debug(
                             "parsing from '{0}' with ios syntax".format(config)
                         )
                     with open(config, **self.openargs) as fh:
                         text = fh.read()
                     rgx = re.compile(linesplit_rgx)
-                    self.ConfigObjs = IOSConfigList(
+                    if self.debug > 0:
+                        ccp_logger.info("assigning self.ConfigObjs = ConfigList()")
+                    self.ConfigObjs = ConfigList(
                         rgx.split(text),
                         comment_delimiter=comment,
                         debug=debug,
                         factory=factory,
                         ignore_blank_lines=ignore_blank_lines,
                         syntax="ios",
-                        CiscoConfParse=self,
+                        ccp_ref=self,
                     )
                 elif syntax == "nxos":
                     # string - assume a filename... open file, split and parse
                     if self.debug > 0:
-                        logger.debug(
+                        ccp_logger.debug(
                             "parsing from '{0}' with nxos syntax".format(config)
                         )
                     with open(config, **self.openargs) as fh:
                         text = fh.read()
                     rgx = re.compile(linesplit_rgx)
-                    self.ConfigObjs = NXOSConfigList(
+                    if self.debug > 0:
+                        ccp_logger.info("assigning self.ConfigObjs = ConfigList(syntax='nxos')")
+                    self.ConfigObjs = ConfigList(
                         rgx.split(text),
                         comment_delimiter=comment,
                         debug=debug,
                         factory=factory,
                         ignore_blank_lines=False,
                         syntax="nxos",
-                        CiscoConfParse=self,
+                        ccp_ref=self,
                     )
                 elif syntax == "asa":
                     # string - assume a filename... open file, split and parse
                     if self.debug > 0:
-                        logger.debug(
+                        ccp_logger.debug(
                             "parsing from '{0}' with asa syntax".format(config)
                         )
                     with open(config, **self.openargs) as fh:
                         text = fh.read()
                     rgx = re.compile(linesplit_rgx)
-                    self.ConfigObjs = ASAConfigList(
+                    if self.debug > 0:
+                        ccp_logger.info("assigning self.ConfigObjs = ConfigList(syntax='asa')")
+                    self.ConfigObjs = ConfigList(
                         rgx.split(text),
                         comment_delimiter=comment,
                         debug=debug,
                         factory=factory,
                         ignore_blank_lines=ignore_blank_lines,
                         syntax="asa",
-                        CiscoConfParse=self,
+                        ccp_ref=self,
                     )
 
                 elif syntax == "junos":
                     # string - assume a filename... open file, split and parse
                     if self.debug > 0:
-                        logger.debug(
+                        ccp_logger.debug(
                             "parsing from '{0}' with junos syntax".format(config)
                         )
                     with open(config, **self.openargs) as fh:
@@ -343,38 +364,42 @@ class CiscoConfParse(object):
                     rgx = re.compile(linesplit_rgx)
 
                     config = self.convert_braces_to_ios(rgx.split(text))
-                    ## FIXME I am shamelessly abusing the IOSConfigList for now...
-                    self.ConfigObjs = IOSConfigList(
+                    if self.debug > 0:
+                        ccp_logger.info("assigning self.ConfigObjs = ConfigList()")
+                    self.ConfigObjs = ConfigList(
                         config,
                         comment_delimiter=comment,
                         debug=debug,
                         factory=factory,
                         ignore_blank_lines=ignore_blank_lines,
                         syntax="junos",
-                        CiscoConfParse=self,
+                        ccp_ref=self,
                     )
                 else:
                     error = "'{}' is an unknown syntax".format(syntax)
-                    logger.critical(error)
+                    ccp_logger.error(error)
                     raise ValueError(error)
 
             except (IOError or FileNotFoundError):
                 error = "CiscoConfParse could not open() the filepath '%s'" % config
-                logger.critical(error)
+                ccp_logger.critical(error)
                 raise RuntimeError
         else:
             error = "CiscoConfParse() received an invalid argument\n"
-            logger.critical(error)
+            ccp_logger.error(error)
             raise RuntimeError(error)
 
-        self.ConfigObjs.CiscoConfParse = self
+        # Important: Ensure we have a sane copy of ConfigObjs....
+        assert isinstance(self.ConfigObjs, MutableSequence)
 
+    # This method is on CiscoConfParse()
     def __repr__(self):
         return (
-            "<CiscoConfParse: %s lines / syntax: %s / comment delimiter: '%s' / factory: %s>"
-            % (len(self.ConfigObjs), self.syntax, self.comment_delimiter, self.factory)
+                "<CiscoConfParse: %s lines / syntax: %s / comment delimiter: '%s' / factory: %s / encoding: '%s'>"
+            % (len(self.ConfigObjs), self.syntax, self.comment_delimiter, self.factory, self.encoding)
         )
 
+    # This method is on CiscoConfParse()
     @property
     def openargs(self):
         """Fix for Py3.5 deprecation of universal newlines - Ref Github #114
@@ -385,22 +410,25 @@ class CiscoConfParse(object):
             5,
             0,
         ):
-            retval = {"mode": "r", "newline": None}
+            retval = {"mode": "r", "newline": None, "encoding": self.encoding}
         else:
-            retval = {"mode": "rU"}
+            retval = {"mode": "rU", "encoding": self.encoding}
         return retval
 
+    # This method is on CiscoConfParse()
     @property
     def ioscfg(self):
         """A list containing all text configuration statements"""
         ## I keep this here to emulate the legacy ciscoconfparse behavior
         return list(map(attrgetter("text"), self.ConfigObjs))
 
+    # This method is on CiscoConfParse()
     @property
     def objs(self):
         """An alias to the ``ConfigObjs`` attribute"""
         return self.ConfigObjs
 
+    # This method is on CiscoConfParse()
     def atomic(self):
         """Call :func:`~ciscoconfparse.CiscoConfParse.atomic` to manually fix
         up ``ConfigObjs`` relationships
@@ -428,6 +456,7 @@ class CiscoConfParse(object):
         """
         self.ConfigObjs._bootstrap_from_text()
 
+    # This method is on CiscoConfParse()
     def commit(self):
         """Alias for calling the :func:`~ciscoconfparse.CiscoConfParse.atomic`
         method.  This method is slow; try to batch calls to
@@ -452,6 +481,7 @@ class CiscoConfParse(object):
         """
         self.atomic()
 
+    # This method is on CiscoConfParse()
     def convert_braces_to_ios(self, input_list, stop_width=4):
         """
         Parameters
@@ -584,12 +614,12 @@ class CiscoConfParse(object):
 
                 else:
                     error = 'Cannot parse junos match:"{0}"'.format(input_str)
-                    logger.critical(error)
+                    ccp_logger.error(error)
                     raise ValueError(error)
 
             else:
                 error = 'Cannot parse junos:"{0}"'.format(input_str)
-                logger.critical(error)
+                ccp_logger.critical(error)
                 raise ValueError(error)
 
         lines = list()
@@ -597,7 +627,7 @@ class CiscoConfParse(object):
         STOP_WIDTH = stop_width
         for idx, tmp in enumerate(input_list):
             if self.debug > 0:
-                logger.debug("Parse line {0}:'{1}'".format(idx + 1, tmp.strip()))
+                ccp_logger.debug("Parse line {0}:'{1}'".format(idx + 1, tmp.strip()))
             (indent_this_line, indent_child, line) = parse_line_braces(tmp.strip())
             lines.append(
                 (" " * STOP_WIDTH * (offset + indent_this_line)) + line.strip()
@@ -605,6 +635,7 @@ class CiscoConfParse(object):
             offset += indent_child
         return lines
 
+    # This method is on CiscoConfParse()
     def find_object_branches(self, branchspec=(), regex_flags=0, allow_none=True):
         r"""This method iterates over a tuple of regular expressions in `branchspec` and returns the matching objects in a list of lists (consider it similar to a table of matching config objects). `branchspec` expects to start at some ancestor and walk through the nested object hierarchy (with no limit on depth).
 
@@ -688,6 +719,10 @@ class CiscoConfParse(object):
         >>> branches[2]
         [<IOSCfgLine # 10 'ltm pool BAR'>, <IOSCfgLine # 11 '    members' (parent is # 10)>, <IOSCfgLine # 12 '        k8s-07.localdomain:8443' (parent is # 11)>, None]
         """
+        if self.debug > 1:
+            message = "%s().find_object_branches(branchspec='%s') was called" % (self.__class__.__name__, branchspec)
+            ccp_logger.info(message)
+
         assert isinstance(
             branchspec, tuple
         ), "find_object_branches(): Please enclose the regular expressions in a Python tuple"
@@ -768,8 +803,9 @@ class CiscoConfParse(object):
 
         return branches
 
+    # This method is on CiscoConfParse()
     def find_interface_objects(self, intfspec, exactmatch=True):
-        """Find all :class:`~models_cisco.IOSCfgLine` or
+        """Find all :class:`~cisco.IOSCfgLine` or
         :class:`~models_cisco.NXOSCfgLine` objects whose text
         is an abbreviation for ``intfspec`` and return the
         objects in a python list.
@@ -812,7 +848,7 @@ class CiscoConfParse(object):
         """
         if (self.factory is not True):
             error = "find_interface_objects() must be called with 'factory=True'"
-            logger.error(error)
+            ccp_logger.error(error)
             raise ValueError(error)
 
         retval = list()
@@ -824,16 +860,17 @@ class CiscoConfParse(object):
                         break  # Only break if exactmatch is True
             else:
                 error = "This method requires exactmatch set True"
-                logger.error(error)
+                ccp_logger.error(error)
                 raise NotImplementedError(error)
         ## TODO: implement ASAConfigLine.abbvs and others
         else:
             error = "This method requires exactmatch set True"
-            logger.error(error)
+            ccp_logger.error(error)
             raise NotImplementedError(error)
 
         return retval
 
+    # This method is on CiscoConfParse()
     def find_objects_dna(self, dnaspec, exactmatch=False):
         """Find all :class:`~models_cisco.IOSCfgLine` objects whose text
         matches ``dnaspec`` and return the :class:`~models_cisco.IOSCfgLine`
@@ -875,9 +912,14 @@ class CiscoConfParse(object):
         >>> obj_list[0].hostname
         'MyRouterHostname'
         """
+        if self.debug > 1:
+            method_name = inspect.currentframe().f_code.co_name
+            message = "METHOD %s().%s(linespec='%s') was called" % (self.__class__.__name__, method_name, linespec)
+            ccp_logger.info(message)
+
         if not self.factory:
             error = "find_objects_dna() must be called with 'factory=True'"
-            logger.error(error)
+            ccp_logger.error(error)
             raise ValueError(error)
 
         if not exactmatch:
@@ -888,6 +930,7 @@ class CiscoConfParse(object):
             linespec_re = re.compile("^{0}$".format(dnaspec))
         return list(filter(lambda obj: linespec_re.search(obj.dna), self.ConfigObjs))
 
+    # This method is on CiscoConfParse()
     def find_objects(self, linespec, exactmatch=False, ignore_ws=False):
         """Find all :class:`~models_cisco.IOSCfgLine` objects whose text
         matches ``linespec`` and return the :class:`~models_cisco.IOSCfgLine`
@@ -940,10 +983,14 @@ class CiscoConfParse(object):
         >>>
 
         """
+        if self.debug > 0:
+            ccp_logger.info("find_objects('%s', exactmatch=%s) was called" % (linespec, exactmatch))
+
         if ignore_ws:
             linespec = self._build_space_tolerant_regex(linespec)
         return self._find_line_OBJ(linespec, exactmatch)
 
+    # This method is on CiscoConfParse()
     def find_lines(self, linespec, exactmatch=False, ignore_ws=False):
         """This method is the equivalent of a simple configuration grep
         (Case-sensitive).
@@ -972,6 +1019,7 @@ class CiscoConfParse(object):
             # Return the lines in self.ioscfg, which match (exactly) linespec
             return list(filter(re.compile("^%s$" % linespec).search, self.ioscfg))
 
+    # This method is on CiscoConfParse()
     def find_children(self, linespec, exactmatch=False, ignore_ws=False):
         """Returns the parents matching the linespec, and their immediate
         children.  This method is different than :meth:`find_all_children`,
@@ -1025,6 +1073,7 @@ class CiscoConfParse(object):
 
         return list(map(attrgetter("text"), sorted(allobjs)))
 
+    # This method is on CiscoConfParse()
     def find_all_children(self, linespec, exactmatch=False, ignore_ws=False):
         """Returns the parents matching the linespec, and all their children.
         This method is different than :meth:`find_children`, because
@@ -1101,6 +1150,7 @@ class CiscoConfParse(object):
             allobjs.update(set(parent.all_children))
         return list(map(attrgetter("text"), sorted(allobjs)))
 
+    # This method is on CiscoConfParse()
     def find_blocks(self, linespec, exactmatch=False, ignore_ws=False):
         """Find all siblings matching the linespec, then find all parents of
         those siblings. Return a list of config lines sorted by line number,
@@ -1222,6 +1272,7 @@ class CiscoConfParse(object):
 
         return list(map(attrgetter("text"), sorted(tmp)))
 
+    # This method is on CiscoConfParse()
     def find_objects_w_child(
         self, parentspec, childspec, ignore_ws=False, recurse=False
     ):
@@ -1321,6 +1372,7 @@ class CiscoConfParse(object):
             )
         )
 
+    # This method is on CiscoConfParse()
     def find_objects_w_all_children(
         self, parentspec, childspec, ignore_ws=False, recurse=False
     ):
@@ -1427,6 +1479,7 @@ class CiscoConfParse(object):
 
         return retval
 
+    # This method is on CiscoConfParse()
     def find_objects_w_missing_children(self, parentspec, childspec, ignore_ws=False):
         """Return a list of parent :class:`~models_cisco.IOSCfgLine` objects,
         which matched the ``parentspec`` and whose children do not match
@@ -1463,6 +1516,7 @@ class CiscoConfParse(object):
 
         return retval
 
+    # This method is on CiscoConfParse()
     def find_parents_w_child(self, parentspec, childspec, ignore_ws=False):
         """Parse through all children matching childspec, and return a list of
         parents that matched the parentspec.  Only the parent lines will be
@@ -1545,6 +1599,7 @@ class CiscoConfParse(object):
         tmp = self.find_objects_w_child(parentspec, childspec, ignore_ws=ignore_ws)
         return list(map(attrgetter("text"), tmp))
 
+    # This method is on CiscoConfParse()
     def find_objects_wo_child(self, parentspec, childspec, ignore_ws=False):
         r"""Return a list of parent :class:`~models_cisco.IOSCfgLine` objects, which matched the ``parentspec`` and whose children did not match ``childspec``.  Only the parent :class:`~models_cisco.IOSCfgLine` objects will be returned.  For simplicity, this method only finds oldest_ancestors without immediate children that match.
 
@@ -1632,6 +1687,7 @@ class CiscoConfParse(object):
             if not obj.re_search_children(childspec)
         ]
 
+    # This method is on CiscoConfParse()
     def find_parents_wo_child(self, parentspec, childspec, ignore_ws=False):
         r"""Parse through all parents matching parentspec, and return a list of parents that did NOT have children match the childspec.  For simplicity, this method only finds oldest_ancestors without immediate children that match.
 
@@ -1713,6 +1769,7 @@ class CiscoConfParse(object):
         tmp = self.find_objects_wo_child(parentspec, childspec, ignore_ws=ignore_ws)
         return list(map(attrgetter("text"), tmp))
 
+    # This method is on CiscoConfParse()
     def find_children_w_parents(self, parentspec, childspec, ignore_ws=False):
         r"""Parse through the children of all parents matching parentspec,
         and return a list of children that matched the childspec.
@@ -1822,6 +1879,7 @@ class CiscoConfParse(object):
 
         return list(map(attrgetter("text"), sorted(retval)))
 
+    # This method is on CiscoConfParse()
     def find_objects_w_parents(self, parentspec, childspec, ignore_ws=False):
         r"""Parse through the children of all parents matching parentspec,
         and return a list of child objects, which matched the childspec.
@@ -1921,6 +1979,7 @@ class CiscoConfParse(object):
 
         return sorted(retval)
 
+    # This method is on CiscoConfParse()
     def find_lineage(self, linespec, exactmatch=False):
         """Iterate through to the oldest ancestor of this object, and return
         a list of all ancestors / children in the direct line.  Cousins or
@@ -1942,42 +2001,55 @@ class CiscoConfParse(object):
         tmp = self.find_objects(linespec, exactmatch=exactmatch)
         if len(tmp) > 1:
             error = "linespec must be unique"
-            logger.error(error)
+            ccp_logger.error(error)
             raise ValueError(error)
 
         return [obj.text for obj in tmp[0].lineage]
 
+    # This method is on CiscoConfParse()
     def has_line_with(self, linespec):
         return self.ConfigObjs.has_line_with(linespec)
 
+    # This method is on CiscoConfParse()
     def insert_before(
         self, exist_val, new_val="", exactmatch=False, ignore_ws=False, atomic=False, **kwargs
     ):
         """Find all objects whose text matches exist_val, and insert 'new_val' before those line objects"""
 
         ######################################################################
+        #
+        # CiscoConfParse().insert_before is a wrapper for CiscoConfParse().ConfigObjs.insert_before()
+        #
         # Named parameter migration warnings...
         #   - `linespec` is now called exist_val
         #   - `insertstr` is now called new_val
         ######################################################################
         if kwargs.get("linespec", ""):
             exist_val = kwargs.get("linespec")
-            logger.info("The parameter named `linespec` is deprecated.  Please use `exist_val` instead")
+            ccp_logger.info("The parameter named `linespec` is deprecated.  Please use `exist_val` instead")
         if kwargs.get("insertstr", ""):
             new_val = kwargs.get("insertstr")
-            logger.info("The parameter named `insertstr` is deprecated.  Please use `new_val` instead")
+            ccp_logger.info("The parameter named `insertstr` is deprecated.  Please use `new_val` instead")
 
         error_exist_val = "FATAL: exist_val:'%s' must be a string" % exist_val
         error_new_val = "FATAL: new_val:'%s' must be a string" % new_val
         assert isinstance(exist_val, str), error_exist_val
         assert isinstance(new_val, str), error_new_val
 
+        # WORKS
+        #objs = self.find_objects(exist_val, exactmatch, ignore_ws)
+        #self.ConfigObjs.insert_before(exist_val, new_val, atomic=atomic)
+        #self.commit()
+        # END-WORKS
+
         objs = self.find_objects(exist_val, exactmatch, ignore_ws)
-        self.ConfigObjs.insert_before(exist_val, new_val, atomic=atomic)
-        self.commit()
+        for obj in objs:
+            obj.insert_before(new_val)
+        if atomic is True:
+            self.atomic()
         return list(map(attrgetter("text"), sorted(objs)))
 
-###########################################################################start
+    # This method is on CiscoConfParse()
     def insert_after(
         self,  exist_val, new_val="", exactmatch=False, ignore_ws=False, atomic=False, **kwargs
     ):
@@ -1985,28 +2057,40 @@ class CiscoConfParse(object):
         matches ``exist_val``, and insert ``new_val`` after those line
         objects"""
 
+
         ######################################################################
+        #
+        # CiscoConfParse().insert_after is a wrapper for CiscoConfParse().ConfigObjs.insert_after()
+        #
+        #
         # Named parameter migration warnings...
         #   - `linespec` is now called exist_val
         #   - `insertstr` is now called new_val
         ######################################################################
         if kwargs.get("linespec", ""):
             exist_val = kwargs.get("linespec")
-            logger.info("The parameter named `linespec` is deprecated.  Please use `exist_val` instead")
+            ccp_logger.info("The parameter named `linespec` is deprecated.  Please use `exist_val` instead")
         if kwargs.get("insertstr", ""):
             new_val = kwargs.get("insertstr")
-            logger.info("The parameter named `insertstr` is deprecated.  Please use `new_val` instead")
+            ccp_logger.info("The parameter named `insertstr` is deprecated.  Please use `new_val` instead")
 
         error_exist_val = "FATAL: exist_val:'%s' must be a string" % exist_val
         error_new_val = "FATAL: new_val:'%s' must be a string" % new_val
         assert isinstance(exist_val, str), error_exist_val
         assert isinstance(new_val, str), error_new_val
 
+        # WORKS!!
+        #objs = self.find_objects(exist_val, exactmatch, ignore_ws)
+        #self.ConfigObjs.insert_after(exist_val, new_val, atomic=atomic)
+        # END-WORKS!!
         objs = self.find_objects(exist_val, exactmatch, ignore_ws)
-        self.ConfigObjs.insert_after(exist_val, new_val, atomic=atomic)
+        for obj in objs:
+            obj.insert_after(new_val)
+        if atomic is True:
+            self.atomic()
         return list(map(attrgetter("text"), sorted(objs)))
-###########################################################################stop
 
+    # This method is on CiscoConfParse()
     def insert_after_child(
         self,
         parentspec,
@@ -2040,6 +2124,7 @@ class CiscoConfParse(object):
                     pass
         return retval
 
+    # This method is on CiscoConfParse()
     def delete_lines(self, linespec, exactmatch=False, ignore_ws=False):
         """Find all :class:`~models_cisco.IOSCfgLine` objects whose text
         matches linespec, and delete the object"""
@@ -2050,12 +2135,14 @@ class CiscoConfParse(object):
             # del self.ConfigObjs[obj.linenum]
             obj.delete()
 
+    # This method is on CiscoConfParse()
     def prepend_line(self, linespec):
         """Unconditionally insert an :class:`~models_cisco.IOSCfgLine` object
         for ``linespec`` (a text line) at the top of the configuration"""
         self.ConfigObjs.insert(0, linespec)
         return self.ConfigObjs[0]
 
+    # This method is on CiscoConfParse()
     def append_line(self, linespec):
         """Unconditionally insert ``linespec`` (a text line) at the end of the
         configuration
@@ -2073,6 +2160,7 @@ class CiscoConfParse(object):
         self.ConfigObjs.append(linespec)
         return self.ConfigObjs[-1]
 
+    # This method is on CiscoConfParse()
     def replace_lines(
         self, linespec, replacestr, excludespec=None, exactmatch=False, atomic=False
     ):
@@ -2183,6 +2271,7 @@ class CiscoConfParse(object):
 
         return retval
 
+    # This method is on CiscoConfParse()
     def replace_children(
         self,
         parentspec,
@@ -2269,6 +2358,7 @@ class CiscoConfParse(object):
             self.ConfigObjs._bootstrap_from_text()
         return retval
 
+    # This method is on CiscoConfParse()
     def replace_all_children(
         self,
         parentspec,
@@ -2303,6 +2393,7 @@ class CiscoConfParse(object):
 
         return retval
 
+    # This method is on CiscoConfParse()
     def re_search_children(self, regex, recurse=False):
         """Use ``regex`` to search for root parents in the config with text matching regex.  If `recurse` is False, only root parent objects are returned.  A list of matching objects is returned.
 
@@ -2329,6 +2420,7 @@ class CiscoConfParse(object):
             # Return any matching object
             return [obj for obj in self.find_objects(regex)]
 
+    # This method is on CiscoConfParse()
     def re_match_iter_typed(
         self, regex, group=1, result_type=str, default="", untyped_default=False
     ):
@@ -2428,6 +2520,7 @@ class CiscoConfParse(object):
         else:
             return result_type(default)
 
+    # This method is on CiscoConfParse()
     def req_cfgspec_all_diff(self, cfgspec, ignore_ws=False):
         """
         req_cfgspec_all_diff takes a list of required configuration lines,
@@ -2482,6 +2575,7 @@ class CiscoConfParse(object):
 
         return retval
 
+    # This method is on CiscoConfParse()
     def req_cfgspec_excl_diff(self, linespec, uncfgspec, cfgspec):
         r"""
         req_cfgspec_excl_diff accepts a linespec, an unconfig spec, and
@@ -2549,6 +2643,7 @@ class CiscoConfParse(object):
 
         return retval
 
+    # This method is on CiscoConfParse()
     def _sequence_nonparent_lines(self, a_nonparent_objs, b_nonparent_objs):
         """Assume a_nonparent_objs is the existing config sequence, and
         b_nonparent_objs is the *desired* config sequence
@@ -2591,6 +2686,7 @@ class CiscoConfParse(object):
 
         return a_parse, a_lines, a_linenums
 
+    # This method is on CiscoConfParse()
     def _sequence_parent_lines(self, a_parent_objs, b_parent_objs):
         """Assume a_parent_objs is the existing config sequence, and
         b_parent_objs is the *desired* config sequence
@@ -2655,6 +2751,7 @@ class CiscoConfParse(object):
 
         return a_parse, a_lines, a_linenums
 
+    # This method is on CiscoConfParse()
     def sync_diff(
         self,
         cfgspec,
@@ -2813,7 +2910,7 @@ class CiscoConfParse(object):
                 for tag, i1, i2, j1, j2 in matcher.get_opcodes():
                     # print ("%7s a[%d:%d] (%s) b[%d:%d] (%s)" % (tag, i1, i2, a_lines[i1:i2], j1, j2, b_lines[j1:j2]))
                     if (debug > 0) or (self.debug > 0):
-                        logger.debug("TAG='{0}'".format(tag))
+                        ccp_logger.debug("TAG='{0}'".format(tag))
 
                     # if tag=='equal', check whether the parent objs are the same
                     #     if parent objects are the same, then do nothing
@@ -2844,8 +2941,8 @@ class CiscoConfParse(object):
                             aobj = None
                             aparent_text = "__ANOTHING__"
                         if (debug > 0) or (self.debug > 0):
-                            logger.debug("    aobj:'{0}'".format(aobj))
-                            logger.debug("    aobj parents:'{0}'".format(aparent_text))
+                            ccp_logger.debug("    aobj:'{0}'".format(aobj))
+                            ccp_logger.debug("    aobj parents:'{0}'".format(aparent_text))
 
                         try:
                             bobj = bobjs[idx]
@@ -2860,15 +2957,15 @@ class CiscoConfParse(object):
                             bparent_text = "__BNOTHING__"
 
                         if (debug > 0) or (self.debug > 0):
-                            logger.debug("    bobj:'{0}'".format(bobj))
-                            logger.debug("    bobj parents:'{0}'".format(bparent_text))
+                            ccp_logger.debug("    bobj:'{0}'".format(bobj))
+                            ccp_logger.debug("    bobj parents:'{0}'".format(bparent_text))
 
                         if tag == "equal":
                             # If the diff claims that these lines are equal, they
                             #   aren't truly equal unless parents match
                             if aparent_text != bparent_text:
                                 if (debug > 0) or (self.debug > 0):
-                                    logger.debug(
+                                    ccp_logger.debug(
                                         "    tagged 'equal', aparent_text!=bparent_text"
                                     )
                                 # a & b parents are *not* the same
@@ -2880,25 +2977,25 @@ class CiscoConfParse(object):
                                         aobj.parent.config_this = True
                                     aobj.unconfig_this = True
                                     if debug > 0:
-                                        logger.debug("    unconfigure aobj")
+                                        ccp_logger.debug("    unconfigure aobj")
                                 if bobj:
                                     bobj.config_this = True
                                     bobj.parent.config_this = True
                                     if debug > 0:
-                                        logger.debug("    configure bobj")
+                                        ccp_logger.debug("    configure bobj")
                             elif aparent_text == bparent_text:
                                 # Both a & b parents match, so these lines are equal
                                 aobj.unconfig_this = False
                                 bobj.config_this = False
                                 if debug > 0:
-                                    logger.debug(
+                                    ccp_logger.debug(
                                         "    tagged 'equal', aparent_text==bparent_text"
                                     )
-                                    logger.debug("    do nothing with aobj / bobj")
+                                    ccp_logger.debug("    do nothing with aobj / bobj")
                         elif tag == "replace":
                             # tag: replace, I'm not going to check parents for now
                             if debug > 0:
-                                logger.debug("    tagged 'replace'")
+                                ccp_logger.debug("    tagged 'replace'")
                             if aobj:
                                 # Only configure parent if it's not already
                                 #    slated for removal
@@ -2906,15 +3003,15 @@ class CiscoConfParse(object):
                                     aobj.parent.config_this = True
                                 aobj.unconfig_this = True
                                 if debug > 0:
-                                    logger.debug("    unconfigure aobj")
+                                    ccp_logger.debug("    unconfigure aobj")
                             if bobj:
                                 bobj.config_this = True
                                 bobj.parent.config_this = True
                                 if debug > 0:
-                                    logger.debug("    configure bobj")
+                                    ccp_logger.debug("    configure bobj")
                         elif tag == "insert":
                             if debug > 0:
-                                logger.debug("    tagged 'insert'")
+                                ccp_logger.debug("    tagged 'insert'")
                             # I don't think tag: insert ever applies to a objects...
                             if aobj:
                                 # Only configure parent if it's not already
@@ -2923,17 +3020,17 @@ class CiscoConfParse(object):
                                     aobj.parent.config_this = True
                                 aobj.unconfig_this = True
                                 if debug > 0:
-                                    logger.debug("    unconfigure aobj")
+                                    ccp_logger.debug("    unconfigure aobj")
                             # tag: insert certainly applies to b objects...
                             if bobj:
                                 bobj.config_this = True
                                 bobj.parent.config_this = True
                                 if debug > 0:
-                                    logger.debug("    configure bobj")
+                                    ccp_logger.debug("    configure bobj")
                         elif tag == "delete":
                             # NOTE: I'm not deleting b objects, for now
                             if debug > 0:
-                                logger.debug("    tagged 'delete'")
+                                ccp_logger.debug("    tagged 'delete'")
                             if aobj:
                                 # Only configure parent if it's not already
                                 #    slated for removal
@@ -2942,10 +3039,10 @@ class CiscoConfParse(object):
                                         pobj.config_this = True
                                 aobj.unconfig_this = True
                                 if debug > 0:
-                                    logger.debug("    unconfigure aobj")
+                                    ccp_logger.debug("    unconfigure aobj")
                         else:
                             error = "Unknown action: {0}".format(tag)
-                            logger.error(error)
+                            ccp_logger.error(error)
                             raise ValueError(error)
 
                 ###
@@ -2997,26 +3094,28 @@ class CiscoConfParse(object):
             )
 
         if debug > 0:
-            logger.debug("Completed diff:")
+            ccp_logger.debug("Completed diff:")
             for line in retval:
-                logger.debug("'{0}'".format(line))
+                ccp_logger.debug("'{0}'".format(line))
         return retval
 
+    # This method is on CiscoConfParse()
     def save_as(self, filepath):
         """Save a text copy of the configuration at ``filepath``; this
         method uses the OperatingSystem's native line separators (such as
         ``\\r\\n`` in Windows)."""
         try:
-            with open(filepath, "w") as newconf:
+            with open(filepath, "w", encoding=self.encoding) as newconf:
                 for line in self.ioscfg:
                     newconf.write(line + "\n")
             return True
-        except Exception as e:
-            logger.error(str(e))
-            raise e
+        except Exception as ee:
+            ccp_logger.error(str(ee))
+            raise ee
 
     ### The methods below are marked SEMI-PRIVATE because they return an object
     ###  or iterable of objects instead of the configuration text itself.
+    # This method is on CiscoConfParse()
     def _build_space_tolerant_regex(self, linespec):
         r"""SEMI-PRIVATE: Accept a string, and return a string with all
         spaces replaced with '\s+'"""
@@ -3046,8 +3145,13 @@ class CiscoConfParse(object):
 
         return linespec
 
+    # This method is on CiscoConfParse()
     def _find_line_OBJ(self, linespec, exactmatch=False):
         """SEMI-PRIVATE: Find objects whose text matches the linespec"""
+
+        if self.debug >= 2:
+            ccp_logger.debug("Looking for match of linespec='%s', exactmatch=%s" % (linespec, exactmatch))
+
         ## NOTE TO SELF: do not remove _find_line_OBJ(); used by Cisco employees
         if not exactmatch:
             # Return objects whose text attribute matches linespec
@@ -3055,14 +3159,18 @@ class CiscoConfParse(object):
         elif exactmatch:
             # Return objects whose text attribute matches linespec exactly
             linespec_re = re.compile("^%s$" % linespec)
+
+
         return list(filter(lambda obj: linespec_re.search(obj.text), self.ConfigObjs))
 
+    # This method is on CiscoConfParse()
     def _find_sibling_OBJ(self, lineobject):
         """SEMI-PRIVATE: Takes a singe object and returns a list of sibling
         objects"""
         siblings = lineobject.parent.children
         return siblings
 
+    # This method is on CiscoConfParse()
     def _find_all_child_OBJ(self, lineobject):
         """SEMI-PRIVATE: Takes a single object and returns a list of
         decendants in all 'children' / 'grandchildren' / etc... after it.
@@ -3076,6 +3184,7 @@ class CiscoConfParse(object):
         retval = sorted(retval)
         return retval
 
+    # This method is on CiscoConfParse()
     def _unique_OBJ(self, objectlist):
         """SEMI-PRIVATE: Returns a list of unique objects (i.e. with no
         duplicates).
@@ -3086,6 +3195,7 @@ class CiscoConfParse(object):
             retval.add(obj)
         return sorted(retval)
 
+    # This method is on CiscoConfParse()
     def _objects_to_uncfg(self, objectlist, unconflist):
         # Used by req_cfgspec_excl_diff()
         retval = list()
@@ -3103,8 +3213,8 @@ class CiscoConfParse(object):
 #########################################################################3
 
 
-class IOSConfigList(MutableSequence):
-    """A custom list to hold :class:`~models_cisco.IOSCfgLine` objects.  Most people will never need to use this class directly."""
+class ConfigList(MutableSequence):
+    """A custom list to hold :class:`~ccp_abc.BaseCfgLine` objects.  Most people will never need to use this class directly."""
 
     def __init__(
         self,
@@ -3113,8 +3223,9 @@ class IOSConfigList(MutableSequence):
         debug=0,
         factory=False,
         ignore_blank_lines=True,
+        #syntax="__undefined__",
         syntax="ios",
-        CiscoConfParse=None,
+        **kwargs
     ):
         """Initialize the class.
 
@@ -3131,7 +3242,7 @@ class IOSConfigList(MutableSequence):
 
         Returns
         -------
-        An instance of an :class:`~ciscoconfparse.IOSConfigList` object.
+        An instance of an :class:`~ciscoconfparse.ConfigList` object.
 
         """
         # data = kwargs.get('data', None)
@@ -3141,22 +3252,74 @@ class IOSConfigList(MutableSequence):
         # ignore_blank_lines = kwargs.get('ignore_blank_lines', True)
         # syntax = kwargs.get('syntax', 'ios')
         # CiscoConfParse = kwargs.get('CiscoConfParse', None)
-        super(IOSConfigList, self).__init__()
+        super(ConfigList, self).__init__()
+
+        #######################################################################
+        # Parse out CiscoConfParse and ccp_ref keywords...
+        #     FIXME the CiscoConfParse attribute / parameter should go away
+        #     use self.ccp_ref instead of self.CiscoConfParse
+        #######################################################################
+        ciscoconfparse_kwarg_val = kwargs.get("CiscoConfParse", None)
+        ccp_ref_kwarg_val = kwargs.get("ccp_ref", None)
+        if ciscoconfparse_kwarg_val is not None:
+            ccp_logger.warning("The CiscoConfParse keyword will be deprecated soon.  Please use ccp_ref instead")
+        ccp_value = ccp_ref_kwarg_val or ciscoconfparse_kwarg_val
 
         self._list = list()
-        self.CiscoConfParse = CiscoConfParse
+        self.CiscoConfParse = ccp_value    # FIXME - CiscoConfParse attribute should go away soon
+        self.ccp_ref = ccp_value
         self.comment_delimiter = comment_delimiter
         self.factory = factory
         self.ignore_blank_lines = ignore_blank_lines
         self.syntax = syntax
-        self.dna = "IOSConfigList"
+        self.dna = "ConfigList"
         self.debug = debug
+
+        is_valid_syntax = False
+        for valid_syntax in ALL_VALID_SYNTAX:
+            try:
+                assert self.syntax == valid_syntax
+                is_valid_syntax = True
+            except:
+                pass
+        assert is_valid_syntax is True
 
         ## Support either a list or a generator instance
         if getattr(data, "__iter__", False):
-            self._list = self._bootstrap_obj_init(data)
+            if self.syntax == "ios":
+                self._list = self._bootstrap_obj_init_ios(data)
+
+            elif self.syntax == "asa":
+                self._list = self._bootstrap_obj_init_asa(data)
+
+            elif self.syntax == "nxos":
+                self._list = self._bootstrap_obj_init_nxos(data)
+
+            elif self.syntax == "junos":
+                # FIXME - abusing ios bootstrap for now... junos
+                #    should have its own bootstrap method...
+                self._list = self._bootstrap_obj_init_ios(data)
+
+            else:
+                error = "No bootstrap method for syntax='%s'" % self.syntax
+                ccp_logger.critical(error)
+                raise NotImplementedError(error)
+
         else:
             self._list = list()
+
+        if self.debug > 0:
+            message = "Create ConfigList() with %i elements" % len(self._list)
+            ccp_logger.info(message)
+
+        ###
+        ### Internal structures
+        if self.syntax == 'asa':
+            self._RE_NAMES = re.compile(r"^\s*name\s+(\d+\.\d+\.\d+\.\d+)\s+(\S+)")
+            self._RE_OBJNET = re.compile(r"^\s*object-group\s+network\s+(\S+)")
+            self._RE_OBJSVC = re.compile(r"^\s*object-group\s+service\s+(\S+)")
+            self._RE_OBJACL = re.compile(r"^\s*access-list\s+(\S+)")
+            self._network_cache = dict()
 
     def __len__(self):
         return len(self._list)
@@ -3185,22 +3348,164 @@ class IOSConfigList(MutableSequence):
         self._list[0].confobj.CiscoConfParse.atomic()
 
     def __repr__(self):
-        return """<IOSConfigList, comment='%s', conf=%s>""" % (
+        return """<ConfigList, syntax='%s', comment='%s', conf=%s>""" % (
+            self.syntax,
             self.comment_delimiter,
             self._list,
         )
 
+    # This method is on ConfigList()
+    def __getattribute__(self, arg):
+        """Call arg on ConfigList() object, and if that fails, call arg from the ccp_ref attribute"""
+        # Try a method call on ASAConfigList()
+
+
+        rewrite_to_ccp_ref = False
+        # Rewrite self.CiscoConfParse to self.ccp_ref
+        if arg=="CiscoConfParse":
+            rewrite_to_ccp_ref = True
+            arg = "ccp_ref"
+
+        try:
+            return object.__getattribute__(self, arg)
+        except Exception as ee:
+            pass
+
+        try:
+            calling_function = inspect.stack()[1].function
+            caller = inspect.getframeinfo(inspect.stack()[1][0])
+
+            ccp_ref = object.__getattribute__(self, 'ccp_ref')
+            ccp_method = ccp_ref.__getattribute__(arg)
+            message = "%s() line %s called this method.  %s doesn't have an attribute named '%s'.  CiscoConfParse() is making this work with duct tape in __getattribute__()." % (calling_function, caller.lineno, ccp_ref, ccp_method)
+            ccp_logger.warning(message)
+            return ccp_method
+        except Exception as ff:
+            ccp_logger.error(str(ff))
+            sys.exit(1)
+
+    # This method is on ConfigList()
     def _bootstrap_from_text(self):
         ## reparse all objects from their text attributes... this is *very* slow
         ## Ultimate goal: get rid of all reparsing from text...
-        self._list = self._bootstrap_obj_init(list(map(attrgetter("text"), self._list)))
-        if self.debug > 0:
-            logger.debug("self._list = {0}".format(self._list))
+        if self.syntax=='ios':
+            self._list = self._bootstrap_obj_init_ios(list(map(attrgetter("text"), self._list)))
 
+        elif self.syntax=='nxos':
+            self._list = self._bootstrap_obj_init_nxos(list(map(attrgetter("text"), self._list)))
+
+        elif self.syntax=='asa':
+            self._list = self._bootstrap_obj_init_asa(list(map(attrgetter("text"), self._list)))
+
+        elif self.syntax=='junos':
+            # FIXME junos syntax should have its own bootstrap method...
+            self._list = self._bootstrap_obj_init_ios(list(map(attrgetter("text"), self._list)))
+
+        else:
+            error = "no defined bootstrap method for syntax='%s'" % self.syntax
+            raise NotImplementedError(error)
+
+        if self.debug > 0:
+            ccp_logger.debug("self._list = {0}".format(self._list))
+
+    # This method is on ConfigList()
     def has_line_with(self, linespec):
         return bool(filter(methodcaller("re_search", linespec), self._list))
 
+    # This method is on ConfigList()
     @junos_unsupported
+    def insert_before_deprecated(self, exist_val, new_val, atomic=False):
+        """
+        Insert new_val before all occurances of exist_val.
+
+        Parameters
+        ----------
+        exist_val : str
+            An existing text value.  This may match multiple configuration entries.
+        new_val : str
+            A new value to be inserted in the configuration.
+        atomic : bool
+            A boolean that controls whether the config is reparsed after the insertion (default False)
+
+        Returns
+        -------
+        list
+            An ios-style configuration list (indented by stop_width for each configuration level).
+
+        Examples
+        --------
+
+        >>> parse = CiscoConfParse(["a a", "b b", "c c", "b b"])
+        >>> # Insert 'g' before any occurance of 'b'
+        >>> retval = parse.insert_before("b b", "X X")
+        >>> parse.commit()
+        >>> parse.ioscfg
+        ... ["a a", "X X", "b b", "c c", "X X", "b b"]
+        >>>
+        """
+
+        calling_fn_index = 1
+        calling_filename = inspect.stack()[calling_fn_index].filename
+        calling_function = inspect.stack()[calling_fn_index].function
+        calling_lineno = inspect.stack()[calling_fn_index].lineno
+        error =  "FATAL CALL: in %s line %s %s(exist_val='%s', new_val='%s')" % (calling_filename, calling_lineno, calling_function, exist_val, new_val)
+        # exist_val MUST be a string
+        if isinstance(exist_val, str) is True:
+            pass
+
+        # Matches "IOSCfgLine", "NXOSCfgLine" and "ASACfgLine"... (and others)
+        elif isinstance(exist_val, BaseCfgLine):
+            exist_val = exist_val.text
+
+        else:
+            ccp_logger.error(error)
+            raise ValueError(error)
+
+        # new_val MUST be a string
+        if isinstance(new_val, str) is True:
+            pass
+
+        # Matches "IOSCfgLine", "NXOSCfgLine" and "ASACfgLine"... (and others)
+        elif isinstance(new_val, BaseCfgLine):
+            new_val = new_val.text
+
+        else:
+            ccp_logger.error(error)
+            raise ValueError(error)
+
+        if self.factory:
+            new_obj = ConfigLineFactory(
+                text=new_val,
+                comment_delimiter=self.comment_delimiter,
+                syntax=self.syntax,
+            )
+        elif self.syntax == "ios":
+            new_obj = IOSCfgLine(text=new_val, comment_delimiter=self.comment_delimiter)
+
+        elif self.syntax == "nxos":
+            new_obj = NXOSCfgLine(text=new_val, comment_delimiter=self.comment_delimiter)
+
+        elif self.syntax == "asa":
+            new_obj = ASACfgLine(text=new_val, comment_delimiter=self.comment_delimiter)
+
+        else:
+            ccp_logger.error(error)
+            raise ValueError(error)
+
+        # Find all config lines which need to be modified... store in all_idx
+        all_idx = [idx for idx, val in enumerate(self._list) if val.text==exist_val]
+        for idx in sorted(all_idx, reverse=True):
+            self._list.insert(idx, new_obj)
+
+        if atomic:
+            # Reparse the whole config as a text list
+            self._bootstrap_from_text()
+        else:
+            ## Just renumber lines...
+            self._reassign_linenums()
+##############################################################################
+
+    # This method is on ConfigList()
     def insert_before(self, exist_val, new_val, atomic=False):
         """
         Insert new_val before all occurances of exist_val.
@@ -3222,12 +3527,12 @@ class IOSConfigList(MutableSequence):
         Examples
         --------
 
-        >>> parse = CiscoConfParse(["a", "b", "c", "b"])
+        >>> parse = CiscoConfParse(["a a", "b b", "c c", "b b"])
         >>> # Insert 'g' before any occurance of 'b'
-        >>> retval = parse.insert_before("b", "g")
+        >>> retval = parse.insert_before("b b", "X X")
         >>> parse.commit()
         >>> parse.ioscfg
-        ... ["a", "g", "b", "c", "g", "b"]
+        ... ["a a", "X X", "b b", "c c", "X X", "b b"]
         >>>
         """
 
@@ -3240,20 +3545,23 @@ class IOSConfigList(MutableSequence):
         if isinstance(exist_val, str) is True:
             pass
 
-        elif isinstance(exist_val, IOSCfgLine) is True:
+        # Matches "IOSCfgLine", "NXOSCfgLine" and "ASACfgLine"... (and others)
+        elif isinstance(exist_val, BaseCfgLine):
             exist_val = exist_val.text
 
         else:
+            ccp_logger.error(error)
             raise ValueError(error)
 
         # new_val MUST be a string
         if isinstance(new_val, str) is True:
             pass
 
-        elif isinstance(new_val, IOSCfgLine) is True:
+        elif isinstance(new_val, BaseCfgLine):
             new_val = new_val.text
 
         else:
+            ccp_logger.error(error)
             raise ValueError(error)
 
         if self.factory:
@@ -3265,19 +3573,33 @@ class IOSConfigList(MutableSequence):
         elif self.syntax == "ios":
             new_obj = IOSCfgLine(text=new_val, comment_delimiter=self.comment_delimiter)
 
+        elif self.syntax == "nxos":
+            new_obj = NXOSCfgLine(text=new_val, comment_delimiter=self.comment_delimiter)
+
+        elif self.syntax == "asa":
+            new_obj = ASACfgLine(text=new_val, comment_delimiter=self.comment_delimiter)
+
+        else:
+            ccp_logger.error(error)
+            raise ValueError(error)
+
         # Find all config lines which need to be modified... store in all_idx
-        all_idx = [idx for idx, val in enumerate(self._list) if val.text==exist_val]
+
+        all_idx = [idx for idx, list_obj in enumerate(self._list) if re.search(exist_val, list_obj.text)]
         for idx in sorted(all_idx, reverse=True):
+
+            # insert at idx - 0 implements 'insert_before()'...
             self._list.insert(idx, new_obj)
 
         if atomic:
             # Reparse the whole config as a text list
             self._bootstrap_from_text()
+
         else:
             ## Just renumber lines...
             self._reassign_linenums()
 
-####################################################################new mod
+    # This method is on ConfigList()
     @junos_unsupported
     def insert_after(self, exist_val, new_val, atomic=False):
         """
@@ -3300,14 +3622,23 @@ class IOSConfigList(MutableSequence):
         Examples
         --------
 
-        >>> parse = CiscoConfParse(["a", "b", "c", "b"])
-        >>> # Insert 'g' after any occurance of 'b'
-        >>> retval = parse.insert_after("b", "g")
+        >>> parse = CiscoConfParse(["a a", "b b", "c c", "b b"])
+        >>> # Insert 'g' before any occurance of 'b'
+        >>> retval = parse.ConfigObjs.insert_after("b b", "X X")
         >>> parse.commit()
         >>> parse.ioscfg
-        ... ["a", "b", "g", "c", "b", "g"]
+        ... ["a a", "b b", "X X", "c c", "b b", "X X"]
         >>>
         """
+
+#        inserted_object = False
+#        for obj in self.ccp_ref.find_objects(exist_val):
+#            ccp_logger.debug("Inserting '%s' after '%s'" % (new_val, exist_val))
+#            print("IDX", obj.index)
+#            obj.insert_after(new_val)
+#            inserted_object = True
+#        return inserted_object
+
 
         calling_fn_index = 1
         calling_filename = inspect.stack()[calling_fn_index].filename
@@ -3318,20 +3649,23 @@ class IOSConfigList(MutableSequence):
         if isinstance(exist_val, str) is True:
             pass
 
-        elif isinstance(exist_val, IOSCfgLine) is True:
+        # Matches "IOSCfgLine", "NXOSCfgLine" and "ASACfgLine"... (and others)
+        elif isinstance(exist_val, BaseCfgLine):
             exist_val = exist_val.text
 
         else:
+            ccp_logger.error(error)
             raise ValueError(error)
 
         # new_val MUST be a string
         if isinstance(new_val, str) is True:
             pass
 
-        elif isinstance(new_val, IOSCfgLine) is True:
+        elif isinstance(new_val, BaseCfgLine):
             new_val = new_val.text
 
         else:
+            ccp_logger.error(error)
             raise ValueError(error)
 
         if self.factory:
@@ -3343,8 +3677,19 @@ class IOSConfigList(MutableSequence):
         elif self.syntax == "ios":
             new_obj = IOSCfgLine(text=new_val, comment_delimiter=self.comment_delimiter)
 
+        elif self.syntax == "nxos":
+            new_obj = NXOSCfgLine(text=new_val, comment_delimiter=self.comment_delimiter)
+
+        elif self.syntax == "asa":
+            new_obj = ASACfgLine(text=new_val, comment_delimiter=self.comment_delimiter)
+
+        else:
+            ccp_logger.error(error)
+            raise ValueError(error)
+
         # Find all config lines which need to be modified... store in all_idx
-        all_idx = [idx for idx, val in enumerate(self._list) if val.text==exist_val]
+
+        all_idx = [idx for idx, list_obj in enumerate(self._list) if re.search(exist_val, list_obj.text)]
         for idx in sorted(all_idx, reverse=True):
             self._list.insert(idx+1, new_obj)
 
@@ -3354,43 +3699,14 @@ class IOSConfigList(MutableSequence):
         else:
             ## Just renumber lines...
             self._reassign_linenums()
-####################################################################new mod
 
-#    @junos_unsupported
-#    def insert_after(self, robj, val, atomic=False):
-#        ## Insert something after robj
-#        if getattr(robj, "capitalize", False):
-#            raise ValueError
-#
-#        ## If val is a string...
-#        if getattr(val, "capitalize", False):
-#            if self.factory:
-#                obj = ConfigLineFactory(
-#                    text=val,
-#                    comment_delimiter=self.comment_delimiter,
-#                    syntax=self.syntax,
-#                )
-#            elif self.syntax == "ios":
-#                obj = IOSCfgLine(text=val, comment_delimiter=self.comment_delimiter)
-#
-#        ## FIXME: This shouldn't be required
-#        ## Removed 2015-01-24 during rewrite...
-#        # self._reassign_linenums()
-#
-#        ii = self._list.index(robj)
-#        if (ii is not None):
-#            ## Do insertion here
-#            self._list.insert(ii + 1, obj)
-#
-#        if atomic:
-#            # Reparse the whole config as a text list
-#            self._bootstrap_from_text()
-#        else:
-#            ## Just renumber lines...
-#            self._reassign_linenums()
-
+    # This method is on ConfigList()
     @junos_unsupported
     def insert(self, ii, val):
+
+        assert isinstance(ii, int)
+
+        # Coerce a string into the appropriate object
         if getattr(val, "capitalize", False):
             if self.factory:
                 obj = ConfigLineFactory(
@@ -3400,13 +3716,20 @@ class IOSConfigList(MutableSequence):
                 )
             elif self.syntax == "ios":
                 obj = IOSCfgLine(text=val, comment_delimiter=self.comment_delimiter)
+
+            elif self.syntax == "nxos":
+                obj = NXOSCfgLine(text=val, comment_delimiter=self.comment_delimiter)
+
+            elif self.syntax == "asa":
+                obj = ASACfgLine(text=val, comment_delimiter=self.comment_delimiter)
+
             else:
                 error = 'insert() cannot insert "{0}"'.format(val)
-                logger.error(error)
+                ccp_logger.error(error)
                 raise ValueError(error)
         else:
             error = 'insert() cannot insert "{0}"'.format(val)
-            logger.error(error)
+            ccp_logger.error(error)
             raise ValueError(error)
 
         ## Insert something at index ii
@@ -3415,11 +3738,13 @@ class IOSConfigList(MutableSequence):
         ## Just renumber lines...
         self._reassign_linenums()
 
+    # This method is on ConfigList()
     @junos_unsupported
     def append(self, val):
         list_idx = len(self._list)
         self.insert(list_idx, val)
 
+    # This method is on ConfigList()
     def config_hierarchy(self):
         """Walk this configuration and return the following tuple
         at each parent 'level': (list_of_parent_sibling_objs, list_of_nonparent_sibling_objs)
@@ -3428,7 +3753,7 @@ class IOSConfigList(MutableSequence):
         parent_siblings = list()
         nonparent_siblings = list()
 
-        for obj in self.CiscoConfParse.find_objects(r"^\S+"):
+        for obj in self.ccp_ref.find_objects(r"^\S+"):
             if obj.is_comment:
                 continue
             elif len(obj.children) == 0:
@@ -3438,6 +3763,7 @@ class IOSConfigList(MutableSequence):
 
         return parent_siblings, nonparent_siblings
 
+    # This method is on ConfigList()
     def _banner_mark_regex(self, REGEX):
         # Build a list of all leading banner lines
         banner_objs = list(filter(lambda obj: REGEX.search(obj.text), self._list))
@@ -3458,9 +3784,9 @@ class IOSConfigList(MutableSequence):
                 (banner_lead, bannerdelimit) = ("", None)
 
             if self.debug > 0:
-                logger.debug("banner_lead = '{0}'".format(banner_lead))
-                logger.debug("bannerdelimit = '{0}'".format(bannerdelimit))
-                logger.debug(
+                ccp_logger.debug("banner_lead = '{0}'".format(banner_lead))
+                ccp_logger.debug("bannerdelimit = '{0}'".format(bannerdelimit))
+                ccp_logger.debug(
                     "{0} starts at line {1}".format(banner_lead, parent.linenum)
                 )
 
@@ -3472,7 +3798,7 @@ class IOSConfigList(MutableSequence):
                     if len(parts) > 2:
                         ## banner has both begin and end delimiter on one line
                         if self.debug > 0:
-                            logger.debug(
+                            ccp_logger.debug(
                                 "{0} ends at line"
                                 " {1}".format(banner_lead, parent.linenum)
                             )
@@ -3484,7 +3810,7 @@ class IOSConfigList(MutableSequence):
                     obj = self._list[idx]
                     if obj.text is None:
                         if self.debug > 0:
-                            logger.warning(
+                            ccp_logger.warning(
                                 "found empty text while parsing '{0}' in the banner".format(
                                     obj
                                 )
@@ -3492,7 +3818,7 @@ class IOSConfigList(MutableSequence):
                         pass
                     elif bannerdelimit in obj.text.strip():
                         if self.debug > 0:
-                            logger.debug(
+                            ccp_logger.debug(
                                 "{0} ends at line"
                                 " {1}".format(banner_lead, obj.linenum)
                             )
@@ -3509,6 +3835,7 @@ class IOSConfigList(MutableSequence):
                 except IndexError:
                     break
 
+    # This method is on ConfigList()
     def _macro_mark_children(self, macro_parent_idx_list):
         # Mark macro children appropriately...
         for idx in macro_parent_idx_list:
@@ -3526,7 +3853,8 @@ class IOSConfigList(MutableSequence):
                 if cobj.text.rstrip() == "@":
                     finished = True
 
-    def _bootstrap_obj_init(self, text_list):
+    # This method is on ConfigList()
+    def _bootstrap_obj_init_ios(self, text_list):
         """Accept a text list and format into proper IOSCfgLine() objects"""
         # Append text lines as IOSCfgLine objects...
         BANNER_STR = set(
@@ -3556,13 +3884,14 @@ class IOSConfigList(MutableSequence):
             #
             if not self.factory:
                 obj = IOSCfgLine(line, self.comment_delimiter)
-            elif self.syntax == "ios":
-                obj = ConfigLineFactory(line, self.comment_delimiter, syntax="ios")
+
+            elif self.syntax in ALL_VALID_SYNTAX:
+                obj = ConfigLineFactory(line, self.comment_delimiter, syntax=self.syntax)
+
             else:
                 error = ("Cannot classify config list item '%s' "
                     "into a proper configuration object line" % line)
-                if self.debug > 0:
-                    logger.error(error)
+                ccp_logger.error(error)
                 raise ValueError(error)
 
             obj.confobj = self
@@ -3638,693 +3967,8 @@ class IOSConfigList(MutableSequence):
         self._macro_mark_children(macro_parent_idx_list)  # Process macros
         return retval
 
-    def _add_child_to_parent(self, _list, idx, indent, parentobj, childobj):
-        ## parentobj could be None when trying to add a child that should not
-        ##    have a parent
-        if parentobj is None:
-            if self.debug > 0:
-                logger.debug("parentobj is None")
-            return
-
-        if self.debug > 0:
-            # logger.debug("Adding child '{0}' to parent"
-            #    " '{1}'".format(childobj, parentobj))
-            # logger.debug("BEFORE parent.children - {0}"
-            #    .format(parentobj.children))
-            pass
-        if childobj.is_comment and (_list[idx - 1].indent > indent):
-            ## I *really* hate making this exception, but legacy
-            ##   ciscoconfparse never marked a comment as a child
-            ##   when the line immediately above it was indented more
-            ##   than the comment line
-            pass
-        elif childobj.parent is childobj:
-            # Child has not been assigned yet
-            parentobj.children.append(childobj)
-            childobj.parent = parentobj
-            childobj.parent.child_indent = indent
-        else:
-            pass
-
-        if self.debug > 0:
-            # logger.debug("     AFTER parent.children - {0}"
-            #    .format(parentobj.children))
-            pass
-
-    def iter_with_comments(self, begin_index=0):
-        for idx, obj in enumerate(self._list):
-            if idx >= begin_index:
-                yield obj
-
-    def iter_no_comments(self, begin_index=0):
-        for idx, obj in enumerate(self._list):
-            if (idx >= begin_index) and (not obj.is_comment):
-                yield obj
-
-    def _reassign_linenums(self):
-        # Call this after any insertion or deletion
-        for idx, obj in enumerate(self._list):
-            obj.linenum = idx
-
-    @property
-    def all_parents(self):
-        return [obj for obj in self._list if obj.has_children]
-
-    @property
-    def last_index(self):
-        return self.__len__() - 1
-
-
-#########################################################################3
-
-
-class NXOSConfigList(MutableSequence):
-    """A custom list to hold :class:`~models_nxos.NXOSCfgLine` objects.  Most people will never need to use this class directly."""
-
-    def __init__(
-        self,
-        data=None,
-        comment_delimiter="!",
-        debug=0,
-        factory=False,
-        ignore_blank_lines=True,
-        syntax="nxos",
-        CiscoConfParse=None,
-    ):
-        """Initialize the class.
-
-        Parameters
-        ----------
-        data : list
-            A list of parsed :class:`~models_cisco.IOSCfgLine` objects
-        comment_delimiter : str
-            A comment delimiter.  This should only be changed when parsing non-Cisco IOS configurations, which do not use a !  as the comment delimiter.  ``comment`` defaults to '!'
-        debug : int
-            ``debug`` defaults to 0, and should be kept that way unless you're working on a very tricky config parsing problem.  Debug output is not particularly friendly
-        ignore_blank_lines : bool
-            ``ignore_blank_lines`` defaults to True; when this is set True, ciscoconfparse ignores blank configuration lines.  You might want to set ``ignore_blank_lines`` to False if you intentionally use blank lines in your configuration (ref: Github Issue #2).
-
-        Returns
-        -------
-        An instance of an :class:`~ciscoconfparse.NXOSConfigList` object.
-
-        """
-        # data = kwargs.get('data', None)
-        # comment_delimiter = kwargs.get('comment_delimiter', '!')
-        # debug = kwargs.get('debug', False)
-        # factory = kwargs.get('factory', False)
-        # ignore_blank_lines = kwargs.get('ignore_blank_lines', True)
-        # syntax = kwargs.get('syntax', 'nxos')
-        # CiscoConfParse = kwargs.get('CiscoConfParse', None)
-        super(NXOSConfigList, self).__init__()
-
-        self._list = list()
-        self.CiscoConfParse = CiscoConfParse
-        self.comment_delimiter = comment_delimiter
-        self.factory = factory
-        self.ignore_blank_lines = ignore_blank_lines
-        self.syntax = syntax
-        self.dna = "NXOSConfigList"
-        self.debug = debug
-
-        ## Support either a list or a generator instance
-        if getattr(data, "__iter__", False):
-            self._list = self._bootstrap_obj_init(data)
-        else:
-            self._list = list()
-
-    def __len__(self):
-        return len(self._list)
-
-    def __getitem__(self, ii):
-        return self._list[ii]
-
-    def __delitem__(self, ii):
-        del self._list[ii]
-        self._bootstrap_from_text()
-
-    def __setitem__(self, ii, val):
-        return self._list[ii]
-
-    def __str__(self):
-        return self.__repr__()
-
-    def __enter__(self):
-        # Add support for with statements...
-        # FIXME: *with* statements dont work
-        for obj in self._list:
-            yield obj
-
-    def __exit__(self, *args, **kwargs):
-        # FIXME: *with* statements dont work
-        self._list[0].confobj.CiscoConfParse.atomic()
-
-    def __repr__(self):
-        return """<NXOSConfigList, comment='%s', conf=%s>""" % (
-            self.comment_delimiter,
-            self._list,
-        )
-
-    def _bootstrap_from_text(self):
-        ## reparse all objects from their text attributes... this is *very* slow
-        ## Ultimate goal: get rid of all reparsing from text...
-        self._list = self._bootstrap_obj_init(list(map(attrgetter("text"), self._list)))
-        if self.debug > 0:
-            logger.debug("self._list = {0}".format(self._list))
-
-    def has_line_with(self, linespec):
-        return bool(filter(methodcaller("re_search", linespec), self._list))
-
-    def insert_before(self, robj, val, atomic=False):
-        ## Insert something before robj
-        if getattr(robj, "capitalize", False):
-            # robj must not be a string...
-            raise ValueError
-
-        if getattr(val, "capitalize", False):
-            if self.factory:
-                obj = ConfigLineFactory(
-                    text=val,
-                    comment_delimiter=self.comment_delimiter,
-                    syntax=self.syntax,
-                )
-            elif self.syntax == "nxos":
-                obj = NXOSCfgLine(text=val, comment_delimiter=self.comment_delimiter)
-
-        ii = self._list.index(robj)
-        if (ii is not None):
-            ## Do insertion here
-            self._list.insert(ii, obj)
-
-        if atomic:
-            # Reparse the whole config as a text list
-            self._bootstrap_from_text()
-        else:
-            ## Just renumber lines...
-            self._reassign_linenums()
-
-    def insert_after(self, robj, val, atomic=False):
-        ## Insert something after robj
-        if getattr(robj, "capitalize", False):
-            raise ValueError
-
-        ## If val is a string...
-        if getattr(val, "capitalize", False):
-            if self.factory:
-                obj = ConfigLineFactory(
-                    text=val,
-                    comment_delimiter=self.comment_delimiter,
-                    syntax=self.syntax,
-                )
-            elif self.syntax == "nxos":
-                obj = NXOSCfgLine(text=val, comment_delimiter=self.comment_delimiter)
-
-        ## FIXME: This shouldn't be required
-        ## Removed 2015-01-24 during rewrite...
-        # self._reassign_linenums()
-
-        ii = self._list.index(robj)
-        if (ii is not None):
-            ## Do insertion here
-            self._list.insert(ii + 1, obj)
-
-        if atomic:
-            # Reparse the whole config as a text list
-            self._bootstrap_from_text()
-        else:
-            ## Just renumber lines...
-            self._reassign_linenums()
-
-    def insert(self, ii, val):
-        if getattr(val, "capitalize", False):
-            if self.factory:
-                obj = ConfigLineFactory(
-                    text=val,
-                    comment_delimiter=self.comment_delimiter,
-                    syntax=self.syntax,
-                )
-            elif self.syntax == "nxos":
-                obj = NXOSCfgLine(text=val, comment_delimiter=self.comment_delimiter)
-            else:
-                error = 'insert() cannot insert "{0}"'.format(val)
-                logger.error(error)
-                raise ValueError(error)
-        else:
-            error = 'insert() cannot insert "{0}"'.format(val)
-            logger.error(error)
-            raise ValueError(error)
-
-        ## Insert something at index ii
-        self._list.insert(ii, obj)
-
-        ## Just renumber lines...
-        self._reassign_linenums()
-
-    def append(self, val):
-        list_idx = len(self._list)
-        self.insert(list_idx, val)
-
-    def config_hierarchy(self):
-        """Walk this configuration and return the following tuple
-        at each parent 'level':
-            (list_of_parent_sibling_objs, list_of_nonparent_sibling_objs)
-        """
-        parent_siblings = list()
-        nonparent_siblings = list()
-
-        for obj in self.CiscoConfParse.find_objects(r"^\S+"):
-            if obj.is_comment:
-                continue
-            elif len(obj.children) == 0:
-                nonparent_siblings.append(obj)
-            else:
-                parent_siblings.append(obj)
-
-        return parent_siblings, nonparent_siblings
-
-    def _banner_mark_regex(self, REGEX):
-        # Build a list of all leading banner lines
-        banner_objs = list(filter(lambda obj: REGEX.search(obj.text), self._list))
-
-        BANNER_STR_RE = r"^(?:(?P<btype>(?:set\s+)*banner\s\w+\s+)(?P<bchar>\S))"
-        for parent in banner_objs:
-            parent.oldest_ancestor = True
-
-            ## Parse out the banner type and delimiting banner character
-            mm = re.search(BANNER_STR_RE, parent.text)
-            if (mm is not None):
-                mm_results = mm.groupdict()
-                (banner_lead, bannerdelimit) = (
-                    mm_results["btype"].rstrip(),
-                    mm_results["bchar"],
-                )
-            else:
-                (banner_lead, bannerdelimit) = ("", None)
-
-            if self.debug > 0:
-                logger.debug("banner_lead = '{0}'".format(banner_lead))
-                logger.debug("bannerdelimit = '{0}'".format(bannerdelimit))
-                logger.debug(
-                    "{0} starts at line {1}".format(banner_lead, parent.linenum)
-                )
-
-            idx = parent.linenum
-            while not (bannerdelimit is None):
-                ## Check whether the banner line has both begin and end delimter
-                if idx == parent.linenum:
-                    parts = parent.text.split(bannerdelimit)
-                    if len(parts) > 2:
-                        ## banner has both begin and end delimiter on one line
-                        if self.debug > 0:
-                            logger.debug(
-                                "{0} ends at line"
-                                " {1}".format(banner_lead, parent.linenum)
-                            )
-                        break
-
-                idx += 1
-                try:
-                    obj = self._list[idx]
-                    if obj.text is None:
-                        if self.debug > 0:
-                            logger.warning(
-                                "found empty text while parsing '{0}' in the banner".format(
-                                    obj
-                                )
-                            )
-                        pass
-                    elif bannerdelimit in obj.text.strip():
-                        if self.debug > 0:
-                            logger.debug(
-                                "{0} ends at line"
-                                " {1}".format(banner_lead, obj.linenum)
-                            )
-                        parent.children.append(obj)
-                        parent.child_indent = 0
-                        obj.parent = parent
-                        break
-
-                    ## Fix Github issue #75 I don't think this case is reqd now
-                    # elif obj.is_comment and (obj.indent == 0):
-                    #    break
-
-                    parent.children.append(obj)
-                    parent.child_indent = 0
-                    obj.parent = parent
-                except IndexError:
-                    break
-
-    def _bootstrap_obj_init(self, text_list):
-        """Accept a text list and format into proper objects"""
-        # Append text lines as NXOSCfgLine objects...
-        BANNER_STR = set(
-            [
-                "login",
-                "motd",
-                "incoming",
-                "exec",
-                "telnet",
-                "lcd",
-            ]
-        )
-        BANNER_RE = re.compile(
-            "|".join([r"^(set\s+)*banner\s+{0}".format(ii) for ii in BANNER_STR])
-        )
-        retval = list()
-        idx = 0
-
-        max_indent = 0
-        parents = dict()
-        for line in text_list:
-            # Reject empty lines if ignore_blank_lines...
-            if self.ignore_blank_lines and line.strip() == "":
-                continue
-            #
-            if not self.factory:
-                obj = NXOSCfgLine(line, self.comment_delimiter)
-            elif self.syntax == "nxos":
-                obj = ConfigLineFactory(line, self.comment_delimiter, syntax="nxos")
-            else:
-                raise ValueError
-
-            obj.confobj = self
-            obj.linenum = idx
-            indent = len(line) - len(line.lstrip())
-            obj.indent = indent
-
-            is_config_line = obj.is_config_line
-
-            ## Parent cache:
-            ## Maintain indent vs max_indent in a family and
-            ##     cache the parent until indent<max_indent
-            if (indent < max_indent) and is_config_line:
-                parent = None
-                # walk parents and intelligently prune stale parents
-                stale_parent_idxs = filter(
-                    lambda ii: ii >= indent, sorted(parents.keys(), reverse=True)
-                )
-                for parent_idx in stale_parent_idxs:
-                    del parents[parent_idx]
-            else:
-                ## As long as the child indent hasn't gone backwards,
-                ##    we can use a cached parent
-                parent = parents.get(indent, None)
-
-            ## If indented, walk backwards and find the parent...
-            ## 1.  Assign parent to the child
-            ## 2.  Assign child to the parent
-            ## 3.  Assign parent's child_indent
-            ## 4.  Maintain oldest_ancestor
-            if (indent > 0) and not (parent is None):
-                ## Add the line as a child (parent was cached)
-                self._add_child_to_parent(retval, idx, indent, parent, obj)
-            elif (indent > 0) and (parent is None):
-                ## Walk backwards to find parent, and add the line as a child
-                candidate_parent_index = idx - 1
-                while candidate_parent_index >= 0:
-                    candidate_parent = retval[candidate_parent_index]
-                    if (
-                        candidate_parent.indent < indent
-                    ) and candidate_parent.is_config_line:
-                        # We found the parent
-                        parent = candidate_parent
-                        parents[indent] = parent  # Cache the parent
-                        if indent == 0:
-                            parent.oldest_ancestor = True
-                        break
-                    else:
-                        candidate_parent_index -= 1
-
-                ## Add the line as a child...
-                self._add_child_to_parent(retval, idx, indent, parent, obj)
-
-            ## Handle max_indent
-            if (indent == 0) and is_config_line:
-                # only do this if it's a config line...
-                max_indent = 0
-            elif indent > max_indent:
-                max_indent = indent
-
-            retval.append(obj)
-            idx += 1
-
-        self._list = retval
-        self._banner_mark_regex(BANNER_RE)  # Process IOS banners
-        return retval
-
-    def _add_child_to_parent(self, _list, idx, indent, parentobj, childobj):
-        ## parentobj could be None when trying to add a child that should not
-        ##    have a parent
-        if parentobj is None:
-            if self.debug > 0:
-                logger.debug("parentobj is None")
-            return
-
-        if self.debug > 0:
-            # logger.debug("Adding child '{0}' to parent"
-            #    " '{1}'".format(childobj, parentobj))
-            # logger.debug("BEFORE parent.children - {0}"
-            #    .format(parentobj.children))
-            pass
-        if childobj.is_comment and (_list[idx - 1].indent > indent):
-            ## I *really* hate making this exception, but legacy
-            ##   ciscoconfparse never marked a comment as a child
-            ##   when the line immediately above it was indented more
-            ##   than the comment line
-            pass
-        elif childobj.parent is childobj:
-            # Child has not been assigned yet
-            parentobj.children.append(childobj)
-            childobj.parent = parentobj
-            childobj.parent.child_indent = indent
-        else:
-            pass
-
-        if self.debug > 0:
-            # logger.debug("     AFTER parent.children - {0}"
-            #    .format(parentobj.children))
-            pass
-
-    def iter_with_comments(self, begin_index=0):
-        for idx, obj in enumerate(self._list):
-            if idx >= begin_index:
-                yield obj
-
-    def iter_no_comments(self, begin_index=0):
-        for idx, obj in enumerate(self._list):
-            if (idx >= begin_index) and (not obj.is_comment):
-                yield obj
-
-    def _reassign_linenums(self):
-        # Call this after any insertion or deletion
-        for idx, obj in enumerate(self._list):
-            obj.linenum = idx
-
-    @property
-    def all_parents(self):
-        return [obj for obj in self._list if obj.has_children]
-
-    @property
-    def last_index(self):
-        return self.__len__() - 1
-
-
-class ASAConfigList(MutableSequence):
-    """A custom list to hold :class:`~models_asa.ASACfgLine` objects.  Most
-    people will never need to use this class directly.
-
-
-    """
-
-    def __init__(
-        self,
-        data=None,
-        comment_delimiter="!",
-        debug=0,
-        factory=False,
-        ignore_blank_lines=True,
-        syntax="asa",
-        CiscoConfParse=None,
-    ):
-        """Initialize the class.
-
-        Parameters
-        ----------
-        data : list
-            A list of parsed :class:`~models_cisco.IOSCfgLine` objects
-        comment_delimiter : str
-            A comment delimiter.  This should only be changed when parsing non-Cisco IOS configurations, which do not use a !  as the comment delimiter.  ``comment`` defaults to '!'
-        debug : int
-            ``debug`` defaults to 0, and should be kept that way unless you're working on a very tricky config parsing problem.  Debug output is not particularly friendly
-        ignore_blank_lines : bool
-            ``ignore_blank_lines`` defaults to True; when this is set True, ciscoconfparse ignores blank configuration lines.  You might want to set ``ignore_blank_lines`` to False if you intentionally use blank lines in your configuration (ref: Github Issue #2).
-
-        Returns
-        -------
-        An instance of an :class:`~ciscoconfparse.ASAConfigList` object.
-
-        """
-        super(ASAConfigList, self).__init__()
-
-        self._list = list()
-        self.CiscoConfParse = CiscoConfParse
-        self.comment_delimiter = comment_delimiter
-        self.factory = factory
-        self.ignore_blank_lines = ignore_blank_lines
-        self.syntax = syntax
-        self.dna = "ASAConfigList"
-        self.debug = debug
-
-        ## Support either a list or a generator instance
-        if getattr(data, "__iter__", False):
-            self._bootstrap_obj_init(data)
-        else:
-            self._list = list()
-
-        ###
-        ### Internal structures
-        self._RE_NAMES = re.compile(r"^\s*name\s+(\d+\.\d+\.\d+\.\d+)\s+(\S+)")
-        self._RE_OBJNET = re.compile(r"^\s*object-group\s+network\s+(\S+)")
-        self._RE_OBJSVC = re.compile(r"^\s*object-group\s+service\s+(\S+)")
-        self._RE_OBJACL = re.compile(r"^\s*access-list\s+(\S+)")
-        self._network_cache = dict()
-
-    def __len__(self):
-        return len(self._list)
-
-    def __getitem__(self, ii):
-        return self._list[ii]
-
-    def __delitem__(self, ii):
-        del self._list[ii]
-        self._bootstrap_from_text()
-
-    def __setitem__(self, ii, val):
-        return self._list[ii]
-
-    def __str__(self):
-        return self.__repr__()
-
-    def __enter__(self):
-        # Add support for with statements...
-        # FIXME: *with* statements dont work
-        for obj in self._list:
-            yield obj
-
-    def __exit__(self, *args, **kwargs):
-        # FIXME: *with* statements dont work
-        self._list[0].confobj.CiscoConfParse.atomic()
-
-    def __repr__(self):
-        return """<ASAConfigList, comment='%s', conf=%s>""" % (
-            self.comment_delimiter,
-            self._list,
-        )
-
-    def _bootstrap_from_text(self):
-        ## reparse all objects from their text attributes... this is *very* slow
-        ## Ultimate goal: get rid of all reparsing from text...
-        self._list = self._bootstrap_obj_init(list(map(attrgetter("text"), self._list)))
-
-    def has_line_with(self, linespec):
-        return bool(filter(methodcaller("re_search", linespec), self._list))
-
-    def insert_before(self, robj, val, atomic=False):
-        ## Insert something before robj
-        if getattr(robj, "capitalize", False):
-            raise ValueError
-
-        if getattr(val, "capitalize", False):
-            if self.factory:
-                obj = ConfigLineFactory(
-                    text=val,
-                    comment_delimiter=self.comment_delimiter,
-                    syntax=self.syntax,
-                )
-            elif self.syntax == "asa":
-                obj = ASACfgLine(text=val, comment_delimiter=self.comment_delimiter)
-
-        ii = self._list.index(robj)
-        if (ii is not None):
-            ## Do insertion here
-            self._list.insert(ii, obj)
-
-        if atomic:
-            # Reparse the whole config as a text list
-            self._bootstrap_from_text()
-        else:
-            ## Just renumber lines...
-            self._reassign_linenums()
-
-    def insert_after(self, robj, val, atomic=False):
-        ## Insert something after robj
-        if getattr(robj, "capitalize", False):
-            raise ValueError
-
-        if getattr(val, "capitalize", False):
-            if self.factory:
-                obj = ConfigLineFactory(
-                    text=val,
-                    comment_delimiter=self.comment_delimiter,
-                    syntax=self.syntax,
-                )
-            elif self.syntax == "asa":
-                obj = ASACfgLine(text=val, comment_delimiter=self.comment_delimiter)
-
-        ## FIXME: This shouldn't be required
-        self._reassign_linenums()
-
-        ii = self._list.index(robj)
-        if (ii is not None):
-            ## Do insertion here
-            self._list.insert(ii + 1, obj)
-
-        if atomic:
-            # Reparse the whole config as a text list
-            self._bootstrap_from_text()
-        else:
-            ## Just renumber lines...
-            self._reassign_linenums()
-
-    def insert(self, ii, val):
-        ## Insert something at index ii
-        if getattr(val, "capitalize", False):
-            if self.factory:
-                obj = ConfigLineFactory(
-                    text=val,
-                    comment_delimiter=self.comment_delimiter,
-                    syntax=self.syntax,
-                )
-            elif self.syntax == "asa":
-                obj = ASACfgLine(text=val, comment_delimiter=self.comment_delimiter)
-
-        self._list.insert(ii, obj)
-
-        ## Just renumber lines...
-        self._reassign_linenums()
-
-    def append(self, val, atomic=False):
-        list_idx = len(self._list)
-        self.insert(list_idx, val)
-
-    def config_hierarchy(self):
-        """Walk this configuration and return the following tuple
-        at each parent 'level':
-            (list_of_parent_siblings, list_of_nonparent_siblings)"""
-        parent_siblings = list()
-        nonparent_siblings = list()
-
-        for obj in self.CiscoConfParse.find_objects(r"^\S+"):
-            if obj.is_comment:
-                continue
-            elif len(obj.children) == 0:
-                nonparent_siblings.append(obj)
-            else:
-                parent_siblings.append(obj)
-
-        return parent_siblings, nonparent_siblings
-
-    def _bootstrap_obj_init(self, text_list):
+    # This method is on ConfigList()
+    def _bootstrap_obj_init_asa(self, text_list):
         """Accept a text list and format into proper objects"""
         # Append text lines as IOSCfgLine objects...
         retval = list()
@@ -4342,7 +3986,10 @@ class ASAConfigList(MutableSequence):
             elif self.syntax == "asa" and not self.factory:
                 obj = ASACfgLine(text=line, comment_delimiter=self.comment_delimiter)
             else:
-                raise ValueError
+                error = ("Cannot classify config list item '%s' "
+                    "into a proper configuration object line" % line)
+                ccp_logger.error(error)
+                raise ValueError(error)
 
             obj.confobj = self
             obj.linenum = idx
@@ -4409,19 +4056,122 @@ class ASAConfigList(MutableSequence):
         ## Insert ASA-specific banner processing here, if required
         return retval
 
+    # This method is on ConfigList()
+    def _bootstrap_obj_init_nxos(self, text_list):
+        """Accept a text list and format into proper objects"""
+        # Append text lines as NXOSCfgLine objects...
+        BANNER_STR = set(
+            [
+                "login",
+                "motd",
+                "incoming",
+                "exec",
+                "telnet",
+                "lcd",
+            ]
+        )
+        BANNER_RE = re.compile(
+            "|".join([r"^(set\s+)*banner\s+{0}".format(ii) for ii in BANNER_STR])
+        )
+        retval = list()
+        idx = 0
+
+        max_indent = 0
+        parents = dict()
+        for line in text_list:
+            # Reject empty lines if ignore_blank_lines...
+            if self.ignore_blank_lines and line.strip() == "":
+                continue
+            #
+            if not self.factory:
+                obj = NXOSCfgLine(line, self.comment_delimiter)
+            elif self.syntax == "nxos":
+                obj = ConfigLineFactory(line, self.comment_delimiter, syntax="nxos")
+            else:
+                error = "Unexpected line in the config: '%s'" % line
+                ccp_logger.error(error)
+                raise ValueError(error)
+
+            obj.confobj = self
+            obj.linenum = idx
+            indent = len(line) - len(line.lstrip())
+            obj.indent = indent
+
+            is_config_line = obj.is_config_line
+
+            ## Parent cache:
+            ## Maintain indent vs max_indent in a family and
+            ##     cache the parent until indent<max_indent
+            if (indent < max_indent) and is_config_line:
+                parent = None
+                # walk parents and intelligently prune stale parents
+                stale_parent_idxs = filter(
+                    lambda ii: ii >= indent, sorted(parents.keys(), reverse=True)
+                )
+                for parent_idx in stale_parent_idxs:
+                    del parents[parent_idx]
+            else:
+                ## As long as the child indent hasn't gone backwards,
+                ##    we can use a cached parent
+                parent = parents.get(indent, None)
+
+            ## If indented, walk backwards and find the parent...
+            ## 1.  Assign parent to the child
+            ## 2.  Assign child to the parent
+            ## 3.  Assign parent's child_indent
+            ## 4.  Maintain oldest_ancestor
+            if (indent > 0) and not (parent is None):
+                ## Add the line as a child (parent was cached)
+                self._add_child_to_parent(retval, idx, indent, parent, obj)
+            elif (indent > 0) and (parent is None):
+                ## Walk backwards to find parent, and add the line as a child
+                candidate_parent_index = idx - 1
+                while candidate_parent_index >= 0:
+                    candidate_parent = retval[candidate_parent_index]
+                    if (
+                        candidate_parent.indent < indent
+                    ) and candidate_parent.is_config_line:
+                        # We found the parent
+                        parent = candidate_parent
+                        parents[indent] = parent  # Cache the parent
+                        if indent == 0:
+                            parent.oldest_ancestor = True
+                        break
+                    else:
+                        candidate_parent_index -= 1
+
+                ## Add the line as a child...
+                self._add_child_to_parent(retval, idx, indent, parent, obj)
+
+            ## Handle max_indent
+            if (indent == 0) and is_config_line:
+                # only do this if it's a config line...
+                max_indent = 0
+            elif indent > max_indent:
+                max_indent = indent
+
+            retval.append(obj)
+            idx += 1
+
+        self._list = retval
+        self._banner_mark_regex(BANNER_RE)  # Process IOS banners
+        return retval
+
+    # This method is on ConfigList()
     def _add_child_to_parent(self, _list, idx, indent, parentobj, childobj):
         ## parentobj could be None when trying to add a child that should not
         ##    have a parent
         if parentobj is None:
             if self.debug > 0:
-                logger.debug("parentobj is None")
+                ccp_logger.debug("parentobj is None")
             return
 
-        if self.debug > 0:
-            logger.debug(
-                "Adding child '{0}' to parent" " '{1}'".format(childobj, parentobj)
-            )
-            logger.debug("     BEFORE parent.children - {0}".format(parentobj.children))
+        if self.debug >= 4:
+            ccp_logger.debug("Adding child '{0}' to parent"
+                " '{1}'".format(childobj, parentobj))
+            ccp_logger.debug("BEFORE parent.children - {0}"
+                .format(parentobj.children))
+            pass
         if childobj.is_comment and (_list[idx - 1].indent > indent):
             ## I *really* hate making this exception, but legacy
             ##   ciscoconfparse never marked a comment as a child
@@ -4437,27 +4187,1106 @@ class ASAConfigList(MutableSequence):
             pass
 
         if self.debug > 0:
-            logger.debug("     AFTER parent.children - {0}".format(parentobj.children))
+            # ccp_logger.debug("     AFTER parent.children - {0}"
+            #    .format(parentobj.children))
+            pass
 
+    # This method is on ConfigList()
     def iter_with_comments(self, begin_index=0):
         for idx, obj in enumerate(self._list):
             if idx >= begin_index:
                 yield obj
 
+    # This method is on ConfigList()
     def iter_no_comments(self, begin_index=0):
         for idx, obj in enumerate(self._list):
             if (idx >= begin_index) and (not obj.is_comment):
                 yield obj
 
+    # This method is on ConfigList()
     def _reassign_linenums(self):
         # Call this after any insertion or deletion
         for idx, obj in enumerate(self._list):
             obj.linenum = idx
 
+    # This method is on ConfigList()
     @property
     def all_parents(self):
         return [obj for obj in self._list if obj.has_children]
 
+    # This method is on ConfigList()
+    @property
+    def last_index(self):
+        return self.__len__() - 1
+
+    ##########################################################################
+    # Special syntax='asa' methods...
+    ##########################################################################
+
+    # This method was on ASAConfigList(); now tentatively on ConfigList()
+    @property
+    def names(self):
+        """Return a dictionary of name to address mappings"""
+        assert self.syntax=='asa'
+
+        retval = dict()
+        name_rgx = self._RE_NAMES
+        for obj in self.ccp_ref.find_objects(name_rgx):
+            addr = obj.re_match_typed(name_rgx, group=1, result_type=str)
+            name = obj.re_match_typed(name_rgx, group=2, result_type=str)
+            retval[name] = addr
+        return retval
+
+    # This method was on ASAConfigList(); now tentatively on ConfigList()
+    @property
+    def object_group_network(self):
+        """Return a dictionary of name to object-group network mappings"""
+        assert self.syntax=='asa'
+
+        retval = dict()
+        obj_rgx = self._RE_OBJNET
+        for obj in self.ccp_ref.find_objects(obj_rgx):
+            name = obj.re_match_typed(obj_rgx, group=1, result_type=str)
+            retval[name] = obj
+        return retval
+
+    # This method was on ASAConfigList(); now tentatively on ConfigList()
+    @property
+    def access_list(self):
+        """Return a dictionary of ACL name to ACE (list) mappings"""
+        assert self.syntax=='asa'
+
+        retval = dict()
+        for obj in self.ccp_ref.find_objects(self._RE_OBJACL):
+            name = obj.re_match_typed(self._RE_OBJACL, group=1, result_type=str)
+            tmp = retval.get(name, [])
+            tmp.append(obj)
+            retval[name] = tmp
+        return retval
+
+
+#########################################################################3
+
+
+class NXOSConfigList_deprecated(MutableSequence):
+    """A custom list to hold :class:`~models_nxos.NXOSCfgLine` objects.  Most people will never need to use this class directly."""
+
+    def __init__(
+        self,
+        data=None,
+        comment_delimiter="!",
+        debug=0,
+        factory=False,
+        ignore_blank_lines=True,
+        syntax="nxos",
+        **kwargs
+    ):
+        """Initialize the class.
+
+        Parameters
+        ----------
+        data : list
+            A list of parsed :class:`~models_cisco.IOSCfgLine` objects
+        comment_delimiter : str
+            A comment delimiter.  This should only be changed when parsing non-Cisco IOS configurations, which do not use a !  as the comment delimiter.  ``comment`` defaults to '!'
+        debug : int
+            ``debug`` defaults to 0, and should be kept that way unless you're working on a very tricky config parsing problem.  Debug output is not particularly friendly
+        ignore_blank_lines : bool
+            ``ignore_blank_lines`` defaults to True; when this is set True, ciscoconfparse ignores blank configuration lines.  You might want to set ``ignore_blank_lines`` to False if you intentionally use blank lines in your configuration (ref: Github Issue #2).
+
+        Returns
+        -------
+        An instance of an :class:`~ciscoconfparse.NXOSConfigList` object.
+
+        """
+        # data = kwargs.get('data', None)
+        # comment_delimiter = kwargs.get('comment_delimiter', '!')
+        # debug = kwargs.get('debug', False)
+        # factory = kwargs.get('factory', False)
+        # ignore_blank_lines = kwargs.get('ignore_blank_lines', True)
+        # syntax = kwargs.get('syntax', 'nxos')
+        # CiscoConfParse = kwargs.get('CiscoConfParse', None)
+        super(NXOSConfigList_deprecated, self).__init__()
+
+        raise NotImplementedError("NXOSConfigList() has been deprecated")
+
+        # Parse out CiscoConfParse and ccp_ref keywords...
+        ciscoconfparse_kwarg_val = kwargs.get("CiscoConfParse", None)
+        ccp_ref_kwarg_val = kwargs.get("ccp_ref", None)
+        if ciscoconfparse_kwarg_val is not None:
+            ccp_logger.warning("The CiscoConfParse keyword will be deprecated soon.  Please use ccp_ref instead")
+        ccp_value = ciscoconfparse_kwarg_val or ccp_ref_kwarg_val
+
+        self._list = list()
+        self.CiscoConfParse = ccp_value
+        self.ccp_ref = ccp_value
+        self.comment_delimiter = comment_delimiter
+        self.factory = factory
+        self.ignore_blank_lines = ignore_blank_lines
+        self.syntax = syntax
+        self.dna = "NXOSConfigList"
+        self.debug = debug
+
+        ## Support either a list or a generator instance
+        if getattr(data, "__iter__", False):
+            self._list = self._bootstrap_obj_init(data)
+        else:
+            self._list = list()
+
+        if self.debug > 0:
+            message = "Create NXOSConfigList() with %i elements" % len(self._list)
+            ccp_logger.info(message)
+
+    def __len__(self):
+        return len(self._list)
+
+    def __getitem__(self, ii):
+        return self._list[ii]
+
+    def __delitem__(self, ii):
+        del self._list[ii]
+        self._bootstrap_from_text()
+
+    def __setitem__(self, ii, val):
+        return self._list[ii]
+
+    def __str__(self):
+        return self.__repr__()
+
+    def __enter__(self):
+        # Add support for with statements...
+        # FIXME: *with* statements dont work
+        for obj in self._list:
+            yield obj
+
+    def __exit__(self, *args, **kwargs):
+        # FIXME: *with* statements dont work
+        self._list[0].confobj.CiscoConfParse.atomic()
+
+    def __repr__(self):
+        return """<NXOSConfigList, comment='%s', conf=%s>""" % (
+            self.comment_delimiter,
+            self._list,
+        )
+
+    # This method is on NXOSConfigList()
+    def __getattribute__(self, arg):
+        """Call arg on NXOSConfigList() object, and if that fails, call arg from the ccp_ref attribute"""
+        # Try a method call on ConfigList()
+
+
+        rewrite_to_ccp_ref = False
+        # Rewrite self.CiscoConfParse to self.ccp_ref
+        if arg=="CiscoConfParse":
+            rewrite_to_ccp_ref = True
+            arg = "ccp_ref"
+
+        try:
+            return object.__getattribute__(self, arg)
+        except Exception as ee:
+            pass
+
+        try:
+            calling_function = inspect.stack()[1].function
+            caller = inspect.getframeinfo(inspect.stack()[1][0])
+
+            ccp_ref = object.__getattribute__(self, 'ccp_ref')
+            ccp_method = ccp_ref.__getattribute__(arg)
+            message = "%s() line %s called this method.  %s doesn't have an attribute named '%s'.  CiscoConfParse() is making this work with duct tape in __getattribute__()." % (calling_function, caller.lineno, ccp_ref, ccp_method)
+            ccp_logger.warning(message)
+            return ccp_method
+        except Exception as ff:
+            ccp_logger.error(str(ff))
+            sys.exit(1)
+
+    #@property
+    #def ConfigObjs(self):
+    #    message = "%s doesn't implement ConfigObjs" % self.__class__.__name__
+    #    ccp_logger.critical(message)
+    #    raise AttributeError(message)
+
+    # This method is on NXOSConfigList()
+    def _bootstrap_from_text(self):
+        ## reparse all objects from their text attributes... this is *very* slow
+        ## Ultimate goal: get rid of all reparsing from text...
+        if self.syntax=='ios':
+            self._list = self._bootstrap_obj_init_ios(list(map(attrgetter("text"), self._list)))
+        elif self.syntax=='nxos':
+            self._list = self._bootstrap_obj_init_nxos(list(map(attrgetter("text"), self._list)))
+        elif self.syntax=='asa':
+            self._list = self._bootstrap_obj_init_asa(list(map(attrgetter("text"), self._list)))
+        else:
+            raise NotImplementedError()
+
+        if self.debug > 0:
+            ccp_logger.debug("self._list = {0}".format(self._list))
+
+    # This method is on NXOSConfigList()
+    def has_line_with(self, linespec):
+        return bool(filter(methodcaller("re_search", linespec), self._list))
+
+    # This method is on NXOSConfigList()
+    def insert_before(self, robj, val, atomic=False):
+        ## Insert something before robj
+        if not getattr(robj, "capitalize", False):
+            # robj must not be a string...
+            error = 'FATAL: robj="%s" (type: %s) failure.  Expected a string.' % (robj, type(robj))
+            ccp_logger.error(error)
+            raise ValueError(error)
+
+        if getattr(val, "capitalize", False):
+            if self.factory:
+                obj = ConfigLineFactory(
+                    text=val,
+                    comment_delimiter=self.comment_delimiter,
+                    syntax=self.syntax,
+                )
+            elif self.syntax == "nxos":
+                obj = NXOSCfgLine(text=val, comment_delimiter=self.comment_delimiter)
+
+        ii = self._list.index(robj)
+        if (ii is not None):
+            ## Do insertion here
+            self._list.insert(ii, obj)
+
+        if atomic:
+            # Reparse the whole config as a text list
+            self._bootstrap_from_text()
+        else:
+            ## Just renumber lines...
+            self._reassign_linenums()
+
+    # This method is on NXOSConfigList()
+    def insert_after(self, robj, val, atomic=False):
+        ## Insert something after robj
+        if not getattr(robj, "capitalize", False):
+            error = 'FATAL: robj="%s" (type: %s) failure.  Expected a string.' % (robj, type(robj))
+            ccp_logger.error(error)
+            raise ValueError(error)
+
+        ## If val is a string...
+        if getattr(val, "capitalize", False):
+            if self.factory:
+                obj = ConfigLineFactory(
+                    text=val,
+                    comment_delimiter=self.comment_delimiter,
+                    syntax=self.syntax,
+                )
+            elif self.syntax == "nxos":
+                obj = NXOSCfgLine(text=val, comment_delimiter=self.comment_delimiter)
+
+        ## FIXME: This shouldn't be required
+        ## Removed 2015-01-24 during rewrite...
+        # self._reassign_linenums()
+
+        ii = self._list.index(robj)
+        if (ii is not None):
+            ## Do insertion here
+            self._list.insert(ii + 1, obj)
+
+        if atomic:
+            # Reparse the whole config as a text list
+            self._bootstrap_from_text()
+        else:
+            ## Just renumber lines...
+            self._reassign_linenums()
+
+    # This method is on NXOSConfigList()
+    def insert(self, ii, val):
+        if getattr(val, "capitalize", False):
+            if self.factory:
+                obj = ConfigLineFactory(
+                    text=val,
+                    comment_delimiter=self.comment_delimiter,
+                    syntax=self.syntax,
+                )
+            elif self.syntax == "nxos":
+                obj = NXOSCfgLine(text=val, comment_delimiter=self.comment_delimiter)
+            else:
+                error = 'insert() cannot insert "{0}"'.format(val)
+                ccp_logger.error(error)
+                raise ValueError(error)
+        else:
+            error = 'insert() cannot insert "{0}"'.format(val)
+            ccp_logger.error(error)
+            raise ValueError(error)
+
+        ## Insert something at index ii
+        self._list.insert(ii, obj)
+
+        ## Just renumber lines...
+        self._reassign_linenums()
+
+    # This method is on NXOSConfigList()
+    def append(self, val):
+        list_idx = len(self._list)
+        self.insert(list_idx, val)
+
+    # This method is on NXOSConfigList()
+    def config_hierarchy(self):
+        """Walk this configuration and return the following tuple
+        at each parent 'level':
+            (list_of_parent_sibling_objs, list_of_nonparent_sibling_objs)
+        """
+        parent_siblings = list()
+        nonparent_siblings = list()
+
+        for obj in self.ccp_ref.find_objects(r"^\S+"):
+            if obj.is_comment:
+                continue
+            elif len(obj.children) == 0:
+                nonparent_siblings.append(obj)
+            else:
+                parent_siblings.append(obj)
+
+        return parent_siblings, nonparent_siblings
+
+    # This method is on NXOSConfigList()
+    def _banner_mark_regex(self, REGEX):
+        # Build a list of all leading banner lines
+        banner_objs = list(filter(lambda obj: REGEX.search(obj.text), self._list))
+
+        BANNER_STR_RE = r"^(?:(?P<btype>(?:set\s+)*banner\s\w+\s+)(?P<bchar>\S))"
+        for parent in banner_objs:
+            parent.oldest_ancestor = True
+
+            ## Parse out the banner type and delimiting banner character
+            mm = re.search(BANNER_STR_RE, parent.text)
+            if (mm is not None):
+                mm_results = mm.groupdict()
+                (banner_lead, bannerdelimit) = (
+                    mm_results["btype"].rstrip(),
+                    mm_results["bchar"],
+                )
+            else:
+                (banner_lead, bannerdelimit) = ("", None)
+
+            if self.debug > 0:
+                ccp_logger.debug("banner_lead = '{0}'".format(banner_lead))
+                ccp_logger.debug("bannerdelimit = '{0}'".format(bannerdelimit))
+                ccp_logger.debug(
+                    "{0} starts at line {1}".format(banner_lead, parent.linenum)
+                )
+
+            idx = parent.linenum
+            while not (bannerdelimit is None):
+                ## Check whether the banner line has both begin and end delimter
+                if idx == parent.linenum:
+                    parts = parent.text.split(bannerdelimit)
+                    if len(parts) > 2:
+                        ## banner has both begin and end delimiter on one line
+                        if self.debug > 0:
+                            ccp_logger.debug(
+                                "{0} ends at line"
+                                " {1}".format(banner_lead, parent.linenum)
+                            )
+                        break
+
+                idx += 1
+                try:
+                    obj = self._list[idx]
+                    if obj.text is None:
+                        if self.debug > 0:
+                            ccp_logger.warning(
+                                "found empty text while parsing '{0}' in the banner".format(
+                                    obj
+                                )
+                            )
+                        pass
+                    elif bannerdelimit in obj.text.strip():
+                        if self.debug > 0:
+                            ccp_logger.debug(
+                                "{0} ends at line"
+                                " {1}".format(banner_lead, obj.linenum)
+                            )
+                        parent.children.append(obj)
+                        parent.child_indent = 0
+                        obj.parent = parent
+                        break
+
+                    ## Fix Github issue #75 I don't think this case is reqd now
+                    # elif obj.is_comment and (obj.indent == 0):
+                    #    break
+
+                    parent.children.append(obj)
+                    parent.child_indent = 0
+                    obj.parent = parent
+                except IndexError:
+                    break
+
+    # This method is on NXOSConfigList()
+    def _bootstrap_obj_init(self, text_list):
+        """Accept a text list and format into proper objects"""
+        # Append text lines as NXOSCfgLine objects...
+        BANNER_STR = set(
+            [
+                "login",
+                "motd",
+                "incoming",
+                "exec",
+                "telnet",
+                "lcd",
+            ]
+        )
+        BANNER_RE = re.compile(
+            "|".join([r"^(set\s+)*banner\s+{0}".format(ii) for ii in BANNER_STR])
+        )
+        retval = list()
+        idx = 0
+
+        max_indent = 0
+        parents = dict()
+        for line in text_list:
+            # Reject empty lines if ignore_blank_lines...
+            if self.ignore_blank_lines and line.strip() == "":
+                continue
+            #
+            if not self.factory:
+                obj = NXOSCfgLine(line, self.comment_delimiter)
+            elif self.syntax == "nxos":
+                obj = ConfigLineFactory(line, self.comment_delimiter, syntax="nxos")
+            else:
+                error = "Unexpected line in the config: '%s'" % line
+                ccp_logger.error(error)
+                raise ValueError(error)
+
+            obj.confobj = self
+            obj.linenum = idx
+            indent = len(line) - len(line.lstrip())
+            obj.indent = indent
+
+            is_config_line = obj.is_config_line
+
+            ## Parent cache:
+            ## Maintain indent vs max_indent in a family and
+            ##     cache the parent until indent<max_indent
+            if (indent < max_indent) and is_config_line:
+                parent = None
+                # walk parents and intelligently prune stale parents
+                stale_parent_idxs = filter(
+                    lambda ii: ii >= indent, sorted(parents.keys(), reverse=True)
+                )
+                for parent_idx in stale_parent_idxs:
+                    del parents[parent_idx]
+            else:
+                ## As long as the child indent hasn't gone backwards,
+                ##    we can use a cached parent
+                parent = parents.get(indent, None)
+
+            ## If indented, walk backwards and find the parent...
+            ## 1.  Assign parent to the child
+            ## 2.  Assign child to the parent
+            ## 3.  Assign parent's child_indent
+            ## 4.  Maintain oldest_ancestor
+            if (indent > 0) and not (parent is None):
+                ## Add the line as a child (parent was cached)
+                self._add_child_to_parent(retval, idx, indent, parent, obj)
+            elif (indent > 0) and (parent is None):
+                ## Walk backwards to find parent, and add the line as a child
+                candidate_parent_index = idx - 1
+                while candidate_parent_index >= 0:
+                    candidate_parent = retval[candidate_parent_index]
+                    if (
+                        candidate_parent.indent < indent
+                    ) and candidate_parent.is_config_line:
+                        # We found the parent
+                        parent = candidate_parent
+                        parents[indent] = parent  # Cache the parent
+                        if indent == 0:
+                            parent.oldest_ancestor = True
+                        break
+                    else:
+                        candidate_parent_index -= 1
+
+                ## Add the line as a child...
+                self._add_child_to_parent(retval, idx, indent, parent, obj)
+
+            ## Handle max_indent
+            if (indent == 0) and is_config_line:
+                # only do this if it's a config line...
+                max_indent = 0
+            elif indent > max_indent:
+                max_indent = indent
+
+            retval.append(obj)
+            idx += 1
+
+        self._list = retval
+        self._banner_mark_regex(BANNER_RE)  # Process IOS banners
+        return retval
+
+    # This method is on NXOSConfigList()
+    def _add_child_to_parent(self, _list, idx, indent, parentobj, childobj):
+        ## parentobj could be None when trying to add a child that should not
+        ##    have a parent
+        if parentobj is None:
+            if self.debug > 0:
+                ccp_logger.debug("parentobj is None")
+            return
+
+        if self.debug > 0:
+            # ccp_logger.debug("Adding child '{0}' to parent"
+            #    " '{1}'".format(childobj, parentobj))
+            # ccp_logger.debug("BEFORE parent.children - {0}"
+            #    .format(parentobj.children))
+            pass
+        if childobj.is_comment and (_list[idx - 1].indent > indent):
+            ## I *really* hate making this exception, but legacy
+            ##   ciscoconfparse never marked a comment as a child
+            ##   when the line immediately above it was indented more
+            ##   than the comment line
+            pass
+        elif childobj.parent is childobj:
+            # Child has not been assigned yet
+            parentobj.children.append(childobj)
+            childobj.parent = parentobj
+            childobj.parent.child_indent = indent
+        else:
+            pass
+
+        if self.debug > 0:
+            # ccp_logger.debug("     AFTER parent.children - {0}"
+            #    .format(parentobj.children))
+            pass
+
+    # This method is on NXOSConfigList()
+    def iter_with_comments(self, begin_index=0):
+        for idx, obj in enumerate(self._list):
+            if idx >= begin_index:
+                yield obj
+
+    # This method is on NXOSConfigList()
+    def iter_no_comments(self, begin_index=0):
+        for idx, obj in enumerate(self._list):
+            if (idx >= begin_index) and (not obj.is_comment):
+                yield obj
+
+    # This method is on NXOSConfigList()
+    def _reassign_linenums(self):
+        # Call this after any insertion or deletion
+        for idx, obj in enumerate(self._list):
+            obj.linenum = idx
+
+    # This method is on NXOSConfigList()
+    @property
+    def all_parents(self):
+        return [obj for obj in self._list if obj.has_children]
+
+    # This method is on NXOSConfigList()
+    @property
+    def last_index(self):
+        return self.__len__() - 1
+
+
+class ASAConfigList_deprecated(MutableSequence):
+    """A custom list to hold :class:`~models_asa.ASACfgLine` objects.  Most
+    people will never need to use this class directly.
+    """
+
+    def __init__(
+        self,
+        data=None,
+        comment_delimiter="!",
+        debug=0,
+        factory=False,
+        ignore_blank_lines=True,
+        syntax="asa",
+        **kwargs
+    ):
+        """Initialize the class.
+
+        Parameters
+        ----------
+        data : list
+            A list of parsed :class:`~models_cisco.IOSCfgLine` objects
+        comment_delimiter : str
+            A comment delimiter.  This should only be changed when parsing non-Cisco IOS configurations, which do not use a !  as the comment delimiter.  ``comment`` defaults to '!'
+        debug : int
+            ``debug`` defaults to 0, and should be kept that way unless you're working on a very tricky config parsing problem.  Debug output is not particularly friendly
+        ignore_blank_lines : bool
+            ``ignore_blank_lines`` defaults to True; when this is set True, ciscoconfparse ignores blank configuration lines.  You might want to set ``ignore_blank_lines`` to False if you intentionally use blank lines in your configuration (ref: Github Issue #2).
+
+        Returns
+        -------
+        An instance of an :class:`~ciscoconfparse.ASAConfigList_deprecated` object.
+
+        """
+        super(ASAConfigList_deprecated, self).__init__()
+
+        raise NotImplementedError("ASAConfigList() has been deprecated")
+
+        # Parse out CiscoConfParse and ccp_ref keywords...
+        ciscoconfparse_kwarg_val = kwargs.get("CiscoConfParse", None)
+        ccp_ref_kwarg_val = kwargs.get("ccp_ref", None)
+        if ciscoconfparse_kwarg_val is not None:
+            ccp_logger.warning("The CiscoConfParse keyword will be deprecated soon.  Please use ccp_ref instead")
+        ccp_value = ciscoconfparse_kwarg_val or ccp_ref_kwarg_val
+
+        self._list = list()
+        self.CiscoConfParse = ccp_value
+        self.ccp_ref = ccp_value
+        self.comment_delimiter = comment_delimiter
+        self.factory = factory
+        self.ignore_blank_lines = ignore_blank_lines
+        self.syntax = syntax
+        self.dna = "ASAConfigList"
+        self.debug = debug
+
+        ## Support either a list or a generator instance
+        if getattr(data, "__iter__", False):
+            self._bootstrap_obj_init(data)
+        else:
+            self._list = list()
+
+        if self.debug > 0:
+            message = "Create ASAConfigList() with %i elements" % len(self._list)
+            ccp_logger.info(message)
+
+        ###
+        ### Internal structures
+        self._RE_NAMES = re.compile(r"^\s*name\s+(\d+\.\d+\.\d+\.\d+)\s+(\S+)")
+        self._RE_OBJNET = re.compile(r"^\s*object-group\s+network\s+(\S+)")
+        self._RE_OBJSVC = re.compile(r"^\s*object-group\s+service\s+(\S+)")
+        self._RE_OBJACL = re.compile(r"^\s*access-list\s+(\S+)")
+        self._network_cache = dict()
+
+    def __len__(self):
+        return len(self._list)
+
+    def __getitem__(self, ii):
+        return self._list[ii]
+
+    def __delitem__(self, ii):
+        del self._list[ii]
+        self._bootstrap_from_text()
+
+    def __setitem__(self, ii, val):
+        return self._list[ii]
+
+    def __str__(self):
+        return self.__repr__()
+
+    def __enter__(self):
+        # Add support for with statements...
+        # FIXME: *with* statements dont work
+        for obj in self._list:
+            yield obj
+
+    def __exit__(self, *args, **kwargs):
+        # FIXME: *with* statements dont work
+        self._list[0].confobj.CiscoConfParse.atomic()
+
+    def __repr__(self):
+        return """<ASAConfigList, comment='%s', conf=%s>""" % (
+            self.comment_delimiter,
+            self._list,
+        )
+
+    # This method is on ASAConfigList()
+    def __getattribute__(self, arg):
+        """Call arg on ASAConfigList() object, and if that fails, call arg from the ccp_ref attribute"""
+        # Try a method call on ASAConfigList()
+
+
+        rewrite_to_ccp_ref = False
+        # Rewrite self.CiscoConfParse to self.ccp_ref
+        if arg=="CiscoConfParse":
+            rewrite_to_ccp_ref = True
+            arg = "ccp_ref"
+
+        try:
+            return object.__getattribute__(self, arg)
+        except Exception as ee:
+            pass
+
+        try:
+            calling_function = inspect.stack()[1].function
+            caller = inspect.getframeinfo(inspect.stack()[1][0])
+
+            ccp_ref = object.__getattribute__(self, 'ccp_ref')
+            ccp_method = ccp_ref.__getattribute__(arg)
+            message = "%s() line %s called this method.  %s doesn't have an attribute named '%s'.  CiscoConfParse() is making this work with duct tape in __getattribute__()." % (calling_function, caller.lineno, ccp_ref, ccp_method)
+            ccp_logger.warning(message)
+            return ccp_method
+        except Exception as ff:
+            ccp_logger.error(str(ff))
+            sys.exit(1)
+
+    # This method is on ASAConfigList()
+    @property
+    def ConfigObjs(self):
+        message = "%s doesn't implement ConfigObjs" % self.__class__.__name__
+        ccp_logger.error(message)
+        raise AttributeError(message)
+
+    # This method is on ASAConfigList()
+    def _bootstrap_from_text(self):
+        ## reparse all objects from their text attributes... this is *very* slow
+        ## Ultimate goal: get rid of all reparsing from text...
+        self._list = self._bootstrap_obj_init(list(map(attrgetter("text"), self._list)))
+
+    # This method is on ASAConfigList()
+    def has_line_with(self, linespec):
+        return bool(filter(methodcaller("re_search", linespec), self._list))
+
+    # This method is on ASAConfigList()
+    def insert_before(self, robj, val, atomic=False):
+        ## Insert something before robj
+        if not getattr(robj, "capitalize", False):
+            error = 'FATAL: robj="%s" (type: %s) failure.  Expected a string.' % (robj, type(robj))
+            ccp_logger.error(error)
+            raise ValueError(error)
+
+        if getattr(val, "capitalize", False):
+            if self.factory:
+                obj = ConfigLineFactory(
+                    text=val,
+                    comment_delimiter=self.comment_delimiter,
+                    syntax=self.syntax,
+                )
+            elif self.syntax == "asa":
+                obj = ASACfgLine(text=val, comment_delimiter=self.comment_delimiter)
+
+        ii = self._list.index(robj)
+        if (ii is not None):
+            ## Do insertion here
+            self._list.insert(ii, obj)
+
+        if atomic:
+            # Reparse the whole config as a text list
+            self._bootstrap_from_text()
+        else:
+            ## Just renumber lines...
+            self._reassign_linenums()
+
+    # This method is on ASAConfigList()
+    def insert_after(self, exist_val, new_val, atomic=False):
+        """
+        Insert new_val after all occurances of exist_val.
+
+        Parameters
+        ----------
+        exist_val : str
+            An existing text value.  This may match multiple configuration entries.
+        new_val : str
+            A new value to be inserted in the configuration.
+        atomic : bool
+            A boolean that controls whether the config is reparsed after the insertion (default False)
+
+        Returns
+        -------
+        list
+            An asa-style configuration list (indented by stop_width for each configuration level).
+
+        Examples
+        --------
+
+        >>> parse = CiscoConfParse(["a", "b", "c", "b"])
+        >>> # Insert 'g' after any occurance of 'b'
+        >>> retval = parse.insert_after("b", "g")
+        >>> parse.commit()
+        >>> parse.ioscfg
+        ... ["a", "b", "g", "c", "b", "g"]
+        >>>
+        """
+
+        calling_fn_index = 1
+        calling_filename = inspect.stack()[calling_fn_index].filename
+        calling_function = inspect.stack()[calling_fn_index].function
+        calling_lineno = inspect.stack()[calling_fn_index].lineno
+        error =  "FATAL CALL: in %s line %s %s(exist_val='%s', new_val='%s')" % (calling_filename, calling_lineno, calling_function, exist_val, new_val)
+        # exist_val MUST be a string
+        if getattr(exist_val, "capitalize", False):
+            pass
+
+        elif isinstance(exist_val, ASACfgLine) is True:
+            exist_val = exist_val.text
+
+        else:
+            ccp_logger.error(error)
+            raise ValueError(error)
+
+        # new_val MUST be a string
+        if isinstance(new_val, str) is True:
+            pass
+
+        elif isinstance(new_val, ASACfgLine) is True:
+            new_val = new_val.text
+
+        else:
+            ccp_logger.error(error)
+            raise ValueError(error)
+
+        if self.factory:
+            new_obj = ConfigLineFactory(
+                text=new_val,
+                comment_delimiter=self.comment_delimiter,
+                syntax=self.syntax,
+            )
+        elif self.syntax == "asa":
+            new_obj = ASACfgLine(text=new_val, comment_delimiter=self.comment_delimiter)
+
+        # Find all config lines which need to be modified... store in all_idx
+        all_idx = [idx for idx, val in enumerate(self._list) if val.text==exist_val]
+        for idx in sorted(all_idx, reverse=True):
+            self._list.insert(idx+1, new_obj)
+
+        if atomic:
+            # Reparse the whole config as a text list
+            self._bootstrap_from_text()
+
+        else:
+            ## Just renumber lines...
+            self._reassign_linenums()
+
+    # This method is on ASAConfigList()
+    def insert_after_ASA_orig(
+        self,  exist_val, new_val="", exactmatch=False, ignore_ws=False, atomic=False, **kwargs
+    ):
+        """Find all :class:`~models_cisco.IOSCfgLine` objects whose text
+        matches ``exist_val``, and insert ``new_val`` after those line
+        objects"""
+
+        ######################################################################
+        # Named parameter migration warnings...
+        #   - `linespec` is now called exist_val
+        #   - `insertstr` is now called new_val
+        ######################################################################
+        if kwargs.get("linespec", ""):
+            exist_val = kwargs.get("linespec")
+            ccp_logger.info("The parameter named `linespec` is deprecated.  Please use `exist_val` instead")
+        if kwargs.get("insertstr", ""):
+            new_val = kwargs.get("insertstr")
+            ccp_logger.info("The parameter named `insertstr` is deprecated.  Please use `new_val` instead")
+
+        error_exist_val = "FATAL: exist_val:'%s' must be a string" % exist_val
+        error_new_val = "FATAL: new_val:'%s' must be a string" % new_val
+        assert isinstance(exist_val, str), error_exist_val
+        assert isinstance(new_val, str), error_new_val
+
+        objs = self.find_objects(exist_val, exactmatch, ignore_ws)
+        # PIZZA
+        self.ConfigObjs.insert_after(exist_val, new_val, atomic=atomic)
+        return list(map(attrgetter("text"), sorted(objs)))
+
+    # This method is on ASAConfigList()
+    def insert_after_orig(self, robj, val, atomic=False):
+        ## Insert something after robj
+        if not getattr(robj, "capitalize", False):
+            error = 'FATAL: robj="%s" (type: %s) failure.  Expected a string.' % (robj, type(robj))
+            ccp_logger.error(error)
+            raise ValueError(error)
+
+        if getattr(val, "capitalize", False):
+            if self.factory:
+                obj = ConfigLineFactory(
+                    text=val,
+                    comment_delimiter=self.comment_delimiter,
+                    syntax=self.syntax,
+                )
+            elif self.syntax == "asa":
+                obj = ASACfgLine(text=val, comment_delimiter=self.comment_delimiter)
+
+        ## FIXME: This shouldn't be required
+        self._reassign_linenums()
+
+        ii = self._list.index(robj)
+        if (ii is not None):
+            ## Do insertion here
+            self._list.insert(ii + 1, obj)
+
+        if atomic:
+            # Reparse the whole config as a text list
+            self._bootstrap_from_text()
+        else:
+            ## Just renumber lines...
+            self._reassign_linenums()
+
+    # This method is on ASAConfigList()
+    def insert(self, ii, val):
+        ## Insert something at index ii
+        if getattr(val, "capitalize", False):
+            if self.factory:
+                obj = ConfigLineFactory(
+                    text=val,
+                    comment_delimiter=self.comment_delimiter,
+                    syntax=self.syntax,
+                )
+            elif self.syntax == "asa":
+                obj = ASACfgLine(text=val, comment_delimiter=self.comment_delimiter)
+
+        self._list.insert(ii, obj)
+
+        ## Just renumber lines...
+        self._reassign_linenums()
+
+    # This method is on ASAConfigList()
+    def append(self, val, atomic=False):
+        list_idx = len(self._list)
+        self.insert(list_idx, val)
+
+    # This method is on ASAConfigList()
+    def config_hierarchy(self):
+        """Walk this configuration and return the following tuple
+        at each parent 'level':
+            (list_of_parent_siblings, list_of_nonparent_siblings)"""
+        parent_siblings = list()
+        nonparent_siblings = list()
+
+        for obj in self.ccp_ref.find_objects(r"^\S+"):
+            if obj.is_comment:
+                continue
+            elif len(obj.children) == 0:
+                nonparent_siblings.append(obj)
+            else:
+                parent_siblings.append(obj)
+
+        return parent_siblings, nonparent_siblings
+
+    # This method is on ASAConfigList()
+    def _bootstrap_obj_init(self, text_list):
+        """Accept a text list and format into proper objects"""
+        # Append text lines as IOSCfgLine objects...
+        retval = list()
+        idx = 0
+
+        max_indent = 0
+        parents = dict()
+        for line in text_list:
+            # Reject empty lines if ignore_blank_lines...
+            if self.ignore_blank_lines and line.strip() == "":
+                continue
+
+            if self.syntax == "asa" and self.factory:
+                obj = ConfigLineFactory(line, self.comment_delimiter, syntax="asa")
+            elif self.syntax == "asa" and not self.factory:
+                obj = ASACfgLine(text=line, comment_delimiter=self.comment_delimiter)
+            else:
+                error = ("Cannot classify config list item '%s' "
+                    "into a proper configuration object line" % line)
+                ccp_logger.error(error)
+                raise ValueError(error)
+
+            obj.confobj = self
+            obj.linenum = idx
+            indent = len(line) - len(line.lstrip())
+            obj.indent = indent
+
+            is_config_line = obj.is_config_line
+
+            ## Parent cache:
+            ## Maintain indent vs max_indent in a family and
+            ##     cache the parent until indent<max_indent
+            if (indent < max_indent) and is_config_line:
+                parent = None
+                # walk parents and intelligently prune stale parents
+                stale_parent_idxs = filter(
+                    lambda ii: ii >= indent, sorted(parents.keys(), reverse=True)
+                )
+                for parent_idx in stale_parent_idxs:
+                    del parents[parent_idx]
+            else:
+                ## As long as the child indent hasn't gone backwards,
+                ##    we can use a cached parent
+                parent = parents.get(indent, None)
+
+            ## If indented, walk backwards and find the parent...
+            ## 1.  Assign parent to the child
+            ## 2.  Assign child to the parent
+            ## 3.  Assign parent's child_indent
+            ## 4.  Maintain oldest_ancestor
+            if (indent > 0) and not (parent is None):
+                ## Add the line as a child (parent was cached)
+                self._add_child_to_parent(retval, idx, indent, parent, obj)
+            elif (indent > 0) and (parent is None):
+                ## Walk backwards to find parent, and add the line as a child
+                candidate_parent_index = idx - 1
+                while candidate_parent_index >= 0:
+                    candidate_parent = retval[candidate_parent_index]
+                    if (
+                        candidate_parent.indent < indent
+                    ) and candidate_parent.is_config_line:
+                        # We found the parent
+                        parent = candidate_parent
+                        parents[indent] = parent  # Cache the parent
+                        if indent == 0:
+                            parent.oldest_ancestor = True
+                        break
+                    else:
+                        candidate_parent_index -= 1
+
+                ## Add the line as a child...
+                self._add_child_to_parent(retval, idx, indent, parent, obj)
+
+            ## Handle max_indent
+            if (indent == 0) and is_config_line:
+                # only do this if it's a config line...
+                max_indent = 0
+            elif indent > max_indent:
+                max_indent = indent
+
+            retval.append(obj)
+            idx += 1
+
+        self._list = retval
+        ## Insert ASA-specific banner processing here, if required
+        return retval
+
+    # This method is on ASAConfigList()
+    def _add_child_to_parent(self, _list, idx, indent, parentobj, childobj):
+        ## parentobj could be None when trying to add a child that should not
+        ##    have a parent
+        if parentobj is None:
+            if self.debug > 0:
+                ccp_logger.debug("parentobj is None")
+            return
+
+        if self.debug > 2:
+            ccp_logger.debug(
+                "Adding child '{0}' to parent" " '{1}'".format(childobj, parentobj)
+            )
+            ccp_logger.debug("     BEFORE parent.children - {0}".format(parentobj.children))
+        if childobj.is_comment and (_list[idx - 1].indent > indent):
+            ## I *really* hate making this exception, but legacy
+            ##   ciscoconfparse never marked a comment as a child
+            ##   when the line immediately above it was indented more
+            ##   than the comment line
+            pass
+        elif childobj.parent is childobj:
+            # Child has not been assigned yet
+            parentobj.children.append(childobj)
+            childobj.parent = parentobj
+            childobj.parent.child_indent = indent
+        else:
+            pass
+
+        if self.debug > 2:
+            ccp_logger.debug("     AFTER parent.children - {0}".format(parentobj.children))
+
+    # This method is on ASAConfigList()
+    def iter_with_comments(self, begin_index=0):
+        for idx, obj in enumerate(self._list):
+            if idx >= begin_index:
+                yield obj
+
+    # This method is on ASAConfigList()
+    def iter_no_comments(self, begin_index=0):
+        for idx, obj in enumerate(self._list):
+            if (idx >= begin_index) and (not obj.is_comment):
+                yield obj
+
+    # This method is on ASAConfigList()
+    def _reassign_linenums(self):
+        # Call this after any insertion or deletion
+        for idx, obj in enumerate(self._list):
+            obj.linenum = idx
+
+    # This method is on ASAConfigList()
+    @property
+    def all_parents(self):
+        return [obj for obj in self._list if obj.has_children]
+
+    # This method is on ASAConfigList()
     @property
     def last_index(self):
         return self.__len__() - 1
@@ -4465,38 +5294,41 @@ class ASAConfigList(MutableSequence):
     ###
     ### ASA-specific stuff here...
     ###
+
+    # This method is on ASAConfigList()
     @property
     def names(self):
         """Return a dictionary of name to address mappings"""
         retval = dict()
         name_rgx = self._RE_NAMES
-        for obj in self.CiscoConfParse.find_objects(name_rgx):
+        for obj in self.ccp_ref.find_objects(name_rgx):
             addr = obj.re_match_typed(name_rgx, group=1, result_type=str)
             name = obj.re_match_typed(name_rgx, group=2, result_type=str)
             retval[name] = addr
         return retval
 
+    # This method is on ASAConfigList()
     @property
     def object_group_network(self):
         """Return a dictionary of name to object-group network mappings"""
         retval = dict()
         obj_rgx = self._RE_OBJNET
-        for obj in self.CiscoConfParse.find_objects(obj_rgx):
+        for obj in self.ccp_ref.find_objects(obj_rgx):
             name = obj.re_match_typed(obj_rgx, group=1, result_type=str)
             retval[name] = obj
         return retval
 
+    # This method is on ASAConfigList()
     @property
     def access_list(self):
         """Return a dictionary of ACL name to ACE (list) mappings"""
         retval = dict()
-        for obj in self.CiscoConfParse.find_objects(self._RE_OBJACL):
+        for obj in self.ccp_ref.find_objects(self._RE_OBJACL):
             name = obj.re_match_typed(self._RE_OBJACL, group=1, result_type=str)
             tmp = retval.get(name, [])
             tmp.append(obj)
             retval[name] = tmp
         return retval
-
 
 class DiffObject(object):
     """This object should be used at every level of hierarchy"""
@@ -4595,7 +5427,7 @@ class CiscoPassword(object):
                 dp = dp + str(newchar)
                 s = s + 1
         # if s > 53:
-        #    logger.warning("password decryption failed.")
+        #    ccp_logger.warning("password decryption failed.")
         return dp
 
 
@@ -4652,8 +5484,8 @@ def ConfigLineFactory(text="", comment_delimiter="!", syntax="ios"):
         classes = [IOSCfgLine]
     else:
         error = "'{0}' is an unknown syntax".format(syntax)
-        logger.error(error)
-        raise ValueError("'{0}' is an unknown syntax".format(syntax))
+        ccp_logger.error(error)
+        raise ValueError(error)
 
     for cls in classes:
         if cls.is_object_for(text):
@@ -4662,7 +5494,7 @@ def ConfigLineFactory(text="", comment_delimiter="!", syntax="ios"):
             )  # instance of the proper subclass
             return inst
     error = "Could not find an object for '%s'" % line
-    logger.error(error)
+    ccp_logger.error(error)
     raise ValueError(error)
 
 
@@ -4728,5 +5560,5 @@ if __name__ == "__main__":
             print(line)
     else:
         error = "ciscoconfparse was called with unknown parameters"
-        logger.error(error)
+        ccp_logger.error(error)
         raise RuntimeError(error)

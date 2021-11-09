@@ -17,7 +17,6 @@ from ciscoconfparse.ciscoconfparse import CiscoPassword
 from ciscoconfparse.ccp_util import IPv4Obj
 from passlib.hash import cisco_type7
 import pytest
-from loguru import logger
 
 r""" test_CiscoConfParse.py - Parse, Query, Build, and Modify IOS-style configs
 
@@ -603,6 +602,60 @@ def testValues_list_insert_02():
 
     obj = confobjs.find_objects(r"^e")[0]
     assert obj.all_children[0].text==' f'
+
+def testValues_list_insert_03():
+    this_syntax = "ios"
+    config = """interface GigabitEthernet0/6
+     no shutdown
+     no nameif
+     no security-level
+     no ip address"""
+
+    parse = CiscoConfParse(config.splitlines(), syntax=this_syntax)
+    parse.insert_after(r'^interface\s+GigabitEthernet0/6\s*$', 'interface GigabitEthernet0/6.30')
+    parse.commit()
+    assert parse.ConfigObjs[0].text=="interface GigabitEthernet0/6"
+    assert parse.ConfigObjs[1].text=="interface GigabitEthernet0/6.30"
+    assert parse.ConfigObjs[2].parent==parse.ConfigObjs[1]
+    assert parse.ConfigObjs[3].parent==parse.ConfigObjs[1]
+    assert parse.ConfigObjs[4].parent==parse.ConfigObjs[1]
+    assert parse.ConfigObjs[5].parent==parse.ConfigObjs[1]
+
+def testValues_list_insert_04():
+    this_syntax = "nxos"
+    config = """interface GigabitEthernet0/6
+     no shutdown
+     no nameif
+     no security-level
+     no ip address"""
+
+    parse = CiscoConfParse(config.splitlines(), syntax=this_syntax)
+    parse.insert_after(r'^interface\s+GigabitEthernet0/6\s*$', 'interface GigabitEthernet0/6.30')
+    parse.commit()
+    assert parse.ConfigObjs[0].text=="interface GigabitEthernet0/6"
+    assert parse.ConfigObjs[1].text=="interface GigabitEthernet0/6.30"
+    assert parse.ConfigObjs[2].parent==parse.ConfigObjs[1]
+    assert parse.ConfigObjs[3].parent==parse.ConfigObjs[1]
+    assert parse.ConfigObjs[4].parent==parse.ConfigObjs[1]
+    assert parse.ConfigObjs[5].parent==parse.ConfigObjs[1]
+
+def testValues_list_insert_05():
+    this_syntax = "asa"
+    config = """interface GigabitEthernet0/6
+     no shutdown
+     no nameif
+     no security-level
+     no ip address"""
+
+    parse = CiscoConfParse(config.splitlines(), syntax=this_syntax)
+    parse.insert_after(r'^interface\s+GigabitEthernet0/6\s*$', 'interface GigabitEthernet0/6.30')
+    parse.commit()
+    assert parse.ConfigObjs[0].text=="interface GigabitEthernet0/6"
+    assert parse.ConfigObjs[1].text=="interface GigabitEthernet0/6.30"
+    assert parse.ConfigObjs[2].parent==parse.ConfigObjs[1]
+    assert parse.ConfigObjs[3].parent==parse.ConfigObjs[1]
+    assert parse.ConfigObjs[4].parent==parse.ConfigObjs[1]
+    assert parse.ConfigObjs[5].parent==parse.ConfigObjs[1]
 
 def testValues_find_parents_w_child(parse_c01):
     c01_parents_w_child_power = [
@@ -2050,7 +2103,7 @@ def testValues_IOSIntfLine_find_objects_factory_02(
         assert result_correct02 == test_result02
 
 
-def testValues_IOSConfigList_insert01(parse_c02):
+def testValues_ConfigList_insert01(parse_c02):
     result_correct = [
         "hostname LabRouter",
         "policy-map QOS_1",
@@ -2080,7 +2133,7 @@ def testValues_IOSConfigList_insert01(parse_c02):
     assert test_result == result_correct
 
 
-def testValues_IOSConfigList_insert02(parse_c02):
+def testValues_ConfigList_insert02(parse_c02):
     result_correct = [
         "policy-map QOS_1",
         " class GOLD",
@@ -2101,11 +2154,11 @@ def testValues_IOSConfigList_insert02(parse_c02):
         "hostname LabRouter",
         "!",
     ]
-    iosconfiglist = parse_c02.ConfigObjs
+    configlist = parse_c02.ConfigObjs
 
     # insert at the end
-    iosconfiglist.insert(-1, "hostname LabRouter")
-    test_result = list(map(attrgetter("text"), iosconfiglist))
+    configlist.insert(-1, "hostname LabRouter")
+    test_result = list(map(attrgetter("text"), configlist))
 
     assert test_result == result_correct
 

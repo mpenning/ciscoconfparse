@@ -21,7 +21,7 @@ from ciscoconfparse.ccp_abc import BaseCfgLine
 ###   for this functionality yet, so I consider all this code alpha quality.
 ###
 ###   Use models_cisco.py at your own risk.  You have been warned :-)
-""" models_cisco.py - Parse, Query, Build, and Modify IOS-style configurations
+r""" models_cisco.py - Parse, Query, Build, and Modify IOS-style configurations
 
      Copyright (C) 2020-2021 David Michael Pennington at Cisco Systems
      Copyright (C) 2019      David Michael Pennington at ThousandEyes
@@ -98,7 +98,7 @@ class IOSCfgLine(BaseCfgLine):
     """
 
     def __init__(self, *args, **kwargs):
-        """Accept an IOS line number and initialize family relationship
+        r"""Accept an IOS line number and initialize family relationship
         attributes"""
         super(IOSCfgLine, self).__init__(*args, **kwargs)
 
@@ -110,7 +110,7 @@ class IOSCfgLine(BaseCfgLine):
     @property
     def is_intf(self):
         # Includes subinterfaces
-        """Returns a boolean (True or False) to answer whether this 
+        r"""Returns a boolean (True or False) to answer whether this 
         :class:`~models_cisco.IOSCfgLine` is an interface; subinterfaces
         also return True.
 
@@ -149,15 +149,13 @@ class IOSCfgLine(BaseCfgLine):
            True
            >>>
         """
-        # intf_regex = r'^interface\s+(\S+.+)'
-        # if self.re_match(intf_regex):
         if self.text[0:10] == "interface " and self.text[10] != " ":
             return True
         return False
 
     @property
     def is_subintf(self):
-        """Returns a boolean (True or False) to answer whether this 
+        r"""Returns a boolean (True or False) to answer whether this 
         :class:`~models_cisco.IOSCfgLine` is a subinterface.
 
         Returns
@@ -213,7 +211,7 @@ class IOSCfgLine(BaseCfgLine):
 
     @property
     def is_loopback_intf(self):
-        """Returns a boolean (True or False) to answer whether this 
+        r"""Returns a boolean (True or False) to answer whether this 
         :class:`~models_cisco.IOSCfgLine` is a loopback interface.
 
         Returns
@@ -253,7 +251,7 @@ class IOSCfgLine(BaseCfgLine):
 
     @property
     def is_ethernet_intf(self):
-        """Returns a boolean (True or False) to answer whether this 
+        r"""Returns a boolean (True or False) to answer whether this 
         :class:`~models_cisco.IOSCfgLine` is an ethernet interface.
         Any ethernet interface (10M through 10G) is considered an ethernet
         interface.
@@ -300,7 +298,7 @@ class IOSCfgLine(BaseCfgLine):
 
     @property
     def intf_in_portchannel(self):
-        """Return a boolean indicating whether this port is configured in a port-channel
+        r"""Return a boolean indicating whether this port is configured in a port-channel
 
         Returns
         -------
@@ -313,7 +311,7 @@ class IOSCfgLine(BaseCfgLine):
 
     @property
     def portchannel_number(self):
-        """Return an integer for the port-channel which it's configured in.  Return -1 if it's not configured in a port-channel
+        r"""Return an integer for the port-channel which it's configured in.  Return -1 if it's not configured in a port-channel
 
         Returns
         -------
@@ -326,7 +324,7 @@ class IOSCfgLine(BaseCfgLine):
 
     @property
     def is_portchannel_intf(self):
-        """Return a boolean indicating whether this port is a port-channel intf
+        r"""Return a boolean indicating whether this port is a port-channel intf
 
         Returns
         -------
@@ -382,7 +380,7 @@ class BaseIOSIntfLine(IOSCfgLine):
             )
 
     def _build_abbvs(self):
-        """Build a set of valid abbreviations (lowercased) for the interface"""
+        r"""Build a set of valid abbreviations (lowercased) for the interface"""
         retval = set([])
         port_type_chars = self.port_type.lower()
         subinterface_number = self.subinterface_number
@@ -437,7 +435,7 @@ class BaseIOSIntfLine(IOSCfgLine):
 
     @property
     def abbvs(self):
-        """A python set of valid abbreviations (lowercased) for the interface"""
+        r"""A python set of valid abbreviations (lowercased) for the interface"""
         return self._build_abbvs()
 
     _INTF_NAME_RE_STR = r"^interface\s+(\S+[0-9\/\.\s]+)\s*"
@@ -445,7 +443,7 @@ class BaseIOSIntfLine(IOSCfgLine):
 
     @property
     def name(self):
-        """Return the interface name as a string, such as 'GigabitEthernet0/1'
+        r"""Return the interface name as a string, such as 'GigabitEthernet0/1'
 
         Returns
         -------
@@ -493,7 +491,7 @@ class BaseIOSIntfLine(IOSCfgLine):
 
     @property
     def port(self):
-        """Return the interface's port number
+        r"""Return the interface's port number
 
         Returns
         -------
@@ -535,7 +533,7 @@ class BaseIOSIntfLine(IOSCfgLine):
 
     @property
     def port_type(self):
-        """Return Loopback, ATM, GigabitEthernet, Virtual-Template, etc...
+        r"""Return Loopback, ATM, GigabitEthernet, Virtual-Template, etc...
 
         Returns
         -------
@@ -578,7 +576,7 @@ class BaseIOSIntfLine(IOSCfgLine):
 
     @property
     def ordinal_list(self):
-        """Return a tuple of numbers representing card, slot, port for this interface.  If you call ordinal_list on GigabitEthernet2/25.100, you'll get this python tuple of integers: (2, 25).  If you call ordinal_list on GigabitEthernet2/0/25.100 you'll get this python list of integers: (2, 0, 25).  This method strips all subinterface information in the returned value.
+        r"""Return a tuple of numbers representing card, slot, port for this interface.  If you call ordinal_list on GigabitEthernet2/25.100, you'll get this python tuple of integers: (2, 25).  If you call ordinal_list on GigabitEthernet2/0/25.100 you'll get this python list of integers: (2, 0, 25).  This method strips all subinterface information in the returned value.
 
         Returns
         -------
@@ -631,7 +629,7 @@ class BaseIOSIntfLine(IOSCfgLine):
 
     @property
     def interface_number(self):
-        """Return a string representing the card, slot, port for this interface.  If you call interface_number on GigabitEthernet2/25.100, you'll get this python string: '2/25'.  If you call interface_number on GigabitEthernet2/0/25.100 you'll get this python string '2/0/25'.  This method strips all subinterface information in the returned value.
+        r"""Return a string representing the card, slot, port for this interface.  If you call interface_number on GigabitEthernet2/25.100, you'll get this python string: '2/25'.  If you call interface_number on GigabitEthernet2/0/25.100 you'll get this python string '2/0/25'.  This method strips all subinterface information in the returned value.
 
         Returns
         -------
@@ -681,7 +679,7 @@ class BaseIOSIntfLine(IOSCfgLine):
 
     @property
     def subinterface_number(self):
-        """Return a string representing the card, slot, port for this interface or subinterface.  If you call subinterface_number on GigabitEthernet2/25.100, you'll get this python string: '2/25.100'.  If you call interface_number on GigabitEthernet2/0/25 you'll get this python string '2/0/25'.  This method strips all subinterface information in the returned value.
+        r"""Return a string representing the card, slot, port for this interface or subinterface.  If you call subinterface_number on GigabitEthernet2/25.100, you'll get this python string: '2/25.100'.  If you call interface_number on GigabitEthernet2/0/25 you'll get this python string '2/0/25'.  This method strips all subinterface information in the returned value.
 
         Returns
         -------
@@ -731,7 +729,7 @@ class BaseIOSIntfLine(IOSCfgLine):
 
     @property
     def description(self):
-        """Return the current interface description string.
+        r"""Return the current interface description string.
 
         """
         retval = self.re_match_iter_typed(
@@ -755,7 +753,7 @@ class BaseIOSIntfLine(IOSCfgLine):
 
     @property
     def manual_holdqueue_out(self):
-        """Return the current hold-queue out depth, if default return 0"""
+        r"""Return the current hold-queue out depth, if default return 0"""
         retval = self.re_match_iter_typed(
             r"^\s*hold-queue\s+(\d+)\s+out$", result_type=int, default=0
         )
@@ -763,7 +761,7 @@ class BaseIOSIntfLine(IOSCfgLine):
 
     @property
     def manual_holdqueue_in(self):
-        """Return the current hold-queue in depth, if default return 0"""
+        r"""Return the current hold-queue in depth, if default return 0"""
         retval = self.re_match_iter_typed(
             r"^\s*hold-queue\s+(\d+)\s+in$", result_type=int, default=0
         )
@@ -785,7 +783,7 @@ class BaseIOSIntfLine(IOSCfgLine):
 
     @property
     def ipv4_addr_object(self):
-        """Return a ccp_util.IPv4Obj object representing the address on this interface; if there is no address, return IPv4Obj('127.0.0.1/32')"""
+        r"""Return a ccp_util.IPv4Obj object representing the address on this interface; if there is no address, return IPv4Obj('127.0.0.1/32')"""
         try:
             return IPv4Obj("%s/%s" % (self.ipv4_addr, self.ipv4_netmask))
         except DynamicAddressException as e:
@@ -795,7 +793,7 @@ class BaseIOSIntfLine(IOSCfgLine):
 
     @property
     def ipv4_network_object(self):
-        """Return an ccp_util.IPv4Obj object representing the subnet on this interface; if there is no address, return ccp_util.IPv4Obj('127.0.0.1/32')"""
+        r"""Return an ccp_util.IPv4Obj object representing the subnet on this interface; if there is no address, return ccp_util.IPv4Obj('127.0.0.1/32')"""
         return self.ip_network_object
 
     @property
@@ -839,12 +837,12 @@ class BaseIOSIntfLine(IOSCfgLine):
 
     @property
     def has_manual_carrierdelay(self):
-        """Return a python boolean for whether carrier delay is manually configured on the interface"""
+        r"""Return a python boolean for whether carrier delay is manually configured on the interface"""
         return bool(self.manual_carrierdelay)
 
     @property
     def manual_carrierdelay(self):
-        """Return the manual carrier delay (in seconds) of the interface as a python float. If there is no explicit carrier delay, return 0.0"""
+        r"""Return the manual carrier delay (in seconds) of the interface as a python float. If there is no explicit carrier delay, return 0.0"""
         cd_seconds = self.re_match_iter_typed(
             r"^\s*carrier-delay\s+(\d+)$", result_type=float, default=0.0
         )
@@ -865,7 +863,7 @@ class BaseIOSIntfLine(IOSCfgLine):
 
     @property
     def manual_clock_rate(self):
-        """Return the clock rate of the interface as a python integer. If there is no explicit clock rate, return 0"""
+        r"""Return the clock rate of the interface as a python integer. If there is no explicit clock rate, return 0"""
         retval = self.re_match_iter_typed(
             r"^\s*clock\s+rate\s+(\d+)$", result_type=int, default=0
         )
@@ -875,7 +873,7 @@ class BaseIOSIntfLine(IOSCfgLine):
     def manual_mtu(self):
         ## Due to the diverse platform defaults, this should be the
         ##    only mtu information I plan to support
-        """Returns a integer value for the manual MTU configured on an
+        r"""Returns a integer value for the manual MTU configured on an
         :class:`~models_cisco.IOSIntfLine` object.  Interfaces without a
         manual MTU configuration return 0.
 
@@ -988,7 +986,7 @@ class BaseIOSIntfLine(IOSCfgLine):
 
     @property
     def ipv4_addr(self):
-        """Return a string with the interface's IPv4 address, or '' if there is none"""
+        r"""Return a string with the interface's IPv4 address, or '' if there is none"""
         retval = self.re_match_iter_typed(
             r"^\s+ip\s+address\s+(\d+\.\d+\.\d+\.\d+)\s+\d+\.\d+\.\d+\.\d+\s*$",
             result_type=str,
@@ -1005,7 +1003,7 @@ class BaseIOSIntfLine(IOSCfgLine):
 
     @property
     def ipv4_netmask(self):
-        """Return a string with the interface's IPv4 netmask, or '' if there is none"""
+        r"""Return a string with the interface's IPv4 netmask, or '' if there is none"""
         retval = self.re_match_iter_typed(
             r"^\s+ip\s+address\s+\d+\.\d+\.\d+\.\d+\s+(\d+\.\d+\.\d+\.\d+)\s*$",
             result_type=str,
@@ -1015,20 +1013,20 @@ class BaseIOSIntfLine(IOSCfgLine):
 
     @property
     def ipv4_masklength(self):
-        """Return an integer with the interface's IPv4 mask length, or 0 if there is no IP address on the interace"""
+        r"""Return an integer with the interface's IPv4 mask length, or 0 if there is no IP address on the interace"""
         ipv4_addr_object = self.ipv4_addr_object
         if ipv4_addr_object != self.default_ipv4_addr_object:
             return ipv4_addr_object.prefixlen
         return 0
 
     def is_abbreviated_as(self, val):
-        """Test whether `val` is a good abbreviation for the interface"""
+        r"""Test whether `val` is a good abbreviation for the interface"""
         if val.lower() in self.abbvs:
             return True
         return False
 
     def in_ipv4_subnet(self, ipv4network=IPv4Obj("0.0.0.0/32", strict=False)):
-        """Accept an argument for the :class:`~ccp_util.IPv4Obj` to be 
+        r"""Accept an argument for the :class:`~ccp_util.IPv4Obj` to be 
         considered, and return a boolean for whether this interface is within 
         the requested :class:`~ccp_util.IPv4Obj`.
 
@@ -1090,7 +1088,7 @@ class BaseIOSIntfLine(IOSCfgLine):
             return None
 
     def in_ipv4_subnets(self, subnets=None):
-        """Accept a set or list of ccp_util.IPv4Obj objects, and return a boolean for whether this interface is within the requested subnets."""
+        r"""Accept a set or list of ccp_util.IPv4Obj objects, and return a boolean for whether this interface is within the requested subnets."""
         if subnets is None:
             raise ValueError(
                 "A python list or set of ccp_util.IPv4Obj objects must be supplied"
@@ -1136,7 +1134,7 @@ class BaseIOSIntfLine(IOSCfgLine):
         ## NOTE: I have no intention of checking self.is_shutdown here
         ##     People should be able to check the sanity of interfaces
         ##     before they put them into production
-        """Return a boolean for whether no ip proxy-arp is configured on the 
+        r"""Return a boolean for whether no ip proxy-arp is configured on the 
         interface.
 
         Returns
@@ -1225,7 +1223,7 @@ class BaseIOSIntfLine(IOSCfgLine):
 
     @property
     def manual_arp_timeout(self):
-        """Return an integer with the current interface ARP timeout, if there isn't one set, return 0.  If there is no IP address, return -1"""
+        r"""Return an integer with the current interface ARP timeout, if there isn't one set, return 0.  If there is no IP address, return -1"""
         ## NOTE: I have no intention of checking self.is_shutdown here
         ##     People should be able to check the sanity of interfaces
         ##     before they put them into production
@@ -1243,14 +1241,14 @@ class BaseIOSIntfLine(IOSCfgLine):
 
     @property
     def has_ip_helper_addresses(self):
-        """Return a True if the intf has helper-addresses; False if not"""
+        r"""Return a True if the intf has helper-addresses; False if not"""
         if len(self.ip_helper_addresses) > 0:
             return True
         return False
 
     @property
     def ip_helper_addresses(self):
-        """Return a list of dicts with IP helper-addresses.  Each helper-address is in a dictionary.  The dictionary is in this format:
+        r"""Return a list of dicts with IP helper-addresses.  Each helper-address is in a dictionary.  The dictionary is in this format:
 
         Examples
         --------
@@ -1356,7 +1354,7 @@ class BaseIOSIntfLine(IOSCfgLine):
 
     @property
     def access_vlan(self):
-        """Return an integer with the access vlan number.  Return 1, if the switchport has no explicit vlan configured; return 0 if the port isn't a switchport"""
+        r"""Return an integer with the access vlan number.  Return 1, if the switchport has no explicit vlan configured; return 0 if the port isn't a switchport"""
         if self.is_switchport:
             default_val = 1
         else:
@@ -1370,7 +1368,7 @@ class BaseIOSIntfLine(IOSCfgLine):
 
     @property
     def trunk_vlans_allowed(self):
-        """Return a CiscoRange() with the list of allowed vlan numbers (as int).  Return 0 if the port isn't a switchport in trunk mode"""
+        r"""Return a CiscoRange() with the list of allowed vlan numbers (as int).  Return 0 if the port isn't a switchport in trunk mode"""
 
         # The default values...
         if self.is_switchport and not self.has_manual_switch_access:
@@ -1383,22 +1381,22 @@ class BaseIOSIntfLine(IOSCfgLine):
 
             ## For every child object, check whether the vlan list is modified
             abs_str = obj.re_match_typed(
-                "^\s+switchport\s+trunk\s+allowed\s+vlan\s(all|none|\d.*?)$",
+                r"^\s+switchport\s+trunk\s+allowed\s+vlan\s(all|none|\d.*?)$",
                 default="_nomatch_",
                 result_type=str,
             ).lower()
             add_str = obj.re_match_typed(
-                "^\s+switchport\s+trunk\s+allowed\s+vlan\s+add\s+(\d.*?)$",
+                r"^\s+switchport\s+trunk\s+allowed\s+vlan\s+add\s+(\d.*?)$",
                 default="_nomatch_",
                 result_type=str,
             ).lower()
             exc_str = obj.re_match_typed(
-                "^\s+switchport\s+trunk\s+allowed\s+vlan\s+except\s+(\d.*?)$",
+                r"^\s+switchport\s+trunk\s+allowed\s+vlan\s+except\s+(\d.*?)$",
                 default="_nomatch_",
                 result_type=str,
             ).lower()
             rem_str = obj.re_match_typed(
-                "^\s+switchport\s+trunk\s+allowed\s+vlan\s+remove\s+(\d.*?)$",
+                r"^\s+switchport\s+trunk\s+allowed\s+vlan\s+remove\s+(\d.*?)$",
                 default="_nomatch_",
                 result_type=str,
             ).lower()
@@ -1436,7 +1434,7 @@ class BaseIOSIntfLine(IOSCfgLine):
 
     @property
     def native_vlan(self):
-        """Return an integer with the native vlan number.  Return 1, if the switchport has no explicit native vlan configured; return 0 if the port isn't a switchport"""
+        r"""Return an integer with the native vlan number.  Return 1, if the switchport has no explicit native vlan configured; return 0 if the port isn't a switchport"""
         if self.is_switchport:
             default_val = 1
         else:
@@ -1698,7 +1696,7 @@ class BaseIOSIntfLine(IOSCfgLine):
 
 class IOSIntfLine(BaseIOSIntfLine):
     def __init__(self, *args, **kwargs):
-        """Accept an IOS line number and initialize family relationship
+        r"""Accept an IOS line number and initialize family relationship
         attributes
 
         Warnings
@@ -1732,7 +1730,7 @@ class IOSIntfGlobal(BaseCfgLine):
     @classmethod
     def is_object_for(cls, line="", re=re):
         if re.search(
-            "^(no\s+cdp\s+run)|(logging\s+event\s+link-status\s+global)|(spanning-tree\sportfast\sdefault)|(spanning-tree\sportfast\sbpduguard\sdefault)",
+            r"^(no\s+cdp\s+run)|(logging\s+event\s+link-status\s+global)|(spanning-tree\sportfast\sdefault)|(spanning-tree\sportfast\sbpduguard\sdefault)",
             line,
         ):
             return True
@@ -1740,31 +1738,31 @@ class IOSIntfGlobal(BaseCfgLine):
 
     @property
     def has_cdp_disabled(self):
-        if self.re_search("^no\s+cdp\s+run\s*"):
+        if self.re_search(r"^no\s+cdp\s+run\s*"):
             return True
         return False
 
     @property
     def has_intf_logging_def(self):
-        if self.re_search("^logging\s+event\s+link-status\s+global"):
+        if self.re_search(r"^logging\s+event\s+link-status\s+global"):
             return True
         return False
 
     @property
     def has_stp_portfast_def(self):
-        if self.re_search("^spanning-tree\sportfast\sdefault"):
+        if self.re_search(r"^spanning-tree\sportfast\sdefault"):
             return True
         return False
 
     @property
     def has_stp_portfast_bpduguard_def(self):
-        if self.re_search("^spanning-tree\sportfast\sbpduguard\sdefault"):
+        if self.re_search(r"^spanning-tree\sportfast\sbpduguard\sdefault"):
             return True
         return False
 
     @property
     def has_stp_mode_rapidpvst(self):
-        if self.re_search("^spanning-tree\smode\srapid-pvst"):
+        if self.re_search(r"^spanning-tree\smode\srapid-pvst"):
             return True
         return False
 
@@ -1784,7 +1782,7 @@ class IOSHostnameLine(BaseCfgLine):
 
     @classmethod
     def is_object_for(cls, line="", re=re):
-        if re.search("^hostname", line):
+        if re.search(r"^hostname", line):
             return True
         return False
 
@@ -1814,7 +1812,7 @@ class IOSAccessLine(BaseCfgLine):
 
     @classmethod
     def is_object_for(cls, line="", re=re):
-        if re.search("^line", line):
+        if re.search(r"^line", line):
             return True
         return False
 
@@ -1827,7 +1825,7 @@ class IOSAccessLine(BaseCfgLine):
     def name(self):
         retval = self.re_match_typed(r"^line\s+(\S+)", result_type=str, default="")
         # special case for IOS async lines: i.e. "line 33 48"
-        if re.search("\d+", retval):
+        if re.search(r"\d+", retval):
             return ""
         return retval
 
@@ -2137,7 +2135,7 @@ class IOSRouteLine(BaseIOSRouteLine):
 
     @property
     def multicast(self):
-        """Return whether the multicast keyword was specified"""
+        r"""Return whether the multicast keyword was specified"""
         return bool(self.route_info["mcast"])
 
     @property
@@ -2223,7 +2221,7 @@ class IOSAaaGroupServerLine(BaseCfgLine):
     @property
     def server_private(self, re=re):
         retval = set([])
-        rgx_priv = re.compile("^\s+server-private\s+(\S+)\s")
+        rgx_priv = re.compile(r"^\s+server-private\s+(\S+)\s")
         for cobj in self.children:
             mm = rgx_priv.search(cobj.text)
             if not (mm is None):
@@ -2247,7 +2245,7 @@ class IOSAaaLoginAuthenticationLine(BaseCfgLine):
         )
         self.group = self.re_match_typed(regex, group=2, result_type=str, default="")
         methods_str = self.re_match_typed(regex, group=3, result_type=str, default="")
-        self.methods = methods_str.strip().split("\s")
+        self.methods = methods_str.strip().split(r"\s")
 
     @classmethod
     def is_object_for(cls, line="", re=re):
@@ -2267,7 +2265,7 @@ class IOSAaaEnableAuthenticationLine(BaseCfgLine):
         )
         self.group = self.re_match_typed(regex, group=2, result_type=str, default="")
         methods_str = self.re_match_typed(regex, group=3, result_type=str, default="")
-        self.methods = methods_str.strip().split("\s")
+        self.methods = methods_str.strip().split(r"\s")
 
     @classmethod
     def is_object_for(cls, line="", re=re):
@@ -2288,7 +2286,7 @@ class IOSAaaCommandsAuthorizationLine(BaseCfgLine):
         )
         self.group = self.re_match_typed(regex, group=3, result_type=str, default="")
         methods_str = self.re_match_typed(regex, group=4, result_type=str, default="")
-        self.methods = methods_str.strip().split("\s")
+        self.methods = methods_str.strip().split(r"\s")
 
     @classmethod
     def is_object_for(cls, line="", re=re):

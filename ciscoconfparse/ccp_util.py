@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from operator import attrgetter
-from colorama import Fore
+from functools import wraps
 import itertools
 import warnings
 import socket
@@ -29,7 +29,9 @@ else:
     from ipaddress import IPv4Network, IPv6Network, IPv4Address, IPv6Address
     import ipaddress
 
-""" ccp_util.py - Parse, Query, Build, and Modify IOS-style configurations
+from loguru import logger as ccp_logger
+
+r""" ccp_util.py - Parse, Query, Build, and Modify IOS-style configurations
 
      Copyright (C) 2020-2021 David Michael Pennington at Cisco Systems
      Copyright (C) 2019      David Michael Pennington at ThousandEyes
@@ -91,19 +93,42 @@ def as_text_list(object_list):
 def junos_unsupported(func):
     """A function wrapper to warn junos users of unsupported features"""
     def wrapper(*args, **kwargs):
-        color_warn = Fore.YELLOW+"syntax='junos' does not fully support config modifications such as .{}(); see Github Issue #185.  https://github.com/mpenning/ciscoconfparse/issues/185".format(func.__name__)+Fore.RESET
-        syntax = ""
+        warn = "syntax='junos' does not fully support config modifications such as .{}(); see Github Issue #185.  https://github.com/mpenning/ciscoconfparse/issues/185".format(func.__name__)
+        syntax = kwargs.get("syntax", None)
         if len(args)>=1:
-            if isinstance(args[0], ciscoconfparse.IOSConfigList):
+            if isinstance(args[0], ciscoconfparse.ConfigList):
                 syntax = args[0].syntax
             else:
                 #print("TYPE", type(args[0]))
                 syntax = args[0].confobj.syntax
         if syntax=="junos":
-            warnings.warn(color_warn, UnsupportedFeatureWarning)
+            ccp_logger.warning(warn, UnsupportedFeatureWarning)
         func(*args, **kwargs)
     return wrapper
 
+def log_function_call(function=None, *args, **kwargs):
+    """A wrapper to log function calls"""
+
+    def logging_decorator(ff):
+        @wraps(ff)
+        def wrapped_logging(*args, **kwargs):
+            if True:
+                if len(args) == 1 and len(kwargs) == 0 and callable(args[0]):
+                    # Called as @log_function_call
+                    ccp_logger.info("Type 1 log_function_call: %s()" % (ff.__qualname__))
+
+                else:
+                    ccp_logger.info("Type 2 log_function_call: %s(%s, %s)" % (ff.__qualname__, args, kwargs))
+            return ff(*args, **kwargs)
+            ccp_logger.info("Type 3 log_function_call: %s(%s, %s)" % (ff.__qualname__, args, kwargs))
+        return wrapped_logging
+
+    if function is not None:
+        ccp_logger.info("Type 4 log_function_call: %s()" % (function.__qualname__))
+        return logging_decorator(function)
+
+    ccp_logger.info("Type 5 log_function_call: %s()" % (function.__qualname__))
+    return logging_decorator
 
 _IPV6_REGEX_STR = r"""(?!:::\S+?$)       # Negative Lookahead for 3 colons
  (?P<addr>                               # Begin a group named 'addr'
@@ -459,8 +484,8 @@ class IPv4Obj(object):
                 return self_ndec < val_ndec
 
         except Exception as ee:
-            print(ee)
             errmsg = "{0} cannot compare itself to '{1}'".format(self.__repr__(), val)
+            ccp_logger.error(errmsg)
             raise ValueError(errmsg)
 
     def __int__(self):
@@ -1227,7 +1252,7 @@ class L4Object(object):
             raise NotImplementedError("This syntax is unknown: '{0}'".format(syntax))
 
         if "eq " in port_spec.strip():
-            port_tmp = re.split("\s+", port_spec)[-1].strip()
+            port_tmp = re.split(r"\s+", port_spec)[-1].strip()
             eq_port = int(ports.get(port_tmp, port_tmp))
             assert 1 <= eq_port <= 65535
             self.port_list = [eq_port]
@@ -1237,23 +1262,23 @@ class L4Object(object):
             assert 1 <= eq_port <= 65535
             self.port_list = [eq_port]
         elif "range " in port_spec.strip():
-            port_tmp = re.split("\s+", port_spec)[1:]
+            port_tmp = re.split(r"\s+", port_spec)[1:]
             low_port = int(ports.get(port_tmp[0], port_tmp[0]))
             high_port = int(ports.get(port_tmp[1], port_tmp[1]))
             assert low_port <= high_port
             self.port_list = sorted(range(low_port, high_port+1))
         elif "lt " in port_spec.strip():
-            port_tmp = re.split("\s+", port_spec)[-1]
+            port_tmp = re.split(r"\s+", port_spec)[-1]
             high_port = int(ports.get(port_tmp, port_tmp))
             assert 65536 >= high_port >= 2
             self.port_list = sorted(range(1, high_port))
         elif "gt " in port_spec.strip():
-            port_tmp = re.split("\s+", port_spec)[-1]
+            port_tmp = re.split(r"\s+", port_spec)[-1]
             low_port = int(ports.get(port_tmp, port_tmp))
             assert 0 < low_port < 65535
             self.port_list = sorted(range(low_port+1, 65536))
         elif "neq " in port_spec.strip():
-            port_str = re.split("\s+", port_spec)[-1]
+            port_str = re.split(r"\s+", port_spec)[-1]
             tmp = set(range(1, 65536))
             tmp.remove(int(port_str))
             self.port_list = sorted(tmp)
@@ -1724,7 +1749,7 @@ class CiscoRange(MutableSequence):
 
     def _parse_dash_range(self, text):
         """Parse a dash Cisco range into a discrete list of items"""
-        retval = list()
+        retval = set({})
         for range_atom in text.split(","):
             try:
                 begin, end = range_atom.split("-")
@@ -1734,8 +1759,8 @@ class CiscoRange(MutableSequence):
             begin, end = int(begin.strip()), int(end.strip()) + 1
             assert begin > -1
             assert end > begin
-            retval.extend(range(begin, end))
-        return list(set(retval))
+            retval.update(range(begin, end))
+        return sorted(list(retval))
 
     def _range(self):
         """Enumerate all values in the CiscoRange()"""

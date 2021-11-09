@@ -9,6 +9,8 @@ import os
 from ciscoconfparse.ccp_util import junos_unsupported, UnsupportedFeatureWarning
 from ciscoconfparse.ccp_util import IPv4Obj
 
+from loguru import logger as ccp_logger
+
 r""" ccp_abc.py - Parse, Query, Build, and Modify IOS-style configurations
 
      Copyright (C) 2020-2021 David Michael Pennington at Cisco Systems
@@ -348,6 +350,13 @@ class BaseCfgLine(object):
         """Usage:
             confobj.insert_after('! insert text after this confobj')"""
 
+        # Fail if insertstr is not the correct object type...
+        #   only strings and *CfgLine() are allowed...
+        if not getattr(insertstr, "capitalize", False) and not isinstance(insertstr, 'BaseCfgLine'):
+            error = "Cannot insert object type - %s" % type(insertstr)
+            ccp_logger.error(error)
+            raise NotImplementedError(error)
+
         retval = None
 
         calling_fn_index = 1
@@ -355,12 +364,20 @@ class BaseCfgLine(object):
         calling_function = inspect.stack()[calling_fn_index].function
         calling_lineno = inspect.stack()[calling_fn_index].lineno
         error =  "FATAL CALL: in %s line %s %s(insertstr='%s')" % (calling_filename, calling_lineno, calling_function, insertstr)
-        if isinstance(insertstr, str) is True:
+
+        if self.confobj.debug >= 1:
+            ccp_logger.debug("Inserting '%s' after '%s'" % (insertstr, self))
+
+        if getattr(insertstr, "capitalize", False):
+            # Handle insertion of a plain-text line
             retval = self.confobj.insert_after(self, insertstr, atomic=False)
 
-        elif isinstance(insertstr, IOSCfgLine) is True:
+        elif isinstance(insertstr, 'BaseCfgLine'):
+            # Handle insertion of a configuration line obj such as IOSCfgLine()
             retval = self.confobj.insert_after(self, insertstr.text, atomic=False)
+
         else:
+            ccp_logger.error(error)
             raise ValueError(error)
 
         #retval = self.confobj.insert_after(self, insertstr, atomic=False)
