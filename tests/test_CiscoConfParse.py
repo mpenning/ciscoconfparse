@@ -6,6 +6,7 @@ try:
 except ImportError:
     from mock import patch
 import platform
+import logging
 import sys
 import re
 import os
@@ -43,6 +44,17 @@ r""" test_CiscoConfParse.py - Parse, Query, Build, and Modify IOS-style configs
 """
 
 
+def testParse_invalid_filepath(caplog):
+    """Test that ciscoconfparse raises an error if the filepath is invalid"""
+
+    # Use a filename that should not exist...
+    bad_filename = "./45faa63b-92e0-4449-a247-f20510d50c1b.txt"
+    assert os.path.isfile(bad_filename) is False
+
+    # Test that CiscoConfParse raises an IOError() when parsing an invalid file...
+    with pytest.raises(IOError):
+        # Normally logs to stdout... using logging.CRITICAL to hide errors...
+        parse = CiscoConfParse(bad_filename)
 
 def testParse_asa_as_ios(config_a02):
     """Test for Github issue #42 parse asa banner with ios syntax"""

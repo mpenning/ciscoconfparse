@@ -42,6 +42,7 @@ from ciscoconfparse.ccp_abc import BaseCfgLine
 
 from ciscoconfparse.ccp_util import junos_unsupported, UnsupportedFeatureWarning
 from ciscoconfparse.ccp_util import log_function_call
+from ciscoconfparse.ccp_util import ccp_logger_control
 
 from operator import methodcaller, attrgetter
 from difflib import SequenceMatcher
@@ -90,6 +91,9 @@ r""" ciscoconfparse.py - Parse, Query, Build, and Modify IOS-style configs
      mike [~at~] pennington [/dot\] net
 """
 
+ccp_logger_control(action="remove")
+ccp_logger_control(action="add", sink=sys.stderr)
+
 ENCODING = locale.getpreferredencoding()
 ALL_VALID_SYNTAX = ('ios', 'nxos', 'asa', 'junos',)
 
@@ -114,20 +118,6 @@ __copyright__ = "2007-{0}, {1}".format(time.strftime("%Y"), __author__)
 __license__ = "GPLv3"
 __status__ = "Production"
 
-
-ccp_logger.remove()
-# Send logs to sys.stderr by default
-ccp_logger.add(
-    sink=sys.stderr,
-    colorize=True,
-    diagnose=True,
-    backtrace=True,
-    enqueue=True,
-    serialize=False,
-    catch=True,
-    level="DEBUG",
-    #format='<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>'
-)
 
 class CiscoConfParse(object):
     """Parses Cisco IOS configurations and answers queries about the configs."""
@@ -286,9 +276,14 @@ class CiscoConfParse(object):
         ## Accept either a string, unicode, or a pathlib.Path instance...
         elif getattr(config, "encode", False) or getattr(config, "is_file"):
 
-            if self.debug > 0:
-                message = "CiscoConfParse(config, syntax='%s', factory=%s) was called with `config` as filename:%s" % (self.syntax, self.factory, config)
-                ccp_logger.info(message)
+            if os.path.isfile(config) is True:
+                if self.debug > 0:
+                    message = "Calling CiscoConfParse(%s, syntax='%s', factory=%s)" % (config, self.syntax, self.factory)
+                    ccp_logger.info(message)
+            else:
+                error = "CiscoConfParse() was called with an invalid path: '%s'" % config
+                ccp_logger.error(error)
+                raise IOError(error)
 
             # Try opening as a file
             try:
@@ -635,13 +630,14 @@ class CiscoConfParse(object):
             offset += indent_child
         return lines
 
+
     # This method is on CiscoConfParse()
     def find_object_branches(self, branchspec=(), regex_flags=0, allow_none=True):
         r"""This method iterates over a tuple of regular expressions in `branchspec` and returns the matching objects in a list of lists (consider it similar to a table of matching config objects). `branchspec` expects to start at some ancestor and walk through the nested object hierarchy (with no limit on depth).
 
         Previous CiscoConfParse() methods only handled a single parent regex and single child regex (such as :func:`~ciscoconfparse.CiscoConfParse.find_parents_w_child`).
 
-        This method dives beyond a simple parent-child relationship to include entire family 'branches' (i.e. parents, children, grand-children, great-grand-children, etc).  The result of handling longer regex chains is that it flattens what would otherwise be nested loops in your scripts; this makes parsing heavily-nested configuratations like Palo-Alto and F5 much simpler.  Of course, there are plenty of applications for "flatter" config formats like IOS.
+        This method dives beyond a simple parent-child relationship to include multiple nested 'branches' of a single family (i.e. parents, children, grand-children, great-grand-children, etc).  The result of handling longer regex chains is that it flattens what would otherwise be nested loops in your scripts; this makes parsing heavily-nested configuratations like Juniper, Palo-Alto, and F5 much simpler.  Of course, there are plenty of applications for "flatter" config formats like IOS.
 
         This method returns a list of lists (of object 'branches') which are nested to the same depth required in `branchspec`.  However, unlike most other CiscoConfParse() methods, it returns an explicit `None` if there is no object match.  Returning `None` allows a single search over configs that may not be uniformly nested in every branch.
 
@@ -719,14 +715,24 @@ class CiscoConfParse(object):
         >>> branches[2]
         [<IOSCfgLine # 10 'ltm pool BAR'>, <IOSCfgLine # 11 '    members' (parent is # 10)>, <IOSCfgLine # 12 '        k8s-07.localdomain:8443' (parent is # 11)>, None]
         """
-        if self.debug > 1:
-            message = "%s().find_object_branches(branchspec='%s') was called" % (self.__class__.__name__, branchspec)
-            ccp_logger.info(message)
 
-        assert isinstance(
-            branchspec, tuple
-        ), "find_object_branches(): Please enclose the regular expressions in a Python tuple"
-        assert branchspec != (), "find_object_branches(): branchspec must not be empty"
+        branchspec_is_tuple = isinstance(branchspec, tuple)
+        if branchspec_is_tuple is True:
+
+            if self.debug > 1:
+                message = "%s().find_object_branches(branchspec='%s') was called" % (self.__class__.__name__, branchspec)
+                ccp_logger.info(message)
+
+            if branchspec == ():
+                error = "find_object_branches(): branchspec must not be empty"
+                ccp_logger.error(error)
+                raise ValueError(error)
+
+        else:
+            error = "find_object_branches(): Please enclose the branchspec regular expressions in a Python tuple"
+            ccp_logger.error(error)
+            raise ValueError(error)
+
 
         def list_matching_children(parent_obj, childspec, regex_flags, allow_none=True):
             ## I'm not using parent_obj.re_search_children() because

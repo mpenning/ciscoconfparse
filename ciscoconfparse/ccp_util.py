@@ -130,6 +130,98 @@ def log_function_call(function=None, *args, **kwargs):
     ccp_logger.info("Type 5 log_function_call: %s()" % (function.__qualname__))
     return logging_decorator
 
+def ccp_logger_control(action=None, sink=sys.stderr):
+    """A simple function to handle logging... Enable / Disable all ciscoconfparse logging here..."""
+
+    assert action=="remove" or action=="add"
+
+    if action=="remove":
+        ccp_logger.remove()
+        return True
+
+    elif action=="add":
+        ccp_logger.add(
+            sink=sink,
+            colorize=True,
+            diagnose=True,
+            backtrace=True,
+            enqueue=True,
+            serialize=False,
+            catch=True,
+            level="DEBUG",
+            #format='<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>'
+        )
+        return True
+
+    else:
+        raise NotImplementedError("action='%s' is an unsupported logger action" % action)
+
+class ccp_re(object):
+    """A wrapper around python's re.  This is an experimental object... it may disappear at any time as long as this message exists"""
+
+    def __init__(self, regex=r"", group=1, match_type=str, flags=0, debug=0):
+        assert isinstance(group, int)
+
+        self.regex = r'{}'.format(regex)
+        self.compiled = re.compile(self.regex, flags=flags)
+        self.group = group
+        self.match_type = match_type
+        self.target_str = None
+        self.search_result = None
+        self.attempted_search = False
+
+    def __repr__(self):
+        return """<ccp_re:'{0}' group={1} match_type={2}>""".format(self.regex, self.group, self.match_type)
+
+    def s(self, target_str):
+        assert isinstance(target_str, str)
+
+        self.target_str = target_str
+        self.attempted_search = True
+        self.search_result = self.compiled.search(target_str)
+        return self.search_result
+
+        retval = dict()
+        retval["error"] = ""
+        #    isinstance(search_result, re.Match):
+        if isinstance(self.search_result, re.Match) is True:
+            try:
+                retval["named"] = search_result.groupdict()
+                retval["tuple"] = search_result.groups()
+            except Exception as ee:
+                print("FAIL", ee, search_result)
+                retval["error"] = ee
+                retval["named"] = dict()
+                retval["tuple"] = tuple()
+
+    def search(self, target_str):
+        self.target_str = target_str
+        self.attempted_search = True
+        self.search_result = self.compiled.search(target_str)
+        return self.search_result
+
+    @property
+    def captured(self):
+        rv_groups = None
+        rv_groupdict = None
+
+
+        if (self.attempted_search is True) and (self.search_result is None):
+            error = ".search(r'%s') was attempted but the regex ('%s') did not capture anything" % (self.target_str, self.regex)
+            ccp_logger.error(error)
+            raise ValueError(error)
+
+        elif (self.attempted_search is True) and (isinstance(self.search_result, re.Match) is True):
+            rv_groups = self.search_result.groups()
+            rv_groupdict = self.search_result.groupdict()
+
+        elif (self.attempted_search is False):
+            error = ".search(r'%s') was NOT attempted yet." % (self.target_str)
+            ccp_logger.error(error)
+            raise ValueError(error)
+
+        return rv_groups, rv_groupdict
+
 _IPV6_REGEX_STR = r"""(?!:::\S+?$)       # Negative Lookahead for 3 colons
  (?P<addr>                               # Begin a group named 'addr'
  (?P<opt1>{0}(?::{0}){{7}})              # no double colons, option 1
