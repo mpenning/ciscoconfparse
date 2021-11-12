@@ -91,7 +91,8 @@ r""" ciscoconfparse.py - Parse, Query, Build, and Modify IOS-style configs
      mike [~at~] pennington [/dot\] net
 """
 
-ccp_logger_control(action="remove")
+# Remove the default loguru logger to stderr (id==0)...
+ccp_logger_control(action="remove", logger_id=0)
 ccp_logger_control(action="add", sink=sys.stderr)
 ccp_logger_control(action="enable")
 
