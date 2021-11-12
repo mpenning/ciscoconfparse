@@ -15,6 +15,7 @@ sys.path.insert(0, "..")
 
 from ciscoconfparse.ciscoconfparse import CiscoConfParse, IOSCfgLine, IOSIntfLine
 from ciscoconfparse.ciscoconfparse import CiscoPassword
+from ciscoconfparse.ccp_util import ccp_logger_control
 from ciscoconfparse.ccp_util import IPv4Obj
 from passlib.hash import cisco_type7
 import pytest
@@ -51,10 +52,14 @@ def testParse_invalid_filepath(caplog):
     bad_filename = "./45faa63b-92e0-4449-a247-f20510d50c1b.txt"
     assert os.path.isfile(bad_filename) is False
 
+    ccp_logger_control(action="disable")  # Silence logs about the missing file error
+
     # Test that CiscoConfParse raises an IOError() when parsing an invalid file...
     with pytest.raises(IOError):
         # Normally logs to stdout... using logging.CRITICAL to hide errors...
         parse = CiscoConfParse(bad_filename)
+
+    ccp_logger_control(action="enable")
 
 def testParse_asa_as_ios(config_a02):
     """Test for Github issue #42 parse asa banner with ios syntax"""
