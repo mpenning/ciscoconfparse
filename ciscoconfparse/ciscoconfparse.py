@@ -93,6 +93,7 @@ r""" ciscoconfparse.py - Parse, Query, Build, and Modify IOS-style configs
 
 ccp_logger_control(action="remove")
 ccp_logger_control(action="add", sink=sys.stderr)
+ccp_logger_control(action="enable")
 
 ENCODING = locale.getpreferredencoding()
 ALL_VALID_SYNTAX = ('ios', 'nxos', 'asa', 'junos',)

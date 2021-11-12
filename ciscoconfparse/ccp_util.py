@@ -133,10 +133,20 @@ def log_function_call(function=None, *args, **kwargs):
 def ccp_logger_control(action=None, sink=sys.stderr):
     """A simple function to handle logging... Enable / Disable all ciscoconfparse logging here..."""
 
-    assert action=="remove" or action=="add"
+    assert action=="remove" or action=="add" or action=="disable" or action=="enable"
+
+    package_name = "ciscoconfparse"
 
     if action=="remove":
         ccp_logger.remove()
+        return True
+
+    elif action=="disable":
+        ccp_logger.disable(package_name)
+        return True
+
+    elif action=="enable":
+        ccp_logger.enable(package_name)
         return True
 
     elif action=="add":
@@ -151,6 +161,7 @@ def ccp_logger_control(action=None, sink=sys.stderr):
             level="DEBUG",
             #format='<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>'
         )
+        ccp_logger.enable(package_name)
         return True
 
     else:
