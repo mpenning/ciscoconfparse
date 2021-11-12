@@ -91,8 +91,8 @@ r""" ciscoconfparse.py - Parse, Query, Build, and Modify IOS-style configs
      mike [~at~] pennington [/dot\] net
 """
 
-# Remove the default loguru logger to stderr (id==0)...
-ccp_logger_control(action="remove", logger_id=0)
+# Remove the default loguru logger to stderr (handler_id==0)...
+ccp_logger_control(action="remove", handler_id=0)
 ccp_logger_control(action="add", sink=sys.stderr)
 ccp_logger_control(action="enable")
 
@@ -119,7 +119,6 @@ __author__ = "David Michael Pennington <{0}>".format(__author_email__)
 __copyright__ = "2007-{0}, {1}".format(time.strftime("%Y"), __author__)
 __license__ = "GPLv3"
 __status__ = "Production"
-
 
 class CiscoConfParse(object):
     """Parses Cisco IOS configurations and answers queries about the configs."""

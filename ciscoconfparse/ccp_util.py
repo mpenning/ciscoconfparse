@@ -130,7 +130,7 @@ def log_function_call(function=None, *args, **kwargs):
     ccp_logger.info("Type 5 log_function_call: %s()" % (function.__qualname__))
     return logging_decorator
 
-def ccp_logger_control(action=None, sink=sys.stderr, logger_id=None):
+def ccp_logger_control(action=None, sink=sys.stderr, handler_id=None):
     """A simple function to handle logging... Enable / Disable all ciscoconfparse logging here..."""
 
     assert action=="remove" or action=="add" or action=="disable" or action=="enable"
@@ -138,17 +138,19 @@ def ccp_logger_control(action=None, sink=sys.stderr, logger_id=None):
     package_name = "ciscoconfparse"
 
     if action=="remove":
-        # Require an explicit logger_id to remove...
-        assert isinstance(logger_id, int)
+        # Require an explicit loguru handler_id to remove...
+        assert isinstance(handler_id, int)
 
-        ccp_logger.remove(logger_id)
+        ccp_logger.remove(handler_id)
         return True
 
     elif action=="disable":
+        # Administratively disable this loguru logger
         ccp_logger.disable(package_name)
         return True
 
     elif action=="enable":
+        # Administratively enable this loguru logger
         ccp_logger.enable(package_name)
         return True
 
