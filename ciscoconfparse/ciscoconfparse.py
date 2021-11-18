@@ -43,6 +43,7 @@ from ciscoconfparse.ccp_abc import BaseCfgLine
 from ciscoconfparse.ccp_util import junos_unsupported, UnsupportedFeatureWarning
 from ciscoconfparse.ccp_util import log_function_call
 from ciscoconfparse.ccp_util import ccp_logger_control
+import toml
 
 from operator import methodcaller, attrgetter
 from difflib import SequenceMatcher
@@ -101,19 +102,20 @@ ALL_VALID_SYNTAX = ('ios', 'nxos', 'asa', 'junos',)
 
 ## Docstring props: http://stackoverflow.com/a/1523456/667301
 # __version__ if-else below fixes Github issue #123
-metadata_json_path = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "metadata.json"
+pyproject_path = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "../pyproject.toml"
 )
-if os.path.isfile(metadata_json_path):
+if os.path.isfile(pyproject_path):
     ## Retrieve the version number from json...
-    with open(metadata_json_path, encoding=ENCODING) as mh:
-        metadata_dict = json.load(mh)
-        __author__ = metadata_dict.get("author")
-        __author_email__ = metadata_dict.get("author_email")
-        __version__ = metadata_dict.get("version")
+    toml_values = dict()
+    with open(pyproject_path, encoding=ENCODING) as fh:
+        toml_values = toml.loads(fh.read())
+    __version__ = toml_values.get("version")
+
 else:
     # This case is required for importing from a zipfile... Github issue #123
     __version__ = "0.0.0"  # __version__ read failed
+
 __author_email__ = r"mike /at\ pennington [dot] net"
 __author__ = "David Michael Pennington <{0}>".format(__author_email__)
 __copyright__ = "2007-{0}, {1}".format(time.strftime("%Y"), __author__)

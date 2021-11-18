@@ -2,25 +2,19 @@ PY27DEVTESTS=cd tests;find ./* -name 'test_*.py' -exec /opt/virtual_env/py27_tes
 PY34DEVTESTS=cd tests;find ./* -name 'test_*.py' -exec /opt/virtual_env/py34_test/bin/py.test -s {} \;
 BITBUCKETPUSH = $(shell bash -c 'read -s -p "Bitbucket Password: " pwd; hg push "https://mpenning:$$pwd@bitbucket.org/mpenning/ciscoconfparse"')
 DOCHOST ?= $(shell bash -c 'read -p "documentation host: " dochost; echo $$dochost')
-VERSION := $(shell python -c "import json;m_dict=json.loads(open('ciscoconfparse/metadata.json').read());print('v'+m_dict.get('version'))")
+VERSION := $(shell grep version pyproject.toml | sed -r 's/^version\s*=\s*"(\S+?)"/\1/g')
 
 .PHONY: package
 package:
 	make clean
-	python setup.py bdist_wheel sdist
-	twine upload dist/*
+	poetry build
 .PHONY: pypi
 pypi:
 	make clean
-	python setup.py register -r pypi
-	python setup.py bdist_wheel sdist
-	twine upload dist/*
+	poetry build
+	poetry publish
 .PHONY: repo-push
 repo-push:
-	-cp .hgrc .hg/
-	-hg bookmark -f master
-	-hg push ssh://hg@bitbucket.org/mpenning/ciscoconfparse
-	-hg push git+ssh://git@github.com:mpenning/ciscoconfparse.git
 	git remote remove origin
 	git remote add origin "git@github.com:mpenning/ciscoconfparse" 
 	git tag -a ${VERSION} -m "Tag with ${VERSION}"

@@ -1,0 +1,46 @@
+[tool.poetry]
+name = "ciscoconfparse"
+version = "1.6.6"
+description = "Parse, Audit, Query, Build, and Modify Cisco IOS-style and JunOS-style configurations"
+authors = ["mpenning <mike@pennington.net>"]
+license = "GPLv3"
+readme = "README.rst"
+homepage = "https://github.com/mpenning/ciscoconfparse"
+documentation = "http://www.pennington.net/py/ciscoconfparse/"
+keywords = ["Parse", "audit", "query", "modify", "Cisco IOS", "Cisco", "NXOS", "ASA", "Juniper",]
+classifiers=[
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Plugins",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: Telecommunications Industry",
+    "License :: OSI Approved :: GNU General Public License (GPL)",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Topic :: Communications",
+    "Topic :: Internet",
+    "Topic :: System :: Networking",
+    "Topic :: System :: Networking :: Monitoring",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+
+[tool.poetry.dependencies]
+python = ">=3.6"
+passlib = "^1.7.4"
+dnspython = "^2.1.0"
+loguru = "0.5.3"
+toml = "0.10.2"
+ipaddr = "ipaddr>=2.1.11"
+
+[tool.poetry.dev-dependencies]
+pytest = "6.2.4"
+pytest-sugar = "6.2.4"
+Sphinx = "^4.3.0"
+sphinx-bootstrap-theme = "^0.8.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
