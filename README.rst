@@ -118,7 +118,7 @@ Building the Package
 ====================
 
 - ``cd`` into the root ciscoconfparse directory
-- Edit the version number in `ciscoconfparse/metadata.json` (as required)
+- Edit the version number in `pyproject.toml` (as required)
 - ``git commit`` all pending changes
 - ``make test``
 - ``make repo-push``
@@ -138,34 +138,14 @@ matter.
 Installation and Downloads
 ==========================
 
-You can install into Python2.x with pip_:
-
-::
-
-      pip install --upgrade ciscoconfparse
-
 Use ``pip3`` for Python3.x...
 
 ::
 
       pip3 install --upgrade ciscoconfparse
 
-If you don't want to use pip_, you can install with `easy_install`:
 
-::
-
-      easy_install -U ciscoconfparse
-
-
-Otherwise `download it from PyPi <https://pypi.python.org/pypi/ciscoconfparse>`_, extract it and run the ``setup.py`` script:
-
-::
-
-      python setup.py install
-
-If you're interested in the source, you can always pull from the `github repo`_
-or `bitbucket repo`_:
-
+If you're interested in the source, you can always pull from the `github repo`_:
 
 - From github_:
   ::
@@ -257,25 +237,15 @@ Special thanks:
 
 .. _`David Michael Pennington`: http://pennington.net/
 
-.. _setuptools: https://pypi.python.org/pypi/setuptools
-
 .. _pip: https://pypi.python.org/pypi/pip
 
 .. _virtualenv: https://pypi.python.org/pypi/virtualenv
 
 .. _`github repo`: https://github.com/mpenning/ciscoconfparse
 
-.. _`bitbucket repo`: https://bitbucket.org/mpenning/ciscoconfparse
-
-.. _bitbucket: https://bitbucket.org/mpenning/ciscoconfparse
-
 .. _github: https://github.com/mpenning/ciscoconfparse
 
-.. _mercurial: http://mercurial.selenic.com/
-
 .. _`github bug tracker`: https://github.com/mpenning/ciscoconfparse/issues
-
-.. _`hg-git`: http://hg-git.github.io/
 
 .. _`regular expressions`: http://docs.python.org/2/howto/regex.html
 

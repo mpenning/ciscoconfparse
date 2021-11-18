@@ -4,10 +4,6 @@ BITBUCKETPUSH = $(shell bash -c 'read -s -p "Bitbucket Password: " pwd; hg push 
 DOCHOST ?= $(shell bash -c 'read -p "documentation host: " dochost; echo $$dochost')
 VERSION := $(shell grep version pyproject.toml | sed -r 's/^version\s*=\s*"(\S+?)"/\1/g')
 
-.PHONY: package
-package:
-	make clean
-	poetry build
 .PHONY: pypi
 pypi:
 	make clean
