@@ -1,8 +1,0 @@
-passlib
-dnspython
-loguru==0.5.3
-edx-lint  # for pylint plugins...
-pytest
-
-[:python_version<'3']
-ipaddr>=2.1.11
