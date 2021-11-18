@@ -107,7 +107,16 @@ def junos_unsupported(func):
     return wrapper
 
 def log_function_call(function=None, *args, **kwargs):
-    """A wrapper to log function calls"""
+    """A wrapper; this decorator uses loguru to log function calls.
+
+    Example
+    -------
+
+    @log_function_call
+    def testme(*args, **kwargs):
+        pass
+
+    """
 
     def logging_decorator(ff):
         @wraps(ff)
@@ -131,7 +140,11 @@ def log_function_call(function=None, *args, **kwargs):
     return logging_decorator
 
 def ccp_logger_control(action=None, sink=sys.stderr, handler_id=None):
-    """A simple function to handle logging... Enable / Disable all ciscoconfparse logging here..."""
+    """A simple function to handle logging... Enable / Disable all ciscoconfparse logging here... also see Github issue #211.
+
+    Example
+    -------
+    """
 
     assert action=="remove" or action=="add" or action=="disable" or action=="enable"
 
@@ -173,15 +186,41 @@ def ccp_logger_control(action=None, sink=sys.stderr, handler_id=None):
         raise NotImplementedError("action='%s' is an unsupported logger action" % action)
 
 class ccp_re(object):
-    """A wrapper around python's re.  This is an experimental object... it may disappear at any time as long as this message exists"""
-
-    def __init__(self, regex=r"", group=1, match_type=str, flags=0, debug=0):
-        assert isinstance(group, int)
-
+    """A wrapper around python's re.  This is an experimental object... it may disappear at any time as long as this message exists.
         self.regex = r'{}'.format(regex)
         self.compiled = re.compile(self.regex, flags=flags)
         self.group = group
         self.match_type = match_type
+        self.target_str = None
+        self.search_result = None
+        self.attempted_search = False
+
+        Parameters
+        ----------
+        regex : str
+            A string containing the regex string to be matched.  Default: r"".  This method is hard-coded to *always* use a python raw-string.
+        compiled: re.Pattern
+            This is a compiled regex pattern - `re.compiled(self.regex, flags=flags)`.
+        groups: dict
+            A dict keyed by the integer match group, or the named regex capture group.  The values in this dict
+
+
+        Examples
+        --------
+
+        >>> from ciscoconfparse.ccp_util import ccp_re
+        >>> ## Parse from an integer...
+
+    """
+
+    def __init__(self, regex=r"", groups=None, flags=0, debug=0):
+
+        if groups is None:
+            groups = {}
+
+        self.regex = r'{}'.format(regex)
+        self.compiled = re.compile(self.regex, flags=flags)
+        self.groups = groups
         self.target_str = None
         self.search_result = None
         self.attempted_search = False
@@ -211,30 +250,50 @@ class ccp_re(object):
                 retval["tuple"] = tuple()
 
     def search(self, target_str):
-        self.target_str = target_str
-        self.attempted_search = True
-        self.search_result = self.compiled.search(target_str)
-        return self.search_result
+        if False:
+            self.target_str = target_str
+            self.attempted_search = True
+            self.search_result = self.compiled.search(target_str)
+            return self.search_result
+        return self.s(target_str)
 
     @property
     def captured(self):
-        rv_groups = None
-        rv_groupdict = None
-
+        rv_groups = list()
+        rv_groupdict = dict()
 
         if (self.attempted_search is True) and (self.search_result is None):
             error = ".search(r'%s') was attempted but the regex ('%s') did not capture anything" % (self.target_str, self.regex)
-            ccp_logger.error(error)
-            raise ValueError(error)
+            ccp_logger.warning(error)
 
         elif (self.attempted_search is True) and (isinstance(self.search_result, re.Match) is True):
-            rv_groups = self.search_result.groups()
+
+            # rv_groups should be a list of capture group
+            rv_groups = list(self.search_result.groups())
+            # rv_groupdict should be a dictionary of named capture groups...
+            # if there are any named capture groups...
             rv_groupdict = self.search_result.groupdict()
+
+            if (self.groups != {}) and isinstance(self.groups, dict):
+
+                # Cast types of the numerical regex match groups...
+                for idx, value in enumerate(rv_groups):
+                    # Lookup the match_type in the self.groups dictionary. regex
+                    # capture groups are indexed starting at 1, so we need to 
+                    # offset the enumerate() idx value...
+                    match_type = self.groups.get(idx+1, None)
+                    if match_type is not None:
+                        rv_groups[idx] = match_type(value)
+
+                # Cast types of the named regex match groups...
+                for re_name, value in rv_groupdict.items():
+                    match_type = self.groups.get(re_name, None)
+                    if match_type is not None:
+                        rv_groupdict[re_name] = match_type(value)
 
         elif (self.attempted_search is False):
             error = ".search(r'%s') was NOT attempted yet." % (self.target_str)
-            ccp_logger.error(error)
-            raise ValueError(error)
+            ccp_logger.warning(error)
 
         return rv_groups, rv_groupdict
 
