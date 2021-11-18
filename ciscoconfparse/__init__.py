@@ -1,13 +1,6 @@
-from __future__ import absolute_import
-from ciscoconfparse.ciscoconfparse import __author_email__
-from ciscoconfparse.ciscoconfparse import __author__
-from ciscoconfparse.ciscoconfparse import __license__
-from ciscoconfparse.ciscoconfparse import __version__
-from ciscoconfparse.ciscoconfparse import *
-from ciscoconfparse.ccp_util import *
-
 r""" __init__.py - Parse, Query, Build, and Modify IOS-style configurations
 
+     Copyright (C) 2021      David Michael Pennington at Netactuate
      Copyright (C) 2020-2021 David Michael Pennington at Cisco Systems
      Copyright (C) 2019      David Michael Pennington at ThousandEyes
      Copyright (C) 2012-2019 David Michael Pennington at Samsung Data Services
@@ -30,3 +23,14 @@ r""" __init__.py - Parse, Query, Build, and Modify IOS-style configurations
      If you need to contact the author, you can do so by emailing:
      mike [~at~] pennington [/dot\] net
 """
+
+from __future__ import absolute_import
+from ciscoconfparse.ciscoconfparse import __author_email__
+from ciscoconfparse.ciscoconfparse import __author__
+from ciscoconfparse.ciscoconfparse import __license__
+from ciscoconfparse.ciscoconfparse import __version__
+from ciscoconfparse.ciscoconfparse import *
+from ciscoconfparse.ccp_util import *
+
+# pyproject.toml needs version defined in __init__.py...
+# See the imports above...
