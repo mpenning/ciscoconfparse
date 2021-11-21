@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 r""" errors.py - Parse, Query, Build, and Modify IOS-style configs
 
+     Copyright (C) 2021      David Michael Pennington
      Copyright (C) 2020-2021 David Michael Pennington at Cisco Systems
      Copyright (C) 2019      David Michael Pennington at ThousandEyes
      Copyright (C) 2018-2019 David Michael Pennington at Samsung Data Services

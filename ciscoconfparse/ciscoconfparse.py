@@ -43,6 +43,7 @@ from ciscoconfparse.ccp_abc import BaseCfgLine
 from ciscoconfparse.ccp_util import junos_unsupported, UnsupportedFeatureWarning
 from ciscoconfparse.ccp_util import log_function_call
 from ciscoconfparse.ccp_util import ccp_logger_control
+from ciscoconfparse.ccp_util import ccp_re
 import toml
 
 from operator import methodcaller, attrgetter
@@ -69,6 +70,7 @@ else:
 
 r""" ciscoconfparse.py - Parse, Query, Build, and Modify IOS-style configs
 
+     Copyright (C) 2021      David Michael Pennington
      Copyright (C) 2020-2021 David Michael Pennington at Cisco Systems
      Copyright (C) 2019      David Michael Pennington at ThousandEyes
      Copyright (C) 2012-2019 David Michael Pennington at Samsung Data Services
@@ -635,7 +637,7 @@ class CiscoConfParse(object):
 
 
     # This method is on CiscoConfParse()
-    def find_object_branches(self, branchspec=(), regex_flags=0, allow_none=True):
+    def find_object_branches(self, branchspec=(), regex_flags=0, allow_none=True, debug=0):
         r"""This method iterates over a tuple of regular expressions in `branchspec` and returns the matching objects in a list of lists (consider it similar to a table of matching config objects). `branchspec` expects to start at some ancestor and walk through the nested object hierarchy (with no limit on depth).
 
         Previous CiscoConfParse() methods only handled a single parent regex and single child regex (such as :func:`~ciscoconfparse.CiscoConfParse.find_parents_w_child`).
@@ -652,6 +654,8 @@ class CiscoConfParse(object):
             Chained regular expression flags, such as `re.IGNORECASE|re.MULTILINE`
         allow_none :
             Set False if you don't want an explicit `None` for missing branch elements (default is allow_none=True)
+        debug : int
+            Set debug > 0 for debug messages
 
         Returns
         -------
@@ -722,7 +726,7 @@ class CiscoConfParse(object):
         branchspec_is_tuple = isinstance(branchspec, tuple)
         if branchspec_is_tuple is True:
 
-            if self.debug > 1:
+            if debug > 1:
                 message = "%s().find_object_branches(branchspec='%s') was called" % (self.__class__.__name__, branchspec)
                 ccp_logger.info(message)
 
@@ -737,12 +741,21 @@ class CiscoConfParse(object):
             raise ValueError(error)
 
 
-        def list_matching_children(parent_obj, childspec, regex_flags, allow_none=True):
+        def list_matching_children(parent_obj, childspec, regex_flags, allow_none=True, debug=0):
             ## I'm not using parent_obj.re_search_children() because
             ## re_search_children() doesn't return None for no match...
 
             # FIXME: Insert debugging here...
             # print("PARENT "+str(parent_obj))
+            if debug > 1:
+                msg = """Calling list_matching_children(
+    parent_obj=%s,
+    childspec=%s,
+    regex_flags=%s,
+    allow_none=%s,
+    debug=%s,
+    )""" % (parent_obj, childspec, regex_flags, allow_none, debug)
+                ccp_logger.info(msg)
 
             # Get the child objects from parent objects
             if parent_obj is None:
@@ -762,6 +775,8 @@ class CiscoConfParse(object):
 
             # FIXME: Insert debugging here...
             # print("    SEGMENTS "+str(segment_list))
+            if debug > 1:
+                ccp_logger.info("    list_matching_children() returns segment_list=%s" % segment_list)
             return segment_list
 
         branches = list()
@@ -776,6 +791,7 @@ class CiscoConfParse(object):
                     childspec=childspec,
                     regex_flags=regex_flags,
                     allow_none=allow_none,
+                    debug=debug,
                 )
                 if allow_none is True:
                     # Start growing branches from the segments we received...
@@ -794,6 +810,7 @@ class CiscoConfParse(object):
                             childspec=childspec,
                             regex_flags=regex_flags,
                             allow_none=allow_none,
+                            debug=debug,
                         )
 
                         for kid in next_kids:

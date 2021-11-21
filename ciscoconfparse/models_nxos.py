@@ -22,6 +22,7 @@ from ciscoconfparse.ccp_abc import BaseCfgLine
 ###   You have been warned :-)
 r""" models_nxos.py - Parse, Query, Build, and Modify IOS-style configurations
 
+     Copyright (C) 2021      David Michael Pennington
      Copyright (C) 2020-2021 David Michael Pennington at Cisco Systems
      Copyright (C) 2019      David Michael Pennington at ThousandEyes
      Copyright (C) 2016-2019 David Michael Pennington at Samsung Data Services

@@ -33,6 +33,7 @@ from loguru import logger as ccp_logger
 
 r""" ccp_util.py - Parse, Query, Build, and Modify IOS-style configurations
 
+     Copyright (C) 2021      David Michael Pennington
      Copyright (C) 2020-2021 David Michael Pennington at Cisco Systems
      Copyright (C) 2019      David Michael Pennington at ThousandEyes
      Copyright (C) 2014-2019 David Michael Pennington at Samsung Data Services
@@ -218,7 +219,17 @@ class ccp_re(object):
         if groups is None:
             groups = {}
 
-        self.regex = r'{}'.format(regex)
+        elif isinstance(groups, dict):
+            pass
+
+        elif isinstance(groups, str):
+            error = "Improper usage.  Call ccp_re(r'''(hello)''').search('hello world')"
+            raise ValueError(error)
+
+        else:
+            raise NotImplementedError()
+
+        self.regex = r"""{}""".format(regex)
         self.compiled = re.compile(self.regex, flags=flags)
         self.groups = groups
         self.target_str = None
@@ -226,7 +237,10 @@ class ccp_re(object):
         self.attempted_search = False
 
     def __repr__(self):
-        return """<ccp_re:'{0}' group={1} match_type={2}>""".format(self.regex, self.group, self.match_type)
+        return self.regex
+
+    def __str__(self):
+        return self.regex
 
     def s(self, target_str):
         assert isinstance(target_str, str)

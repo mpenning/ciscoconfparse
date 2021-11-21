@@ -16,6 +16,7 @@ from ciscoconfparse.ccp_util import IPv4Obj
 
 r""" models_junos.py - Parse, Query, Build, and Modify Junos-style configurations
 
+     Copyright (C) 2021      David Michael Pennington
      Copyright (C) 2020-2021 David Michael Pennington at Cisco Systems
      Copyright (C) 2019      David Michael Pennington at ThousandEyes
      Copyright (C) 2015-2019 David Michael Pennington at Samsung Data Services
