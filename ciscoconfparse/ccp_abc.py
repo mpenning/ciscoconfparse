@@ -894,7 +894,7 @@ class BaseCfgLine(object):
         a list of all ancestors in the direct line as well as this obj.  
         Cousins or aunts / uncles are *not* returned.  Note: children of this 
         object are *not* returned."""
-        retval = map(lambda x: x.text, sorted(self.all_parents+set([self])))
+        retval = map(lambda x: x.text, sorted(self.all_parents+[self]))
         return retval
 
     @property
