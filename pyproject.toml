@@ -1,8 +1,10 @@
 [tool.poetry]
 name = "ciscoconfparse"
-version = "1.6.7"
+version = "1.6.8"
 description = "Parse, Audit, Query, Build, and Modify Cisco IOS-style and JunOS-style configurations"
-authors = ["mpenning <mike@pennington.net>"]
+authors = [
+    "Mike Pennington <mike@pennington.net>",
+]
 license = "GPLv3"
 readme = "README.rst"
 homepage = "https://github.com/mpenning/ciscoconfparse"
@@ -33,14 +35,15 @@ passlib = "^1.7.4"
 dnspython = "^2.1.0"
 loguru = "0.5.3"
 toml = "0.10.2"
-ipaddr = "ipaddr>=2.1.11"
+ipaddr = ">=2.1.11"
 
 [tool.poetry.dev-dependencies]
+black = ">=20.8b1"
 pytest = "6.2.4"
 pytest-sugar = "6.2.4"
 Sphinx = "^4.3.0"
 sphinx-bootstrap-theme = "^0.8.0"
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core>=1.0.0", "wheel>=0.37.0",]
 build-backend = "poetry.core.masonry.api"
