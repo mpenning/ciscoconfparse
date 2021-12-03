@@ -40,8 +40,9 @@ r""" ccp_abc.py - Parse, Query, Build, and Modify IOS-style configurations
 ##
 
 
-class BaseCfgLine(object):
-    __metaclass__ = ABCMeta
+class BaseCfgLine(object, metaclass=ABCMeta):
+    # deprecating py2.foo metaclass syntax in version 1.6.8...
+    #__metaclass__ = ABCMeta
 
     def __init__(self, text="", comment_delimiter="!"):
         """Accept an IOS line number and initialize family relationship
@@ -881,9 +882,9 @@ class BaseCfgLine(object):
     @property
     def geneology(self):
         """Iterate through to the oldest ancestor of this object, and return
-        a list of all ancestors in the direct line as well as this obj.  
-        Cousins or aunts / uncles are *not* returned.  Note: children of this 
-        object are *not* returned."""
+        a list of all ancestors' objects in the direct line as well as this
+        obj.  Cousins or aunts / uncles are *not* returned.  Note: children
+        of this object are *not* returned."""
         retval = sorted(self.all_parents)
         retval.append(self)
         return retval
@@ -891,11 +892,10 @@ class BaseCfgLine(object):
     @property
     def geneology_text(self):
         """Iterate through to the oldest ancestor of this object, and return
-        a list of all ancestors in the direct line as well as this obj.  
-        Cousins or aunts / uncles are *not* returned.  Note: children of this 
-        object are *not* returned."""
-        retval = map(lambda x: x.text, sorted(self.all_parents))
-        retval.append(self.text)
+        a list of all ancestors' .text field for all ancestors in the direct
+        line as well as this obj.  Cousins or aunts / uncles are *not*
+        returned.  Note: children of this object are *not* returned."""
+        retval = [ii.text for ii in self.geneology]
         return retval
 
     @property

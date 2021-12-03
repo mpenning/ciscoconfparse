@@ -1629,6 +1629,83 @@ def testValues_IOSCfgLine_all_parents(parse_c01):
         assert result_correct[idx].linenum == test_result[idx].linenum
         assert result_correct[idx].classname == test_result[idx].classname
 
+def testValues_IOSCfgLine_geneology_junos():
+    config = """
+base_hello {
+    that_thing {
+       parameter_01 {}
+       parameter_02 {}
+       parameter_03 {}
+    }
+}
+"""
+    parse = CiscoConfParse(config.splitlines(), syntax="junos", comment="#")
+
+    #################################
+    # test the .geneology attribute
+    #################################
+    geneology = parse.find_objects(r"parameter_03")[0].geneology
+
+    # test overall geneology list length
+    assert(len(geneology)==3)
+
+    # FIXME - one day build JunosCfgLine()...
+    # For now, we are abusing IOSCfgLine() by using it in the **junos** parser
+    result_kindof_correct = IOSCfgLine
+    assert isinstance(geneology[0], result_kindof_correct)
+    assert isinstance(geneology[1], result_kindof_correct)
+    assert isinstance(geneology[2], result_kindof_correct)
+
+    # test individual geneology .text fields
+    result_correct = 'base_hello'
+    assert(geneology[0].text.lstrip()==result_correct)
+
+    result_correct = 'that_thing'
+    assert(geneology[1].text.lstrip()==result_correct)
+
+    result_correct = 'parameter_03'
+    assert(geneology[2].text.lstrip()==result_correct)
+
+
+def testValues_IOSCfgLine_geneology_text_junos():
+    config = """
+base_hello {
+    that_thing {
+       parameter_01 {}
+       parameter_02 {}
+       parameter_03 {}
+    }
+}
+"""
+    parse = CiscoConfParse(config.splitlines(), syntax="junos", comment="#")
+
+    #################################
+    # test the .geneology attribute
+    #################################
+    geneology_text = parse.find_objects(r"parameter_03")[0].geneology_text
+
+    # test overall geneology list length
+    assert(len(geneology_text)==3)
+
+    # FIXME - one day build JunosCfgLine()...
+    # For now, we are abusing IOSCfgLine() by using it in the **junos** parser
+    result_correct = str
+    assert isinstance(geneology_text[0], result_correct)
+    assert isinstance(geneology_text[1], result_correct)
+    assert isinstance(geneology_text[2], result_correct)
+
+    # test individual geneology .text fields
+    result_correct = 'base_hello'
+    assert(geneology_text[0].lstrip()==result_correct)
+
+    result_correct = 'that_thing'
+    assert(geneology_text[1].lstrip()==result_correct)
+
+    result_correct = 'parameter_03'
+    assert(geneology_text[2].lstrip()==result_correct)
+
+
+
 
 def testValues_find_objects(parse_c01):
     lines = [
