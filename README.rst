@@ -138,21 +138,20 @@ matter.
 Installation and Downloads
 ==========================
 
-Use ``pip3`` for Python3.x...
+- Use ``poetry`` for Python3.x...
+  ::
 
-::
-
-      pip3 install --upgrade ciscoconfparse
+      python -m pip install ciscoconfparse
 
 
 If you're interested in the source, you can always pull from the `github repo`_:
 
-- From github_:
+- From github_ source download:
   ::
 
       git clone git://github.com/mpenning/ciscoconfparse
       cd ciscoconfparse/
-      pip install .
+      python -m pip install .
 
 
 .. _`Other-Resources`:
@@ -179,7 +178,7 @@ Bug Tracker and Support
 Unit-Tests
 ==========
 
-`Travis CI project <https://travis-ci.org>`_ tests ciscoconfparse on Python versions 3.5 and higher, as well as a `pypy JIT`_ executable.
+`Travis CI project <https://travis-ci.org>`_ tests ciscoconfparse on Python versions 3.6 and higher, as well as a `pypy JIT`_ executable.
 
 Click the image below for details; the current build status is:
 

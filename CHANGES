@@ -1,3 +1,4 @@
+1.6.8   20211203 Reorganize build infra and ccp data structures. Fix Github issue #214. Fix for issue documented in Github PR #217.
 1.6.7   20211122 Misc updates
 1.6.6   20211118 Build poetry infra
 1.6.5   20211118 Deprecate setuptools
