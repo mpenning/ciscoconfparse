@@ -2034,7 +2034,8 @@ class CiscoConfParse(object):
 
     # This method is on CiscoConfParse()
     def has_line_with(self, linespec):
-        return self.ConfigObjs.has_line_with(linespec)
+        matching_conftext = list(filter(re.compile(linespec).search, self.ioscfg))
+        return bool(matching_conftext)
 
     # This method is on CiscoConfParse()
     def insert_before(
@@ -3436,7 +3437,8 @@ class ConfigList(MutableSequence):
 
     # This method is on ConfigList()
     def has_line_with(self, linespec):
-        return bool(filter(methodcaller("re_search", linespec), self._list))
+        matching_conftext = list(filter(re.compile(linespec).search, map(attrgetter("text"), self._list)))
+        return bool(matching_conftext)
 
     # This method is on ConfigList()
     @junos_unsupported
@@ -4449,7 +4451,8 @@ class NXOSConfigList_deprecated(MutableSequence):
 
     # This method is on NXOSConfigList()
     def has_line_with(self, linespec):
-        return bool(filter(methodcaller("re_search", linespec), self._list))
+        matching_conftext = list(filter(re.compile(linespec).search, map(attrgetter("text"), self._list)))
+        return bool(matching_conftext)
 
     # This method is on NXOSConfigList()
     def insert_before(self, robj, val, atomic=False):
@@ -4953,7 +4956,8 @@ class ASAConfigList_deprecated(MutableSequence):
 
     # This method is on ASAConfigList()
     def has_line_with(self, linespec):
-        return bool(filter(methodcaller("re_search", linespec), self._list))
+        matching_conftext = list(filter(re.compile(linespec).search, map(attrgetter("text"), self._list)))
+        return bool(matching_conftext)
 
     # This method is on ASAConfigList()
     def insert_before(self, robj, val, atomic=False):

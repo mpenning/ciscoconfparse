@@ -1679,12 +1679,12 @@ base_hello {
 """
     parse = CiscoConfParse(config.splitlines(), syntax="junos", comment="#")
 
-    #################################
-    # test the .geneology attribute
-    #################################
+    #####################################
+    # test the .geneology_text attribute
+    #####################################
     geneology_text = parse.find_objects(r"parameter_03")[0].geneology_text
 
-    # test overall geneology list length
+    # test overall geneology_text list length
     assert(len(geneology_text)==3)
 
     # FIXME - one day build JunosCfgLine()...
@@ -1705,7 +1705,74 @@ base_hello {
     assert(geneology_text[2].lstrip()==result_correct)
 
 
+def testValues_IOSCfgLine_geneology_ios():
+    config = """
+base_hello
+    that_thing
+       parameter_01
+       parameter_02
+       parameter_03
+"""
+    parse = CiscoConfParse(config.splitlines(), syntax="ios")
 
+    #################################
+    # test the .geneology attribute
+    #################################
+    geneology = parse.find_objects(r"parameter_03")[0].geneology
+
+    # test overall geneology list length
+    assert(len(geneology)==3)
+
+    # FIXME - one day build JunosCfgLine()...
+    # For now, we are abusing IOSCfgLine() by using it in the **junos** parser
+    result_kindof_correct = IOSCfgLine
+    assert isinstance(geneology[0], result_kindof_correct)
+    assert isinstance(geneology[1], result_kindof_correct)
+    assert isinstance(geneology[2], result_kindof_correct)
+
+    # test individual geneology .text fields
+    result_correct = 'base_hello'
+    assert(geneology[0].text.lstrip()==result_correct)
+
+    result_correct = 'that_thing'
+    assert(geneology[1].text.lstrip()==result_correct)
+
+    result_correct = 'parameter_03'
+    assert(geneology[2].text.lstrip()==result_correct)
+
+
+def testValues_IOSCfgLine_geneology_text_ios():
+    config = """
+base_hello
+    that_thing
+       parameter_01
+       parameter_02
+       parameter_03
+"""
+    parse = CiscoConfParse(config.splitlines(), syntax="ios")
+
+    #####################################
+    # test the .geneology_text attribute
+    #####################################
+    geneology_text = parse.find_objects(r"parameter_03")[0].geneology_text
+
+    # test overall geneology_text list length
+    assert(len(geneology_text)==3)
+
+    result_correct = str
+    assert isinstance(geneology_text[0], result_correct)
+    assert isinstance(geneology_text[1], result_correct)
+    assert isinstance(geneology_text[2], result_correct)
+
+    # test individual geneology .text fields
+    result_correct = 'base_hello'
+    assert(geneology_text[0].lstrip()==result_correct)
+
+    result_correct = 'that_thing'
+    assert(geneology_text[1].lstrip()==result_correct)
+
+    result_correct = 'parameter_03'
+    assert(geneology_text[2].lstrip()==result_correct)
 
 def testValues_find_objects(parse_c01):
     lines = [
@@ -1731,6 +1798,30 @@ def testValues_find_objects(parse_c01):
     result_correct = c01_find_objects
     test_result = parse_c01.find_objects("^interface")
     assert result_correct == test_result
+
+def test_has_line_with_all_syntax():
+    config = """
+interface GigabitEthernet0/1
+ switchport
+ switchport mode access
+"""
+
+    for test_syntax in ["ios", "nxos", "asa", "junos"]:
+        parse = CiscoConfParse(config.splitlines(), syntax=test_syntax)
+
+        param_true = "access"
+        ccp_test_value = parse.has_line_with(param_true)
+        assert ccp_test_value is True
+
+        objs_test_value = parse.ConfigObjs.has_line_with(param_true)
+        assert objs_test_value is True
+
+        param_false = "NONONONONONONONONONONONONONONONONONONO"
+        ccp_test_value = parse.has_line_with(param_false)
+        assert ccp_test_value is False
+
+        objs_test_value = parse.ConfigObjs.has_line_with(param_false)
+        assert objs_test_value is False
 
 
 def testValues_find_objects_replace_01():
