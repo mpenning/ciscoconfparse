@@ -55,6 +55,61 @@ r""" ccp_util.py - Parse, Query, Build, and Modify IOS-style configurations
      mike [~at~] pennington [/dot\] net
 """
 
+def import_gevent_monkey(debug=0):
+    """
+    Try to import both gevent and gevent.monkey
+
+    try:
+        from gevent import monkey
+        import gevent
+
+    This function will return: gevent, monkey
+
+    This function is part of the fix for:
+    https://github.com/mpenning/ciscoconfparse/issues/215
+
+    Also see -> https://stackoverflow.com/a/30705971/667301
+    """
+
+    # Initialize variables...
+    gevent = None
+    monkey = None
+
+    try:
+        assert isinstance(debug, int) and (0 <= debug <= 5)
+
+        from gevent import monkey
+        import gevent
+
+        if debug > 0:
+            ccp_logger.info("import_gevent_monkey() imported gevent and monkey into the global namespace")
+        #monkey.patch_all()
+        #return {
+        #    "gevent_monkey_patch_all": bool(monkey.saved),
+        #    "gevent_patched_threading": bool(monkey.is_module_patched('threading'))
+        #}
+    except ImportError:
+
+        if gevent is None:
+            ccp_logger.error("import_gevent_monkey() could not import gevent")
+        elif debug > 0:
+            ccp_logger.debug("import_gevent_monkey() imported gevent")
+
+        if monkey is None:
+            ccp_logger.error("import_gevent_monkey() could not import monkey")
+        elif debug > 0:
+            ccp_logger.debug("import_gevent_monkey() imported monkey")
+
+    except Exception as EE:
+        raise EE("Unclear exception", str(EE))
+
+        ccp_logger.warning("import_gevent_monkey() hit an unclear error - %s" % str(EE))
+        ccp_logger.info("    The value of gevent is '{0}'".format(gevent))
+        ccp_logger.info("    The value of monkey is '{0}'".format(monkey))
+
+    return gevent, monkey
+
+
 class UnsupportedFeatureWarning(SyntaxWarning):
     pass
 
@@ -140,7 +195,7 @@ def log_function_call(function=None, *args, **kwargs):
     ccp_logger.info("Type 5 log_function_call: %s()" % (function.__qualname__))
     return logging_decorator
 
-def ccp_logger_control(action=None, sink=sys.stderr, handler_id=None):
+def ccp_logger_control(action=None, sink=sys.stderr, handler_id=None, allow_enqueue=True):
     """A simple function to handle logging... Enable / Disable all ciscoconfparse logging here... also see Github issue #211.
 
     Example
@@ -174,7 +229,8 @@ def ccp_logger_control(action=None, sink=sys.stderr, handler_id=None):
             colorize=True,
             diagnose=True,
             backtrace=True,
-            enqueue=True,
+            # https://github.com/mpenning/ciscoconfparse/issues/215
+            enqueue=allow_enqueue,
             serialize=False,
             catch=True,
             level="DEBUG",

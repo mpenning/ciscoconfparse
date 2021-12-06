@@ -40,6 +40,8 @@ from ciscoconfparse.models_junos import JunosCfgLine
 
 from ciscoconfparse.ccp_abc import BaseCfgLine
 
+from ciscoconfparse.ccp_util import import_gevent_monkey
+
 from ciscoconfparse.ccp_util import junos_unsupported, UnsupportedFeatureWarning
 from ciscoconfparse.ccp_util import log_function_call
 from ciscoconfparse.ccp_util import ccp_logger_control
@@ -58,6 +60,10 @@ import sys
 import re
 import os
 
+##############################################################################
+# Start conditional imports...
+##############################################################################
+
 if sys.version_info >= (
     3,
     0,
@@ -67,6 +73,10 @@ if sys.version_info >= (
 else:
     ## This syntax is not supported in Python 3...
     from collections import MutableSequence, Iterator
+
+##############################################################################
+# End conditional imports...
+##############################################################################
 
 r""" ciscoconfparse.py - Parse, Query, Build, and Modify IOS-style configs
 
@@ -94,10 +104,17 @@ r""" ciscoconfparse.py - Parse, Query, Build, and Modify IOS-style configs
      mike [~at~] pennington [/dot\] net
 """
 
-# Remove the default loguru logger to stderr (handler_id==0)...
-ccp_logger_control(action="remove", handler_id=0)
-ccp_logger_control(action="add", sink=sys.stderr)
-ccp_logger_control(action="enable")
+def configure_loguru(debug=0):
+    assert isinstance(debug, int) and (0 <= debug <= 5)
+    assert bool(ccp_logger_control)
+
+    # ccp_logger_control() was imported above...
+    #    Remove the default loguru logger to stderr (handler_id==0)...
+    ccp_logger_control(action="remove", handler_id=0)
+    ccp_logger_control(action="add", sink=sys.stderr)
+    ccp_logger_control(action="enable")
+
+configure_loguru()
 
 ENCODING = locale.getpreferredencoding()
 ALL_VALID_SYNTAX = ('ios', 'nxos', 'asa', 'junos',)
