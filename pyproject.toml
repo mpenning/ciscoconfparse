@@ -39,6 +39,7 @@ ipaddr = ">=2.1.11"
 
 [tool.poetry.dev-dependencies]
 black = ">=20.8b1"
+fabric = "2.6.0"
 pytest = "6.2.4"
 pytest-sugar = "6.2.4"
 Sphinx = "^4.3.0"
