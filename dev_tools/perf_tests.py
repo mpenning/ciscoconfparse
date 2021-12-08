@@ -6,12 +6,23 @@ sys.path.insert(0, "../")
 
 iterations = 1000
 
+list_cast = timeit("list(map(attrgetter('text'), parse.ConfigObjs))",
+    setup="from ciscoconfparse import CiscoConfParse;from operator import methodcaller, attrgetter;parse=CiscoConfParse('../configs/sample_01.ios')",
+    number=10000)
+
+list_comprehension = timeit("[ii.text for ii in parse.ConfigObjs]",
+    setup="from ciscoconfparse import CiscoConfParse;from operator import methodcaller, attrgetter;parse=CiscoConfParse('../configs/sample_01.ios')",
+    number=10000)
+
+print("CAST TO LIST", list_cast)
+print("LIST COMPREHENSION", list_comprehension)
+
 vlan_text = "1-1000,1001-2000,2001-3000,3001-4000,4001-4094"
 time_CiscoRange_all_vlans_int = timeit(
     'CiscoRange(text="%s", result_type=int)' % vlan_text,
     setup='from ciscoconfparse.ccp_util import CiscoRange',
     number=iterations)
-print(time_CiscoRange_all_vlans_int)
+print("SAMPLE", time_CiscoRange_all_vlans_int)
 
 result_special_1 = timeit(
     'ss = rr.search("FoMike12325234234nananana");rr.captured',

@@ -9,7 +9,11 @@ import sys
 import re
 import os
 
-if sys.version_info >= (3, 0, 0,):
+if sys.version_info >= (
+    3,
+    0,
+    0,
+):
     from collections.abc import MutableSequence
 else:
     ## This syntax is not supported in Python 3...
@@ -55,112 +59,66 @@ r""" ccp_util.py - Parse, Query, Build, and Modify IOS-style configurations
      mike [~at~] pennington [/dot\] net
 """
 
-def import_gevent_monkey(debug=0):
-    """
-    Try to import both gevent and gevent.monkey
-
-    try:
-        from gevent import monkey
-        import gevent
-
-    This function will return: gevent, monkey
-
-    This function is part of the fix for:
-    https://github.com/mpenning/ciscoconfparse/issues/215
-
-    Also see -> https://stackoverflow.com/a/30705971/667301
-    """
-
-    # Initialize variables...
-    gevent = None
-    monkey = None
-
-    try:
-        assert isinstance(debug, int) and (0 <= debug <= 5)
-
-        from gevent import monkey
-        import gevent
-
-        if debug > 0:
-            ccp_logger.info("import_gevent_monkey() imported gevent and monkey into the global namespace")
-        #monkey.patch_all()
-        #return {
-        #    "gevent_monkey_patch_all": bool(monkey.saved),
-        #    "gevent_patched_threading": bool(monkey.is_module_patched('threading'))
-        #}
-    except ImportError:
-
-        if gevent is None:
-            ccp_logger.error("import_gevent_monkey() could not import gevent")
-        elif debug > 0:
-            ccp_logger.debug("import_gevent_monkey() imported gevent")
-
-        if monkey is None:
-            ccp_logger.error("import_gevent_monkey() could not import monkey")
-        elif debug > 0:
-            ccp_logger.debug("import_gevent_monkey() imported monkey")
-
-    except Exception as EE:
-        raise EE("Unclear exception", str(EE))
-
-        ccp_logger.warning("import_gevent_monkey() hit an unclear error - %s" % str(EE))
-        ccp_logger.info("    The value of gevent is '{0}'".format(gevent))
-        ccp_logger.info("    The value of monkey is '{0}'".format(monkey))
-
-    return gevent, monkey
-
 
 class UnsupportedFeatureWarning(SyntaxWarning):
     pass
 
+
 def as_text_list(object_list):
     """This is a helper-function to convert a list of configuration objects into a list of text config lines.
 
-        Examples
-        --------
+    Examples
+    --------
 
-        >>> from ciscoconfparse.ccp_util import as_text_list
-        >>> from ciscoconfparse import CiscoConfParse
-        >>> 
-        >>> config = [
-        ... 'interface GigabitEthernet1/13',
-        ... '  ip address 192.0.2.1/30',
-        ... '  vrf member ThisRestrictedVrf',
-        ... '  no ip redirects',
-        ... '  no ipv6 redirects',
-        ... ]
-        >>> parse = CiscoConfParse(config)
-        >>> interface_object = parse.find_objects("^interface")[0]
-        >>> interface_config_objects = interface_object.all_children
-        >>> interface_config_objects
-        [<IOSCfgLine # 1 '  ip address 192.0.2.1/30' (parent is # 0)>, <IOSCfgLine # 2 '  vrf member ThisRestrictedVrf' (parent is # 0)>, <IOSCfgLine # 3 '  no ip redirects' (parent is # 0)>, <IOSCfgLine # 4 '  no ipv6 redirects' (parent is # 0)>]
-        >>>
-        >>> as_text_list(interface_config_objects)
-        ['  ip address 192.0.2.1/30', '  vrf member ThisRestrictedVrf', '  no ip redirects', '  no ipv6 redirects']
-        >>>
+    >>> from ciscoconfparse.ccp_util import as_text_list
+    >>> from ciscoconfparse import CiscoConfParse
+    >>>
+    >>> config = [
+    ... 'interface GigabitEthernet1/13',
+    ... '  ip address 192.0.2.1/30',
+    ... '  vrf member ThisRestrictedVrf',
+    ... '  no ip redirects',
+    ... '  no ipv6 redirects',
+    ... ]
+    >>> parse = CiscoConfParse(config)
+    >>> interface_object = parse.find_objects("^interface")[0]
+    >>> interface_config_objects = interface_object.all_children
+    >>> interface_config_objects
+    [<IOSCfgLine # 1 '  ip address 192.0.2.1/30' (parent is # 0)>, <IOSCfgLine # 2 '  vrf member ThisRestrictedVrf' (parent is # 0)>, <IOSCfgLine # 3 '  no ip redirects' (parent is # 0)>, <IOSCfgLine # 4 '  no ipv6 redirects' (parent is # 0)>]
+    >>>
+    >>> as_text_list(interface_config_objects)
+    ['  ip address 192.0.2.1/30', '  vrf member ThisRestrictedVrf', '  no ip redirects', '  no ipv6 redirects']
+    >>>
 
     """
     assert isinstance(object_list, list) or isinstance(object_list, tuple)
     for obj in object_list:
         assert isinstance(obj.linenum, int)
         assert isinstance(obj.text, str)
+    # return [ii.text for ii in object_list]
     return list(map(attrgetter("text"), object_list))
+
 
 def junos_unsupported(func):
     """A function wrapper to warn junos users of unsupported features"""
+
     def wrapper(*args, **kwargs):
-        warn = "syntax='junos' does not fully support config modifications such as .{}(); see Github Issue #185.  https://github.com/mpenning/ciscoconfparse/issues/185".format(func.__name__)
+        warn = "syntax='junos' does not fully support config modifications such as .{}(); see Github Issue #185.  https://github.com/mpenning/ciscoconfparse/issues/185".format(
+            func.__name__
+        )
         syntax = kwargs.get("syntax", None)
-        if len(args)>=1:
+        if len(args) >= 1:
             if isinstance(args[0], ciscoconfparse.ConfigList):
                 syntax = args[0].syntax
             else:
-                #print("TYPE", type(args[0]))
+                # print("TYPE", type(args[0]))
                 syntax = args[0].confobj.syntax
-        if syntax=="junos":
+        if syntax == "junos":
             ccp_logger.warning(warn, UnsupportedFeatureWarning)
         func(*args, **kwargs)
+
     return wrapper
+
 
 def log_function_call(function=None, *args, **kwargs):
     """A wrapper; this decorator uses loguru to log function calls.
@@ -180,12 +138,20 @@ def log_function_call(function=None, *args, **kwargs):
             if True:
                 if len(args) == 1 and len(kwargs) == 0 and callable(args[0]):
                     # Called as @log_function_call
-                    ccp_logger.info("Type 1 log_function_call: %s()" % (ff.__qualname__))
+                    ccp_logger.info(
+                        "Type 1 log_function_call: %s()" % (ff.__qualname__)
+                    )
 
                 else:
-                    ccp_logger.info("Type 2 log_function_call: %s(%s, %s)" % (ff.__qualname__, args, kwargs))
+                    ccp_logger.info(
+                        "Type 2 log_function_call: %s(%s, %s)"
+                        % (ff.__qualname__, args, kwargs)
+                    )
             return ff(*args, **kwargs)
-            ccp_logger.info("Type 3 log_function_call: %s(%s, %s)" % (ff.__qualname__, args, kwargs))
+            ccp_logger.info(
+                "Type 3 log_function_call: %s(%s, %s)" % (ff.__qualname__, args, kwargs)
+            )
+
         return wrapped_logging
 
     if function is not None:
@@ -195,35 +161,43 @@ def log_function_call(function=None, *args, **kwargs):
     ccp_logger.info("Type 5 log_function_call: %s()" % (function.__qualname__))
     return logging_decorator
 
-def ccp_logger_control(action=None, sink=sys.stderr, handler_id=None, allow_enqueue=True):
+
+def ccp_logger_control(
+    action=None, sink=sys.stderr, handler_id=None, allow_enqueue=True
+):
     """A simple function to handle logging... Enable / Disable all ciscoconfparse logging here... also see Github issue #211.
 
     Example
     -------
     """
 
-    assert action=="remove" or action=="add" or action=="disable" or action=="enable"
+    assert (
+        action == "remove"
+        or action == "add"
+        or action == "disable"
+        or action == "enable"
+    )
 
     package_name = "ciscoconfparse"
 
-    if action=="remove":
+    if action == "remove":
         # Require an explicit loguru handler_id to remove...
         assert isinstance(handler_id, int)
 
         ccp_logger.remove(handler_id)
         return True
 
-    elif action=="disable":
+    elif action == "disable":
         # Administratively disable this loguru logger
         ccp_logger.disable(package_name)
         return True
 
-    elif action=="enable":
+    elif action == "enable":
         # Administratively enable this loguru logger
         ccp_logger.enable(package_name)
         return True
 
-    elif action=="add":
+    elif action == "add":
         ccp_logger.add(
             sink=sink,
             colorize=True,
@@ -234,39 +208,42 @@ def ccp_logger_control(action=None, sink=sys.stderr, handler_id=None, allow_enqu
             serialize=False,
             catch=True,
             level="DEBUG",
-            #format='<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>'
+            # format='<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>'
         )
         ccp_logger.enable(package_name)
         return True
 
     else:
-        raise NotImplementedError("action='%s' is an unsupported logger action" % action)
+        raise NotImplementedError(
+            "action='%s' is an unsupported logger action" % action
+        )
+
 
 class ccp_re(object):
     """A wrapper around python's re.  This is an experimental object... it may disappear at any time as long as this message exists.
-        self.regex = r'{}'.format(regex)
-        self.compiled = re.compile(self.regex, flags=flags)
-        self.group = group
-        self.match_type = match_type
-        self.target_str = None
-        self.search_result = None
-        self.attempted_search = False
+    self.regex = r'{}'.format(regex)
+    self.compiled = re.compile(self.regex, flags=flags)
+    self.group = group
+    self.match_type = match_type
+    self.target_str = None
+    self.search_result = None
+    self.attempted_search = False
 
-        Parameters
-        ----------
-        regex : str
-            A string containing the regex string to be matched.  Default: r"".  This method is hard-coded to *always* use a python raw-string.
-        compiled: re.Pattern
-            This is a compiled regex pattern - `re.compiled(self.regex, flags=flags)`.
-        groups: dict
-            A dict keyed by the integer match group, or the named regex capture group.  The values in this dict
+    Parameters
+    ----------
+    regex : str
+        A string containing the regex string to be matched.  Default: r"".  This method is hard-coded to *always* use a python raw-string.
+    compiled: re.Pattern
+        This is a compiled regex pattern - `re.compiled(self.regex, flags=flags)`.
+    groups: dict
+        A dict keyed by the integer match group, or the named regex capture group.  The values in this dict
 
 
-        Examples
-        --------
+    Examples
+    --------
 
-        >>> from ciscoconfparse.ccp_util import ccp_re
-        >>> ## Parse from an integer...
+    >>> from ciscoconfparse.ccp_util import ccp_re
+    >>> ## Parse from an integer...
 
     """
 
@@ -333,10 +310,15 @@ class ccp_re(object):
         rv_groupdict = dict()
 
         if (self.attempted_search is True) and (self.search_result is None):
-            error = ".search(r'%s') was attempted but the regex ('%s') did not capture anything" % (self.target_str, self.regex)
+            error = (
+                ".search(r'%s') was attempted but the regex ('%s') did not capture anything"
+                % (self.target_str, self.regex)
+            )
             ccp_logger.warning(error)
 
-        elif (self.attempted_search is True) and (isinstance(self.search_result, re.Match) is True):
+        elif (self.attempted_search is True) and (
+            isinstance(self.search_result, re.Match) is True
+        ):
 
             # rv_groups should be a list of capture group
             rv_groups = list(self.search_result.groups())
@@ -349,9 +331,9 @@ class ccp_re(object):
                 # Cast types of the numerical regex match groups...
                 for idx, value in enumerate(rv_groups):
                     # Lookup the match_type in the self.groups dictionary. regex
-                    # capture groups are indexed starting at 1, so we need to 
+                    # capture groups are indexed starting at 1, so we need to
                     # offset the enumerate() idx value...
-                    match_type = self.groups.get(idx+1, None)
+                    match_type = self.groups.get(idx + 1, None)
                     if match_type is not None:
                         rv_groups[idx] = match_type(value)
 
@@ -361,11 +343,12 @@ class ccp_re(object):
                     if match_type is not None:
                         rv_groupdict[re_name] = match_type(value)
 
-        elif (self.attempted_search is False):
+        elif self.attempted_search is False:
             error = ".search(r'%s') was NOT attempted yet." % (self.target_str)
             ccp_logger.warning(error)
 
         return rv_groups, rv_groupdict
+
 
 _IPV6_REGEX_STR = r"""(?!:::\S+?$)       # Negative Lookahead for 3 colons
  (?P<addr>                               # Begin a group named 'addr'
@@ -444,6 +427,7 @@ def is_valid_ipv6_addr(input_str=""):
         return True
     return False
 
+
 def collapse_addresses(network_list):
     """
     This is a ciscoconfparse proxy for ipaddress.collapse_addresses()
@@ -451,7 +435,7 @@ def collapse_addresses(network_list):
     It attempts to summarize network_list into the closest network(s)
     containing prefixes in `network_list`.
 
-    Return an iterator of the collapsed IPv4Network or IPv6Network objects. 
+    Return an iterator of the collapsed IPv4Network or IPv6Network objects.
     addresses is an iterator of IPv4Network or IPv6Network objects. A
     TypeError is raised if addresses contains mixed version objects.
     """
@@ -471,13 +455,14 @@ def collapse_addresses(network_list):
 
     return ipaddress.collapse_addresses([ip_net(ii) for ii in network_list])
 
+
 ## Emulate the old behavior of ipaddr.IPv4Network in Python2, which can use
 ##    IPv4Network with a host address.  Google removed that in Python3's
 ##    ipaddress.py module
 class IPv4Obj(object):
     def __init__(self, arg="127.0.0.1/32", strict=False):
         """An object to represent IPv4 addresses and IPv4 networks.
-        
+
         When :class:`~ccp_util.IPv4Obj` objects are compared or sorted, network numbers are sorted lower to higher.  If network numbers are the same, shorter masks are lower than longer masks. After comparing mask length, numerically higher IP addresses are greater than numerically lower IP addresses..  Comparisons between :class:`~ccp_util.IPv4Obj` instances was chosen so it's easy to find the longest-match for a given prefix (see examples below).
 
         This object emulates the behavior of ipaddr.IPv4Network (in Python2) where host-bits were retained in the IPv4Network() object.  :class:`ipaddress.IPv4Network` in Python3 does not retain host-bits; the desire to retain host-bits in both Python2 and Python3 ip network objects was the genesis of this API.
@@ -669,7 +654,9 @@ class IPv4Obj(object):
                     try:
                         assert getattr(obj, attr_name, None) is not None
                     except (AssertionError) as ee:
-                        error_str = "Cannot compare {} with '{}'".format(self, type(obj))
+                        error_str = "Cannot compare {} with '{}'".format(
+                            self, type(obj)
+                        )
                         raise AssertionError(error_str)
 
             val_prefixlen = int(getattr(val, "prefixlen"))
@@ -700,7 +687,9 @@ class IPv4Obj(object):
                     try:
                         assert getattr(obj, attr_name, None) is not None
                     except (AssertionError) as ee:
-                        error_str = "Cannot compare {} with '{}'".format(self, type(obj))
+                        error_str = "Cannot compare {} with '{}'".format(
+                            self, type(obj)
+                        )
                         raise AssertionError(error_str)
 
             val_prefixlen = int(getattr(val, "prefixlen"))
@@ -879,8 +868,7 @@ class IPv4Obj(object):
 
     @property
     def network(self):
-        """Returns an :class:`ipaddress.IPv4Network` object, which represents this network.
-        """
+        """Returns an :class:`ipaddress.IPv4Network` object, which represents this network."""
         if sys.version_info[0] < 3:
             return self.network_object.network
         else:
@@ -889,8 +877,7 @@ class IPv4Obj(object):
 
     @property
     def as_decimal_network(self):
-        """Returns an integer calculated from the network address...
-        """
+        """Returns an integer calculated from the network address..."""
         num_strings = str(self.network).split(".")
         num_strings.reverse()  # reverse the order
         return sum(
@@ -1082,7 +1069,6 @@ class IPv6Obj(object):
                     "IPv6Obj doesn't understand how to parse {0}".format(arg)
                 )
 
-        
         ERROR = "IPv6Obj couldn't parse {0}".format(arg)
         assert not (mm is None), ERROR
         self.network_object = IPv6Network(arg, strict=strict)
@@ -1122,7 +1108,9 @@ class IPv6Obj(object):
                     try:
                         assert getattr(obj, attr_name, None) is not None
                     except (AssertionError) as ee:
-                        error_str = "Cannot compare {} with '{}'".format(self, type(obj))
+                        error_str = "Cannot compare {} with '{}'".format(
+                            self, type(obj)
+                        )
                         raise AssertionError(error_str)
 
             val_prefixlen = int(getattr(val, "prefixlen"))
@@ -1153,7 +1141,9 @@ class IPv6Obj(object):
                     try:
                         assert getattr(obj, attr_name, None) is not None
                     except (AssertionError) as ee:
-                        error_str = "Cannot compare {} with '{}'".format(self, type(obj))
+                        error_str = "Cannot compare {} with '{}'".format(
+                            self, type(obj)
+                        )
                         raise AssertionError(error_str)
 
             val_prefixlen = int(getattr(val, "prefixlen"))
@@ -1336,8 +1326,7 @@ class IPv6Obj(object):
 
     @property
     def network(self):
-        """Returns an :class:`ipaddress.IPv6Network` object, which represents this network.
-        """
+        """Returns an :class:`ipaddress.IPv6Network` object, which represents this network."""
         if sys.version_info[0] < 3:
             return self.network_object.network
         else:
@@ -1437,7 +1426,7 @@ class IPv6Obj(object):
 
     @property
     def is_unspecified(self):
-        """Returns a boolean for whether this address is not otherwise 
+        """Returns a boolean for whether this address is not otherwise
         classified"""
         return self.network_object.is_unspecified
 
@@ -1452,7 +1441,7 @@ class IPv6Obj(object):
 
 class L4Object(object):
     """Object for Transport-layer protocols; the object ensures that logical operators (such as le, gt, eq, and ne) are parsed correctly, as well as mapping service names to port numbers
-    
+
     Examples
     --------
     >>> from ciscoconfparse.ccp_util import L4Object
@@ -1503,7 +1492,7 @@ class L4Object(object):
             low_port = int(ports.get(port_tmp[0], port_tmp[0]))
             high_port = int(ports.get(port_tmp[1], port_tmp[1]))
             assert low_port <= high_port
-            self.port_list = sorted(range(low_port, high_port+1))
+            self.port_list = sorted(range(low_port, high_port + 1))
         elif "lt " in port_spec.strip():
             port_tmp = re.split(r"\s+", port_spec)[-1]
             high_port = int(ports.get(port_tmp, port_tmp))
@@ -1513,14 +1502,16 @@ class L4Object(object):
             port_tmp = re.split(r"\s+", port_spec)[-1]
             low_port = int(ports.get(port_tmp, port_tmp))
             assert 0 < low_port < 65535
-            self.port_list = sorted(range(low_port+1, 65536))
+            self.port_list = sorted(range(low_port + 1, 65536))
         elif "neq " in port_spec.strip():
             port_str = re.split(r"\s+", port_spec)[-1]
             tmp = set(range(1, 65536))
             tmp.remove(int(port_str))
             self.port_list = sorted(tmp)
         else:
-            raise NotImplementedError("This port_spec is unknown: '{0}'".format(port_spec))
+            raise NotImplementedError(
+                "This port_spec is unknown: '{0}'".format(port_spec)
+            )
 
     def __eq__(self, val):
         if (self.protocol == val.protocol) and (self.port_list == val.port_list):
@@ -1545,7 +1536,7 @@ class DNSResponse(object):
     input_str : str
         The DNS query string
     duration : float
-        The query duration in seconds 
+        The query duration in seconds
 
     Attributes
     ----------
@@ -1560,14 +1551,13 @@ class DNSResponse(object):
     error_str : str
         The error returned by dnspython
     duration : float
-        The query duration in seconds 
+        The query duration in seconds
     preference : int
         The MX record's preference (default: -1)
 
     Returns
     -------
-    A :class:`~ccp_util.DNSResponse` instance
-"""
+    A :class:`~ccp_util.DNSResponse` instance"""
 
     def __init__(self, query_type="", result_str="", input_str="", duration=0.0):
         self.query_type = query_type
@@ -1688,7 +1678,9 @@ def dns_query(input_str="", query_type="", server="", timeout=2.0):
             duration = time.time() - start
             for result in answer:
                 response = DNSResponse(
-                    query_type=query_type, input_str=input_str, result_str=str(result.target)
+                    query_type=query_type,
+                    input_str=input_str,
+                    result_str=str(result.target),
                 )
                 response.preference = int(result.preference)
                 retval.add(response)
@@ -1951,9 +1943,9 @@ class CiscoRange(MutableSequence):
 
                     # Unicode is the only type with .isnumeric()...
                     if sys.version_info < (3, 0, 0):
-                        prefix_removed = unicode(ii[len(common_prefix):], "utf-8")
+                        prefix_removed = unicode(ii[len(common_prefix) :], "utf-8")
                     else:
-                        prefix_removed = ii[len(common_prefix):]
+                        prefix_removed = ii[len(common_prefix) :]
 
                     if prefix_removed.isnumeric():
                         _tmp.append(prefix_removed)
@@ -1971,7 +1963,7 @@ class CiscoRange(MutableSequence):
         mm = _RGX_CISCO_RANGE.search(tmp[0])
 
         ERROR = "CiscoRange() couldn't parse '{0}'".format(self.text)
-        assert (mm is not None), ERROR
+        assert mm is not None, ERROR
 
         mm_result = mm.groupdict()
         line_prefix = mm_result.get("line_prefix", "") or ""
@@ -2031,11 +2023,11 @@ class CiscoRange(MutableSequence):
     def compressed_str(self):
         """Return a text string with a compressed csv of values
 
->>> from ciscoconfparse.ccp_util import CiscoRange
->>> range_obj = CiscoRange('1,3,5,6,7')
->>> range_obj.compressed_str
-'1,3,5-7'
->>>
+        >>> from ciscoconfparse.ccp_util import CiscoRange
+        >>> range_obj = CiscoRange('1,3,5,6,7')
+        >>> range_obj.compressed_str
+        '1,3,5-7'
+        >>>
         """
         retval = list()
         prefix_str = self.line_prefix.strip() + self.slot_prefix.strip()
@@ -2051,13 +2043,13 @@ class CiscoRange(MutableSequence):
                 unicode_ii = str(ii)
 
             # Removed this in version 1.5.27 because it's so slow...
-            #trailing_digits = re.sub(r"^{0}(\d+)$".format(prefix_str), "\g<1>", unicode_ii)
+            # trailing_digits = re.sub(r"^{0}(\d+)$".format(prefix_str), "\g<1>", unicode_ii)
 
             complete_len = len(unicode_ii)
             # Assign ii to the trailing number after prefix_str...
             #    this is much faster than regexp processing...
             trailing_digits_len = complete_len - prefix_str_len
-            trailing_digits = unicode_ii[-1*trailing_digits_len:]
+            trailing_digits = unicode_ii[-1 * trailing_digits_len :]
             input_str.append(int(trailing_digits))
 
         if len(input_str) == 0:  # Special case, handle empty list

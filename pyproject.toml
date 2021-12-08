@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ciscoconfparse"
-version = "1.6.9"
+version = "1.6.10"
 description = "Parse, Audit, Query, Build, and Modify Cisco IOS-style and JunOS-style configurations"
 authors = [
     "Mike Pennington <mike@pennington.net>",

@@ -1,3 +1,4 @@
+1.6.10  20211208 Improve style and readability
 1.6.9   20211206 Commit fix for Github issue #215 (problems with gevent / gevent.monkey.patch_all())
 1.6.8   20211203 Reorganize build infra and ccp data structures. Fix Github issue #214. Fix for issue documented in Github PR #217.
 1.6.7   20211122 Misc updates
