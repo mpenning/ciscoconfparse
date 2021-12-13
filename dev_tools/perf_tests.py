@@ -14,8 +14,13 @@ list_comprehension = timeit("[ii.text for ii in parse.ConfigObjs]",
     setup="from ciscoconfparse import CiscoConfParse;from operator import methodcaller, attrgetter;parse=CiscoConfParse('../configs/sample_01.ios')",
     number=10000)
 
+list_comprehension_getattr = timeit("[getattr(ii, 'text') for ii in parse.ConfigObjs]",
+    setup="from ciscoconfparse import CiscoConfParse;from operator import methodcaller, attrgetter;parse=CiscoConfParse('../configs/sample_01.ios')",
+    number=10000)
+
 print("CAST TO LIST", list_cast)
 print("LIST COMPREHENSION", list_comprehension)
+print("LIST COMPREHENSION GETATTR", list_comprehension_getattr)
 
 vlan_text = "1-1000,1001-2000,2001-3000,3001-4000,4001-4094"
 time_CiscoRange_all_vlans_int = timeit(
