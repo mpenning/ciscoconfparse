@@ -9,8 +9,14 @@ pypi:
 	make clean
 	poetry build
 	poetry publish
-.PHONY: repo-push
+.PHONY: repo-push-tag
 repo-push:
+	git remote remove origin
+	git remote add origin "git@github.com:mpenning/ciscoconfparse" 
+	git push git@github.com:mpenning/ciscoconfparse.git
+	git push --force-with-lease origin +master
+.PHONY: repo-push-tag
+repo-push-tag:
 	git remote remove origin
 	git remote add origin "git@github.com:mpenning/ciscoconfparse" 
 	git tag -a ${VERSION} -m "Tag with ${VERSION}"
