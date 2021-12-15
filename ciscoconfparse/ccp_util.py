@@ -523,39 +523,56 @@ class IPv4Obj(object):
 
         Attributes
         ----------
-        network : :class:`ipaddress.IPv4Network`
-            Returns an :class:`ipaddress.IPv4Network` with the network of this object
-        network_object : :class:`ipaddress.IPv4Network`
-            Returns an :class:`ipaddress.IPv4Network` with the network of this object
-        ip_object  : :class:`ipaddress.IPv4Address`
-            Returns an :class:`ipaddress.IPv4Address` with the host address of this object
-        ip : :class:`ipaddress.IPv4Address`
-            Returns an :class:`ipaddress.IPv4Address` with the host address of this object
         as_binary_tuple : :py:class:`tuple`
             The address as a tuple of zero-padded binary strings
-        as_hex_tuple : tuple
-            The address as a tuple of zero-padded 8-bit hex strings
+        as_cidr_addr : str
+            Return a string representing the IPv4 host and netmask of this object in cidr notation.  Example - '172.16.0.1/24'
+        as_cidr_net : str
+            Return a string representing the IPv4 network and netmask of this object in cidr notation.  Example - '172.16.5.0/24'
         as_decimal : int
             The ip address as a decimal integer
         as_decimal_network : int
             The network address as a decimal integer
+        as_hex_tuple : tuple
+            The address as a tuple of zero-padded 8-bit hex strings
         as_zeropadded : str
             Return a zero-padded string of the ip address (example: '10.1.1.1' returns '010.001.001.001')
         as_zeropadded_network : str
             Return a zero-padded string of the ip network (example: '10.1.1.1' returns '010.001.001.000')
-        netmask : :class:`ipaddress.IPv4Address`
-            An :class:`ipaddress.IPv4Address` object containing the netmask
-        prefixlen : int
-            An integer representing the length of the netmask
-        prefixlength : int
-            An integer representing the length of the netmask
         broadcast : str
-            A string representing the broadcast address
+            An IPv4Address object representing the broadcast address
+        exploded : str
+            Returns the IPv4 Address object as a string.  The string representation is in dotted decimal notation. Leading zeroes are never included in the representation.
         hostmask : :class:`ipaddress.IPv4Address`
             A :class:`ipaddress.IPv4Address` representing the hostmask
+        ip : :class:`ipaddress.IPv4Address`
+            Returns an :class:`ipaddress.IPv4Address` with the host address of this object
+        ip_object  : :class:`ipaddress.IPv4Address`
+            Returns an :class:`ipaddress.IPv4Address` with the host address of this object
+        is_multicast : bool
+            Return a boolean True if this object represents a multicast address; otherwise return False.
+        is_private : bool
+            Return a boolean True if this object represents a private IPv4 address; otherwise return False.
+        is_reserved : bool
+            Return a boolean True if this object represents a reserved IPv4 address; otherwise return False.
+        netmask : :class:`ipaddress.IPv4Address`
+            An :class:`ipaddress.IPv4Address` object containing the netmask
+        network : :class:`ipaddress.IPv4Network`
+            Returns an :class:`ipaddress.IPv4Network` with the network of this object
+        network_object : :class:`ipaddress.IPv4Network`
+            Returns an :class:`ipaddress.IPv4Network` with the network of this object
         numhosts : int
             An integer representing the number of hosts contained in the network
-
+        packed : str
+            Returns the IPv4 object as packed hex bytes
+        prefixlen : int
+            An python setter/getter method which return an integer representing the length of the netmask
+        prefixlength : int
+            An integer representing the length of the netmask
+        inverse_netmask : :class:`ipaddress.IPv4Address`
+            A :class:`ipaddress.IPv4Address` representing the hostmask.  .hostmask and .inverse_netmask return the same values
+        version : int
+            Returns an integer representing the IP version of this object.  Only 4 or 6 are valid results
         """
 
         # RGX_IPV4ADDR = re.compile(r'^(\d+\.\d+\.\d+\.\d+)')
@@ -850,12 +867,12 @@ class IPv4Obj(object):
 
     @property
     def exploded(self):
-        """Returns the IPv4 Address object in exploded form"""
+        """Returns the IPv4 Address object as a string.  The string representation is in dotted decimal notation. Leading zeroes are never included in the representation."""
         return self.ip_object.exploded
 
     @property
     def packed(self):
-        """Returns the IPv4 object in packed binary form"""
+        """Returns the IPv4 object as packed hex bytes"""
         return self.ip_object.packed
 
     @property
@@ -875,14 +892,14 @@ class IPv4Obj(object):
             ## The ipaddress module returns an "IPAddress" object in Python3...
             return IPv4Network("{0}".format(self.network_object.compressed))
 
-    @property
-    def as_decimal_network(self):
-        """Returns an integer calculated from the network address..."""
-        num_strings = str(self.network).split(".")
-        num_strings.reverse()  # reverse the order
-        return sum(
-            [int(num, 16) * (65536 ** idx) for idx, num in enumerate(num_strings)]
-        )
+    #@property
+    #def as_decimal_network(self):
+    #    """Returns an integer calculated from the network address..."""
+    #    num_strings = str(self.network).split(".")
+    #    num_strings.reverse()  # reverse the order
+    #    return sum(
+    #        [int(num, 16) * (65536 ** idx) for idx, num in enumerate(num_strings)]
+    #    )
 
     @property
     def hostmask(self):
@@ -936,6 +953,11 @@ class IPv4Obj(object):
             + "/"
             + str(self.prefixlen)
         )
+
+    @property
+    def as_hex(self):
+        """Returns the IP address as a hex string"""
+        return hex(self)
 
     @property
     def as_binary_tuple(self):
@@ -1317,7 +1339,7 @@ class IPv6Obj(object):
 
     @property
     def packed(self):
-        """Returns the IPv6 Address object in packed binary form"""
+        """Returns the IPv6 object as packed hex bytes"""
         return self.ip_object.packed
 
     @property
@@ -1379,6 +1401,11 @@ class IPv6Obj(object):
         """Returns the IPv6 address as a tuple of zero-padded 16-bit binary strings"""
         result_list = ["{0:016b}".format(int(ii, 16)) for ii in self.as_hex_tuple]
         return tuple(result_list)
+
+    @property
+    def as_hex(self):
+        """Returns the IP address as a hex string"""
+        return hex(self)
 
     @property
     def as_hex_tuple(self):
