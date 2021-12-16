@@ -542,8 +542,8 @@ class IPv4Obj(object):
             Return a zero-padded string of the ip network (example: '10.1.1.1' returns '010.001.001.000')
         broadcast : str
             An IPv4Address object representing the broadcast address
-        regex : str
-            Returns the regex used for an IPv4 Address
+        get_regex : str
+            Returns the regex string used for an IPv4 Address
         exploded : str
             Returns the IPv4 Address object as a string.  The string representation is in dotted decimal notation. Leading zeroes are never included in the representation.
         hostmask : :class:`ipaddress.IPv4Address`
@@ -1054,8 +1054,8 @@ class IPv6Obj(object):
             The network address as a decimal integer
         as_hex_tuple : tuple
             The ipv6 address as a tuple of zero-padded 8-bit hex strings
-        regex : str
-            Returns the regex used for an IPv6 Address
+        get_regex : str
+            Returns the regex string used for an IPv6 Address
         netmask : :class:`ipaddress.IPv6Address`
             An :class:`ipaddress.IPv6Address` object containing the netmask
         prefixlen : int
