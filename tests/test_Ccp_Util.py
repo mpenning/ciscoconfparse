@@ -440,6 +440,10 @@ def testIPv6Obj_gt_01():
     """Simple greater_than test"""
     assert IPv6Obj("::2") > IPv6Obj("::1")
 
+def testIPv6Obj_lt_01():
+    """Simple less_than test"""
+    assert IPv6Obj("::1") < IPv6Obj("::2")
+
 def test_collapse_addresses_01():
 
     if sys.version_info >= (3, 0, 0):
