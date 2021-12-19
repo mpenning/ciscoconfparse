@@ -22,19 +22,19 @@ print("GETATTR append", list_getattr)
 
 list_cast = timeit(
     stmt="list(map(attrgetter('text'), parse.ConfigObjs))",
-    setup="from ciscoconfparse import CiscoConfParse;from operator import methodcaller, attrgetter;parse=CiscoConfParse('../configs/sample_01.ios')",
+    setup="from ciscoconfparse import CiscoConfParse;from operator import methodcaller, attrgetter;parse=CiscoConfParse(config='configs/sample_01.ios')",
     number=10000,
 )
 
 list_comprehension = timeit(
     stmt="[ii.text for ii in parse.ConfigObjs]",
-    setup="from ciscoconfparse import CiscoConfParse;from operator import methodcaller, attrgetter;parse=CiscoConfParse('../configs/sample_01.ios')",
+    setup="from ciscoconfparse import CiscoConfParse;from operator import methodcaller, attrgetter;parse=CiscoConfParse(config='../configs/sample_01.ios')",
     number=10000,
 )
 
 list_comprehension_getattr = timeit(
     "[getattr(ii, 'text') for ii in parse.ConfigObjs]",
-    setup="from ciscoconfparse import CiscoConfParse;from operator import methodcaller, attrgetter;parse=CiscoConfParse('../configs/sample_01.ios')",
+    setup="from ciscoconfparse import CiscoConfParse;from operator import methodcaller, attrgetter;parse=CiscoConfParse(config='../configs/sample_01.ios')",
     number=10000,
 )
 
