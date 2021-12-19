@@ -194,7 +194,7 @@ class CiscoConfParse(object):
         ...     'logging trap debugging',
         ...     'logging 172.28.26.15',
         ...     ]
-        >>> parse = CiscoConfParse(config)
+        >>> parse = CiscoConfParse(config=config)
         >>> parse
         <CiscoConfParse: 2 lines / syntax: ios / comment delimiter: '!' / factory: False>
         >>> parse.ConfigObjs
@@ -233,7 +233,7 @@ class CiscoConfParse(object):
         if isinstance(config, list) or isinstance(config, Iterator):
 
             if self.debug > 0:
-                message = "CiscoConfParse(config, syntax='%s', factory=%s) was called with `config` as a list" % (
+                message = "CiscoConfParse(config=config, syntax='%s', factory=%s) was called with `config` as a list" % (
                     self.syntax, self.factory)
                 ccp_logger.info(message)
 
@@ -306,11 +306,11 @@ class CiscoConfParse(object):
 
             if os.path.isfile(config) is True:
                 if self.debug > 0:
-                    message = "Calling CiscoConfParse(%s, syntax='%s', factory=%s)" % (
+                    message = "Calling CiscoConfParse(config='%s', syntax='%s', factory=%s)" % (
                         config, self.syntax, self.factory)
                     ccp_logger.info(message)
             else:
-                error = "CiscoConfParse() was called with an invalid path: '%s'" % config
+                error = "FATAL: CiscoConfParse(config='%s') failed. `config` requires a valid filepath or a list of config strings." % config
                 ccp_logger.error(error)
                 raise IOError(error)
 
@@ -719,7 +719,7 @@ class CiscoConfParse(object):
         ...     '  }',
         ...     '}',
         ...     ]
-        >>> parse = CiscoConfParse(config, syntax='junos', comment='#')
+        >>> parse = CiscoConfParse(config=config, syntax='junos', comment='#')
         >>>
         >>> branchspec = (r'ltm\spool', r'members', r'\S+?:\d+', r'state\sup')
         >>> branches = parse.find_object_branches(branchspec=branchspec)
@@ -898,7 +898,7 @@ class CiscoConfParse(object):
         ...     ' ip address 1.1.1.5 255.255.255.252',
         ...     '!',
         ...     ]
-        >>> parse = CiscoConfParse(config, factory=True)
+        >>> parse = CiscoConfParse(config=config, factory=True)
         >>>
         >>> parse.find_interface_objects('Se 1/0')
         [<IOSIntfLine # 1 'Serial1/0' info: '1.1.1.1/30'>]
@@ -961,7 +961,7 @@ class CiscoConfParse(object):
         ...     'hostname MyRouterHostname',
         ...     '!',
         ...     ]
-        >>> parse = CiscoConfParse(config, factory=True, syntax='ios')
+        >>> parse = CiscoConfParse(config=config, factory=True, syntax='ios')
         >>>
         >>> obj_list = parse.find_objects_dna(r'Hostname')
         >>> obj_list
@@ -1034,7 +1034,7 @@ class CiscoConfParse(object):
         ...     ' ip address 1.1.1.5 255.255.255.252',
         ...     '!',
         ...     ]
-        >>> parse = CiscoConfParse(config)
+        >>> parse = CiscoConfParse(config=config)
         >>>
         >>> parse.find_objects(r'^interface')
         [<IOSCfgLine # 1 'interface Serial1/0'>, <IOSCfgLine # 4 'interface Serial1/1'>]
@@ -1115,7 +1115,7 @@ class CiscoConfParse(object):
         ...           ' path ftp://ns.foo.com//tftpboot/Foo-archive',
         ...           '!',
         ...     ]
-        >>> p = CiscoConfParse(config)
+        >>> p = CiscoConfParse(config=config)
         >>> p.find_children('^archive')
         ['archive', ' log config', ' path ftp://ns.foo.com//tftpboot/Foo-archive']
         >>>
@@ -1193,7 +1193,7 @@ class CiscoConfParse(object):
         ...           ' path ftp://ns.foo.com//tftpboot/Foo-archive',
         ...           '!',
         ...     ]
-        >>> p = CiscoConfParse(config)
+        >>> p = CiscoConfParse(config=config)
         >>> p.find_all_children('^archive')
         ['archive', ' log config', '  logging enable', '  hidekeys', ' path ftp://ns.foo.com//tftpboot/Foo-archive']
         >>>
@@ -1299,7 +1299,7 @@ class CiscoConfParse(object):
            ...           '  service-policy EXTERNAL_CBWFQ',
            ...           '!',
            ...     ]
-           >>> p = CiscoConfParse(config)
+           >>> p = CiscoConfParse(config=config)
            >>> p.find_blocks('bandwidth percent')
            ['policy-map EXTERNAL_CBWFQ', ' class IP_PREC_MEDIUM', '  bandwidth percent 50', '  queue-limit 100', ' class class-default', '  bandwidth percent 40', '  queue-limit 100']
            >>>
@@ -1418,7 +1418,7 @@ class CiscoConfParse(object):
            ...           ' spanning-tree portfast',
            ...           '!',
            ...     ]
-           >>> p = CiscoConfParse(config)
+           >>> p = CiscoConfParse(config=config)
            >>> p.find_objects_w_child('^interface',
            ...     'switchport access vlan 300')
            ...
@@ -1451,7 +1451,7 @@ class CiscoConfParse(object):
         ----------
         parentspec : str
             Text regular expression for the :class:`~models_cisco.IOSCfgLine` object to be matched; this must match the parent's line
-        childspec : str
+        childspec : list
             A list of text regular expressions to be matched among the children
         ignore_ws : bool
             boolean that controls whether whitespace is ignored
@@ -1518,7 +1518,7 @@ class CiscoConfParse(object):
            ...           ' spanning-tree portfast',
            ...           '!',
            ...     ]
-           >>> p = CiscoConfParse(config)
+           >>> p = CiscoConfParse(config=config)
            >>> p.find_objects_w_all_children('^interface',
            ...     ['switchport access vlan 300', 'spanning-tree portfast'])
            ...
@@ -1526,11 +1526,14 @@ class CiscoConfParse(object):
            >>>
         """
 
-        assert bool(getattr(childspec, "append"))  # Childspec must be a list
+        #assert bool(getattr(childspec, "append"))  # Childspec must be a list
+        assert isinstance(childspec, list) or isinstance(childspec, tuple)
         retval = list()
-        if ignore_ws:
+        if ignore_ws is True:
             parentspec = self._build_space_tolerant_regex(parentspec)
-            childspec = map(self._build_space_tolerant_regex, childspec)
+            #childspec = map(self._build_space_tolerant_regex, childspec)
+            ccp_logger.info("CHILDSPEC", childspec)
+            childspec = [ii._build_space_tolerant_regex() for ii in childspec]
 
         for parentobj in self.find_objects(parentspec):
             results = set([])
@@ -1660,7 +1663,7 @@ class CiscoConfParse(object):
            ...           ' spanning-tree portfast',
            ...           '!',
            ...     ]
-           >>> p = CiscoConfParse(config)
+           >>> p = CiscoConfParse(config=config)
            >>> p.find_parents_w_child('^interface', 'switchport access vlan 300')
            ['interface FastEthernet0/2', 'interface FastEthernet0/3']
            >>>
@@ -1743,7 +1746,7 @@ class CiscoConfParse(object):
            ...           ' spanning-tree portfast',
            ...           '!',
            ...     ]
-           >>> p = CiscoConfParse(config)
+           >>> p = CiscoConfParse(config=config)
            >>> p.find_objects_wo_child(r'^interface', r'speed\s\d+')
            [<IOSCfgLine # 1 'interface FastEthernet0/1'>, <IOSCfgLine # 5 'interface FastEthernet0/2'>]
            >>>
@@ -1831,7 +1834,7 @@ class CiscoConfParse(object):
            ...           ' spanning-tree portfast',
            ...           '!',
            ...     ]
-           >>> p = CiscoConfParse(config)
+           >>> p = CiscoConfParse(config=config)
            >>> p.find_parents_wo_child('^interface', 'speed\s\d+')
            ['interface FastEthernet0/1', 'interface FastEthernet0/2']
            >>>
@@ -1931,7 +1934,7 @@ class CiscoConfParse(object):
            ...           ' spanning-tree bpduguard enable',
            ...           '!',
            ...     ]
-           >>> p = CiscoConfParse(config)
+           >>> p = CiscoConfParse(config=config)
            >>> p.find_children_w_parents('^interface\sFastEthernet0/1',
            ... 'port-security')
            [' switchport port-security', ' switchport port-security violation protect', ' switchport port-security aging time 5', ' switchport port-security aging type inactivity']
@@ -2031,7 +2034,7 @@ class CiscoConfParse(object):
            ...           '            family inet',
            ...           '                address 172.16.15.5/22',
            ...     ]
-           >>> p = CiscoConfParse(config)
+           >>> p = CiscoConfParse(config=config)
            >>> p.find_objects_w_parents('^\s*interfaces',
            ... r'\s+ge-0/0/1')
            [<IOSCfgLine # 7 '    ge-0/0/1' (parent is # 0)>]
@@ -2338,7 +2341,7 @@ class CiscoConfParse(object):
            ...           '  service-policy EXTERNAL_CBWFQ',
            ...           '!',
            ...     ]
-           >>> p = CiscoConfParse(config)
+           >>> p = CiscoConfParse(config=config)
            >>> p.replace_lines('EXTERNAL_CBWFQ', 'EXTERNAL_QOS', 'description')
            ['policy-map EXTERNAL_QOS', '  service-policy EXTERNAL_QOS']
            >>>
@@ -2423,7 +2426,7 @@ class CiscoConfParse(object):
            ...           ' storm-control broadcast level 0.2',
            ...           '!'
            ...     ]
-           >>> p = CiscoConfParse(config)
+           >>> p = CiscoConfParse(config=config)
            >>> p.replace_children(r'^interface\sGigabit', r'broadcast\slevel\s\S+', 'broadcast level 0.5')
            [' storm-control broadcast level 0.5']
            >>>
@@ -2570,7 +2573,7 @@ class CiscoConfParse(object):
         ...     ' ip address 1.1.1.5 255.255.255.252',
         ...     '!',
         ...     ]
-        >>> parse = CiscoConfParse(config)
+        >>> parse = CiscoConfParse(config=config)
         >>> parse.re_match_iter_typed(r'interface\s(\S+)')
         'Serial1/0'
         >>>
@@ -2589,7 +2592,7 @@ class CiscoConfParse(object):
         ...     ' ip address 1.1.1.5 255.255.255.252',
         ...     '!',
         ...     ]
-        >>> parse = CiscoConfParse(config)
+        >>> parse = CiscoConfParse(config=config)
         >>> parse.re_match_iter_typed(r'^hostname\s+(\S+)')
         'DEN-EDGE-01'
         >>>
@@ -2640,7 +2643,7 @@ class CiscoConfParse(object):
         ...     'logging trap debugging',
         ...     'logging 172.28.26.15',
         ...     ]
-        >>> p = CiscoConfParse(config)
+        >>> p = CiscoConfParse(config=config)
         >>> required_lines = [
         ...     "logging 172.28.26.15",
         ...     "logging 172.16.1.5",
@@ -2697,7 +2700,7 @@ class CiscoConfParse(object):
         ...     'logging trap debugging',
         ...     'logging 172.28.26.15',
         ...     ]
-        >>> p = CiscoConfParse(config)
+        >>> p = CiscoConfParse(config=config)
         >>> required_lines = [
         ...     "logging 172.16.1.5",
         ...     "logging 1.10.20.30",
@@ -2759,7 +2762,7 @@ class CiscoConfParse(object):
         - The reordered list of a_nonparent_lines
         - The reordered list of a_nonparent_linenums
         """
-        a_parse = CiscoConfParse([])  # A *new* parse for reordered a lines
+        a_parse = CiscoConfParse(config=[])  # A *new* parse for reordered a lines
         a_lines = list()
         a_linenums = list()
 
@@ -2802,7 +2805,7 @@ class CiscoConfParse(object):
         - The reordered list of a_parent_lines
         - The reordered list of a_parent_linenums
         """
-        a_parse = CiscoConfParse([])  # A *new* parse for reordered a lines
+        a_parse = CiscoConfParse(config=[])  # A *new* parse for reordered a lines
         a_lines = list()
         a_linenums = list()
 
@@ -2900,7 +2903,7 @@ class CiscoConfParse(object):
         ...     'logging trap debugging',
         ...     'logging 172.28.26.15',
         ...     ]
-        >>> p = CiscoConfParse(config)
+        >>> p = CiscoConfParse(config=config)
         >>> required_lines = [
         ...     "logging 172.16.1.5",
         ...     "logging 1.10.20.30",
@@ -2919,9 +2922,9 @@ class CiscoConfParse(object):
         if uncfgspec is None:
             uncfgspec = linespec
         a_lines = [ii.text for ii in tmp]
-        a = CiscoConfParse(a_lines)
+        a = CiscoConfParse(config=a_lines)
 
-        b = CiscoConfParse(cfgspec, factory=False)
+        b = CiscoConfParse(config=cfgspec, factory=False)
         b_lines = b.ioscfg
 
         a_hierarchy = list()
@@ -3552,7 +3555,7 @@ class ConfigList(MutableSequence):
         Examples
         --------
 
-        >>> parse = CiscoConfParse(["a a", "b b", "c c", "b b"])
+        >>> parse = CiscoConfParse(config=["a a", "b b", "c c", "b b"])
         >>> # Insert 'g' before any occurance of 'b'
         >>> retval = parse.insert_before("b b", "X X")
         >>> parse.commit()
@@ -3652,7 +3655,7 @@ class ConfigList(MutableSequence):
         Examples
         --------
 
-        >>> parse = CiscoConfParse(["a a", "b b", "c c", "b b"])
+        >>> parse = CiscoConfParse(config=["a a", "b b", "c c", "b b"])
         >>> # Insert 'g' before any occurance of 'b'
         >>> retval = parse.insert_before("b b", "X X")
         >>> parse.commit()
@@ -3755,7 +3758,7 @@ class ConfigList(MutableSequence):
         Examples
         --------
 
-        >>> parse = CiscoConfParse(["a a", "b b", "c c", "b b"])
+        >>> parse = CiscoConfParse(config=["a a", "b b", "c c", "b b"])
         >>> # Insert 'g' before any occurance of 'b'
         >>> retval = parse.ConfigObjs.insert_after("b b", "X X")
         >>> parse.commit()
@@ -5136,7 +5139,7 @@ class ASAConfigList_deprecated(MutableSequence):
         Examples
         --------
 
-        >>> parse = CiscoConfParse(["a", "b", "c", "b"])
+        >>> parse = CiscoConfParse(config=["a", "b", "c", "b"])
         >>> # Insert 'g' after any occurance of 'b'
         >>> retval = parse.insert_after("b", "g")
         >>> parse.commit()
@@ -5701,24 +5704,24 @@ if __name__ == "__main__":
     (opts, args) = pp.parse_args()
 
     if opts.method == "find_lines":
-        diff = CiscoConfParse(opts.config).find_lines(opts.arg1)
+        diff = CiscoConfParse(config=opts.config).find_lines(opts.arg1)
     elif opts.method == "find_children":
-        diff = CiscoConfParse(opts.config).find_children(opts.arg1)
+        diff = CiscoConfParse(config=opts.config).find_children(opts.arg1)
     elif opts.method == "find_all_children":
-        diff = CiscoConfParse(opts.config).find_all_children(opts.arg1)
+        diff = CiscoConfParse(config=opts.config).find_all_children(opts.arg1)
     elif opts.method == "find_blocks":
-        diff = CiscoConfParse(opts.config).find_blocks(opts.arg1)
+        diff = CiscoConfParse(config=opts.config).find_blocks(opts.arg1)
     elif opts.method == "find_parents_w_child":
-        diff = CiscoConfParse(opts.config).find_parents_w_child(
+        diff = CiscoConfParse(config=opts.config).find_parents_w_child(
             opts.arg1, opts.arg2)
     elif opts.method == "find_parents_wo_child":
-        diff = CiscoConfParse(opts.config).find_parents_wo_child(
+        diff = CiscoConfParse(config=opts.config).find_parents_wo_child(
             opts.arg1, opts.arg2)
     elif opts.method == "req_cfgspec_excl_diff":
-        diff = CiscoConfParse(opts.config).req_cfgspec_excl_diff(
+        diff = CiscoConfParse(config=opts.config).req_cfgspec_excl_diff(
             opts.arg1, opts.arg2, opts.arg3.split(","))
     elif opts.method == "req_cfgspec_all_diff":
-        diff = CiscoConfParse(opts.config).req_cfgspec_all_diff(
+        diff = CiscoConfParse(config=opts.config).req_cfgspec_all_diff(
             opts.arg1.split(","))
     elif opts.method == "decrypt":
         pp = CiscoPassword()
