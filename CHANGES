@@ -1,4 +1,4 @@
-1.6.11  202112xx 
+1.6.11  20211212 Update IPv4Obj and IPv6Obj docs 
 1.6.10  20211208 Improve style and readability
 1.6.9   20211206 Small tweak
 1.6.8   20211203 Reorganize build infra and ccp data structures. Fix Github issue #214. Fix for issue documented in Github PR #217.
