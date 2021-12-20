@@ -9,7 +9,7 @@ pypi:
 	make clean
 	poetry build
 	poetry publish
-.PHONY: repo-push-tag
+.PHONY: repo-push
 repo-push:
 	git remote remove origin
 	git remote add origin "git@github.com:mpenning/ciscoconfparse" 
