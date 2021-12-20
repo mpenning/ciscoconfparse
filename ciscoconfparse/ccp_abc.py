@@ -318,7 +318,7 @@ class BaseCfgLine(object, metaclass=ABCMeta):
            >>>
         """
         cobjs = filter(methodcaller("re_search", linespec), self.children)
-        retval = map(attrgetter("text"), cobjs)
+        retval = [ii.text for ii in cobjs]
         # Delete the children
         map(methodcaller("delete"), cobjs)
         return retval
@@ -864,7 +864,7 @@ class BaseCfgLine(object, metaclass=ABCMeta):
         """Return a list with this the text of this object, and 
         with all children in the direct line."""
         retval = [self.text]
-        retval.extend(list(map(attrgetter("text"), self.all_children)))
+        retval.extend([ii.text for ii in self.all_children])
         return retval
 
     @property
