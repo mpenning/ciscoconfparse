@@ -1,3 +1,4 @@
+1.6.12  20211220 Replace map() calls with equivalent list-comprehensions
 1.6.11  20211212 Update IPv4Obj and IPv6Obj docs 
 1.6.10  20211208 Improve style and readability
 1.6.9   20211206 Small tweak
