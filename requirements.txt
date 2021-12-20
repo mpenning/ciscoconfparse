@@ -1,6 +1,6 @@
 #python>=3.6
-passlib==^1.7.4
-dnspython==^2.1.0
+passlib==1.7.4
+dnspython==2.1.0
 loguru==0.5.3
 toml==0.10.2
 ipaddr>=2.1.11
@@ -9,6 +9,6 @@ black>=20.8b1
 fabric==2.6.0
 pytest==6.2.5
 pytest-sugar==6.2.5
-Sphinx==^4.3.0
-sphinx-bootstrap-theme==^0.8.0
+Sphinx==4.3.0
+sphinx-bootstrap-theme==0.8.0
 
