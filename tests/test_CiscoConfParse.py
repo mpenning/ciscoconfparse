@@ -1,6 +1,6 @@
 from operator import attrgetter
 from itertools import repeat
-from copy import deepcopy
+from copy import copy, deepcopy
 try:
     from unittest.mock import patch
 except ImportError:
@@ -16,7 +16,8 @@ sys.path.insert(0, "..")
 from ciscoconfparse.ciscoconfparse import CiscoConfParse, IOSCfgLine, IOSIntfLine
 from ciscoconfparse.ciscoconfparse import CiscoPassword
 from ciscoconfparse.ccp_util import ccp_logger_control
-from ciscoconfparse.ccp_util import IPv4Obj
+from ciscoconfparse.ccp_util import IPv4Obj, IPv6Obj
+from ciscoconfparse.ccp_abc import BaseCfgLine
 from passlib.hash import cisco_type7
 import pytest
 
@@ -414,9 +415,7 @@ def testValues_parent_child_parsing_02(parse_c01):
     # Insert lines here...
     for intf_obj in cfg.find_objects(r"^interface\sGigabitEthernet"):
         # Configured with an access vlan...
-        if " switchport access vlan 100" in set(
-            map(attrgetter("text"), intf_obj.children)
-        ):
+        if " switchport access vlan 100" in set([ii.text for ii in intf_obj.children]):
             intf_obj.insert_after(" spanning-tree portfast")
     cfg.atomic()
 
@@ -986,9 +985,7 @@ def testValues_find_objects_w_parents(parse_c01):
     )
     ## test find_children_w_parents
     for args, result_correct in find_objects_w_parents_Values:
-        test_result = list(
-            map(attrgetter("text"), parse_c01.find_objects_w_parents(**args))
-        )
+        test_result = [ii.text for ii in parse_c01.find_objects_w_parents(**args)]
         assert result_correct == test_result
 
 
@@ -2201,6 +2198,7 @@ def testValues_renumbering_insert_before_nonatomic_02(
 
 def testValues_find_objects_factory_01(parse_c01_factory):
     """Test whether find_objects returns the correct objects"""
+
     # mockobj pretends to be the IOSIntfLine object
     with patch(__name__ + "." + "IOSIntfLine") as mockobj:
         vals = [
@@ -2213,24 +2211,28 @@ def testValues_find_objects_factory_01(parse_c01_factory):
             ("interface GigabitEthernet4/7", 43),
             ("interface GigabitEthernet4/8", 47),
         ]
-        ## Build fake IOSIntfLine objects to validate unit tests...
+        ## Simulate correct IOSIntfLine objects...
         result_correct = list()
+
         # deepcopy a unique mock for every val with itertools.repeat()
-        mockobjs = map(deepcopy, repeat(mockobj, len(vals)))
-        # mock pretends to be an IOSCfgLine so we can test against it
-        for idx, obj in enumerate(mockobjs):
-            obj.text = vals[idx][0]  # Check the text
-            obj.linenum = vals[idx][1]  # Check the line numbers
-            # append the fake IOSIntfLine object to result_correct
-            result_correct.append(obj)
+        mockobjs = [deepcopy(ii) for ii in repeat(mockobj, len(vals))]
+        # correct_intf simulates an IOSCfgLine so we can test against it
+        #########for idx, correct_intf in enumerate(mockobjs):
+        for idx in range(0, len(vals)):
+            correct_intf = BaseCfgLine(text=vals[idx][0])
+            correct_intf.linenum = vals[idx][1]  # correct line numbers
+            # append all to result_correct
+            result_correct.append(correct_intf)
 
-        test_result = parse_c01_factory.find_objects("^interface GigabitEther")
-        for idx, test_result_object in enumerate(test_result):
-            # Check line numbers
-            assert result_correct[idx].linenum == test_result_object.linenum
+        test_intfs = parse_c01_factory.find_objects("^interface GigabitEther")
+        assert len(test_intfs) == len(result_correct)
+
+        for idx, test_intf in enumerate(test_intfs):
+            correct_intf = result_correct[idx]
             # Check text
-            assert result_correct[idx].text == test_result_object.text
-
+            assert correct_intf.text == test_intf.text
+            # Check line numbers
+            assert correct_intf.linenum == test_intf.linenum
 
 def testValues_IOSIntfLine_find_objects_factory_01(parse_c01_factory):
     """test whether find_objects() returns correct IOSIntfLine objects and tests IOSIntfLine methods"""
