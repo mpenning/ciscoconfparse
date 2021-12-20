@@ -1,6 +1,7 @@
 ---
-# Useful walk-through...
+# Useful walk-throughs...
 #     https://www.jeffgeerling.com/blog/2020/travis-cis-new-pricing-plan-threw-wrench-my-open-source-works
+#     https://blog.dennisokeeffe.com/blog/2021-08-08-pytest-with-github-actions
 
 name: Tests
 on:
