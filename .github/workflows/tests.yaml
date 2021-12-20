@@ -53,5 +53,5 @@ jobs:
         with:
           path: ${{ steps.pip-cache.outputs.dir }}
           key: pip|${{ runner.os }}|${{ matrix.python }}|${{ hashFiles('pyproject.toml') }}
-      - run: pip install pytest==2.6.5
+      - run: pip install pytest==6.2.5
       - run: make test
