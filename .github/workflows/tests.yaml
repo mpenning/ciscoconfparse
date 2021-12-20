@@ -2,18 +2,18 @@ name: Tests
 on:
   push:
     branches:
-      - main
+      - master
       - '*.x'
     paths-ignore:
-      - 'docs/**'
+      - 'sphinx-doc/**'
       - '*.md'
       - '*.rst'
   pull_request:
     branches:
-      - main
+      - master
       - '*.x'
     paths-ignore:
-      - 'docs/**'
+      - 'sphinx-doc/**'
       - '*.md'
       - '*.rst'
 jobs:
