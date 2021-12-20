@@ -1559,7 +1559,6 @@ class CiscoConfParse(object):
         if ignore_ws is True:
             parentspec = build_space_tolerant_regex(parentspec)
             #childspec = map(build_space_tolerant_regex, childspec)
-            ccp_logger.info("CHILDSPEC", childspec)
             childspec = [build_space_tolerant_regex(ii) for ii in childspec]
 
         for parentobj in self.find_objects(parentspec):
@@ -2991,10 +2990,8 @@ class CiscoConfParse(object):
                             a_lines.append(obj.text)
                             a_linenums.append(obj.linenum)
                             a_lines.extend(
-                                #map(lambda x: getattr(x, "text"), obj.all_children)
                                 [ii.text for ii in obj.all_children])
                             a_linenums.extend(
-                                #map(lambda x: getattr(x, "linenum"), obj.all_children)
                                 [ii.linenum for ii in obj.all_children])
                     b_lines = list()
                     b_linenums = list()
@@ -3002,10 +2999,8 @@ class CiscoConfParse(object):
                         b_lines.append(obj.text)
                         b_linenums.append(obj.linenum)
                         b_lines.extend(
-                            #map(lambda x: getattr(x, "text"), obj.all_children)
                             [ii.text for ii in obj.all_children])
                         b_linenums.extend(
-                            #map(lambda x: getattr(x, "linenum"), obj.all_children)
                             [ii.linenum for ii in obj.all_children])
                 else:
                     if ignore_order:
@@ -3016,20 +3011,12 @@ class CiscoConfParse(object):
                         a, a_lines, a_linenums = self._sequence_nonparent_lines(
                             a_nonparents, b_nonparents)
                     else:
-                        a_lines = list(
-                            map(lambda x: getattr(x, "text"),
-                                getattr(adiff_level, attr)))
+                        a_lines = [ii.text for ii in getattr(adiff_level, attr)]
                         # Build a map from a_lines index to a.ConfigObjs index
-                        a_linenums = list(
-                            map(lambda x: getattr(x, "linenum"),
-                                getattr(adiff_level, attr)))
-                    b_lines = list(
-                        map(lambda x: getattr(x, "text"),
-                            getattr(bdiff_level, attr)))
+                        a_linenums = [ii.linenum for ii in getattr(adiff_level, attr)]
+                    b_lines = [ii.text for ii in getattr(bdiff_level, attr)]
                     # Build a map from b_lines index to b.ConfigObjs index
-                    b_linenums = list(
-                        map(lambda x: getattr(x, "linenum"),
-                            getattr(bdiff_level, attr)))
+                    b_linenums = [ii.linenum for ii in getattr(bdiff_level, attr)]
 
                 ###
                 ### Mark diffs here
