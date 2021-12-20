@@ -24,17 +24,17 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - {name: Linux, python: '3.10', os: ubuntu-latest, tox: py310}
-          - {name: Windows, python: '3.10', os: windows-latest, tox: py310}
-          - {name: Mac, python: '3.10', os: macos-latest, tox: py310}
-          - {name: '3.11-dev', python: '3.11-dev', os: ubuntu-latest, tox: py311}
-          - {name: '3.9', python: '3.9', os: ubuntu-latest, tox: py39}
-          - {name: '3.8', python: '3.8', os: ubuntu-latest, tox: py38}
-          - {name: '3.7', python: '3.7', os: ubuntu-latest, tox: py37}
-          - {name: 'PyPy', python: 'pypy-3.7', os: ubuntu-latest, tox: pypy37}
+          - {name: Linux, python: '3.10', os: ubuntu-latest, pytest: py310}
+          - {name: Windows, python: '3.10', os: windows-latest, pytest: py310}
+          - {name: Mac, python: '3.10', os: macos-latest, pytest: py310}
+          - {name: '3.11-dev', python: '3.11-dev', os: ubuntu-latest, pytest: py311}
+          - {name: '3.9', python: '3.9', os: ubuntu-latest, pytest: py39}
+          - {name: '3.8', python: '3.8', os: ubuntu-latest, pytest: py38}
+          - {name: '3.7', python: '3.7', os: ubuntu-latest, pytest: py37}
+          - {name: 'PyPy', python: 'pypy-3.7', os: ubuntu-latest, pytest: pypy37}
           - {name: 'ciscoconfparse Minimum Versions', python: '3.10', os: ubuntu-latest}
           - {name: 'ciscoconfparse Development Versions', python: '3.7', os: ubuntu-latest}
-          - {name: Typing, python: '3.10', os: ubuntu-latest, tox: typing}
+          - {name: Typing, python: '3.10', os: ubuntu-latest, pytest: typing}
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
