@@ -144,6 +144,33 @@ __copyright__ = "2007-{0}, {1}".format(time.strftime("%Y"), __author__)
 __license__ = "GPLv3"
 __status__ = "Production"
 
+def build_space_tolerant_regex(linespec):
+    r"""SEMI-PRIVATE: Accept a string, and return a string with all
+    spaces replaced with '\s+'"""
+
+    # Unicode below...
+    backslash = "\x5c"
+    # escaped_space = "\\s+" (not a raw string)
+    if sys.version_info >= (
+            3,
+            0,
+            0,
+    ):
+        escaped_space = (backslash + backslash + "s+").translate("utf-8")
+    else:
+        escaped_space = backslash + backslash + "s+"
+
+    if isinstance(linespec, str) or isinstance(linespec, unicode):
+        linespec = re.sub(r"\s+", escaped_space, linespec)
+
+    elif isinstance(linespec, list) or isinstance(linespec, tuple):
+        for idx in range(0, len(linespec)):
+            ## Ensure this list element is a string...
+            tmp = linespec[idx]
+            assert isinstance(tmp, str) or isinstance(tmp, unicode)
+            linespec[idx] = re.sub(r"\s+", escaped_space, tmp)
+
+    return linespec
 
 class CiscoConfParse(object):
     """Parses Cisco IOS configurations and answers queries about the configs."""
@@ -735,7 +762,7 @@ class CiscoConfParse(object):
         [<IOSCfgLine # 0 'ltm pool FOO'>, <IOSCfgLine # 1 '    members' (parent is # 0)>, <IOSCfgLine # 2 '        k8s-05.localdomain:8443' (parent is # 1)>, <IOSCfgLine # 5 '            state up' (parent is # 2)>]
         >>>
         >>> # Get the a list of text lines for this branch...
-        >>> list(map(attrgetter('text'), branches[0]))
+        >>> [ii.text for ii in branches[0]]
         ['ltm pool FOO', '    members', '        k8s-05.localdomain:8443', '            state up']
         >>>
         >>> # Get the config text of the root object of the branch...
@@ -1049,7 +1076,7 @@ class CiscoConfParse(object):
                             (linespec, exactmatch))
 
         if ignore_ws:
-            linespec = self._build_space_tolerant_regex(linespec)
+            linespec = build_space_tolerant_regex(linespec)
         return self._find_line_OBJ(linespec, exactmatch)
 
     # This method is on CiscoConfParse()
@@ -1072,7 +1099,7 @@ class CiscoConfParse(object):
             A list of matching configuration lines
         """
         if ignore_ws:
-            linespec = self._build_space_tolerant_regex(linespec)
+            linespec = build_space_tolerant_regex(linespec)
 
         if exactmatch is False:
             # Return the lines in self.ioscfg, which match linespec
@@ -1121,7 +1148,7 @@ class CiscoConfParse(object):
         >>>
         """
         if ignore_ws:
-            linespec = self._build_space_tolerant_regex(linespec)
+            linespec = build_space_tolerant_regex(linespec)
 
         if exactmatch is False:
             parentobjs = self._find_line_OBJ(linespec)
@@ -1200,7 +1227,7 @@ class CiscoConfParse(object):
         """
 
         if ignore_ws:
-            linespec = self._build_space_tolerant_regex(linespec)
+            linespec = build_space_tolerant_regex(linespec)
 
         if exactmatch is False:
             parentobjs = self._find_line_OBJ(linespec)
@@ -1311,7 +1338,7 @@ class CiscoConfParse(object):
         tmp = set([])
 
         if ignore_ws:
-            linespec = self._build_space_tolerant_regex(linespec)
+            linespec = build_space_tolerant_regex(linespec)
 
         # Find line objects maching the spec
         if exactmatch is False:
@@ -1427,8 +1454,8 @@ class CiscoConfParse(object):
         """
 
         if ignore_ws:
-            parentspec = self._build_space_tolerant_regex(parentspec)
-            childspec = self._build_space_tolerant_regex(childspec)
+            parentspec = build_space_tolerant_regex(parentspec)
+            childspec = build_space_tolerant_regex(childspec)
 
         return list(
             filter(
@@ -1530,10 +1557,10 @@ class CiscoConfParse(object):
         assert isinstance(childspec, list) or isinstance(childspec, tuple)
         retval = list()
         if ignore_ws is True:
-            parentspec = self._build_space_tolerant_regex(parentspec)
-            #childspec = map(self._build_space_tolerant_regex, childspec)
+            parentspec = build_space_tolerant_regex(parentspec)
+            #childspec = map(build_space_tolerant_regex, childspec)
             ccp_logger.info("CHILDSPEC", childspec)
-            childspec = [ii._build_space_tolerant_regex() for ii in childspec]
+            childspec = [build_space_tolerant_regex(ii) for ii in childspec]
 
         for parentobj in self.find_objects(parentspec):
             results = set([])
@@ -1563,7 +1590,7 @@ class CiscoConfParse(object):
         ----------
         parentspec : str
             Text regular expression for the :class:`~models_cisco.IOSCfgLine` object to be matched; this must match the parent's line
-        childspec : str
+        childspec : list
             A list of text regular expressions to be matched among the children
         ignore_ws : bool
             boolean that controls whether whitespace is ignored
@@ -1574,9 +1601,14 @@ class CiscoConfParse(object):
             A list of matching parent :class:`~models_cisco.IOSCfgLine` objects"""
         assert bool(getattr(childspec, "append"))  # Childspec must be a list
         retval = list()
-        if ignore_ws:
-            parentspec = self._build_space_tolerant_regex(parentspec)
-            childspec = map(self._build_space_tolerant_regex, childspec)
+        if ignore_ws is True:
+            parentspec = build_space_tolerant_regex(parentspec)
+            if isinstance(childspec, list):
+                childspec = [build_space_tolerant_regex(ii) for ii in childspec]
+
+            else:
+                error = "Cannot call build_space_tolerant_regex() on childspec"
+                raise ValueError(error)
 
         for parentobj in self.find_objects(parentspec):
             results = set([])
@@ -1753,8 +1785,8 @@ class CiscoConfParse(object):
         """
 
         if ignore_ws:
-            parentspec = self._build_space_tolerant_regex(parentspec)
-            childspec = self._build_space_tolerant_regex(childspec)
+            parentspec = build_space_tolerant_regex(parentspec)
+            childspec = build_space_tolerant_regex(childspec)
 
         return [
             obj for obj in self.find_objects(parentspec)
@@ -1942,8 +1974,8 @@ class CiscoConfParse(object):
 
         """
         if ignore_ws:
-            parentspec = self._build_space_tolerant_regex(parentspec)
-            childspec = self._build_space_tolerant_regex(childspec)
+            parentspec = build_space_tolerant_regex(parentspec)
+            childspec = build_space_tolerant_regex(childspec)
 
         retval = set([])
         childobjs = self._find_line_OBJ(childspec)
@@ -2042,8 +2074,8 @@ class CiscoConfParse(object):
 
         """
         if ignore_ws:
-            parentspec = self._build_space_tolerant_regex(parentspec)
-            childspec = self._build_space_tolerant_regex(childspec)
+            parentspec = build_space_tolerant_regex(parentspec)
+            childspec = build_space_tolerant_regex(childspec)
 
         retval = set([])
         childobjs = self._find_line_OBJ(childspec)
@@ -2655,9 +2687,9 @@ class CiscoConfParse(object):
         """
 
         rgx = dict()
-        if ignore_ws:
+        if ignore_ws is True:
             for line in cfgspec:
-                rgx[line] = self._build_space_tolerant_regex(line)
+                rgx[line] = build_space_tolerant_regex(line)
 
         skip_cfgspec = dict()
         retval = list()
@@ -3227,35 +3259,6 @@ class CiscoConfParse(object):
 
     ### The methods below are marked SEMI-PRIVATE because they return an object
     ###  or iterable of objects instead of the configuration text itself.
-    # This method is on CiscoConfParse()
-    def _build_space_tolerant_regex(self, linespec):
-        r"""SEMI-PRIVATE: Accept a string, and return a string with all
-        spaces replaced with '\s+'"""
-
-        # Unicode below...
-        backslash = "\x5c"
-        # escaped_space = "\\s+" (not a raw string)
-        if sys.version_info >= (
-                3,
-                0,
-                0,
-        ):
-            escaped_space = (backslash + backslash + "s+").translate("utf-8")
-        else:
-            escaped_space = backslash + backslash + "s+"
-
-        LINESPEC_LIST_TYPE = bool(getattr(linespec, "append", False))
-
-        if not LINESPEC_LIST_TYPE:
-            assert bool(getattr(linespec, "upper", False))  # Ensure it's a str
-            linespec = re.sub(r"\s+", escaped_space, linespec)
-        else:
-            for idx in range(0, len(linespec)):
-                ## Ensure this element is a string
-                assert bool(getattr(linespec[idx], "upper", False))
-                linespec[idx] = re.sub(r"\s+", escaped_space, linespec[idx])
-
-        return linespec
 
     # This method is on CiscoConfParse()
     def _find_line_OBJ(self, linespec, exactmatch=False):
