@@ -54,4 +54,5 @@ jobs:
           path: ${{ steps.pip-cache.outputs.dir }}
           key: pip|${{ runner.os }}|${{ matrix.python }}|${{ hashFiles('pyproject.toml') }}|${{ hashFiles('requirements.txt') }}
       - run: pip install pytest==6.2.5
+      - run: pip install -r requirements.txt
       - run: make test
