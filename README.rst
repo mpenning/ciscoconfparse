@@ -3,7 +3,7 @@ ciscoconfparse
 ==============
 
 .. image:: https://github.com/mpenning/ciscoconfparse/actions/workflows/tests.yaml/badge.svg
-   :target: https://github.com/mpenning/ciscoconfparse/
+   :target: https://github.com/mpenning/ciscoconfparse/actions
    :alt: Github unittest workflow
 
 .. image:: https://img.shields.io/pypi/v/ciscoconfparse.svg
