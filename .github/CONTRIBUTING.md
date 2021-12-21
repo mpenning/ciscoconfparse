@@ -1,7 +1,7 @@
 # Contribution Guidelines
 
-Before opening any issues or proposing any pull requests, please read this
-document completely.
+Before opening any [ciscoconfparse][1] issues or proposing any pull
+requests, please read this document completely.
 
 To get the greatest chance of helpful responses, please also observe the
 following additional notes:
