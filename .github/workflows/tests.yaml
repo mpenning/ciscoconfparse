@@ -43,7 +43,6 @@ jobs:
           - {name: 'PyPy', python: 'pypy-3.7', os: ubuntu-latest, pytest: pypy37}
           - {name: 'ciscoconfparse Minimum Versions', python: '3.10', os: ubuntu-latest}
           - {name: 'ciscoconfparse Development Versions', python: '3.7', os: ubuntu-latest}
-          - {name: Typing, python: '3.10', os: ubuntu-latest, pytest: typing}
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
