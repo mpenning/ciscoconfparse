@@ -2,9 +2,9 @@
 ciscoconfparse
 ==============
 
-.. image:: https://travis-ci.org/mpenning/ciscoconfparse.png?branch=master
-   :target: https://travis-ci.org/mpenning/ciscoconfparse
-   :alt: Travis CI Status
+.. image:: https://github.com/mpenning/ciscoconfparse/actions/workflows/tests.yaml/badge.svg
+   :target: https://github.com/mpenning/ciscoconfparse/
+   :alt: Github unittest workflow
 
 .. image:: https://img.shields.io/pypi/v/ciscoconfparse.svg
    :target: https://pypi.python.org/pypi/ciscoconfparse/
@@ -178,14 +178,13 @@ Bug Tracker and Support
 Unit-Tests
 ==========
 
-`Travis CI project <https://travis-ci.org>`_ tests ciscoconfparse on Python versions 3.6 and higher, as well as a `pypy JIT`_ executable.
+`Github workflow <https://github.com/mpenning/ciscoconfparse/tree/master/.github/workflows>`_ tests ciscoconfparse on Python versions 3.6 and higher, as well as a `pypy JIT`_ executable.
 
 Click the image below for details; the current build status is:
 
-.. image:: https://travis-ci.org/mpenning/ciscoconfparse.png?branch=master
-   :align: center
-   :target: https://travis-ci.org/mpenning/ciscoconfparse
-   :alt: Travis CI Status
+.. image:: https://github.com/mpenning/ciscoconfparse/actions/workflows/tests.yaml/badge.svg
+   :target: https://github.com/mpenning/ciscoconfparse/
+   :alt: Github unittest workflow
 
 .. _`License and Copyright`:
 
