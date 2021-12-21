@@ -1,7 +1,7 @@
 # Contribution Guidelines
 
-Before opening any issues or proposing any pull requests, please read this
-document completely.
+Before opening any [ciscoconfparse][1] issues or proposing any pull
+requests, please read this document completely.
 
 To get the greatest chance of helpful responses, please also observe the
 following additional notes:
@@ -51,6 +51,15 @@ Please be aware of the following things when filing bug reports:
    If you do not provide all of these things, it could take us much longer to
    fix your problem. If we ask you to clarify these and you never respond, we
    may close your issue without fixing it.
+
+## Pull Requests
+
+1. Please email Mike Pennington before writing a PR.  We might not be
+   interested in the feature, or already have plans to fix an issue.
+   Unsolicited PRs may be closed.
+
+2. PRs must include tests for the functionality being added, or bugs being
+   fixed.  Needless to say, your PR itself must not fail existing tests.
 
   [1]: https://github.com/mpenning/ciscoconfparse
   [2]: https://github.com/mpenning/ciscoconfparse/issues/new/choose
