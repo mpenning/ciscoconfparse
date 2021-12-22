@@ -1,6 +1,7 @@
 ---
 # Documentation reference
 #     https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/manually-creating-a-single-issue-template-for-your-repository
+
 blank_issues_enabled: false
 contact_links:
   - name: Security issue
