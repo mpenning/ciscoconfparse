@@ -24,6 +24,10 @@ on:
       - 'sphinx-doc/**'
       - '*.md'
       - '*.rst'
+
+env:
+    FORCE_COLOR: 1
+
 jobs:
   tests:
     name: ${{ matrix.name }}
