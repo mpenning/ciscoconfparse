@@ -1,6 +1,9 @@
 ---
 # Documentation reference
 #     https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/manually-creating-a-single-issue-template-for-your-repository
+#
+# The titles of markdown (*.md) files in `.github/ISSUE_TEMPLATE/*.md`
+# determine what buttons are shown when opening a github issue...
 
 blank_issues_enabled: false
 contact_links:
