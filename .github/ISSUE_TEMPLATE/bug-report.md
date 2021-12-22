@@ -1,12 +1,12 @@
 ---
-name: Bug Report
-description: File a ciscoconfparse bug report
-title: "[Bug]: "
-labels: ["bug", "triage"]
-assignees:
-  - mpenning
+- name: Bug Report
+  - description: File a ciscoconfparse bug report
+  - title: "[Bug]: "
+  - labels: ["bug", "triage"]
+  - assignees:
+    - mpenning
 
-body:
+- body:
   - type: markdown
     attributes:
       value: |
@@ -58,7 +58,7 @@ body:
 
 
 
-Environment:
-- Operating System:
-- Python version:
-- ciscoconfparse version:
+- Environment:
+  - Operating System:
+  - Python version:
+  - ciscoconfparse version:
