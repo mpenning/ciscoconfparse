@@ -4,12 +4,16 @@
 #
 # The titles of markdown (*.md) files in `.github/ISSUE_TEMPLATE/*.md`
 # determine what buttons are shown when opening a github issue...
-
+#
+# yaml formatting checked with http://www.yamllint.com/
+#
 blank_issues_enabled: false
-contact_links:
-  - name: Security issue
+contact_links: 
+  - 
+    about: "Do not report security issues publicly. Email our security contact."
+    name: "Security issue"
     url: penningtonthing@gmail.com
-    about: Do not report security issues publicly. Email our security contact.
-  - name: Questions
-    url: https://stackoverflow.com/questions/tagged/ciscoconfparse
-    about: Search for and ask questions about your code on Stack Overflow.
+  - 
+    about: "Search for and ask questions about your code on Stack Overflow."
+    name: Questions
+    url: "https://stackoverflow.com/questions/tagged/ciscoconfparse"
