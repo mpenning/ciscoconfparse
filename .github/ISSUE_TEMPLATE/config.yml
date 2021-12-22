@@ -1,0 +1,11 @@
+---
+# Documentation reference
+#     https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/manually-creating-a-single-issue-template-for-your-repository
+blank_issues_enabled: false
+contact_links:
+  - name: Security issue
+    url: penningtonthing@gmail.com
+    about: Do not report security issues publicly. Email our security contact.
+  - name: Questions
+    url: https://stackoverflow.com/questions/tagged/ciscoconfparse
+    about: Search for and ask questions about your code on Stack Overflow.
