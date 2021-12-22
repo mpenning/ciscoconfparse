@@ -4,14 +4,14 @@ about: Report a bug in ciscoconfparse (not other projects which depend on ciscoc
 ---
 
 <!--
-This issue tracker is a tool to address bugs in ciscoconfpare itself. Please use
-Stack Overflow for questions about your own code.
+This issue tracker is a tool to address bugs in ciscoconfparse itself. Please 
+use Stack Overflow for questions about your own code.
 
 Replace this comment with a clear outline of what the bug is.
 -->
 
 <!--
-Describe how to replicate the bug.
+Describe how to replicate the ciscoconfparse bug.
 
 Include a minimal reproducible example that demonstrates the bug.
 Include the full traceback if there was an exception.
