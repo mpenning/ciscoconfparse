@@ -428,6 +428,42 @@ def is_valid_ipv6_addr(input_str=""):
         return True
     return False
 
+def ip_factory(addr="", stdlib=False):
+    """
+    Accept an IPv4 or IPv6 address / prefix.  Return an appropriate IPv4 or IPv6 object
+
+    Set stdlib=True if you only want IP objects from the python stdlib.
+
+    Throw an error if addr cannot be parsed as a valid IP.
+    """
+    assert addr!=""
+    retval = None
+    if is_valid_ipv4_addr(addr):
+        tmp = IPv4Obj(addr)
+        if stdlib is False:
+            retval = tmp
+        else:
+            if tmp.prefixlen==32:
+                # Return IPv4Address()
+                retval = tmp.ip
+            else:
+                # Return IPv4Network()
+                retval = tmp.network
+    elif is_valid_ipv6_addr(addr):
+        tmp = IPv6Obj(addr)
+        if stdlib is False:
+            retval = tmp
+        else:
+            if tmp.prefixlen==128:
+                # Return IPv6Address()
+                retval = tmp.ip
+            else:
+                # Return IPv6Network()
+                retval = tmp.network
+    else:
+        raise ValueError("Cannot parse '%s' into a valid IP object" % addr)
+    assert retval is not None
+    return retval
 
 def collapse_addresses(network_list):
     """
@@ -455,6 +491,7 @@ def collapse_addresses(network_list):
             ValueError("collapse_addresses() isn't sure how to handle %s" % arg)
 
     return ipaddress.collapse_addresses([ip_net(ii) for ii in network_list])
+
 
 
 ## Emulate the old behavior of ipaddr.IPv4Network in Python2, which can use

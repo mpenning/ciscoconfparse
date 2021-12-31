@@ -7,9 +7,9 @@ import os
 sys.path.insert(0, "..")
 
 from ciscoconfparse.ccp_util import _RGX_IPV4ADDR, _RGX_IPV6ADDR
-from ciscoconfparse.ccp_util import IPv4Obj, L4Object
-from ciscoconfparse.ccp_util import CiscoRange
+from ciscoconfparse.ccp_util import IPv4Obj, L4Object, ip_factory
 from ciscoconfparse.ccp_util import IPv6Obj
+from ciscoconfparse.ccp_util import CiscoRange
 from ciscoconfparse.ccp_util import dns_lookup, reverse_dns_lookup
 from ciscoconfparse.ccp_util import collapse_addresses
 import pytest
@@ -212,6 +212,24 @@ def testIPv4Obj_attributes():
     for attribute, result_correct in results_correct:
 
         assert getattr(test_object, attribute) == result_correct
+
+def test_ip_factory_inputs_01():
+    """Test input / output of ccp_util.ip_factory()"""
+    # Test whether IPv4Obj is retured
+    test_inputs = (
+            # Test format...
+            #    (<dict with test inputs>, result_correct)
+            (ip_factory(**{'addr': '1.1.1.1/16', 'stdlib': False}), IPv4Obj("1.1.1.1/16")),
+            (ip_factory(**{'addr': '1.1.1.1/16', 'stdlib': True}),  IPv4Network("1.1.0.0/16")),
+            (ip_factory(**{'addr': '1.1.1.1/32', 'stdlib': False}), IPv4Obj("1.1.1.1/32")),
+            (ip_factory(**{'addr': '1.1.1.1/32', 'stdlib': True}),  IPv4Address("1.1.1.1")),
+            (ip_factory(**{'addr': '::1/64', 'stdlib': False}), IPv6Obj("::1/64")),
+            (ip_factory(**{'addr': '::1/64', 'stdlib': True}),  IPv6Network("::0/64")),
+            (ip_factory(**{'addr': '::1/128', 'stdlib': False}), IPv6Obj("::1/128")),
+            (ip_factory(**{'addr': '::1/128', 'stdlib': True}),  IPv6Address("::1")),
+        )
+    for test_input, result_correct in test_inputs:
+        assert test_input==result_correct
 
 
 def testIPv6Obj_attributes():
