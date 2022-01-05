@@ -9,7 +9,7 @@ import os
 from ciscoconfparse.ccp_util import junos_unsupported, UnsupportedFeatureWarning
 from ciscoconfparse.ccp_util import IPv4Obj
 
-from loguru import logger as ccp_logger
+from loguru import logger
 
 r""" ccp_abc.py - Parse, Query, Build, and Modify IOS-style configurations
 
@@ -356,7 +356,7 @@ class BaseCfgLine(object, metaclass=ABCMeta):
         #   only strings and *CfgLine() are allowed...
         if not getattr(insertstr, "capitalize", False) and not isinstance(insertstr, 'BaseCfgLine'):
             error = "Cannot insert object type - %s" % type(insertstr)
-            ccp_logger.error(error)
+            logger.error(error)
             raise NotImplementedError(error)
 
         retval = None
@@ -368,7 +368,7 @@ class BaseCfgLine(object, metaclass=ABCMeta):
         error =  "FATAL CALL: in %s line %s %s(insertstr='%s')" % (calling_filename, calling_lineno, calling_function, insertstr)
 
         if self.confobj.debug >= 1:
-            ccp_logger.debug("Inserting '%s' after '%s'" % (insertstr, self))
+            logger.debug("Inserting '%s' after '%s'" % (insertstr, self))
 
         if getattr(insertstr, "capitalize", False):
             # Handle insertion of a plain-text line
@@ -379,7 +379,7 @@ class BaseCfgLine(object, metaclass=ABCMeta):
             retval = self.confobj.insert_after(self, insertstr.text, atomic=False)
 
         else:
-            ccp_logger.error(error)
+            logger.error(error)
             raise ValueError(error)
 
         #retval = self.confobj.insert_after(self, insertstr, atomic=False)
@@ -632,7 +632,7 @@ class BaseCfgLine(object, metaclass=ABCMeta):
            >>>
         """
         mm = re.search(regex, self.text)
-        if not (mm is None):
+        if (mm is not None):
             return mm.group(group)
         return default
 
@@ -655,7 +655,7 @@ class BaseCfgLine(object, metaclass=ABCMeta):
         """
         ## TODO: use re.escape(regex) on all regex, instead of bare regex
         mm = re.search(regex, self.text)
-        if not (mm is None):
+        if (mm is not None):
             return self.text
         return default
 
@@ -745,8 +745,8 @@ class BaseCfgLine(object, metaclass=ABCMeta):
 
         """
         mm = re.search(regex, self.text)
-        if not (mm is None):
-            if not (mm.group(group) is None):
+        if (mm is not None):
+            if (mm.group(group) is not None):
                 return result_type(mm.group(group))
 
         if untyped_default:
@@ -833,7 +833,7 @@ class BaseCfgLine(object, metaclass=ABCMeta):
         if recurse is False:
             for cobj in self.children:
                 mm = re.search(regex, cobj.text)
-                if not (mm is None):
+                if (mm is not None):
                     return result_type(mm.group(group))
             ## Ref Github issue #121
             if untyped_default:
@@ -843,7 +843,7 @@ class BaseCfgLine(object, metaclass=ABCMeta):
         else:
             for cobj in self.all_children:
                 mm = re.search(regex, cobj.text)
-                if not (mm is None):
+                if (mm is not None):
                     return result_type(mm.group(group))
             ## Ref Github issue #121
             if untyped_default:

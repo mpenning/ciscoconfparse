@@ -1,6 +1,3 @@
-PY27DEVTESTS=cd tests;find ./* -name 'test_*.py' -exec /opt/virtual_env/py27_test/bin/py.test -s {} \;
-PY34DEVTESTS=cd tests;find ./* -name 'test_*.py' -exec /opt/virtual_env/py34_test/bin/py.test -s {} \;
-BITBUCKETPUSH = $(shell bash -c 'read -s -p "Bitbucket Password: " pwd; hg push "https://mpenning:$$pwd@bitbucket.org/mpenning/ciscoconfparse"')
 DOCHOST ?= $(shell bash -c 'read -p "documentation host: " dochost; echo $$dochost')
 VERSION := $(shell grep version pyproject.toml | sed -r 's/^version\s*=\s*"(\S+?)"/\1/g')
 
@@ -14,9 +11,23 @@ repo-push:
 	git remote remove origin
 	git remote add origin "git@github.com:mpenning/ciscoconfparse" 
 	git push git@github.com:mpenning/ciscoconfparse.git
+	git push origin +master
+.PHONY: repo-push-force
+repo-push-force:
+	git remote remove origin
+	git remote add origin "git@github.com:mpenning/ciscoconfparse" 
+	git push git@github.com:mpenning/ciscoconfparse.git
 	git push --force-with-lease origin +master
 .PHONY: repo-push-tag
 repo-push-tag:
+	git remote remove origin
+	git remote add origin "git@github.com:mpenning/ciscoconfparse" 
+	git tag -a ${VERSION} -m "Tag with ${VERSION}"
+	git push git@github.com:mpenning/ciscoconfparse.git
+	git push --tags origin +master
+	git push --tags origin ${VERSION}
+.PHONY: repo-push-tag-force
+repo-push-tag-force:
 	git remote remove origin
 	git remote add origin "git@github.com:mpenning/ciscoconfparse" 
 	git tag -a ${VERSION} -m "Tag with ${VERSION}"
@@ -32,25 +43,26 @@ tutorial:
 	rst2html5 --jquery --reveal-js --pretty-print-code --embed-stylesheet --embed-content --embed-images tutorial/ccp_tutorial.rst > tutorial/ccp_tutorial.html
 .PHONY: parse-ios
 parse-ios:
-	cd tests; python parse_test.py 1 | less
+	cd tests; python parse_test.py 1 | less -XR
 .PHONY: parse-ios-factory
 parse-ios-factory:
-	cd tests; python parse_test.py 2 | less
+	cd tests; python parse_test.py 2 | less -XR
 .PHONY: parse-ios-banner
 parse-iosxr-banner:
-	cd tests; python parse_test.py 3 | less
+	cd tests; python parse_test.py 3 | less -XR
 .PHONY: perf-acl
 perf-acl:
-	cd tests; python performance_case.py 5 | less
+	cd tests; python performance_case.py 5 | less -XR
 .PHONY: perf-factory-intf
 perf-factory-intf:
-	cd tests; python performance_case.py 6 | less
+	cd tests; python performance_case.py 6 | less -XR
 .PHONY: devpkgs
 devpkgs:
 	pip install --upgrade pip
 	pip install --upgrade virtualenv
 	pip install --upgrade virtualenvwrapper
 	pip install --upgrade passlib
+	pip install --upgrade loguru==0.5.3
 	pip install --upgrade pss
 	pip install --upgrade mock
 	pip install --upgrade sphinx
@@ -71,15 +83,6 @@ flake:
 coverage:
 	@echo "[[[ py.test Coverage ]]]"
 	cd tests;py.test --cov-report term-missing --cov=ciscoconfparse.py -s -v
-.PHONY: devtest
-devtest:
-	@echo "[[[ Python 2.7 tests ]]]"
-	/opt/virtual_env/py27_test/bin/python ciscoconfparse/ciscoconfparse.py;
-	$(PY27DEVTESTS)
-	#@echo "[[[ Python 3.4 tests ]]]"
-	#/opt/virtual_env/py34_test/bin/python ciscoconfparse/ciscoconfparse.py
-	$(PY34DEVTESTS)
-	make clean
 .PHONY: doctest
 doctest:
 	# Run the doc tests

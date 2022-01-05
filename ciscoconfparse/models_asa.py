@@ -457,7 +457,7 @@ class ASAName(ASACfgLine):
         attributes"""
         super(ASAName, self).__init__(*args, **kwargs)
         mm = _RE_NAMEOBJECT.search(self.text)
-        if not (mm is None):
+        if (mm is not None):
             self._mm_results = mm.groupdict()  # All regex match results
         else:
             raise ValueError
@@ -569,7 +569,7 @@ class ASAObjGroupNetwork(ASACfgLine):
 
             ## Parse out 'object-group ...' and 'group-object' lines...
             mm = _RE_NETOBJECT.search(obj.text)
-            if not (mm is None):
+            if (mm is not None):
                 net_obj = mm.groupdict()
                 if net_obj["netmask"] == "255.255.255.255":
                     net_obj["host"] = net_obj["network"]
@@ -690,7 +690,7 @@ class ASAObjGroupService(ASACfgLine):
 
             ## Parse out 'service-object ...' and 'port-object' lines...
             mm = _RE_PORTOBJECT.search(obj.text)
-            if not (mm is None):
+            if (mm is not None):
                 svc_obj = mm.groupdict()
             else:
                 svc_obj = dict()
@@ -1119,7 +1119,7 @@ class ASAAclLine(ASACfgLine):
         """Provide attributes on Cisco ASA Access-Lists"""
         super(ASAAclLine, self).__init__(*args, **kwargs)
         mm = _RE_ACLOBJECT.search(self.text)
-        if not (mm is None):
+        if (mm is not None):
             self._mm_results = mm.groupdict()  # All regex match results
         else:
             raise ValueError("[FATAL] models_asa cannot parse '{0}'".format(self.text))

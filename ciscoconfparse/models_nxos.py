@@ -1272,7 +1272,7 @@ class BaseNXOSIntfLine(NXOSCfgLine):
         ##   default value is True
         for obj in self.children:
             switch = obj.re_match(r"^\s*(switchport\snoneg\S*)\s*$")
-            if not (switch is None):
+            if (switch is not None):
                 return False
         return True
 
@@ -2108,7 +2108,7 @@ class NXOSRouteLine(BaseNXOSRouteLine):
             self.feature = "ipv6 route"
             self._address_family = "ipv6"
             mm = _RE_IPV6_ROUTE.search(self.text)
-            if not (mm is None):
+            if (mm is not None):
                 self.route_info = mm.groupdict()
             else:
                 raise ValueError("Could not parse '{0}'".format(self.text))
@@ -2116,7 +2116,7 @@ class NXOSRouteLine(BaseNXOSRouteLine):
             self.feature = "ip route"
             self._address_family = "ip"
             mm = _RE_IP_ROUTE.search(self.text)
-            if not (mm is None):
+            if (mm is not None):
                 self.route_info = mm.groupdict()
             else:
                 raise ValueError("Could not parse '{0}'".format(self.text))
@@ -2254,7 +2254,7 @@ class NXOSAaaGroupServerLine(BaseCfgLine):
 
         REGEX = r"^aaa\sgroup\sserver\s(?P<protocol>\S+)\s(?P<group>\S+)\s*$"
         mm = re.search(REGEX, self.text)
-        if not (mm is None):
+        if (mm is not None):
             groups = mm.groupdict()
             self.protocol = groups.get("protocol", "")
             self.group = groups.get("group", "")
@@ -2288,7 +2288,7 @@ class NXOSAaaGroupServerLine(BaseCfgLine):
         rgx_priv = re.compile(r"^\s+server-private\s+(\S+)\s")
         for cobj in self.children:
             mm = rgx_priv.search(cobj.text)
-            if not (mm is None):
+            if (mm is not None):
                 retval.add(mm.group(1))  # This is the server's ip
         return retval
 

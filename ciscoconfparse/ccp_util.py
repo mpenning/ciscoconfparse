@@ -33,7 +33,7 @@ else:
     from ipaddress import IPv4Network, IPv6Network, IPv4Address, IPv6Address
     import ipaddress
 
-from loguru import logger as ccp_logger
+from loguru import logger as logger
 
 r""" ccp_util.py - Parse, Query, Build, and Modify IOS-style configurations
 
@@ -59,10 +59,66 @@ r""" ccp_util.py - Parse, Query, Build, and Modify IOS-style configurations
      mike [~at~] pennington [/dot\] net
 """
 
+# Maximum ipv4 as an integer
+IPV4_MAXINT = 4294967295
+# Maximum ipv6 as an integer
+IPV6_MAXINT = 340282366920938463463374607431768211455
+IPV4_MAXSTR_LEN = 15 + 3  # String length with periods, slash, and masklen
+IPV6_MAXSTR_LEN = 39 + 4  # String length with colons, slash and masklen
+
+_IPV6_REGEX_STR = r"""(?!:::\S+?$)       # Negative Lookahead for 3 colons
+ (?P<addr>                               # Begin a group named 'addr'
+ (?P<opt1>{0}(?::{0}){{7}})              # no double colons, option 1
+|(?P<opt2>(?:{0}:){{1}}(?::{0}){{1,6}})  # match fe80::1
+|(?P<opt3>(?:{0}:){{2}}(?::{0}){{1,5}})  # match fe80:a::1
+|(?P<opt4>(?:{0}:){{3}}(?::{0}){{1,4}})  # match fe80:a:b::1
+|(?P<opt5>(?:{0}:){{4}}(?::{0}){{1,3}})  # match fe80:a:b:c::1
+|(?P<opt6>(?:{0}:){{5}}(?::{0}){{1,2}})  # match fe80:a:b:c:d::1
+|(?P<opt7>(?:{0}:){{6}}(?::{0}){{1,1}})  # match fe80:a:b:c:d:e::1
+|(?P<opt8>:(?::{0}){{1,7}})              # leading double colons
+|(?P<opt9>(?:{0}:){{1,7}}:)              # trailing double colons
+|(?P<opt10>(?:::))                       # bare double colons (default route)
+)                                        # End group named 'addr'
+""".format(
+    r"[0-9a-fA-F]{1,4}"
+)
+_IPV6_REGEX_STR_COMPRESSED1 = r"""(?!:::\S+?$)(?P<addr1>(?P<opt1_1>{0}(?::{0}){{7}})|(?P<opt1_2>(?:{0}:){{1}}(?::{0}){{1,6}})|(?P<opt1_3>(?:{0}:){{2}}(?::{0}){{1,5}})|(?P<opt1_4>(?:{0}:){{3}}(?::{0}){{1,4}})|(?P<opt1_5>(?:{0}:){{4}}(?::{0}){{1,3}})|(?P<opt1_6>(?:{0}:){{5}}(?::{0}){{1,2}})|(?P<opt1_7>(?:{0}:){{6}}(?::{0}){{1,1}})|(?P<opt1_8>:(?::{0}){{1,7}})|(?P<opt1_9>(?:{0}:){{1,7}}:)|(?P<opt1_10>(?:::)))""".format(
+    r"[0-9a-fA-F]{1,4}"
+)
+_IPV6_REGEX_STR_COMPRESSED2 = r"""(?!:::\S+?$)(?P<addr2>(?P<opt2_1>{0}(?::{0}){{7}})|(?P<opt2_2>(?:{0}:){{1}}(?::{0}){{1,6}})|(?P<opt2_3>(?:{0}:){{2}}(?::{0}){{1,5}})|(?P<opt2_4>(?:{0}:){{3}}(?::{0}){{1,4}})|(?P<opt2_5>(?:{0}:){{4}}(?::{0}){{1,3}})|(?P<opt2_6>(?:{0}:){{5}}(?::{0}){{1,2}})|(?P<opt2_7>(?:{0}:){{6}}(?::{0}){{1,1}})|(?P<opt2_8>:(?::{0}){{1,7}})|(?P<opt2_9>(?:{0}:){{1,7}}:)|(?P<opt2_10>(?:::)))""".format(
+    r"[0-9a-fA-F]{1,4}"
+)
+_IPV6_REGEX_STR_COMPRESSED3 = r"""(?!:::\S+?$)(?P<addr3>(?P<opt3_1>{0}(?::{0}){{7}})|(?P<opt3_2>(?:{0}:){{1}}(?::{0}){{1,6}})|(?P<opt3_3>(?:{0}:){{2}}(?::{0}){{1,5}})|(?P<opt3_4>(?:{0}:){{3}}(?::{0}){{1,4}})|(?P<opt3_5>(?:{0}:){{4}}(?::{0}){{1,3}})|(?P<opt3_6>(?:{0}:){{5}}(?::{0}){{1,2}})|(?P<opt3_7>(?:{0}:){{6}}(?::{0}){{1,1}})|(?P<opt3_8>:(?::{0}){{1,7}})|(?P<opt3_9>(?:{0}:){{1,7}}:)|(?P<opt3_10>(?:::)))""".format(
+    r"[0-9a-fA-F]{1,4}"
+)
+
+_CISCO_RANGE_ATOM_STR = r"""\d+\s*\-*\s*\d*"""
+_CISCO_RANGE_STR = r"""^(?P<line_prefix>[a-zA-Z\s]*)(?P<slot_prefix>[\d\/]*\d+\/)*(?P<range_text>(\s*{0})*)$""".format(
+    _CISCO_RANGE_ATOM_STR
+)
+
+_RGX_IPV6ADDR = re.compile(_IPV6_REGEX_STR, re.VERBOSE)
+
+_IPV4_REGEX_STR = r"^(?P<addr>\d+\.\d+\.\d+\.\d+)"
+_RGX_IPV4ADDR = re.compile(_IPV4_REGEX_STR)
+_RGX_IPV4ADDR_NETMASK = re.compile(
+    r"""
+     (?:
+       ^(?P<addr0>\d+\.\d+\.\d+\.\d+)$
+      |(?:^
+         (?:(?P<addr1>\d+\.\d+\.\d+\.\d+))(?:\s+|\/)(?:(?P<netmask>\d+\.\d+\.\d+\.\d+))
+       $)
+      |^(?:\s*(?P<addr2>\d+\.\d+\.\d+\.\d+)(?:\/(?P<masklen>\d+))\s*)$
+    )
+    """,
+    re.VERBOSE,
+)
+
+_RGX_CISCO_RANGE = re.compile(_CISCO_RANGE_STR)
+
 
 class UnsupportedFeatureWarning(SyntaxWarning):
     pass
-
 
 def as_text_list(object_list):
     """This is a helper-function to convert a list of configuration objects into a list of text config lines.
@@ -114,7 +170,7 @@ def junos_unsupported(func):
                 # print("TYPE", type(args[0]))
                 syntax = args[0].confobj.syntax
         if syntax == "junos":
-            ccp_logger.warning(warn, UnsupportedFeatureWarning)
+            logger.warning(warn, UnsupportedFeatureWarning)
         func(*args, **kwargs)
 
     return wrapper
@@ -138,27 +194,27 @@ def log_function_call(function=None, *args, **kwargs):
             if True:
                 if len(args) == 1 and len(kwargs) == 0 and callable(args[0]):
                     # Called as @log_function_call
-                    ccp_logger.info(
+                    logger.info(
                         "Type 1 log_function_call: %s()" % (ff.__qualname__)
                     )
 
                 else:
-                    ccp_logger.info(
+                    logger.info(
                         "Type 2 log_function_call: %s(%s, %s)"
                         % (ff.__qualname__, args, kwargs)
                     )
             return ff(*args, **kwargs)
-            ccp_logger.info(
+            logger.info(
                 "Type 3 log_function_call: %s(%s, %s)" % (ff.__qualname__, args, kwargs)
             )
 
         return wrapped_logging
 
     if function is not None:
-        ccp_logger.info("Type 4 log_function_call: %s()" % (function.__qualname__))
+        logger.info("Type 4 log_function_call: %s()" % (function.__qualname__))
         return logging_decorator(function)
 
-    ccp_logger.info("Type 5 log_function_call: %s()" % (function.__qualname__))
+    logger.info("Type 5 log_function_call: %s()" % (function.__qualname__))
     return logging_decorator
 
 
@@ -184,21 +240,21 @@ def ccp_logger_control(
         # Require an explicit loguru handler_id to remove...
         assert isinstance(handler_id, int)
 
-        ccp_logger.remove(handler_id)
+        logger.remove(handler_id)
         return True
 
     elif action == "disable":
         # Administratively disable this loguru logger
-        ccp_logger.disable(package_name)
+        logger.disable(package_name)
         return True
 
     elif action == "enable":
         # Administratively enable this loguru logger
-        ccp_logger.enable(package_name)
+        logger.enable(package_name)
         return True
 
     elif action == "add":
-        ccp_logger.add(
+        logger.add(
             sink=sink,
             colorize=True,
             diagnose=True,
@@ -210,7 +266,7 @@ def ccp_logger_control(
             level="DEBUG",
             # format='<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>'
         )
-        ccp_logger.enable(package_name)
+        logger.enable(package_name)
         return True
 
     else:
@@ -314,7 +370,7 @@ class ccp_re(object):
                 ".search(r'%s') was attempted but the regex ('%s') did not capture anything"
                 % (self.target_str, self.regex)
             )
-            ccp_logger.warning(error)
+            logger.warning(error)
 
         elif (self.attempted_search is True) and (
             isinstance(self.search_result, re.Match) is True
@@ -345,60 +401,9 @@ class ccp_re(object):
 
         elif self.attempted_search is False:
             error = ".search(r'%s') was NOT attempted yet." % (self.target_str)
-            ccp_logger.warning(error)
+            logger.warning(error)
 
         return rv_groups, rv_groupdict
-
-
-_IPV6_REGEX_STR = r"""(?!:::\S+?$)       # Negative Lookahead for 3 colons
- (?P<addr>                               # Begin a group named 'addr'
- (?P<opt1>{0}(?::{0}){{7}})              # no double colons, option 1
-|(?P<opt2>(?:{0}:){{1}}(?::{0}){{1,6}})  # match fe80::1
-|(?P<opt3>(?:{0}:){{2}}(?::{0}){{1,5}})  # match fe80:a::1
-|(?P<opt4>(?:{0}:){{3}}(?::{0}){{1,4}})  # match fe80:a:b::1
-|(?P<opt5>(?:{0}:){{4}}(?::{0}){{1,3}})  # match fe80:a:b:c::1
-|(?P<opt6>(?:{0}:){{5}}(?::{0}){{1,2}})  # match fe80:a:b:c:d::1
-|(?P<opt7>(?:{0}:){{6}}(?::{0}){{1,1}})  # match fe80:a:b:c:d:e::1
-|(?P<opt8>:(?::{0}){{1,7}})              # leading double colons
-|(?P<opt9>(?:{0}:){{1,7}}:)              # trailing double colons
-|(?P<opt10>(?:::))                       # bare double colons (default route)
-)                                        # End group named 'addr'
-""".format(
-    r"[0-9a-fA-F]{1,4}"
-)
-_IPV6_REGEX_STR_COMPRESSED1 = r"""(?!:::\S+?$)(?P<addr1>(?P<opt1_1>{0}(?::{0}){{7}})|(?P<opt1_2>(?:{0}:){{1}}(?::{0}){{1,6}})|(?P<opt1_3>(?:{0}:){{2}}(?::{0}){{1,5}})|(?P<opt1_4>(?:{0}:){{3}}(?::{0}){{1,4}})|(?P<opt1_5>(?:{0}:){{4}}(?::{0}){{1,3}})|(?P<opt1_6>(?:{0}:){{5}}(?::{0}){{1,2}})|(?P<opt1_7>(?:{0}:){{6}}(?::{0}){{1,1}})|(?P<opt1_8>:(?::{0}){{1,7}})|(?P<opt1_9>(?:{0}:){{1,7}}:)|(?P<opt1_10>(?:::)))""".format(
-    r"[0-9a-fA-F]{1,4}"
-)
-_IPV6_REGEX_STR_COMPRESSED2 = r"""(?!:::\S+?$)(?P<addr2>(?P<opt2_1>{0}(?::{0}){{7}})|(?P<opt2_2>(?:{0}:){{1}}(?::{0}){{1,6}})|(?P<opt2_3>(?:{0}:){{2}}(?::{0}){{1,5}})|(?P<opt2_4>(?:{0}:){{3}}(?::{0}){{1,4}})|(?P<opt2_5>(?:{0}:){{4}}(?::{0}){{1,3}})|(?P<opt2_6>(?:{0}:){{5}}(?::{0}){{1,2}})|(?P<opt2_7>(?:{0}:){{6}}(?::{0}){{1,1}})|(?P<opt2_8>:(?::{0}){{1,7}})|(?P<opt2_9>(?:{0}:){{1,7}}:)|(?P<opt2_10>(?:::)))""".format(
-    r"[0-9a-fA-F]{1,4}"
-)
-_IPV6_REGEX_STR_COMPRESSED3 = r"""(?!:::\S+?$)(?P<addr3>(?P<opt3_1>{0}(?::{0}){{7}})|(?P<opt3_2>(?:{0}:){{1}}(?::{0}){{1,6}})|(?P<opt3_3>(?:{0}:){{2}}(?::{0}){{1,5}})|(?P<opt3_4>(?:{0}:){{3}}(?::{0}){{1,4}})|(?P<opt3_5>(?:{0}:){{4}}(?::{0}){{1,3}})|(?P<opt3_6>(?:{0}:){{5}}(?::{0}){{1,2}})|(?P<opt3_7>(?:{0}:){{6}}(?::{0}){{1,1}})|(?P<opt3_8>:(?::{0}){{1,7}})|(?P<opt3_9>(?:{0}:){{1,7}}:)|(?P<opt3_10>(?:::)))""".format(
-    r"[0-9a-fA-F]{1,4}"
-)
-
-_CISCO_RANGE_ATOM_STR = r"""\d+\s*\-*\s*\d*"""
-_CISCO_RANGE_STR = r"""^(?P<line_prefix>[a-zA-Z\s]*)(?P<slot_prefix>[\d\/]*\d+\/)*(?P<range_text>(\s*{0})*)$""".format(
-    _CISCO_RANGE_ATOM_STR
-)
-
-_RGX_IPV6ADDR = re.compile(_IPV6_REGEX_STR, re.VERBOSE)
-
-_IPV4_REGEX_STR = r"^(?P<addr>\d+\.\d+\.\d+\.\d+)"
-_RGX_IPV4ADDR = re.compile(_IPV4_REGEX_STR)
-_RGX_IPV4ADDR_NETMASK = re.compile(
-    r"""
-     (?:
-       ^(?P<addr0>\d+\.\d+\.\d+\.\d+)$
-      |(?:^
-         (?:(?P<addr1>\d+\.\d+\.\d+\.\d+))(?:\s+|\/)(?:(?P<netmask>\d+\.\d+\.\d+\.\d+))
-       $)
-      |^(?:\s*(?P<addr2>\d+\.\d+\.\d+\.\d+)(?:\/(?P<masklen>\d+))\s*)$
-    )
-    """,
-    re.VERBOSE,
-)
-
-_RGX_CISCO_RANGE = re.compile(_CISCO_RANGE_STR)
 
 
 def is_valid_ipv4_addr(input_str=""):
@@ -409,6 +414,11 @@ def is_valid_ipv4_addr(input_str=""):
     bool
         A boolean indicating whether this is a valid IPv4 string
     """
+    # REJECT THIS BASED ON STR LENGTH
+    ("255."*40000)
+
+    assert isinstance(input_str, str)
+    assert len(input_str.strip()) <= IPV4_MAXSTR_LEN
     assert input_str != ""
     if _RGX_IPV4ADDR.search(input_str):
         return True
@@ -423,6 +433,14 @@ def is_valid_ipv6_addr(input_str=""):
     bool
         A boolean indicating whether this is a valid IPv6 string
     """
+    # REJECT THIS BASED ON STR LENGTH
+    ("::"*40000)+"1"
+    ("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff")
+
+    assert isinstance(input_str, str)
+    # Max valid IPv6 string length is 39, add 4 for a slash and masklen
+    assert len(input_str.strip()) <= IPV6_MAXSTR_LEN
+
     assert input_str != ""
     if _RGX_IPV6ADDR.search(input_str):
         return True
@@ -432,12 +450,44 @@ def ip_factory(addr="", stdlib=False):
     """
     Accept an IPv4 or IPv6 address / prefix.  Return an appropriate IPv4 or IPv6 object
 
-    Set stdlib=True if you only want IP objects from the python stdlib.
+    Set stdlib=True if you only want python's stdlib IP objects.
 
-    Throw an error if addr cannot be parsed as a valid IP.
+    Throw an error if addr cannot be parsed as a valid IPv4 or IPv6.
     """
-    assert addr!=""
     retval = None
+
+    def prepare_ip_input(addr="", force_v6=None):
+
+        if isinstance(addr, str):
+            # Remove all string whitespace...
+            #   -> https://stackoverflow.com/a/3739939/667301
+            addr_w_no_spaces = "".join(addr.split())
+
+            # Heuristic - maximum length of ipv6 addr, mask, and masklen
+            assert len(addr_w_no_spaces) <= IPV6_MAXSTR_LEN
+
+            if ":" in addr_w_no_spaces and is_valid_ipv6_addr(addr_w_no_spaces):
+                IPv6Obj(addr_w_no_spaces)
+
+            elif "." in addr_w_no_spaces and is_valid_ipv4_addr(addr_w_no_spaces):
+                IPv4Obj(addr_w_no_spaces)
+
+            else:
+                # Heuristic, maximum length of an ipv4 string, slash and masklen
+                assert len(addr_w_no_spaces) <= IPV4_MAXCHAR_LEN
+
+        elif isinstance(addr, int):
+            pass
+
+    def ipv4_security_heuristic_failed(addr):
+        reject_this_input = False
+        if isinstance(addr, str) and len(addr) >= 16:
+            pass
+        elif isinstance(addr, int) and (addr <= 4294967295):
+            pass
+        else:
+            reject_this_input = True
+
     if is_valid_ipv4_addr(addr):
         tmp = IPv4Obj(addr)
         if stdlib is False:
@@ -618,6 +668,13 @@ class IPv4Obj(object):
         # RGX_IPV4ADDR = re.compile(r'^(\d+\.\d+\.\d+\.\d+)')
         # RGX_IPV4ADDR_NETMASK = re.compile(r'(\d+\.\d+\.\d+\.\d+)\s+(\d+\.\d+\.\d+\.\d+)')
 
+        if isinstance(arg, str):
+            assert len(arg) <= IPV6_MAXSTR_LEN
+        elif isinstance(arg, int):
+            # Before fixing bug...
+            #    assert int(IPv4Network("255.255.255.255/32").prefixlen) >= arg
+            assert int(IPv4Address("255.255.255.255")) >= arg
+
         self.arg = arg
         self.dna = "IPv4Obj"
         self.ip_object = None
@@ -651,7 +708,7 @@ class IPv4Obj(object):
                 )
 
         ERROR = "IPv4Obj couldn't parse '{0}'".format(arg)
-        assert not (mm is None), ERROR
+        assert (mm is not None), ERROR
 
         mm_result = mm.groupdict()
         addr = (
@@ -768,7 +825,7 @@ class IPv4Obj(object):
 
         except Exception as ee:
             errmsg = "{0} cannot compare itself to '{1}'".format(self.__repr__(), val)
-            ccp_logger.error(errmsg)
+            logger.error(errmsg)
             raise ValueError(errmsg)
 
     def __int__(self):
@@ -792,7 +849,7 @@ class IPv4Obj(object):
         )
         orig_prefixlen = self.prefixlen
         total = self.as_decimal + val
-        assert total <= 4294967295, "Max IPv4 integer exceeded"
+        assert total <= IPV4_MAXINT, "Max IPv4 integer exceeded"
         assert total >= 0, "Min IPv4 integer exceeded"
         retval = IPv4Obj(total)
         retval.prefixlen = orig_prefixlen
@@ -805,7 +862,7 @@ class IPv4Obj(object):
         )
         orig_prefixlen = self.prefixlen
         total = self.as_decimal - val
-        assert total <= 4294967295, "Max IPv4 integer exceeded"
+        assert total < IPV4_MAXINT, "Max IPv4 integer exceeded"
         assert total >= 0, "Min IPv4 integer exceeded"
         retval = IPv4Obj(total)
         retval.prefixlen = orig_prefixlen
@@ -882,7 +939,6 @@ class IPv4Obj(object):
     def get_regex():
         return _IPV4_REGEX_STR
 
-
     @property
     def ip(self):
         """Returns the address as an :class:`ipaddress.IPv4Address` object."""
@@ -892,6 +948,30 @@ class IPv4Obj(object):
     def netmask(self):
         """Returns the network mask as an :class:`ipaddress.IPv4Address` object."""
         return self.network_object.netmask
+
+    @property
+    def masklen(self):
+        """Returns the length of the network mask as an integer."""
+        return int(self.network_object.prefixlen)
+
+    @masklen.setter
+    def masklen(self, arg):
+        """masklen setter method"""
+        self.network_object = IPv4Network(
+            "{0}/{1}".format(str(self.ip_object), arg), strict=False
+        )
+
+    @property
+    def masklength(self):
+        """Returns the length of the network mask as an integer."""
+        return self.prefixlen
+
+    @masklength.setter
+    def masklength(self, arg):
+        """masklen setter method"""
+        self.network_object = IPv4Network(
+            "{0}/{1}".format(str(self.ip_object), arg), strict=False
+        )
 
     @property
     def prefixlen(self):
@@ -909,6 +989,13 @@ class IPv4Obj(object):
     def prefixlength(self):
         """Returns the length of the network mask as an integer."""
         return self.prefixlen
+
+    @prefixlength.setter
+    def prefixlength(self, arg):
+        """prefixlength setter method"""
+        self.network_object = IPv4Network(
+            "{0}/{1}".format(str(self.ip_object), arg), strict=False
+        )
 
     @property
     def exploded(self):
@@ -952,6 +1039,11 @@ class IPv4Obj(object):
         return self.network_object.hostmask
 
     @property
+    def max_int(self):
+        """Return the maximum size of an IPv4 Address object as an integer"""
+        return IPV4_MAXINT
+
+    @property
     def inverse_netmask(self):
         """Returns the host mask as an :class:`ipaddress.IPv4Address` object."""
         return self.network_object.hostmask
@@ -982,6 +1074,11 @@ class IPv4Obj(object):
         num_strings = str(self.network).split("/")[0].split(".")
         num_strings.reverse()  # reverse the order
         return sum([int(num) * (256 ** idx) for idx, num in enumerate(num_strings)])
+
+    @property
+    def as_int(self):
+        """Returns the IP address as a decimal integer"""
+        return self.as_decimal
 
     @property
     def as_zeropadded(self):
@@ -1105,6 +1202,11 @@ class IPv6Obj(object):
 
         """
 
+        if isinstance(arg, str):
+            assert len(arg) <= IPV6_MAXSTR_LEN
+        elif isinstance(arg, int):
+            assert int(IPv6Address("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff")) >= arg
+
         # arg= _RGX_IPV6ADDR_NETMASK.sub(r'\1/\2', arg) # mangle IOS: 'addr mask'
         self.arg = arg
         self.dna = "IPv6Obj"
@@ -1139,7 +1241,7 @@ class IPv6Obj(object):
                 )
 
         ERROR = "IPv6Obj couldn't parse {0}".format(arg)
-        assert not (mm is None), ERROR
+        assert (mm is not None), ERROR
         self.network_object = IPv6Network(arg, strict=strict)
         self.ip_object = IPv6Address(mm.group(1))
 
@@ -1257,8 +1359,7 @@ class IPv6Obj(object):
         )
         orig_prefixlen = self.prefixlen
         total = self.as_decimal + val
-        error = "Max IPv6 integer exceeded"
-        assert total <= 340282366920938463463374607431768211455, error
+        assert total <= IPV6_MAXINT, "Max IPv6 integer exceeded"
         assert total >= 0, "Min IPv6 integer exceeded"
         retval = IPv6Obj(total)
         retval.prefixlen = orig_prefixlen
@@ -1271,8 +1372,7 @@ class IPv6Obj(object):
         )
         orig_prefixlen = self.prefixlen
         total = self.as_decimal - val
-        error = "Max IPv6 integer exceeded"
-        assert total <= 340282366920938463463374607431768211455, error
+        assert total < IPV6_MAXINT, "Max IPv6 integer exceeded"
         assert total >= 0, "Min IPv6 integer exceeded"
         retval = IPv6Obj(total)
         retval.prefixlen = orig_prefixlen
@@ -1362,6 +1462,30 @@ class IPv6Obj(object):
         return self.network_object.netmask
 
     @property
+    def masklen(self):
+        """Returns the length of the network mask as an integer."""
+        return int(self.network_object.prefixlen)
+
+    @masklen.setter
+    def masklen(self, arg):
+        """masklen setter method"""
+        self.network_object = IPv6Network(
+            "{0}/{1}".format(str(self.ip_object), arg), strict=False
+        )
+
+    @property
+    def masklength(self):
+        """Returns the length of the network mask as an integer."""
+        return self.prefixlen
+
+    @masklength.setter
+    def masklength(self, arg):
+        """masklength setter method"""
+        self.network_object = IPv6Network(
+            "{0}/{1}".format(str(self.ip_object), arg), strict=False
+        )
+
+    @property
     def prefixlen(self):
         """Returns the length of the network mask as an integer."""
         return int(self.network_object.prefixlen)
@@ -1421,8 +1545,13 @@ class IPv6Obj(object):
         return self.network_object.hostmask
 
     @property
+    def max_int(self):
+        """Return the maximum size of an IPv6 Address object as an integer"""
+        return IPV6_MAXINT
+
+    @property
     def inverse_netmask(self):
-        """Returns the host mask as an :class:`ipaddress.IPv4Address` object."""
+        """Returns the host mask as an :class:`ipaddress.IPv6Address` object."""
         return self.network_object.hostmask
 
     @property
@@ -1446,6 +1575,10 @@ class IPv6Obj(object):
         return sum(
             [int(num, 16) * (65536 ** idx) for idx, num in enumerate(num_strings)]
         )
+
+    def as_int(self):
+        """Returns the IP address as a decimal integer"""
+        return self.as_decimal
 
     @property
     def as_binary_tuple(self):

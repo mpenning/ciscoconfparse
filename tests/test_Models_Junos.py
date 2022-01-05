@@ -34,10 +34,11 @@ r""" test_Models_Junos.py - Parse, Query, Build, and Modify IOS-style configs
 
 
 @pytest.mark.xfail(True, reason="Junos factory parsing is not supported yet")
-def testVal_JunosIntfLine_dna(parse_j01_factory):
-    cfg = parse_j01_factory
-    obj = cfg.find_objects_w_child("interfaces", "ge-0/0/1")[0]
-    assert obj.dna == "JunosIntfLine"
+def testVal_JunosIntfLine_dna(j01):
+    with pytest.raises(AssertionError):
+        parse = CiscoConfParse(j01, factory=True, syntax="junos")
+        #obj = parse.find_objects_w_child("interfaces", "ge-0/0/1")[0]
+        #assert obj.dna == "JunosIntfLine"
 
 
 @pytest.mark.xfail(True, reason="Junos configs currently use IOSCfgLine objects")

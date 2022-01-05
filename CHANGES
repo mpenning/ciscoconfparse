@@ -1,3 +1,5 @@
+1.6.15  20220105 Fix several problems in version 1.6.14
+1.6.14  20220101 Ensure masklen and prefix are int objects for IPv4Obj and IPv6Obj network mask length
 1.6.13  20211231 Add ccp_util.ip_factory()
 1.6.12  20211220 Replace map() calls with equivalent list-comprehensions
 1.6.11  20211212 Update IPv4Obj and IPv6Obj docs 

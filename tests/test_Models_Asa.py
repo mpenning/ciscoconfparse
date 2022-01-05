@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import uuid
 import sys
 import re
 import os
@@ -51,7 +52,7 @@ def testVal_Access_List(parse_a01_factory):
 
 def testParse_asa_factory(config_a02):
     parse = CiscoConfParse(config_a02, syntax="asa", factory=True)
-    assert not (parse is None)
+    assert (parse is not None)
 
 
 def testVal_Names(parse_a01, parse_a01_factory):
@@ -318,10 +319,22 @@ def testVal_ASAAclLine_DNA(line):
 
 
 @pytest.mark.parametrize(
-    "line", ["access-list TESTME_01 extended pAAmit ip any any log deactivate",]
+    "tmp", [["access-list TESTME_01 extended VpAAmit987 ip any any log deactivate",]]
 )
-def testVal_ASAAclLine_DNA_negative(line):
-    # Ensure that parsing the bogus acl line raises a ValueError
-    with pytest.raises(ValueError):
-        cfg = CiscoConfParse([line], factory=True, syntax="asa")
-        # cfg.objs[0].dna=='ASACfgLine'
+def testVal_ASAAclLine_DNA_negative(tmp):
+
+    #with pytest.raises(ValueError):
+    #with pytest.raises(OSError):
+    with pytest.raises(SystemExit):
+        # Ensure that parsing the bogus ACL line in a config list raises a ValueError
+        #     but ValueError triggers a SystemExit
+        list_of_lines = tmp
+        bogus_filepath = "/%s" % str(uuid.uuid4())
+
+        if isinstance(list_of_lines, list):
+            parse = CiscoConfParse(list_of_lines, factory=True, syntax="asa")
+
+        # Ensure that parsing the bogus filepath string raises OSError
+        elif isinstance(bogus_filepath, str):
+            parse = CiscoConfParse(bogus_filepath, factory=True, syntax="asa")
+
