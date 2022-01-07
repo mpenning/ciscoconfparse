@@ -943,7 +943,7 @@ def testValues_find_object_branches_05():
     parse = CiscoConfParse(test_data)
 
     branchspec = (r"^this", r"^\s+atest", r"^\s+matchthis")
-    test_result = parse.find_object_branches(branchspec, allow_none=True)
+    test_result = parse.find_object_branches(branchspec)
 
     assert len(test_result)==2
     assert test_result[0][0].text.strip() == "thisis"
@@ -952,27 +952,6 @@ def testValues_find_object_branches_05():
     assert test_result[1][0].text.strip() == "thisis"
     assert test_result[1][1].text.strip() == "atest"
     assert test_result[1][2].text.strip() == "matchthis"
-
-def testValues_find_object_branches_06():
-    """Basic test: find_object_branches() - Test that non-existent regex child levels are not returned if allow_none=False (see Github Issue #178)"""
-    test_data = ['thisis',
-        '    atest',
-        '        ofbranchsearch',
-        'thisis',
-        '    atest',
-        '        matchthis',
-        ]
-
-    parse = CiscoConfParse(test_data)
-
-    branchspec = (r"^this", r"^\s+atest", r"^\s+matchthis")
-    test_result = parse.find_object_branches(branchspec, allow_none=False)
-
-    assert len(test_result)==1
-    assert test_result[0][0].text.strip() == "thisis"
-    assert test_result[0][1].text.strip() == "atest"
-    assert test_result[0][2].text.strip() == "matchthis"
-
 
 def testValues_find_objects_w_parents(parse_c01):
     c01_children_w_parents_switchport = [

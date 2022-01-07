@@ -692,7 +692,8 @@ class CiscoConfParse(object):
     def find_object_branches(self,
                              branchspec=(),
                              regex_flags=0,
-                             allow_none=True,
+                             allow_none=None,
+                             regex_groups=False,
                              debug=0):
         r"""This method iterates over a tuple of regular expressions in `branchspec` and returns the matching objects in a list of lists (consider it similar to a table of matching config objects). `branchspec` expects to start at some ancestor and walk through the nested object hierarchy (with no limit on depth).
 
@@ -702,14 +703,20 @@ class CiscoConfParse(object):
 
         This method returns a list of lists (of object 'branches') which are nested to the same depth required in `branchspec`.  However, unlike most other CiscoConfParse() methods, it returns an explicit `None` if there is no object match.  Returning `None` allows a single search over configs that may not be uniformly nested in every branch.
 
+        Deprecation notice for allow_none
+        ---------------------------------
+
+        allow_none is deprecated and no longer a configuration option, as of version 1.6.16.
+        Going forward, allow_none will always be True.
+
         Parameters
         ----------
         branchspec : tuple
             A tuple of python regular expressions to be matched.
         regex_flags :
             Chained regular expression flags, such as `re.IGNORECASE|re.MULTILINE`
-        allow_none :
-            Set False if you don't want an explicit `None` for missing branch elements (default is allow_none=True)
+        regex_groups : bool (default False)
+            If True, return a tuple of re.Match groups instead of the matching configuration objects.
         debug : int
             Set debug > 0 for debug messages
 
@@ -778,6 +785,13 @@ class CiscoConfParse(object):
         >>> branches[2]
         [<IOSCfgLine # 10 'ltm pool BAR'>, <IOSCfgLine # 11 '    members' (parent is # 10)>, <IOSCfgLine # 12 '        k8s-07.localdomain:8443' (parent is # 11)>, None]
         """
+
+        # As of verion 1.6.16, allow_none is always True.  See the Deprecation
+        # notice above...
+        if allow_none is not None:
+            warning = "The allow_none parameter is deprecated as of version 1.6.16.  Going forward, allow_none is always True."
+            logger.warning(warning)
+        allow_none = True
 
         branchspec_is_tuple = isinstance(branchspec, tuple)
         if branchspec_is_tuple is True:
@@ -888,6 +902,38 @@ class CiscoConfParse(object):
 
                 # Ensure we have the most recent branches...
                 branches = new_branches
+
+        if regex_groups is True:
+            new_feature_branches = list()
+            for branch_idx, branch in enumerate(branches):
+                tmp = [None]*len(branch)
+                for obj_idx, obj in enumerate(branch):
+                    if isinstance(obj, BaseCfgLine):
+                        # branchspec[obj_idx] could have zero or more re match
+                        # groups
+                        bb = re.search(branchspec[obj_idx], obj.text)
+                        if isinstance(bb, re.Match):
+                            #print("    DBG BRANCHSPEC RGX: '%s'" % branchspec[obj_idx])
+                            #print("    DBG        OBJ TXT: '%s'" % obj.text)
+                            #print("    DBG     MATCH VALS: '%s'" % bb.groups())
+                            #print("    DBG     ----------")
+                            vals = bb.groups()
+                            if len(vals) == 0:
+                                tmp[obj_idx] = (obj.text.strip(),)
+                            else:
+                                tmp[obj_idx] = vals
+                assert obj_idx == len(branch) - 1
+                new_feature_branches.append(tmp)
+
+            # We could have lost or created an extra branch if these aren't the
+            # same length
+            assert len(new_feature_branches)==len(branches)
+
+        if False:
+            for branch in new_feature_branches:
+                print("BB", branch)
+        #for idx, tmp in enumerate(new_branches):
+        #    print("TMP", idx, tmp)
 
         return branches
 
