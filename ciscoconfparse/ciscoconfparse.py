@@ -707,7 +707,7 @@ class CiscoConfParse(object):
         ---------------------------------
 
         allow_none is deprecated and no longer a configuration option, as of version 1.6.16.
-        Going forward, allow_none will always be True.
+        Going forward, allow_none will always be considered True.
 
         Parameters
         ----------
