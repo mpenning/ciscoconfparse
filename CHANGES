@@ -1,4 +1,5 @@
-1.6.16  20220109 Add regex_groups as a boolean parameter for find_object_branches
+1.6.17  20220109 Enhance regex_groups on find_object_branches
+1.6.16  20220107 Add regex match group support to find_object_branches
 1.6.15  20220105 Fix several problems in version 1.6.14
 1.6.14  20220101 Ensure masklen and prefix are int objects for IPv4Obj and IPv6Obj network mask length
 1.6.13  20211231 Add ccp_util.ip_factory()
