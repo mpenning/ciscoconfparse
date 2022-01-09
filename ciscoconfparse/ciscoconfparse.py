@@ -927,7 +927,7 @@ class CiscoConfParse(object):
 
                     if isinstance(element, BaseCfgLine):
                         regex_result = re.search(branchspec[idx], element.text)
-                        if isinstance(regex_result, re.Match):
+                        if regex_result is not None:
                             # Save all the regex capture groups in matched_capture...
                             matched_capture = regex_result.groups()
                             if len(matched_capture) == 0:
