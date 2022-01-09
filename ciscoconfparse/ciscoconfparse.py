@@ -703,8 +703,8 @@ class CiscoConfParse(object):
 
         This method returns a list of lists (of object 'branches') which are nested to the same depth required in `branchspec`.  However, unlike most other CiscoConfParse() methods, it returns an explicit `None` if there is no object match.  Returning `None` allows a single search over configs that may not be uniformly nested in every branch.
 
-        Deprecation notice for allow_none
-        ---------------------------------
+        Deprecation notice for the allow_none parameter
+        -----------------------------------------------
 
         allow_none is deprecated and no longer a configuration option, as of version 1.6.16.
         Going forward, allow_none will always be considered True.
@@ -821,6 +821,10 @@ class CiscoConfParse(object):
 
             # FIXME: Insert debugging here...
             # print("PARENT "+str(parent_obj))
+
+            # As of version 1.6.16, allow_none must always be True...
+            assert allow_none is True
+
             if debug > 1:
                 msg = """Calling list_matching_children(
     parent_obj=%s,
@@ -903,38 +907,54 @@ class CiscoConfParse(object):
                 # Ensure we have the most recent branches...
                 branches = new_branches
 
+        branches = new_branches
+        # If regex_groups is True, assign regexp matches to the return matrix.
         if regex_groups is True:
-            new_feature_branches = list()
-            for branch_idx, branch in enumerate(branches):
-                tmp = [None]*len(branch)
-                for obj_idx, obj in enumerate(branch):
-                    if isinstance(obj, BaseCfgLine):
-                        # branchspec[obj_idx] could have zero or more re match
-                        # groups
-                        bb = re.search(branchspec[obj_idx], obj.text)
-                        if isinstance(bb, re.Match):
-                            #print("    DBG BRANCHSPEC RGX: '%s'" % branchspec[obj_idx])
-                            #print("    DBG        OBJ TXT: '%s'" % obj.text)
-                            #print("    DBG     MATCH VALS: '%s'" % bb.groups())
-                            #print("    DBG     ----------")
-                            vals = bb.groups()
-                            if len(vals) == 0:
-                                tmp[obj_idx] = (obj.text.strip(),)
+
+            return_matrix = list()
+            #branchspec = (r"^interfaces", r"\s+(\S+)", r"\s+(unit\s+\d+)", r"family\s+(inet)", r"address\s+(\S+)")
+            #for idx_matrix, row in enumerate(self.find_object_branches(branchspec)):
+            for idx_matrix, row in enumerate(branches):
+                assert isinstance(row, list) or isinstance(row, tuple)
+
+                # Before we check regex capture groups, allocate an "empty return_row"
+                #   of the correct length...
+                return_row = [(None,)]*len(branchspec)
+
+                # Populate the return_row below...
+                #     return_row will be appended to return_matrix...
+                for idx, element in enumerate(row):
+
+                    if isinstance(element, BaseCfgLine):
+                        regex_result = re.search(branchspec[idx], element.text)
+                        if isinstance(regex_result, re.Match):
+                            # Save all the regex capture groups in matched_capture...
+                            matched_capture = regex_result.groups()
+                            if len(matched_capture) == 0:
+                                # If the branchspec groups() matches are a
+                                # zero-length tuple, populate this return_row 
+                                # with the whole element's text
+                                return_row[idx] = (element.text,)
+                            elif len(matched_capture) > 0:
+                                # In this case, we found regex capture groups
+                                return_row[idx] = matched_capture
                             else:
-                                tmp[obj_idx] = vals
-                assert obj_idx == len(branch) - 1
-                new_feature_branches.append(tmp)
+                                raise ValueError
+                        elif (regex_result is None):
+                            # No regex capture groups b/c of no regex match...
+                            return_row[idx] = (None,)
+                        else:
+                            raise ValueError()
+                    elif element is None:
+                        return_row[idx] = (None,)
+                    else:
+                        raise ValueError("regex matches on %s('%s') are not supported" % (type(element), element.text))
+                return_matrix.append(return_row)
 
-            # We could have lost or created an extra branch if these aren't the
-            # same length
-            assert len(new_feature_branches)==len(branches)
+            branches = return_matrix
 
-        if False:
-            for branch in new_feature_branches:
-                print("BB", branch)
-        #for idx, tmp in enumerate(new_branches):
-        #    print("TMP", idx, tmp)
-
+        # We could have lost or created an extra branch if these aren't the
+        # same length
         return branches
 
     # This method is on CiscoConfParse()

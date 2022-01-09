@@ -773,28 +773,28 @@ def testValues_find_object_branches_01():
         "}",
     ]
     parse = CiscoConfParse(config, syntax="junos", comment="#")
-    branchspec = (r"ltm\spool", r"members", r"\S+?:\d+", r"state\sup")
-    test_result = parse.find_object_branches(branchspec=branchspec)
+    branchspec = (r"^ltm\spool\s+(\S+)", r"(members)", r"(\S+?):(\d+)", r"state\s(up|down)")
+    test_result = parse.find_object_branches(branchspec=branchspec, regex_groups=True)
 
     assert len(test_result) == 3
 
     # Test first family branch result...
-    assert test_result[0][0].text.strip() == "ltm pool FOO"
-    assert test_result[0][1].text.strip() == "members"
-    assert test_result[0][2].text.strip() == "k8s-05.localdomain:8443"
-    assert test_result[0][3].text.strip() == "state up"
+    assert test_result[0][0] == ("FOO",)
+    assert test_result[0][1] == ("members",)
+    assert test_result[0][2] == ("k8s-05.localdomain", "8443",)
+    assert test_result[0][3] == ("up",)
 
     # Test second family branch result...
-    assert test_result[1][0].text.strip() == "ltm pool FOO"
-    assert test_result[1][1].text.strip() == "members"
-    assert test_result[1][2].text.strip() == "k8s-06.localdomain:8443"
-    assert test_result[1][3] is None  # 'state down' != 'state up'
+    assert test_result[1][0] == ("FOO",)
+    assert test_result[1][1] == ("members",)
+    assert test_result[1][2] == ("k8s-06.localdomain", "8443",)
+    assert test_result[1][3] == ("down",)  # 'state down' != 'state up'
 
     # Test third family branch result...
-    assert test_result[2][0].text.strip() == "ltm pool BAR"
-    assert test_result[2][1].text.strip() == "members"
-    assert test_result[2][2].text.strip() == "k8s-07.localdomain:8443"
-    assert test_result[2][3] is None  # 'state down' != 'state up'
+    assert test_result[2][0] == ("BAR",)
+    assert test_result[2][1] == ("members",)
+    assert test_result[2][2] == ("k8s-07.localdomain", "8443",)
+    assert test_result[2][3] == ("down",)  # 'state down' != 'state up'
 
 
 def testValues_find_object_branches_02():
