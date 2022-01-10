@@ -226,6 +226,8 @@ def test_ip_factory_inputs_01():
             (ip_factory(**{'addr': '1.1.1.1/16', 'stdlib': True}),  IPv4Network("1.1.0.0/16")),
             (ip_factory(**{'addr': '1.1.1.1/32', 'stdlib': False}), IPv4Obj("1.1.1.1/32")),
             (ip_factory(**{'addr': '1.1.1.1/32', 'stdlib': True}),  IPv4Address("1.1.1.1")),
+            (ip_factory(**{'addr': '2b00:cd80:14:10::1/64', 'stdlib': False}), IPv6Obj("2b00:cd80:14:10::1/64")),
+            (ip_factory(**{'addr': '2b00:cd80:14:10::1/64', 'stdlib': True}), IPv6Network("2b00:cd80:14:10::/64")),
             (ip_factory(**{'addr': '::1/64', 'stdlib': False}), IPv6Obj("::1/64")),
             (ip_factory(**{'addr': '::1/64', 'stdlib': True}),  IPv6Network("::0/64")),
             (ip_factory(**{'addr': '::1/128', 'stdlib': False}), IPv6Obj("::1/128")),
@@ -233,6 +235,12 @@ def test_ip_factory_inputs_01():
         )
     for test_input, result_correct in test_inputs:
         assert test_input==result_correct
+
+def main():
+    p_6_01 = "2a00:dd80:14:10::1/64"
+    foo  = ip_factory(p_6_01)
+    print(foo)
+
 
 
 def testIPv6Obj_attributes():
