@@ -42,7 +42,8 @@ from ciscoconfparse.ccp_abc import BaseCfgLine
 from ciscoconfparse.ccp_util import junos_unsupported, UnsupportedFeatureWarning
 from ciscoconfparse.ccp_util import log_function_call
 from ciscoconfparse.ccp_util import ccp_logger_control
-from ciscoconfparse.ccp_util import ccp_re
+# Not using ccp_re yet... still a work in progress
+#from ciscoconfparse.ccp_util import ccp_re
 import toml
 
 from operator import methodcaller, attrgetter

@@ -275,7 +275,8 @@ def ccp_logger_control(
         )
 
 
-class ccp_re(object):
+@logger.catch(default=True, onerror=lambda _: sys.exit(1))
+class __ccp_re__(object):
     """A wrapper around python's re.  This is an experimental object... it may disappear at any time as long as this message exists.
     self.regex = r'{}'.format(regex)
     self.compiled = re.compile(self.regex, flags=flags)
@@ -303,62 +304,62 @@ class ccp_re(object):
 
     """
 
-    def __init__(self, regex=r"", groups=None, flags=0, debug=0):
+    def __init__(self, regex_str=r"", target_str=None, groups=None, flags=0, debug=0):
+        assert isinstance(regex_str, str)
+        assert isinstance(flags, int)
+        assert isinstance(debug, int)
 
-        if groups is None:
-            groups = {}
+        if isinstance(regex_str, str):
+            assert isinstance(regex_str, str)
+            self.regex_str = regex_str
+            self.compiled = re.compile(self.regex, flags=flags)
 
-        elif isinstance(groups, dict):
-            pass
-
-        elif isinstance(groups, str):
-            error = "Improper usage.  Call ccp_re(r'''(hello)''').search('hello world')"
-            raise ValueError(error)
-
-        else:
-            raise NotImplementedError()
-
-        self.regex = r"""{}""".format(regex)
-        self.compiled = re.compile(self.regex, flags=flags)
-        self.groups = groups
-        self.target_str = None
-        self.search_result = None
         self.attempted_search = False
+        if isinstance(target_str, str):
+            self.target_str = target_str
+            self.s(self.target_str)
+        else:
+            self.target_str = target_str
+
+        self.groups = groups
+        self.search_result = None
 
     def __repr__(self):
-        return self.regex
+        return """ccp_re(%s, %s)""" % (self.regex, self.target_str)
 
     def __str__(self):
-        return self.regex
+        return """ccp_re(%s, %s)""" % (self.regex, self.target_str)
+
+    @property
+    def regex(self):
+        return r"""%s""" % self.regex_str
+
+    @regex.setter
+    def regex(self, regex_str):
+        assert isinstance(regex_str, str)
+        self.regex_str = regex_str
+        self.compiled = re.compile(regex_str)
+        self.attempted_search = False
 
     def s(self, target_str):
+        assert self.attempted_search is False
         assert isinstance(target_str, str)
 
-        self.target_str = target_str
         self.attempted_search = True
         self.search_result = self.compiled.search(target_str)
-        return self.search_result
+        if isinstance(self.search_result, re.Match):
+            match_groups = self.search_result.groups()
+            if len(match_groups) > 0:
+                return match_groups
+            else:
+                # Return the whole string if there are no match groups
+                return target_str
+        else:
+            return None
 
-        retval = dict()
-        retval["error"] = ""
-        #    isinstance(search_result, re.Match):
-        if isinstance(self.search_result, re.Match) is True:
-            try:
-                retval["named"] = search_result.groupdict()
-                retval["tuple"] = search_result.groups()
-            except Exception as ee:
-                print("FAIL", ee, search_result)
-                retval["error"] = ee
-                retval["named"] = dict()
-                retval["tuple"] = tuple()
-
-    def search(self, target_str):
-        if False:
-            self.target_str = target_str
-            self.attempted_search = True
-            self.search_result = self.compiled.search(target_str)
-            return self.search_result
-        return self.s(target_str)
+    @property
+    def result(self):
+        raise NotImplementedError()
 
     @property
     def captured(self):
@@ -417,9 +418,12 @@ def is_valid_ipv4_addr(input_str=""):
     # REJECT THIS BASED ON STR LENGTH
     ("255."*40000)
 
-    assert isinstance(input_str, str)
-    assert len(input_str.strip()) <= IPV4_MAXSTR_LEN
-    assert input_str != ""
+    try:
+        assert isinstance(input_str, str)
+        assert len(input_str.strip()) <= IPV4_MAXSTR_LEN
+        assert input_str != ""
+    except AssertionError as aa:
+        return False
     if _RGX_IPV4ADDR.search(input_str):
         return True
     return False
@@ -437,11 +441,13 @@ def is_valid_ipv6_addr(input_str=""):
     ("::"*40000)+"1"
     ("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff")
 
-    assert isinstance(input_str, str)
-    # Max valid IPv6 string length is 39, add 4 for a slash and masklen
-    assert len(input_str.strip()) <= IPV6_MAXSTR_LEN
-
-    assert input_str != ""
+    try:
+        assert isinstance(input_str, str)
+        # Max valid IPv6 string length is 39, add 4 for a slash and masklen
+        assert len(input_str.strip()) <= IPV6_MAXSTR_LEN
+        assert input_str != ""
+    except AssertionError as aa:
+        return False
     if _RGX_IPV6ADDR.search(input_str):
         return True
     return False
@@ -499,6 +505,7 @@ def ip_factory(addr="", stdlib=False):
             else:
                 # Return IPv4Network()
                 retval = tmp.network
+
     elif is_valid_ipv6_addr(addr):
         tmp = IPv6Obj(addr)
         if stdlib is False:
