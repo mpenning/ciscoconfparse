@@ -34,6 +34,10 @@ repo-push-tag-force:
 	git push git@github.com:mpenning/ciscoconfparse.git
 	git push --force-with-lease --tags origin +master
 	git push --force-with-lease --tags origin ${VERSION}
+.PHONY: pylama
+pylama:
+	# Good usability info here -> https://pythonspeed.com/articles/pylint/
+	pylama --ignore=E501,E301,E265,E266 ciscoconfparse/*py | less -XR
 .PHONY: pylint
 pylint:
 	# Good usability info here -> https://pythonspeed.com/articles/pylint/
