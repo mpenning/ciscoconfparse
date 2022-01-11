@@ -1,3 +1,4 @@
+1.6.20  20220111 Code cleanup
 1.6.19  20220109 Fix IPv6 bug in `ip_factory()`
 1.6.18  20220109 Fix failed py36 test
 1.6.17  20220109 Enhance regex_groups on find_object_branches
