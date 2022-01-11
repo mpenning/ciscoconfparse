@@ -3,7 +3,7 @@ from operator import methodcaller
 from abc import ABCMeta
 import inspect
 import re
-from ciscoconfparse.ccp_util import junos_unsupported, UnsupportedFeatureWarning
+from ciscoconfparse.ccp_util import junos_unsupported
 from loguru import logger
 r""" ccp_abc.py - Parse, Query, Build, and Modify IOS-style configurations
      Copyright (C) 2021      David Michael Pennington

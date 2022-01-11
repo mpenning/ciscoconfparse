@@ -53,25 +53,25 @@ MAX_VLAN = 4094
 
 
 class IOSCfgLine(BaseCfgLine):
-    """An object for a parsed IOS-style configuration line.  
-    :class:`~models_cisco.IOSCfgLine` objects contain references to other 
+    """An object for a parsed IOS-style configuration line.
+    :class:`~models_cisco.IOSCfgLine` objects contain references to other
     parent and child :class:`~models_cisco.IOSCfgLine` objects.
 
     Notes
     -----
-    Originally, :class:`~models_cisco.IOSCfgLine` objects were only 
-    intended for advanced ciscoconfparse users.  As of ciscoconfparse 
-    version 0.9.10, *all users* are strongly encouraged to prefer the 
-    methods directly on :class:`~models_cisco.IOSCfgLine` objects.  
-    Ultimately, if you write scripts which call methods on 
-    :class:`~models_cisco.IOSCfgLine` objects, your scripts will be much 
-    more efficient than if you stick strictly to the classic 
+    Originally, :class:`~models_cisco.IOSCfgLine` objects were only
+    intended for advanced ciscoconfparse users.  As of ciscoconfparse
+    version 0.9.10, *all users* are strongly encouraged to prefer the
+    methods directly on :class:`~models_cisco.IOSCfgLine` objects.
+    Ultimately, if you write scripts which call methods on
+    :class:`~models_cisco.IOSCfgLine` objects, your scripts will be much
+    more efficient than if you stick strictly to the classic
     :class:`~ciscoconfparse.CiscoConfParse` methods.
 
     Parameters
     ----------
     text : str
-        A string containing a text copy of the IOS configuration line.  :class:`~ciscoconfparse.CiscoConfParse` will automatically identify the parent and children (if any) when it parses the configuration. 
+        A string containing a text copy of the IOS configuration line.  :class:`~ciscoconfparse.CiscoConfParse` will automatically identify the parent and children (if any) when it parses the configuration.
     comment_delimiter : str
         A string which is considered a comment for the configuration format.  Since this is for Cisco IOS-style configurations, it defaults to ``!``.
 
@@ -111,7 +111,7 @@ class IOSCfgLine(BaseCfgLine):
     @property
     def is_intf(self):
         # Includes subinterfaces
-        r"""Returns a boolean (True or False) to answer whether this 
+        r"""Returns a boolean (True or False) to answer whether this
         :class:`~models_cisco.IOSCfgLine` is an interface; subinterfaces
         also return True.
 
@@ -156,7 +156,7 @@ class IOSCfgLine(BaseCfgLine):
 
     @property
     def is_subintf(self):
-        r"""Returns a boolean (True or False) to answer whether this 
+        r"""Returns a boolean (True or False) to answer whether this
         :class:`~models_cisco.IOSCfgLine` is a subinterface.
 
         Returns
@@ -212,7 +212,7 @@ class IOSCfgLine(BaseCfgLine):
 
     @property
     def is_loopback_intf(self):
-        r"""Returns a boolean (True or False) to answer whether this 
+        r"""Returns a boolean (True or False) to answer whether this
         :class:`~models_cisco.IOSCfgLine` is a loopback interface.
 
         Returns
@@ -252,7 +252,7 @@ class IOSCfgLine(BaseCfgLine):
 
     @property
     def is_ethernet_intf(self):
-        r"""Returns a boolean (True or False) to answer whether this 
+        r"""Returns a boolean (True or False) to answer whether this
         :class:`~models_cisco.IOSCfgLine` is an ethernet interface.
         Any ethernet interface (10M through 10G) is considered an ethernet
         interface.
@@ -789,7 +789,7 @@ class BaseIOSIntfLine(IOSCfgLine):
             return IPv4Obj("%s/%s" % (self.ipv4_addr, self.ipv4_netmask))
         except DynamicAddressException as e:
             raise DynamicAddressException(e)
-        except:
+        except Exception:
             return self.default_ipv4_addr_object
 
     @property
@@ -1027,8 +1027,8 @@ class BaseIOSIntfLine(IOSCfgLine):
         return False
 
     def in_ipv4_subnet(self, ipv4network=IPv4Obj("0.0.0.0/32", strict=False)):
-        r"""Accept an argument for the :class:`~ccp_util.IPv4Obj` to be 
-        considered, and return a boolean for whether this interface is within 
+        r"""Accept an argument for the :class:`~ccp_util.IPv4Obj` to be
+        considered, and return a boolean for whether this interface is within
         the requested :class:`~ccp_util.IPv4Obj`.
 
         Parameters
@@ -1135,7 +1135,7 @@ class BaseIOSIntfLine(IOSCfgLine):
         ## NOTE: I have no intention of checking self.is_shutdown here
         ##     People should be able to check the sanity of interfaces
         ##     before they put them into production
-        r"""Return a boolean for whether no ip proxy-arp is configured on the 
+        r"""Return a boolean for whether no ip proxy-arp is configured on the
         interface.
 
         Returns
@@ -2059,7 +2059,7 @@ class IOSRouteLine(BaseIOSRouteLine):
                 return IPv4Obj("%s/%s" % (self.network, self.netmask), strict=False)
             elif self._address_family == "ipv6":
                 return IPv6Obj("%s/%s" % (self.network, self.masklen))
-        except:
+        except Exception:
             return None
 
     @property

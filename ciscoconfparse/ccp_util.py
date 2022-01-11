@@ -2152,10 +2152,7 @@ class CiscoRange(MutableSequence):
                 if idx > 0:
 
                     # Unicode is the only type with .isnumeric()...
-                    if sys.version_info < (3, 0, 0):
-                        prefix_removed = str(ii[len(common_prefix) :], "utf-8")
-                    else:
-                        prefix_removed = ii[len(common_prefix) :]
+                    prefix_removed = ii[len(common_prefix) :]
 
                     if prefix_removed.isnumeric():
                         _tmp.append(prefix_removed)

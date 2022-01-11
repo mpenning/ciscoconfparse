@@ -39,14 +39,15 @@ from ciscoconfparse.models_junos import JunosCfgLine
 
 from ciscoconfparse.ccp_abc import BaseCfgLine
 
-from ciscoconfparse.ccp_util import junos_unsupported, UnsupportedFeatureWarning
+from ciscoconfparse.ccp_util import junos_unsupported
 from ciscoconfparse.ccp_util import ccp_logger_control
 # Not using ccp_re yet... still a work in progress
 #from ciscoconfparse.ccp_util import ccp_re
 import toml
 
-from functools import partial
+from collections.abc import MutableSequence, Iterator
 from difflib import SequenceMatcher
+from functools import partial
 from operator import is_not
 import inspect
 import pathlib
@@ -57,19 +58,6 @@ import sys
 import re
 import os
 
-##############################################################################
-# Start conditional imports...
-##############################################################################
-
-if sys.version_info >= (
-        3,
-        0,
-        0,
-):
-    from collections.abc import MutableSequence, Iterator
-else:
-    ## This syntax is not supported in Python 3...
-    from collections import MutableSequence, Iterator
 
 ##############################################################################
 # End conditional imports...
@@ -923,7 +911,7 @@ class CiscoConfParse(object):
                             matched_capture = regex_result.groups()
                             if len(matched_capture) == 0:
                                 # If the branchspec groups() matches are a
-                                # zero-length tuple, populate this return_row 
+                                # zero-length tuple, populate this return_row
                                 # with the whole element's text
                                 return_row[idx] = (element.text,)
                             elif len(matched_capture) > 0:

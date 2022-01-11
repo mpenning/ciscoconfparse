@@ -48,23 +48,23 @@ r""" models_asa.py - Parse, Query, Build, and Modify IOS-style configurations
 
 
 class ASACfgLine(BaseCfgLine):
-    """An object for a parsed ASA-style configuration line.  
-    :class:`~models_asa.ASACfgLine` objects contain references to other 
+    """An object for a parsed ASA-style configuration line.
+    :class:`~models_asa.ASACfgLine` objects contain references to other
     parent and child :class:`~models_asa.ASACfgLine` objects.
 
     .. note::
 
-       Originally, :class:`~models_asa.ASACfgLine` objects were only 
-       intended for advanced ciscoconfparse users.  As of ciscoconfparse 
-       version 0.9.10, *all users* are strongly encouraged to prefer the 
-       methods directly on :class:`~models_asa.ASACfgLine` objects.  
-       Ultimately, if you write scripts which call methods on 
-       :class:`~models_asa.ASACfgLine` objects, your scripts will be much 
-       more efficient than if you stick strictly to the classic 
+       Originally, :class:`~models_asa.ASACfgLine` objects were only
+       intended for advanced ciscoconfparse users.  As of ciscoconfparse
+       version 0.9.10, *all users* are strongly encouraged to prefer the
+       methods directly on :class:`~models_asa.ASACfgLine` objects.
+       Ultimately, if you write scripts which call methods on
+       :class:`~models_asa.ASACfgLine` objects, your scripts will be much
+       more efficient than if you stick strictly to the classic
        :class:`~ciscoconfparse.CiscoConfParse` methods.
 
     Args:
-        - text (str): A string containing a text copy of the ASA configuration line.  :class:`~ciscoconfparse.CiscoConfParse` will automatically identify the parent and children (if any) when it parses the configuration. 
+        - text (str): A string containing a text copy of the ASA configuration line.  :class:`~ciscoconfparse.CiscoConfParse` will automatically identify the parent and children (if any) when it parses the configuration.
         - comment_delimiter (str): A string which is considered a comment for the configuration format.  Since this is for Cisco ASA-style configurations, it defaults to ``!``.
 
     Attributes:
@@ -262,7 +262,7 @@ class BaseASAIntfLine(ASACfgLine):
         """Return a ccp_util.IPv4Obj object representing the address on this interface; if there is no address, return IPv4Obj('127.0.0.1/32')"""
         try:
             return IPv4Obj("%s/%s" % (self.ipv4_addr, self.ipv4_netmask))
-        except:
+        except Exception as ee:
             return self.default_ipv4_addr_object
 
     @property
@@ -270,7 +270,7 @@ class BaseASAIntfLine(ASACfgLine):
         """Return a ccp_util.IPv4Obj object representing the standby address on this interface; if there is no address, return IPv4Obj('127.0.0.1/32')"""
         try:
             return IPv4Obj("%s/%s" % (self.ipv4_standby_addr, self.ipv4_netmask))
-        except:
+        except Exception as ee:
             return self.default_ipv4_addr_object
 
     @property
@@ -288,7 +288,7 @@ class BaseASAIntfLine(ASACfgLine):
             return IPv4Obj(
                 "%s/%s" % (self.ipv4_addr, self.ipv4_netmask), strict=False
             ).network_address
-        except:
+        except Exception as ee:
             return self.default_ipv4_addr_object
 
     @property
@@ -373,7 +373,7 @@ class BaseASAIntfLine(ASACfgLine):
             try:
                 # Return a boolean for whether the interface is in that network and mask
                 return self.ipv4_addr_object in ipv4network
-            except:
+            except Exception as ee:
                 raise ValueError(
                     "FATAL: %s.in_ipv4_subnet(ipv4network={0}) is an invalid arg".format(
                         ipv4network
@@ -646,7 +646,7 @@ _RE_PORTOBJECT = re.compile(_RE_PORTOBJ_STR, re.VERBOSE)
 
 class ASAObjGroupService(ASACfgLine):
     def __init__(self, *args, **kwargs):
-        """Accept an ASA line number and initialize family relationship 
+        """Accept an ASA line number and initialize family relationship
             attributes"""
         super(ASAObjGroupService, self).__init__(*args, **kwargs)
 
@@ -939,7 +939,7 @@ class ASARouteLine(BaseASARouteLine):
                 return IPv4Obj("%s/%s" % (self.network, self.netmask), strict=False)
             elif self.address_family == "ipv6":
                 return IPv6Network("%s/%s" % (self.network, self.netmask))
-        except:
+        except Exception as ee:
             return None
 
     @property

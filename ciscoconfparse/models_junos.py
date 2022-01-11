@@ -44,25 +44,25 @@ r""" models_junos.py - Parse, Query, Build, and Modify Junos-style configuration
 
 
 class JunosCfgLine(BaseCfgLine):
-    r"""An object for a parsed Junos-style configuration line.  
-    :class:`~models_junos.JunosCfgLine` objects contain references to other 
+    r"""An object for a parsed Junos-style configuration line.
+    :class:`~models_junos.JunosCfgLine` objects contain references to other
     parent and child :class:`~models_junos.JunosCfgLine` objects.
 
     Notes
     -----
-    Originally, :class:`~models_junos.JunosCfgLine` objects were only 
-    intended for advanced ciscoconfparse users.  As of ciscoconfparse 
-    version 0.9.10, *all users* are strongly encouraged to prefer the 
-    methods directly on :class:`~models_junos.JunosCfgLine` objects.  
-    Ultimately, if you write scripts which call methods on 
-    :class:`~models_junos.JunosCfgLine` objects, your scripts will be much 
-    more efficient than if you stick strictly to the classic 
+    Originally, :class:`~models_junos.JunosCfgLine` objects were only
+    intended for advanced ciscoconfparse users.  As of ciscoconfparse
+    version 0.9.10, *all users* are strongly encouraged to prefer the
+    methods directly on :class:`~models_junos.JunosCfgLine` objects.
+    Ultimately, if you write scripts which call methods on
+    :class:`~models_junos.JunosCfgLine` objects, your scripts will be much
+    more efficient than if you stick strictly to the classic
     :class:`~ciscoconfparse.CiscoConfParse` methods.
 
     Parameters
     ----------
     text : str
-        A string containing a text copy of the Junos configuration line.  :class:`~ciscoconfparse.CiscoConfParse` will automatically identify the parent and children (if any) when it parses the configuration. 
+        A string containing a text copy of the Junos configuration line.  :class:`~ciscoconfparse.CiscoConfParse` will automatically identify the parent and children (if any) when it parses the configuration.
      comment_delimiter : str
          A string which is considered a comment for the configuration format.  Since this is for Cisco Junos-style configurations, it defaults to ``!``.
 
@@ -102,7 +102,7 @@ class JunosCfgLine(BaseCfgLine):
     @property
     def is_intf(self):
         # Includes subinterfaces
-        r"""Returns a boolean (True or False) to answer whether this 
+        r"""Returns a boolean (True or False) to answer whether this
         :class:`~models_junos.JunosCfgLine` is an interface; subinterfaces
         also return True.
 
@@ -146,7 +146,7 @@ class JunosCfgLine(BaseCfgLine):
 
     @property
     def is_subintf(self):
-        r"""Returns a boolean (True or False) to answer whether this 
+        r"""Returns a boolean (True or False) to answer whether this
         :class:`~models_junos.JunosCfgLine` is a subinterface.
 
         Returns:
@@ -196,7 +196,7 @@ class JunosCfgLine(BaseCfgLine):
 
     @property
     def is_loopback_intf(self):
-        r"""Returns a boolean (True or False) to answer whether this 
+        r"""Returns a boolean (True or False) to answer whether this
         :class:`~models_junos.JunosCfgLine` is a loopback interface.
 
         Returns:
@@ -232,7 +232,7 @@ class JunosCfgLine(BaseCfgLine):
 
     @property
     def is_ethernet_intf(self):
-        r"""Returns a boolean (True or False) to answer whether this 
+        r"""Returns a boolean (True or False) to answer whether this
         :class:`~models_junos.JunosCfgLine` is an ethernet interface.
         Any ethernet interface (10M through 10G) is considered an ethernet
         interface.

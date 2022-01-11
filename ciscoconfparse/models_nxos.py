@@ -53,12 +53,12 @@ MAX_VLAN = 4094
 
 
 class NXOSCfgLine(BaseCfgLine):
-    r"""An object for a parsed IOS-style configuration line.  
-    :class:`~models_nxos.NXOSCfgLine` objects contain references to other 
+    r"""An object for a parsed IOS-style configuration line.
+    :class:`~models_nxos.NXOSCfgLine` objects contain references to other
     parent and child :class:`~models_nxos.NXOSCfgLine` objects.
 
     Args:
-        - text (str): A string containing a text copy of the NXOS configuration line.  :class:`~ciscoconfparse.CiscoConfParse` will automatically identify the parent and children (if any) when it parses the configuration. 
+        - text (str): A string containing a text copy of the NXOS configuration line.  :class:`~ciscoconfparse.CiscoConfParse` will automatically identify the parent and children (if any) when it parses the configuration.
         - comment_delimiter (str): A string which is considered a comment for the configuration format.  Since this is for Cisco IOS-style configurations, it defaults to ``!``.
 
     Attributes:
@@ -88,7 +88,7 @@ class NXOSCfgLine(BaseCfgLine):
     @property
     def is_intf(self):
         # Includes subinterfaces
-        r"""Returns a boolean (True or False) to answer whether this 
+        r"""Returns a boolean (True or False) to answer whether this
         :class:`~models_nxos.NXOSCfgLine` is an interface; subinterfaces
         also return True.
 
@@ -128,7 +128,7 @@ class NXOSCfgLine(BaseCfgLine):
 
     @property
     def is_subintf(self):
-        r"""Returns a boolean (True or False) to answer whether this 
+        r"""Returns a boolean (True or False) to answer whether this
         :class:`~models_nxos.NXOSCfgLine` is a subinterface.
 
         Returns:
@@ -175,7 +175,7 @@ class NXOSCfgLine(BaseCfgLine):
 
     @property
     def is_loopback_intf(self):
-        r"""Returns a boolean (True or False) to answer whether this 
+        r"""Returns a boolean (True or False) to answer whether this
         :class:`~models_nxos.NXOSCfgLine` is a loopback interface.
 
         Returns:
@@ -211,7 +211,7 @@ class NXOSCfgLine(BaseCfgLine):
 
     @property
     def is_ethernet_intf(self):
-        r"""Returns a boolean (True or False) to answer whether this 
+        r"""Returns a boolean (True or False) to answer whether this
         :class:`~models_nxos.NXOSCfgLine` is an ethernet interface.
         Any ethernet interface (10M through 10G) is considered an ethernet
         interface.
@@ -732,7 +732,7 @@ class BaseNXOSIntfLine(NXOSCfgLine):
             return IPv4Obj("%s/%s" % (self.ipv4_addr, self.ipv4_masklength))
         except DynamicAddressException as e:
             raise DynamicAddressException(e)
-        except:
+        except Exception:
             return self.default_ipv4_addr_object
 
     @property
@@ -951,8 +951,8 @@ class BaseNXOSIntfLine(NXOSCfgLine):
         return False
 
     def in_ipv4_subnet(self, ipv4network=IPv4Obj("0.0.0.0/32", strict=False)):
-        r"""Accept an argument for the :class:`~ccp_util.IPv4Obj` to be 
-        considered, and return a boolean for whether this interface is within 
+        r"""Accept an argument for the :class:`~ccp_util.IPv4Obj` to be
+        considered, and return a boolean for whether this interface is within
         the requested :class:`~ccp_util.IPv4Obj`.
 
         Kwargs:
@@ -1053,7 +1053,7 @@ class BaseNXOSIntfLine(NXOSCfgLine):
         ## NOTE: I have no intention of checking self.is_shutdown here
         ##     People should be able to check the sanity of interfaces
         ##     before they put them into production
-        r"""Return a boolean for whether no ip proxy-arp is configured on the 
+        r"""Return a boolean for whether no ip proxy-arp is configured on the
         interface.
 
         Returns:
@@ -2176,7 +2176,7 @@ class NXOSRouteLine(BaseNXOSRouteLine):
                 return IPv4Obj("%s/%s" % (self.network, self.masklen), strict=False)
             elif self._address_family == "ipv6":
                 return IPv6Obj("%s/%s" % (self.network, self.masklen))
-        except:
+        except Exception:
             return None
 
     @property

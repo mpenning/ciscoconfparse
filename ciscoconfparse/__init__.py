@@ -25,10 +25,6 @@ r""" __init__.py - Parse, Query, Build, and Modify IOS-style configurations
 """
 
 from __future__ import absolute_import
-from ciscoconfparse.ciscoconfparse import __author_email__
-from ciscoconfparse.ciscoconfparse import __author__
-from ciscoconfparse.ciscoconfparse import __license__
-from ciscoconfparse.ciscoconfparse import __version__
 from ciscoconfparse.ciscoconfparse import *
 from ciscoconfparse.ccp_util import *
 
