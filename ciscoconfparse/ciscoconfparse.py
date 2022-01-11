@@ -40,20 +40,17 @@ from ciscoconfparse.models_junos import JunosCfgLine
 from ciscoconfparse.ccp_abc import BaseCfgLine
 
 from ciscoconfparse.ccp_util import junos_unsupported, UnsupportedFeatureWarning
-from ciscoconfparse.ccp_util import log_function_call
 from ciscoconfparse.ccp_util import ccp_logger_control
 # Not using ccp_re yet... still a work in progress
 #from ciscoconfparse.ccp_util import ccp_re
 import toml
 
-from operator import methodcaller, attrgetter
-from functools import wraps, partial
+from functools import partial
 from difflib import SequenceMatcher
 from operator import is_not
 import inspect
 import pathlib
 import locale
-import json
 import time
 import copy
 import sys
@@ -130,7 +127,7 @@ ALL_VALID_SYNTAX = (
 pyproject_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                               "../pyproject.toml")
 if os.path.isfile(pyproject_path):
-    ## Retrieve the version number from json...
+    ## Retrieve the version number from pyproject.toml...
     toml_values = dict()
     with open(pyproject_path, encoding=ENCODING) as fh:
         toml_values = toml.loads(fh.read())
@@ -153,23 +150,16 @@ def build_space_tolerant_regex(linespec):
     # Unicode below...
     backslash = "\x5c"
     # escaped_space = "\\s+" (not a raw string)
-    if sys.version_info >= (
-            3,
-            0,
-            0,
-    ):
-        escaped_space = (backslash + backslash + "s+").translate("utf-8")
-    else:
-        escaped_space = backslash + backslash + "s+"
+    escaped_space = (backslash + backslash + "s+").translate("utf-8")
 
-    if isinstance(linespec, str) or isinstance(linespec, unicode):
+    if isinstance(linespec, str):
         linespec = re.sub(r"\s+", escaped_space, linespec)
 
     elif isinstance(linespec, list) or isinstance(linespec, tuple):
         for idx in range(0, len(linespec)):
             ## Ensure this list element is a string...
             tmp = linespec[idx]
-            assert isinstance(tmp, str) or isinstance(tmp, unicode)
+            assert isinstance(tmp, str)
             linespec[idx] = re.sub(r"\s+", escaped_space, tmp)
 
     return linespec
@@ -331,7 +321,7 @@ class CiscoConfParse(object):
                 logger.error(error)
                 raise ValueError(error)
 
-        ## Accept either a filepath in a string, unicode, or a pathlib.Path instance...
+        ## Accept either a filepath in a string, or a pathlib.Path instance...
         elif isinstance(config, str) or isinstance(config, pathlib.Path):
 
             if os.path.isfile(config) is True:
@@ -1069,8 +1059,8 @@ class CiscoConfParse(object):
         """
         if self.debug > 1:
             method_name = inspect.currentframe().f_code.co_name
-            message = "METHOD %s().%s(linespec='%s') was called" % (
-                self.__class__.__name__, method_name, linespec)
+            message = "METHOD %s().%s(dnaspec='%s') was called" % (
+                self.__class__.__name__, method_name, dnaspec)
             logger.info(message)
 
         if not self.factory:
@@ -3272,7 +3262,7 @@ class CiscoConfParse(object):
                     for attr in ["config_this", "unconfig_this"]:
                         try:
                             delattr(obj.text, attr)
-                        except:
+                        except Exception:
                             pass
 
         ###
@@ -3285,7 +3275,7 @@ class CiscoConfParse(object):
             # Clean up the attributes we used temporarily in this method
             try:
                 delattr(obj.text, "config_this")
-            except:
+            except Exception:
                 pass
 
         ## Strip out 'double negatives' (i.e. 'no no ')
@@ -3453,7 +3443,7 @@ class ConfigList(MutableSequence):
             try:
                 assert self.syntax == valid_syntax
                 is_valid_syntax = True
-            except:
+            except Exception:
                 pass
         assert is_valid_syntax is True
 
@@ -3533,15 +3523,13 @@ class ConfigList(MutableSequence):
         """Call arg on ConfigList() object, and if that fails, call arg from the ccp_ref attribute"""
         # Try a method call on ASAConfigList()
 
-        rewrite_to_ccp_ref = False
         # Rewrite self.CiscoConfParse to self.ccp_ref
         if arg == "CiscoConfParse":
-            rewrite_to_ccp_ref = True
             arg = "ccp_ref"
 
         try:
             return object.__getattribute__(self, arg)
-        except Exception as ee:
+        except Exception:
             pass
 
         try:
@@ -4581,15 +4569,13 @@ class NXOSConfigList_deprecated(MutableSequence):
         """Call arg on NXOSConfigList() object, and if that fails, call arg from the ccp_ref attribute"""
         # Try a method call on ConfigList()
 
-        rewrite_to_ccp_ref = False
         # Rewrite self.CiscoConfParse to self.ccp_ref
         if arg == "CiscoConfParse":
-            rewrite_to_ccp_ref = True
             arg = "ccp_ref"
 
         try:
             return object.__getattribute__(self, arg)
-        except Exception as ee:
+        except Exception:
             pass
 
         try:
@@ -5101,15 +5087,13 @@ class ASAConfigList_deprecated(MutableSequence):
         """Call arg on ASAConfigList() object, and if that fails, call arg from the ccp_ref attribute"""
         # Try a method call on ASAConfigList()
 
-        rewrite_to_ccp_ref = False
         # Rewrite self.CiscoConfParse to self.ccp_ref
         if arg == "CiscoConfParse":
-            rewrite_to_ccp_ref = True
             arg = "ccp_ref"
 
         try:
             return object.__getattribute__(self, arg)
-        except Exception as ee:
+        except Exception:
             pass
 
         try:

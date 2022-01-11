@@ -1,8 +1,6 @@
 from __future__ import absolute_import
 from operator import attrgetter
 from functools import wraps
-import itertools
-import warnings
 import socket
 import time
 import sys
@@ -25,13 +23,8 @@ from dns.exception import DNSException
 from dns.resolver import Resolver
 from dns import reversename, query, zone
 
-if sys.version_info[0] < 3:
-    from ipaddr import IPv4Network, IPv6Network, IPv4Address, IPv6Address
-    import ipaddr
-
-else:
-    from ipaddress import IPv4Network, IPv6Network, IPv4Address, IPv6Address
-    import ipaddress
+from ipaddress import IPv4Network, IPv6Network, IPv4Address, IPv6Address
+import ipaddress
 
 from loguru import logger as logger
 
@@ -422,7 +415,7 @@ def is_valid_ipv4_addr(input_str=""):
         assert isinstance(input_str, str)
         assert len(input_str.strip()) <= IPV4_MAXSTR_LEN
         assert input_str != ""
-    except AssertionError as aa:
+    except AssertionError:
         return False
     if _RGX_IPV4ADDR.search(input_str):
         return True
@@ -446,7 +439,7 @@ def is_valid_ipv6_addr(input_str=""):
         # Max valid IPv6 string length is 39, add 4 for a slash and masklen
         assert len(input_str.strip()) <= IPV6_MAXSTR_LEN
         assert input_str != ""
-    except AssertionError as aa:
+    except AssertionError:
         return False
     if _RGX_IPV6ADDR.search(input_str):
         return True
@@ -480,19 +473,18 @@ def ip_factory(addr="", stdlib=False):
 
             else:
                 # Heuristic, maximum length of an ipv4 string, slash and masklen
-                assert len(addr_w_no_spaces) <= IPV4_MAXCHAR_LEN
+                assert len(addr_w_no_spaces) <= IPV4_MAXSTR_LEN
 
         elif isinstance(addr, int):
             pass
 
     def ipv4_security_heuristic_failed(addr):
-        reject_this_input = False
         if isinstance(addr, str) and len(addr) >= 16:
             pass
         elif isinstance(addr, int) and (addr <= 4294967295):
             pass
         else:
-            reject_this_input = True
+            raise ValueError("'%s' doesn't look like a good IPv4 address" % addr)
 
     if is_valid_ipv4_addr(addr):
         tmp = IPv4Obj(addr)
@@ -774,7 +766,7 @@ class IPv4Obj(object):
                 for attr_name in ["as_decimal", "as_decimal_network", "prefixlen"]:
                     try:
                         assert getattr(obj, attr_name, None) is not None
-                    except (AssertionError) as ee:
+                    except (AssertionError):
                         error_str = "Cannot compare {} with '{}'".format(
                             self, type(obj)
                         )
@@ -797,7 +789,7 @@ class IPv4Obj(object):
             else:
                 return self_ndec > val_ndec
 
-        except:
+        except Exception:
             errmsg = "{0} cannot compare itself to '{1}'".format(self.__repr__(), val)
             raise ValueError(errmsg)
 
@@ -807,7 +799,7 @@ class IPv4Obj(object):
                 for attr_name in ["as_decimal", "as_decimal_network", "prefixlen"]:
                     try:
                         assert getattr(obj, attr_name, None) is not None
-                    except (AssertionError) as ee:
+                    except (AssertionError):
                         error_str = "Cannot compare {} with '{}'".format(
                             self, type(obj)
                         )
@@ -830,7 +822,7 @@ class IPv4Obj(object):
             else:
                 return self_ndec < val_ndec
 
-        except Exception as ee:
+        except Exception:
             errmsg = "{0} cannot compare itself to '{1}'".format(self.__repr__(), val)
             logger.error(errmsg)
             raise ValueError(errmsg)
@@ -1285,7 +1277,7 @@ class IPv6Obj(object):
                 for attr_name in ["as_decimal", "as_decimal_network", "prefixlen"]:
                     try:
                         assert getattr(obj, attr_name, None) is not None
-                    except (AssertionError) as ee:
+                    except (AssertionError):
                         error_str = "Cannot compare {} with '{}'".format(
                             self, type(obj)
                         )
@@ -1308,7 +1300,7 @@ class IPv6Obj(object):
             else:
                 return self_ndec > val_ndec
 
-        except:
+        except Exception:
             errmsg = "{0} cannot compare itself to '{1}'".format(self.__repr__(), val)
             raise ValueError(errmsg)
 
@@ -1318,7 +1310,7 @@ class IPv6Obj(object):
                 for attr_name in ["as_decimal", "prefixlen"]:
                     try:
                         assert getattr(obj, attr_name, None) is not None
-                    except (AssertionError) as ee:
+                    except (AssertionError):
                         error_str = "Cannot compare {} with '{}'".format(
                             self, type(obj)
                         )
@@ -1341,7 +1333,7 @@ class IPv6Obj(object):
             else:
                 return self_ndec < val_ndec
 
-        except:
+        except Exception:
             errmsg = "{0} cannot compare itself to '{1}'".format(self.__repr__(), val)
             raise ValueError(errmsg)
 
@@ -1680,7 +1672,7 @@ class L4Object(object):
 
         try:
             port_spec = port_spec.strip()
-        except:
+        except Exception:
             port_spec = port_spec
 
         if syntax == "asa":
@@ -1839,7 +1831,7 @@ def dns_query(input_str="", query_type="", server="", timeout=2.0):
     assert server != ""
     assert float(timeout) > 0
     assert input_str != ""
-    intput = input_str.strip()
+    #input = input_str.strip()
     retval = set([])
     resolver = Resolver()
     resolver.server = [socket.gethostbyname(server)]
@@ -2161,7 +2153,7 @@ class CiscoRange(MutableSequence):
 
                     # Unicode is the only type with .isnumeric()...
                     if sys.version_info < (3, 0, 0):
-                        prefix_removed = unicode(ii[len(common_prefix) :], "utf-8")
+                        prefix_removed = str(ii[len(common_prefix) :], "utf-8")
                     else:
                         prefix_removed = ii[len(common_prefix) :]
 
@@ -2255,10 +2247,7 @@ class CiscoRange(MutableSequence):
         input_str = list()
         for ii in self._list:
             # Removed try / except which is slower than sys.version_info
-            if sys.version_info < (3, 0, 0):
-                unicode_ii = unicode(str(ii))  # Python2.7...
-            else:
-                unicode_ii = str(ii)
+            unicode_ii = str(ii)
 
             # Removed this in version 1.5.27 because it's so slow...
             # trailing_digits = re.sub(r"^{0}(\d+)$".format(prefix_str), "\g<1>", unicode_ii)
