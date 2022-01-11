@@ -2155,11 +2155,7 @@ class NXOSRouteLine(BaseNXOSRouteLine):
 
     @property
     def netmask(self):
-        if self._address_family == "ip":
-            return str(self.network_object.netmask)
-        elif self._address_family == "ipv6":
-            return str(self.network_object.netmask)
-        return retval
+        return str(self.network_object.netmask)
 
     @property
     def masklen(self):
