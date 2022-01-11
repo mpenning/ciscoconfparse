@@ -290,7 +290,7 @@ class BaseCfgLine(object, metaclass=ABCMeta):
         error =  "FATAL CALL: in %s line %s %s(insertstr='%s')" % (calling_filename, calling_lineno, calling_function, insertstr)
         if isinstance(insertstr, str) is True:
             retval = self.confobj.insert_before(self, insertstr, atomic=False)
-        elif isinstance(insertstr, IOSCfgLine) is True:
+        elif isinstance(insertstr, BaseCfgLine) is True:
             retval = self.confobj.insert_before(self, insertstr.text, atomic=False)
         else:
             raise ValueError(error)
