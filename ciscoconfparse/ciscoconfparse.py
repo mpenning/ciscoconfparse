@@ -89,18 +89,37 @@ r""" ciscoconfparse.py - Parse, Query, Build, and Modify IOS-style configs
 """
 
 
-def configure_loguru(debug=0):
+def configure_loguru(
+    sink=sys.stderr,
+    action="",
+    rotation="midnight",
+    retention="1 month",
+    compression="zip",
+    level="DEBUG",
+    debug=0,
+    ):
+    assert (sink is sys.stderr) or (sink is sys.stdout) or isinstance(sink, str)
+    assert isinstance(action, str)
+    assert action=="remove" or action=="add" or action=="enable" or action=="disable" or action==""
+    assert isinstance(rotation, str)
+    assert isinstance(retention, str)
+    assert isinstance(compression, str)
+    assert compression=="zip"
+    assert isinstance(level, str)
     assert isinstance(debug, int) and (0 <= debug <= 5)
     assert bool(ccp_logger_control)
 
-    # logger_control() was imported above...
-    #    Remove the default loguru logger to stderr (handler_id==0)...
+        # logger_control() was imported above...
+        #    Remove the default loguru logger to stderr (handler_id==0)...
     ccp_logger_control(action="remove", handler_id=0)
-    ccp_logger_control(action="add", sink=sys.stderr)
+        #ccp_logger_control(action="add", sink=sys.stderr, rotation="midnight", compression="gzip")
+
+    log_config = logger.configure(sink=sys.stdout, level="DEBUG", rotation='midnight', retention="1 month", compression=compression)
+    logger.add(log_config)
+
+    ccp_logger_control(action="add", sink=sys.stdout, level="DEBUG", rotation='midnight', retention="1 month", compression=compression)
     ccp_logger_control(action="enable")
-
-
-configure_loguru()
+#configure_loguru()
 
 ENCODING = locale.getpreferredencoding()
 ALL_VALID_SYNTAX = (

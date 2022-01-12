@@ -7,15 +7,7 @@ import sys
 import re
 import os
 
-if sys.version_info >= (
-    3,
-    0,
-    0,
-):
-    from collections.abc import MutableSequence
-else:
-    ## This syntax is not supported in Python 3...
-    from collections import MutableSequence
+from collections.abc import MutableSequence
 
 from ciscoconfparse.protocol_values import ASA_TCP_PORTS, ASA_UDP_PORTS
 import ciscoconfparse
@@ -212,7 +204,15 @@ def log_function_call(function=None, *args, **kwargs):
 
 
 def ccp_logger_control(
-    action=None, sink=sys.stderr, handler_id=None, allow_enqueue=True
+    sink=sys.stderr,
+    action="",
+    handler_id=None,
+    allow_enqueue=True,
+    rotation="00:00",
+    retention="1 month",
+    compression="zip",
+    level="DEBUG",
+    debug=0,
 ):
     """A simple function to handle logging... Enable / Disable all ciscoconfparse logging here... also see Github issue #211.
 
@@ -220,11 +220,16 @@ def ccp_logger_control(
     -------
     """
 
+    msg = "ccp_logger_control() was called with sink='{0}', action='{1}', handler_id='{2}', allow_enqueue={3}, rotation='{4}', retention='{5}', compression='{6}', level='{7}', debug={8}".format(sink, action, handler_id, allow_enqueue, rotation, retention, compression, level, debug)
+    logger.info(msg)
+
+    assert isinstance(action, str)
     assert (
         action == "remove"
         or action == "add"
         or action == "disable"
         or action == "enable"
+        or action == ""
     )
 
     package_name = "ciscoconfparse"
@@ -247,6 +252,7 @@ def ccp_logger_control(
         return True
 
     elif action == "add":
+
         logger.add(
             sink=sink,
             colorize=True,
@@ -256,11 +262,17 @@ def ccp_logger_control(
             enqueue=allow_enqueue,
             serialize=False,
             catch=True,
+            rotation="00:00",
+            retention="1 day",
+            compression="zip",
             level="DEBUG",
-            # format='<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>'
         )
+        # format='<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>'
         logger.enable(package_name)
         return True
+
+    elif action == "":
+        raise ValueError("action='' is not supported.  Please use a valid action keyword")
 
     else:
         raise NotImplementedError(
