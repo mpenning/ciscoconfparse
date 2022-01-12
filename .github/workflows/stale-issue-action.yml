@@ -1,0 +1,36 @@
+# close-stale-issues (https://github.com/marketplace/actions/close-stale-issues)
+name: 'Close stale issues/PRs'
+on:
+  schedule:
+    - cron: '0 1 * * *'
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v4
+        with:
+          close-issue-message: >
+            Due to inactivity, CiscoConfParse's maintainers are closing this
+            issue.  Please refrain from further comments. In the future, 
+            CiscoConfParse's maintainers may reopen it solely at their
+            own discretion.
+          close-pr-message: >
+            This PR has been automatically closed due to lack of activity.
+          days-before-stale: 60
+          days-before-close: 30
+          exempt-issue-labels: 'status: accepted,status: blocked'
+          operations-per-run: 100
+          remove-stale-when-updated: false
+          stale-issue-label: 'stale-pending-close'
+          stale-issue-message: >
+            This issue has automatically been marked stale due to inactivity.
+            The issue will close unless further activity occurs.  Please
+            understand that the CiscoConfParse team is not obligated to
+            comment on every issue.
+          stale-pr-label: 'stale-pending-close'
+          stale-pr-message: >
+            This PR has automatically been marked stale due to inactivity.
+            It will automatically close unless further action is taken. 
+            Please understand that the CiscoConfParse team is not obligated
+            to comment on (or approve) every Pull Request.
