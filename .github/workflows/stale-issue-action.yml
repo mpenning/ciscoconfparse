@@ -1,4 +1,6 @@
-# close-stale-issues (https://github.com/marketplace/actions/close-stale-issues)
+# close-stale-issues ->
+# - https://github.com/marketplace/actions/close-stale-issues
+# - https://github.com/actions/stale
 name: 'Close stale issues/PRs'
 on:
   schedule:
@@ -15,10 +17,16 @@ jobs:
             issue.  Please refrain from further comments. In the future, 
             CiscoConfParse's maintainers may reopen it solely at their
             own discretion.  For more detailed information, please refer to
-            <a href="(https://github.com/mpenning/ciscoconfparse/blob/master/.github/CONTRIBUTING.md">Our CONTRIBUTING guidance</a>
+            our CONTRIBUTING guidance ->
+            https://github.com/mpenning/ciscoconfparse/blob/master/.github/CONTRIBUTING.md
+
+
+
           close-pr-message: >
             This PR has been automatically closed due to lack of activity.
-            For more detailed information, please refer to <a href="(https://github.com/mpenning/ciscoconfparse/blob/master/.github/CONTRIBUTING.md">Our CONTRIBUTING guidance</a>.
+            For more detailed information, please refer to our
+            CONTRIBUTING guidance ->
+            https://github.com/mpenning/ciscoconfparse/blob/master/.github/CONTRIBUTING.md
           days-before-stale: 60
           days-before-close: 30
           exempt-issue-labels: 'status: accepted,status: blocked'
@@ -30,11 +38,13 @@ jobs:
             The issue will close unless further activity occurs.  Please
             understand that the CiscoConfParse team is not obligated to
             comment on every issue.  For more detailed information, please
-            refer to <a href="(https://github.com/mpenning/ciscoconfparse/blob/master/.github/CONTRIBUTING.md">our CONTRIBUTING guidance</a>.
+            refer to our CONTRIBUTING guidance ->
+            https://github.com/mpenning/ciscoconfparse/blob/master/.github/CONTRIBUTING.md
           stale-pr-label: 'stale-pending-close'
           stale-pr-message: >
             This PR has automatically been marked stale due to inactivity.
             It will automatically close unless further action is taken. 
             Please understand that the CiscoConfParse team is not obligated
             to comment on (or approve) every Pull Request.  For more detailed
-            information, please refer to <a href="(https://github.com/mpenning/ciscoconfparse/blob/master/.github/CONTRIBUTING.md">our CONTRIBUTING guidance</a>.
+            information, please refer to CONTRIBUTING guidance ->
+            https://github.com/mpenning/ciscoconfparse/blob/master/.github/CONTRIBUTING.md
