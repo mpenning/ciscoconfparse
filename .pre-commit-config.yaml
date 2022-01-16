@@ -1,8 +1,13 @@
 ---
+# This yaml requires a specific python package -> https://pre-commit.com/
+repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.1.0  # Use the ref you want to point at
+  rev: v4.1.0
   hooks:
+  - id: check-yaml
+  - id: end-of-file-fixer
+  - id: trailing-whitespace
+  - id: fix-byte-order-marker
+  - id: trailing-whitespace
+  - id: end-of-file-fixer
   - id: no-commit-to-branch
-    name: "No direct commit to these branches."
-    pass_filenames: false
-    always_run: true
