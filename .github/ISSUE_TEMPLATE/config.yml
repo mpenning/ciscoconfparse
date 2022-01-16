@@ -8,12 +8,12 @@
 # yaml formatting checked with http://www.yamllint.com/
 #
 blank_issues_enabled: false
-contact_links: 
-  - 
+contact_links:
+  -
     about: "Do not report security issues publicly. Email our security contact."
     name: "Security issue"
     url: penningtonthing@gmail.com
-  - 
+  -
     about: "Search for and ask questions about your code on Stack Overflow."
     name: Questions
     url: "https://stackoverflow.com/questions/tagged/ciscoconfparse"

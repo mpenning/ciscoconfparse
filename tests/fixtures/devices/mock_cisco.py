@@ -244,7 +244,7 @@ def wr_build_config(instance):
     ## In a perfect world, we would sleep here to pretend
     ##    that the router is building the configuration; however,
     ##    there isn't a good way to make Twisted flush the TCP buffer
-    ##    so the client sees a delay between "Building configuration..." 
+    ##    so the client sees a delay between "Building configuration..."
     ##    and "[OK]"
     #time.sleep(1.2)
     instance.write(CRLF+"[OK]")

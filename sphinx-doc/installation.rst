@@ -4,10 +4,10 @@ CiscoConfParse Installation and Python Basics
 A note about Python
 -------------------
 
-If you are coming from Perl or another language (many people do), you may not 
-be familiar with Python's interpreter interface.  To access the interpreter, 
-just issue ``python`` at the Windows or unix command-line; this drops you into 
-an interactive interpreter, where you can issue python commands.  Use 
+If you are coming from Perl or another language (many people do), you may not
+be familiar with Python's interpreter interface.  To access the interpreter,
+just issue ``python`` at the Windows or unix command-line; this drops you into
+an interactive interpreter, where you can issue python commands.  Use
 ``quit()`` to leave the interpreter.
 
 When you see ``>>>`` preceding python statements, that means the example is run
@@ -41,7 +41,7 @@ This is a "Hello World" example from within a unix Python interpreter.
    >>> quit()
    [mpenning@mpenning-S10 ~]$
 
-The same commands could be used in an executable script (mode 755) saved to 
+The same commands could be used in an executable script (mode 755) saved to
 disk... and run from the unix shell.
 
 .. code-block:: python
@@ -58,16 +58,16 @@ Please see the official `Python on Windows`_ documentation.
 Using :mod:`ciscoconfparse`
 ---------------------------
 
-Once you know how to find and use python on your system, it's time to ensure 
-you have a copy of :mod:`ciscoconfparse`.   Many of the examples assume you 
-have imported :class:`~ciscoconfparse.CiscoConfParse` at the interpreter 
+Once you know how to find and use python on your system, it's time to ensure
+you have a copy of :mod:`ciscoconfparse`.   Many of the examples assume you
+have imported :class:`~ciscoconfparse.CiscoConfParse` at the interpreter
 before you start...
 
 .. code-block:: python
 
    >>> from ciscoconfparse import CiscoConfParse
 
-Try importing `CiscoConfParse` in the python interpreter now.  If it doesn't 
+Try importing `CiscoConfParse` in the python interpreter now.  If it doesn't
 work, then you'll need to install ciscoconfparse.
 
 Installing :mod:`ciscoconfparse`
@@ -93,7 +93,7 @@ Install with pip
 
 If you already have pip_, you can install as usual:
 
-Alternatively you can install with pip_: :: 
+Alternatively you can install with pip_: ::
 
       pip install --upgrade ciscoconfparse
 
@@ -119,8 +119,8 @@ at the command-line ::
 Install from the source
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-If you don't have either pip_ or setuptools_, you can 
-`download the ciscoconfparse compressed tarball`_, extract it and 
+If you don't have either pip_ or setuptools_, you can
+`download the ciscoconfparse compressed tarball`_, extract it and
 run the ``setup.py`` script in the tarball: ::
 
       python setup.py install
@@ -138,7 +138,7 @@ If want to install from the most recent source, you can always clone and install
       pip install .
 
 
-.. _`download the ciscoconfparse compressed tarball`: https://pypi.python.org/pypi/ciscoconfparse/ 
+.. _`download the ciscoconfparse compressed tarball`: https://pypi.python.org/pypi/ciscoconfparse/
 
 .. _`Python on Windows`: https://docs.python.org/3/faq/windows.html
 
@@ -159,5 +159,3 @@ If want to install from the most recent source, you can always clone and install
 .. _virtualenv: https://pypi.python.org/pypi/virtualenv
 
 .. _ciscoconfparse: https://pypi.python.org/pypi/ciscoconfparse
-
-

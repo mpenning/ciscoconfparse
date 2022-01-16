@@ -4,7 +4,7 @@
 setup_fn_call = """
 import sys
 sys.path.insert(0, "../")
-from ciscoconfparse import CiscoConfParse 
+from ciscoconfparse import CiscoConfParse
 
 global parse
 parse = CiscoConfParse("../configs/sample_04.junos", syntax='junos', comment="#")

@@ -16,7 +16,7 @@ for base_dir, dirs, files in os.walk("./"):
 if CONFIG_FILEPATH is None:
     raise RuntimeError('RuntimeError - Could not find a config to parse')
 
-# Regarding how to import a variable into timeit(), 
+# Regarding how to import a variable into timeit(),
 #     (for example: 'from __main__ import CONFIG_FILEPATH'),
 #     see https://stackoverflow.com/a/18882784/667301
 list_cast = timeit(

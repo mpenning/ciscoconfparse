@@ -8,7 +8,7 @@
 1.6.14  20220101 Ensure masklen and prefix are int objects for IPv4Obj and IPv6Obj network mask length
 1.6.13  20211231 Add ccp_util.ip_factory()
 1.6.12  20211220 Replace map() calls with equivalent list-comprehensions
-1.6.11  20211212 Update IPv4Obj and IPv6Obj docs 
+1.6.11  20211212 Update IPv4Obj and IPv6Obj docs
 1.6.10  20211208 Improve style and readability
 1.6.9   20211206 Small tweak
 1.6.8   20211203 Reorganize build infra and ccp data structures. Fix Github issue #214. Fix for issue documented in Github PR #217.
@@ -48,7 +48,7 @@
 1.5.7   20200711 Revise IPv4Obj & IPv6Obj __lt__(), __gt__(), and __contains__() methods (impacts sorting behavior); reformatted documentation to latest numpydoc format.  Add version number as json data instead of raw text...
 1.5.6   20200627 Improve find_object_branches() speed; reformat with black
 1.5.5   20200612 Beta-test new function: find_object_branches()
-1.5.4   20200412 Modify IPv4Obj().__add__() and IPv6Obj().__add__() (and __sub__()) methods return IPv4Obj()/IPv6Obj() objects.  Add support for int(), bin() and hex() on the IPv4Obj() and IPv6Obj() 
+1.5.4   20200412 Modify IPv4Obj().__add__() and IPv6Obj().__add__() (and __sub__()) methods return IPv4Obj()/IPv6Obj() objects.  Add support for int(), bin() and hex() on the IPv4Obj() and IPv6Obj()
 1.5.3   20200412 Fix IPv6Obj().packed and IPv6Obj().exploded; add IPv4Obj().packed and IPv4Obj().exploded
 1.5.2   20200412 Add __add__() and __sub__() to IPv4Obj() and IPv6Obj(); remove use of IPv6Obj().broadcast in IPv6Obj().__contains__()
 1.5.1   20200223 Remove embedded junos debugging
@@ -68,7 +68,7 @@
 1.3.43  20190705 Attempt to fix Github issue #154
 1.3.42  20190627 Fix Github issue #153
 1.3.41  20190627 [RELEASE BROKEN] HSRP timers now return a float (used to return int).  NXOS support for HSRP (Github issue #152)
-1.3.40  20190620 
+1.3.40  20190620
 1.3.39  20190527 Allow re_match_iter_typed() to use default=True
 1.3.38  20190527 Add CiscoConfParse().re_match_iter_typed()
 1.3.37  20190512 Take a step further towards full Python 3 compat (Github issue #98)
@@ -95,7 +95,7 @@
 1.3.16  20180601 Add dns_query() zone transfer as text
 1.3.15  20180421 Distrbution change
 1.3.14  20180421 Attempt to fix unit tests
-1.3.13  20180421 Fix Github issue #103, Python3 ccp_util imports 
+1.3.13  20180421 Fix Github issue #103, Python3 ccp_util imports
 1.3.12  20180416 Upgrade comparison operations of IPv4Obj and IPv6Obj
 1.3.11  20180331 Fix Github issue #101
 1.3.10  20180304 Fix various bugs in dns_query(); add a query duration to the DNSResponse() object
@@ -191,7 +191,7 @@
         more relative ipaddr imports
 1.1.1   20140515 Fix Python3 breakage due to xrange
 1.1.0   20140514 Improve parsing speed.  Simplify debugging logs.
-1.0.7   20140507 Add build automation improvements.  Modify default value for 
+1.0.7   20140507 Add build automation improvements.  Modify default value for
         ipv4_network_object()
 1.0.6   20140506 Improve docs
 1.0.5   20140506 Improve docs
@@ -204,42 +204,42 @@
 1.0.1   20140501 More documentation improvements.  Fix problem with experimental
         IOSCfgLine factory feature.
 1.0.0   20140430 Significant documentation overhaul.  Add documentation of
-        new IOSCfgLine methods introduced in 0.9.10, as well as making the 
-        documentation more friendly to mobile devices; substitute the 
-        sphinx_bootstrap_theme instead of the sphinxdoc theme.  Add line 
-        highlights in code examples which hopefully make complex examples more 
+        new IOSCfgLine methods introduced in 0.9.10, as well as making the
+        documentation more friendly to mobile devices; substitute the
+        sphinx_bootstrap_theme instead of the sphinxdoc theme.  Add line
+        highlights in code examples which hopefully make complex examples more
         clear.
 0.9.35  20140430 Update docstrings with more examples.  Improve doc Makefile
 0.9.34  20140429 Update IOSCfgLine objects with a recursive delete, which
-        will automatically delete children if the parent is deleted.  First 
+        will automatically delete children if the parent is deleted.  First
         steps toward a long-overdue documentation update.  A lot more is left to
         do.
 0.9.33  20140425 Add unit test for banner parsing coverage
-0.9.32  20140422 Fix banner parent-child relationships for Github Issue #4.  
-        Improve parsing speed with pre-compiled regex in _mark_banner().  
-        Update example in README.rst.  Add new ignore_rgx option to the 
+0.9.32  20140422 Fix banner parent-child relationships for Github Issue #4.
+        Improve parsing speed with pre-compiled regex in _mark_banner().
+        Update example in README.rst.  Add new ignore_rgx option to the
         re_sub() line-object method.
 0.9.31  20140415 Fix DBGFLAG issue in CiscoConfParse() for Github Issue #5
-0.9.30  20140404 Add ignore_blank_lines option in CiscoConfParse() for Github 
+0.9.30  20140404 Add ignore_blank_lines option in CiscoConfParse() for Github
         Issue #3
 0.9.29  20140404 Fix typo in CiscoConfParse()
 0.9.28  20140403 Added new linesplit_rgx option in CiscoConfParse() to help
-        user who filed Github Issue #2; no defaults were changed.  Added 
+        user who filed Github Issue #2; no defaults were changed.  Added
         Python 3.4 in .travis.yml in hopes of testing against Python 3.4
 0.9.27  20140326 Added a new append_line() method to ciscoconfparse.
 0.9.26  20140319  Finally caved and left my copy of ipaddr that's modified to
         work with python3 in ciscoconfparse/ipaddr.py, where Travis can find it
-0.9.25  20140319 Improve speed in find_blocks(), as requested by Github 
+0.9.25  20140319 Improve speed in find_blocks(), as requested by Github
         Issue #1.  Minor change to improve Travis CI builds
 0.9.24  20140313 Fix broken Travis CI builds (because of where I moved the ipaddr module).  Added new functionality
         in models_cisco (still alpha code at this point)
-0.9.23  20140305 Modify ipv4_addr_object default value in models_cisco; 
+0.9.23  20140305 Modify ipv4_addr_object default value in models_cisco;
         move ipaddr module to a local folder
-0.9.22  20140228 Add PIM interface support in models_cisco (still alpha at 
+0.9.22  20140228 Add PIM interface support in models_cisco (still alpha at
         this point)
 0.9.21  20140226 Fix Python3.2 build (note to self... u'' isn't supported until
         Python3.3).
-0.9.20  20140226 Updated README with other Cisco IOS configuration resources.  
+0.9.20  20140226 Updated README with other Cisco IOS configuration resources.
         Fixed problems in models_cisco; improved / added docstrings. Improve
         build workflow.
 0.9.19  20140217 Fixed Python3 build issue in 0.9.18
@@ -254,11 +254,11 @@
 0.9.15  20140210 Updated README.rst with inline example
 0.9.14  20140209 Support for Travis CI.  Fix Travis CI build failures on
         Python3.3 (due to how __hash__() is computed).
-0.9.13  20140209 Fixed Python3 compatibility, which broke a few builds ago.  
-        Including ipaddr-py (patched for Python3) until versions of Python3 
+0.9.13  20140209 Fixed Python3 compatibility, which broke a few builds ago.
+        Including ipaddr-py (patched for Python3) until versions of Python3
         typically include it (right now, Debian 7.3 has Python3.2 without
         ipaddr-py)
-0.9.12  20140208 Fixed bug in ccp_abc.py; reworked comment detection; 
+0.9.12  20140208 Fixed bug in ccp_abc.py; reworked comment detection;
         performance improvements
 0.9.11  20140204 Bugfixes
 0.9.10  20140203 Bugfixes and more performance improvements.  Doubled
@@ -267,32 +267,32 @@
         optional interface-aware config line factory objects.  Add abstract base
         classes.  Add atomic options to insert_before(), insert_after(), etc...
 0.9.8   20140124 Remove debugging info
-0.9.7   20140124 Major rewrite, removed support for old python versions.  
+0.9.7   20140124 Major rewrite, removed support for old python versions.
         Ripped out inefficient code I wrote as a python newbie, added more
-        idiomatic structures in various places.  Also added support for 
+        idiomatic structures in various places.  Also added support for
         inserting and deleting lines via insert_before(), insert_after(), and
         insert_after_child()
 0.9.6   20140106 Update copyright to 2014.  Rewrite unit tests
-0.9.5   20131231 Add replace_lines() function, enhance unit tests, 
-        added an exactmatch option on _find_line_OBJ().  Updated code 
+0.9.5   20131231 Add replace_lines() function, enhance unit tests,
+        added an exactmatch option on _find_line_OBJ().  Updated code
         copyright to include 2014
 0.9.4   20130814 Add Python3 compliance; other minor tweaks
-0.9.3   20130511 Added methods to IOSCfgLine: __eq__(), __hash__(), __lt__(), 
+0.9.3   20130511 Added methods to IOSCfgLine: __eq__(), __hash__(), __lt__(),
         __gt__(), as well as simplifying several other methods.  Misc code
         maintenance...
 0.9.2   20130509 Add find_children_w_parents() method... tidy up unit-tests
 0.9.1   20121231 Improve docs with numpydoc and intersphinx links.  Add
         more examples / doctests.  Renamed internal CiscoConfParse methods
         with a leading _ to make Sphinx documentation more intuitive...
-0.9.0   20121230 Add RST documentation into the archives and fix more build 
+0.9.0   20121230 Add RST documentation into the archives and fix more build
         issues
 0.8.6   20121230 Fix packaging problems introduced when I switched to a native
         mercurial repository (examples/* and configs/* were not automatically
         packaged in the .egg / .tar.gz anymore...)
-0.8.5   20121229 - Added custom comment delimiters that were in the 0.8.3a private 
+0.8.5   20121229 - Added custom comment delimiters that were in the 0.8.3a private
         build.  Converted the unicode backslash to a true unicode instance.
 0.8.4   20121229 - Add doctests, code maintenance, and more documentation fixes.
-        Improved examples/req_cfgspec_all_diff.py and 
+        Improved examples/req_cfgspec_all_diff.py and
         examples/req_cfgspec_excl_diff.py.
 0.8.3   20091016 - Documentation updates.  PEP8 formatting
 0.8.2   20090808 - Fixed a fatal crash in find_blocks()
@@ -300,39 +300,38 @@
         production-quality at this point
 0.8.0   20071011 - Removed residual internal debugging from the CiscoPassword
         class.  Added an 'ignore_ws' options to all public methods, except
-	req_cfgspec_excl_diff; this option will make the method's matches 
-	ignore whitespace differences (useful in some CatOS configurations).  
-	After much deliberation, I have removed the explicit 'False' return 
-	values for methods that do not match; instead I am returning an empty 
-	list (which will test False).  Apologies for breaking any existing 
+	req_cfgspec_excl_diff; this option will make the method's matches
+	ignore whitespace differences (useful in some CatOS configurations).
+	After much deliberation, I have removed the explicit 'False' return
+	values for methods that do not match; instead I am returning an empty
+	list (which will test False).  Apologies for breaking any existing
 	code, but I decided against leaving beta with this behavior.  Removed
 	all sys.exit(0) statements in favor of raising a RuntimeError.
 
 0.7.5   20070804 - Fixed a bug in the parse() method, which was associating
         grandchildren as children of the grandparent.   Added unit tests.
 
-0.7.0   20070803 - Added an optional parameter to the find_lines(), 
+0.7.0   20070803 - Added an optional parameter to the find_lines(),
         find_children(), find_all_children(), and find_blocks() methods.  This
 	parameter will allow the user to specify whether he wants an "exact"
 	match or a normal regex match.  Also fixed a bug that broke parsing
 	of configs with an indented line at the very end.
 
-0.6.8   20070802 - Ported fixes to the CiscoPassword class from the 
+0.6.8   20070802 - Ported fixes to the CiscoPassword class from the
         cisco_decrypt package.  Notably, there were crashes when it was called
 	with certain unencrypted passwords.
 
-0.6.7   20070801 - Fixed bug where some methods didn't return False when no 
+0.6.7   20070801 - Fixed bug where some methods didn't return False when no
         diffs were found
 
 0.6.6   20070730 - Added password decryption options to the command-line help
         menu.  Modified all diff functions to return False if no diffs are found
 
-0.6.5   20070728 - Fixed another CiscoPassword bug. Added warning if 
-        CiscoPassword decryption fails.  Added command-line functionality for 
-	improved interoperability with other languages (and shell-usage if 
+0.6.5   20070728 - Fixed another CiscoPassword bug. Added warning if
+        CiscoPassword decryption fails.  Added command-line functionality for
+	improved interoperability with other languages (and shell-usage if
 	you like).
 
 0.6.1   20070726 - Cosmetic restructuring of code
 
 0.6.0   20070721 - Revised APIs.  Existing APIs should be stable now
-

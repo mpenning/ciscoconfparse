@@ -19,5 +19,3 @@ ciscoconfparse_ is not affiliated with Cisco Systems in any way; the word "Cisco
 .. _ciscoconfparse: https://pypi.python.org/pypi/ciscoconfparse
 
 .. _`David Michael Pennington`: http://pennington.net/
-
-

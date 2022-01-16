@@ -24,4 +24,3 @@ ciscoconfparse.ccp_util Classes and Methods
       :inherited-members:
 
 .. autofunction:: ciscoconfparse.ccp_util.dns_query
-

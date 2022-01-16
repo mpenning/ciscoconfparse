@@ -5,7 +5,7 @@ Introduction
 Overview
 ---------
 
-ciscoconfparse is a Python_ library, which parses through Cisco IOS-style 
+ciscoconfparse is a Python_ library, which parses through Cisco IOS-style
 configurations.  It can:
 
 - Audit existing router / switch / firewall / wlc configurations
@@ -13,8 +13,8 @@ configurations.  It can:
 - Modify existing configurations
 - Build new configurations
 
-The library examines an IOS-style config and breaks it into a set of linked 
-parent / child relationships; each configuration line is stored in a different 
+The library examines an IOS-style config and breaks it into a set of linked
+parent / child relationships; each configuration line is stored in a different
 :class:`~models_cisco.IOSCfgLine` object.
 
 .. figure:: _static/ciscoconfparse_overview.png
@@ -24,16 +24,16 @@ parent / child relationships; each configuration line is stored in a different
 
    Figure 1, An Example of Parent-line / Child-line relationships
 
-Then you issue queries against these relationships using a familiar family 
-syntax model. Queries can either be in the form of a simple string, or you can 
-use `regular expressions`_. The API provides powerful query tools, including 
-the ability to find all parents that have or do not have children matching a 
+Then you issue queries against these relationships using a familiar family
+syntax model. Queries can either be in the form of a simple string, or you can
+use `regular expressions`_. The API provides powerful query tools, including
+the ability to find all parents that have or do not have children matching a
 certain criteria.
 
-The package also provides a set of methods to query and manipulate the 
-:class:`~models_cisco.IOSCfgLine` objects themselves. This gives you a flexible 
-mechanism to build your own custom queries, because the 
-:class:`~models_cisco.IOSCfgLine` objects store all the parent / child 
+The package also provides a set of methods to query and manipulate the
+:class:`~models_cisco.IOSCfgLine` objects themselves. This gives you a flexible
+mechanism to build your own custom queries, because the
+:class:`~models_cisco.IOSCfgLine` objects store all the parent / child
 hierarchy in them.
 
 |br|
@@ -48,17 +48,17 @@ hierarchy in them.
 What is ciscoconfparse good for?
 ----------------------------------
 
-After several network evolutions, you may have a tangled mess of conflicting or 
-misconfigured Cisco devices.  Misconfigurations of proxy-arp, static routes, 
-FHRP timers, routing protocols, duplicated subnets, cdp, console passwords, or 
+After several network evolutions, you may have a tangled mess of conflicting or
+misconfigured Cisco devices.  Misconfigurations of proxy-arp, static routes,
+FHRP timers, routing protocols, duplicated subnets, cdp, console passwords, or
 aaa schemes have a measurable affect on up time and beg for a tool to audit them.
 However, manually scrubbing configurations is a long and error-prone process.
 
-Audits aren't the only use for ciscoconfparse.  Let's suppose you are working 
-on a design and need a list of dot1q trunks on a switch with more than 400 
-interfaces.  You can't grep for them because you need the interface names of 
-layer2 trunks; the interface name is stored on one line, and the trunk 
-configuration is stored somewhere below the interface name.  With 
+Audits aren't the only use for ciscoconfparse.  Let's suppose you are working
+on a design and need a list of dot1q trunks on a switch with more than 400
+interfaces.  You can't grep for them because you need the interface names of
+layer2 trunks; the interface name is stored on one line, and the trunk
+configuration is stored somewhere below the interface name.  With
 ciscoconfparse, it's really this easy...
 
 .. sourcecode:: python
@@ -76,14 +76,14 @@ ciscoconfparse, it's really this easy...
    interface GigabitEthernet 5/10
    <and so on...>
 
-So you may be saying, that all sounds great, but I have no idea what you did 
-with that code up there.  If so, don't worry... There is a tutorial following 
+So you may be saying, that all sounds great, but I have no idea what you did
+with that code up there.  If so, don't worry... There is a tutorial following
 this intro.  For more depth, I highly recommend `Dive into Python3`_.
 
 We don't have Ciscos
 --------------------
 
-Don't let that stop you.  CiscoConfParse parses anything that has a Cisco IOS 
+Don't let that stop you.  CiscoConfParse parses anything that has a Cisco IOS
 style of configuration, which includes:
 
 - Cisco IOS, Cisco Nexus, Cisco IOS-XR, Cisco IOS-XE, Aironet OS, Cisco ASA, Cisco CatOS
@@ -95,8 +95,8 @@ style of configuration, which includes:
 - Extreme Networks
 - Enterasys
 
-As of CiscoConfParse 1.2.4, you can parse `brace-delimited configurations`_ 
-into a Cisco IOS style (see `Github Issue #17`_), which means that 
+As of CiscoConfParse 1.2.4, you can parse `brace-delimited configurations`_
+into a Cisco IOS style (see `Github Issue #17`_), which means that
 CiscoConfParse understands these configurations too:
 
 - Juniper Networks Junos, and Screenos
@@ -148,13 +148,13 @@ These are a few selected public mentions about CiscoConfParse; I usually try not
 What's new in version 1.0.0
 ---------------------------
 
-I wrote :mod:`ciscoconfparse` in 2007 as literally my first Python 
-project; through the years, my understanding of Python improved, and I also 
-found many missing features along the way. Some of these features, like 
-changing a configuration after it was parsed, required non-trivial changes to 
+I wrote :mod:`ciscoconfparse` in 2007 as literally my first Python
+project; through the years, my understanding of Python improved, and I also
+found many missing features along the way. Some of these features, like
+changing a configuration after it was parsed, required non-trivial changes to
 the whole project.
 
-Starting in version 0.9, I initiated a major rewrite; several important 
+Starting in version 0.9, I initiated a major rewrite; several important
 changes were made:
 
 - Python3 compatibility; Python2.4 deprecation

@@ -437,7 +437,7 @@ j01 = """## Last commit: 2015-06-28 13:00:59 CST by mpenning
             authentication {
                 encrypted-password "$1$y7ArHxKU$zUbdeLfBirgkCsKiOJ5Qa0"; ## SECRET-DATA
             }
-        }                               
+        }
     }
     services {
         ssh {
@@ -467,7 +467,7 @@ j01 = """## Last commit: 2015-06-28 13:00:59 CST by mpenning
             ge-0/0/0.0;
             ge-0/0/1.0;
             ge-0/0/2.0;
-            ge-0/0/3.0;                 
+            ge-0/0/3.0;
         }
     }
     VLAN_FOO {
@@ -605,7 +605,7 @@ access-group INSIDE_in in interface INSIDE
 a02 = """: Saved
 : Written by mpenning at 05:37:43.184 CDT Sun Jun 29 2015
 !
-ASA Version 9.0(3) 
+ASA Version 9.0(3)
 !
 command-alias exec slog show log | i Deny|denied
 command-alias exec sacl sh access-list INSIDE_out | e hitcnt=0 |remark|elements
@@ -678,16 +678,16 @@ interface Vlan100
  mac-address 0030.dead.beef
  nameif OUTSIDE
  security-level 0
- ip address dhcp setroute 
+ ip address dhcp setroute
 !
 interface Vlan200
  nameif INSIDE
  security-level 100
- ip address 192.0.2.1 255.255.255.0 
+ ip address 192.0.2.1 255.255.255.0
 !
-banner motd 
+banner motd
 banner motd Test banner for $(hostname)
-banner motd 
+banner motd
 banner motd *******************************
 boot system disk0:/asa903-k8.bin
 ftp mode passive
@@ -757,9 +757,9 @@ object-group network GoogleTalk
  network-object object GTalk10
  network-object object GTalk11
 object-group service GoogleTalkPorts
- service-object tcp destination eq 5222 
- service-object tcp destination eq https 
- service-object udp destination range 19302 19309 
+ service-object tcp destination eq 5222
+ service-object tcp destination eq https
+ service-object udp destination range 19302 19309
 object-group network Inside
  network-object 192.0.2.0 255.255.255.0
  network-object 192.0.22.0 255.255.255.0
@@ -788,47 +788,47 @@ object-group network INSIDE_addrs
  network-object 10.0.0.0 255.0.0.0
 object-group service GOOGLE_svc
  description Google's push service for Android
- service-object tcp destination eq www 
- service-object tcp destination eq https 
- service-object tcp destination eq 5228 
- service-object tcp destination eq 5222 
- service-object tcp destination eq 587 
+ service-object tcp destination eq www
+ service-object tcp destination eq https
+ service-object tcp destination eq 5228
+ service-object tcp destination eq 5222
+ service-object tcp destination eq 587
 object-group service TELNET_svc
- service-object tcp destination eq telnet 
+ service-object tcp destination eq telnet
 object-group service WHOIS_svc
- service-object tcp destination eq whois 
+ service-object tcp destination eq whois
 object-group service SSH_svc
- service-object tcp destination eq ssh 
+ service-object tcp destination eq ssh
 object-group service WEB_svc
  description Standard web services - http, https, ftp
- service-object tcp destination eq ftp 
- service-object tcp destination eq www 
- service-object tcp destination eq https 
- service-object icmp 
+ service-object tcp destination eq ftp
+ service-object tcp destination eq www
+ service-object tcp destination eq https
+ service-object icmp
 object-group service DNS_svc
- service-object udp destination eq domain 
- service-object tcp destination eq domain 
+ service-object udp destination eq domain
+ service-object tcp destination eq domain
 object-group network MACHINE01_addrs
  network-object object Machine01
 object-group service ANDROID_svc
  description Google's push service for Android
- service-object tcp destination eq 5228 
+ service-object tcp destination eq 5228
 object-group service GMAILSMTP_svc
- service-object tcp destination eq 2525 
+ service-object tcp destination eq 2525
 object-group service NTP_svc
- service-object udp destination eq ntp 
+ service-object udp destination eq ntp
 object-group service SKYPE_svc
- service-object udp destination eq 5555 
+ service-object udp destination eq 5555
 object-group service XBOX_svc
- service-object tcp destination eq domain 
- service-object udp destination eq domain 
- service-object udp destination eq 88 
- service-object tcp destination eq 3074 
- service-object udp destination eq 3074 
+ service-object tcp destination eq domain
+ service-object udp destination eq domain
+ service-object udp destination eq 88
+ service-object tcp destination eq 3074
+ service-object udp destination eq 3074
 object-group network ANY
 object-group service NaverLine_svc
- service-object udp destination eq 11000 
- service-object udp destination range 9401 9405 
+ service-object udp destination eq 11000
+ service-object udp destination range 9401 9405
 object-group network NaverLine_addrs
  network-object 174.35.127.0 255.255.255.0
 object-group network Facebook_addrs
@@ -848,42 +848,42 @@ object-group network Facebook_addrs
  network-object 31.13.64.0 255.255.192.0
  network-object 31.13.96.0 255.255.224.0
 object-group service IP_SLA_PathTrace_svc
- service-object udp destination range 33400 33499 
+ service-object udp destination range 33400 33499
 object-group service FTP_svc
- service-object tcp destination eq ftp 
+ service-object tcp destination eq ftp
 object-group service TeamViewerPorts
- service-object tcp destination eq 5938 
+ service-object tcp destination eq 5938
 object-group service SSLVPN_svc
- service-object udp destination eq 443 
+ service-object udp destination eq 443
 object-group service TEST_PORTS tcp
  port-object eq domain
  port-object eq smtp
 access-list SPLIT_TUNNEL_NETS remark [[ destinations available via the VPN ]]
-access-list SPLIT_TUNNEL_NETS standard permit 192.0.2.0 255.255.255.0 
+access-list SPLIT_TUNNEL_NETS standard permit 192.0.2.0 255.255.255.0
 access-list NO_SSLVPN_NAT remark [[ prevent inadvertent nat of sslvpn traffic ]]
-access-list NO_SSLVPN_NAT extended permit ip 192.0.2.0 255.255.255.0 192.0.2.0 255.255.255.0 
-access-list INSIDE_in extended deny object-group SKYPE_svc object-group INSIDE_addrs object-group ANY_addrs log disable 
-access-list INSIDE_in extended permit object-group GOOGLE_svc object-group INSIDE_addrs object-group GOOGLE_addrs log 
-access-list INSIDE_in extended permit object-group ANDROID_svc object-group INSIDE_addrs object-group GOOGLE_addrs log 
-access-list INSIDE_in extended permit object-group IP_SLA_PathTrace_svc any host 4.2.2.2 log 
-access-list INSIDE_in extended permit object-group DNS_svc object-group INSIDE_addrs object-group ANY_addrs log 
-access-list INSIDE_in extended permit object-group NTP_svc object-group INSIDE_addrs object-group ANY_addrs log 
-access-list INSIDE_in extended permit object-group TELNET_svc object-group INSIDE_addrs host 128.223.51.103 log 
-access-list INSIDE_in extended permit object-group FTP_svc object-group INSIDE_addrs object-group ANY_addrs log 
-access-list INSIDE_in extended permit object-group WEB_svc object-group INSIDE_addrs object-group ANY_addrs log 
-access-list INSIDE_in extended permit object-group SSH_svc object-group INSIDE_addrs object-group SSH_addrs log 
-access-list INSIDE_in extended permit object-group GMAILSMTP_svc object-group TSUNAMI_addrs object-group ANY_addrs log 
-access-list INSIDE_in extended permit object-group WHOIS_svc object-group TSUNAMI_addrs object-group ANY_addrs log 
-access-list INSIDE_in extended deny ip any4 any4 log 
-access-list ANY extended permit ip object-group Inside any4 
-access-list ANY extended permit ip any4 object-group Inside 
-access-list VOIP extended permit object-group GoogleTalkPorts object-group Inside object-group GoogleTalk 
-access-list VOIP extended permit object-group GoogleTalkPorts object-group GoogleTalk object-group Inside 
-access-list MAINTENANCE extended deny ip any4 any4 log 
-access-list OUTSIDE_in extended deny ip host 4.2.2.2 any4 log 
-access-list OUTSIDE_in extended permit icmp any4 0.0.0.0 0.0.0.0 unreachable log interval 1 
-access-list OUTSIDE_in extended permit icmp any4 0.0.0.0 0.0.0.0 time-exceeded log interval 1 
-access-list OUTSIDE_in extended deny ip any4 any4 log 
+access-list NO_SSLVPN_NAT extended permit ip 192.0.2.0 255.255.255.0 192.0.2.0 255.255.255.0
+access-list INSIDE_in extended deny object-group SKYPE_svc object-group INSIDE_addrs object-group ANY_addrs log disable
+access-list INSIDE_in extended permit object-group GOOGLE_svc object-group INSIDE_addrs object-group GOOGLE_addrs log
+access-list INSIDE_in extended permit object-group ANDROID_svc object-group INSIDE_addrs object-group GOOGLE_addrs log
+access-list INSIDE_in extended permit object-group IP_SLA_PathTrace_svc any host 4.2.2.2 log
+access-list INSIDE_in extended permit object-group DNS_svc object-group INSIDE_addrs object-group ANY_addrs log
+access-list INSIDE_in extended permit object-group NTP_svc object-group INSIDE_addrs object-group ANY_addrs log
+access-list INSIDE_in extended permit object-group TELNET_svc object-group INSIDE_addrs host 128.223.51.103 log
+access-list INSIDE_in extended permit object-group FTP_svc object-group INSIDE_addrs object-group ANY_addrs log
+access-list INSIDE_in extended permit object-group WEB_svc object-group INSIDE_addrs object-group ANY_addrs log
+access-list INSIDE_in extended permit object-group SSH_svc object-group INSIDE_addrs object-group SSH_addrs log
+access-list INSIDE_in extended permit object-group GMAILSMTP_svc object-group TSUNAMI_addrs object-group ANY_addrs log
+access-list INSIDE_in extended permit object-group WHOIS_svc object-group TSUNAMI_addrs object-group ANY_addrs log
+access-list INSIDE_in extended deny ip any4 any4 log
+access-list ANY extended permit ip object-group Inside any4
+access-list ANY extended permit ip any4 object-group Inside
+access-list VOIP extended permit object-group GoogleTalkPorts object-group Inside object-group GoogleTalk
+access-list VOIP extended permit object-group GoogleTalkPorts object-group GoogleTalk object-group Inside
+access-list MAINTENANCE extended deny ip any4 any4 log
+access-list OUTSIDE_in extended deny ip host 4.2.2.2 any4 log
+access-list OUTSIDE_in extended permit icmp any4 0.0.0.0 0.0.0.0 unreachable log interval 1
+access-list OUTSIDE_in extended permit icmp any4 0.0.0.0 0.0.0.0 time-exceeded log interval 1
+access-list OUTSIDE_in extended deny ip any4 any4 log
 pager lines 23
 logging enable
 logging timestamp
@@ -893,7 +893,7 @@ logging trap informational
 logging asdm informational
 logging facility 22
 logging host INSIDE Machine01
-logging class sys buffered informational 
+logging class sys buffered informational
 no logging message 302021
 no logging message 302020
 mtu OUTSIDE 1500
@@ -920,12 +920,12 @@ timeout tcp-proxy-reassembly 0:01:00
 timeout floating-conn 0:00:00
 dynamic-access-policy-record DfltAccessPolicy
 user-identity default-domain LOCAL
-aaa authentication ssh console LOCAL 
-aaa authentication enable console LOCAL 
-aaa authentication http console LOCAL 
-aaa authorization command LOCAL 
+aaa authentication ssh console LOCAL
+aaa authentication enable console LOCAL
+aaa authentication http console LOCAL
+aaa authorization command LOCAL
 aaa local authentication attempts max-fail 16
-filter java 1-65535 192.0.2.0 255.255.255.0 0.0.0.0 0.0.0.0 
+filter java 1-65535 192.0.2.0 255.255.255.0 0.0.0.0 0.0.0.0
 http server enable
 http 192.0.2.0 255.255.255.0 INSIDE
 snmp-server host INSIDE Machine01 poll community public
@@ -992,25 +992,25 @@ policy-map type inspect dns preset_dns_map
   message-length maximum 512
 policy-map global_policy
  class inspection_default
-  inspect dns preset_dns_map 
-  inspect h323 h225 
-  inspect h323 ras 
-  inspect rsh 
-  inspect rtsp 
-  inspect esmtp 
-  inspect sqlnet 
-  inspect skinny  
-  inspect sunrpc 
-  inspect xdmcp 
-  inspect sip  
-  inspect netbios 
-  inspect tftp 
-  inspect ip-options 
-  inspect icmp 
-  inspect http 
+  inspect dns preset_dns_map
+  inspect h323 h225
+  inspect h323 ras
+  inspect rsh
+  inspect rtsp
+  inspect esmtp
+  inspect sqlnet
+  inspect skinny
+  inspect sunrpc
+  inspect xdmcp
+  inspect sip
+  inspect netbios
+  inspect tftp
+  inspect ip-options
+  inspect icmp
+  inspect http
 !
 service-policy global_policy global
-prompt hostname context 
+prompt hostname context
 no call-home reporting anonymous
 call-home
  profile CiscoTAC-1

@@ -39,8 +39,8 @@ It can help you:
 - Modify existing configurations
 - Build new configurations
 
-Speaking generally, the library examines an IOS-style config and breaks it 
-into a set of linked parent / child relationships.  You can perform complex 
+Speaking generally, the library examines an IOS-style config and breaks it
+into a set of linked parent / child relationships.  You can perform complex
 queries about these relationships.
 
 .. image:: https://raw.githubusercontent.com/mpenning/ciscoconfparse/master/sphinx-doc/_static/ciscoconfparse_overview_75pct.png
@@ -75,8 +75,8 @@ The next example will find the IP address assigned to interfaces.
 
         intf_name = intf_obj.re_match_typed('^interface\s+(\S.+?)$')
 
-        # Search children of all interfaces for a regex match and return 
-        # the value matched in regex match group 1.  If there is no match, 
+        # Search children of all interfaces for a regex match and return
+        # the value matched in regex match group 1.  If there is no match,
         # return a default value: ''
         intf_ip_addr = intf_obj.re_match_iter_typed(
             r'ip\saddress\s(\d+\.\d+\.\d+\.\d+)\s', result_type=str,
@@ -88,8 +88,8 @@ What if we don't use Cisco?
 
 Don't let that stop you.
 
-As of CiscoConfParse 1.2.4, you can parse `brace-delimited configurations`_ 
-into a Cisco IOS style (see `Github Issue #17`_), which means that 
+As of CiscoConfParse 1.2.4, you can parse `brace-delimited configurations`_
+into a Cisco IOS style (see `Github Issue #17`_), which means that
 CiscoConfParse can parse these configurations:
 
 - Juniper Networks Junos
@@ -129,8 +129,8 @@ Building the Package
 Pre-requisites
 ==============
 
-ciscoconfparse_ requires Python versions 3.5+ (note: version 3.7.0 has 
-a bug - ref Github issue #117, but version 3.7.1 works); the OS should not 
+ciscoconfparse_ requires Python versions 3.5+ (note: version 3.7.0 has
+a bug - ref Github issue #117, but version 3.7.1 works); the OS should not
 matter.
 
 .. _Installation:
@@ -207,7 +207,7 @@ The word "Cisco" is a registered trademark of Cisco Systems
 Author and Thanks
 =================
 
-ciscoconfparse_ was written by David Michael Pennington (mike [~at~] 
+ciscoconfparse_ was written by David Michael Pennington (mike [~at~]
 pennington [/dot\] net).
 
 Special thanks:
@@ -277,4 +277,3 @@ Special thanks:
 .. _`Juniper networks`: http://www.juniper.net/
 
 .. _`Cisco's Guide to hardening IOS devices`: http://www.cisco.com/c/en/us/support/docs/ip/access-lists/13608-21.html
-

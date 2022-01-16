@@ -40,7 +40,7 @@ aaa group server tacacs+ tac_admin
 aaa group server radius rad_pmip
 !
 aaa group server radius dummy
-!         
+!
 aaa group server radius rad_eap1
  server 172.28.16.194 auth-port 1812 acct-port 1813
  server 172.28.0.194 auth-port 1812 acct-port 1813
@@ -62,8 +62,8 @@ aaa authentication login method_WLSE group WLSE
 aaa authentication login eap_methods1 group rad_eap1
 aaa authentication login eap_methods2 group rad_eap2
 aaa authentication login method_Clients group Clients
-aaa authorization exec default local group tac_admin group rad_admin 
-aaa authorization ipmobile default group rad_pmip 
+aaa authorization exec default local group tac_admin group rad_admin
+aaa authorization ipmobile default group rad_pmip
 aaa accounting network acct_methods start-stop group rad_acct
 aaa session-id common
 dot11 activity-timeout unknown default 300
@@ -78,7 +78,7 @@ interface Dot11Radio0
  no ip address
  no ip route-cache
  !
- encryption mode wep mandatory 
+ encryption mode wep mandatory
  !
  broadcast-key change 1800
  !
@@ -87,7 +87,7 @@ interface Dot11Radio0
     authentication open eap eap_methods1
  !
  ssid RADIOSCREAM
-    authentication network-eap eap_methods2 
+    authentication network-eap eap_methods2
  !
  speed 1.0 2.0 5.5 6.0 9.0 basic-11.0 12.0 18.0 24.0 36.0 48.0 54.0
  rts threshold 2312
@@ -122,7 +122,7 @@ ip default-gateway 10.32.200.254
 ip http server
 ip http help-path http://www.cisco.com/warp/public/779/smbiz/prodconfig/help/eag/122-15.JA/1100
 ip http authentication aaa
-ip radius source-interface BVI1 
+ip radius source-interface BVI1
 logging history size 500
 logging history informational
 logging facility local4
@@ -172,4 +172,3 @@ line vty 5 15
 ntp clock-period 2860626
 ntp server 10.32.255.251
 end
-          

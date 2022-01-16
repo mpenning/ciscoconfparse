@@ -337,4 +337,3 @@ def testVal_ASAAclLine_DNA_negative(tmp):
         # Ensure that parsing the bogus filepath string raises OSError
         elif isinstance(bogus_filepath, str):
             parse = CiscoConfParse(bogus_filepath, factory=True, syntax="asa")
-

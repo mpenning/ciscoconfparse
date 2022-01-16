@@ -140,7 +140,7 @@ Use `re_match_iter_typed()` to extract values with a regex match group
 
     intf_obj = parse.find_objects('interface\s+GigabitEthernet1\/3$')
 
-    # Search children of GigabitEthernet1/3 for a regex match and return 
+    # Search children of GigabitEthernet1/3 for a regex match and return
     # the value matched in regex match group 1.  If there is no match, return a
     # default value: ''
     intf_ip_addr = intf_obj.re_match_iter_typed(
@@ -197,7 +197,7 @@ parsing with `factory=True` automatically extracts interface values
 
     !python
     [mpenning@localhost]$ python
-    Python 2.7.3 (default, Mar 14 2014, 11:57:14) 
+    Python 2.7.3 (default, Mar 14 2014, 11:57:14)
     [GCC 4.7.2] on linux2
     Type "help", "copyright", "credits" or "license" for more information.
     >>>
@@ -205,7 +205,7 @@ parsing with `factory=True` automatically extracts interface values
     >>> parse = CiscoConfParse('/path/to/the/config', syntax='ios')
     >>>
     >>> # Standardize switchport configs with 0.5% broadcast storm control
-    >>> parse.replace_children(r'^interface\s\S+?thernet', 
+    >>> parse.replace_children(r'^interface\s\S+?thernet',
     ...     r'broadcast\slevel\s\S+', 'broadcast level 0.5')
     ...
     [' storm-control broadcast level 0.5']
@@ -238,15 +238,15 @@ parsing with `factory=True` automatically extracts interface values
     interface GigabitEthernet0/1
      ip address 172.16.1.1 255.255.255.0
      no ip proxy-arp
-    >>> 
+    >>>
 
 ---
 
 # Notes about diffs
 
 -   The diffs use python's standard [difflib]
--   As you may have noticed, the diffs are kindof dumb... We didn't need to 
-    delete the ip address before adding another one.  We did't need to 
+-   As you may have noticed, the diffs are kindof dumb... We didn't need to
+    delete the ip address before adding another one.  We did't need to
     configure `interface GigabitEthernet0/1` twice.
 
 ---
@@ -307,7 +307,7 @@ parsing with `factory=True` automatically extracts interface values
 
     !python
     >>> from ciscoconfparse import CiscoConfParse
-    >>> parse = CiscoConfParse('configs/sample_01.junos', syntax='junos', 
+    >>> parse = CiscoConfParse('configs/sample_01.junos', syntax='junos',
     ...     comment='#!')
     >>> print '\n'.join(parse.ioscfg[0:5])
     !# Last commit: 2015-06-28 13:00:59 CST by mpenning

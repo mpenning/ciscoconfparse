@@ -6,4 +6,3 @@ ciscoconfparse.IOSConfigList Object
 .. autoclass:: ciscoconfparse.IOSConfigList
    :members:
    :inherited-members:
-

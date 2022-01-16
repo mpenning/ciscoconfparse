@@ -2,8 +2,8 @@
 :class:`~ciscoconfparse.CiscoConfParse` Tutorial
 ================================================
 
-This tutorial will cover the features that most 
-:class:`~ciscoconfparse.CiscoConfParse` users care about.  We make a couple 
+This tutorial will cover the features that most
+:class:`~ciscoconfparse.CiscoConfParse` users care about.  We make a couple
 of assumptions throughout this tutorial...
 
 - You already know Python

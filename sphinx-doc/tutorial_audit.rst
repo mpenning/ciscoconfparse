@@ -1,8 +1,8 @@
 Example Usage: A Contrived Configuration Audit
 ==============================================
 
-Suppose you have a large switched network and need to run audits on your 
-configurations; assume you need to build configurations which conform to the 
+Suppose you have a large switched network and need to run audits on your
+configurations; assume you need to build configurations which conform to the
 following criteria:
 
 * Access switchports *must* be configured with ``storm-control``
@@ -84,12 +84,12 @@ Next, we build this script to read and change the config:
    ## Write the new configuration
    parse.save_as('short.conf.new')
 
-Normally, `regular expressions`_ should be used in ``.has_child_with()``; 
-however, you can technically get away with the bare strings that I used in 
-``standardize_intfs()`` in some cases.  That said, `regular expressions`_ are 
-more powerful, and reliable when searching text.  Usage of 
-the :func:`~models_cisco.IOSCfgLine.has_line_with()` and 
-:func:`~models_cisco.IOSCfgLine.find_objects()` methods illustrate regular 
+Normally, `regular expressions`_ should be used in ``.has_child_with()``;
+however, you can technically get away with the bare strings that I used in
+``standardize_intfs()`` in some cases.  That said, `regular expressions`_ are
+more powerful, and reliable when searching text.  Usage of
+the :func:`~models_cisco.IOSCfgLine.has_line_with()` and
+:func:`~models_cisco.IOSCfgLine.find_objects()` methods illustrate regular
 expression syntax.
 
 After the script runs, the new configuration (``short.conf.new``) looks like this:

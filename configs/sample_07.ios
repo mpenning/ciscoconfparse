@@ -30,14 +30,14 @@ aaa new-model
 aaa authentication login default local
 aaa authentication login CONSOLE none
 aaa authorization console
-aaa authorization exec default local none 
-aaa authorization exec CONSOLE none 
+aaa authorization exec default local none
+aaa authorization exec CONSOLE none
 !
 aaa session-id common
 clock timezone MST -7
 clock summer-time MDT recurring
-no network-clock-participate slot 1 
-no network-clock-participate wic 0 
+no network-clock-participate slot 1
+no network-clock-participate wic 0
 no ip source-route
 no ip gratuitous-arps
 ip wccp version 1
@@ -51,9 +51,9 @@ ip dhcp excluded-address 172.16.1.1 172.16.1.50
 !
 ip dhcp pool HOME_LAN
    network 172.16.1.0 255.255.255.0
-   default-router 172.16.1.1 
+   default-router 172.16.1.1
    domain-name foo.com
-   dns-server 172.16.1.5 
+   dns-server 172.16.1.5
    lease 2
 !
 !

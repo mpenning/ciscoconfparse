@@ -4,7 +4,7 @@ about: Report a bug in ciscoconfparse (not other projects which depend on ciscoc
 ---
 
 <!--
-This issue tracker is a tool to address bugs in ciscoconfparse itself. Please 
+This issue tracker is a tool to address bugs in ciscoconfparse itself. Please
 use Stack Overflow for questions about your own code.
 
 Replace this comment with a clear outline of what the bug is.

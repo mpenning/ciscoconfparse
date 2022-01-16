@@ -1,38 +1,38 @@
 from ciscoconfparse import CiscoConfParse
 
 ## Define an example configuration to parse...
-config = """interfaces {                                                 
-    xe-0/0/0 {                                               
-        unit 0 {                                             
-            family inet {                                    
-                address 1.1.1.6/31;                     
-            }                                                
-            family inet6 {                                   
-                address FD00:DEAD:CAFE:6000::4/127;         
-            }                                                
-        }                                                    
-    }                                                        
-    xe-0/0/1 {                                               
-        unit 0 {                                             
-            family inet {                                    
-                address 2.2.2.10/31;                    
-            }                                                
-            family inet6 {                                   
-                address FD00:DEAD:CAFE:7903::2/64;             
-            }                                                
-        }                                                    
-    }                                                        
-    xe-0/0/2 {                                               
-        mtu 9192;                                            
-        unit 0 {                                             
-            family inet {                                    
-                address 3.3.3.14/31;                    
-            }                                                
-            family inet6 {                                   
-                address FD00:DEAD:CAFE:6000::26/127;        
-            }                                                
-        }                                                    
-    }                                                        
+config = """interfaces {
+    xe-0/0/0 {
+        unit 0 {
+            family inet {
+                address 1.1.1.6/31;
+            }
+            family inet6 {
+                address FD00:DEAD:CAFE:6000::4/127;
+            }
+        }
+    }
+    xe-0/0/1 {
+        unit 0 {
+            family inet {
+                address 2.2.2.10/31;
+            }
+            family inet6 {
+                address FD00:DEAD:CAFE:7903::2/64;
+            }
+        }
+    }
+    xe-0/0/2 {
+        mtu 9192;
+        unit 0 {
+            family inet {
+                address 3.3.3.14/31;
+            }
+            family inet6 {
+                address FD00:DEAD:CAFE:6000::26/127;
+            }
+        }
+    }
 }""".splitlines()
 
 ## Parse the list of config lines here...

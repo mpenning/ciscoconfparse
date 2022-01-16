@@ -4,7 +4,7 @@ hostname sample_nxos_01
 no system admin-vdc
 install feature-set fex
 vdc DCE-200-N7010-01 id 1
-  limit-resource module-type m1 f1 m1xl m2xl 
+  limit-resource module-type m1 f1 m1xl m2xl
   allow feature-set fex
   allocate interface Ethernet1/1-48
   allocate interface Ethernet2/1-32
@@ -47,11 +47,11 @@ no password strength-check
 ip domain-lookup
 tacacs-server key 7 02050D4808095E731F
 ip tacacs source-interface loopback1
-tacacs-server host 10.10.6.165 
-tacacs-server host 10.10.2.130 
-aaa group server tacacs+ tacacs 
-    server 10.10.6.165 
-    server 10.10.2.130 
+tacacs-server host 10.10.6.165
+tacacs-server host 10.10.2.130
+aaa group server tacacs+ tacacs
+    server 10.10.6.165
+    server 10.10.2.130
     use-vrf management
 errdisable recovery interval 120
 errdisable recovery cause all
@@ -78,8 +78,8 @@ snmp-server community read-write group network-admin
 snmp-server community read group network-operator
 ntp server 10.10.2.10
 ntp server 10.10.2.10 prefer
-aaa authentication login default group tacacs 
-aaa authorization config-commands default group tacacs 
+aaa authentication login default group tacacs
+aaa authorization config-commands default group tacacs
 ip route 0.0.0.0/0 10.1.1.1
 vlan 1
 vlan 8
@@ -123,7 +123,7 @@ flow monitor MONITOR-1
   record netflow-original
   exporter EXPORTER-1
 route-map internal permit 10
-  match ip address permit-any 
+  match ip address permit-any
 vrf context VRF
 vrf context BRAVO
 vrf context CHARLIE
@@ -178,104 +178,104 @@ interface Vlan249
   no shutdown
   no ip redirects
   ip address 10.249.255.253/16
-  hsrp 2 
+  hsrp 2
     authentication text HSRPAUTH
-    preempt 
+    preempt
     priority 105 forwarding-threshold lower 1 upper 105
     ip 10.249.0.1
-    track 2 
+    track 2
 interface Vlan400
   description
   no shutdown
   no ip redirects
   ip address 10.5.129.3/24
-  hsrp 2 
+  hsrp 2
     authentication text HSRPAUTH
-    preempt 
+    preempt
     priority 105 forwarding-threshold lower 1 upper 105
     ip 10.5.129.1
-    track 2 
+    track 2
 interface Vlan403
   description
   no shutdown
   vrf member ALPHA
   no ip redirects
   ip address 10.5.131.3/25
-  hsrp 2 
+  hsrp 2
     authentication text HSRPAUTH
-    preempt 
+    preempt
     priority 105 forwarding-threshold lower 1 upper 105
     ip 10.5.131.1
-    track 2 
+    track 2
 interface Vlan404
   description
   no shutdown
   vrf member BRAVO
   no ip redirects
   ip address 10.5.131.131/25
-  hsrp 2 
+  hsrp 2
     authentication text HSRPAUTH
-    preempt 
+    preempt
     priority 105 forwarding-threshold lower 1 upper 105
     ip 10.5.131.129
-    track 2 
+    track 2
 interface Vlan405
   description
   no shutdown
   vrf member CHARLIE
   no ip redirects
   ip address 10.5.132.3/22
-  hsrp 2 
+  hsrp 2
     authentication text HSRPAUTH
-    preempt 
+    preempt
     priority 105 forwarding-threshold lower 1 upper 105
     ip 10.5.132.1
-    track 2 
+    track 2
 interface Vlan550
   description
   no shutdown
   vrf member DELTA
   no ip redirects
   ip address 10.111.50.3/24
-  hsrp 2 
+  hsrp 2
     authentication text HSRPAUTH
-    preempt 
+    preempt
     priority 105 forwarding-threshold lower 1 upper 105
     ip 10.111.50.1
-    track 2 
+    track 2
 interface Vlan551
   description
   no shutdown
   vrf member ECHO
   no ip redirects
   ip address 10.111.51.3/24
-  hsrp 2 
+  hsrp 2
     authentication text HSRPAUTH
-    preempt 
+    preempt
     priority 105 forwarding-threshold lower 1 upper 105
     ip 10.111.51.1
-    track 2 
+    track 2
 interface Vlan552
   description
   no shutdown
   vrf member FOX
   no ip redirects
   ip address 10.111.52.3/24
-  hsrp 2 
+  hsrp 2
     authentication text HSRPAUTH
-    preempt 
+    preempt
     priority 105 forwarding-threshold lower 1 upper 105
     ip 10.111.52.1
-    track 2 
+    track 2
 interface Vlan600
   description
   no shutdown
   vrf member GOLF
   no ip redirects
   ip address 10.237.128.253/24
-  hsrp 7 
+  hsrp 7
     authentication text HSRPAUTH
-    preempt 
+    preempt
     priority 105 forwarding-threshold lower 1 upper 105
     ip 10.237.128.1
 interface Vlan700
@@ -284,9 +284,9 @@ interface Vlan700
   vrf member HOTEL
   no ip redirects
   ip address 10.237.0.253/24
-  hsrp 7 
+  hsrp 7
     authentication text HSRPAUTH
-    preempt 
+    preempt
     priority 105 forwarding-threshold lower 1 upper 105
     ip 10.237.0.1
 interface Vlan900
@@ -295,137 +295,137 @@ interface Vlan900
   vrf member INDIA
   no ip redirects
   ip address 10.152.200.194/28
-  hsrp 0 
-    preempt delay reload 180 
+  hsrp 0
+    preempt delay reload 180
     priority 105 forwarding-threshold lower 1 upper 105
     timers msec 250 msec 750
     ip 10.152.200.193
-    track 2 
+    track 2
 interface Vlan997
   description
   no shutdown
   vrf member JULIET
   no ip redirects
   ip address 10.166.182.253/24
-  hsrp 0 
+  hsrp 0
     authentication text HSRPAUTH
-    preempt 
+    preempt
     priority 105 forwarding-threshold lower 1 upper 105
     ip 10.166.182.1
-    track 2 
+    track 2
 interface Vlan3237
   description
   no shutdown
   vrf member KILO
   no ip redirects
   ip address 10.223.137.3/24
-  hsrp 2 
+  hsrp 2
     authentication text HSRPAUTH
-    preempt delay reload 180 
+    preempt delay reload 180
     priority 105 forwarding-threshold lower 1 upper 105
     timers msec 250 msec 750
     ip 10.223.137.1
-    track 2 
+    track 2
 interface Vlan3238
   description
   no shutdown
   vrf member LIMA
   no ip redirects
   ip address 10.223.138.3/24
-  hsrp 2 
+  hsrp 2
     authentication text HSRPAUTH
-    preempt delay reload 180 
+    preempt delay reload 180
     priority 105 forwarding-threshold lower 1 upper 105
     timers msec 250 msec 750
     ip 10.223.138.1
-    track 2 
+    track 2
 interface Vlan3239
   description
   no shutdown
   vrf member ALPHA
   no ip redirects
   ip address 10.223.139.3/24
-  hsrp 2 
+  hsrp 2
     authentication text HSRPAUTH
-    preempt delay reload 180 
+    preempt delay reload 180
     priority 105 forwarding-threshold lower 1 upper 105
     timers msec 250 msec 750
     ip 10.223.139.1
-    track 2 
+    track 2
 interface Vlan3305
   description
   no shutdown
   vrf member BRAVO
   no ip redirects
   ip address 10.223.55.253/24
-  hsrp 0 
+  hsrp 0
     authentication text HSRPAUTH
-    preempt 
+    preempt
     priority 105 forwarding-threshold lower 1 upper 105
     ip 10.223.55.1
-    track 2 
+    track 2
 interface Vlan3308
   description
   no shutdown
   vrf member CHARLIE
   no ip redirects
   ip address 10.223.208.253/24
-  hsrp 2 
+  hsrp 2
     authentication text HSRPAUTH
-    preempt 
+    preempt
     priority 105 forwarding-threshold lower 1 upper 105
     ip 10.223.208.1
-    track 2 
+    track 2
 interface Vlan3336
   description
   no shutdown
   vrf member DELTA
   no ip redirects
   ip address 10.223.236.3/24
-  hsrp 2 
+  hsrp 2
     authentication text HSRPAUTH
-    preempt delay reload 180 
+    preempt delay reload 180
     priority 105 forwarding-threshold lower 1 upper 105
     timers msec 250 msec 750
     ip 10.223.236.1
-    track 2 
+    track 2
 interface Vlan3339
   description
   no shutdown
   vrf member ECHO
   no ip redirects
   ip address 10.223.239.3/24
-  hsrp 2 
+  hsrp 2
     authentication text HSRPAUTH
-    preempt delay reload 180 
+    preempt delay reload 180
     priority 105 forwarding-threshold lower 1 upper 105
     timers msec 250 msec 750
     ip 10.223.239.1
-    track 2 
+    track 2
 interface Vlan3405
   description
   no shutdown
   vrf member FOX
   no ip redirects
   ip address 10.223.56.253/24
-  hsrp 0 
+  hsrp 0
     authentication text HSRPAUTH
-    preempt 
+    preempt
     priority 105 forwarding-threshold lower 1 upper 105
     ip 10.223.56.1
-    track 2 
+    track 2
 interface Vlan3505
   description
   no shutdown
   vrf member GOLF
   no ip redirects
   ip address 10.223.57.253/24
-  hsrp 0 
+  hsrp 0
     authentication text HSRPAUTH
-    preempt 
+    preempt
     priority 105 forwarding-threshold lower 1 upper 105
     ip 10.223.57.1
-    track 2 
+    track 2
 interface port-channel50
   description
   switchport
@@ -979,7 +979,7 @@ router bgp 65001
       password 3 a667d47acc18ea6b
       address-family ipv4 unicast
         soft-reconfiguration inbound
-monitor session 1 
+monitor session 1
   source interface Ethernet3/30 both
   destination interface Ethernet3/2
   no shut
@@ -996,4 +996,3 @@ no system auto-upgrade epld
 logging server 10.10.10.67
 logging server 10.10.10.68
 logging source-interface loopback 1
-

@@ -30,14 +30,14 @@ aaa new-model
 aaa authentication login default local
 aaa authentication login CONSOLE none
 aaa authorization console
-aaa authorization exec default local none 
-aaa authorization exec CONSOLE none 
+aaa authorization exec default local none
+aaa authorization exec CONSOLE none
 !
 aaa session-id common
 clock timezone MST -7
 clock summer-time MDT recurring
-no network-clock-participate slot 1 
-no network-clock-participate wic 0 
+no network-clock-participate slot 1
+no network-clock-participate wic 0
 no ip source-route
 no ip gratuitous-arps
 ip wccp version 1
@@ -51,9 +51,9 @@ ip dhcp excluded-address 172.16.1.1 172.16.1.50
 !
 ip dhcp pool HOME_LAN
    network 172.16.1.0 255.255.255.0
-   default-router 172.16.1.1 
+   default-router 172.16.1.1
    domain-name foo.com
-   dns-server 172.16.1.5 
+   dns-server 172.16.1.5
    lease 2
 !
 !
@@ -147,22 +147,22 @@ ip ftp password 7 107D3D232342041E3A
 ip ssh time-out 30
 !
 class-map match-all IP_PREC_MEDIUM
- match ip precedence 2  3  4  5 
+ match ip precedence 2  3  4  5
 class-map match-all IP_PREC_HIGH
- match ip precedence 6  7 
+ match ip precedence 6  7
 class-map match-all TEST
 class-map match-all TO_ATM
  match access-group name NOT_INTERNAL
 class-map match-any ALL
- match any 
+ match any
 !
 !
 policy-map EXTERNAL_CBWFQ
  class IP_PREC_HIGH
   priority percent 10
   police cir percent 10
-    conform-action transmit 
-    exceed-action drop 
+    conform-action transmit
+    exceed-action drop
  class IP_PREC_MEDIUM
   bandwidth percent 50
   queue-limit 100
@@ -174,7 +174,7 @@ policy-map SHAPE_HEIR
   shape average 630000
   service-policy EXTERNAL_CBWFQ
 !
-! 
+!
 !
 !
 !
@@ -200,7 +200,7 @@ interface ATM0/0
  carrier-delay msec 100
  no atm ilmi-keepalive
  bundle-enable
- dsl operating-mode auto 
+ dsl operating-mode auto
  max-reserved-bandwidth 100
  hold-queue 500 in
 !
@@ -209,7 +209,7 @@ interface ATM0/0.32 point-to-point
  no ip unreachables
  no ip proxy-arp
  ip accounting access-violations
- pvc 0/32 
+ pvc 0/32
   vbr-nrt 704 704
   dialer pool-member 1
   protocol ppp dialer
@@ -240,7 +240,7 @@ interface FastEthernet1/0
  ip address 172.16.4.1 255.255.255.0
  no ip unreachables
 !
-interface Virtual-Template1 
+interface Virtual-Template1
  no ip address
 !
 interface Dialer1

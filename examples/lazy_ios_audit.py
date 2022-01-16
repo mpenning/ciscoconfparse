@@ -81,7 +81,7 @@ for filename in CONFIG_PATH:
         enab_sec_regex = r'^enable\s+secret\s+(\d+)\s+\S+'
         # Get the encryption level as an int...
         enab_sec_level = parse.find_objects(enab_sec_regex,
-            )[0].re_match_typed(enab_sec_regex, group=1, default=-1, 
+            )[0].re_match_typed(enab_sec_regex, group=1, default=-1,
             result_type=int)
         if enab_sec_level==0:
             print(default_enab_sec)

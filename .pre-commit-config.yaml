@@ -1,5 +1,10 @@
 ---
 # This yaml requires a specific python package -> https://pre-commit.com/
+#    make sure your virtualenv has the pre-commit pypi dependency...
+#
+# To install this hook config in .git/hooks/pre-commit:
+# - pre-commit install
+# - pre-commit run --all-files
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: v4.1.0

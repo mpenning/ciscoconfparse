@@ -46,7 +46,7 @@ Please be aware of the following things when filing bug reports:
      result?
    - Tell us **what version of [ciscoconfparse][1] you're using**, and
      **how you installed it**. Different versions of [ciscoconfparse][1] behave
-     differently 
+     differently
 
    If you do not provide all of these things, it could take us much longer to
    fix your problem. If we ask you to clarify these and you never respond, we

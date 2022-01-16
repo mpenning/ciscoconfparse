@@ -14,7 +14,7 @@ jobs:
         with:
           close-issue-message: >
             Due to inactivity, CiscoConfParse's maintainers are closing this
-            issue.  Please refrain from further comments. In the future, 
+            issue.  Please refrain from further comments. In the future,
             CiscoConfParse's maintainers may reopen it solely at their
             own discretion.  For more detailed information, please refer to
             our CONTRIBUTING guidance ->
@@ -43,7 +43,7 @@ jobs:
           stale-pr-label: 'stale-pending-close'
           stale-pr-message: >
             This PR has automatically been marked stale due to inactivity.
-            It will automatically close unless further action is taken. 
+            It will automatically close unless further action is taken.
             Please understand that the CiscoConfParse team is not obligated
             to comment on (or approve) every Pull Request.  For more detailed
             information, please refer to CONTRIBUTING guidance ->

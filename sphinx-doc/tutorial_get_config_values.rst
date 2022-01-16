@@ -5,8 +5,8 @@ Getting Config Values with :class:`~ciscoconfparse.CiscoConfParse`
 Now that we're familiar with parent / child relationships, let's tackle another
 common problem.  How do you get specific values from a configuration?
 
-For sure, you could use traditional Python techniques, such as Python's 
-:any:`re` module; however, the :any:`re` module is rather cumbersome when 
+For sure, you could use traditional Python techniques, such as Python's
+:any:`re` module; however, the :any:`re` module is rather cumbersome when
 you're retrieving a lot of config values.
 
 :class:`~ciscoconfparse.CiscoConfParse` introduces methods directly on
@@ -48,7 +48,7 @@ For the next examples, we will use this configuration...
 :func:`~ciscoconfparse.models_cisco.IOSCfgLine.re_match_typed()`: Get a value from an object
 --------------------------------------------------------------------------------------------
 
-Let's suppose we want the hostname of `short.conf` above.  One approach is to 
+Let's suppose we want the hostname of `short.conf` above.  One approach is to
 use :func:`~ciscoconfparse.CiscoConfParse.find_objects()` and then use
 :func:`~ciscoconfparse.models_cisco.IOSCfgLine.re_match_typed()` to get the
 hostname:
@@ -65,16 +65,16 @@ hostname:
    >>>
 
 Take note of the regex we used: ``r'hostname\s+(\S+)'``.  This regex has a
-capture group (bounded by the parenthesis), which 
-:func:`~ciscoconfparse.models_cisco.IOSCfgLine.re_match_typed()` requires.  
-:func:`~ciscoconfparse.models_cisco.IOSCfgLine.re_match_typed()` uses the 
+capture group (bounded by the parenthesis), which
+:func:`~ciscoconfparse.models_cisco.IOSCfgLine.re_match_typed()` requires.
+:func:`~ciscoconfparse.models_cisco.IOSCfgLine.re_match_typed()` uses the
 contents of this capture group to return the value.
 
 This technique is fine, but we have to tell Python to iterate over all config
 objects with :func:`~ciscoconfparse.CiscoConfParse.find_objects()` and then
 we extract the hostname from that object.
 
-What if there was a way to get the hostname without calling :func:`~ciscoconfparse.CiscoConfParse.find_objects()`?  As it happens, 
+What if there was a way to get the hostname without calling :func:`~ciscoconfparse.CiscoConfParse.find_objects()`?  As it happens,
 :func:`~ciscoconfparse.models_cisco.IOSCfgLine.re_match_iter_typed()` does
 it for you.
 
@@ -82,10 +82,10 @@ it for you.
 :func:`~ciscoconfparse.models_cisco.IOSCfgLine.re_match_iter_typed()`: Iterate over all children and get a value
 ----------------------------------------------------------------------------------------------------------------
 
-:func:`~ciscoconfparse.models_cisco.IOSCfgLine.re_match_iter_typed()` 
-iterates over child objects and returns the *first* value it finds.  This is 
-very useful because 
-:func:`~ciscoconfparse.models_cisco.IOSCfgLine.re_match_iter_typed()` does 
+:func:`~ciscoconfparse.models_cisco.IOSCfgLine.re_match_iter_typed()`
+iterates over child objects and returns the *first* value it finds.  This is
+very useful because
+:func:`~ciscoconfparse.models_cisco.IOSCfgLine.re_match_iter_typed()` does
 all the iteration for us.
 
 .. code-block:: python
@@ -99,16 +99,16 @@ all the iteration for us.
    >>>
 
 Take note of the regex we used: ``r'hostname\s+(\S+)'``.  This regex has a
-capture group (bounded by the parenthesis), which 
-:func:`~ciscoconfparse.models_cisco.IOSCfgLine.re_match_iter_typed()` requires. 
-:func:`~ciscoconfparse.models_cisco.IOSCfgLine.re_match_iter_typed()` uses the 
+capture group (bounded by the parenthesis), which
+:func:`~ciscoconfparse.models_cisco.IOSCfgLine.re_match_iter_typed()` requires.
+:func:`~ciscoconfparse.models_cisco.IOSCfgLine.re_match_iter_typed()` uses the
 contents of this capture group to return the value.
 
-This code is better than the previous example, because it eliminates the call 
+This code is better than the previous example, because it eliminates the call
 to :func:`~ciscoconfparse.CiscoConfParse.find_objects()` that we used above.
 
-However, there are still times when you need to call 
-:func:`~ciscoconfparse.CiscoConfParse.find_objects()`; one example is when you 
+However, there are still times when you need to call
+:func:`~ciscoconfparse.CiscoConfParse.find_objects()`; one example is when you
 need to get the HSRP address from an interface.
 
 .. code-block:: python
@@ -117,7 +117,7 @@ need to get the HSRP address from an interface.
    >>> from ciscoconfparse import CiscoConfParse
    >>> parse = CiscoConfParse('short.conf')
    >>> intf_obj = parse.find_objects(r'^interface\s+Vlan10$')[0]
-   >>> hsrp_ip = intf_obj.re_match_iter_typed(r'standby\s10\sip\s(\S+)', 
+   >>> hsrp_ip = intf_obj.re_match_iter_typed(r'standby\s10\sip\s(\S+)',
    ...     default='')
    >>> hsrp_ip
    '192.0.2.1'
@@ -128,12 +128,12 @@ is so we can get the specific inteface object that contains the HSRP address
 in question.
 
 You may be wondering, "Why does this method have *typed* in its name?".  This
-is because 
-:func:`~ciscoconfparse.models_cisco.IOSCfgLine.re_match_iter_typed()` 
+is because
+:func:`~ciscoconfparse.models_cisco.IOSCfgLine.re_match_iter_typed()`
 can return the value cast as a python type.  By default, all return values are
 cast as a Python `str`_.
 
-The following example looks for the ARP timeout on interface Vlan10, and 
+The following example looks for the ARP timeout on interface Vlan10, and
 returns it cast as a Python `int`_.
 
 .. code-block:: python
@@ -142,24 +142,24 @@ returns it cast as a Python `int`_.
    >>> from ciscoconfparse import CiscoConfParse
    >>> parse = CiscoConfParse('short.conf')
    >>> intf_obj = parse.find_objects(r'^interface\s+Vlan10$')[0]
-   >>> arp_timeout = intf_obj.re_match_iter_typed(r'arp\s+timeout\s+(\d+)', 
+   >>> arp_timeout = intf_obj.re_match_iter_typed(r'arp\s+timeout\s+(\d+)',
    ...     result_type=int, default=4*3600)
    >>> arp_timeout
    240
    >>>
 
-Finally, let's talk about two more 
+Finally, let's talk about two more
 :func:`~ciscoconfparse.models_cisco.IOSCfgLine.re_match_iter_typed()`
 keywords: `default` and `untyped_default`.
 
-:func:`~ciscoconfparse.models_cisco.IOSCfgLine.re_match_iter_typed()` 
-has a `default` keyword, which specifies what the default value should be if 
-the regular expression doesn't match the configuration.  The value in 
+:func:`~ciscoconfparse.models_cisco.IOSCfgLine.re_match_iter_typed()`
+has a `default` keyword, which specifies what the default value should be if
+the regular expression doesn't match the configuration.  The value in
 `default` is automatically cast as the `result_type`.
 
-However, there may be times when you don't want `default`'s value to be cast 
+However, there may be times when you don't want `default`'s value to be cast
 as `result_type`.  If you find yourself in that situation, you can call
-:func:`~ciscoconfparse.models_cisco.IOSCfgLine.re_match_iter_typed()` with 
+:func:`~ciscoconfparse.models_cisco.IOSCfgLine.re_match_iter_typed()` with
 `untyped_default=True`.
 
 .. code-block:: python
@@ -168,8 +168,8 @@ as `result_type`.  If you find yourself in that situation, you can call
    >>> from ciscoconfparse import CiscoConfParse
    >>> parse = CiscoConfParse('short.conf')
    >>> intf_obj = parse.find_objects(r'^interface\s+Vlan20$')[0]
-   >>> arp_timeout = intf_obj.re_match_iter_typed(r'arp\s+timeout\s+(\d+)', 
-   ...     result_type=int, 
+   >>> arp_timeout = intf_obj.re_match_iter_typed(r'arp\s+timeout\s+(\d+)',
+   ...     result_type=int,
            untyped_default=True, default='__no_explicit_value__')
    >>> arp_timeout
    '__no_explicit_value__'
@@ -198,7 +198,7 @@ This script will get all the DHCP helper-addresses from Vlan10:
    >>>
    >>> HELPER_REGEX = r'ip\s+helper-address\s+(\S+)$'
    >>> NO_MATCH = '__no_match__'
-   >>> 
+   >>>
    >>> # Iterate over matching interfaces
    >>> for intf_obj in parse.find_objects(r'^interface\s+Vlan10$'):
    ...     for child_obj in intf_obj.children:  # Iterate over intf children

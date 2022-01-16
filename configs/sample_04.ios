@@ -240,7 +240,7 @@ snmp-server community private2 RW
 snmp-server enable traps slb
 snmp-server enable traps rf
 snmp-server host 172.28.26.15 public1
-snmp-server host 172.28.26.15 public2 
+snmp-server host 172.28.26.15 public2
 !
 radius-server host 172.28.16.194 auth-port 1812 acct-port 1813
 radius-server host 172.28.0.194 auth-port 1812 acct-port 1813
@@ -266,4 +266,3 @@ ntp clock-period 17180086
 ntp server 172.24.0.106 prefer
 ntp server 172.24.0.107
 end
-    

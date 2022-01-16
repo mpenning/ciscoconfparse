@@ -24,7 +24,7 @@ system {
             authentication {
                 encrypted-password "$1$y7ArHxKU$zUbdeLfBirgkCsKiOJ5Qa0"; ## SECRET-DATA
             }
-        }                               
+        }
     }
     services {
         ssh {
@@ -50,7 +50,7 @@ system {
     ntp {
         boot-server time.apple.com;
         server 172.16.8.3;
-    }                             
+    }
 }
 vlans {
     Management {
@@ -59,7 +59,7 @@ vlans {
             ge-0/0/0.0;
             ge-0/0/1.0;
             ge-0/0/2.0;
-            ge-0/0/3.0;                 
+            ge-0/0/3.0;
         }
     }
     VLAN_FOO {

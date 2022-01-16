@@ -1,8 +1,8 @@
 Example Usage: Build configuration diffs
 ========================================
 
-Let's suppose we need to find all serial interfaces in a certain address range 
-and configure them for the MPLS LDP protocol.  We will assume that all serial 
+Let's suppose we need to find all serial interfaces in a certain address range
+and configure them for the MPLS LDP protocol.  We will assume that all serial
 interfaces in 1.1.1.0/24 need to be configured with LDP.
 
 Baseline Configuration
@@ -55,8 +55,8 @@ This tutorial will run all the queries against a sample configuration, which is 
 Diff Script
 -----------
 
-The script below will build a list of serial interfaces, check to see whether 
-they are in the correct address range.  If so, the script will build a diff to 
+The script below will build a list of serial interfaces, check to see whether
+they are in the correct address range.  If so, the script will build a diff to
 enable LDP.
 
 .. code-block:: python
@@ -87,7 +87,7 @@ Result:
    ['interface Serial1/0', ' mpls ip', 'interface Serial1/1', ' mpls ip', 'interface Serial1/2', ' mpls ip']
    >>> for line in cfgdiffs.ioscfg:
    ...     print(line)
-   ... 
+   ...
    !
    interface Serial1/0
     mpls ip
@@ -98,4 +98,3 @@ Result:
    interface Serial1/2
     mpls ip
    >>>
-

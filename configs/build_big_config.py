@@ -35,7 +35,7 @@ if sys.argv[1]=="1":
         if mode=='vrf':
             print "ip vrf forwarding VRF_{0}".format(vlan)
         print " description Layer3 SVI: vlan {0}".format(vlan)
-        print " ip address {0}.{1}.{2}.0 255.255.255.0".format(randint(1, 224), 
+        print " ip address {0}.{1}.{2}.0 255.255.255.0".format(randint(1, 224),
             randint(1, 255), randint(1, 255))
         print "!"
 

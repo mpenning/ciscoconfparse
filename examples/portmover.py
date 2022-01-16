@@ -15,7 +15,7 @@ License: GPLv3
 
 portmover.py:
 Move ports from an 'old' switch to a new switch:
-    Read a Cisco IOS config and a csv containing port mappings; 
+    Read a Cisco IOS config and a csv containing port mappings;
     output a new switch config
 """
 
@@ -28,15 +28,15 @@ def parse_args(input_str=""):
         sys.argv = [input_str]   # sys.argv[0] is always the whole list of args
         sys.argv.extend(shlex.split(input_str))   # shlex adds the rest of argv
 
-    parser = ArgumentParser(prog=os.path.basename(__file__), 
+    parser = ArgumentParser(prog=os.path.basename(__file__),
         description='Move ports in a new switch configuration', add_help=True)
 
     parser_required = parser.add_argument_group('required')
-    parser_required.add_argument('-o', '--old', required=True, 
+    parser_required.add_argument('-o', '--old', required=True,
         help='Old config filename')
-    parser_required.add_argument('-n', '--new', required=True, 
+    parser_required.add_argument('-n', '--new', required=True,
         help='New config filename')
-    parser_required.add_argument('-m', '--map', required=True, 
+    parser_required.add_argument('-m', '--map', required=True,
         help='CSV file which maps old to new ports')
 
     return parser.parse_args()
@@ -47,7 +47,7 @@ def main(args):
     parse = CiscoConfParse(args.old) # parse the old config
     config = list()  # Initialize a container for the new config
 
-    # Open the csv... 
+    # Open the csv...
     with open(args.map) as csvfh:
         reader = csv.reader(csvfh)
 
