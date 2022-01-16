@@ -1,0 +1,8 @@
+---
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v4.1.0  # Use the ref you want to point at
+  hooks:
+  - id: no-commit-to-branch
+    name: "No direct commit to these branches."
+    pass_filenames: false
+    always_run: true
