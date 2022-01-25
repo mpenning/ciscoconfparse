@@ -30,12 +30,12 @@ classifiers=[
 
 
 [tool.poetry.dependencies]
-python = ">=3.6"
+python = ">=3.6.1"
 passlib = "^1.7.4"
 dnspython = "^2.1.0"
 loguru = "0.5.3"
 toml = "0.10.2"
-ipaddress = ">=2.1.11"
+ipaddr = { version = ">=2.1.11", python = "<3.3" }
 
 [tool.poetry.dev-dependencies]
 pytest = "6.2.4"
