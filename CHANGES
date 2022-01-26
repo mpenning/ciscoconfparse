@@ -1,3 +1,4 @@
+1.6.24  20220125 Update CHANGES to match most recent github version
 1.6.21  20220112 Commit with ccp_logger_control feature incompete
 1.6.20  20220111 Code cleanup
 1.6.19  20220109 Fix IPv6 bug in `ip_factory()`
