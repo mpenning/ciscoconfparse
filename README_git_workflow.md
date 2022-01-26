@@ -9,7 +9,7 @@ git checkout master
 git pull --ff-only
 
 # Checkout a new branch (some_feature_branch) add / modify code...
-git checkout -b some_feature_branch
+git switch -c some_feature_branch
 
 # -> run tests after modifying some_feature_branch
 make test
