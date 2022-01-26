@@ -1,3 +1,4 @@
+1.6.25  20220126 Remove old 'ipaddress' module requirement from Python2.7 days
 1.6.24  20220125 Update CHANGES to match most recent github version
 1.6.21  20220112 Commit with ccp_logger_control feature incompete
 1.6.20  20220111 Code cleanup
