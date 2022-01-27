@@ -3,7 +3,6 @@ passlib==1.7.4
 dnspython==2.1.0
 loguru==0.5.3
 toml==0.10.2
-ipaddr>=2.1.11
 
 poetry==1.1.11
 poetry-core==1.0.7
