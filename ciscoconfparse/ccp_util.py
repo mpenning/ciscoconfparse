@@ -421,16 +421,22 @@ def is_valid_ipv4_addr(input_str=""):
         A boolean indicating whether this is a valid IPv4 string
     """
     # REJECT THIS BASED ON STR LENGTH
-    ("255."*40000)
+    #input_str = ("255."*40000)
 
     try:
         assert isinstance(input_str, str)
-        assert len(input_str.strip()) <= IPV4_MAXSTR_LEN
-        assert input_str != ""
+        obj = IPv4Obj(input_str)
+        return obj
     except AssertionError:
-        return False
-    if _RGX_IPV4ADDR.search(input_str):
-        return True
+        # TypeError could happen if "input_str is None"
+        return None
+    except TypeError:
+        # TypeError could happen if "input_str is None"
+        return None
+    except ipaddress.AddressValueError:
+        logger.info("HERE2 %s" % input_str)
+        return None
+    logger.info("HERE4 %s" % input_str)
     return False
 
 
@@ -457,74 +463,89 @@ def is_valid_ipv6_addr(input_str=""):
         return True
     return False
 
-def ip_factory(addr="", stdlib=False):
+def ip_factory(input_val="", stdlib=False, mode="auto_detect", debug=0):
     """
-    Accept an IPv4 or IPv6 address / prefix.  Return an appropriate IPv4 or IPv6 object
+    Accept an IPv4 or IPv6 address / (mask or masklength).  Return an appropriate IPv4 or IPv6 object
 
     Set stdlib=True if you only want python's stdlib IP objects.
 
-    Throw an error if addr cannot be parsed as a valid IPv4 or IPv6.
+    Throw an error if addr cannot be parsed as a valid IPv4 or IPv6 object.
     """
-    retval = None
 
-    def prepare_ip_input(addr="", force_v6=None):
+    assert isinstance(input_val, str) or isinstance(input_val, int)
+    assert mode in set(["auto_detect", "ipv4", "ipv6"])
+    assert isinstance(stdlib, bool)
+    assert isinstance(debug, int)
 
-        if isinstance(addr, str):
-            # Remove all string whitespace...
-            #   -> https://stackoverflow.com/a/3739939/667301
-            addr_w_no_spaces = "".join(addr.split())
+    obj = None
+    try:
+        if mode == "auto_detect" or mode == "ipv4":
+            obj = IPv4Obj(input_val)
 
-            # Heuristic - maximum length of ipv6 addr, mask, and masklen
-            assert len(addr_w_no_spaces) <= IPV6_MAXSTR_LEN
-
-            if ":" in addr_w_no_spaces and is_valid_ipv6_addr(addr_w_no_spaces):
-                IPv6Obj(addr_w_no_spaces)
-
-            elif "." in addr_w_no_spaces and is_valid_ipv4_addr(addr_w_no_spaces):
-                IPv4Obj(addr_w_no_spaces)
-
+            if stdlib is False:
+                return obj
             else:
-                # Heuristic, maximum length of an ipv4 string, slash and masklen
-                assert len(addr_w_no_spaces) <= IPV4_MAXSTR_LEN
+                if obj.prefixlen==32:
+                    # Return IPv4Address()
+                    assert isinstance(obj.ip, IPv4Address)
+                    return obj.ip
+                else:
+                    # Return IPv4Network()
+                    assert isinstance(obj.network, IPv4Network)
+                    return obj.network
 
-        elif isinstance(addr, int):
+        elif mode == "ipv6":
+            obj = None
+
+        else:
+            raise ValueError("Cannot parse '%s'" % input_val)
+
+    except Exception as ee:
+        if isinstance(obj, IPv4Obj):
+            return obj
+
+        elif (obj is None):
+            # We hit this condition if obj is an IPv6 string...
             pass
 
-    def ipv4_security_heuristic_failed(addr):
-        if isinstance(addr, str) and len(addr) >= 16:
-            pass
-        elif isinstance(addr, int) and (addr <= 4294967295):
-            pass
         else:
-            raise ValueError("'%s' doesn't look like a good IPv4 address" % addr)
+            raise ValueError("Cannot parse '%s'" % input_val)
 
-    if is_valid_ipv4_addr(addr):
-        tmp = IPv4Obj(addr)
-        if stdlib is False:
-            retval = tmp
-        else:
-            if tmp.prefixlen==32:
-                # Return IPv4Address()
-                retval = tmp.ip
-            else:
-                # Return IPv4Network()
-                retval = tmp.network
+    assert obj is None
+    try:
+        if mode=="auto_detect" or mode=="ipv6":
+            obj = IPv6Obj(input_val)
 
-    elif is_valid_ipv6_addr(addr):
-        tmp = IPv6Obj(addr)
-        if stdlib is False:
-            retval = tmp
-        else:
-            if tmp.prefixlen==128:
-                # Return IPv6Address()
-                retval = tmp.ip
+            assert isinstance(obj, IPv6Obj)
+            if stdlib is False:
+                return obj
             else:
-                # Return IPv6Network()
-                retval = tmp.network
+                if obj.prefixlen==128:
+                    # Return IPv6Address()
+                    assert isinstance(obj.ip, IPv6Address)
+                    return obj.ip
+                else:
+                    # Return IPv6Network()
+                    assert isinstance(obj.network, IPv6Network)
+                    return obj.network
+        elif mode=="ipv4":
+            obj = None
+        else:
+            raise ValueError("Cannot parse '%s'" % input_val)
+    except:
+        obj = None
+
+    # Raise errors for any problems...  We should not be here...
+    assert not (isinstance(obj, IPv4Obj) or isinstance(obj, IPv6Obj))
+    if mode == "ipv4":
+        addr_family = "IPv4"
+    elif mode == "ipv6":
+        addr_family = "IPv6"
     else:
-        raise ValueError("Cannot parse '%s' into a valid IP object" % addr)
-    assert retval is not None
-    return retval
+        addr_family = "IPv4 or IPv6"
+
+    error = "ip_factory('%s', mode='%s') could not parse into a valid %s object" % (input_val, mode, addr_family)
+    raise ipaddress.AddressValueError(error)
 
 def collapse_addresses(network_list):
     """

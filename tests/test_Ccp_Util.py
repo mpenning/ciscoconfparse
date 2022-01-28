@@ -166,21 +166,30 @@ def testIPv4Obj_contain():
         assert test_result == result_correct
 
 
-def testIPv4Obj_parse():
-    ## Ensure that IPv4Obj can correctly parse various inputs
-    test_strings = [
+@pytest.mark.parametrize(
+    "addr_mask", [
         "1.0.0.1/24",
         "1.0.0.1/32",
-        "1.0.0.1   255.255.255.0",
-        "1.0.0.1   255.255.255.255",
+        "1.0.0.1 255.255.255.0",
+        "1.0.0.1\r255.255.255.0",
+        "1.0.0.1\n255.255.255.0",
+        "1.0.0.1\t255.255.255.0",
+        "1.0.0.1\t 255.255.255.0",
+        "1.0.0.1 \t255.255.255.0",
+        "1.0.0.1 \t 255.255.255.0",
+        "1.0.0.1\t \t255.255.255.0",
+        "1.0.0.1     255.255.255.0",
+        "1.0.0.1     255.255.255.255",
         "1.0.0.1 255.255.255.0",
         "1.0.0.1 255.255.255.255",
         "1.0.0.1/255.255.255.0",
         "1.0.0.1/255.255.255.255",
     ]
-    for test_string in test_strings:
-        test_result = IPv4Obj(test_string)
-        assert isinstance(test_result, IPv4Obj)
+)
+def testIPv4Obj_parse(addr_mask):
+    ## Ensure that IPv4Obj can correctly parse various inputs
+    test_result = IPv4Obj(addr_mask)
+    assert isinstance(test_result, IPv4Obj)
 
 
 def testIPv4Obj_attributes():
@@ -219,29 +228,73 @@ def testIPv4Obj_attributes():
 def test_ip_factory_inputs_01():
     """Test input / output of ccp_util.ip_factory()"""
     # Test whether IPv4Obj is retured
-    test_inputs = (
+    test_params = (
             # Test format...
             #    (<dict with test inputs>, result_correct)
-            (ip_factory(**{'addr': '1.1.1.1/16', 'stdlib': False}), IPv4Obj("1.1.1.1/16")),
-            (ip_factory(**{'addr': '1.1.1.1/16', 'stdlib': True}),  IPv4Network("1.1.0.0/16")),
-            (ip_factory(**{'addr': '1.1.1.1/32', 'stdlib': False}), IPv4Obj("1.1.1.1/32")),
-            (ip_factory(**{'addr': '1.1.1.1/32', 'stdlib': True}),  IPv4Address("1.1.1.1")),
-            (ip_factory(**{'addr': '2b00:cd80:14:10::1/64', 'stdlib': False}), IPv6Obj("2b00:cd80:14:10::1/64")),
-            (ip_factory(**{'addr': '2b00:cd80:14:10::1/64', 'stdlib': True}), IPv6Network("2b00:cd80:14:10::/64")),
-            (ip_factory(**{'addr': '::1/64', 'stdlib': False}), IPv6Obj("::1/64")),
-            (ip_factory(**{'addr': '::1/64', 'stdlib': True}),  IPv6Network("::0/64")),
-            (ip_factory(**{'addr': '::1/128', 'stdlib': False}), IPv6Obj("::1/128")),
-            (ip_factory(**{'addr': '::1/128', 'stdlib': True}),  IPv6Address("::1")),
+            ({'input_val': '1.1.1.1/16', 'stdlib': False}, IPv4Obj("1.1.1.1/16")),
+            ({'input_val': '1.1.1.1/16', 'stdlib': True},  IPv4Network("1.1.1.1/16", strict=False)),
+            ({'input_val': '1.1.1.1/32', 'stdlib': False}, IPv4Obj("1.1.1.1/32")),
+            ({'input_val': '1.1.1.1/32', 'stdlib': True},  IPv4Address("1.1.1.1")),
+            ({'input_val': '2b00:cd80:14:10::1/64', 'stdlib': False}, IPv6Obj("2b00:cd80:14:10::1/64")),
+            ({'input_val': '2b00:cd80:14:10::1/64', 'stdlib': True}, IPv6Network("2b00:cd80:14:10::/64", strict=True)),
+            ({'input_val': '::1/64', 'stdlib': False}, IPv6Obj("::1/64")),
+            ({'input_val': '::1/64', 'stdlib': True},  IPv6Network("::0/64")),
+            ({'input_val': '::1/128', 'stdlib': False}, IPv6Obj("::1/128")),
+            ({'input_val': '::1/128', 'stdlib': True},  IPv6Address("::1")),
         )
-    for test_input, result_correct in test_inputs:
-        assert test_input==result_correct
+    for test_args, result_correct in test_params:
+        assert ip_factory(**test_args)==result_correct
 
-def main():
-    p_6_01 = "2a00:dd80:14:10::1/64"
-    foo  = ip_factory(p_6_01)
-    print(foo)
+def test_ip_factory_inputs_02():
+    """Test input / output of ccp_util.ip_factory().  This tests checks error conditions"""
 
+    # invalid ip address...
+    with pytest.raises(ipaddress.AddressValueError) as ee:
+        ip_factory("brickTrick", stdlib=False, mode="auto_detect")
 
+    # invalid ipv4 address
+    with pytest.raises(ipaddress.AddressValueError) as ee:
+        ip_factory("brickTrick", stdlib=False, mode="ipv4")
+
+    # invalid ipv6 address
+    with pytest.raises(ipaddress.AddressValueError) as ee:
+        ip_factory("brickTrick", stdlib=False, mode="ipv6")
+
+    # invalid ipv4 address
+    with pytest.raises(ipaddress.AddressValueError) as ee:
+        ip_factory("::1/128", stdlib=False, mode="ipv4")
+
+    # invalid ipv4 address
+    with pytest.raises(ipaddress.AddressValueError) as ee:
+        ip_factory("1.2.3.4.5", stdlib=False, mode="ipv4")
+
+    # invalid first octet and parse auto_detect...
+    with pytest.raises(ipaddress.AddressValueError) as ee:
+        ip_factory("256.1.1.1", stdlib=False, mode="auto_detect")
+
+    # invalid first octet and parse as ipv4
+    with pytest.raises(ipaddress.AddressValueError) as ee:
+        ip_factory("256.1.1.1", stdlib=False, mode="ipv4")
+
+    # invalid first octet and parse as ipv6
+    with pytest.raises(ipaddress.AddressValueError) as ee:
+        ip_factory("256.1.1.1", stdlib=False, mode="ipv6")
+
+    # netmask too long...
+    with pytest.raises(ipaddress.AddressValueError) as ee:
+        ip_factory("239.1.1.1/33", stdlib=False, mode="ipv4")
+
+    # parse ipv6 as ipv6...
+    with pytest.raises(ipaddress.AddressValueError) as ee:
+        ip_factory("239.1.1.1/24", stdlib=False, mode="ipv6")
+
+    # parse invalid ipv6 address...
+    with pytest.raises(ipaddress.AddressValueError) as ee:
+        ip_factory("FE80:AAAA::DEAD:BEEEEEEEEEEF", stdlib=False, mode="ipv6")
+
+    # parse invalid auto_detect ipv6 address...
+    with pytest.raises(ipaddress.AddressValueError) as ee:
+        ip_factory("FE80:AAAA::DEAD:BEEEEEEEEEEF", stdlib=False, mode="auto_detect")
 
 def testIPv6Obj_attributes():
     ## Ensure that attributes are accessible and pass the smell test
