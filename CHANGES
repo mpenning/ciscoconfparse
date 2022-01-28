@@ -1,3 +1,4 @@
+1.6.28  20220128 Make ip_factory() more resilient
 1.6.27  20220128 Make ip_factory() more resilient
 1.6.26  20220126 Fix issue raised in github PR #219
 1.6.25  20220126 Remove old 'ipaddress' module requirement from Python2.7 days
