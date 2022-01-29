@@ -1,7 +1,8 @@
+1.6.29  20220129 Re-organize / cleanup IPv4Obj, IPv6Obj
 1.6.28  20220128 Make ip_factory() more resilient
 1.6.27  20220128 Make ip_factory() more resilient
 1.6.26  20220126 Fix issue raised in github PR #219
-1.6.25  20220126 Remove old 'ipaddress' module requirement from Python2.7 days
+1.6.25  20220126 Remove old 'ipaddr' module requirement from Python2.7 days
 1.6.24  20220125 Update CHANGES to match most recent github version
 1.6.21  20220112 Commit with ccp_logger_control feature incompete
 1.6.20  20220111 Code cleanup
