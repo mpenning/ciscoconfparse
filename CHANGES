@@ -1,3 +1,4 @@
+1.6.30  20220204 Fix BaseCfgLine().has_child_with() method
 1.6.29  20220129 Re-organize / cleanup IPv4Obj, IPv6Obj
 1.6.28  20220128 Make ip_factory() more resilient
 1.6.27  20220128 Make ip_factory() more resilient
