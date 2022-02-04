@@ -2331,6 +2331,21 @@ def testValues_ConfigList_insert02(parse_c02):
 
     assert test_result == result_correct
 
+def test_BaseCfgLine_has_child_with(parse_c03):
+    # PIZZA
+    result_correct = [
+        'interface GigabitEthernet4/1',
+        'interface GigabitEthernet4/2',
+        'interface GigabitEthernet4/3',
+        'interface GigabitEthernet4/5',
+        'interface GigabitEthernet4/6',
+    ]
+    test_output = list()
+    for intf in parse_c03.find_objects(r"^interface\s+\w+?thernet"):
+        if intf.has_child_with("switchport access vlan"):
+            test_output.append(intf.text)
+
+    assert test_output == result_correct
 
 def testValues_IOSCfgLine_ioscfg01(parse_c02):
     result_correct = [
