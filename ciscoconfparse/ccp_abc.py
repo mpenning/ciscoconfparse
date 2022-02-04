@@ -6,6 +6,7 @@ import re
 from ciscoconfparse.ccp_util import junos_unsupported
 from loguru import logger
 r""" ccp_abc.py - Parse, Query, Build, and Modify IOS-style configurations
+     Copyright (C) 2022      David Michael Pennington
      Copyright (C) 2021      David Michael Pennington
      Copyright (C) 2020-2021 David Michael Pennington at Cisco Systems
      Copyright (C) 2019      David Michael Pennington at ThousandEyes
@@ -46,6 +47,8 @@ class BaseCfgLine(object, metaclass=ABCMeta):
         self.feature_param1 = ""  # Parameter1 of the feature
         self.feature_param2 = ""  # Parameter2 of the feature (if req'd)
         self.set_comment_bool()
+
+    # On BaseCfgLine()
     def __repr__(self):
         if not self.is_child:
             return "<%s # %s '%s'>" % (self.classname, self.linenum, self.text)
@@ -56,16 +59,24 @@ class BaseCfgLine(object, metaclass=ABCMeta):
                 self.text,
                 self.parent.linenum,
             )
+
+    # On BaseCfgLine()
     def __str__(self):
         return self.__repr__()
+
+    # On BaseCfgLine()
     def __hash__(self):
         ##   I inlined the hash() argument below for speed... whenever I change
         ##   self.__eq__() I *must* change this
         return hash(str(self.linenum) + self.text)
+
+    # On BaseCfgLine()
     def __gt__(self, val):
         if self.linenum > val.linenum:
             return True
         return False
+
+    # On BaseCfgLine()
     def __eq__(self, val):
         try:
             ##   try / except is much faster than isinstance();
@@ -74,11 +85,15 @@ class BaseCfgLine(object, metaclass=ABCMeta):
             return (str(self.linenum) + self.text) == (str(val.linenum) + val.text)
         except Exception:
             return False
+
+    # On BaseCfgLine()
     def __lt__(self, val):
         # Ref: http://stackoverflow.com/a/7152796/667301
         if self.linenum < val.linenum:
             return True
         return False
+
+    # On BaseCfgLine()
     def set_comment_bool(self):
         delimiters = set(self.comment_delimiter)
         retval = None
@@ -92,9 +107,13 @@ class BaseCfgLine(object, metaclass=ABCMeta):
                 retval = False
         self.is_comment = retval
         return retval
+
+    # On BaseCfgLine()
     @property
     def dna(self):
         return self.classname
+
+    # On BaseCfgLine()
     @property
     def hash_children(self):
         """Return a unique hash of all children (if the number of children > 0)"""
@@ -102,12 +121,16 @@ class BaseCfgLine(object, metaclass=ABCMeta):
             return hash(tuple(self.children))
         else:
             return 0
+
+    # On BaseCfgLine()
     @property
     def family_endpoint(self):
         if self.children == []:
             return 0
         else:
             return self.children[-1].linenum
+
+    # On BaseCfgLine()
     @property
     def verbose(self):
         if self.has_children:
@@ -129,6 +152,8 @@ class BaseCfgLine(object, metaclass=ABCMeta):
                 self.text,
                 self.family_endpoint,
             )
+
+    # On BaseCfgLine()
     @property
     def all_parents(self):
         retval = set([])
@@ -137,6 +162,8 @@ class BaseCfgLine(object, metaclass=ABCMeta):
             retval.add(me.parent)
             me = me.parent
         return sorted(retval)
+
+    # On BaseCfgLine()
     @property
     def all_children(self):
         retval = set([])
@@ -145,20 +172,28 @@ class BaseCfgLine(object, metaclass=ABCMeta):
                 retval.add(child)
                 retval.update(child.all_children)
         return sorted(retval)
+
+    # On BaseCfgLine()
     @property
     def classname(self):
         return self.__class__.__name__
+
+    # On BaseCfgLine()
     @property
     def has_children(self):
         if len(self.children) > 0:
             return True
         return False
+
+    # On BaseCfgLine()
     @property
     def is_config_line(self):
         """Return a boolean for whether this is a config statement; returns False if this object is a blank line, or a comment"""
         if len(self.text.strip()) > 0 and not self.is_comment:
             return True
         return False
+
+    # On BaseCfgLine()
     def _list_reassign_linenums(self):
         # Call this when I want to reparse everything
         #     (which is very slow)
@@ -169,6 +204,8 @@ class BaseCfgLine(object, metaclass=ABCMeta):
         # def _list_reassign_linenums(self):
         #     self.confobj._reassign_linenums()
         raise NotImplementedError()
+
+    # On BaseCfgLine()
     @junos_unsupported
     def add_parent(self, parentobj):
         """Add a reference to parentobj, on this object"""
@@ -176,6 +213,8 @@ class BaseCfgLine(object, metaclass=ABCMeta):
         ##     with isinstance(), but I'm not ready to take the perf hit
         self.parent = parentobj
         return True
+
+    # On BaseCfgLine()
     @junos_unsupported
     def add_child(self, childobj):
         """Add references to childobj, on this object"""
@@ -189,6 +228,8 @@ class BaseCfgLine(object, metaclass=ABCMeta):
             return True
         else:
             return False
+
+    # On BaseCfgLine()
     @junos_unsupported
     def add_uncfgtext(self, unconftext):
         """unconftext is defined during special method calls.  Do not assume it
@@ -197,6 +238,8 @@ class BaseCfgLine(object, metaclass=ABCMeta):
         conftext = re.sub(r"\s*no\s+", "", unconftext)
         myindent = self.parent.child_indent
         self.uncfgtext = myindent * " " + "no " + conftext
+
+    # On BaseCfgLine()
     @junos_unsupported
     def delete(self, recurse=True):
         """Delete this object.  By default, if a parent object is deleted, the child objects are also deleted; this happens because ``recurse`` defaults True.
@@ -223,6 +266,8 @@ class BaseCfgLine(object, metaclass=ABCMeta):
             for obj in self.confobj._list[self.linenum:]:
                 obj.linenum = linenum
                 linenum += 1
+
+    # On BaseCfgLine()
     @junos_unsupported
     def delete_children_matching(self, linespec):
         """Delete any child :class:`~models_cisco.IOSCfgLine` objects which
@@ -276,8 +321,22 @@ class BaseCfgLine(object, metaclass=ABCMeta):
         # Delete the children
         map(methodcaller("delete"), cobjs)
         return retval
-    def has_child_with(self, linespec):
-        return bool(filter(methodcaller("re_search", linespec), self.children))
+
+    # On BaseCfgLine()
+    def has_child_with(self, linespec, all_children=False):
+        assert isinstance(all_children, bool)
+        # Old, crusty broken... fixed in 1.6.30...
+        #return bool(filter(methodcaller("re_search", linespec), self.children))
+        #
+        # TODO - check whether using re_match_iter_typed() is faster than this:
+        ll = linespec
+        if all_children is False:
+            offspring = self.children
+        else:
+            offspring = self.all_children
+        return bool(len([ll for cobj in offspring if cobj.re_search(ll)]))
+
+    # On BaseCfgLine()
     @junos_unsupported
     def insert_before(self, insertstr):
         """Usage:
@@ -296,6 +355,8 @@ class BaseCfgLine(object, metaclass=ABCMeta):
             raise ValueError(error)
         #retval = self.confobj.insert_after(self, insertstr, atomic=False)
         return retval
+
+    # On BaseCfgLine()
     @junos_unsupported
     def insert_after(self, insertstr):
         """Usage:
@@ -325,6 +386,8 @@ class BaseCfgLine(object, metaclass=ABCMeta):
             raise ValueError(error)
         #retval = self.confobj.insert_after(self, insertstr, atomic=False)
         return retval
+
+    # On BaseCfgLine()
     @junos_unsupported
     def append_to_family(
         self, insertstr, indent=-1, auto_indent_width=1, auto_indent=False
@@ -397,6 +460,8 @@ class BaseCfgLine(object, metaclass=ABCMeta):
             # The object has no children
             retval = self.confobj.insert_after(self, insertstr, atomic=False)
         return retval
+
+    # On BaseCfgLine()
     @junos_unsupported
     def replace(self, linespec, replacestr, ignore_rgx=None):
         """Replace all strings matching ``linespec`` with ``replacestr`` in
@@ -447,6 +512,8 @@ class BaseCfgLine(object, metaclass=ABCMeta):
         """
         # This is a little slower than calling BaseCfgLine.re_sub directly...
         return self.re_sub(linespec, replacestr, ignore_rgx)
+
+    # On BaseCfgLine()
     def re_sub(self, regex, replacergx, ignore_rgx=None):
         """Replace all strings matching ``linespec`` with ``replacestr`` in the :class:`~models_cisco.IOSCfgLine` object; however, if the :class:`~models_cisco.IOSCfgLine` text matches ``ignore_rgx``, then the text is *not* replaced.
         Parameters
@@ -502,6 +569,8 @@ class BaseCfgLine(object, metaclass=ABCMeta):
         self.text = retval
         self.set_comment_bool()
         return retval
+
+    # On BaseCfgLine()
     def re_match(self, regex, group=1, default=""):
         r"""Use ``regex`` to search the :class:`~models_cisco.IOSCfgLine` text and return the regular expression group, at the integer index.
         Parameters
@@ -546,6 +615,8 @@ class BaseCfgLine(object, metaclass=ABCMeta):
         if (mm is not None):
             return mm.group(group)
         return default
+
+    # On BaseCfgLine()
     def re_search(self, regex, default=""):
         """Use ``regex`` to search this :class:`~models_cisco.IOSCfgLine`'s
         text.
@@ -565,6 +636,8 @@ class BaseCfgLine(object, metaclass=ABCMeta):
         if (mm is not None):
             return self.text
         return default
+
+    # On BaseCfgLine()
     def re_search_children(self, regex, recurse=False):
         """Use ``regex`` to search the text contained in the children of
         this :class:`~models_cisco.IOSCfgLine`.
@@ -583,6 +656,8 @@ class BaseCfgLine(object, metaclass=ABCMeta):
             return [cobj for cobj in self.children if cobj.re_search(regex)]
         else:
             return [cobj for cobj in self.all_children if cobj.re_search(regex)]
+
+    # On BaseCfgLine()
     def re_match_typed(
         self, regex, group=1, untyped_default=False, result_type=str, default=""
     ):
@@ -648,6 +723,8 @@ class BaseCfgLine(object, metaclass=ABCMeta):
             return default
         else:
             return result_type(default)
+
+    # On BaseCfgLine()
     def re_match_iter_typed(
         self,
         regex,
@@ -737,12 +814,18 @@ class BaseCfgLine(object, metaclass=ABCMeta):
                 return default
             else:
                 return result_type(default)
+
+    # On BaseCfgLine()
     def reset(self):
         # For subclass APIs
         raise NotImplementedError
+
+    # On BaseCfgLine()
     def build_reset_string(self):
         # For subclass APIs
         raise NotImplementedError
+
+    # On BaseCfgLine()
     @property
     def ioscfg(self):
         """Return a list with this the text of this object, and
@@ -750,6 +833,8 @@ class BaseCfgLine(object, metaclass=ABCMeta):
         retval = [self.text]
         retval.extend([ii.text for ii in self.all_children])
         return retval
+
+    # On BaseCfgLine()
     @property
     def lineage(self):
         """Iterate through to the oldest ancestor of this object, and return
@@ -761,6 +846,8 @@ class BaseCfgLine(object, metaclass=ABCMeta):
         if self.children:
             retval.extend(self.all_children)
         return sorted(retval)
+
+    # On BaseCfgLine()
     @property
     def geneology(self):
         """Iterate through to the oldest ancestor of this object, and return
@@ -770,6 +857,8 @@ class BaseCfgLine(object, metaclass=ABCMeta):
         retval = sorted(self.all_parents)
         retval.append(self)
         return retval
+
+    # On BaseCfgLine()
     @property
     def geneology_text(self):
         """Iterate through to the oldest ancestor of this object, and return
@@ -778,16 +867,24 @@ class BaseCfgLine(object, metaclass=ABCMeta):
         returned.  Note: children of this object are *not* returned."""
         retval = [ii.text for ii in self.geneology]
         return retval
+
+    # On BaseCfgLine()
     @property
     def is_parent(self):
         return bool(self.has_children)
+
+    # On BaseCfgLine()
     @property
     def is_child(self):
         return not bool(self.parent == self)
+
+    # On BaseCfgLine()
     @property
     def siblings(self):
         indent = self.indent
         return [obj for obj in self.parent.children if (obj.indent == indent)]
+
+    # On BaseCfgLine()
     @classmethod
     def is_object_for(cls, line=""):
         return False
