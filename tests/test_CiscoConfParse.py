@@ -2332,7 +2332,6 @@ def testValues_ConfigList_insert02(parse_c02):
     assert test_result == result_correct
 
 def test_BaseCfgLine_has_child_with(parse_c03):
-    # PIZZA
     result_correct = [
         'interface GigabitEthernet4/1',
         'interface GigabitEthernet4/2',
