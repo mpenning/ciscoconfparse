@@ -64,7 +64,7 @@ import os
 ##############################################################################
 r""" ciscoconfparse.py - Parse, Query, Build, and Modify IOS-style configs
 
-     Copyright (C) 2022      David Michael Pennington
+     Copyright (C) 2021-2022 David Michael Pennington
      Copyright (C) 2021      David Michael Pennington
      Copyright (C) 2020-2021 David Michael Pennington at Cisco Systems
      Copyright (C) 2019      David Michael Pennington at ThousandEyes
@@ -249,6 +249,8 @@ class CiscoConfParse(object):
             A string holding the configuration type.  Default: 'ios'.  Must be one of: 'ios', 'nxos', 'asa', 'junos'.  Use 'junos' for any brace-delimited configuration (including F5, Palo Alto, etc...).
 
         """
+        assert isinstance(syntax, str)
+        assert syntax in set(["ios", "nxos", "asa", "junos"])
 
         # all IOSCfgLine object instances...
         self.comment_delimiter = comment
@@ -258,194 +260,33 @@ class CiscoConfParse(object):
         self.encoding = encoding or ENCODING
         self.debug = debug
 
-        if isinstance(config, list) or isinstance(config, Iterator):
+        # Define a functools.partial() wrapper around ConfigList()...
+        # functools.partial() info->https://stackoverflow.com/a/5737892/667301
+        self.config_list = partial(ConfigList, syntax=syntax, comment_delimiter=comment, factory=factory, ignore_blank_lines=ignore_blank_lines, ccp_ref=self, debug=debug)
+
+        config = self.get_config_lines(config=config, logger=logger)
+        valid_syntax = copy.copy(set(ALL_VALID_SYNTAX))
+        valid_syntax.discard("junos")
+        if syntax in valid_syntax:
 
             if self.debug > 0:
-                message = "CiscoConfParse(config=config, syntax='%s', factory=%s) was called with `config` as a list" % (
-                    self.syntax, self.factory)
-                logger.info(message)
+                log_msg = "assigning self.ConfigObjs = ConfigList(syntax='%s')" % syntax
+                logger.info(log_msg)
+            # self.config_list is a partial wrapper around ConfigList()
+            self.ConfigObjs = self.config_list(data=config)
 
-            if syntax == "ios":
-                # we already have a list object, simply call the parser
-                if self.debug > 0:
-                    logger.info(
-                        "assigning self.ConfigObjs = ConfigList(syntax='ios')")
-                self.ConfigObjs = ConfigList(
-                    data=config,
-                    comment_delimiter=comment,
-                    debug=debug,
-                    factory=factory,
-                    ignore_blank_lines=ignore_blank_lines,
-                    syntax="ios",
-                    ccp_ref=self,
-                )
-            elif syntax == "nxos":
-                # we already have a list object, simply call the parser
-                if self.debug > 0:
-                    logger.info(
-                        "assigning self.ConfigObjs = ConfigList(syntax='nxos')"
-                    )
-                self.ConfigObjs = ConfigList(
-                    data=config,
-                    comment_delimiter=comment,
-                    debug=debug,
-                    factory=factory,
-                    ignore_blank_lines=False,  # NXOS always has blank lines
-                    syntax="nxos",
-                    ccp_ref=self,
-                )
-            elif syntax == "asa":
-                # we already have a list object, simply call the parser
-                if self.debug > 0:
-                    logger.info(
-                        "assigning self.ConfigObjs = ConfigList(syntax='asa')")
-
-                self.ConfigObjs = ConfigList(
-                    data=config,
-                    comment_delimiter=comment,
-                    debug=debug,
-                    factory=factory,
-                    ignore_blank_lines=ignore_blank_lines,
-                    syntax="asa",
-                    ccp_ref=self,
-                )
-            elif syntax == "junos":
-                error = "junos parser factory is not yet enabled; use factory=False"
-                assert factory is False, error
-                config = self.convert_braces_to_ios(config)
-                if self.debug > 0:
-                    logger.info("assigning self.ConfigObjs = ConfigList()")
-                self.ConfigObjs = ConfigList(
-                    data=config,
-                    comment_delimiter=comment,
-                    debug=debug,
-                    factory=factory,
-                    ignore_blank_lines=ignore_blank_lines,
-                    syntax="junos",
-                    ccp_ref=self,
-                )
-            else:
-                error = "'{}' is an unknown syntax".format(syntax)
-                logger.error(error)
-                raise ValueError(error)
-
-        ## Accept either a filepath in a string, or a pathlib.Path instance...
-        elif isinstance(config, str) or isinstance(config, pathlib.Path):
-
-            if os.path.isfile(config) is True:
-                if self.debug > 0:
-                    message = "Calling CiscoConfParse(config='%s', syntax='%s', factory=%s)" % (
-                        config, self.syntax, self.factory)
-                    logger.info(message)
-            else:
-                error = "FATAL: CiscoConfParse(config='%s') failed. The file_path in `config` is not valid"
-                logger.error(error)
-                raise OSError(error)
-
-            # Try opening as a file
-            try:
-                if syntax == "ios":
-                    # string - assume a filename... open file, split and parse
-                    if self.debug > 0:
-                        logger.debug(
-                            "parsing from '{0}' with ios syntax".format(
-                                config))
-                    with open(config, **self.openargs) as fh:
-                        text = fh.read()
-                    rgx = re.compile(linesplit_rgx)
-                    if self.debug > 0:
-                        logger.info(
-                            "assigning self.ConfigObjs = ConfigList()")
-                    self.ConfigObjs = ConfigList(
-                        rgx.split(text),
-                        comment_delimiter=comment,
-                        debug=debug,
-                        factory=factory,
-                        ignore_blank_lines=ignore_blank_lines,
-                        syntax="ios",
-                        ccp_ref=self,
-                    )
-                elif syntax == "nxos":
-                    # string - assume a filename... open file, split and parse
-                    if self.debug > 0:
-                        logger.debug(
-                            "parsing from '{0}' with nxos syntax".format(
-                                config))
-                    with open(config, **self.openargs) as fh:
-                        text = fh.read()
-                    rgx = re.compile(linesplit_rgx)
-                    if self.debug > 0:
-                        logger.info(
-                            "assigning self.ConfigObjs = ConfigList(syntax='nxos')"
-                        )
-                    self.ConfigObjs = ConfigList(
-                        rgx.split(text),
-                        comment_delimiter=comment,
-                        debug=debug,
-                        factory=factory,
-                        ignore_blank_lines=False,
-                        syntax="nxos",
-                        ccp_ref=self,
-                    )
-                elif syntax == "asa":
-                    # string - assume a filename... open file, split and parse
-                    if self.debug > 0:
-                        logger.debug(
-                            "parsing from '{0}' with asa syntax".format(
-                                config))
-                    with open(config, **self.openargs) as fh:
-                        text = fh.read()
-                    rgx = re.compile(linesplit_rgx)
-                    if self.debug > 0:
-                        logger.info(
-                            "assigning self.ConfigObjs = ConfigList(syntax='asa')"
-                        )
-                    self.ConfigObjs = ConfigList(
-                        rgx.split(text),
-                        comment_delimiter=comment,
-                        debug=debug,
-                        factory=factory,
-                        ignore_blank_lines=ignore_blank_lines,
-                        syntax="asa",
-                        ccp_ref=self,
-                    )
-
-                elif syntax == "junos":
-                    # string - assume a filename... open file, split and parse
-                    if self.debug > 0:
-                        logger.debug(
-                            "parsing from '{0}' with junos syntax".format(
-                                config))
-                    with open(config, **self.openargs) as fh:
-                        text = fh.read()
-                    rgx = re.compile(linesplit_rgx)
-
-                    config = self.convert_braces_to_ios(rgx.split(text))
-                    if self.debug > 0:
-                        logger.info(
-                            "assigning self.ConfigObjs = ConfigList()")
-                    self.ConfigObjs = ConfigList(
-                        config,
-                        comment_delimiter=comment,
-                        debug=debug,
-                        factory=factory,
-                        ignore_blank_lines=ignore_blank_lines,
-                        syntax="junos",
-                        ccp_ref=self,
-                    )
-                else:
-                    error = "'{}' is an unknown syntax".format(syntax)
-                    logger.error(error)
-                    raise ValueError(error)
-
-            except (OSError or FileNotFoundError):
-                error = "CiscoConfParse could not open() the filepath '%s'" % config
-                logger.critical(error)
-                raise RuntimeError
+        elif syntax == "junos":
+            error = "junos parser factory is not yet enabled; use factory=False"
+            assert factory is False, error
+            config = self.convert_braces_to_ios(config)
+            if self.debug > 0:
+                logger.info("assigning self.ConfigObjs = ConfigList()")
+            # self.config_list is a partial wrapper around ConfigList()
+            self.ConfigObjs = self.config_list(data=config)
         else:
-            error = "CiscoConfParse() received an invalid argument\n"
+            error = "'{}' is an unknown syntax".format(syntax)
             logger.error(error)
-            raise RuntimeError(error)
+            raise ValueError(error)
 
         # Important: Ensure we have a sane copy of ConfigObjs....
         assert isinstance(self.ConfigObjs, MutableSequence)
@@ -456,6 +297,40 @@ class CiscoConfParse(object):
             "<CiscoConfParse: %s lines / syntax: %s / comment delimiter: '%s' / factory: %s / encoding: '%s'>"
             % (len(self.ConfigObjs), self.syntax, self.comment_delimiter,
                self.factory, self.encoding))
+
+
+    # This method is on CiscoConfParse()
+    def get_config_lines(self, config=None, logger=None, linesplit_rgx=r"\r*\n+"):
+        config_lines = None
+
+        # config string - assume a filename... open file return lines...
+        if self.debug > 0:
+            logger.debug("parsing config from '%s'" % config)
+
+        try:
+            assert isinstance(config, str) or isinstance(config, pathlib.Path)
+            assert os.path.isfile(config) is True
+            with open(config, **self.openargs) as fh:
+                text = fh.read()
+            rgx = re.compile(linesplit_rgx)
+            config_lines = rgx.split(text)
+            return config_lines
+
+        except (OSError or FileNotFoundError):
+            error = "CiscoConfParse could not open() the filepath '%s'" % config
+            logger.critical(error)
+            raise OSError
+
+        except AssertionError:
+            # Allow list / iterator config to fall through the next logic below
+            pass
+
+        if isinstance(config, list) or isinstance(config, Iterator):
+            config_lines = config
+            return config_lines
+
+        else:
+            raise ValueError("config='%s' is an unexpected type()" % config)
 
     # This method is on CiscoConfParse()
     @property
