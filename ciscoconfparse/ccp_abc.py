@@ -5,6 +5,7 @@ import inspect
 import re
 from ciscoconfparse.ccp_util import junos_unsupported
 from loguru import logger
+
 r""" ccp_abc.py - Parse, Query, Build, and Modify IOS-style configurations
      Copyright (C) 2022      David Michael Pennington
      Copyright (C) 2021      David Michael Pennington
@@ -617,9 +618,9 @@ class BaseCfgLine(object, metaclass=ABCMeta):
         return default
 
     # On BaseCfgLine()
-    def re_search(self, regex, default=""):
-        """Use ``regex`` to search this :class:`~models_cisco.IOSCfgLine`'s
-        text.
+    def re_search(self, regex, default="", debug=0):
+        """Search :class:`~models_cisco.IOSCfgLine` with ``regex``
+
         Parameters
         ----------
         regex : str
@@ -631,11 +632,21 @@ class BaseCfgLine(object, metaclass=ABCMeta):
         str
             The :class:`~models_cisco.IOSCfgLine` text which matched.  If there is no match, ``default`` is returned.
         """
-        ## TODO: use re.escape(regex) on all regex, instead of bare regex
-        mm = re.search(regex, self.text)
-        if (mm is not None):
-            return self.text
-        return default
+        #assert isinstance(default, str)
+        #assert isinstance(debug, int)
+
+        retval = default
+        # Shortcut with a substring match, if possible...
+        if isinstance(regex, str) and (regex in self.text):
+            if debug > 0:
+                logger.debug("'%s' is a substring of '%s'" % (regex, self.text))
+            retval = self.text
+        elif re.search(regex, self.text) is not None:
+            ## TODO: use re.escape(regex) on all regex, instead of bare regex
+            if debug > 0:
+                logger.debug("re.search('%s', '%s') matches" % (regex, self.text))
+            retval = self.text
+        return retval
 
     # On BaseCfgLine()
     def re_search_children(self, regex, recurse=False):
