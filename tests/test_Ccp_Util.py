@@ -149,7 +149,7 @@ def testL4Object_asa_lt02():
     assert pp.port_list == sorted(range(1, 7))
 
 
-def testIPv4Obj_contain():
+def testIPv4Obj_contains_01():
     ## Test ccp_util.IPv4Obj.__contains__()
     ##
     ## Test whether a prefix is or is not contained in another prefix
@@ -164,6 +164,14 @@ def testIPv4Obj_contain():
         ## 'foo in bar' tests bar.__contains__(foo)
         test_result = IPv4Obj(prefix1) in IPv4Obj(prefix2)
         assert test_result == result_correct
+
+def testIPv4Obj_contains_02():
+
+    test_result = IPv4Obj("200.1.1.1/24") in IPv4Network("200.1.1.0/24")
+    assert test_result is True
+
+    test_result = IPv4Obj("1.1.1.1/24") in IPv4Network("200.1.1.0/24")
+    assert test_result is False
 
 
 @pytest.mark.parametrize(
@@ -475,21 +483,21 @@ def testIPv4Obj_lt_03():
     assert obj2 < obj1
 
 
-def testIPv4Obj_contains_01():
+def testIPv4Obj_contains_03():
     """Test __contains__ method"""
     obj1 = IPv4Obj("1.1.1.0/24")
     obj2 = IPv4Obj("1.1.0.0/23")
     assert obj1 in obj2
 
 
-def testIPv4Obj_contains_02():
+def testIPv4Obj_contains_04():
     """Test __contains__ method"""
     obj1 = IPv4Obj("1.1.1.1/32")
     obj2 = IPv4Obj("1.1.1.0/24")
     assert obj1 in obj2
 
 
-def testIPv4Obj_contains_03():
+def testIPv4Obj_contains_05():
     """Test __contains__ method"""
     obj1 = IPv4Obj("1.1.1.255/32")
     obj2 = IPv4Obj("1.1.1.0/24")

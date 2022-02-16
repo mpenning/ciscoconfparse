@@ -18,14 +18,13 @@ from dns import reversename, query, zone
 from ipaddress import IPv4Network, IPv6Network, IPv4Address, IPv6Address
 import ipaddress
 
-from loguru import logger as logger
+from loguru import logger
 
 r""" ccp_util.py - Parse, Query, Build, and Modify IOS-style configurations
 
-     Copyright (C) 2022      David Michael Pennington
-     Copyright (C) 2021      David Michael Pennington
+     Copyright (C) 2021-2022 David Michael Pennington
      Copyright (C) 2020-2021 David Michael Pennington at Cisco Systems
-     Copyright (C) 2019      David Michael Pennington at ThousandEyes
+     Copyright (C) 2019-2020 David Michael Pennington at ThousandEyes
      Copyright (C) 2014-2019 David Michael Pennington at Samsung Data Services
 
      This program is free software: you can redistribute it and/or modify
@@ -476,11 +475,9 @@ def ip_factory(input_val="", stdlib=False, mode="auto_detect", debug=0):
     assert isinstance(stdlib, bool)
     assert isinstance(debug, int)
 
-    obj = None
-    try:
-        if mode == "auto_detect" or mode == "ipv4":
+    def _get_ipv4(input_val="", stdlib=stdlib, debug=debug):
+        try:
             obj = IPv4Obj(input_val)
-
             if stdlib is False:
                 return obj
             else:
@@ -492,30 +489,12 @@ def ip_factory(input_val="", stdlib=False, mode="auto_detect", debug=0):
                     # Return IPv4Network()
                     assert isinstance(obj.network, IPv4Network)
                     return obj.network
+        except:
+            return None
 
-        elif mode == "ipv6":
-            obj = None
-
-        else:
-            raise ValueError("Cannot parse '%s'" % input_val)
-
-    except Exception as ee:
-        if isinstance(obj, IPv4Obj):
-            return obj
-
-        elif (obj is None):
-            # We hit this condition if obj is an IPv6 string...
-            pass
-
-        else:
-            raise ipaddress.AddressValueError("Cannot parse '%s'" % input_val)
-
-    assert obj is None
-    try:
-        if mode=="auto_detect" or mode=="ipv6":
+    def _get_ipv6(input_val="", stdlib=stdlib, debug=debug):
+        try:
             obj = IPv6Obj(input_val)
-
-            assert isinstance(obj, IPv6Obj)
             if stdlib is False:
                 return obj
             else:
@@ -527,22 +506,43 @@ def ip_factory(input_val="", stdlib=False, mode="auto_detect", debug=0):
                     # Return IPv6Network()
                     assert isinstance(obj.network, IPv6Network)
                     return obj.network
-        elif mode=="ipv4":
-            obj = None
+        except:
+            return None
+
+    obj = None
+    if mode == "auto_detect":
+        obj = _get_ipv4(input_val=input_val, stdlib=stdlib, debug=debug)
+        if obj is not None:
+            return obj
+
+        obj = _get_ipv6(input_val=input_val, stdlib=stdlib, debug=debug)
+        if obj is not None:
+            return obj
         else:
-            raise ipaddress.AddressValueError("Cannot parse '%s'" % input_val)
-    except:
-        obj = None
+            error_str = "Cannot auto-detect ip='%s'" % input_val
+            raise ipaddress.AddressValueError(error_str)
+
+    elif mode == "ipv4":
+        obj = _get_ipv4(input_val=input_val, stdlib=stdlib, debug=debug)
+        if obj is not None:
+            return obj
+        else:
+            error_str = "Cannot parse '%s' as ipv4" % input_val
+            raise ipaddress.AddressValueError(error_str)
+
+    elif mode == "ipv6":
+        obj = _get_ipv6(input_val=input_val, stdlib=stdlib, debug=debug)
+        if obj is not None:
+            return obj
+        else:
+            error_str = "Cannot parse '%s' as ipv6" % input_val
+            raise ipaddress.AddressValueError(error_str)
+    else:
+        error_str = "Cannot parse '%s' as ipv4 or ipv6" % input_val
+        raise ipaddress.AddressValueError(error_str)
+
 
     # Raise errors for any problems...  We should not be here...
-    assert not (isinstance(obj, IPv4Obj) or isinstance(obj, IPv6Obj))
-    if mode == "ipv4":
-        addr_family = "IPv4"
-    elif mode == "ipv6":
-        addr_family = "IPv6"
-    else:
-        addr_family = "IPv4 or IPv6"
-
     error = "ip_factory('%s', mode='%s') could not parse into a valid %s object" % (input_val, mode, addr_family)
     raise ipaddress.AddressValueError(error)
 
@@ -995,6 +995,12 @@ class IPv4Obj(object):
     def get_regex():
         return _IPV4_REGEX_STR
 
+    # On IPv6Obj()
+    @property
+    def _ip(self):
+        """Returns the address as an :class:`ipaddress.IPv4Address` object."""
+        return self.ip_object
+
     # On IPv4Obj()
     @property
     def ip(self):
@@ -1351,7 +1357,11 @@ class IPv6Obj(object):
 
     # On IPv6Obj()
     def __repr__(self):
-        return """<IPv6Obj {0}/{1}>""".format(str(self.ip_object), self.prefixlen)
+        # Detect IPv4_mapped IPv6 addresses...
+        if self.is_ipv4_mapped:
+            return """<IPv6Obj ::ffff:{0}/{1}>""".format(str(self.ip.ipv4_mapped), self.prefixlen)
+        else:
+            return """<IPv6Obj {0}/{1}>""".format(str(self.ip), self.prefixlen)
 
     # On IPv6Obj()
     def __eq__(self, val):
@@ -1570,6 +1580,26 @@ class IPv6Obj(object):
             return 32
         else:
             return 128
+
+    # On IPv6Obj()
+    @property
+    def is_ipv4_mapped(self):
+        # ref RFC 5156 - Section 2.2 IPv4 mapped addresses
+        #     https://datatracker.ietf.org/doc/html/rfc5156#section-2.2
+        #
+        # ref RFC 4291 -  Section 2.5.5.2
+        #     https://datatracker.ietf.org/doc/html/rfc4291#section-2.5.5.2
+
+        #if self.ip in IPv6Network("::ffff:0:0/96", strict=False):
+        if self.ip in IPv6Obj("::ffff:0:0/96"):
+            return True
+        return False
+
+    # On IPv6Obj()
+    @property
+    def _ip(self):
+        """Returns the address as an :class:`ipaddress.IPv6Address` object."""
+        return self.ip_object
 
     # On IPv6Obj()
     @property
