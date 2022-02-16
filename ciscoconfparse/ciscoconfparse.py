@@ -301,6 +301,7 @@ class CiscoConfParse(object):
 
     # This method is on CiscoConfParse()
     def get_config_lines(self, config=None, logger=None, linesplit_rgx=r"\r*\n+"):
+        """Enforce rules - If config is a str, assume it's a filepath.  If config is a list, assume it's a router config."""
         config_lines = None
 
         # config string - assume a filename... open file return lines...
