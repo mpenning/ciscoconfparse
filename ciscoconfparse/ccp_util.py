@@ -995,11 +995,11 @@ class IPv4Obj(object):
     def get_regex():
         return _IPV4_REGEX_STR
 
-    # On IPv6Obj()
+    # On IPv4Obj()
     @property
     def _ip(self):
-        """Returns the address as an :class:`ipaddress.IPv4Address` object."""
-        return self.ip_object
+        """Returns the address as an integer.  This property exists for compatibility with ipaddress.IPv4Address() in stdlib"""
+        return int(self.ip_object)
 
     # On IPv4Obj()
     @property
@@ -1598,8 +1598,8 @@ class IPv6Obj(object):
     # On IPv6Obj()
     @property
     def _ip(self):
-        """Returns the address as an :class:`ipaddress.IPv6Address` object."""
-        return self.ip_object
+        """Returns the address as an integer.  This property exists for compatibility with ipaddress.IPv6Address() in stdlib"""
+        return int(self.ip_object)
 
     # On IPv6Obj()
     @property
