@@ -508,14 +508,12 @@ def ip_factory(val="", stdlib=False, mode="auto_detect", debug=0):
         if isinstance(val, str) and (":" in val):
             obj = _get_ipv6(val=val, stdlib=stdlib, debug=debug)
 
-        elif isinstance(val, str):
+        elif isinstance(val, str) and not (":" in val):
             obj = _get_ipv4(val=val, stdlib=stdlib, debug=debug)
 
         elif isinstance(val, int):
-            if val <= IPV4_MAXINT:
-                obj = _get_ipv4(val=val, stdlib=stdlib, debug=debug)
-            else:
-                obj = _get_ipv6(val=val, stdlib=stdlib, debug=debug)
+            # Do not try to make ip version assumptions for integer inputs...
+            raise NotImplementedError
 
         if obj is not None:
             return obj
