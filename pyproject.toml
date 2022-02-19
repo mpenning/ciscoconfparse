@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ciscoconfparse"
-version = "1.6.34"
+version = "1.6.35"
 description = "Parse, Audit, Query, Build, and Modify Cisco IOS-style and JunOS-style configurations"
 authors = [
     "Mike Pennington <mike@pennington.net>",
@@ -33,7 +33,7 @@ classifiers=[
 python = ">=3.6"
 passlib = "^1.7.4"
 dnspython = "^2.1.0"
-loguru = "0.5.3"
+loguru = "0.6.0"
 toml = "0.10.2"
 
 [tool.poetry.dev-dependencies]
