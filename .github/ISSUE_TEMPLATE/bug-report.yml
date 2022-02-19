@@ -25,7 +25,7 @@ body:
   attributes:
     label: Contact Details
     description: How can we get in touch with you if we need more info?
-    placeholder: ex. email@example.com
+    placeholder: me@gmail.com
   validations:
     required: false
 
@@ -62,7 +62,7 @@ body:
 - type: textarea
   id: reproduce-example
   attributes:
-    label: Show us how to reproduce the problem
+    label: Show us how to reproduce the problem.  Please tell us if the problem is specific to certain inputs or situations.
     description: Include a minimal reproducible example that demonstrates the bug
     render: python
     placeholder: |
@@ -86,10 +86,10 @@ body:
       parser = parse_a_config()
 
 - type: textarea
-  id: tracebacks
+  id: python-tracebacks
   attributes:
-    label: python-tracebacks
-    description: Please include all tracebacks
+    label: Python tracebacks
+    description: Please include all tracebacks.
     placeholder: |
       Traceback (most recent call last):
         File "/home/mpenning/fixme/ciscoconfparse/ciscoconfparse/ccp_util.py", line 445, in _get_ipv4
@@ -122,10 +122,11 @@ body:
   id: logs
   attributes:
     label: Relevant log output
-    description: Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks.
+    description: Please copy and paste any relevant log output.
     placeholder: |
       # In /var/log/messages...
-      17 Jun 2022 04:28:16.003 Something went boom!
+      2022-02-19T14:41:16.492894-06:00  mySweetBread_Daemon.py started listeningon 192.0.2.21 port tcp/9190
+      2022-02-19T14:43:44.690444-06:00  mySweetBread_Daemon.py went boom!
     render: shell
 
 - type: checkboxes
