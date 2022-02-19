@@ -9,11 +9,9 @@
 #
 blank_issues_enabled: false
 contact_links:
-  -
-    about: "Do not report security issues publicly. Email our security contact."
-    name: "Security issue"
+  - name: "Security issue"
     url: penningtonthing@gmail.com
-  -
-    about: "StackOverflow is a good place to asking programming questions, such as those involving CiscoConfParse"
-    name: Questions
+    about: "Do not report security issues publicly. Please email our security contact."
+  - name: Questions
+    about: "StackOverflow is a good place to asking programming questions, such as those involving CiscoConfParse(). We do not support these questions here."
     url: "https://stackoverflow.com/questions/ask?title=How%20do%20I&tags=ciscoconfparse+python"
