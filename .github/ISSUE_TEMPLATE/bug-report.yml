@@ -125,7 +125,7 @@ body:
     description: Please copy and paste any relevant log output.
     placeholder: |
       # In /var/log/messages...
-      2022-02-19T14:41:16.492894-06:00  mySweetBread_Daemon.py started listeningon 192.0.2.21 port tcp/9190
+      2022-02-19T14:41:16.492894-06:00  mySweetBread_Daemon.py started listening on 192.0.2.21 port tcp/9190
       2022-02-19T14:43:44.690444-06:00  mySweetBread_Daemon.py went boom!
     render: shell
 
