@@ -62,6 +62,32 @@ body:
     - Other (please specify)
 
 - type: textarea
+  id: reproduce-example
+  attributes:
+    label: Show us how to reproduce the problem
+    description: Please include a brief, but complete python script that will reproduce the problem
+    render: python
+    value: |
+      import sys
+      from ciscoconfparse import CiscoConfParse
+
+      def parse_a_config():
+          config = """
+      hostname Router01
+      !
+      interface FastEthernet 0/4
+       switchport
+       switchport mode access
+      !
+      ! Add any other relevant configuration...
+      !
+      """
+          parse = CiscoConfParse(config.splitlines(), syntax='ios')
+          return parse
+
+      parser = parse_a_config()
+
+- type: textarea
   id: logs
   attributes:
     label: Relevant log output
