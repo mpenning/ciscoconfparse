@@ -199,8 +199,34 @@ def testIPv4Obj_parse(addr_mask):
     test_result = IPv4Obj(addr_mask)
     assert isinstance(test_result, IPv4Obj)
 
+def testIPv4Obj_set_masklen01():
 
-def testIPv4Obj_attributes():
+    MASK_RESET = 32
+    test_object = IPv4Obj("1.1.1.1/%s" % MASK_RESET)
+
+    for result_correct_masklen in [32, 24, 16, 8]:
+
+        test_object = IPv4Obj("1.1.1.1/%s" % MASK_RESET)
+
+        # Test the masklen setter method...
+        test_object.masklen = result_correct_masklen
+
+        assert test_object.masklen == result_correct_masklen
+        assert test_object.masklength == result_correct_masklen
+        assert test_object.prefixlen == result_correct_masklen
+        assert test_object.prefixlength == result_correct_masklen
+
+        test_object = IPv4Obj("1.1.1.1/%s" % MASK_RESET)
+
+        # Test the prefixlen setter method...
+        test_object.prefixlen = result_correct_masklen
+
+        assert test_object.masklen == result_correct_masklen
+        assert test_object.masklength == result_correct_masklen
+        assert test_object.prefixlen == result_correct_masklen
+        assert test_object.prefixlength == result_correct_masklen
+
+def testIPv4Obj_attributes_01():
     ## Ensure that attributes are accessible and pass the smell test
     test_object = IPv4Obj("1.0.0.1 255.255.255.0")
     results_correct = [
@@ -239,16 +265,16 @@ def test_ip_factory_inputs_01():
     test_params = (
             # Test format...
             #    (<dict with test inputs>, result_correct)
-            ({'input_val': '1.1.1.1/16', 'stdlib': False}, IPv4Obj("1.1.1.1/16")),
-            ({'input_val': '1.1.1.1/16', 'stdlib': True},  IPv4Network("1.1.1.1/16", strict=False)),
-            ({'input_val': '1.1.1.1/32', 'stdlib': False}, IPv4Obj("1.1.1.1/32")),
-            ({'input_val': '1.1.1.1/32', 'stdlib': True},  IPv4Address("1.1.1.1")),
-            ({'input_val': '2b00:cd80:14:10::1/64', 'stdlib': False}, IPv6Obj("2b00:cd80:14:10::1/64")),
-            ({'input_val': '2b00:cd80:14:10::1/64', 'stdlib': True}, IPv6Network("2b00:cd80:14:10::/64", strict=True)),
-            ({'input_val': '::1/64', 'stdlib': False}, IPv6Obj("::1/64")),
-            ({'input_val': '::1/64', 'stdlib': True},  IPv6Network("::0/64")),
-            ({'input_val': '::1/128', 'stdlib': False}, IPv6Obj("::1/128")),
-            ({'input_val': '::1/128', 'stdlib': True},  IPv6Address("::1")),
+            ({'val': '1.1.1.1/16', 'stdlib': False}, IPv4Obj("1.1.1.1/16")),
+            ({'val': '1.1.1.1/16', 'stdlib': True},  IPv4Network("1.1.1.1/16", strict=False)),
+            ({'val': '1.1.1.1/32', 'stdlib': False}, IPv4Obj("1.1.1.1/32")),
+            ({'val': '1.1.1.1/32', 'stdlib': True},  IPv4Address("1.1.1.1")),
+            ({'val': '2b00:cd80:14:10::1/64', 'stdlib': False}, IPv6Obj("2b00:cd80:14:10::1/64")),
+            ({'val': '2b00:cd80:14:10::1/64', 'stdlib': True}, IPv6Network("2b00:cd80:14:10::/64", strict=True)),
+            ({'val': '::1/64', 'stdlib': False}, IPv6Obj("::1/64")),
+            ({'val': '::1/64', 'stdlib': True},  IPv6Network("::0/64")),
+            ({'val': '::1/128', 'stdlib': False}, IPv6Obj("::1/128")),
+            ({'val': '::1/128', 'stdlib': True},  IPv6Address("::1")),
         )
     for test_args, result_correct in test_params:
         assert ip_factory(**test_args)==result_correct
