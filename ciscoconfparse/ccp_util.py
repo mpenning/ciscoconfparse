@@ -513,7 +513,8 @@ def ip_factory(val="", stdlib=False, mode="auto_detect", debug=0):
 
         elif isinstance(val, int):
             # Do not try to make ip version assumptions for integer inputs...
-            raise NotImplementedError
+            error_msg = "ip_factory(val=%s, mode='auto_detect') does not support integer inputs" % val
+            raise NotImplementedError(error_msg)
 
         if obj is not None:
             return obj
