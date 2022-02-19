@@ -1,7 +1,7 @@
 #python>=3.6
 passlib==1.7.4
 dnspython==2.1.0
-loguru==0.5.3
+loguru==0.6.0
 toml==0.10.2
 
 poetry==1.1.11
