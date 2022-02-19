@@ -40,29 +40,12 @@ body:
   validations:
     required: true
 
-- type: dropdown
-  id: version
+- type: input
+  id: ciscoconfparse-version
   attributes:
-    label: Version
-    description: What [ciscoconfparse](https://github.com/mpenning/ciscoconfparse)
-      version are you running?
-    options:
-    - 1.6.34
-    - 1.6.33
-    - 1.6.32
-    - 1.6.31
-    - 1.6.30
-    - 1.6.29
-    - 1.6.28
-    - 1.6.27
-    - 1.6.26
-    - 1.6.25
-    - 1.6.24
-    - 1.6.21
-    - 1.6.20
-    - 1.6.19
-    - 1.6.18
-    - 1.6.17
+    label: CiscoConfParse Version
+    description: What ciscoconfparse version had the problem?
+    placeholder: Version x.y.z (e.g. 'Version 1.6.13')
   validations:
     required: true
 
@@ -78,6 +61,31 @@ body:
     - OpenBSD, FreeBSD, NetBSD
     - Other (please specify)
 
+- type: textarea
+  id: reproduce-example
+  attributes:
+    label: Show us how to reproduce the problem
+    description: Please include a brief, but complete python script that will reproduce the problem
+    render: python
+    value: |
+      import sys
+      from ciscoconfparse import CiscoConfParse
+
+      def parse_a_config():
+          config = """
+      hostname Router01
+      !
+      interface FastEthernet 0/4
+       switchport
+       switchport mode access
+      !
+      ! Add any other relevant configuration...
+      !
+      """
+          parse = CiscoConfParse(config.splitlines(), syntax='ios')
+          return parse
+
+      parser = parse_a_config()
 
 - type: textarea
   id: logs
