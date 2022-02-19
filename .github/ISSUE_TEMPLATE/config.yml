@@ -14,6 +14,6 @@ contact_links:
     name: "Security issue"
     url: penningtonthing@gmail.com
   -
-    about: "Search for and ask questions about your code on Stack Overflow."
+    about: "StackOverflow is a good place to asking programming questions, such as those involving CiscoConfParse"
     name: Questions
-    url: "https://stackoverflow.com/questions/tagged/ciscoconfparse"
+    url: "https://stackoverflow.com/questions/ask?title=How%20do%20I&tags=ciscoconfparse+python"
