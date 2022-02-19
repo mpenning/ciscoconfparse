@@ -48,9 +48,20 @@ r""" ccp_util.py - Parse, Query, Build, and Modify IOS-style configurations
 IPV4_MAXINT = 4294967295
 # Maximum ipv6 as an integer
 IPV6_MAXINT = 340282366920938463463374607431768211455
-IPV4_MAXSTR_LEN = 31      # String length with periods, slash, and netmask
+IPV4_MAXSTR_LEN = 31  # String length with periods, slash, and netmask
 IPV6_MAXSTR_LEN = 39 + 4  # String length with colons, slash and masklen
 
+IPV4_MAX_PREFIXLEN = 32
+IPV6_MAX_PREFIXLEN = 128
+
+
+_CISCO_RANGE_ATOM_STR = r"""\d+\s*\-*\s*\d*"""
+_CISCO_RANGE_STR = r"""^(?P<line_prefix>[a-zA-Z\s]*)(?P<slot_prefix>[\d\/]*\d+\/)*(?P<range_text>(\s*{0})*)$""".format(
+    _CISCO_RANGE_ATOM_STR
+)
+_RGX_CISCO_RANGE = re.compile(_CISCO_RANGE_STR)
+
+####################### Begin IPv6 #############################
 _IPV6_REGEX_STR = r"""(?!:::\S+?$)       # Negative Lookahead for 3 colons
  (?P<addr>                               # Begin a group named 'addr'
  (?P<opt1>{0}(?::{0}){{7}})              # no double colons, option 1
@@ -63,27 +74,27 @@ _IPV6_REGEX_STR = r"""(?!:::\S+?$)       # Negative Lookahead for 3 colons
 |(?P<opt8>:(?::{0}){{1,7}})              # leading double colons
 |(?P<opt9>(?:{0}:){{1,7}}:)              # trailing double colons
 |(?P<opt10>(?:::))                       # bare double colons (default route)
-)                                        # End group named 'addr'
+)([/\s](?P<masklen>\d+))*                # match 'masklen' and end 'addr' group
 """.format(
     r"[0-9a-fA-F]{1,4}"
 )
+
 _IPV6_REGEX_STR_COMPRESSED1 = r"""(?!:::\S+?$)(?P<addr1>(?P<opt1_1>{0}(?::{0}){{7}})|(?P<opt1_2>(?:{0}:){{1}}(?::{0}){{1,6}})|(?P<opt1_3>(?:{0}:){{2}}(?::{0}){{1,5}})|(?P<opt1_4>(?:{0}:){{3}}(?::{0}){{1,4}})|(?P<opt1_5>(?:{0}:){{4}}(?::{0}){{1,3}})|(?P<opt1_6>(?:{0}:){{5}}(?::{0}){{1,2}})|(?P<opt1_7>(?:{0}:){{6}}(?::{0}){{1,1}})|(?P<opt1_8>:(?::{0}){{1,7}})|(?P<opt1_9>(?:{0}:){{1,7}}:)|(?P<opt1_10>(?:::)))""".format(
     r"[0-9a-fA-F]{1,4}"
 )
+
 _IPV6_REGEX_STR_COMPRESSED2 = r"""(?!:::\S+?$)(?P<addr2>(?P<opt2_1>{0}(?::{0}){{7}})|(?P<opt2_2>(?:{0}:){{1}}(?::{0}){{1,6}})|(?P<opt2_3>(?:{0}:){{2}}(?::{0}){{1,5}})|(?P<opt2_4>(?:{0}:){{3}}(?::{0}){{1,4}})|(?P<opt2_5>(?:{0}:){{4}}(?::{0}){{1,3}})|(?P<opt2_6>(?:{0}:){{5}}(?::{0}){{1,2}})|(?P<opt2_7>(?:{0}:){{6}}(?::{0}){{1,1}})|(?P<opt2_8>:(?::{0}){{1,7}})|(?P<opt2_9>(?:{0}:){{1,7}}:)|(?P<opt2_10>(?:::)))""".format(
     r"[0-9a-fA-F]{1,4}"
 )
+
 _IPV6_REGEX_STR_COMPRESSED3 = r"""(?!:::\S+?$)(?P<addr3>(?P<opt3_1>{0}(?::{0}){{7}})|(?P<opt3_2>(?:{0}:){{1}}(?::{0}){{1,6}})|(?P<opt3_3>(?:{0}:){{2}}(?::{0}){{1,5}})|(?P<opt3_4>(?:{0}:){{3}}(?::{0}){{1,4}})|(?P<opt3_5>(?:{0}:){{4}}(?::{0}){{1,3}})|(?P<opt3_6>(?:{0}:){{5}}(?::{0}){{1,2}})|(?P<opt3_7>(?:{0}:){{6}}(?::{0}){{1,1}})|(?P<opt3_8>:(?::{0}){{1,7}})|(?P<opt3_9>(?:{0}:){{1,7}}:)|(?P<opt3_10>(?:::)))""".format(
     r"[0-9a-fA-F]{1,4}"
 )
 
-_CISCO_RANGE_ATOM_STR = r"""\d+\s*\-*\s*\d*"""
-_CISCO_RANGE_STR = r"""^(?P<line_prefix>[a-zA-Z\s]*)(?P<slot_prefix>[\d\/]*\d+\/)*(?P<range_text>(\s*{0})*)$""".format(
-    _CISCO_RANGE_ATOM_STR
-)
-
 _RGX_IPV6ADDR = re.compile(_IPV6_REGEX_STR, re.VERBOSE)
+####################### End IPv6 #############################
 
+####################### Begin IPv4 #############################
 _IPV4_REGEX_STR = r"^(?P<addr>\d+\.\d+\.\d+\.\d+)"
 _RGX_IPV4ADDR = re.compile(_IPV4_REGEX_STR)
 _RGX_IPV4ADDR_NETMASK = re.compile(
@@ -98,12 +109,12 @@ _RGX_IPV4ADDR_NETMASK = re.compile(
     """,
     re.VERBOSE,
 )
-
-_RGX_CISCO_RANGE = re.compile(_CISCO_RANGE_STR)
+####################### End IPv4 #############################
 
 
 class UnsupportedFeatureWarning(SyntaxWarning):
     pass
+
 
 def as_text_list(object_list):
     """This is a helper-function to convert a list of configuration objects into a list of text config lines.
@@ -179,9 +190,7 @@ def log_function_call(function=None, *args, **kwargs):
             if True:
                 if len(args) == 1 and len(kwargs) == 0 and callable(args[0]):
                     # Called as @log_function_call
-                    logger.info(
-                        "Type 1 log_function_call: %s()" % (ff.__qualname__)
-                    )
+                    logger.info("Type 1 log_function_call: %s()" % (ff.__qualname__))
 
                 else:
                     logger.info(
@@ -220,7 +229,17 @@ def ccp_logger_control(
     -------
     """
 
-    msg = "ccp_logger_control() was called with sink='{0}', action='{1}', handler_id='{2}', allow_enqueue={3}, rotation='{4}', retention='{5}', compression='{6}', level='{7}', debug={8}".format(sink, action, handler_id, allow_enqueue, rotation, retention, compression, level, debug)
+    msg = "ccp_logger_control() was called with sink='{0}', action='{1}', handler_id='{2}', allow_enqueue={3}, rotation='{4}', retention='{5}', compression='{6}', level='{7}', debug={8}".format(
+        sink,
+        action,
+        handler_id,
+        allow_enqueue,
+        rotation,
+        retention,
+        compression,
+        level,
+        debug,
+    )
     logger.info(msg)
 
     assert isinstance(action, str)
@@ -272,7 +291,9 @@ def ccp_logger_control(
         return True
 
     elif action == "":
-        raise ValueError("action='' is not supported.  Please use a valid action keyword")
+        raise ValueError(
+            "action='' is not supported.  Please use a valid action keyword"
+        )
 
     else:
         raise NotImplementedError(
@@ -412,56 +433,61 @@ class __ccp_re__(object):
         return rv_groups, rv_groupdict
 
 
-def is_valid_ipv4_addr(input_str=""):
-    """Check if this is a valid IPv4 string.
-
-    Returns
-    -------
-    bool
-        A boolean indicating whether this is a valid IPv4 string
-    """
-    # REJECT THIS BASED ON STR LENGTH
-    #input_str = ("255."*40000)
+def _get_ipv4(val="", strict=False, stdlib=False, debug=0):
+    assert isinstance(val, str) or isinstance(val, int)
+    assert isinstance(strict, bool)
+    assert isinstance(stdlib, bool)
+    assert isinstance(debug, int)
 
     try:
-        assert isinstance(input_str, str)
-        obj = IPv4Obj(input_str)
-        return obj
-    except AssertionError:
-        # TypeError could happen if "input_str is None"
-        return None
-    except TypeError:
-        # TypeError could happen if "input_str is None"
-        return None
-    except ipaddress.AddressValueError:
-        return None
-    return False
+        # Test val in stdlib and raise ipaddress.AddressValueError()
+        # if there's a problem...
+        IPv4Network(val, strict=False)
+
+        obj = IPv4Obj(val)
+        if stdlib is False:
+            return obj
+        else:
+            if obj.prefixlen == IPV4_MAX_PREFIXLEN:
+                # Return IPv6Address()
+                assert isinstance(obj.ip, IPv4Address)
+                return obj.ip
+            else:
+                # Return IPv6Network()
+                assert isinstance(obj.network, IPv4Network)
+                return obj.network
+    except Exception as ee:
+        raise ipaddress.AddressValueError(str(ee))
 
 
-def is_valid_ipv6_addr(input_str=""):
-    """Check if this is a valid IPv6 string.
-
-    Returns
-    -------
-    bool
-        A boolean indicating whether this is a valid IPv6 string
-    """
-    # REJECT THIS BASED ON STR LENGTH
-    ("::"*40000)+"1"
-    ("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff")
+def _get_ipv6(val="", strict=False, stdlib=False, debug=0):
+    assert isinstance(val, str) or isinstance(val, int)
+    assert isinstance(strict, bool)
+    assert isinstance(stdlib, bool)
+    assert isinstance(debug, int)
 
     try:
-        assert isinstance(input_str, str)
-        # Max valid IPv6 string length is 39, add 4 for a slash and masklen
-        assert len(input_str.strip()) <= IPV6_MAXSTR_LEN
-        assert input_str != ""
-    except AssertionError:
-        return False
-    if _RGX_IPV6ADDR.search(input_str):
-        return True
-    return False
+        # Test val in stdlib and raise ipaddress.AddressValueError()
+        # if there's a problem...
+        IPv6Network(val, strict=False)
 
-def ip_factory(input_val="", stdlib=False, mode="auto_detect", debug=0):
+        obj = IPv6Obj(val)
+        if stdlib is False:
+            return obj
+        else:
+            if obj.prefixlen == IPV6_MAX_PREFIXLEN:
+                # Return IPv6Address()
+                assert isinstance(obj.ip, IPv6Address)
+                return obj.ip
+            else:
+                # Return IPv6Network()
+                assert isinstance(obj.network, IPv6Network)
+                return obj.network
+
+    except Exception as ee:
+        raise ipaddress.AddressValueError(str(ee))
+
+def ip_factory(val="", stdlib=False, mode="auto_detect", debug=0):
     """
     Accept an IPv4 or IPv6 address / (mask or masklength).  Return an appropriate IPv4 or IPv6 object
 
@@ -470,81 +496,61 @@ def ip_factory(input_val="", stdlib=False, mode="auto_detect", debug=0):
     Throw an error if addr cannot be parsed as a valid IPv4 or IPv6 object.
     """
 
-    assert isinstance(input_val, str) or isinstance(input_val, int)
+    assert isinstance(val, str) or isinstance(val, int)
     assert mode in set(["auto_detect", "ipv4", "ipv6"])
     assert isinstance(stdlib, bool)
     assert isinstance(debug, int)
 
-    def _get_ipv4(input_val="", stdlib=stdlib, debug=debug):
-        try:
-            obj = IPv4Obj(input_val)
-            if stdlib is False:
-                return obj
-            else:
-                if obj.prefixlen==32:
-                    # Return IPv4Address()
-                    assert isinstance(obj.ip, IPv4Address)
-                    return obj.ip
-                else:
-                    # Return IPv4Network()
-                    assert isinstance(obj.network, IPv4Network)
-                    return obj.network
-        except:
-            return None
-
-    def _get_ipv6(input_val="", stdlib=stdlib, debug=debug):
-        try:
-            obj = IPv6Obj(input_val)
-            if stdlib is False:
-                return obj
-            else:
-                if obj.prefixlen==128:
-                    # Return IPv6Address()
-                    assert isinstance(obj.ip, IPv6Address)
-                    return obj.ip
-                else:
-                    # Return IPv6Network()
-                    assert isinstance(obj.network, IPv6Network)
-                    return obj.network
-        except:
-            return None
 
     obj = None
     if mode == "auto_detect":
-        obj = _get_ipv4(input_val=input_val, stdlib=stdlib, debug=debug)
-        if obj is not None:
-            return obj
 
-        obj = _get_ipv6(input_val=input_val, stdlib=stdlib, debug=debug)
+        if isinstance(val, str) and (":" in val):
+            obj = _get_ipv6(val=val, stdlib=stdlib, debug=debug)
+
+        elif isinstance(val, str):
+            obj = _get_ipv4(val=val, stdlib=stdlib, debug=debug)
+
+        elif isinstance(val, int):
+            if val <= IPV4_MAXINT:
+                obj = _get_ipv4(val=val, stdlib=stdlib, debug=debug)
+            else:
+                obj = _get_ipv6(val=val, stdlib=stdlib, debug=debug)
+
         if obj is not None:
             return obj
         else:
-            error_str = "Cannot auto-detect ip='%s'" % input_val
+            error_str = "Cannot auto-detect ip='%s'" % val
             raise ipaddress.AddressValueError(error_str)
 
     elif mode == "ipv4":
-        obj = _get_ipv4(input_val=input_val, stdlib=stdlib, debug=debug)
-        if obj is not None:
+        try:
+            obj = _get_ipv4(val=val, stdlib=stdlib, debug=debug)
             return obj
-        else:
-            error_str = "Cannot parse '%s' as ipv4" % input_val
+        except:
+            error_str = "Cannot parse '%s' as ipv4" % val
             raise ipaddress.AddressValueError(error_str)
 
     elif mode == "ipv6":
-        obj = _get_ipv6(input_val=input_val, stdlib=stdlib, debug=debug)
-        if obj is not None:
+        try:
+            obj = _get_ipv6(val=val, stdlib=stdlib, debug=debug)
             return obj
-        else:
-            error_str = "Cannot parse '%s' as ipv6" % input_val
+        except:
+            error_str = "Cannot parse '%s' as ipv6" % val
             raise ipaddress.AddressValueError(error_str)
+
     else:
-        error_str = "Cannot parse '%s' as ipv4 or ipv6" % input_val
+        error_str = "Cannot parse '%s' as ipv4 or ipv6" % val
         raise ipaddress.AddressValueError(error_str)
 
-
     # Raise errors for any problems...  We should not be here...
-    error = "ip_factory('%s', mode='%s') could not parse into a valid %s object" % (input_val, mode, addr_family)
+    error = "ip_factory('%s', mode='%s') could not parse into a valid %s object" % (
+        val,
+        mode,
+        addr_family,
+    )
     raise ipaddress.AddressValueError(error)
+
 
 def collapse_addresses(network_list):
     """
@@ -574,10 +580,9 @@ def collapse_addresses(network_list):
     return ipaddress.collapse_addresses([ip_net(ii) for ii in network_list])
 
 
-
 # Build a wrapper around ipaddress classes so we can customize behavoir
 class IPv4Obj(object):
-    def __init__(self, arg="127.0.0.1/32", strict=False):
+    def __init__(self, arg="127.0.0.1/{0}".format(IPV4_MAX_PREFIXLEN), strict=False, debug=0):
         """An object to represent IPv4 addresses and IPv4 networks.
 
         When :class:`~ccp_util.IPv4Obj` objects are compared or sorted, network numbers are sorted lower to higher.  If network numbers are the same, shorter masks are lower than longer masks. After comparing mask length, numerically higher IP addresses are greater than numerically lower IP addresses..  Comparisons between :class:`~ccp_util.IPv4Obj` instances was chosen so it's easy to find the longest-match for a given prefix (see examples below).
@@ -696,21 +701,36 @@ class IPv4Obj(object):
 
         self.arg = arg
         self.dna = "IPv4Obj"
+        # self.arg_ip, self.arg_mask = re.split(r"[\s\/]\s*", arg, maxsplit=2)
+        # self.ip_object = IPv4Address(self.arg_ip)
+        # self.network_object = IPv4Network("{0}/{1}".format(self.arg_ip, self.arg_mask), strict=False)
         self.ip_object = None
         self.network_object = None
         self.strict = strict
 
+
         if isinstance(arg, str):
+            params_dict = self._ipv4_params_dict(arg)
             # Removing string length checks in 1.6.29... there are too many
             #    options such as IPv4Obj("111.111.111.111      255.255.255.255")
-            self._parse_ipv4obj_from_string()
+            # RECURSION
+            #obj = _get_ipv4(arg, strict=strict)
+            self.network_object = IPv4Network(params_dict['ip_arg_str'], strict=strict)
+            self.ip_object = IPv4Address(params_dict['ipv4_addr'])
+            return None
 
         elif isinstance(arg, int):
             assert 0 <= arg <= IPV4_MAXINT
+            #obj = _get_ipv4(arg, strict=strict)
+            #self.network_object, self.ip_object = obj.network, obj.ip
+
+            self.network_object = IPv4Network(arg, strict=strict)
             self.ip_object = IPv4Address(arg)
-            self.network_object = IPv4Network(
-                str(self.ip_object) + "/32", strict=False
-            )
+
+            #self.ip_object = IPv4Address(arg)
+            #self.network_object = IPv4Network(
+            #    str(self.ip_object) + "/" + str(IPV4_MAX_PREFIXLEN), strict=False
+            #)
             return None
 
         elif isinstance(arg, IPv4Obj):
@@ -725,26 +745,37 @@ class IPv4Obj(object):
             return None
 
         elif isinstance(arg, IPv4Address):
-            self.network_object = IPv4Network(str(arg) + "/32")
+            self.network_object = IPv4Network(str(arg) + "/" + str(IPV4_MAX_PREFIXLEN))
             self.ip_object = IPv4Address(str(arg).split("/")[0])
             return None
 
         else:
-            raise ValueError("Could not parse '{0}' (type: {1}) into an IPv4 Address".format(arg, type(arg)))
-
-
-    # On IPv4Obj()
-    def _parse_ipv4obj_from_string(self):
-        """Internal method to build an IPv4Obj from string inputs to self.arg"""
-        try:
-            mm = _RGX_IPV4ADDR_NETMASK.search(self.arg)
-        except TypeError:
             raise ValueError(
-                "IPv4Obj doesn't understand how to parse {0}".format(self.arg)
+                "Could not parse '{0}' (type: {1}) into an IPv4 Address".format(
+                    arg, type(arg)
+                )
             )
 
-        ERROR = "IPv4Obj couldn't parse '{0}'".format(self.arg)
-        assert (mm is not None), ERROR
+    # On IPv4Obj()
+    def _ipv4_params_dict(self, arg):
+        assert isinstance(arg, str)
+
+        params_dict = {
+            'ipv4_addr': None,
+            'ip_version': 4,
+            'ip_arg_str': None,
+            'netmask': None,
+            'masklen': None,
+        }
+        try:
+            mm = _RGX_IPV4ADDR_NETMASK.search(arg)
+        except TypeError:
+            raise ipaddress.AddressValueError(
+                "_ipv4_params_dict() doesn't understand how to parse {0}".format(arg)
+            )
+
+        ERROR = "_ipv4_params_dict() couldn't parse '{0}'".format(arg)
+        assert mm is not None, ERROR
 
         mm_result = mm.groupdict()
         addr = (
@@ -755,26 +786,37 @@ class IPv4Obj(object):
         )
 
         ## Normalize addr if we get zero-padded strings, i.e. 172.001.001.001
+        assert re.search(r"^\d+\.\d+.\d+\.\d+", addr)
         addr = ".".join([str(int(ii)) for ii in addr.split(".")])
 
-        masklen = int(mm_result["masklen"] or 32)
-        assert 0 <= masklen <= 32
-
         netmask = mm_result["netmask"]
-        if isinstance(netmask, str):
-            ## ALWAYS check for the netmask first
-            self.network_object = IPv4Network(
-                "{0}/{1}".format(addr, netmask), strict=self.strict
-            )
-            self.ip_object = IPv4Address("{0}".format(addr))
+
+        masklen = int(mm_result.get("masklen", None) or IPV4_MAX_PREFIXLEN)
+        assert 0 <= masklen <= IPV4_MAX_PREFIXLEN
+
+
+        params_dict = {
+            'ipv4_addr': addr,
+            'ip_version': 4,
+            'ip_arg_str': None,
+            'netmask': netmask,
+            'masklen': masklen,
+        }
+
+        if params_dict.get('netmask', None) is not None:
+            ip_arg_str = "{0}/{1}".format(params_dict['ipv4_addr'], params_dict['netmask'])
+        elif params_dict.get('masklen', None) is not None:
+            ip_arg_str = "{0}/{1}".format(params_dict['ipv4_addr'], params_dict['masklen'])
         else:
-            self.network_object = IPv4Network(
-                "{0}/{1}".format(addr, masklen), strict=self.strict
-            )
-            self.ip_object = IPv4Address("{0}".format(addr))
+            raise ipaddress.AddressValueError()
+
+        params_dict['ip_arg_str'] = ip_arg_str
+
+        return params_dict
 
     # On IPv4Obj()
     def __repr__(self):
+        assert isinstance(self.prefixlen, int)
         return """<IPv4Obj {0}/{1}>""".format(str(self.ip_object), self.prefixlen)
 
     # On IPv4Obj()
@@ -986,9 +1028,9 @@ class IPv4Obj(object):
         Fix github issue #203... build a `_prefixlen` attribute...
         """
         if self.version == 4:
-            return 32
+            return IPV4_MAX_PREFIXLEN
         else:
-            return 128
+            return IPV6_MAX_PREFIXLEN
 
     # On IPv4Obj()
     @staticmethod
@@ -1100,8 +1142,8 @@ class IPv4Obj(object):
             ## The ipaddress module returns an "IPAddress" object in Python3...
             return IPv4Network("{0}".format(self.network_object.compressed))
 
-    #@property
-    #def as_decimal_network(self):
+    # @property
+    # def as_decimal_network(self):
     #    """Returns an integer calculated from the network address..."""
     #    num_strings = str(self.network).split(".")
     #    num_strings.reverse()  # reverse the order
@@ -1140,7 +1182,7 @@ class IPv4Obj(object):
         if sys.version_info[0] < 3:
             return self.network_object.numhosts
         else:
-            return 2 ** (32 - self.network_object.prefixlen)
+            return 2 ** (IPV4_MAX_PREFIXLEN - self.network_object.prefixlen)
 
     # On IPv4Obj()
     @property
@@ -1148,7 +1190,7 @@ class IPv4Obj(object):
         """Returns the IP address as a decimal integer"""
         num_strings = str(self.ip).split(".")
         num_strings.reverse()  # reverse the order
-        return sum([int(num) * (256 ** idx) for idx, num in enumerate(num_strings)])
+        return sum([int(num) * (256**idx) for idx, num in enumerate(num_strings)])
 
     # On IPv4Obj()
     @property
@@ -1156,7 +1198,7 @@ class IPv4Obj(object):
         """Returns the IP address as a decimal integer"""
         num_strings = str(self.network).split("/")[0].split(".")
         num_strings.reverse()  # reverse the order
-        return sum([int(num) * (256 ** idx) for idx, num in enumerate(num_strings)])
+        return sum([int(num) * (256**idx) for idx, num in enumerate(num_strings)])
 
     # On IPv4Obj()
     @property
@@ -1236,7 +1278,7 @@ class IPv4Obj(object):
 
 # Build a wrapper around ipaddress classes so we can customize behavoir
 class IPv6Obj(object):
-    def __init__(self, arg="::1/128", strict=False):
+    def __init__(self, arg="::1/{0}".format(IPV6_MAX_PREFIXLEN), strict=False, debug=0):
         """An object to represent IPv6 addresses and IPv6 networks.
 
         When :class:`~ccp_util.IPv6Obj` objects are compared or sorted, network numbers are sorted lower to higher.  If network numbers are the same, shorter masks are lower than longer masks. After comparing mask length, numerically higher IP addresses are greater than numerically lower IP addresses.  Comparisons between :class:`~ccp_util.IPv6Obj` instances was chosen so it's easy to find the longest-match for a given prefix.
@@ -1302,14 +1344,28 @@ class IPv6Obj(object):
 
         if isinstance(arg, str):
             assert len(arg) <= IPV6_MAXSTR_LEN
-            self._parse_ipv6obj_from_string()
+            params_dict = self._ipv6_params_dict(arg)
+            #network_obj, ip_obj = self._parse_ipv6obj_from_string(arg)
+            #self.network_object, self.ip_object = network_obj, ip_obj
+            self.network_object = IPv6Network(params_dict['ip_arg_str'], strict=strict)
+            self.ip_object = IPv6Address(params_dict['ipv6_addr'])
+
+            #obj = _get_ipv6(arg, strict=strict)
+            #self.network_object, self.ip_object = obj.network, obj.ip
+            return None
 
         elif isinstance(arg, int):
             assert 0 <= arg <= IPV6_MAXINT
+            #obj = _get_ipv6(arg, strict=strict)
+            #self.network_object, self.ip_object = obj.network, obj.ip
+
+            self.network_object = IPv6Network(arg, strict=strict)
             self.ip_object = IPv6Address(arg)
-            self.network_object = IPv6Network(
-                str(self.ip_object) + "/128", strict=False
-            )
+
+            #self.ip_object = IPv6Address(arg)
+            #self.network_object = IPv6Network(
+            #    str(self.ip_object) + "/" + str(IPV6_MAX_PREFIXLEN), strict=False
+            #)
             return None
 
         elif isinstance(arg, IPv6Obj):
@@ -1324,42 +1380,81 @@ class IPv6Obj(object):
             return None
 
         elif isinstance(arg, IPv6Address):
-            self.network_object = IPv6Network(str(arg) + "/128")
+            self.network_object = IPv6Network(str(arg) + "/" + str(IPV6_MAX_PREFIXLEN))
             self.ip_object = IPv6Address(str(arg).split("/")[0])
             return None
 
         else:
-            raise ipaddress.AddressValueError("Could not parse '{0}' (type: {1}) into an IPv6 Address".format(arg, type(arg)))
+            raise ipaddress.AddressValueError(
+                "Could not parse '{0}' (type: {1}) into an IPv6 Address".format(
+                    arg, type(arg)
+                )
+            )
 
         # arg= _RGX_IPV6ADDR_NETMASK.sub(r'\1/\2', arg) # mangle IOS: 'addr mask'
-    # On IPv6Obj()
-    def _parse_ipv6obj_from_string(self):
-        """Internal method to build an IPv6Obj from string inputs to self.arg"""
-        try:
-            tmp = re.split(r"[\s\/]+", self.arg.strip())
-            v6_addr_str = tmp[0]
-            if len(tmp) == 2:
-                masklen = int(tmp[1])
-            elif len(tmp) == 1:
-                masklen = 128
-            else:
-                raise ValueError
 
-            self.network_object = IPv6Network(
-                "{0}/{1}".format(v6_addr_str, masklen), strict=self.strict
+    # On IPv6Obj()
+    def _ipv6_params_dict(self, arg):
+        assert isinstance(arg, str)
+
+        params_dict = {
+            'ipv6_addr': None,
+            'ip_version': 6,
+            'ip_arg_str': None,
+            'netmask': None,
+            'masklen': None,
+        }
+        try:
+            #mm = _RGX_IPV6ADDR_NETMASK.search(self.arg)
+            mm = _RGX_IPV6ADDR.search(arg)
+
+        except TypeError:
+            raise ipaddress.AddressValueError(
+                "_ipv6_params_dict() doesn't know how to parse {0}".format(arg)
             )
-            self.ip_object = IPv6Address(v6_addr_str)
+
+
+        ERROR = "_ipv6_params_dict() couldn't parse '{0}'".format(arg)
+        assert mm is not None, ERROR
+
+        mm_result = mm.groupdict()
+        try:
+            addr = mm_result["addr"]
 
         except Exception as ee:
-            raise ipaddress.AddressValueError(
-                "IPv6Obj doesn't understand how to parse {0}".format(self.arg)
-            )
+            addr = "::1"
+
+        try:
+            masklen = int(mm_result['masklen'])
+        except Exception as ee:
+            masklen = IPV6_MAX_PREFIXLEN
+
+        assert 0 <= masklen <= IPV6_MAX_PREFIXLEN
+
+        params_dict = {
+            'ipv6_addr': addr,
+            'ip_version': 6,
+            'ip_arg_str': None,
+            'netmask': None,
+            'masklen': masklen,
+        }
+
+        if params_dict.get('masklen', None) is not None:
+            ip_arg_str = "{0}/{1}".format(params_dict['ipv6_addr'], params_dict['masklen'])
+        else:
+            raise ipaddress.AddressValueError()
+
+        params_dict['ip_arg_str'] = ip_arg_str
+
+        return params_dict
 
     # On IPv6Obj()
     def __repr__(self):
         # Detect IPv4_mapped IPv6 addresses...
         if self.is_ipv4_mapped:
-            return """<IPv6Obj ::ffff:{0}/{1}>""".format(str(self.ip.ipv4_mapped), self.prefixlen)
+            return """<IPv6Obj ::ffff:{0}/{1}>""".format(
+                str(self.ip.ipv4_mapped), self.prefixlen
+            )
         else:
             return """<IPv6Obj {0}/{1}>""".format(str(self.ip), self.prefixlen)
 
@@ -1577,21 +1672,21 @@ class IPv6Obj(object):
         Fix github issue #203... build a `_prefixlen` attribute...
         """
         if self.version == 4:
-            return 32
+            return IPV4_MAX_PREFIXLEN
         else:
-            return 128
+            return IPV6_MAX_PREFIXLEN
 
     # On IPv6Obj()
     @property
     def is_ipv4_mapped(self):
+        # ref RFC 4291 -  Section 2.5.5.2
+        #     https://datatracker.ietf.org/doc/html/rfc4291#section-2.5.5.2
+        #
         # ref RFC 5156 - Section 2.2 IPv4 mapped addresses
         #     https://datatracker.ietf.org/doc/html/rfc5156#section-2.2
         #
-        # ref RFC 4291 -  Section 2.5.5.2
-        #     https://datatracker.ietf.org/doc/html/rfc4291#section-2.5.5.2
-
-        #if self.ip in IPv6Network("::ffff:0:0/96", strict=False):
-        if self.ip in IPv6Obj("::ffff:0:0/96"):
+        # if self.ip in IPv6Network("::ffff:0:0/96", strict=False):
+        if IPv6Network("::ffff:0:0/96").__contains__(self.ip):
             return True
         return False
 
@@ -1698,7 +1793,7 @@ class IPv6Obj(object):
         num_strings = str(self.network.exploded).split("/")[0].split(":")
         num_strings.reverse()  # reverse the order
         return sum(
-            [int(num, 16) * (65536 ** idx) for idx, num in enumerate(num_strings)]
+            [int(num, 16) * (65536**idx) for idx, num in enumerate(num_strings)]
         )
 
     # On IPv6Obj()
@@ -1732,7 +1827,7 @@ class IPv6Obj(object):
         if sys.version_info[0] < 3:
             return self.network_object.numhosts
         else:
-            return 2 ** (128 - self.network_object.prefixlen)
+            return 2 ** (IPV6_MAX_PREFIXLEN - self.network_object.prefixlen)
 
     # On IPv6Obj()
     @property
@@ -1741,7 +1836,7 @@ class IPv6Obj(object):
         num_strings = str(self.ip.exploded).split(":")
         num_strings.reverse()  # reverse the order
         return sum(
-            [int(num, 16) * (65536 ** idx) for idx, num in enumerate(num_strings)]
+            [int(num, 16) * (65536**idx) for idx, num in enumerate(num_strings)]
         )
 
     # On IPv6Obj()
@@ -2014,7 +2109,7 @@ def dns_query(input_str="", query_type="", server="", timeout=2.0):
     assert server != ""
     assert float(timeout) > 0
     assert input_str != ""
-    #input = input_str.strip()
+    # input = input_str.strip()
     retval = set([])
     resolver = Resolver()
     resolver.server = [socket.gethostbyname(server)]
@@ -2106,7 +2201,20 @@ def dns_query(input_str="", query_type="", server="", timeout=2.0):
             response.error_str = e
             retval.add(response)
     elif query_type == "PTR":
-        if is_valid_ipv4_addr(input_str) or is_valid_ipv6_addr(input_str):
+
+        try:
+            tmp = IPv4Address(input_str)
+            is_valid_v4 = True
+        except:
+            is_valid_v4 = False
+
+        try:
+            tmp = IPv6Address(input_str)
+            is_valid_v6 = True
+        except:
+            is_valid_v6 = False
+
+        if (is_valid_v4 is True) or (is_valid_ipv6 is True):
             inaddr = reversename.from_address(input_str)
         elif "in-addr.arpa" in input_str.lower():
             inaddr = input_str
