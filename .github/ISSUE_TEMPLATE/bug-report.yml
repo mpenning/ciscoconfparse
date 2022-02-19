@@ -13,7 +13,7 @@ body:
     value: |
       Please use this form to report a CiscoConfParse bug.
 
-      - Follow our guidance on <a href="https://github.com/mpenning/ciscoconfparse/How-to-Create-Good-Issues">How to create Good Issues</a>.
+      - Follow our guidance on <a href="https://meta.stackoverflow.com/q/260648/667301">How to Ask Good Questions</a>.
       - Please include sufficient details and context.
       - Describe the expected behavior that should have happened but didn't.
       - If you find multiple bugs, please submit them in separate issues.
