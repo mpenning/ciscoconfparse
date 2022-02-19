@@ -1,3 +1,4 @@
+l.6.35  20220219 Fix problems with ip_factory()
 1.6.34  20220216 Add _ip property to IPv4Obj() and IPv6Obj()
 1.6.33  20220216 Commit changes from develop to master
 1.6.32  20220216 Add support for IPv4 Mapped IPv6 Addresses
