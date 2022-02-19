@@ -86,11 +86,46 @@ body:
       parser = parse_a_config()
 
 - type: textarea
+  id: tracebacks
+  attributes:
+    label: python-tracebacks
+    description: Please include all tracebacks
+    placeholder: |
+      Traceback (most recent call last):
+        File "/home/mpenning/fixme/ciscoconfparse/ciscoconfparse/ccp_util.py", line 445, in _get_ipv4
+          IPv4Network(val, strict=False)
+        File "/opt/python37/lib/python3.7/ipaddress.py", line 1528, in __init__
+          addr = self._ip_int_from_string(args[0])
+        File "/opt/python37/lib/python3.7/ipaddress.py", line 1140, in _ip_int_from_string
+          raise AddressValueError("%s in %r" % (exc, ip_str)) from None
+      ipaddress.AddressValueError: Only decimal digits permitted in '::ffff:192' in '::ffff:192.0.2.101'
+
+      During handling of the above exception, another exception occurred:
+
+      Traceback (most recent call last):
+        File "/home/mpenning/fixme/ciscoconfparse/ciscoconfparse/ccp_util.py", line 528, in ip_factory
+          obj = _get_ipv4(val=val, stdlib=stdlib, debug=debug)
+        File "/home/mpenning/fixme/ciscoconfparse/ciscoconfparse/ccp_util.py", line 460, in _get_ipv4
+          raise ipaddress.AddressValueError(str(ee))
+      ipaddress.AddressValueError: Only decimal digits permitted in '::ffff:192' in '::ffff:192.0.2.101'
+
+      During handling of the above exception, another exception occurred:
+
+      Traceback (most recent call last):
+        File "<stdin>", line 1, in <module>
+        File "/home/mpenning/fixme/ciscoconfparse/ciscoconfparse/ccp_util.py", line 532, in ip_factory
+          raise ipaddress.AddressValueError(error_str)
+      ipaddress.AddressValueError: Cannot parse '::ffff:192.0.2.101' as ipv4
+    render: shell
+
+- type: textarea
   id: logs
   attributes:
     label: Relevant log output
-    description: Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks.  Include the full traceback if there was a python exception.
-    placeholder: 17 Jun 2022 04:28:16.003 Something went boom!
+    description: Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks.
+    placeholder: |
+      # In /var/log/messages...
+      17 Jun 2022 04:28:16.003 Something went boom!
     render: shell
 
 - type: checkboxes
