@@ -1,3 +1,4 @@
+---
 # https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/configuring-issue-templates-for-your-repository
 name: CiscoConfParse Bug Report
 description: File a bug report
@@ -58,9 +59,13 @@ body:
     - Linux - Debian, Ubuntu, CentOS, RHEL or others
     - OpenBSD, FreeBSD, NetBSD
     - Other (please specify)
+  validations:
+    required: true
 
 - type: textarea
   id: reproduce-example
+  validations:
+    required: true
   attributes:
     label: Show us how to reproduce the problem.  Please tell us if the problem is specific to certain inputs or situations.
     description: Include a minimal reproducible example that demonstrates the bug
@@ -85,11 +90,12 @@ body:
 
       parser = parse_a_config()
 
+
 - type: textarea
   id: python-tracebacks
   attributes:
     label: Python tracebacks
-    description: Please include all tracebacks.
+    description: Please include all tracebacks.  If no traceback, please say so in the textarea box.
     placeholder: |
       Traceback (most recent call last):
         File "/home/mpenning/fixme/ciscoconfparse/ciscoconfparse/ccp_util.py", line 445, in _get_ipv4
@@ -117,6 +123,8 @@ body:
           raise ipaddress.AddressValueError(error_str)
       ipaddress.AddressValueError: Cannot parse '::ffff:192.0.2.101' as ipv4
     render: shell
+  validations:
+    required: true
 
 - type: textarea
   id: logs
@@ -128,6 +136,8 @@ body:
       2022-02-19T14:41:16.492894-06:00  mySweetBread_Daemon.py started listening on 192.0.2.21 port tcp/9190
       2022-02-19T14:43:44.690444-06:00  mySweetBread_Daemon.py went boom!
     render: shell
+  validations:
+    required: false
 
 - type: checkboxes
   id: terms
