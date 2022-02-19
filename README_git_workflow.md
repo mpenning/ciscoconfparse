@@ -19,7 +19,7 @@ git commit <files> -m "Describe changes here"
 
 # Merge some_feature_branch into master
 git checkout master
-git merge some_feature_branch
+git merge some_feature_branch -m "Bring a new feature into the main branch"
 make repo-push-tag
 make pypi
 
