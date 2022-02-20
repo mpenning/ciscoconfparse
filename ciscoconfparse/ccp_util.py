@@ -434,6 +434,7 @@ class __ccp_re__(object):
 
 
 def _get_ipv4(val="", strict=False, stdlib=False, debug=0):
+    """Return the requested IPv4 object to the caller.  This method heavily depends on IPv4Obj()"""
     assert isinstance(val, str) or isinstance(val, int)
     assert isinstance(strict, bool)
     assert isinstance(stdlib, bool)
@@ -461,6 +462,7 @@ def _get_ipv4(val="", strict=False, stdlib=False, debug=0):
 
 
 def _get_ipv6(val="", strict=False, stdlib=False, debug=0):
+    """Return the requested IPv6 object to the caller.  This method heavily depends on IPv6Obj()"""
     assert isinstance(val, str) or isinstance(val, int)
     assert isinstance(strict, bool)
     assert isinstance(stdlib, bool)
@@ -697,55 +699,70 @@ class IPv4Obj(object):
         version : int
             Returns an integer representing the IP version of this object.  Only 4 or 6 are valid results
         """
+        if debug > 0:
+            logger.info("IPv4Obj(arg='%s', strict=%s, debug=%s) was called" % (arg, strict, debug))
 
         self.arg = arg
         self.dna = "IPv4Obj"
-        # self.arg_ip, self.arg_mask = re.split(r"[\s\/]\s*", arg, maxsplit=2)
-        # self.ip_object = IPv4Address(self.arg_ip)
-        # self.network_object = IPv4Network("{0}/{1}".format(self.arg_ip, self.arg_mask), strict=False)
         self.ip_object = None
         self.network_object = None
+        self._netmask = None
         self.strict = strict
+        self.debug = debug
+        self.params_dict = {}
 
+        # Build params_dict... this needs to work with any supported input...
+        if isinstance(arg, str) or isinstance(arg, int):
+            params_dict = self._ipv4_params_dict(arg)
+            self.params_dict = params_dict
+
+        elif isinstance(arg, IPv4Obj):
+            params_dict = {
+                'ipv4_addr': str(arg.ip),
+                'ip_version': 4,
+                'ip_arg_str': str(arg.ip)+"/"+str(arg.masklen),
+                'netmask': str(arg.netmask),
+                'masklen': str(arg.masklen),
+            }
+            self.params_dict = params_dict
+
+        else:
+            raise ValueError("type(%s) is not supported" % arg)
 
         if isinstance(arg, str):
-            params_dict = self._ipv4_params_dict(arg)
             # Removing string length checks in 1.6.29... there are too many
             #    options such as IPv4Obj("111.111.111.111      255.255.255.255")
             # RECURSION
             #obj = _get_ipv4(arg, strict=strict)
             self.network_object = IPv4Network(params_dict['ip_arg_str'], strict=strict)
             self.ip_object = IPv4Address(params_dict['ipv4_addr'])
+            self._netmask = self.network_object.netmask
             return None
 
         elif isinstance(arg, int):
             assert 0 <= arg <= IPV4_MAXINT
-            #obj = _get_ipv4(arg, strict=strict)
-            #self.network_object, self.ip_object = obj.network, obj.ip
-
             self.network_object = IPv4Network(arg, strict=strict)
             self.ip_object = IPv4Address(arg)
-
-            #self.ip_object = IPv4Address(arg)
-            #self.network_object = IPv4Network(
-            #    str(self.ip_object) + "/" + str(IPV4_MAX_PREFIXLEN), strict=False
-            #)
+            self._netmask = self.network_object.netmask
             return None
 
         elif isinstance(arg, IPv4Obj):
             ip_str = "{0}/{1}".format(str(arg.ip_object), arg.prefixlen)
             self.network_object = IPv4Network(ip_str, strict=False)
             self.ip_object = IPv4Address(str(arg.ip_object))
+            self._netmask = self.network_object.netmask
             return None
 
         elif isinstance(arg, IPv4Network):
             self.network_object = arg
             self.ip_object = IPv4Address(str(arg).split("/")[0])
+            self._netmask = self.network_object.netmask
             return None
 
         elif isinstance(arg, IPv4Address):
             self.network_object = IPv4Network(str(arg) + "/" + str(IPV4_MAX_PREFIXLEN))
             self.ip_object = IPv4Address(str(arg).split("/")[0])
+            self._netmask = self.network_object.netmask
             return None
 
         else:
@@ -756,8 +773,9 @@ class IPv4Obj(object):
             )
 
     # On IPv4Obj()
-    def _ipv4_params_dict(self, arg):
-        assert isinstance(arg, str)
+    def _ipv4_params_dict(self, arg, debug=0):
+        """Parse out important IPv4 parameters from arg.  This method must run to completion for address parsing to work correctly."""
+        assert isinstance(arg, str) or isinstance(arg, int) or isinstance(arg, IPv4Obj)
 
         params_dict = {
             'ipv4_addr': None,
@@ -766,50 +784,64 @@ class IPv4Obj(object):
             'netmask': None,
             'masklen': None,
         }
-        try:
-            mm = _RGX_IPV4ADDR_NETMASK.search(arg)
-        except TypeError:
-            raise ipaddress.AddressValueError(
-                "_ipv4_params_dict() doesn't understand how to parse {0}".format(arg)
+
+        if isinstance(arg, str):
+            try:
+                mm = _RGX_IPV4ADDR_NETMASK.search(arg)
+            except TypeError:
+                raise ipaddress.AddressValueError(
+                    "_ipv4_params_dict() doesn't understand how to parse {0}".format(arg)
+                )
+
+            error_msg = "_ipv4_params_dict() couldn't parse '{0}'".format(arg)
+            assert mm is not None, error_msg
+
+            mm_result = mm.groupdict()
+            addr = (
+                mm_result["addr0"]
+                or mm_result["addr1"]
+                or mm_result["addr2"]
+                or "127.0.0.1"
             )
+            ## Normalize if we get zero-padded strings, i.e. 172.001.001.001
+            assert re.search(r"^\d+\.\d+.\d+\.\d+", addr)
+            addr = ".".join([str(int(ii)) for ii in addr.split(".")])
 
-        ERROR = "_ipv4_params_dict() couldn't parse '{0}'".format(arg)
-        assert mm is not None, ERROR
+            netmask = mm_result["netmask"]
 
-        mm_result = mm.groupdict()
-        addr = (
-            mm_result["addr0"]
-            or mm_result["addr1"]
-            or mm_result["addr2"]
-            or "127.0.0.1"
-        )
+            masklen = int(mm_result.get("masklen", None) or IPV4_MAX_PREFIXLEN)
 
-        ## Normalize addr if we get zero-padded strings, i.e. 172.001.001.001
-        assert re.search(r"^\d+\.\d+.\d+\.\d+", addr)
-        addr = ".".join([str(int(ii)) for ii in addr.split(".")])
+            if netmask is not None:
+                ip_arg_str = "{0}/{1}".format(addr, netmask)
+            elif masklen is not None:
+                ip_arg_str = "{0}/{1}".format(addr, masklen)
+            else:
+                raise ipaddress.AddressValueError()
 
-        netmask = mm_result["netmask"]
+        elif isinstance(arg, int):
+            addr = str(IPv4Address(arg))
+            netmask = "255.255.255.255"
+            masklen = 32
+            ip_arg_str = "{0}/{1}".format(addr, masklen)
 
-        masklen = int(mm_result.get("masklen", None) or IPV4_MAX_PREFIXLEN)
+        elif isinstance(arg, IPv4Obj):
+            raise NotImplementedError("foo")
+            addr = str(arg.ip)
+            netmask = str(arg.netmask)
+            masklen = arg.masklen
+            ip_arg_str = "{0}/{1}".format(addr, masklen)
+
+        else:
+            raise ipaddress.AddressValueError("IPv4Obj(arg='%s') is an unknown argument type" % (arg))
+
         assert 0 <= masklen <= IPV4_MAX_PREFIXLEN
-
-
         params_dict = {
             'ipv4_addr': addr,
             'ip_version': 4,
-            'ip_arg_str': None,
+            'ip_arg_str': ip_arg_str,
             'netmask': netmask,
             'masklen': masklen,
         }
-
-        if params_dict.get('netmask', None) is not None:
-            ip_arg_str = "{0}/{1}".format(params_dict['ipv4_addr'], params_dict['netmask'])
-        elif params_dict.get('masklen', None) is not None:
-            ip_arg_str = "{0}/{1}".format(params_dict['ipv4_addr'], params_dict['masklen'])
-        else:
-            raise ipaddress.AddressValueError()
-
-        params_dict['ip_arg_str'] = ip_arg_str
 
         return params_dict
 
@@ -1052,6 +1084,13 @@ class IPv4Obj(object):
     @property
     def netmask(self):
         """Returns the network mask as an :class:`ipaddress.IPv4Address` object."""
+        return self.network_object.netmask
+
+    # On IPv4Obj()
+    @netmask.setter
+    def netmask(self, val):
+        """Set the network mask as an :class:`ipaddress.IPv4Address` object."""
+        self.network_object.netmask = IPv4Address(val)
         return self.network_object.netmask
 
     # On IPv4Obj()
@@ -1335,36 +1374,32 @@ class IPv6Obj(object):
 
         """
 
+        if debug > 0:
+            logger.info("IPv6Obj(arg='%s', strict=%s, debug=%s) was called" % (arg, strict, debug))
+
         self.arg = arg
         self.dna = "IPv6Obj"
         self.ip_object = None
         self.network_object = None
         self.strict = strict
+        self.debug = debug
+        self.params_dict = {}
+
+        # Build params_dict... this needs to work with any supported input...
+        if isinstance(arg, str) or isinstance(arg, int):
+            params_dict = self._ipv6_params_dict(arg)
+            self.params_dict = params_dict
 
         if isinstance(arg, str):
             assert len(arg) <= IPV6_MAXSTR_LEN
-            params_dict = self._ipv6_params_dict(arg)
-            #network_obj, ip_obj = self._parse_ipv6obj_from_string(arg)
-            #self.network_object, self.ip_object = network_obj, ip_obj
             self.network_object = IPv6Network(params_dict['ip_arg_str'], strict=strict)
             self.ip_object = IPv6Address(params_dict['ipv6_addr'])
-
-            #obj = _get_ipv6(arg, strict=strict)
-            #self.network_object, self.ip_object = obj.network, obj.ip
             return None
 
         elif isinstance(arg, int):
             assert 0 <= arg <= IPV6_MAXINT
-            #obj = _get_ipv6(arg, strict=strict)
-            #self.network_object, self.ip_object = obj.network, obj.ip
-
             self.network_object = IPv6Network(arg, strict=strict)
             self.ip_object = IPv6Address(arg)
-
-            #self.ip_object = IPv6Address(arg)
-            #self.network_object = IPv6Network(
-            #    str(self.ip_object) + "/" + str(IPV6_MAX_PREFIXLEN), strict=False
-            #)
             return None
 
         elif isinstance(arg, IPv6Obj):
@@ -1393,8 +1428,9 @@ class IPv6Obj(object):
         # arg= _RGX_IPV6ADDR_NETMASK.sub(r'\1/\2', arg) # mangle IOS: 'addr mask'
 
     # On IPv6Obj()
-    def _ipv6_params_dict(self, arg):
-        assert isinstance(arg, str)
+    def _ipv6_params_dict(self, arg, debug=0):
+        """Parse out important IPv6 parameters from arg.  This method must run to completion for address parsing to work correctly."""
+        assert isinstance(arg, str) or isinstance(arg, int) or isinstance(arg, IPv6Obj)
 
         params_dict = {
             'ipv6_addr': None,
@@ -1403,43 +1439,63 @@ class IPv6Obj(object):
             'netmask': None,
             'masklen': None,
         }
-        try:
-            #mm = _RGX_IPV6ADDR_NETMASK.search(self.arg)
-            mm = _RGX_IPV6ADDR.search(arg)
 
-        except TypeError:
-            raise ipaddress.AddressValueError(
-                "_ipv6_params_dict() doesn't know how to parse {0}".format(arg)
-            )
+        if isinstance(arg, str):
+            try:
+                mm = _RGX_IPV6ADDR.search(arg)
+
+            except TypeError:
+                raise ipaddress.AddressValueError(
+                    "_ipv6_params_dict() doesn't know how to parse {0}".format(arg)
+                )
 
 
-        ERROR = "_ipv6_params_dict() couldn't parse '{0}'".format(arg)
-        assert mm is not None, ERROR
+            ERROR = "_ipv6_params_dict() couldn't parse '{0}'".format(arg)
+            assert mm is not None, ERROR
 
-        mm_result = mm.groupdict()
-        try:
-            addr = mm_result["addr"]
+            mm_result = mm.groupdict()
+            try:
+                addr = mm_result["addr"]
 
-        except Exception as ee:
-            addr = "::1"
+            except Exception as ee:
+                addr = "::1"
 
-        try:
-            masklen = int(mm_result['masklen'])
-        except Exception as ee:
-            masklen = IPV6_MAX_PREFIXLEN
+            try:
+                masklen = int(mm_result['masklen'])
+            except Exception as ee:
+                masklen = IPV6_MAX_PREFIXLEN
+
+            netmask_int = 2**(128 - masklen) - 1
+            netmask = str(IPv6Address(netmask_int))
+
+        elif isinstance(arg, int):
+            # Assume this arg int() represents an IPv6 host-address
+            addr = str(IPv6Address(arg))
+            netmask = 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff'
+            masklen = 128
+            ip_arg_str = "{0}/{1}".format(addr, masklen)
+
+        elif isinstance(arg, IPv6Obj):
+            raise NotImplementedError("foo")
+            addr = str(arg.ip)
+            netmask = str(arg.netmask)
+            masklen = arg.masklen
+            ip_arg_str = "{0}/{1}".format(addr, masklen)
+
+        else:
+            raise ipaddress.AddressValueError("IPv6Obj(arg='%s') is an unknown argument type" % (arg))
 
         assert 0 <= masklen <= IPV6_MAX_PREFIXLEN
-
         params_dict = {
             'ipv6_addr': addr,
             'ip_version': 6,
             'ip_arg_str': None,
-            'netmask': None,
+            'netmask': netmask,
             'masklen': masklen,
         }
 
         if params_dict.get('masklen', None) is not None:
-            ip_arg_str = "{0}/{1}".format(params_dict['ipv6_addr'], params_dict['masklen'])
+            ip_arg_str = "{0}/{1}".format(addr, masklen)
         else:
             raise ipaddress.AddressValueError()
 
