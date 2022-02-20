@@ -82,12 +82,21 @@ body:
     required: true
 
 - type: textarea
+  id: what-happened
+  attributes:
+    label: What happened?
+    description: What did you see?  What did you expect?
+    placeholder: What did you see?  What did you expect?
+  validations:
+    required: true
+
+- type: textarea
   id: reproduce-example
   validations:
     required: true
   attributes:
-    label: Show us how to reproduce the problem.  Please tell us if the problem is specific to certain inputs or situations.
-    description: Include a minimal reproducible example that demonstrates the bug
+    label: Include a python script that can reproduce the problem.
+    description: Include a minimal reproducible example that demonstrates the bug.  Please tell us if the problem is specific to certain inputs or situations.
     render: python
     placeholder: |
       import sys
@@ -108,7 +117,6 @@ body:
           return parse
 
       parser = parse_a_config()
-
 
 - type: textarea
   id: python-tracebacks

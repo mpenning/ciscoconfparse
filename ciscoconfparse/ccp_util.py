@@ -2162,14 +2162,14 @@ def dns_query(input_str="", query_type="", server="", timeout=2.0):
     assert input_str != ""
     # input = input_str.strip()
     retval = set([])
-    resolver = Resolver()
-    resolver.server = [socket.gethostbyname(server)]
-    resolver.timeout = float(timeout)
-    resolver.lifetime = float(timeout)
+    rr = Resolver()
+    rr.server = [socket.gethostbyname(server)]
+    rr.timeout = float(timeout)
+    rr.lifetime = float(timeout)
     start = time.time()
     if (query_type == "A") or (query_type == "AAAA"):
         try:
-            answer = resolver.query(input_str, query_type)
+            answer = rr.query(input_str, query_type)
             duration = time.time() - start
             for result in answer:
                 response = DNSResponse(
@@ -2314,22 +2314,39 @@ def dns_query(input_str="", query_type="", server="", timeout=2.0):
     return retval
 
 
-def dns_lookup(input_str, timeout=3, server=""):
+def dns_lookup(input_str, timeout=3, server="", record_type="A"):
     """Perform a simple DNS lookup, return results in a dictionary"""
-    resolver = Resolver()
-    resolver.timeout = float(timeout)
-    resolver.lifetime = float(timeout)
+    rr = Resolver()
+    rr.timeout = float(timeout)
+    rr.lifetime = float(timeout)
     if server:
-        resolver.nameservers = [server]
+        rr.nameservers = [server]
+    dns_session = rr.resolve(input_str, record_type)
+    responses = list()
+    for rdata in dns_session:
+        responses.append(rdata)
+
+    """
+    from dns import resolver
+    rr = resolver.Resolver()
+    rr.nameservers = ['8.8.8.8']
+    rr.timeout = 2.0
+    foo = rr.resolve('cisco.com', 'A')
+    for rdata in foo:
+        print("ADDR", rdata)
+    """
+
     try:
-        records = resolver.query(input_str, "A")
         return {
-            "addrs": [ii.address for ii in records],
+            #"addrs": [ii.address for ii in records],
+            "record_type": record_type,
+            "addrs": responses,
             "error": "",
             "name": input_str,
         }
     except DNSException as e:
         return {
+            "record_type": record_type,
             "addrs": [],
             "error": repr(e),
             "name": input_str,
