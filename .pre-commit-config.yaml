@@ -6,12 +6,21 @@
 # - pre-commit install
 # - pre-commit run --all-files
 repos:
-- repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.1.0
-  hooks:
-  - id: check-yaml
-  - id: end-of-file-fixer
-  - id: fix-byte-order-marker
-  - id: trailing-whitespace
-  - id: end-of-file-fixer
-  - id: no-commit-to-branch
+
+  # github.com/pallets/flask uses this plugin... auto-format code for
+  # the --pyXXXXXXX argument.
+  - repo: https://github.com/asottile/pyupgrade
+    rev: v2.31.0
+    hooks:
+      - id: pyupgrade
+        args: ["--py3-plus"]
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.1.0
+    hooks:
+    - id: check-yaml
+    - id: end-of-file-fixer
+    - id: fix-byte-order-marker
+    - id: trailing-whitespace
+    - id: end-of-file-fixer
+    - id: no-commit-to-branch
