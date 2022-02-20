@@ -581,8 +581,9 @@ def collapse_addresses(network_list):
     return ipaddress.collapse_addresses([ip_net(ii) for ii in network_list])
 
 
-# Build a wrapper around ipaddress classes so we can customize
-# behavior (like persisting host-bits when the masklen changes) and custom @properties
+# Build a wrapper around ipaddress classes to mimic the behavior of network
+# interfaces (such as persisting host-bits when the intf masklen changes) and
+# add custom @properties
 class IPv4Obj(object):
     def __init__(self, arg="127.0.0.1/{0}".format(IPV4_MAX_PREFIXLEN), strict=False, debug=0):
         """An object to represent IPv4 addresses and IPv4 networks.
@@ -1306,8 +1307,9 @@ class IPv4Obj(object):
         return self.network_object.is_reserved
 
 
-# Build a wrapper around ipaddress classes so we can customize
-# behavior (like persisting host-bits when the masklen changes) and custom @properties
+# Build a wrapper around ipaddress classes to mimic the behavior of network
+# interfaces (such as persisting host-bits when the intf masklen changes) and
+# add custom @properties
 class IPv6Obj(object):
     def __init__(self, arg="::1/{0}".format(IPV6_MAX_PREFIXLEN), strict=False, debug=0):
         """An object to represent IPv6 addresses and IPv6 networks.
