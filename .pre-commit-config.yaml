@@ -12,7 +12,7 @@ repos:
     rev: v2.31.0
     hooks:
       - id: pyupgrade
-        args: ["--py36-plus"]
+        args: ["--py35-plus"]
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.1.0
