@@ -582,7 +582,7 @@ def test_collapse_addresses_02():
 def test_dns_lookup():
     # Use VMWare's opencloud A-record to test...
     #   ref http://stackoverflow.com/a/7714208/667301
-    result_correct = {"addrs": ["127.0.0.1"], "name": "*.vcap.me", "error": ""}
+    result_correct = {"addrs": ["127.0.0.1"], "name": "*.vcap.me", "error": "", "record_type": "A"}
     test_result = dns_lookup("*.vcap.me")
     if not test_result["error"]:
         assert dns_lookup("*.vcap.me") == result_correct
