@@ -825,7 +825,6 @@ class IPv4Obj(object):
             ip_arg_str = "{0}/{1}".format(addr, masklen)
 
         elif isinstance(arg, IPv4Obj):
-            raise NotImplementedError("foo")
             addr = str(arg.ip)
             netmask = str(arg.netmask)
             masklen = arg.masklen
@@ -1476,7 +1475,6 @@ class IPv6Obj(object):
             ip_arg_str = "{0}/{1}".format(addr, masklen)
 
         elif isinstance(arg, IPv6Obj):
-            raise NotImplementedError("foo")
             addr = str(arg.ip)
             netmask = str(arg.netmask)
             masklen = arg.masklen
