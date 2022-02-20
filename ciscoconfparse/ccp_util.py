@@ -581,7 +581,8 @@ def collapse_addresses(network_list):
     return ipaddress.collapse_addresses([ip_net(ii) for ii in network_list])
 
 
-# Build a wrapper around ipaddress classes so we can customize behavoir
+# Build a wrapper around ipaddress classes so we can customize
+# behavior (like persisting host-bits when the masklen changes) and custom @properties
 class IPv4Obj(object):
     def __init__(self, arg="127.0.0.1/{0}".format(IPV4_MAX_PREFIXLEN), strict=False, debug=0):
         """An object to represent IPv4 addresses and IPv4 networks.
@@ -706,7 +707,6 @@ class IPv4Obj(object):
         self.dna = "IPv4Obj"
         self.ip_object = None
         self.network_object = None
-        self._netmask = None
         self.strict = strict
         self.debug = debug
         self.params_dict = {}
@@ -736,33 +736,28 @@ class IPv4Obj(object):
             #obj = _get_ipv4(arg, strict=strict)
             self.network_object = IPv4Network(params_dict['ip_arg_str'], strict=strict)
             self.ip_object = IPv4Address(params_dict['ipv4_addr'])
-            self._netmask = self.network_object.netmask
             return None
 
         elif isinstance(arg, int):
             assert 0 <= arg <= IPV4_MAXINT
             self.network_object = IPv4Network(arg, strict=strict)
             self.ip_object = IPv4Address(arg)
-            self._netmask = self.network_object.netmask
             return None
 
         elif isinstance(arg, IPv4Obj):
             ip_str = "{0}/{1}".format(str(arg.ip_object), arg.prefixlen)
             self.network_object = IPv4Network(ip_str, strict=False)
             self.ip_object = IPv4Address(str(arg.ip_object))
-            self._netmask = self.network_object.netmask
             return None
 
         elif isinstance(arg, IPv4Network):
             self.network_object = arg
             self.ip_object = IPv4Address(str(arg).split("/")[0])
-            self._netmask = self.network_object.netmask
             return None
 
         elif isinstance(arg, IPv4Address):
             self.network_object = IPv4Network(str(arg) + "/" + str(IPV4_MAX_PREFIXLEN))
             self.ip_object = IPv4Address(str(arg).split("/")[0])
-            self._netmask = self.network_object.netmask
             return None
 
         else:
@@ -1086,13 +1081,6 @@ class IPv4Obj(object):
         return self.network_object.netmask
 
     # On IPv4Obj()
-    @netmask.setter
-    def netmask(self, val):
-        """Set the network mask as an :class:`ipaddress.IPv4Address` object."""
-        self.network_object.netmask = IPv4Address(val)
-        return self.network_object.netmask
-
-    # On IPv4Obj()
     @property
     def masklen(self):
         """Returns the length of the network mask as an integer."""
@@ -1105,6 +1093,11 @@ class IPv4Obj(object):
         self.network_object = IPv4Network(
             "{0}/{1}".format(str(self.ip_object), arg), strict=False
         )
+
+    # On IPv4Obj()
+    @property
+    def netmask(self):
+        return self.network_object.netmask
 
     # On IPv4Obj()
     @property
@@ -1313,7 +1306,8 @@ class IPv4Obj(object):
         return self.network_object.is_reserved
 
 
-# Build a wrapper around ipaddress classes so we can customize behavoir
+# Build a wrapper around ipaddress classes so we can customize
+# behavior (like persisting host-bits when the masklen changes) and custom @properties
 class IPv6Obj(object):
     def __init__(self, arg="::1/{0}".format(IPV6_MAX_PREFIXLEN), strict=False, debug=0):
         """An object to represent IPv6 addresses and IPv6 networks.
@@ -2193,7 +2187,7 @@ def dns_query(input_str="", query_type="", server="", timeout=2.0):
         return [_zone[node].to_text(node) for node in _zone.nodes.keys()]
     elif query_type == "CNAME":
         try:
-            answer = resolver.query(input_str, query_type)
+            answer = rr.query(input_str, query_type)
             duration = time.time() - start
             for result in answer:
                 response = DNSResponse(
@@ -2213,7 +2207,7 @@ def dns_query(input_str="", query_type="", server="", timeout=2.0):
             retval.add(response)
     elif query_type == "MX":
         try:
-            answer = resolver.query(input_str, query_type)
+            answer = rr.query(input_str, query_type)
             duration = time.time() - start
             for result in answer:
                 response = DNSResponse(
@@ -2233,7 +2227,7 @@ def dns_query(input_str="", query_type="", server="", timeout=2.0):
             retval.add(response)
     elif query_type == "NS":
         try:
-            answer = resolver.query(input_str, query_type)
+            answer = rr.query(input_str, query_type)
             duration = time.time() - start
             for result in answer:
                 response = DNSResponse(
@@ -2273,7 +2267,7 @@ def dns_query(input_str="", query_type="", server="", timeout=2.0):
             raise ValueError('Cannot query PTR record for "{0}"'.format(input_str))
 
         try:
-            answer = resolver.query(inaddr, query_type)
+            answer = rr.query(inaddr, query_type)
             duration = time.time() - start
             for result in answer:
                 response = DNSResponse(
@@ -2293,7 +2287,7 @@ def dns_query(input_str="", query_type="", server="", timeout=2.0):
             retval.add(response)
     elif query_type == "TXT":
         try:
-            answer = resolver.query(input_str, query_type)
+            answer = rr.query(input_str, query_type)
             duration = time.time() - start
             for result in answer:
                 response = DNSResponse(
@@ -2324,7 +2318,7 @@ def dns_lookup(input_str, timeout=3, server="", record_type="A"):
     dns_session = rr.resolve(input_str, record_type)
     responses = list()
     for rdata in dns_session:
-        responses.append(rdata)
+        responses.append(str(rdata))
 
     """
     from dns import resolver
@@ -2355,13 +2349,13 @@ def dns_lookup(input_str, timeout=3, server="", record_type="A"):
 
 def dns6_lookup(input_str, timeout=3, server=""):
     """Perform a simple DNS lookup, return results in a dictionary"""
-    resolver = Resolver()
-    resolver.timeout = float(timeout)
-    resolver.lifetime = float(timeout)
+    rr = Resolver()
+    rr.timeout = float(timeout)
+    rr.lifetime = float(timeout)
     if server:
-        resolver.nameservers = [server]
+        rr.nameservers = [server]
     try:
-        records = resolver.query(input_str, "AAAA")
+        records = rr.query(input_str, "AAAA")
         return {
             "addrs": [ii.address for ii in records],
             "error": "",
@@ -2383,16 +2377,16 @@ def reverse_dns_lookup(input_str, timeout=3, server=""):
     assert _REVERSE_DNS_REGEX.search(input_str), "Invalid address format: '{0}'".format(
         input_str
     )
-    resolver = Resolver()
-    resolver.timeout = float(timeout)
-    resolver.lifetime = float(timeout)
+    rr = Resolver()
+    rr.timeout = float(timeout)
+    rr.lifetime = float(timeout)
     if server:
-        resolver.nameservers = [server]
+        rr.nameservers = [server]
     try:
         tmp = input_str.strip().split(".")
         tmp.reverse()
         inaddr = ".".join(tmp) + ".in-addr.arpa"
-        records = resolver.query(inaddr, "PTR")
+        records = rr.query(inaddr, "PTR")
         return {
             "name": records[0].to_text(),
             "lookup": inaddr,
