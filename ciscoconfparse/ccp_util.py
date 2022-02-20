@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 from operator import attrgetter
 from functools import wraps
 import socket
@@ -56,7 +55,7 @@ IPV6_MAX_PREFIXLEN = 128
 
 
 _CISCO_RANGE_ATOM_STR = r"""\d+\s*\-*\s*\d*"""
-_CISCO_RANGE_STR = r"""^(?P<line_prefix>[a-zA-Z\s]*)(?P<slot_prefix>[\d\/]*\d+\/)*(?P<range_text>(\s*{0})*)$""".format(
+_CISCO_RANGE_STR = r"""^(?P<line_prefix>[a-zA-Z\s]*)(?P<slot_prefix>[\d\/]*\d+\/)*(?P<range_text>(\s*{})*)$""".format(
     _CISCO_RANGE_ATOM_STR
 )
 _RGX_CISCO_RANGE = re.compile(_CISCO_RANGE_STR)
@@ -199,7 +198,7 @@ def log_function_call(function=None, *args, **kwargs):
                     )
             return ff(*args, **kwargs)
             logger.info(
-                "Type 3 log_function_call: %s(%s, %s)" % (ff.__qualname__, args, kwargs)
+                f"Type 3 log_function_call: {ff.__qualname__}({args}, {kwargs})"
             )
 
         return wrapped_logging
@@ -229,7 +228,7 @@ def ccp_logger_control(
     -------
     """
 
-    msg = "ccp_logger_control() was called with sink='{0}', action='{1}', handler_id='{2}', allow_enqueue={3}, rotation='{4}', retention='{5}', compression='{6}', level='{7}', debug={8}".format(
+    msg = "ccp_logger_control() was called with sink='{}', action='{}', handler_id='{}', allow_enqueue={}, rotation='{}', retention='{}', compression='{}', level='{}', debug={}".format(
         sink,
         action,
         handler_id,
@@ -302,7 +301,7 @@ def ccp_logger_control(
 
 
 @logger.catch(default=True, onerror=lambda _: sys.exit(1))
-class __ccp_re__(object):
+class __ccp_re__:
     """A wrapper around python's re.  This is an experimental object... it may disappear at any time as long as this message exists.
     self.regex = r'{}'.format(regex)
     self.compiled = re.compile(self.regex, flags=flags)
@@ -351,10 +350,10 @@ class __ccp_re__(object):
         self.search_result = None
 
     def __repr__(self):
-        return """ccp_re(%s, %s)""" % (self.regex, self.target_str)
+        return f"""ccp_re({self.regex}, {self.target_str})"""
 
     def __str__(self):
-        return """ccp_re(%s, %s)""" % (self.regex, self.target_str)
+        return f"""ccp_re({self.regex}, {self.target_str})"""
 
     @property
     def regex(self):
@@ -499,7 +498,7 @@ def ip_factory(val="", stdlib=False, mode="auto_detect", debug=0):
     """
 
     assert isinstance(val, str) or isinstance(val, int)
-    assert mode in set(["auto_detect", "ipv4", "ipv6"])
+    assert mode in {"auto_detect", "ipv4", "ipv6"}
     assert isinstance(stdlib, bool)
     assert isinstance(debug, int)
 
@@ -545,7 +544,7 @@ def ip_factory(val="", stdlib=False, mode="auto_detect", debug=0):
         raise ipaddress.AddressValueError(error_str)
 
     # Raise errors for any problems...  We should not be here...
-    error = "ip_factory('%s', mode='%s') could not parse into a valid %s object" % (
+    error = "ip_factory('{}', mode='{}') could not parse into a valid {} object".format(
         val,
         mode,
         addr_family,
@@ -584,8 +583,8 @@ def collapse_addresses(network_list):
 # Build a wrapper around ipaddress classes to mimic the behavior of network
 # interfaces (such as persisting host-bits when the intf masklen changes) and
 # add custom @properties
-class IPv4Obj(object):
-    def __init__(self, arg="127.0.0.1/{0}".format(IPV4_MAX_PREFIXLEN), strict=False, debug=0):
+class IPv4Obj:
+    def __init__(self, arg=f"127.0.0.1/{IPV4_MAX_PREFIXLEN}", strict=False, debug=0):
         """An object to represent IPv4 addresses and IPv4 networks.
 
         When :class:`~ccp_util.IPv4Obj` objects are compared or sorted, network numbers are sorted lower to higher.  If network numbers are the same, shorter masks are lower than longer masks. After comparing mask length, numerically higher IP addresses are greater than numerically lower IP addresses..  Comparisons between :class:`~ccp_util.IPv4Obj` instances was chosen so it's easy to find the longest-match for a given prefix (see examples below).
@@ -702,7 +701,7 @@ class IPv4Obj(object):
             Returns an integer representing the IP version of this object.  Only 4 or 6 are valid results
         """
         if debug > 0:
-            logger.info("IPv4Obj(arg='%s', strict=%s, debug=%s) was called" % (arg, strict, debug))
+            logger.info(f"IPv4Obj(arg='{arg}', strict={strict}, debug={debug}) was called")
 
         self.arg = arg
         self.dna = "IPv4Obj"
@@ -746,7 +745,7 @@ class IPv4Obj(object):
             return None
 
         elif isinstance(arg, IPv4Obj):
-            ip_str = "{0}/{1}".format(str(arg.ip_object), arg.prefixlen)
+            ip_str = f"{str(arg.ip_object)}/{arg.prefixlen}"
             self.network_object = IPv4Network(ip_str, strict=False)
             self.ip_object = IPv4Address(str(arg.ip_object))
             return None
@@ -763,7 +762,7 @@ class IPv4Obj(object):
 
         else:
             raise ipaddress.AddressValueError(
-                "Could not parse '{0}' (type: {1}) into an IPv4 Address".format(
+                "Could not parse '{}' (type: {}) into an IPv4 Address".format(
                     arg, type(arg)
                 )
             )
@@ -786,10 +785,10 @@ class IPv4Obj(object):
                 mm = _RGX_IPV4ADDR_NETMASK.search(arg)
             except TypeError:
                 raise ipaddress.AddressValueError(
-                    "_ipv4_params_dict() doesn't understand how to parse {0}".format(arg)
+                    f"_ipv4_params_dict() doesn't understand how to parse {arg}"
                 )
 
-            error_msg = "_ipv4_params_dict() couldn't parse '{0}'".format(arg)
+            error_msg = f"_ipv4_params_dict() couldn't parse '{arg}'"
             assert mm is not None, error_msg
 
             mm_result = mm.groupdict()
@@ -808,9 +807,9 @@ class IPv4Obj(object):
             masklen = int(mm_result.get("masklen", None) or IPV4_MAX_PREFIXLEN)
 
             if netmask is not None:
-                ip_arg_str = "{0}/{1}".format(addr, netmask)
+                ip_arg_str = f"{addr}/{netmask}"
             elif masklen is not None:
-                ip_arg_str = "{0}/{1}".format(addr, masklen)
+                ip_arg_str = f"{addr}/{masklen}"
             else:
                 raise ipaddress.AddressValueError()
 
@@ -818,13 +817,13 @@ class IPv4Obj(object):
             addr = str(IPv4Address(arg))
             netmask = "255.255.255.255"
             masklen = 32
-            ip_arg_str = "{0}/{1}".format(addr, masklen)
+            ip_arg_str = f"{addr}/{masklen}"
 
         elif isinstance(arg, IPv4Obj):
             addr = str(arg.ip)
             netmask = str(arg.netmask)
             masklen = arg.masklen
-            ip_arg_str = "{0}/{1}".format(addr, masklen)
+            ip_arg_str = f"{addr}/{masklen}"
 
         else:
             raise ipaddress.AddressValueError("IPv4Obj(arg='%s') is an unknown argument type" % (arg))
@@ -843,7 +842,7 @@ class IPv4Obj(object):
     # On IPv4Obj()
     def __repr__(self):
         assert isinstance(self.prefixlen, int)
-        return """<IPv4Obj {0}/{1}>""".format(str(self.ip_object), self.prefixlen)
+        return f"""<IPv4Obj {str(self.ip_object)}/{self.prefixlen}>"""
 
     # On IPv4Obj()
     def __eq__(self, val):
@@ -861,7 +860,7 @@ class IPv4Obj(object):
                 return True
             return False
         except AttributeError as e:
-            errmsg = "'{0}' cannot compare itself to '{1}': {2}".format(
+            errmsg = "'{}' cannot compare itself to '{}': {}".format(
                 self.__repr__(), val, e
             )
             raise AttributeError(errmsg)
@@ -901,7 +900,7 @@ class IPv4Obj(object):
                 return self_ndec > val_ndec
 
         except Exception:
-            errmsg = "{0} cannot compare itself to '{1}'".format(self.__repr__(), val)
+            errmsg = f"{self.__repr__()} cannot compare itself to '{val}'"
             raise ValueError(errmsg)
 
     # On IPv4Obj()
@@ -935,7 +934,7 @@ class IPv4Obj(object):
                 return self_ndec < val_ndec
 
         except Exception:
-            errmsg = "{0} cannot compare itself to '{1}'".format(self.__repr__(), val)
+            errmsg = f"{self.__repr__()} cannot compare itself to '{val}'"
             logger.error(errmsg)
             raise ValueError(errmsg)
 
@@ -1007,7 +1006,7 @@ class IPv4Obj(object):
 
         except ValueError as e:
             raise ValueError(
-                "Could not check whether '{0}' is contained in '{1}': {2}".format(
+                "Could not check whether '{}' is contained in '{}': {}".format(
                     val, self, e
                 )
             )
@@ -1092,7 +1091,7 @@ class IPv4Obj(object):
     def masklen(self, arg):
         """masklen setter method"""
         self.network_object = IPv4Network(
-            "{0}/{1}".format(str(self.ip_object), arg), strict=False
+            f"{str(self.ip_object)}/{arg}", strict=False
         )
 
     # On IPv4Obj()
@@ -1111,7 +1110,7 @@ class IPv4Obj(object):
     def masklength(self, arg):
         """masklen setter method"""
         self.network_object = IPv4Network(
-            "{0}/{1}".format(str(self.ip_object), arg), strict=False
+            f"{str(self.ip_object)}/{arg}", strict=False
         )
 
     # On IPv4Obj()
@@ -1125,7 +1124,7 @@ class IPv4Obj(object):
     def prefixlen(self, arg):
         """prefixlen setter method"""
         self.network_object = IPv4Network(
-            "{0}/{1}".format(str(self.ip_object), arg), strict=False
+            f"{str(self.ip_object)}/{arg}", strict=False
         )
 
     # On IPv4Obj()
@@ -1139,7 +1138,7 @@ class IPv4Obj(object):
     def prefixlength(self, arg):
         """prefixlength setter method"""
         self.network_object = IPv4Network(
-            "{0}/{1}".format(str(self.ip_object), arg), strict=False
+            f"{str(self.ip_object)}/{arg}", strict=False
         )
 
     # On IPv4Obj()
@@ -1171,7 +1170,7 @@ class IPv4Obj(object):
             return self.network_object.network
         else:
             ## The ipaddress module returns an "IPAddress" object in Python3...
-            return IPv4Network("{0}".format(self.network_object.compressed))
+            return IPv4Network(f"{self.network_object.compressed}")
 
     # @property
     # def as_decimal_network(self):
@@ -1221,7 +1220,7 @@ class IPv4Obj(object):
         """Returns the IP address as a decimal integer"""
         num_strings = str(self.ip).split(".")
         num_strings.reverse()  # reverse the order
-        return sum([int(num) * (256**idx) for idx, num in enumerate(num_strings)])
+        return sum(int(num) * (256**idx) for idx, num in enumerate(num_strings))
 
     # On IPv4Obj()
     @property
@@ -1229,7 +1228,7 @@ class IPv4Obj(object):
         """Returns the IP address as a decimal integer"""
         num_strings = str(self.network).split("/")[0].split(".")
         num_strings.reverse()  # reverse the order
-        return sum([int(num) * (256**idx) for idx, num in enumerate(num_strings)])
+        return sum(int(num) * (256**idx) for idx, num in enumerate(num_strings))
 
     # On IPv4Obj()
     @property
@@ -1242,7 +1241,7 @@ class IPv4Obj(object):
     def as_zeropadded(self):
         """Returns the IP address as a zero-padded string (useful when sorting in a text-file)"""
         num_strings = str(self.ip).split(".")
-        return ".".join(["{0:03}".format(int(num)) for num in num_strings])
+        return ".".join([f"{int(num):03}" for num in num_strings])
 
     # On IPv4Obj()
     @property
@@ -1250,7 +1249,7 @@ class IPv4Obj(object):
         """Returns the IP network as a zero-padded string (useful when sorting in a text-file)"""
         num_strings = self.as_cidr_net.split("/")[0].split(".")
         return (
-            ".".join(["{0:03}".format(int(num)) for num in num_strings])
+            ".".join([f"{int(num):03}" for num in num_strings])
             + "/"
             + str(self.prefixlen)
         )
@@ -1265,13 +1264,13 @@ class IPv4Obj(object):
     @property
     def as_binary_tuple(self):
         """Returns the IP address as a tuple of zero-padded binary strings"""
-        return tuple(["{0:08b}".format(int(num)) for num in str(self.ip).split(".")])
+        return tuple(f"{int(num):08b}" for num in str(self.ip).split("."))
 
     # On IPv4Obj()
     @property
     def as_hex_tuple(self):
         """Returns the IP address as a tuple of zero-padded hex strings"""
-        return tuple(["{0:02x}".format(int(num)) for num in str(self.ip).split(".")])
+        return tuple(f"{int(num):02x}" for num in str(self.ip).split("."))
 
     # On IPv4Obj()
     @property
@@ -1310,8 +1309,8 @@ class IPv4Obj(object):
 # Build a wrapper around ipaddress classes to mimic the behavior of network
 # interfaces (such as persisting host-bits when the intf masklen changes) and
 # add custom @properties
-class IPv6Obj(object):
-    def __init__(self, arg="::1/{0}".format(IPV6_MAX_PREFIXLEN), strict=False, debug=0):
+class IPv6Obj:
+    def __init__(self, arg=f"::1/{IPV6_MAX_PREFIXLEN}", strict=False, debug=0):
         """An object to represent IPv6 addresses and IPv6 networks.
 
         When :class:`~ccp_util.IPv6Obj` objects are compared or sorted, network numbers are sorted lower to higher.  If network numbers are the same, shorter masks are lower than longer masks. After comparing mask length, numerically higher IP addresses are greater than numerically lower IP addresses.  Comparisons between :class:`~ccp_util.IPv6Obj` instances was chosen so it's easy to find the longest-match for a given prefix.
@@ -1370,7 +1369,7 @@ class IPv6Obj(object):
         """
 
         if debug > 0:
-            logger.info("IPv6Obj(arg='%s', strict=%s, debug=%s) was called" % (arg, strict, debug))
+            logger.info(f"IPv6Obj(arg='{arg}', strict={strict}, debug={debug}) was called")
 
         self.arg = arg
         self.dna = "IPv6Obj"
@@ -1398,7 +1397,7 @@ class IPv6Obj(object):
             return None
 
         elif isinstance(arg, IPv6Obj):
-            ip_str = "{0}/{1}".format(str(arg.ip_object), arg.prefixlen)
+            ip_str = f"{str(arg.ip_object)}/{arg.prefixlen}"
             self.network_object = IPv6Network(ip_str, strict=False)
             self.ip_object = IPv6Address(str(arg.ip_object))
             return None
@@ -1415,7 +1414,7 @@ class IPv6Obj(object):
 
         else:
             raise ipaddress.AddressValueError(
-                "Could not parse '{0}' (type: {1}) into an IPv6 Address".format(
+                "Could not parse '{}' (type: {}) into an IPv6 Address".format(
                     arg, type(arg)
                 )
             )
@@ -1439,11 +1438,11 @@ class IPv6Obj(object):
 
             except TypeError:
                 raise ipaddress.AddressValueError(
-                    "_ipv6_params_dict() doesn't know how to parse {0}".format(arg)
+                    f"_ipv6_params_dict() doesn't know how to parse {arg}"
                 )
 
 
-            ERROR = "_ipv6_params_dict() couldn't parse '{0}'".format(arg)
+            ERROR = f"_ipv6_params_dict() couldn't parse '{arg}'"
             assert mm is not None, ERROR
 
             mm_result = mm.groupdict()
@@ -1466,13 +1465,13 @@ class IPv6Obj(object):
             addr = str(IPv6Address(arg))
             netmask = 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff'
             masklen = 128
-            ip_arg_str = "{0}/{1}".format(addr, masklen)
+            ip_arg_str = f"{addr}/{masklen}"
 
         elif isinstance(arg, IPv6Obj):
             addr = str(arg.ip)
             netmask = str(arg.netmask)
             masklen = arg.masklen
-            ip_arg_str = "{0}/{1}".format(addr, masklen)
+            ip_arg_str = f"{addr}/{masklen}"
 
         else:
             raise ipaddress.AddressValueError("IPv6Obj(arg='%s') is an unknown argument type" % (arg))
@@ -1487,7 +1486,7 @@ class IPv6Obj(object):
         }
 
         if params_dict.get('masklen', None) is not None:
-            ip_arg_str = "{0}/{1}".format(addr, masklen)
+            ip_arg_str = f"{addr}/{masklen}"
         else:
             raise ipaddress.AddressValueError()
 
@@ -1499,11 +1498,11 @@ class IPv6Obj(object):
     def __repr__(self):
         # Detect IPv4_mapped IPv6 addresses...
         if self.is_ipv4_mapped:
-            return """<IPv6Obj ::ffff:{0}/{1}>""".format(
+            return """<IPv6Obj ::ffff:{}/{}>""".format(
                 str(self.ip.ipv4_mapped), self.prefixlen
             )
         else:
-            return """<IPv6Obj {0}/{1}>""".format(str(self.ip), self.prefixlen)
+            return f"""<IPv6Obj {str(self.ip)}/{self.prefixlen}>"""
 
     # On IPv6Obj()
     def __eq__(self, val):
@@ -1520,7 +1519,7 @@ class IPv6Obj(object):
                 return True
             return False
         except (Exception) as e:
-            errmsg = "'{0}' cannot compare itself to '{1}': {2}".format(
+            errmsg = "'{}' cannot compare itself to '{}': {}".format(
                 self.__repr__(), val, e
             )
             raise ValueError(errmsg)
@@ -1560,7 +1559,7 @@ class IPv6Obj(object):
                 return self_ndec > val_ndec
 
         except Exception:
-            errmsg = "{0} cannot compare itself to '{1}'".format(self.__repr__(), val)
+            errmsg = f"{self.__repr__()} cannot compare itself to '{val}'"
             raise ValueError(errmsg)
 
     # On IPv6Obj()
@@ -1594,7 +1593,7 @@ class IPv6Obj(object):
                 return self_ndec < val_ndec
 
         except Exception:
-            errmsg = "{0} cannot compare itself to '{1}'".format(self.__repr__(), val)
+            errmsg = f"{self.__repr__()} cannot compare itself to '{val}'"
             raise ValueError(errmsg)
 
     # On IPv6Obj()
@@ -1667,7 +1666,7 @@ class IPv6Obj(object):
 
         except (Exception) as e:
             raise ValueError(
-                "Could not check whether '{0}' is contained in '{1}': {2}".format(
+                "Could not check whether '{}' is contained in '{}': {}".format(
                     val, self, e
                 )
             )
@@ -1766,7 +1765,7 @@ class IPv6Obj(object):
     def masklen(self, arg):
         """masklen setter method"""
         self.network_object = IPv6Network(
-            "{0}/{1}".format(str(self.ip_object), arg), strict=False
+            f"{str(self.ip_object)}/{arg}", strict=False
         )
 
     # On IPv6Obj()
@@ -1780,7 +1779,7 @@ class IPv6Obj(object):
     def masklength(self, arg):
         """masklength setter method"""
         self.network_object = IPv6Network(
-            "{0}/{1}".format(str(self.ip_object), arg), strict=False
+            f"{str(self.ip_object)}/{arg}", strict=False
         )
 
     # On IPv6Obj()
@@ -1794,7 +1793,7 @@ class IPv6Obj(object):
     def prefixlen(self, arg):
         """prefixlen setter method"""
         self.network_object = IPv6Network(
-            "{0}/{1}".format(str(self.ip_object), arg), strict=False
+            f"{str(self.ip_object)}/{arg}", strict=False
         )
 
     # On IPv6Obj()
@@ -1831,7 +1830,7 @@ class IPv6Obj(object):
     def network(self):
         """Returns an :class:`ipaddress.IPv6Network` object, which represents this network."""
         ## The ipaddress module returns an "IPAddress" object in Python3...
-        return IPv6Network("{0}".format(self.network_object.compressed))
+        return IPv6Network(f"{self.network_object.compressed}")
 
     # On IPv6Obj()
     @property
@@ -1840,7 +1839,7 @@ class IPv6Obj(object):
         num_strings = str(self.network.exploded).split("/")[0].split(":")
         num_strings.reverse()  # reverse the order
         return sum(
-            [int(num, 16) * (65536**idx) for idx, num in enumerate(num_strings)]
+            int(num, 16) * (65536**idx) for idx, num in enumerate(num_strings)
         )
 
     # On IPv6Obj()
@@ -1883,7 +1882,7 @@ class IPv6Obj(object):
         num_strings = str(self.ip.exploded).split(":")
         num_strings.reverse()  # reverse the order
         return sum(
-            [int(num, 16) * (65536**idx) for idx, num in enumerate(num_strings)]
+            int(num, 16) * (65536**idx) for idx, num in enumerate(num_strings)
         )
 
     # On IPv6Obj()
@@ -1895,7 +1894,7 @@ class IPv6Obj(object):
     @property
     def as_binary_tuple(self):
         """Returns the IPv6 address as a tuple of zero-padded 16-bit binary strings"""
-        result_list = ["{0:016b}".format(int(ii, 16)) for ii in self.as_hex_tuple]
+        result_list = [f"{int(ii, 16):016b}" for ii in self.as_hex_tuple]
         return tuple(result_list)
 
     # On IPv6Obj()
@@ -1974,7 +1973,7 @@ class IPv6Obj(object):
         return self.network_object.sixtofour
 
 
-class L4Object(object):
+class L4Object:
     """Object for Transport-layer protocols; the object ensures that logical operators (such as le, gt, eq, and ne) are parsed correctly, as well as mapping service names to port numbers
 
     Examples
@@ -2010,7 +2009,7 @@ class L4Object(object):
                     "'{0}' is not supported: '{0}'".format(protocol)
                 )
         else:
-            raise NotImplementedError("This syntax is unknown: '{0}'".format(syntax))
+            raise NotImplementedError(f"This syntax is unknown: '{syntax}'")
 
         if "eq " in port_spec.strip():
             port_tmp = re.split(r"\s+", port_spec)[-1].strip()
@@ -2045,7 +2044,7 @@ class L4Object(object):
             self.port_list = sorted(tmp)
         else:
             raise NotImplementedError(
-                "This port_spec is unknown: '{0}'".format(port_spec)
+                f"This port_spec is unknown: '{port_spec}'"
             )
 
     def __eq__(self, val):
@@ -2056,10 +2055,10 @@ class L4Object(object):
     def __repr__(self):
         crobj = CiscoRange()
         crobj._list = self.port_list
-        return "<L4Object {0} ports: {1}>".format(self.protocol, crobj.compressed_str)
+        return f"<L4Object {self.protocol} ports: {crobj.compressed_str}>"
 
 
-class DNSResponse(object):
+class DNSResponse:
     """A universal DNS Response object
 
     Parameters
@@ -2109,11 +2108,11 @@ class DNSResponse(object):
 
     def __repr__(self):
         if not self.has_error:
-            return '<DNSResponse "{0}" result_str="{1}">'.format(
+            return '<DNSResponse "{}" result_str="{}">'.format(
                 self.query_type, self.result_str
             )
         else:
-            return '<DNSResponse "{0}" error="{1}">'.format(
+            return '<DNSResponse "{}" error="{}">'.format(
                 self.query_type, self.error_str
             )
 
@@ -2150,14 +2149,14 @@ def dns_query(input_str="", query_type="", server="", timeout=2.0):
     >>>
     """
 
-    valid_records = set(["A", "AAAA", "AXFR", "CNAME", "MX", "NS", "PTR", "TXT"])
+    valid_records = {"A", "AAAA", "AXFR", "CNAME", "MX", "NS", "PTR", "TXT"}
     query_type = query_type.upper()
     assert query_type in valid_records
     assert server != ""
     assert float(timeout) > 0
     assert input_str != ""
     # input = input_str.strip()
-    retval = set([])
+    retval = set()
     rr = Resolver()
     rr.server = [socket.gethostbyname(server)]
     rr.timeout = float(timeout)
@@ -2266,7 +2265,7 @@ def dns_query(input_str="", query_type="", server="", timeout=2.0):
         elif "in-addr.arpa" in input_str.lower():
             inaddr = input_str
         else:
-            raise ValueError('Cannot query PTR record for "{0}"'.format(input_str))
+            raise ValueError(f'Cannot query PTR record for "{input_str}"')
 
         try:
             answer = rr.query(inaddr, query_type)
@@ -2376,7 +2375,7 @@ _REVERSE_DNS_REGEX = re.compile(r"^\s*\d+\.\d+\.\d+\.\d+\s*$")
 
 def reverse_dns_lookup(input_str, timeout=3, server=""):
     """Perform a simple reverse DNS lookup, return results in a dictionary"""
-    assert _REVERSE_DNS_REGEX.search(input_str), "Invalid address format: '{0}'".format(
+    assert _REVERSE_DNS_REGEX.search(input_str), "Invalid address format: '{}'".format(
         input_str
     )
     rr = Resolver()
@@ -2429,7 +2428,7 @@ class CiscoRange(MutableSequence):
     """
 
     def __init__(self, text="", result_type=str):
-        super(CiscoRange, self).__init__()
+        super().__init__()
         self.text = text
         self.result_type = result_type
         if text:
@@ -2448,7 +2447,7 @@ class CiscoRange(MutableSequence):
         if len(self._list) == 0:
             return """<CiscoRange []>"""
         else:
-            return """<CiscoRange {0}>""".format(self.compressed_str)
+            return f"""<CiscoRange {self.compressed_str}>"""
 
     def __len__(self):
         return len(self._list)
@@ -2514,7 +2513,7 @@ class CiscoRange(MutableSequence):
                     elif re.search(r"^\d+\s*-\s*\d+$", prefix_removed.strip()):
                         _tmp.append(prefix_removed)
                     else:
-                        ERROR = "CiscoRange() couldn't parse '{0}'".format(self.text)
+                        ERROR = f"CiscoRange() couldn't parse '{self.text}'"
                         raise ValueError(ERROR)
             tmp = _tmp
         return tmp
@@ -2524,7 +2523,7 @@ class CiscoRange(MutableSequence):
 
         mm = _RGX_CISCO_RANGE.search(tmp[0])
 
-        ERROR = "CiscoRange() couldn't parse '{0}'".format(self.text)
+        ERROR = f"CiscoRange() couldn't parse '{self.text}'"
         assert mm is not None, ERROR
 
         mm_result = mm.groupdict()
