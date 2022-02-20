@@ -4,17 +4,11 @@ Before opening any [ciscoconfparse][1] issues or proposing any pull
 requests, please read this document completely.
 
 To get the greatest chance of helpful responses, please also observe the
-following additional notes:
+following.
 
-## Questions
+## Contributions
 
-The [GitHub issue tracker][3] is for *bug reports* and *feature requests*.
-Please do not use it to ask questions about how to use [ciscoconfparse][1].
-These questions should instead be directed to [Stack Overflow][5]. Make sure
-that your question is tagged with the [ciscoconfparse][4] tag when asking it on
-[Stack Overflow][5], to ensure that it is answered promptly and accurately.
-
-## Good Bug Reports
+### Bug Reports
 
 Please be aware of the following things when filing bug reports:
 
@@ -46,13 +40,14 @@ Please be aware of the following things when filing bug reports:
      result?
    - Tell us **what version of [ciscoconfparse][1] you're using**, and
      **how you installed it**. Different versions of [ciscoconfparse][1] behave
-     differently
+     differently.  If possible, you should check the latest ciscoconfparse
+     release before filing a new bug.
 
-   If you do not provide all of these things, it could take us much longer to
-   fix your problem. If we ask you to clarify these and you never respond, we
-   may close your issue without fixing it.
+   If you do not provide sufficient detail, it could take us much longer to
+   fix your problem.
 
-## Pull Requests
+
+### Pull Requests
 
 1. Please email Mike Pennington before writing a PR.  We might not be
    interested in the feature, or already have plans to fix an issue.
@@ -61,8 +56,26 @@ Please be aware of the following things when filing bug reports:
 2. PRs must include tests for the functionality being added, or bugs being
    fixed.  Needless to say, your PR itself must not fail existing tests.
 
+## Questions are not supported.
+
+The [GitHub issue tracker][3] is for *bug reports* and *feature requests*.
+Please do not use it to ask questions about how to use [ciscoconfparse][1].
+[Stack Overflow][4] or [Reddit r/networking][5] are good examples of places to ask questions. If you ask on [Stack Overflow][4], please make sure that your question is tagged with the [ciscoconfparse tag][4].
+
+## Anti-social behavior
+
+   Harrassment (in any form, or for any reason), intimidation, trolling,
+   excessive drama, insults, rudeness, stalking, libel, or other abusive
+   behaviors are not welcome for any reason.
+
+## Content policy
+
+   The project maintainers may edit, close, or delete content at their own
+   discretion.
+
+
   [1]: https://github.com/mpenning/ciscoconfparse
-  [2]: https://github.com/mpenning/ciscoconfparse/issues/new/choose
+  [2]: http://127.0.0.1/
   [3]: https://github.com/mpenning/ciscoconfparse/issues
-  [4]: https://stackoverflow.com/questions/tagged/ciscoconfparse?tab=Newest
-  [5]: https://stackoverflow.com/
+  [4]: https://stackoverflow.com/questions/ask?title=How%20do%20I&tags=ciscoconfparse+python
+  [5]: https://reddit.com/r/networking
