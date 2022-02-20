@@ -766,7 +766,7 @@ class IPv4Obj(object):
             return None
 
         else:
-            raise ValueError(
+            raise ipaddress.AddressValueError(
                 "Could not parse '{0}' (type: {1}) into an IPv4 Address".format(
                     arg, type(arg)
                 )
@@ -1385,7 +1385,7 @@ class IPv6Obj(object):
         self.params_dict = {}
 
         # Build params_dict... this needs to work with any supported input...
-        if isinstance(arg, str) or isinstance(arg, int):
+        if isinstance(arg, str) or isinstance(arg, int) or isinstance(arg, IPv6Obj):
             params_dict = self._ipv6_params_dict(arg)
             self.params_dict = params_dict
 
@@ -1423,8 +1423,6 @@ class IPv6Obj(object):
                     arg, type(arg)
                 )
             )
-
-        # arg= _RGX_IPV6ADDR_NETMASK.sub(r'\1/\2', arg) # mangle IOS: 'addr mask'
 
     # On IPv6Obj()
     def _ipv6_params_dict(self, arg, debug=0):
