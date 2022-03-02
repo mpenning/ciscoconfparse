@@ -55,11 +55,14 @@ Please be aware of the following things when filing bug reports:
 2. PRs must include tests for the functionality being added, or bugs being
    fixed.  Needless to say, your PR itself must not fail existing tests.
 
-## Questions are not supported.
+## Usage Questions
 
 The [GitHub issue tracker][3] is for *bug reports* and *feature requests*.
-Please do not use it to ask questions about how to use [ciscoconfparse][1].
-[Stack Overflow][4] or [Reddit r/networking][5] are good examples of places to ask questions. If you ask on [Stack Overflow][4], please make sure that your question is tagged with the [ciscoconfparse tag][4].
+Please do not use it to ask usage questions about how to use
+[ciscoconfparse][1] or how to fix your scripts.  [Stack Overflow][4] or
+[Reddit r/networking][5] are good examples of places to ask questions. If
+you ask on [Stack Overflow][4], please make sure that your question is
+tagged with the [ciscoconfparse tag][4].
 
 ## Anti-social behavior
 
