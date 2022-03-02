@@ -16,9 +16,8 @@ Please be aware of the following things when filing bug reports:
    feature to check whether your bug report or feature request has been
    discussed in the past. Duplicate bug reports and feature requests are a
    non-trivial maintenance burden on the resources of the project. If it is
-   clear from your report that you would have struggled to find the original,
-   that's ok, but if searching for a selection of words in your issue title
-   would have found the duplicate then the issue will likely be closed.
+   clear from your report that you could not find the original, no worries.
+   However, we will usually close duplicate issues.
 2. When filing bug reports about exceptions or tracebacks, please include the
    *complete* traceback. Partial tracebacks, or just the exception text, are
    not helpful. Issues that do not contain complete tracebacks may be closed
