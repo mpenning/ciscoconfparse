@@ -163,11 +163,13 @@ class BaseCfgLine(metaclass=ABCMeta):
     @text.setter
     def text(self, newtext=None):
         assert isinstance(newtext, str)
+        previous_text = self._text
         self._text = newtext
         # FIXME - for the sake of speed, only calculate_diff_id() when a
         #         diff is requested.  I have not added the logic
         #         for conditional diff calculation yet.
-        self._diff_id = self.calculate_diff_id()
+        if previous_text != newtext:
+            self._diff_id = self.calculate_diff_id()
 
     # On BaseCfgLine()
     @property
