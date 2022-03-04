@@ -5,12 +5,15 @@ import os
 
 iterations = 1000
 
+sys.path.insert(0, "../")
+
 CONFIG_FILEPATH = None
 # Set CONFIG_FILEPATH as a relative path
-for base_dir, dirs, files in os.walk("./"):
+for base_dir, dirs, files in os.walk("../"):
     for filename in files:
         if filename=="sample_01.ios":
-            CONFIG_FILEPATH = '%s/%s' % (base_dir, filename)
+            print("HERE@@")
+            CONFIG_FILEPATH = '{}/{}'.format(base_dir, filename)
             break
 
 if CONFIG_FILEPATH is None:
@@ -51,14 +54,14 @@ print("SAMPLE", time_CiscoRange_all_vlans_int)
 
 result_special_1 = timeit(
     'ss = rr.search("FoMike12325234234nananana");rr.captured',
-    setup='import re;from ciscoconfparse import ccp_re;rr = ccp_re(r"^(\w+?)(?P<numbers1>\d+)(\S+?)$")',
+    setup=r'import re;from ciscoconfparse import ccp_re;rr = ccp_re(r"^(\w+?)(?P<numbers1>\d+)(\S+?)$")',
     number=iterations,
 )
 print("SPECIAL REGEX1 ", round(result_special_1, 4))
 
 result_special_2 = timeit(
     'ss = rr.search("FoMike12325234234nananana");rr.captured',
-    setup='import re;from ciscoconfparse import ccp_re;rr = ccp_re(r"^(\w+?)(?P<numbers2>\d+)(\S+?)$")',
+    setup=r'import re;from ciscoconfparse import ccp_re;rr = ccp_re(r"^(\w+?)(?P<numbers2>\d+)(\S+?)$")',
     number=iterations,
 )
 print("SPECIAL REGEX2 ", round(result_special_2, 4))
@@ -66,7 +69,7 @@ print("SPECIAL REGEX2 ", round(result_special_2, 4))
 result_standard = timeit(
     #'rr = re.compile(r"(\w?)(?P<numbers>\d+)(\S+)");ss=rr.search("");ss.groups();ss.groupdict()',
     'ss = rr.search("FoMike12325234234nananana");ss.groups();ss.groupdict()',
-    setup='import re;rr = re.compile(r"(\w?)(?P<numbers3>\d+)(\S+)")',
+    setup=r'import re;rr = re.compile(r"(\w?)(?P<numbers3>\d+)(\S+)")',
     number=iterations,
 )
 print("STANDARD REGEX", result_standard)
