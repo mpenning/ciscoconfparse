@@ -18,7 +18,7 @@ jobs:
             CiscoConfParse's maintainers may reopen it solely at their
             own discretion.  For more detailed information, please refer to
             our CONTRIBUTING guidance ->
-            https://github.com/mpenning/ciscoconfparse/blob/master/.github/CONTRIBUTING.md
+            https://github.com/mpenning/ciscoconfparse/blob/main/.github/CONTRIBUTING.md
 
 
 
@@ -26,7 +26,7 @@ jobs:
             This PR has been automatically closed due to lack of activity.
             For more detailed information, please refer to our
             CONTRIBUTING guidance ->
-            https://github.com/mpenning/ciscoconfparse/blob/master/.github/CONTRIBUTING.md
+            https://github.com/mpenning/ciscoconfparse/blob/main/.github/CONTRIBUTING.md
           days-before-stale: 60
           days-before-close: 30
           exempt-issue-labels: 'status: accepted,status: blocked'
@@ -39,7 +39,7 @@ jobs:
             understand that the CiscoConfParse team is not obligated to
             comment on every issue.  For more detailed information, please
             refer to our CONTRIBUTING guidance ->
-            https://github.com/mpenning/ciscoconfparse/blob/master/.github/CONTRIBUTING.md
+            https://github.com/mpenning/ciscoconfparse/blob/main/.github/CONTRIBUTING.md
           stale-pr-label: 'stale-pending-close'
           stale-pr-message: >
             This PR has automatically been marked stale due to inactivity.
@@ -47,4 +47,4 @@ jobs:
             Please understand that the CiscoConfParse team is not obligated
             to comment on (or approve) every Pull Request.  For more detailed
             information, please refer to CONTRIBUTING guidance ->
-            https://github.com/mpenning/ciscoconfparse/blob/master/.github/CONTRIBUTING.md
+            https://github.com/mpenning/ciscoconfparse/blob/main/.github/CONTRIBUTING.md
