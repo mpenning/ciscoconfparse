@@ -1,3 +1,4 @@
+l.6.38  20220304 Internal adjustments on previous commit
 l.6.37  20220304 Rename 'master' branch to 'main'.  Add config diff infrastructure (preparing to make heavy changes to diffs)
 l.6.36  20220220 Cosmetic changes to dns_query()
 l.6.35  20220219 Fix problems with ip_factory()
