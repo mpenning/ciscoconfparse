@@ -9,7 +9,7 @@ name: Tests
 on:
   push:
     branches:
-      - master
+      - main
       - '*.x'
     paths-ignore:
       - 'sphinx-doc/**'
@@ -17,7 +17,7 @@ on:
       - '*.rst'
   pull_request:
     branches:
-      - master
+      - main
       - '*.x'
     paths-ignore:
       - 'sphinx-doc/**'
