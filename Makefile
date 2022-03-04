@@ -11,20 +11,20 @@ repo-push:
 	git remote remove origin
 	git remote add origin "git@github.com:mpenning/ciscoconfparse"
 	git push git@github.com:mpenning/ciscoconfparse.git
-	git push origin +master
+	git push origin +main
 .PHONY: repo-push-force
 repo-push-force:
 	git remote remove origin
 	git remote add origin "git@github.com:mpenning/ciscoconfparse"
 	git push git@github.com:mpenning/ciscoconfparse.git
-	git push --force-with-lease origin +master
+	git push --force-with-lease origin +main
 .PHONY: repo-push-tag
 repo-push-tag:
 	git remote remove origin
 	git remote add origin "git@github.com:mpenning/ciscoconfparse"
 	git tag -a ${VERSION} -m "Tag with ${VERSION}"
 	git push git@github.com:mpenning/ciscoconfparse.git
-	git push --tags origin +master
+	git push --tags origin +main
 	git push --tags origin ${VERSION}
 .PHONY: repo-push-tag-force
 repo-push-tag-force:
@@ -32,7 +32,7 @@ repo-push-tag-force:
 	git remote add origin "git@github.com:mpenning/ciscoconfparse"
 	git tag -a ${VERSION} -m "Tag with ${VERSION}"
 	git push git@github.com:mpenning/ciscoconfparse.git
-	git push --force-with-lease --tags origin +master
+	git push --force-with-lease --tags origin +main
 	git push --force-with-lease --tags origin ${VERSION}
 .PHONY: pylama
 pylama:
