@@ -12,7 +12,6 @@ CONFIG_FILEPATH = None
 for base_dir, dirs, files in os.walk("../"):
     for filename in files:
         if filename=="sample_01.ios":
-            print("HERE@@")
             CONFIG_FILEPATH = '{}/{}'.format(base_dir, filename)
             break
 
