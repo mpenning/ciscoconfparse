@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 from operator import methodcaller
 from abc import ABCMeta
 import inspect
@@ -28,14 +27,14 @@ r""" ccp_abc.py - Parse, Query, Build, and Modify IOS-style configurations
 ##
 ##-------------  Config Line ABC
 ##
-class BaseCfgLine(object, metaclass=ABCMeta):
+class BaseCfgLine(metaclass=ABCMeta):
     # deprecating py2.foo metaclass syntax in version 1.6.8...
     #__metaclass__ = ABCMeta
     def __init__(self, text="", comment_delimiter="!"):
         """Accept an IOS line number and initialize family relationship
         attributes"""
         self.comment_delimiter = comment_delimiter
-        self.text = text
+        self._text = text
         self.linenum = -1
         self.parent = self
         self.child_indent = 0
@@ -49,12 +48,17 @@ class BaseCfgLine(object, metaclass=ABCMeta):
         self.feature_param2 = ""  # Parameter2 of the feature (if req'd)
         self.set_comment_bool()
 
+        self._diff_id = None
+        self.diff_exist_before = None
+        self.diff_required_after = None
+        self.diff_verb = ""
+
     # On BaseCfgLine()
     def __repr__(self):
         if not self.is_child:
-            return "<%s # %s '%s'>" % (self.classname, self.linenum, self.text)
+            return "<{} # {} '{}'>".format(self.classname, self.linenum, self.text)
         else:
-            return "<%s # %s '%s' (parent is # %s)>" % (
+            return "<{} # {} '{}' (parent is # {})>".format(
                 self.classname,
                 self.linenum,
                 self.text,
@@ -110,6 +114,70 @@ class BaseCfgLine(object, metaclass=ABCMeta):
         return retval
 
     # On BaseCfgLine()
+    def calculate_diff_id(self):
+        """
+        Calculate and return this object's integer diff_id
+
+        Do NOT cache this value.  It may need to be recalculated
+        if self.text changes.
+        """
+        indent = self.indent
+        _diff_id = hash(" " * indent + " ".join(self.text.strip().split()))
+
+        return _diff_id
+
+    @property
+    def diff_id_list(self):
+        """
+        Return a list of integers as a unique diff identifier.
+
+        Be aware that object id integers are NOT the same between script runs.
+        """
+        retval = list()
+        finished = False
+        while finished is not True:
+            if self.parent is not self:
+                # This object is a child of self.parent
+                indent = self.indent
+                _diff_id = hash(" " * indent + " ".join(self.text.strip().split()))
+                self._diff_id = _diff_id
+                retval.insert(0, _diff_id)
+                self = self.parent
+                continue
+
+            else:
+                # This object is NOT a child
+                indent = self.indent
+                _diff_id = hash(" " * indent + " ".join(self.text.strip().split()))
+                retval.insert(0, _diff_id)
+                finished = True
+
+        return retval
+
+    # On BaseCfgLine()
+    @property
+    def text(self):
+        return self._text
+
+    # On BaseCfgLine()
+    @text.setter
+    def text(self, newtext=None):
+        assert isinstance(newtext, str)
+        self._text = newtext
+        self._diff_id = self.calculate_diff_id()
+
+    # On BaseCfgLine()
+    @property
+    def diff_id(self):
+        return self._diff_id
+
+    # On BaseCfgLine()
+    @diff_id.setter
+    def diff_id(self, value=None):
+        assert isinstance(value, int)
+        self._diff_id = value
+
+    # On BaseCfgLine()
     @property
     def dna(self):
         return self.classname
@@ -147,7 +215,7 @@ class BaseCfgLine(object, metaclass=ABCMeta):
                 )
             )
         else:
-            return "<%s # %s '%s' (no_children / family_endpoint: %s)>" % (
+            return "<{} # {} '{}' (no_children / family_endpoint: {})>".format(
                 self.classname,
                 self.linenum,
                 self.text,
@@ -157,7 +225,7 @@ class BaseCfgLine(object, metaclass=ABCMeta):
     # On BaseCfgLine()
     @property
     def all_parents(self):
-        retval = set([])
+        retval = set()
         me = self
         while me.parent != me:
             retval.add(me.parent)
@@ -167,7 +235,7 @@ class BaseCfgLine(object, metaclass=ABCMeta):
     # On BaseCfgLine()
     @property
     def all_children(self):
-        retval = set([])
+        retval = set()
         if self.has_children:
             for child in self.children:
                 retval.add(child)
@@ -347,7 +415,7 @@ class BaseCfgLine(object, metaclass=ABCMeta):
         calling_filename = inspect.stack()[calling_fn_index].filename
         calling_function = inspect.stack()[calling_fn_index].function
         calling_lineno = inspect.stack()[calling_fn_index].lineno
-        error =  "FATAL CALL: in %s line %s %s(insertstr='%s')" % (calling_filename, calling_lineno, calling_function, insertstr)
+        error =  "FATAL CALL: in {} line {} {}(insertstr='{}')".format(calling_filename, calling_lineno, calling_function, insertstr)
         if isinstance(insertstr, str) is True:
             retval = self.confobj.insert_before(self, insertstr, atomic=False)
         elif isinstance(insertstr, BaseCfgLine) is True:
@@ -373,9 +441,9 @@ class BaseCfgLine(object, metaclass=ABCMeta):
         calling_filename = inspect.stack()[calling_fn_index].filename
         calling_function = inspect.stack()[calling_fn_index].function
         calling_lineno = inspect.stack()[calling_fn_index].lineno
-        error =  "FATAL CALL: in %s line %s %s(insertstr='%s')" % (calling_filename, calling_lineno, calling_function, insertstr)
+        error =  "FATAL CALL: in {} line {} {}(insertstr='{}')".format(calling_filename, calling_lineno, calling_function, insertstr)
         if self.confobj.debug >= 1:
-            logger.debug("Inserting '%s' after '%s'" % (insertstr, self))
+            logger.debug("Inserting '{}' after '{}'".format(insertstr, self))
         if getattr(insertstr, "capitalize", False):
             # Handle insertion of a plain-text line
             retval = self.confobj.insert_after(self, insertstr, atomic=False)
@@ -639,12 +707,12 @@ class BaseCfgLine(object, metaclass=ABCMeta):
         # Shortcut with a substring match, if possible...
         if isinstance(regex, str) and (regex in self.text):
             if debug > 0:
-                logger.debug("'%s' is a substring of '%s'" % (regex, self.text))
+                logger.debug("'{}' is a substring of '{}'".format(regex, self.text))
             retval = self.text
         elif re.search(regex, self.text) is not None:
             ## TODO: use re.escape(regex) on all regex, instead of bare regex
             if debug > 0:
-                logger.debug("re.search('%s', '%s') matches" % (regex, self.text))
+                logger.debug("re.search('{}', '{}') matches".format(regex, self.text))
             retval = self.text
         return retval
 
