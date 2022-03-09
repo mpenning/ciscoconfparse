@@ -35,11 +35,13 @@ repos:
     - id: check-symlinks                        # Look for isolated symlinks
     - id: check-shebang-scripts-are-executable  # Fix permissions on scripts
     - id: check-docstring-first # Forbid code before a function's docstring
+    - id: fix-encoding-pragma   # Add "# -*- coding: utf-8 -*-" to top of file
+      args: ['--remove']
+      #  ^^^^^^^^^^^^^^^^^^^^^^^ for some reason, this keeps alerting
     - id: end-of-file-fixer
     - id: debug-statements
     - id: requirements-txt-fixer
     - id: fix-byte-order-marker
-    - id: fix-encoding-pragma   # Add "# -*- coding: utf-8 -*-" to top of file
     - id: trailing-whitespace
     - id: end-of-file-fixer
     - id: no-commit-to-branch   # By default, protect 'master' and 'main'
