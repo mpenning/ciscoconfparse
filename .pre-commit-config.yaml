@@ -35,9 +35,8 @@ repos:
     - id: check-symlinks                        # Look for isolated symlinks
     - id: check-shebang-scripts-are-executable  # Fix permissions on scripts
     - id: check-docstring-first # Forbid code before a function's docstring
-    - id: fix-encoding-pragma   # Add "# -*- coding: utf-8 -*-" to top of file
-      args: ['--remove']
-      #  ^^^^^^^^^^^^^^^^^^^^^^^ for some reason, this keeps alerting
+    - id: fix-encoding-pragma   # Remove "# -*- coding: utf-8 -*-" from files
+      args: ['--remove']        #    Python3 doesn't need the pragma
     - id: end-of-file-fixer
     - id: debug-statements
     - id: requirements-txt-fixer
