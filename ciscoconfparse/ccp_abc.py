@@ -177,19 +177,11 @@ class BaseCfgLine(metaclass=ABCMeta):
         assert isinstance(newtext, str)
         previous_text = self._text
         self._text = newtext
-<<<<<<< HEAD
         # FIXME - for the sake of speed, only calculate_diff_id() when a
         #         diff is requested.  I have not added the logic
         #         for conditional diff calculation yet.
         if previous_text != newtext:
             self._diff_id = self.calculate_diff_id()
-=======
-
-        if previous_text != newtext:
-            self.diff_id = self.calculate_diff_id()
-            # FIXME - after changing text somehow we need to trigger
-            #         ConfigObjs.bootstrap_from_text()...
->>>>>>> develop
 
     # On BaseCfgLine()
     @property
