@@ -1,6 +1,8 @@
 DOCHOST ?= $(shell bash -c 'read -p "documentation host: " dochost; echo $$dochost')
 VERSION := $(shell grep version pyproject.toml | sed -r 's/^version\s*=\s*"(\S+?)"/\1/g')
 
+.DEFAULT_GOAL := test
+
 .PHONY: pypi
 pypi:
 	make clean
