@@ -5,6 +5,9 @@
 # To install this hook config in .git/hooks/pre-commit:
 # - pre-commit install
 # - pre-commit run --all-files
+#
+# Manually run all pre-commit checks with:
+#    `pre-commit run --all-files`
 repos:
 
   # github.com/pallets/flask uses this plugin... auto-format code for
@@ -30,6 +33,8 @@ repos:
     - id: check-shebang-scripts-are-executable  # Fix permissions on scripts
     - id: check-docstring-first # Forbid code before a function's docstring
     - id: end-of-file-fixer
+    - id: debug-statements
+    - id: requirements-txt-fixer
     - id: fix-byte-order-marker
     - id: fix-encoding-pragma   # Add "# -*- coding: utf-8 -*-" to top of file
     - id: trailing-whitespace
