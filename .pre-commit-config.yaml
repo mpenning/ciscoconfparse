@@ -1,11 +1,4 @@
----
-# This yaml requires a specific python package -> https://pre-commit.com/
-#    make sure your virtualenv has the pre-commit pypi dependency...
-#
-# To install this hook config in .git/hooks/pre-commit:
-# - pre-commit install
-# - pre-commit run --all-files
-#
+# pre-commit hook catalog -> https://pre-commit.com/hooks.html
 # Manually run all pre-commit checks with:
 #    `pre-commit autoupdate`
 #    `pre-commit run --all-files`
@@ -14,8 +7,7 @@
 #    `git commit --no-verify <filepath> -m "Some message here"
 repos:
 
-  # github.com/pallets/flask uses this plugin... auto-format code for
-  # the --pyXXXXXXX argument.
+  # auto-format code for the --pyXXXXXXX argument.
   - repo: https://github.com/asottile/pyupgrade
     rev: v2.31.0
     hooks:
@@ -37,7 +29,6 @@ repos:
     - id: check-shebang-scripts-are-executable  # Fix permissions on scripts
     - id: check-docstring-first # Forbid code before a function's docstring
     - id: end-of-file-fixer
-    - id: debug-statements
     - id: requirements-txt-fixer
     - id: fix-byte-order-marker
     - id: trailing-whitespace
