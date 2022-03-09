@@ -35,8 +35,6 @@ repos:
     - id: check-symlinks                        # Look for isolated symlinks
     - id: check-shebang-scripts-are-executable  # Fix permissions on scripts
     - id: check-docstring-first # Forbid code before a function's docstring
-    - id: fix-encoding-pragma   # Remove "# -*- coding: utf-8 -*-" from files
-      args: ['--remove']        #    Python3 doesn't need the pragma
     - id: end-of-file-fixer
     - id: debug-statements
     - id: requirements-txt-fixer
@@ -44,3 +42,7 @@ repos:
     - id: trailing-whitespace
     - id: end-of-file-fixer
     - id: no-commit-to-branch   # By default, protect 'master' and 'main'
+
+    # https://github.com/pre-commit/pre-commit-hooks/issues/106
+    - id: fix-encoding-pragma   # Remove "# -*- coding: utf-8 -*-" from files
+      args: ['--remove']        #    Python3 doesn't need the utf8 pragma
