@@ -24,6 +24,11 @@ repos:
     - id: python-no-eval
     - id: rst-backticks
 
+  - repo: https://github.com/asottile/add-trailing-comma
+    rev: v2.2.1
+    hooks:
+    -   id: add-trailing-comma  # Add a trailing comma in kwarg params
+
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.1.0
     hooks:
