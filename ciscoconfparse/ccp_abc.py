@@ -1,10 +1,3 @@
-from operator import methodcaller
-from abc import ABCMeta
-import inspect
-import re
-from ciscoconfparse.ccp_util import junos_unsupported
-from loguru import logger
-
 r""" ccp_abc.py - Parse, Query, Build, and Modify IOS-style configurations
      Copyright (C) 2022      David Michael Pennington
      Copyright (C) 2021      David Michael Pennington
@@ -24,13 +17,21 @@ r""" ccp_abc.py - Parse, Query, Build, and Modify IOS-style configurations
      If you need to contact the author, you can do so by emailing:
      mike [~at~] pennington [/dot\] net
 """
+
+from operator import methodcaller
+from abc import ABCMeta
+import inspect
+import re
+from ciscoconfparse.ccp_util import junos_unsupported
+from loguru import logger
+
 ##
 ##-------------  Config Line ABC
 ##
 class BaseCfgLine(metaclass=ABCMeta):
     # deprecating py2.foo metaclass syntax in version 1.6.8...
     #__metaclass__ = ABCMeta
-    def __init__(self, text="", comment_delimiter="!"):
+    def __init__(self, text="__undefined__", comment_delimiter="!"):
         """Accept an IOS line number and initialize family relationship
         attributes"""
         self.comment_delimiter = comment_delimiter
@@ -49,9 +50,8 @@ class BaseCfgLine(metaclass=ABCMeta):
         self.set_comment_bool()
 
         self._diff_id = None
-        self.diff_exist_before = None
-        self.diff_required_after = None
-        self.diff_verb = ""
+        self.diff_rendered = None
+        self.diff_word = ""
 
     # On BaseCfgLine()
     def __repr__(self):
@@ -76,20 +76,21 @@ class BaseCfgLine(metaclass=ABCMeta):
         return hash(str(self.linenum) + self.text)
 
     # On BaseCfgLine()
-    def __gt__(self, val):
-        if self.linenum > val.linenum:
-            return True
-        return False
-
-    # On BaseCfgLine()
     def __eq__(self, val):
         try:
             ##   try / except is much faster than isinstance();
             ##   I added hash_arg() inline below for speed... whenever I change
             ##   self.__hash__() I *must* change this
-            return (str(self.linenum) + self.text) == (str(val.linenum) + val.text)
+            # FIXME
+            return hash(str(self.linenum) + self.text) == hash(str(val.linenum) + val.text)
         except Exception:
             return False
+
+    # On BaseCfgLine()
+    def __gt__(self, val):
+        if self.linenum > val.linenum:
+            return True
+        return False
 
     # On BaseCfgLine()
     def __lt__(self, val):
@@ -113,6 +114,13 @@ class BaseCfgLine(metaclass=ABCMeta):
         self.is_comment = retval
         return retval
 
+
+    # On BaseCfgLine()
+    @property
+    def index(self):
+        """Alias index to linenum"""
+        return self.linenum
+
     # On BaseCfgLine()
     def calculate_diff_id(self):
         """
@@ -121,11 +129,11 @@ class BaseCfgLine(metaclass=ABCMeta):
         Do NOT cache this value.  It may need to be recalculated
         if self.text changes.
         """
-        indent = self.indent
-        _diff_id = hash(" " * indent + " ".join(self.text.strip().split()))
 
+        _diff_id = hash(" " * self.indent + " ".join(self.text.strip().split()))
         return _diff_id
 
+    # On BaseCfgLine()
     @property
     def diff_id_list(self):
         """
@@ -134,23 +142,27 @@ class BaseCfgLine(metaclass=ABCMeta):
         Be aware that object id integers are NOT the same between script runs.
         """
         retval = list()
-        finished = False
-        while finished is not True:
-            if self.parent is not self:
-                # This object is a child of self.parent
-                indent = self.indent
-                _diff_id = hash(" " * indent + " ".join(self.text.strip().split()))
-                self._diff_id = _diff_id
-                retval.insert(0, _diff_id)
-                self = self.parent
-                continue
+        len_geneology = len(self.geneology)
 
-            else:
+        #while finished is not True:
+        for idx, obj in enumerate(self.geneology):
+
+            obj._diff_id = obj.calculate_diff_id()
+
+            # idx = 0 is the oldest ancestor
+            if idx==0:
                 # This object is NOT a child
-                indent = self.indent
-                _diff_id = hash(" " * indent + " ".join(self.text.strip().split()))
-                retval.insert(0, _diff_id)
-                finished = True
+                assert obj.indent == 0  # FIXME 2022-03-07
+                retval.insert(0, obj._diff_id)
+                # FIXME -> ORIGINAL obj = obj.parent
+                obj.parent = obj
+                #finished = True
+
+            elif idx <= len_geneology - 1:
+                # This object is a child of self.parent
+                assert obj.indent > 0  # FIXME 2022-03-07
+                retval.insert(0, obj._diff_id)
+                continue
 
         return retval
 
@@ -165,11 +177,19 @@ class BaseCfgLine(metaclass=ABCMeta):
         assert isinstance(newtext, str)
         previous_text = self._text
         self._text = newtext
+<<<<<<< HEAD
         # FIXME - for the sake of speed, only calculate_diff_id() when a
         #         diff is requested.  I have not added the logic
         #         for conditional diff calculation yet.
         if previous_text != newtext:
             self._diff_id = self.calculate_diff_id()
+=======
+
+        if previous_text != newtext:
+            self.diff_id = self.calculate_diff_id()
+            # FIXME - after changing text somehow we need to trigger
+            #         ConfigObjs.bootstrap_from_text()...
+>>>>>>> develop
 
     # On BaseCfgLine()
     @property
