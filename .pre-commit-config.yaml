@@ -1,3 +1,4 @@
+---
 # pre-commit hook catalog -> https://pre-commit.com/hooks.html
 # Manually run all pre-commit checks with:
 #    `pre-commit autoupdate`
@@ -8,11 +9,11 @@
 repos:
 
   # auto-format code for the --pyXXXXXXX argument.
-#  - repo: https://github.com/asottile/pyupgrade
-#    rev: v2.31.0
-#    hooks:
-#      - id: pyupgrade
-#        args: ["--py3-plus"]
+  - repo: https://github.com/asottile/pyupgrade
+    rev: v2.31.0
+    hooks:
+      - id: pyupgrade
+        args: ["--py3-plus"]
 
   - repo: https://github.com/pre-commit/pygrep-hooks
     rev: v1.9.0  # Use the ref you want to point at
@@ -33,7 +34,7 @@ repos:
     - id: fix-byte-order-marker
     - id: trailing-whitespace
     - id: end-of-file-fixer
-    #- id: no-commit-to-branch   # By default, protect 'master' and 'main'
+      #- id: no-commit-to-branch   # By default, protect 'master' and 'main'
 
     # https://github.com/pre-commit/pre-commit-hooks/issues/106
     - id: fix-encoding-pragma   # Remove "# -*- coding: utf-8 -*-" from files
