@@ -25,9 +25,9 @@ repos:
     hooks:
     - id: check-yaml
     - id: check-json
+    - id: check-docstring-first # Forbid code before a function's docstring
     - id: check-symlinks                        # Look for isolated symlinks
     - id: check-shebang-scripts-are-executable  # Fix permissions on scripts
-    - id: check-docstring-first # Forbid code before a function's docstring
     - id: end-of-file-fixer
     - id: requirements-txt-fixer
     - id: fix-byte-order-marker
