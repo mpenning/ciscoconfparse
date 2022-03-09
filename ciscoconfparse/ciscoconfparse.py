@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 r""" ciscoconfparse.py - Parse, Query, Build, and Modify IOS-style configs
 
      Copyright (C) 2021-2022 David Michael Pennington
@@ -153,7 +152,7 @@ def build_space_tolerant_regex(linespec):
     r"""SEMI-PRIVATE: Accept a string, and return a string with all
     spaces replaced with '\s+'"""
 
-    # Unicode below...
+    # Define backslash with manual Unicode...
     backslash = "\x5c"
     # escaped_space = "\\s+" (not a raw string)
     escaped_space = (backslash + backslash + "s+").translate("utf-8")
