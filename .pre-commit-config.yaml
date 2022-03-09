@@ -8,6 +8,9 @@
 #
 # Manually run all pre-commit checks with:
 #    `pre-commit run --all-files`
+#
+# Manually ignore pre-commit checks with --no-verify...
+#    `git commit --no-verify <filepath> -m "Some message here"
 repos:
 
   # github.com/pallets/flask uses this plugin... auto-format code for
