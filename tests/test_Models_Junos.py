@@ -1,15 +1,6 @@
-import sys
-import re
-import os
-
-sys.path.insert(0, "..")
-
-from ciscoconfparse.ciscoconfparse import CiscoConfParse
-from ciscoconfparse.ccp_util import IPv4Obj
-import pytest
-
 r""" test_Models_Junos.py - Parse, Query, Build, and Modify IOS-style configs
 
+     Copyright (C) 2021-2022 David Michael Pennington
      Copyright (C) 2020-2021 David Michael Pennington at Cisco Systems
      Copyright (C) 2019      David Michael Pennington at ThousandEyes
      Copyright (C) 2015-2019 David Michael Pennington at Samsung Data Services
@@ -31,6 +22,15 @@ r""" test_Models_Junos.py - Parse, Query, Build, and Modify IOS-style configs
      mike [~at~] pennington [/dot\] net
 """
 
+import sys
+import re
+import os
+
+sys.path.insert(0, "..")
+
+from ciscoconfparse.ciscoconfparse import CiscoConfParse
+from ciscoconfparse.ccp_util import IPv4Obj
+import pytest
 
 
 @pytest.mark.xfail(True, reason="Junos factory parsing is not supported yet")
