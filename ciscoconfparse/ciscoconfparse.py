@@ -1,7 +1,6 @@
 r""" ciscoconfparse.py - Parse, Query, Build, and Modify IOS-style configs
 
      Copyright (C) 2021-2022 David Michael Pennington
-     Copyright (C) 2021      David Michael Pennington
      Copyright (C) 2020-2021 David Michael Pennington at Cisco Systems
      Copyright (C) 2019      David Michael Pennington at ThousandEyes
      Copyright (C) 2012-2019 David Michael Pennington at Samsung Data Services
@@ -82,8 +81,6 @@ import copy
 import sys
 import re
 import os
-
-
 
 def configure_loguru(
     sink=sys.stderr,
@@ -3345,7 +3342,6 @@ class CiscoConfParse:
 
 
 #########################################################################3
-
 
 class ConfigList(MutableSequence):
     """A custom list to hold :class:`~ccp_abc.BaseCfgLine` objects.  Most people will never need to use this class directly."""
