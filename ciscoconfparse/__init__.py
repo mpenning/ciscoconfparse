@@ -23,7 +23,6 @@ r""" __init__.py - Parse, Query, Build, and Modify IOS-style configurations
      If you need to contact the author, you can do so by emailing:
      mike [~at~] pennington [/dot\] net
 """
-# FOO THE BAR
 
 from ciscoconfparse.ciscoconfparse import *
 from ciscoconfparse.ccp_util import *
