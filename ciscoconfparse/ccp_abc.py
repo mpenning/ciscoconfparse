@@ -21,6 +21,7 @@ from operator import methodcaller
 from abc import ABCMeta
 import inspect
 import re
+
 from ciscoconfparse.ccp_util import junos_unsupported
 from loguru import logger
 
@@ -141,8 +142,9 @@ class BaseCfgLine(metaclass=ABCMeta):
         """
         Return a list of integers as a context-sensitive diff identifier.
 
-        The context for this object includes all parents.  The oldest
-        ancestor / parent diff_id is last.
+        The returned value includes diff_id of all parents.  The oldest
+        ancestor / parent diff_id is last in the returned list of diff_id
+        hash values.
 
         object id integers are NOT the same between script runs.
         """
