@@ -123,7 +123,10 @@ class BaseCfgLine(metaclass=ABCMeta):
     # On BaseCfgLine()
     def calculate_diff_id(self):
         """
-        Calculate and return this object's integer diff_id
+        Calculate and return an integer diff_id for BaseCfgLine()
+
+        diff_id is used to build a numerical identity for a given
+        BaseCfgLine().
 
         Do NOT cache this value.  It may need to be recalculated
         if self.text changes.
@@ -136,14 +139,16 @@ class BaseCfgLine(metaclass=ABCMeta):
     @property
     def diff_id_list(self):
         """
-        Return a list of integers as a unique diff identifier.
+        Return a list of integers as a context-sensitive diff identifier.
 
-        Be aware that object id integers are NOT the same between script runs.
+        The context for this object includes all parents.  The oldest
+        ancestor / parent diff_id is last.
+
+        object id integers are NOT the same between script runs.
         """
         retval = list()
         len_geneology = len(self.geneology)
 
-        #while finished is not True:
         for idx, obj in enumerate(self.geneology):
 
             obj._diff_id = obj.calculate_diff_id()
@@ -151,18 +156,24 @@ class BaseCfgLine(metaclass=ABCMeta):
             # idx = 0 is the oldest ancestor
             if idx==0:
                 # This object is NOT a child
-                assert obj.indent == 0  # FIXME 2022-03-07
+                assert obj.indent == 0
                 retval.insert(0, obj._diff_id)
-                # FIXME -> ORIGINAL obj = obj.parent
-                obj.parent = obj
-                #finished = True
+
+                if False:
+                    # FIXME -> ORIGINAL obj = obj.parent
+                    #obj.parent = obj
+                    raise NotImplementedError(obj, obj.parent)
 
             elif idx <= len_geneology - 1:
                 # This object is a child of self.parent
-                assert obj.indent > 0  # FIXME 2022-03-07
+                assert obj.indent > 0
                 retval.insert(0, obj._diff_id)
-                continue
 
+        # retval usually looks like this (example with a single parent obj):
+        #
+        #                          [-1387406312585020591, 3965133112392387338]
+        #  root / oldest _diff_id:                        ^^^^^^^^^^^^^^^^^^^
+        #  child object _diff_id:   ^^^^^^^^^^^^^^^^^^^^
         return retval
 
     # On BaseCfgLine()
@@ -179,8 +190,17 @@ class BaseCfgLine(metaclass=ABCMeta):
 
         if previous_text != newtext:
             self.diff_id = self.calculate_diff_id()
-            # FIXME - after changing text somehow we need to trigger
-            #         ConfigObjs.bootstrap_from_text()...
+
+            # After changing text we need to trigger
+            #     ConfigObjs.bootstrap_from_text()...
+            #
+            # If we take False out, it would run _bootstrap_from_text()
+            #     too often during initial configuration parsing...
+            #
+            # I put this here for some debugging but it shouldn't be
+            #     used in a general config parsing case.
+            if False and self.confobj is not None:
+                self.confobj._bootstrap_from_text()
 
     # On BaseCfgLine()
     @property
