@@ -1,7 +1,7 @@
 DOCHOST ?= $(shell bash -c 'read -p "documentation host: " dochost; echo $$dochost')
 # VERSION detection:
 #    Ref -> https://stackoverflow.com/a/71592061/667301
-VERSION := $(shell grep version pyproject.toml | tr -s ' ' | tr -d '"' | cut -d' ' -f3)
+VERSION := $(shell grep version pyproject.toml | tr -s ' ' | tr -d "'" | tr -d '"' | cut -d' ' -f3)
 
 .DEFAULT_GOAL := test
 
