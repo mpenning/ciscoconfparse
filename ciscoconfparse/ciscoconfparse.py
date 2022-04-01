@@ -72,6 +72,7 @@ import toml
 
 
 from collections.abc import MutableSequence, Iterator
+from difflib import SequenceMatcher
 from functools import partial
 from operator import is_not
 import inspect
