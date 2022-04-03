@@ -1,6 +1,6 @@
 r""" __init__.py - Parse, Query, Build, and Modify IOS-style configurations
 
-     Copyright (C) 2021      David Michael Pennington
+     Copyright (C) 2021-2022 David Michael Pennington
      Copyright (C) 2020-2021 David Michael Pennington at Cisco Systems
      Copyright (C) 2019      David Michael Pennington at ThousandEyes
      Copyright (C) 2012-2019 David Michael Pennington at Samsung Data Services
@@ -24,8 +24,15 @@ r""" __init__.py - Parse, Query, Build, and Modify IOS-style configurations
      mike [~at~] pennington [/dot\] net
 """
 
+import sys
+import os
+
+assert sys.version_info > (3, 0)
+
+from ciscoconfparse.ccp_util import PythonOptimizeCheck
 from ciscoconfparse.ciscoconfparse import *
 from ciscoconfparse.ccp_util import *
 
-# pyproject.toml needs version defined in __init__.py...
-# See the imports above...
+# Throw errors for PYTHONOPTIMIZE and `python -O ...` by executing
+#     PythonOptimizeCheck()...
+_ = PythonOptimizeCheck()
