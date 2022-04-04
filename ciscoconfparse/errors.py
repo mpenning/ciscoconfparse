@@ -22,7 +22,6 @@ r""" errors.py - Parse, Query, Build, and Modify IOS-style configs
      mike [~at~] pennington [/dot\] net
 """
 
-
 class BaseError(Exception):
     def __init__(self, msg=""):
         super().__init__(msg)
