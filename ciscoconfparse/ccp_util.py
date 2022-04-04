@@ -1,24 +1,3 @@
-from operator import attrgetter
-from functools import wraps
-import socket
-import time
-import sys
-import re
-import os
-
-from collections.abc import MutableSequence
-
-from ciscoconfparse.protocol_values import ASA_TCP_PORTS, ASA_UDP_PORTS
-import ciscoconfparse
-from dns.exception import DNSException
-from dns.resolver import Resolver
-from dns import reversename, query, zone
-
-from ipaddress import IPv4Network, IPv6Network, IPv4Address, IPv6Address
-import ipaddress
-
-from loguru import logger
-
 r""" ccp_util.py - Parse, Query, Build, and Modify IOS-style configurations
 
      Copyright (C) 2021-2022 David Michael Pennington
@@ -42,6 +21,28 @@ r""" ccp_util.py - Parse, Query, Build, and Modify IOS-style configurations
      If you need to contact the author, you can do so by emailing:
      mike [~at~] pennington [/dot\] net
 """
+
+from operator import attrgetter
+from functools import wraps
+import socket
+import time
+import sys
+import re
+import os
+
+from collections.abc import MutableSequence
+
+from ciscoconfparse.protocol_values import ASA_TCP_PORTS, ASA_UDP_PORTS
+from ciscoconfparse.errors import PythonOptimizeException
+import ciscoconfparse
+from dns.exception import DNSException
+from dns.resolver import Resolver
+from dns import reversename, query, zone
+
+from ipaddress import IPv4Network, IPv6Network, IPv4Address, IPv6Address
+import ipaddress
+
+from loguru import logger
 
 # Maximum ipv4 as an integer
 IPV4_MAXINT = 4294967295
@@ -113,6 +114,65 @@ _RGX_IPV4ADDR_NETMASK = re.compile(
 
 class UnsupportedFeatureWarning(SyntaxWarning):
     pass
+
+class PythonOptimizeCheck:
+    """
+    Check if we're running under "python -O ...".  The -O option removes
+    all `assert` statements at runtime.  ciscoconfparse depends heavily on
+    `assert` and running ciscoconfparse under python -O is a really bad idea.
+
+    __debug__ is True unless run with `python -O ...`.  __debug__ is False
+    under `python -O ...`.
+
+    Also throw an error if PYTHONOPTIMIZE is set in the windows or unix shell.
+
+    This class should be run in <module_name_dir>/__init__.py.
+
+    This condition is not unique to ciscoconfparse.
+
+    Simple usage (in __init__.py):
+    ------------------------------
+
+    # Handle PYTHONOPTIMIZE problems...
+    from ciscoconfparse.ccp_util import PythonOptimizeCheck
+    _ = PythonOptimizeCheck()
+
+
+    """
+    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    def __init__(self):
+
+        self.PYTHONOPTIMIZE_env_value = os.environ.get("PYTHONOPTIMIZE", None)
+
+        error = "__no_error__"
+        try:
+            # PYTHONOPTIMIZE is not supported...  in the linux shell
+            # disable it with `unset PYTHONOPTIMIZE`
+            if isinstance(self.PYTHONOPTIMIZE_env_value, str) and self.PYTHONOPTIMIZE_env_value.strip()!="":
+                # This condition explicitly allows PYTHONOPTIMIZE="", which
+                # is not a problem.
+                error = "Your environment has PYTHONOPTIMIZE set.  ciscoconfparse doesn't support running under PYTHONOPTIMIZE."
+            # PYTHONOPTIMIZE is not supported...  in the linux shell
+            # disable it with `unset PYTHONOPTIMIZE`
+            elif self.PYTHONOPTIMIZE_env_value is not None:
+                error = "Your environment has PYTHONOPTIMIZE set.  ciscoconfparse doesn't support running under PYTHONOPTIMIZE."
+            # Throw an error if we're running under `python -O`.  `python -O` is not supported
+            # We should keep the __debug__ check for `-O` at the end, otherwise it
+            # masks identifying problems with PYTHONOPTIMIZE set in the shell...
+            elif __debug__ is False:
+                # Running under 'python -O'
+                error = "You're using `python -O`. Please don't.  ciscoconfparse doesn't support `python -O`"
+
+            else:
+                # whew...
+                pass
+
+        except Exception as exception_info:
+            print("exception_info", str(exception_info))
+            raise RuntimeError("Something bad happened in PYTHONOPTIMIZE checks.  Please report this problem as a ciscoconfparse bug")
+
+        if error!="__no_error__":
+            raise PythonOptimizeException(error)
 
 
 def as_text_list(object_list):
