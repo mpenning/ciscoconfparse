@@ -24,10 +24,10 @@ r""" __init__.py - Parse, Query, Build, and Modify IOS-style configurations
      mike [~at~] pennington [/dot\] net
 """
 
-import importlib
-_ccp_util_specs = importlib.util.find_spec("ccp_util")
-_ccp_util = importlib.util.module_from_spec(_ccp_util_specs)
-_ccp_util_specs.loader.exec_module(_ccp_util)
+#import importlib
+#_ccp_util_specs = importlib.util.find_spec("ccp_util")
+#_ccp_util = importlib.util.module_from_spec(_ccp_util_specs)
+#_ccp_util_specs.loader.exec_module(_ccp_util)
 
 import sys
 import os
