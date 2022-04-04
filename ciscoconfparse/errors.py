@@ -1,8 +1,6 @@
-from __future__ import absolute_import
-
 r""" errors.py - Parse, Query, Build, and Modify IOS-style configs
 
-     Copyright (C) 2021      David Michael Pennington
+     Copyright (C) 2021-2022 David Michael Pennington
      Copyright (C) 2020-2021 David Michael Pennington at Cisco Systems
      Copyright (C) 2019      David Michael Pennington at ThousandEyes
      Copyright (C) 2018-2019 David Michael Pennington at Samsung Data Services
@@ -27,13 +25,18 @@ r""" errors.py - Parse, Query, Build, and Modify IOS-style configs
 
 class BaseError(Exception):
     def __init__(self, msg=""):
-        super(BaseError, self).__init__(msg)
+        super().__init__(msg)
         self.msg = msg
+
+class PythonOptimizeException(BaseError):
+
+    def __init__(self, msg=""):
+        super().__init__(msg)
 
 
 class DynamicAddressException(Exception):
     """Throw this if you try to get an address object from a dhcp interface"""
 
     def __init__(self, msg=""):
-        super(DynamicAddressException, self).__init__(msg)
+        super().__init__(msg)
         self.msg = msg
