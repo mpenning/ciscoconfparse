@@ -2642,7 +2642,8 @@ class CiscoRange(MutableSequence):
     ## Github issue #125
     @property
     def compressed_str(self):
-        """Return a text string with a compressed csv of values
+        """
+        Return a text string with a compressed csv of values
 
         >>> from ciscoconfparse.ccp_util import CiscoRange
         >>> range_obj = CiscoRange('1,3,5,6,7')
