@@ -1,28 +1,6 @@
-from operator import attrgetter
-from itertools import repeat
-from copy import copy, deepcopy
-try:
-    from unittest.mock import patch
-except ImportError:
-    from mock import patch
-import platform
-import logging
-import sys
-import re
-import os
-
-sys.path.insert(0, "..")
-
-from ciscoconfparse.ciscoconfparse import CiscoConfParse, IOSCfgLine, IOSIntfLine
-from ciscoconfparse.ciscoconfparse import CiscoPassword
-from ciscoconfparse.ccp_util import ccp_logger_control
-from ciscoconfparse.ccp_util import IPv4Obj, IPv6Obj
-from ciscoconfparse.ccp_abc import BaseCfgLine
-from passlib.hash import cisco_type7
-import pytest
-
 r""" test_CiscoConfParse.py - Parse, Query, Build, and Modify IOS-style configs
 
+     Copyright (C) 2021-2022 David Michael Pennington
      Copyright (C) 2020-2021 David Michael Pennington at Cisco Systems
      Copyright (C) 2019      David Michael Pennington at ThousandEyes
      Copyright (C) 2012-2019 David Michael Pennington at Samsung Data Services
@@ -44,6 +22,29 @@ r""" test_CiscoConfParse.py - Parse, Query, Build, and Modify IOS-style configs
      If you need to contact the author, you can do so by emailing:
      mike [~at~] pennington [/dot\] net
 """
+
+from operator import attrgetter
+from itertools import repeat
+from copy import copy, deepcopy
+try:
+    from unittest.mock import patch
+except ImportError:
+    from unittest.mock import patch
+import platform
+import logging
+import sys
+import re
+import os
+
+sys.path.insert(0, "..")
+
+from ciscoconfparse.ciscoconfparse import CiscoConfParse, IOSCfgLine, IOSIntfLine
+from ciscoconfparse.ciscoconfparse import CiscoPassword
+from ciscoconfparse.ccp_util import ccp_logger_control
+from ciscoconfparse.ccp_util import IPv4Obj, IPv6Obj
+from ciscoconfparse.ccp_abc import BaseCfgLine
+from passlib.hash import cisco_type7
+import pytest
 
 
 def testParse_invalid_filepath():
@@ -418,7 +419,7 @@ def testValues_parent_child_parsing_02(parse_c01):
     # Insert lines here...
     for intf_obj in cfg.find_objects(r"^interface\sGigabitEthernet"):
         # Configured with an access vlan...
-        if " switchport access vlan 100" in set([ii.text for ii in intf_obj.children]):
+        if " switchport access vlan 100" in {ii.text for ii in intf_obj.children}:
             intf_obj.insert_after(" spanning-tree portfast")
     cfg.atomic()
 
