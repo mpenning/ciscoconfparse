@@ -1,7 +1,6 @@
 r""" ciscoconfparse.py - Parse, Query, Build, and Modify IOS-style configs
 
      Copyright (C) 2021-2022 David Michael Pennington
-     Copyright (C) 2021      David Michael Pennington
      Copyright (C) 2020-2021 David Michael Pennington at Cisco Systems
      Copyright (C) 2019      David Michael Pennington at ThousandEyes
      Copyright (C) 2012-2019 David Michael Pennington at Samsung Data Services
@@ -170,9 +169,10 @@ def build_space_tolerant_regex(linespec):
 
     return linespec
 
-@logger.catch(default=True, onerror=lambda _: sys.exit(1))
 class CiscoConfParse:
     """Parses Cisco IOS configurations and answers queries about the configs."""
+
+    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
     def __init__(
         self,
         config="",
