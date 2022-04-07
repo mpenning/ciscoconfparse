@@ -1,4 +1,27 @@
-#!/usr/bin/env python
+r""" test_Ccp_Util.py - Parse, Query, Build, and Modify IOS-style configs
+
+     Copyright (C) 2021-2022 David Michael Pennington
+     Copyright (C) 2020-2021 David Michael Pennington at Cisco Systems
+     Copyright (C) 2019      David Michael Pennington at ThousandEyes
+     Copyright (C) 2014-2019 David Michael Pennington at Samsung Data Services
+
+     This program is free software: you can redistribute it and/or modify
+     it under the terms of the GNU General Public License as published by
+     the Free Software Foundation, either version 3 of the License, or
+     (at your option) any later version.
+
+     This program is distributed in the hope that it will be useful,
+     but WITHOUT ANY WARRANTY; without even the implied warranty of
+     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+     GNU General Public License for more details.
+
+     You should have received a copy of the GNU General Public License
+     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+     If you need to contact the author, you can do so by emailing:
+     mike [~at~] pennington [/dot\] net
+"""
+
 
 import sys
 import re
@@ -20,29 +43,6 @@ if sys.version_info[0] < 3:
 else:
     from ipaddress import IPv4Network, IPv6Network, IPv4Address, IPv6Address
     import ipaddress
-
-r""" test_Ccp_Util.py - Parse, Query, Build, and Modify IOS-style configs
-
-     Copyright (C) 2020-2021 David Michael Pennington at Cisco Systems
-     Copyright (C) 2019      David Michael Pennington at ThousandEyes
-     Copyright (C) 2014-2019 David Michael Pennington at Samsung Data Services
-
-     This program is free software: you can redistribute it and/or modify
-     it under the terms of the GNU General Public License as published by
-     the Free Software Foundation, either version 3 of the License, or
-     (at your option) any later version.
-
-     This program is distributed in the hope that it will be useful,
-     but WITHOUT ANY WARRANTY; without even the implied warranty of
-     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-     GNU General Public License for more details.
-
-     You should have received a copy of the GNU General Public License
-     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-     If you need to contact the author, you can do so by emailing:
-     mike [~at~] pennington [/dot\] net
-"""
 
 
 
@@ -562,11 +562,8 @@ def testIPv6Obj_lt_01():
 
 def test_collapse_addresses_01():
 
-    if sys.version_info >= (3, 0, 0):
-        net_collapsed = ipaddress.collapse_addresses([IPv4Network('192.0.0.0/22'), IPv4Network('192.0.2.128/25')])
+    net_collapsed = ipaddress.collapse_addresses([IPv4Network('192.0.0.0/22'), IPv4Network('192.0.2.128/25')])
 
-    else:
-        net_collapsed = ipaddr.collapse_addresses([IPv4Network('192.0.0.0/22'), IPv4Network('192.0.2.128/25')])
 
     for idx, entry in enumerate(net_collapsed):
         if idx==0:
@@ -745,7 +742,7 @@ def test_CiscoRange_18():
 
 def test_CiscoRange_compressed_str_01():
     """compressed_str test"""
-    assert CiscoRange("1,2, 3, 6, 7, 8, 9, 911").compressed_str == "1-3,6-9,911"
+    assert CiscoRange("1,2, 3, 6, 7,  8 , 9, 911").compressed_str == "1-3,6-9,911"
 
 
 def test_CiscoRange_contains():
