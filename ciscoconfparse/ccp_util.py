@@ -359,8 +359,6 @@ def ccp_logger_control(
             "action='%s' is an unsupported logger action" % action
         )
 
-
-@logger.catch(default=True, onerror=lambda _: sys.exit(1))
 class __ccp_re__:
     """A wrapper around python's re.  This is an experimental object... it may disappear at any time as long as this message exists.
     self.regex = r'{}'.format(regex)
@@ -389,6 +387,7 @@ class __ccp_re__:
 
     """
 
+    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
     def __init__(self, regex_str=r"", target_str=None, groups=None, flags=0, debug=0):
         assert isinstance(regex_str, str)
         assert isinstance(flags, int)
@@ -635,7 +634,7 @@ def collapse_addresses(network_list):
         elif isinstance(arg, IPv6Network):
             return arg
         else:
-            ValueError("collapse_addresses() isn't sure how to handle %s" % arg)
+            raise ValueError("collapse_addresses() isn't sure how to handle %s" % arg)
 
     return ipaddress.collapse_addresses([ip_net(ii) for ii in network_list])
 
