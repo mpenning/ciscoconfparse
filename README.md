@@ -3,10 +3,8 @@ ciscoconfparse
 
 [![Github unittest workflow][4]][5] [![Code Health][37]][38] [![Version][2]][3] [![Downloads][6]][7] [![License][8]][9]
 
-::: {.contents}
-:::
 
-Introduction: What is ciscoconfparse? {#introduction}
+Introduction: What is ciscoconfparse?
 -------------------------------------
 
 Short answer: ciscoconfparse is a [Python][10] library
@@ -105,12 +103,12 @@ Building the Package
 -   `make repo-push`
 -   `make pypi`
 
-Pre-requisites {#Pre-Requisites}
+Pre-requisites
 --------------
 
 [The ciscoconfparse python package][3] requires Python versions 3.5+ (note: Python version 3.7.0 has a bug - ref [Github issue \#117][18], but version 3.7.1 works); the OS should not matter.
 
-Installation and Downloads {#Installation}
+Installation and Downloads
 --------------------------
 
 -   Use `poetry` for Python3.x\... :
@@ -125,7 +123,7 @@ If you\'re interested in the source, you can always pull from the [github repo][
         cd ciscoconfparse/
         python -m pip install .
 
-Other Resources {#Other-Resources}
+Other Resources
 ---------------
 
 - [Dive into Python3](http://www.diveintopython3.net/) is a good way to learn Python
@@ -133,7 +131,7 @@ Other Resources {#Other-Resources}
 - [Cisco\'s Guide to hardening IOS devices][31]
 - [Center for Internet Security Benchmarks][32] (An email address, cookies, and javascript are required)
 
-Bug Tracker and Support {#Bug-Tracker-and-Support}
+Bug Tracker and Support
 -----------------------
 
 - Please report any suggestions, bug reports, or annoyances with [ciscoconfparse][3] through the [github bug tracker][24].
@@ -144,38 +142,31 @@ Bug Tracker and Support {#Bug-Tracker-and-Support}
   - [reddit/r/networking][36]
   - [NetworkEngineering.se][23]
 
-Unit-Tests {#Unit-Tests}
+Unit-Tests
 ----------
 
 The project\'s [test workflow][1] checks ciscoconfparse on Python versions 3.6 and higher, as well as a [pypy JIT][22] executable.
 
 Click the image below for details; the current build status is: [![Github unittest status][4]][5]
 
-License and Copyright {#License and Copyright}
+License and Copyright
 ---------------------
 
 [ciscoconfparse][3] is licensed [GPLv3][21]
 
-Copyright (C) 2021-2022 David Michael Pennington
-Copyright (C) 2020-2021 David Michael Pennington at Cisco Systems
-Copyright (C) 2019 David Michael Pennington at ThousandEyes
-Copyright (C) 2012-2019 David Michael Pennington at Samsung Data Services
-Copyright (C) 2011-2012 David Michael Pennington at Dell Computer Corp
-Copyright (C) 2007-2011 David Michael Pennington
+- Copyright (C) 2021-2022 David Michael Pennington
+- Copyright (C) 2020-2021 David Michael Pennington at Cisco Systems
+- Copyright (C) 2019 David Michael Pennington at ThousandEyes
+- Copyright (C) 2012-2019 David Michael Pennington at Samsung Data Services
+- Copyright (C) 2011-2012 David Michael Pennington at Dell Computer Corp
+- Copyright (C) 2007-2011 David Michael Pennington
 
 The word \"Cisco\" is a registered trademark of [Cisco Systems][27].
 
-Author and Thanks {#Author}
+Author and Thanks
 -----------------
 
 [ciscoconfparse][3] was written by [David Michael Pennington][25] (mike \[\~at\~\] pennington \[/dot\] net).
-
-Special mentions:
-
-- Thanks to [David Muir Sharnoff][26] for his suggestion about making a special case for IOS banners.
-- Thanks to Alan Cownie for his API suggestions.
-- Thanks to [CrackerJackMack][20] for reporting [Github Issue \#13][19]
-- Soli Deo Gloria
 
 
   [1]: https://github.com/mpenning/ciscoconfparse/tree/master/.github/workflows
