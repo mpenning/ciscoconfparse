@@ -1,4 +1,12 @@
 ---
 # https://lgtm.com/projects/g/mpenning/ciscoconfparse/
+extraction:
+  python:
+    python_setup:
+      version: 3
+      requirements_files:
+        - requirements.txt
+      setup_py: false
+
 queries:
 - exclude: py/property-in-old-style-class
