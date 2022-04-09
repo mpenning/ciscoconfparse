@@ -13,5 +13,5 @@ contact_links:
     url: penningtonthing@gmail.com
     about: "Do not report security issues publicly. Please email our security contact."
   - name: Questions
-    about: "StackOverflow is a good place to ask programming questions, such as those involving CiscoConfParse(). We do not support these questions here."
+    about: "[StackOverflow](https://stackoverflow.com/questions/ask?title=How%20do%20I&tags=ciscoconfparse+python) or [reddit/r/Python](https://www.reddit.com/r/Python/) are good places to ask programming questions, such as those involving CiscoConfParse(). We do not support these questions here."
     url: "https://stackoverflow.com/questions/ask?title=How%20do%20I&tags=ciscoconfparse+python"
