@@ -1,3 +1,4 @@
+---
 # https://lgtm.com/projects/g/mpenning/ciscoconfparse/
 queries:
 - exclude: py/property-in-old-style-class
