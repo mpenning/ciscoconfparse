@@ -135,7 +135,7 @@ Bug Tracker and Support
 -----------------------
 
 - Please report any suggestions, bug reports, or annoyances with a [github bug report][24].
-- If you\'re having problems with general python issues, consider searching for a solution on [Stack Overflow][33].  If you can\'t find a solution for your problem or need more help, you can [ask on Stack Overflow][34].
+- If you\'re having problems with general python issues, consider searching for a solution on [Stack Overflow][33].  If you can\'t find a solution for your problem or need more help, you can [ask on Stack Overflow][34] or [reddit/r/Python][39].
 - If you\'re having problems with your Cisco devices, you can contact:
   - [Cisco TAC][28]
   - [reddit/r/Cisco][35]
@@ -207,3 +207,4 @@ Author
   [36]: https://www.reddit.com/r/networking
   [37]: https://snyk.io/advisor/python/ciscoconfparse/badge.svg
   [38]: https://snyk.io/advisor/python/ciscoconfparse
+  [39]: https://www.reddit.com/r/Python/
