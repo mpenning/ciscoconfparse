@@ -155,7 +155,7 @@ License and Copyright
 [ciscoconfparse][3] is licensed [GPLv3][21]
 
 - Copyright (C) 2021-2022 David Michael Pennington
-- Copyright (C) 2020-2021 David Michael Pennington at Cisco Systems
+- Copyright (C) 2020-2021 David Michael Pennington at Cisco Systems (post-acquisition: Cisco acquired ThousandEyes)
 - Copyright (C) 2019 David Michael Pennington at ThousandEyes
 - Copyright (C) 2012-2019 David Michael Pennington at Samsung Data Services
 - Copyright (C) 2011-2012 David Michael Pennington at Dell Computer Corp
@@ -163,8 +163,8 @@ License and Copyright
 
 The word \"Cisco\" is a registered trademark of [Cisco Systems][27].
 
-Author and Thanks
------------------
+Author
+------
 
 [ciscoconfparse][3] was written by [David Michael Pennington][25] (mike \[\~at\~\] pennington \[/dot\] net).
 
