@@ -19,11 +19,14 @@ r""" ccp_abc.py - Parse, Query, Build, and Modify IOS-style configurations
 
 from operator import methodcaller
 from abc import ABCMeta
+import warnings
 import inspect
 import re
 
 from ciscoconfparse.ccp_util import junos_unsupported
 from loguru import logger
+
+DEFAULT_TEXT = "__undefined__"
 
 ##
 ##-------------  Config Line ABC
@@ -31,27 +34,27 @@ from loguru import logger
 class BaseCfgLine(metaclass=ABCMeta):
     # deprecating py2.foo metaclass syntax in version 1.6.8...
     #__metaclass__ = ABCMeta
-    def __init__(self, text="__undefined__", comment_delimiter="!"):
+    def __init__(self, text=DEFAULT_TEXT, comment_delimiter="!"):
         """Accept an IOS line number and initialize family relationship
         attributes"""
         self.comment_delimiter = comment_delimiter
         self._text = text
+        self._uncfgtext_to_be_deprecated = ""
         self.linenum = -1
         self.parent = self
         self.child_indent = 0
         self.is_comment = None
         self.children = list()
         self.oldest_ancestor = False
-        self.indent = 0  # Whitespace indentation on the object
+        self.indent = 0      # Whitespace indentation on the object
         self.confobj = None  # Reference to the list object which owns it
-        self.feature = ""  # Major feature description
-        self.feature_param1 = ""  # Parameter1 of the feature
-        self.feature_param2 = ""  # Parameter2 of the feature (if req'd)
+        self.feature = ""    # Major feature description
         self.set_comment_bool()
 
         self._diff_id = None
         self.diff_rendered = None
-        self.diff_word = ""
+        self.diff_word = ""  # diff_word: 'keep', 'remove', 'unchanged', 'add'
+        self.diff_side = ""  # diff_side: 'before', 'after' or ''
 
     # On BaseCfgLine()
     def __repr__(self):
@@ -161,11 +164,6 @@ class BaseCfgLine(metaclass=ABCMeta):
                 assert obj.indent == 0
                 retval.insert(0, obj._diff_id)
 
-                if False:
-                    # FIXME -> ORIGINAL obj = obj.parent
-                    #obj.parent = obj
-                    raise NotImplementedError(obj, obj.parent)
-
             elif idx <= len_geneology - 1:
                 # This object is a child of self.parent
                 assert obj.indent > 0
@@ -224,18 +222,22 @@ class BaseCfgLine(metaclass=ABCMeta):
     @property
     def hash_children(self):
         """Return a unique hash of all children (if the number of children > 0)"""
-        if len(self.children) > 0:
-            return hash(tuple(self.children))
+        if len(self.all_children) > 0:
+            return hash(tuple(self.all_children))
         else:
-            return 0
+            return hash(())
 
     # On BaseCfgLine()
     @property
     def family_endpoint(self):
-        if self.children == []:
-            return 0
+        assert isinstance(self.all_children, list)
+        if self.all_children == []:
+            # CHANGED on 2022-04-01... PREVIOUS_VALUE="return 0"
+            # CHANGED on 2022-04-01... NEW_VALUE="self.linenum"
+            return self.linenum
         else:
-            return self.children[-1].linenum
+            return self.all_children[-1].linenum
+
 
     # On BaseCfgLine()
     @property
@@ -338,13 +340,79 @@ class BaseCfgLine(metaclass=ABCMeta):
 
     # On BaseCfgLine()
     @junos_unsupported
-    def add_uncfgtext(self, unconftext):
-        """unconftext is defined during special method calls.  Do not assume it
-        is automatically populated."""
-        ## remove any preceeding "no "
-        conftext = re.sub(r"\s*no\s+", "", unconftext)
+    def add_uncfgtext(self, unconftext=None):
+        """
+        add_uncfgtext() is deprecated and will be removed.
+
+        .. code-block:: python
+           :emphasize-lines: 16
+           >>> # assume parse.find_objects() returned a value in obj below
+           >>> obj.text
+           ' no ip proxy-arp'
+           >>> obj.uncfgtext
+           ''
+           >>> obj.add_uncfgtext(" no ip proxy-arp")
+        """
+        assert isinstance(unconftext, str)
+        assert isinstance(self.text, str) and self.text != DEFAULT_TEXT
+
+        # adding a deprecation warning in version 1.7.0...
+        deprecation_warn_str = "add_uncfgtext() is deprecated and will be removed."
+        warnings.warn(deprecation_warn_str, DeprecationWarning)
+        ## remove any preceeding "no " from Cisco IOS commands...
+        conftext = re.sub(r"^(\s*)(no\s+)(\S.*)?$", "\3", unconftext)
         myindent = self.parent.child_indent
-        self.uncfgtext = myindent * " " + "no " + conftext
+
+        # write access to self.uncfgtext is not supported
+        self._uncfgtext_to_be_deprecated = myindent * " " + "no " + conftext
+
+    @property
+    def uncfgtext(self):
+        """
+        Return a 'best-effort' Cisco IOS-style config to remove this
+        configuration object.
+
+        This `uncfgtext` string should not be considered correct
+        in all Cisco IOS command unconfigure cases.
+        """
+        assert isinstance(self.text, str) and self.text != DEFAULT_TEXT
+
+        tmp = [ii.strip() for ii in self.text.split()]
+
+        # _uncfgtext_to_be_deprecated is normally set in add_uncfgtext()...
+        # deprecation warnings for _uncfgtext_to_be_deprecated were
+        # introduced in version 1.7.0...
+        if self._uncfgtext_to_be_deprecated != "":
+            # Officially, _uncfgtext_to_be_deprecated is not supported.
+            # This if-case is here for someone who may have set
+            # self.uncfgtext in older ciscoconfparse versions.
+            #
+            # After uncfgtext.setter (below) is removed, we can rip out
+            # this portion of the if-else logic...
+            deprecation_warn_str = "add_uncfgtext() is deprecated and will be removed."
+            warnings.warn(deprecation_warn_str, DeprecationWarning)
+            return self._uncfgtext_to_be_deprecated
+
+        # Once _uncfgtext_to_be_deprecated is removed, we can make this
+        # condition the first in this if-else logic...
+        elif tmp[0].lower()=="no":
+            assert len(tmp) > 1 # join() below only makes sense if len(tmp)>1
+            return self.indent * " " + " ".join(tmp[1:])
+
+        else:
+            return self.indent * " " + "no " + self.text.lstrip()
+
+    @uncfgtext.setter
+    def uncfgtext(self, value=""):
+        # Officially, _uncfgtext_to_be_deprecated is not supported. This
+        # setter is here for someone who may have set self.uncfgtext in older
+        # ciscoconfparse versions.
+        #
+        # This uncfgtext setter was added in version 1.7.0...
+        deprecation_warn_str = "setting uncfgtext is deprecated and will be removed."
+        warnings.warn(deprecation_warn_str, DeprecationWarning)
+
+        self._uncfgtext_to_be_deprecated = value
 
     # On BaseCfgLine()
     @junos_unsupported
