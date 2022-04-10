@@ -40,7 +40,8 @@ from dns.resolver import Resolver
 from dns import reversename, query, zone
 
 from ipaddress import IPv4Network, IPv6Network, IPv4Address, IPv6Address
-import ipaddress
+from ipaddress import collapse_addresses as ipaddr_collapse_addresses
+from ipaddress import AddressValueError
 
 from loguru import logger
 
@@ -516,7 +517,7 @@ def _get_ipv4(val="", strict=False, stdlib=False, debug=0):
                 assert isinstance(obj.network, IPv4Network)
                 return obj.network
     except Exception as ee:
-        raise ipaddress.AddressValueError(str(ee))
+        raise AddressValueError(str(ee))
 
 
 def _get_ipv6(val="", strict=False, stdlib=False, debug=0):
@@ -545,7 +546,7 @@ def _get_ipv6(val="", strict=False, stdlib=False, debug=0):
                 return obj.network
 
     except Exception as ee:
-        raise ipaddress.AddressValueError(str(ee))
+        raise AddressValueError(str(ee))
 
 def ip_factory(val="", stdlib=False, mode="auto_detect", debug=0):
     """
@@ -580,7 +581,7 @@ def ip_factory(val="", stdlib=False, mode="auto_detect", debug=0):
             return obj
         else:
             error_str = "Cannot auto-detect ip='%s'" % val
-            raise ipaddress.AddressValueError(error_str)
+            raise AddressValueError(error_str)
 
     elif mode == "ipv4":
         try:
@@ -588,7 +589,7 @@ def ip_factory(val="", stdlib=False, mode="auto_detect", debug=0):
             return obj
         except:
             error_str = "Cannot parse '%s' as ipv4" % val
-            raise ipaddress.AddressValueError(error_str)
+            raise AddressValueError(error_str)
 
     elif mode == "ipv6":
         try:
@@ -596,11 +597,11 @@ def ip_factory(val="", stdlib=False, mode="auto_detect", debug=0):
             return obj
         except:
             error_str = "Cannot parse '%s' as ipv6" % val
-            raise ipaddress.AddressValueError(error_str)
+            raise AddressValueError(error_str)
 
     else:
         error_str = "Cannot parse '%s' as ipv4 or ipv6" % val
-        raise ipaddress.AddressValueError(error_str)
+        raise AddressValueError(error_str)
 
     # Raise errors for any problems...  We should not be here...
     error = "ip_factory('{}', mode='{}') could not parse into a valid {} object".format(
@@ -608,7 +609,7 @@ def ip_factory(val="", stdlib=False, mode="auto_detect", debug=0):
         mode,
         addr_family,
     )
-    raise ipaddress.AddressValueError(error)
+    raise AddressValueError(error)
 
 
 def collapse_addresses(network_list):
@@ -636,7 +637,7 @@ def collapse_addresses(network_list):
         else:
             raise ValueError("collapse_addresses() isn't sure how to handle %s" % arg)
 
-    return ipaddress.collapse_addresses([ip_net(ii) for ii in network_list])
+    return ipaddr_collapse_addresses([ip_net(ii) for ii in network_list])
 
 
 # Build a wrapper around ipaddress classes to mimic the behavior of network
@@ -820,7 +821,7 @@ class IPv4Obj:
             return None
 
         else:
-            raise ipaddress.AddressValueError(
+            raise AddressValueError(
                 "Could not parse '{}' (type: {}) into an IPv4 Address".format(
                     arg, type(arg)
                 )
@@ -843,7 +844,7 @@ class IPv4Obj:
             try:
                 mm = _RGX_IPV4ADDR_NETMASK.search(arg)
             except TypeError:
-                raise ipaddress.AddressValueError(
+                raise AddressValueError(
                     f"_ipv4_params_dict() doesn't understand how to parse {arg}"
                 )
 
@@ -870,7 +871,7 @@ class IPv4Obj:
             elif masklen is not None:
                 ip_arg_str = f"{addr}/{masklen}"
             else:
-                raise ipaddress.AddressValueError()
+                raise AddressValueError()
 
         elif isinstance(arg, int):
             addr = str(IPv4Address(arg))
@@ -885,7 +886,7 @@ class IPv4Obj:
             ip_arg_str = f"{addr}/{masklen}"
 
         else:
-            raise ipaddress.AddressValueError("IPv4Obj(arg='%s') is an unknown argument type" % (arg))
+            raise AddressValueError("IPv4Obj(arg='%s') is an unknown argument type" % (arg))
 
         assert 0 <= masklen <= IPV4_MAX_PREFIXLEN
         params_dict = {
@@ -1472,7 +1473,7 @@ class IPv6Obj:
             return None
 
         else:
-            raise ipaddress.AddressValueError(
+            raise AddressValueError(
                 "Could not parse '{}' (type: {}) into an IPv6 Address".format(
                     arg, type(arg)
                 )
@@ -1496,7 +1497,7 @@ class IPv6Obj:
                 mm = _RGX_IPV6ADDR.search(arg)
 
             except TypeError:
-                raise ipaddress.AddressValueError(
+                raise AddressValueError(
                     f"_ipv6_params_dict() doesn't know how to parse {arg}"
                 )
 
@@ -1533,7 +1534,7 @@ class IPv6Obj:
             ip_arg_str = f"{addr}/{masklen}"
 
         else:
-            raise ipaddress.AddressValueError("IPv6Obj(arg='%s') is an unknown argument type" % (arg))
+            raise AddressValueError("IPv6Obj(arg='%s') is an unknown argument type" % (arg))
 
         assert 0 <= masklen <= IPV6_MAX_PREFIXLEN
         params_dict = {
@@ -1547,7 +1548,7 @@ class IPv6Obj:
         if params_dict.get('masklen', None) is not None:
             ip_arg_str = f"{addr}/{masklen}"
         else:
-            raise ipaddress.AddressValueError()
+            raise AddressValueError()
 
         params_dict['ip_arg_str'] = ip_arg_str
 
