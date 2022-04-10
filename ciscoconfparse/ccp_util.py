@@ -1500,13 +1500,11 @@ class IPv6Obj:
             addr = str(IPv6Address(arg))
             netmask = 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff'
             masklen = 128
-            ip_arg_str = f"{addr}/{masklen}"
 
         elif isinstance(arg, IPv6Obj):
             addr = str(arg.ip)
             netmask = str(arg.netmask)
             masklen = arg.masklen
-            ip_arg_str = f"{addr}/{masklen}"
 
         else:
             raise AddressValueError("IPv6Obj(arg='%s') is an unknown argument type" % (arg))
