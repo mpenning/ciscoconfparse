@@ -823,14 +823,6 @@ class IPv4Obj:
         """Parse out important IPv4 parameters from arg.  This method must run to completion for address parsing to work correctly."""
         assert isinstance(arg, str) or isinstance(arg, int) or isinstance(arg, IPv4Obj)
 
-        params_dict = {
-            'ipv4_addr': None,
-            'ip_version': 4,
-            'ip_arg_str': None,
-            'netmask': None,
-            'masklen': None,
-        }
-
         if isinstance(arg, str):
             try:
                 mm = _RGX_IPV4ADDR_NETMASK.search(arg)
