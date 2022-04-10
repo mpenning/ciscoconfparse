@@ -257,10 +257,11 @@ def log_function_call(function=None, *args, **kwargs):
                         "Type 2 log_function_call: %s(%s, %s)"
                         % (ff.__qualname__, args, kwargs)
                     )
-            return ff(*args, **kwargs)
+
             logger.info(
                 f"Type 3 log_function_call: {ff.__qualname__}({args}, {kwargs})"
             )
+            return ff(*args, **kwargs)
 
         return wrapped_logging
 
@@ -562,7 +563,6 @@ def ip_factory(val="", stdlib=False, mode="auto_detect", debug=0):
     assert isinstance(stdlib, bool)
     assert isinstance(debug, int)
 
-
     obj = None
     if mode == "auto_detect":
 
@@ -602,15 +602,6 @@ def ip_factory(val="", stdlib=False, mode="auto_detect", debug=0):
     else:
         error_str = "Cannot parse '%s' as ipv4 or ipv6" % val
         raise AddressValueError(error_str)
-
-    # Raise errors for any problems...  We should not be here...
-    error = "ip_factory('{}', mode='{}') could not parse into a valid {} object".format(
-        val,
-        mode,
-        addr_family,
-    )
-    raise AddressValueError(error)
-
 
 def collapse_addresses(network_list):
     """
