@@ -1,23 +1,3 @@
-from __future__ import absolute_import
-import re
-
-from ciscoconfparse.protocol_values import (
-    ASA_TCP_PORTS,
-    ASA_UDP_PORTS,
-    ASA_IP_PROTOCOLS,
-)
-from ciscoconfparse.ccp_abc import BaseCfgLine
-from ciscoconfparse.ccp_util import L4Object
-from ciscoconfparse.ccp_util import IPv4Obj
-
-### HUGE UGLY WARNING:
-###   Anything in models_asa.py could change at any time, until I remove this
-###   warning.  I have good reason to believe that these methods
-###   function correctly, but I've been wrong before.  There are no unit tests
-###   for this functionality yet, so I consider all this code alpha quality.
-###
-###   Use models_asa.py at your own risk.  You have been warned :-)
-
 r""" models_asa.py - Parse, Query, Build, and Modify IOS-style configurations
 
      Copyright (C) 2021      David Michael Pennington
@@ -41,6 +21,25 @@ r""" models_asa.py - Parse, Query, Build, and Modify IOS-style configurations
      If you need to contact the author, you can do so by emailing:
      mike [~at~] pennington [/dot\] net
 """
+
+### HUGE UGLY WARNING:
+###   Anything in models_asa.py could change at any time, until I remove this
+###   warning.  I have good reason to believe that these methods
+###   function correctly, but I've been wrong before.  There are no unit tests
+###   for this functionality yet, so I consider all this code alpha quality.
+###
+###   Use models_asa.py at your own risk.  You have been warned :-)
+
+import re
+
+from ciscoconfparse.protocol_values import (
+    ASA_TCP_PORTS,
+    ASA_UDP_PORTS,
+    ASA_IP_PROTOCOLS,
+)
+from ciscoconfparse.ccp_abc import BaseCfgLine
+from ciscoconfparse.ccp_util import L4Object
+from ciscoconfparse.ccp_util import IPv4Obj
 
 ##
 ##-------------  ASA Configuration line object
@@ -85,7 +84,7 @@ class ASACfgLine(BaseCfgLine):
     def __init__(self, *args, **kwargs):
         """Accept an ASA line number and initialize family relationship
         attributes"""
-        super(ASACfgLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     @classmethod
     def is_object_for(cls, line="", re=re):
@@ -143,7 +142,7 @@ class ASACfgLine(BaseCfgLine):
 
 class BaseASAIntfLine(ASACfgLine):
     def __init__(self, *args, **kwargs):
-        super(BaseASAIntfLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.ifindex = None  # Optional, for user use
         self.default_ipv4_addr_object = IPv4Obj("127.0.0.1/32", strict=False)
 
@@ -153,14 +152,14 @@ class BaseASAIntfLine(ASACfgLine):
                 addr = "No IPv4"
             else:
                 addr = self.ipv4_addr_object
-            return "<%s # %s '%s' info: '%s'>" % (
+            return "<{} # {} '{}' info: '{}'>".format(
                 self.classname,
                 self.linenum,
                 self.name,
                 addr,
             )
         else:
-            return "<%s # %s '%s' info: 'switchport'>" % (
+            return "<{} # {} '{}' info: 'switchport'>".format(
                 self.classname,
                 self.linenum,
                 self.name,
@@ -261,7 +260,7 @@ class BaseASAIntfLine(ASACfgLine):
     def ipv4_addr_object(self):
         """Return a ccp_util.IPv4Obj object representing the address on this interface; if there is no address, return IPv4Obj('127.0.0.1/32')"""
         try:
-            return IPv4Obj("%s/%s" % (self.ipv4_addr, self.ipv4_netmask))
+            return IPv4Obj("{}/{}".format(self.ipv4_addr, self.ipv4_netmask))
         except Exception as ee:
             return self.default_ipv4_addr_object
 
@@ -269,7 +268,7 @@ class BaseASAIntfLine(ASACfgLine):
     def ipv4_standby_addr_object(self):
         """Return a ccp_util.IPv4Obj object representing the standby address on this interface; if there is no address, return IPv4Obj('127.0.0.1/32')"""
         try:
-            return IPv4Obj("%s/%s" % (self.ipv4_standby_addr, self.ipv4_netmask))
+            return IPv4Obj("{}/{}".format(self.ipv4_standby_addr, self.ipv4_netmask))
         except Exception as ee:
             return self.default_ipv4_addr_object
 
@@ -282,11 +281,11 @@ class BaseASAIntfLine(ASACfgLine):
     def ip_network_object(self):
         try:
             return IPv4Obj(
-                "%s/%s" % (self.ipv4_addr, self.ipv4_netmask), strict=False
+                "{}/{}".format(self.ipv4_addr, self.ipv4_netmask), strict=False
             ).network
         except AttributeError:
             return IPv4Obj(
-                "%s/%s" % (self.ipv4_addr, self.ipv4_netmask), strict=False
+                "{}/{}".format(self.ipv4_addr, self.ipv4_netmask), strict=False
             ).network_address
         except Exception as ee:
             return self.default_ipv4_addr_object
@@ -375,7 +374,7 @@ class BaseASAIntfLine(ASACfgLine):
                 return self.ipv4_addr_object in ipv4network
             except Exception as ee:
                 raise ValueError(
-                    "FATAL: %s.in_ipv4_subnet(ipv4network={0}) is an invalid arg".format(
+                    "FATAL: %s.in_ipv4_subnet(ipv4network={}) is an invalid arg".format(
                         ipv4network
                     )
                 )
@@ -455,7 +454,7 @@ class ASAName(ASACfgLine):
     def __init__(self, *args, **kwargs):
         """Accept an ASA line number and initialize family relationship
         attributes"""
-        super(ASAName, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         mm = _RE_NAMEOBJECT.search(self.text)
         if (mm is not None):
             self._mm_results = mm.groupdict()  # All regex match results
@@ -491,7 +490,7 @@ class ASAObjNetwork(ASACfgLine):
     def __init__(self, *args, **kwargs):
         """Accept an ASA line number and initialize family relationship
         attributes"""
-        super(ASAObjNetwork, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     @classmethod
     def is_object_for(cls, line="", re=re):
@@ -509,7 +508,7 @@ class ASAObjService(ASACfgLine):
     def __init__(self, *args, **kwargs):
         """Accept an ASA line number and initialize family relationship
         attributes"""
-        super(ASAObjService, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     @classmethod
     def is_object_for(cls, line="", re=re):
@@ -534,7 +533,7 @@ class ASAObjGroupNetwork(ASACfgLine):
     def __init__(self, *args, **kwargs):
         """Accept an ASA line number and initialize family relationship
         attributes"""
-        super(ASAObjGroupNetwork, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         self.name = self.re_match_typed(
             r"^object-group\s+network\s+(\S+)", group=1, result_type=str
@@ -581,7 +580,7 @@ class ASAObjGroupNetwork(ASACfgLine):
             elif net_obj.get("network", None):
                 ## This is a non-host network object
                 retval.append(
-                    "{0}/{1}".format(
+                    "{}/{}".format(
                         names.get(net_obj["network"], net_obj["network"]),
                         net_obj["netmask"],
                     )
@@ -591,7 +590,7 @@ class ASAObjGroupNetwork(ASACfgLine):
                 if groupobject == self.name:
                     ## Throw an error when importing self
                     raise ValueError(
-                        "FATAL: Cannot recurse through group-object {0} in object-group network {1}".format(
+                        "FATAL: Cannot recurse through group-object {} in object-group network {}".format(
                             groupobject, self.name
                         )
                     )
@@ -599,21 +598,21 @@ class ASAObjGroupNetwork(ASACfgLine):
                 group_nets = self.confobj.object_group_network.get(groupobject, None)
                 if group_nets is None:
                     raise ValueError(
-                        "FATAL: Cannot find group-object named {0}".format(name)
+                        "FATAL: Cannot find group-object named {}".format(name)
                     )
                 else:
                     retval.extend(group_nets.network_strings)
             elif "description " in obj.text:
                 pass
             else:
-                raise NotImplementedError("Cannot parse '{0}'".format(obj.text))
+                raise NotImplementedError("Cannot parse '{}'".format(obj.text))
         return retval
 
     @property
     def networks(self):
         """Return a list of IPv4Obj objects which represent the address space allowed by
         This object-group"""
-        ## FIXME: Implement object caching for other ASAConfigList objects
+        ## FIXME: Implement object caching for other ConfigList objects
         ## Return a cached result if the networks lookup has already been done
 
         retval = list()
@@ -634,7 +633,7 @@ class ASAObjGroupNetwork(ASACfgLine):
 ##
 _RE_PORTOBJ_STR = r"""(?:                            # Non-capturing parentesis
  # service-object udp destination eq dns
- (^\s*service-object\s+(?P<protocol>{0})\s+(?P<src_dst>\S+)\s+(?P<s_port>\S+))
+ (^\s*service-object\s+(?P<protocol>{})\s+(?P<src_dst>\S+)\s+(?P<s_port>\S+))
 |(^\s*port-object\s+(?P<operator>eq|range)\s+(?P<p_port>\S.+))
 |(^\s*group-object\s+(?P<groupobject>\S+))
 )                                                   # Close non-capture parens
@@ -648,7 +647,7 @@ class ASAObjGroupService(ASACfgLine):
     def __init__(self, *args, **kwargs):
         """Accept an ASA line number and initialize family relationship
             attributes"""
-        super(ASAObjGroupService, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         self.protocol_type = self.re_match_typed(
             r"^object-group\s+service\s+\S+(\s+.+)*$",
@@ -675,7 +674,7 @@ class ASAObjGroupService(ASACfgLine):
         return False
 
     def __repr__(self):
-        return "<ASAObjGroupService {0} protocol: {1}>".format(
+        return "<ASAObjGroupService {} protocol: {}>".format(
             self.name, self.protocol_type
         )
 
@@ -715,7 +714,7 @@ class ASAObjGroupService(ASACfgLine):
             elif svc_obj.get("operator", None):
                 op = svc_obj.get("operator", "")
                 port = svc_obj.get("p_port", "")
-                port_spec = "{0} {1}".format(op, port)
+                port_spec = "{} {}".format(op, port)
 
                 if self.protocol_type == "tcp-udp":
                     retval.append(
@@ -739,20 +738,20 @@ class ASAObjGroupService(ASACfgLine):
                 if name == self.name:
                     ## Throw an error when importing self
                     raise ValueError(
-                        "FATAL: Cannot recurse through group-object {0} in object-group service {1}".format(
+                        "FATAL: Cannot recurse through group-object {} in object-group service {}".format(
                             name, self.name
                         )
                     )
                 if group_ports is None:
                     raise ValueError(
-                        "FATAL: Cannot find group-object named {0}".format(name)
+                        "FATAL: Cannot find group-object named {}".format(name)
                     )
                 else:
                     retval.extend(group_ports.ports)
             elif "description " in obj.text:
                 pass
             else:
-                raise NotImplementedError("Cannot parse '{0}'".format(obj.text))
+                raise NotImplementedError("Cannot parse '{}'".format(obj.text))
         return retval
 
 
@@ -765,7 +764,7 @@ class ASAIntfLine(BaseASAIntfLine):
     def __init__(self, *args, **kwargs):
         """Accept an ASA line number and initialize family relationship
         attributes"""
-        super(ASAIntfLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     @classmethod
     def is_object_for(cls, line="", re=re):
@@ -782,11 +781,11 @@ class ASAIntfLine(BaseASAIntfLine):
 
 class ASAIntfGlobal(BaseCfgLine):
     def __init__(self, *args, **kwargs):
-        super(ASAIntfGlobal, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.feature = "interface global"
 
     def __repr__(self):
-        return "<%s # %s '%s'>" % (self.classname, self.linenum, self.text)
+        return "<{} # {} '{}'>".format(self.classname, self.linenum, self.text)
 
     @classmethod
     def is_object_for(cls, line="", re=re):
@@ -802,11 +801,11 @@ class ASAIntfGlobal(BaseCfgLine):
 
 class ASAHostnameLine(BaseCfgLine):
     def __init__(self, *args, **kwargs):
-        super(ASAHostnameLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.feature = "hostname"
 
     def __repr__(self):
-        return "<%s # %s '%s'>" % (self.classname, self.linenum, self.hostname)
+        return "<{} # {} '{}'>".format(self.classname, self.linenum, self.hostname)
 
     @classmethod
     def is_object_for(cls, line="", re=re):
@@ -827,10 +826,10 @@ class ASAHostnameLine(BaseCfgLine):
 
 class BaseASARouteLine(BaseCfgLine):
     def __init__(self, *args, **kwargs):
-        super(BaseASARouteLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def __repr__(self):
-        return "<%s # %s '%s' info: '%s'>" % (
+        return "<{} # {} '{}' info: '{}'>".format(
             self.classname,
             self.linenum,
             self.network_object,
@@ -888,7 +887,7 @@ class BaseASARouteLine(BaseCfgLine):
 
 class ASARouteLine(BaseASARouteLine):
     def __init__(self, *args, **kwargs):
-        super(ASARouteLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         if "ipv6" in self.text:
             self.feature = "ipv6 route"
         else:
@@ -936,9 +935,9 @@ class ASARouteLine(BaseASARouteLine):
     def network_object(self):
         try:
             if self.address_family == "ip":
-                return IPv4Obj("%s/%s" % (self.network, self.netmask), strict=False)
+                return IPv4Obj("{}/{}".format(self.network, self.netmask), strict=False)
             elif self.address_family == "ipv6":
-                return IPv6Network("%s/%s" % (self.network, self.netmask))
+                return IPv6Network("{}/{}".format(self.network, self.netmask))
         except Exception as ee:
             return None
 
@@ -1117,12 +1116,12 @@ _RE_ACLOBJECT = re.compile(_RE_ACLOBJECT_STR, re.VERBOSE)
 class ASAAclLine(ASACfgLine):
     def __init__(self, *args, **kwargs):
         """Provide attributes on Cisco ASA Access-Lists"""
-        super(ASAAclLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         mm = _RE_ACLOBJECT.search(self.text)
         if (mm is not None):
             self._mm_results = mm.groupdict()  # All regex match results
         else:
-            raise ValueError("[FATAL] models_asa cannot parse '{0}'".format(self.text))
+            raise ValueError("[FATAL] models_asa cannot parse '{}'".format(self.text))
 
     @classmethod
     def is_object_for(cls, line="", re=re):
@@ -1162,7 +1161,7 @@ class ASAAclLine(ASACfgLine):
             return "network"
         else:
             raise ValueError(
-                "Cannot parse ACL source address method for '{0}'".format(self.text)
+                "Cannot parse ACL source address method for '{}'".format(self.text)
             )
 
     @property
@@ -1193,7 +1192,7 @@ class ASAAclLine(ASACfgLine):
             return "network"
         else:
             raise ValueError(
-                "Cannot parse ACL destination address method for '{0}'".format(
+                "Cannot parse ACL destination address method for '{}'".format(
                     self.text
                 )
             )
@@ -1228,7 +1227,7 @@ class ASAAclLine(ASACfgLine):
             return retval
         else:
             raise ValueError(
-                "Cannot parse ACL protocol value for '{0}'".format(self.text)
+                "Cannot parse ACL protocol value for '{}'".format(self.text)
             )
 
     @property
