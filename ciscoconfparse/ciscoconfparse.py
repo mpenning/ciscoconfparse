@@ -2110,6 +2110,7 @@ class CiscoConfParse:
         return bool(matching_conftext)
 
     # This method is on CiscoConfParse()
+    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
     def insert_before(
         self,
         exist_val,
@@ -2159,18 +2160,47 @@ class CiscoConfParse:
         return [ii.text for ii in sorted(objs)]
 
     # This method is on CiscoConfParse()
+    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
     def insert_after(
         self,
-        exist_val,
+        exist_val="",
         new_val="",
         exactmatch=False,
         ignore_ws=False,
         atomic=False,
+        new_val_indent = -1,
         **kwargs
     ):
-        """Find all :class:`~models_cisco.IOSCfgLine` objects whose text
+        r"""
+        Find all :class:`~models_cisco.IOSCfgLine` objects whose text
         matches ``exist_val``, and insert ``new_val`` after those line
-        objects"""
+        objects.
+
+        If ``new_val_indent`` >= 0, then ``new_val`` will be inserted with
+        the requested indent regardless of any existing indent on ``new_val``.
+
+        Examples
+        --------
+
+        .. code-block:: python
+           :emphasize-lines: 23
+
+           >>> from ciscoconfparse import CiscoConfParse
+           >>> config = ['!',
+           ...           'interface FastEthernet 0/1',
+           ...           ' description Test intf to CloudFlare',
+           ...           ' ip address 192.0.2.1 255.255.255.252',
+           ...           ' no ip unreachables',
+           ...           '!',
+           ...           'interface FastEthernet 0/2',
+           ...           ' description ProxySG model 8100',
+           ...           ' ip address 192.0.2.5 255.255.255.252',
+           ...           ' no ip unreachables',
+           ...           '!',
+           ...     ]
+           >>> p = CiscoConfParse(config=config)
+           >>> p.insert_after(r"interface\s+FastEthernet\s+0\/2", "no ip proxy-arp", new_val_indent=1)
+        """
 
         ######################################################################
         #
@@ -2181,32 +2211,45 @@ class CiscoConfParse:
         #   - `linespec` is now called exist_val
         #   - `insertstr` is now called new_val
         ######################################################################
-        if kwargs.get("linespec", ""):
+        if kwargs.get("linespec", "") != "":
             exist_val = kwargs.get("linespec")
             logger.info(
                 "The parameter named `linespec` is deprecated.  Please use `exist_val` instead",
             )
-        if kwargs.get("insertstr", ""):
+        if kwargs.get("insertstr", "") != "":
             new_val = kwargs.get("insertstr")
             logger.info(
                 "The parameter named `insertstr` is deprecated.  Please use `new_val` instead",
             )
 
-        error_exist_val = "FATAL: exist_val:'%s' must be a string" % exist_val
-        error_new_val = "FATAL: new_val:'%s' must be a string" % new_val
-        assert isinstance(exist_val, str), error_exist_val
-        assert isinstance(new_val, str), error_new_val
+        err_exist_val = "FATAL: exist_val:'%s' must be a string" % exist_val
+        err_new_val = "FATAL: new_val:'%s' must be a string" % new_val
+        assert isinstance(exist_val, str), err_exist_val
+        assert exist_val != ""
+        assert isinstance(new_val, str), err_new_val
+        assert new_val != ""
+        assert isinstance(exactmatch, bool)
+        assert isinstance(ignore_ws, bool)
+        assert isinstance(new_val_indent, int)
 
         # WORKS!!
         #objs = self.find_objects(exist_val, exactmatch, ignore_ws)
         #self.ConfigObjs.insert_after(exist_val, new_val, atomic=atomic)
         # END-WORKS!!
-        objs = self.find_objects(exist_val, exactmatch=exactmatch, ignore_ws)
-        for obj in objs:
-            obj.insert_after(new_val)
+        objs = self.find_objects(linespec=exist_val, exactmatch=exactmatch, ignore_ws=ignore_ws)
+        for exist_obj in objs:
+            exist_indent = len(exist_obj._text) - len(exist_obj._text.lstrip())
+            assert exist_indent == exist_obj.indent
+            if new_val_indent >= 0:
+                # Forces an indent on ``new_val``...
+                self.ConfigObjs.insert_after(new_val_indent*" " + new_val.lstrip())
+            else:
+                # Does not force an indent on ``new_val``...
+                self.ConfigObjs.insert_after(new_val)
+
         if atomic is True:
             self.atomic()
-        return [ii.text for ii in sorted(objs)]
+        return [ii._text for ii in parse.objs]
 
     # This method is on CiscoConfParse()
     def insert_after_child(
@@ -4104,80 +4147,8 @@ class ConfigList(MutableSequence):
         ... ["a a", "X X", "b b", "c c", "X X", "b b"]
         >>>
         """
+        raise NotImplementedError()
 
-        calling_fn_index = 1
-        calling_filename = inspect.stack()[calling_fn_index].filename
-        calling_function = inspect.stack()[calling_fn_index].function
-        calling_lineno = inspect.stack()[calling_fn_index].lineno
-        error = "FATAL CALL: in {} line {} {}(exist_val='{}', new_val='{}')".format(
-            calling_filename, calling_lineno, calling_function, exist_val,
-            new_val,
-        )
-        # exist_val MUST be a string
-        if isinstance(exist_val, str) is True:
-            pass
-
-        # Matches "IOSCfgLine", "NXOSCfgLine" and "ASACfgLine"... (and others)
-        elif isinstance(exist_val, BaseCfgLine):
-            exist_val = exist_val.text
-
-        else:
-            logger.error(error)
-            raise ValueError(error)
-
-        # new_val MUST be a string
-        if isinstance(new_val, str) is True:
-            pass
-
-        # Matches "IOSCfgLine", "NXOSCfgLine" and "ASACfgLine"... (and others)
-        elif isinstance(new_val, BaseCfgLine):
-            new_val = new_val.text
-
-        else:
-            logger.error(error)
-            raise ValueError(error)
-
-        if self.factory:
-            new_obj = ConfigLineFactory(
-                text=new_val,
-                comment_delimiter=self.comment_delimiter,
-                syntax=self.syntax,
-            )
-        elif self.syntax == "ios":
-            new_obj = IOSCfgLine(
-                text=new_val,
-                comment_delimiter=self.comment_delimiter,
-            )
-
-        elif self.syntax == "nxos":
-            new_obj = NXOSCfgLine(
-                text=new_val,
-                comment_delimiter=self.comment_delimiter,
-            )
-
-        elif self.syntax == "asa":
-            new_obj = ASACfgLine(
-                text=new_val,
-                comment_delimiter=self.comment_delimiter,
-            )
-
-        else:
-            logger.error(error)
-            raise ValueError(error)
-
-        # Find all config lines which need to be modified... store in all_idx
-        all_idx = [
-            idx for idx, val in enumerate(self._list) if val.text == exist_val
-        ]
-        for idx in sorted(all_idx, reverse=True):
-            self._list.insert(idx, new_obj)
-
-        if atomic:
-            # Reparse the whole config as a text list
-            self._bootstrap_from_text()
-        else:
-            ## Just renumber lines...
-            self._reassign_linenums()
 ##############################################################################
 
     # This method is on ConfigList()
@@ -4266,6 +4237,12 @@ class ConfigList(MutableSequence):
                 comment_delimiter=self.comment_delimiter,
             )
 
+        elif self.syntax == "junos":
+            new_obj = JunosCfgLine(
+                text=new_val,
+                comment_delimiter=self.comment_delimiter,
+            )
+
         else:
             logger.error(error)
             raise ValueError(error)
@@ -4291,18 +4268,20 @@ class ConfigList(MutableSequence):
 
     # This method is on ConfigList()
     @junos_unsupported
-    def insert_after(self, exist_val, new_val, atomic=False):
+    def insert_after(self, exist_val="", new_val="", atomic=False, new_val_indent=-1):
         """
         Insert new_val after all occurances of exist_val.
 
         Parameters
         ----------
         exist_val : str
-            An existing text value.  This may match multiple configuration entries.
+            An existing configuration string value (used as the insertion reference point)
         new_val : str
             A new value to be inserted in the configuration.
         atomic : bool
             A boolean that controls whether the config is reparsed after the insertion (default False)
+        new_val_indent : int
+            The indent for new_val
 
         Returns
         -------
@@ -4392,7 +4371,7 @@ class ConfigList(MutableSequence):
 
         all_idx = [
             idx for idx, list_obj in enumerate(self._list)
-            if re.search(exist_val, list_obj.text)
+            if re.search(exist_val, list_obj._text)
         ]
         for idx in sorted(all_idx, reverse=True):
             self._list.insert(idx + 1, new_obj)
