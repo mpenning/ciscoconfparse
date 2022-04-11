@@ -361,7 +361,7 @@ This router is protected by a hungry admin
         6: 1,
     }
     for obj in parse.find_objects(""):
-        result_correct = parent_intf.get(obj.linenum, False)
+        result_correct = parent_intf.get(obj.linenum, -1)
         if result_correct:
             test_result = obj.parent.linenum
             ## Does this object parent's line number match?
@@ -392,7 +392,7 @@ def testValues_parent_child_parsing_01(parse_c01):
 def testValues_parent_child_parsing_02(parse_c01):
     cfg = parse_c01
     # Expected child / parent line numbers before the insert
-    parent_intf_before = {
+    parent_intf_before_dict = {
         # Line 11 is Serial1/0, child is line 13
         13: 11,
         # Line 15 is GigabitEthernet4/1
@@ -410,7 +410,7 @@ def testValues_parent_child_parsing_02(parse_c01):
 
     # Validate line numbers *before* inserting
     for obj in cfg.find_objects(""):
-        result_correct = parent_intf_before.get(obj.linenum, False)
+        result_correct = parent_intf_before_dict.get(obj.linenum, -1)
         if result_correct:
             test_result = obj.parent.linenum
             ## Does this object parent's line number match?
@@ -423,7 +423,12 @@ def testValues_parent_child_parsing_02(parse_c01):
             intf_obj.insert_after(" spanning-tree portfast")
     cfg.atomic()
 
-    parent_intf_after = {
+    # Dictionary of parent assignments below...
+    parent_linenum_after_dict = {
+        # dictionary format...
+        # - key (integer) is CHILD line number
+        # - value (integer) is PARENT line number
+
         # Line 11 is Serial1/0, child is line 13
         13: 11,
         # Line 15 is GigabitEthernet4/1
@@ -438,9 +443,13 @@ def testValues_parent_child_parsing_02(parse_c01):
         26: 22,
     }
     # Validate line numbers *after* inserting
-    for obj in cfg.find_objects(""):
-        result_correct = parent_intf_after.get(obj.linenum, False)
-        if result_correct:
+    for parent_obj in cfg.find_objects("^interface"):
+        print("\nTEST_LINE", parent_obj)
+        for child_obj in parent_obj.all_children:
+            print("TEST_LINE", child_obj)
+            # result_correct is the **correct parent line number** after insert...
+            result_correct = parent_linenum_after_dict.get(child_obj.linenum, -1)
+
             test_result = obj.parent.linenum
             ## Does this object parent's line number match?
             assert result_correct == test_result
@@ -589,11 +598,11 @@ def testValues_list_insert_01():
         "d",
         "e",
     ]
-    confobjs = CiscoConfParse(c01, syntax="ios")
-    confobjs.insert_before('b', 'a')
-    confobjs.insert_after('e', 'f')
-    assert confobjs.ConfigObjs[0].text=='a'
-    assert confobjs.ConfigObjs[-1].text=='f'
+    parse = CiscoConfParse(c01, syntax="ios")
+    parse.insert_before('b', 'a')
+    parse.insert_after('e', 'f')
+    assert parse.ConfigObjs[0].text=='a'
+    assert parse.ConfigObjs[-1].text=='f'
 
 def testValues_list_insert_01():
     """test whether we can insert list elements"""
@@ -603,24 +612,29 @@ def testValues_list_insert_01():
         "d",
         "e",
     ]
-    confobjs = CiscoConfParse(c01, syntax="ios")
-    confobjs.insert_before('b', 'a')
-    confobjs.insert_after('e', 'f')
-    obj = confobjs.find_objects(r"^e")
-    assert confobjs.ConfigObjs[0].text=='a'
-    assert confobjs.ConfigObjs[-1].text=='f'
+    parse = CiscoConfParse(c01, syntax="ios")
+    parse.insert_before('b', 'a')
+    parse.insert_after('e', 'f')
+    parse.commit()
+
+    all_objs = parse.find_objects(r"^e")
+    assert len(all_objs)==1
+    assert all_objs[0].text == "e"
+
+    assert parse.ConfigObjs[0].text=='a'
+    assert parse.ConfigObjs[-1].text=='f'
 
 def testValues_list_insert_02():
     """test whether we can insert child list elements"""
     c01 = ["b", "c", "d", "e",]
-    confobjs = CiscoConfParse(c01, syntax="ios")
+    parse = CiscoConfParse(c01, syntax="ios")
 
     # ' f' is the child of 'e'...
-    confobjs.insert_after('e', ' f')
-    confobjs.commit()
-    assert confobjs.ConfigObjs[-1].text == ' f'
+    parse.insert_after('e', ' f')
+    parse.commit()
+    assert parse.ConfigObjs[-1].text == ' f'
 
-    obj = confobjs.find_objects(r"^e")[0]
+    obj = parse.find_objects(r"^e")[0]
     assert obj.all_children[0].text==' f'
 
 def testValues_list_insert_03():
@@ -1196,7 +1210,7 @@ def testValues_replace_children_01(parse_c01):
 
 
 @pytest.mark.xfail(
-    sys.version_info[0] == 3, reason="Difflib.SequenceMatcher is broken in Python3"
+    sys.version_info[0] == 3, reason="difflib.SequenceMatcher is broken in Python3"
 )
 def testValues_sync_diff_01(parse_c01):
     ## test sync_diff as a drop-in replacement for req_cfgspec_excl_diff()
@@ -1215,7 +1229,7 @@ def testValues_sync_diff_01(parse_c01):
 
 
 @pytest.mark.xfail(
-    sys.version_info[0] == 3, reason="Difflib.SequenceMatcher is broken in Python3"
+    sys.version_info[0] == 3, reason="difflib.SequenceMatcher is broken in Python3"
 )
 def testValues_sync_diff_03():
     ## config_01 is the starting point
@@ -1268,7 +1282,7 @@ def testValues_sync_diff_03():
 
 
 @pytest.mark.xfail(
-    sys.version_info[0] == 3, reason="Difflib.SequenceMatcher is broken in Python3"
+    sys.version_info[0] == 3, reason="difflib.SequenceMatcher is broken in Python3"
 )
 def testValues_sync_diff_04():
     """Test diffs against double-spacing for children (such as NXOS)"""
@@ -1322,7 +1336,7 @@ def testValues_sync_diff_04():
 
 
 @pytest.mark.xfail(
-    sys.version_info[0] == 3, reason="Difflib.SequenceMatcher is broken in Python3"
+    sys.version_info[0] == 3, reason="difflib.SequenceMatcher is broken in Python3"
 )
 def testValues_sync_diff_05():
     ## config_01 is the starting point
@@ -1355,7 +1369,7 @@ def testValues_sync_diff_05():
 
 
 @pytest.mark.xfail(
-    sys.version_info[0] == 3, reason="Difflib.SequenceMatcher is broken in Python3"
+    sys.version_info[0] == 3, reason="difflib.SequenceMatcher is broken in Python3"
 )
 def testValues_sync_diff_06():
     """Test diffs against double-spacing for children (such as NXOS)"""
@@ -1395,7 +1409,7 @@ def testValues_sync_diff_06():
 
 
 @pytest.mark.xfail(
-    sys.version_info[0] == 3, reason="Difflib.SequenceMatcher is broken in Python3"
+    sys.version_info[0] == 3, reason="difflib.SequenceMatcher is broken in Python3"
 )
 def testValues_sync_diff_07():
     """Test diffs with remove_lines=False"""
@@ -1437,7 +1451,7 @@ def testValues_sync_diff_07():
 
 
 @pytest.mark.xfail(
-    sys.version_info[0] == 3, reason="Difflib.SequenceMatcher is broken in Python3"
+    sys.version_info[0] == 3, reason="difflib.SequenceMatcher is broken in Python3"
 )
 def testValues_sync_diff_08():
     """Test diffs with explicit ignore_order=False"""
@@ -1481,7 +1495,7 @@ def testValues_sync_diff_08():
 
 
 @pytest.mark.xfail(
-    sys.version_info[0] == 3, reason="Difflib.SequenceMatcher is broken in Python3"
+    sys.version_info[0] == 3, reason="difflib.SequenceMatcher is broken in Python3"
 )
 def testValues_sync_diff_09():
     """Test diffs with explicit ignore_order=True"""
