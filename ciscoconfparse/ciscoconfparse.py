@@ -70,8 +70,8 @@ from ciscoconfparse.ccp_util import ccp_logger_control
 import toml
 
 
+from difflib import SequenceMatcher, get_close_matches
 from collections.abc import MutableSequence, Iterator
-from difflib import SequenceMatcher
 from functools import partial
 from operator import is_not
 import inspect
@@ -82,8 +82,6 @@ import copy
 import sys
 import re
 import os
-
-
 
 def configure_loguru(
     sink=sys.stderr,
@@ -2203,7 +2201,7 @@ class CiscoConfParse:
         #objs = self.find_objects(exist_val, exactmatch, ignore_ws)
         #self.ConfigObjs.insert_after(exist_val, new_val, atomic=atomic)
         # END-WORKS!!
-        objs = self.find_objects(exist_val, exactmatch, ignore_ws)
+        objs = self.find_objects(exist_val, exactmatch=exactmatch, ignore_ws)
         for obj in objs:
             obj.insert_after(new_val)
         if atomic is True:
@@ -2221,10 +2219,12 @@ class CiscoConfParse:
         ignore_ws=False,
         atomic=False,
     ):
-        """Find all :class:`~models_cisco.IOSCfgLine` objects whose text
+        """
+        Find all :class:`~models_cisco.IOSCfgLine` objects whose text
         matches ``linespec`` and have a child matching ``childspec``, and
         insert an :class:`~models_cisco.IOSCfgLine` object for ``insertstr``
-        after those child objects."""
+        after those child objects.
+        """
         retval = list()
         modified = False
         for pobj in self._find_line_OBJ(parentspec, exactmatch=exactmatch):
@@ -3347,6 +3347,12 @@ class CiscoConfParse:
 
 #########################################################################3
 
+class UnifiedDiffHunk:
+
+    def __init__(self, before_lines=None, after_lines=None):
+        self.before = before_lines
+        self.after = after_lines
+
 class HDiff:
 
     # This method is on HDiff()
@@ -3389,50 +3395,68 @@ class HDiff:
         # FIXME ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         #       no ordered_diff support yet
 
-        parse_before = CiscoConfParse(before_lines, syntax=syntax)
-        parse_after = CiscoConfParse(after_lines, syntax=syntax)
+        parse_before = CiscoConfParse(before_lines, syntax=syntax, ignore_blank_lines=False)
+        parse_after = CiscoConfParse(after_lines, syntax=syntax, ignore_blank_lines=False)
+
+        for bobj in parse_before.objs:
+            bobj.diff_side = "before"
+
+        for aobj in parse_after.objs:
+            aobj.diff_side = "after"
 
         # Initialize the output attribute...
-        self.all_output_lines = list()
+        self.all_output_dicts = list()
 
         default_diff_word_before = "remove"
         default_diff_word_after = "unknown"
         valid_after_obj_diff_words = set({"add", "unchanged"})
-        before_list = self.build_diff_obj_list(
+        before_obj_list = self.build_diff_obj_list(
             parse=parse_before, default_diff_word=default_diff_word_before
         )
-        after_list = self.build_diff_obj_list(
+        after_obj_list = self.build_diff_obj_list(
             parse=parse_after, default_diff_word=default_diff_word_after
         )
 
         # Handle add / move / change. change is diff_word: remove + diff_word: add
-        for after_obj in after_list:
+        for after_obj in after_obj_list:
 
-            # Ensure we start with after_obj.diff_word as default_word... it's unknown
-            # at this time... NOTE - even though all after_obj.diff_word values are
-            # changed in self.find_in_before_list() below, setting to a default state
+            # Ensure we start with after_obj.diff_word as default_word...
+            # it's unknownat this time... NOTE - even though all
+            # after_obj.diff_word values are changed in
+            # self.find_in_before_obj_list() below, setting to a default state
             # is useful to catch any future bugs...
             assert after_obj.diff_word == default_diff_word_after
 
             # Check whether we keep the before object, or add a new after object...
             # before_list and after_obj may be rewritten / changed here...
-            before_list, after_obj = self.find_in_before_list(before_list, after_obj)
+            before_obj_list, after_obj = self.find_in_before_obj_list(
+                before_obj_list, after_obj)
 
             # Ensure that we rewrote after_obj.diff_word from default_diff_word_after
             assert after_obj.diff_word in valid_after_obj_diff_words
         # Relocate end
 
         # At this stage, `raw_dict_diffs()` returns duplicate parent lines...
-        all_line_dicts = self.raw_dict_diffs(before_list, after_list)
+        tmp_line_dicts = self.raw_dict_diffs(before_obj_list, after_obj_list)
 
         # Remove duplicate parent lines with `compress_dict_diffs()`
-        self.all_output_lines = self.compress_dict_diffs(all_line_dicts)
+        self.all_output_dicts = self.compress_dict_diffs(tmp_line_dicts)
+
+        self.sort_lines(parse_after, self.all_output_dicts)
 
         # print unified diff output... I need to enhance this output since
         # `ydiff()` still can't process it yet... the unified diff header
         # isn't calculated yet...
         if output_format == "unified":
-            for line_dict in self.all_output_lines:
+            """
+            diff --git a/README_git_workflow.md b/README_git_workflow.md
+            index 303d06a..e4ff34b 100644
+
+            --- a/README_git_workflow.md
+            +++ b/README_git_workflow.md
+            @@ -3,7 +3,7 @@
+            """
+            for line_dict in self.all_output_dicts:
 
                 assert isinstance(line_dict, dict)
 
@@ -3444,30 +3468,46 @@ class HDiff:
                     print(" " + " " + line_dict["text"])
 
         elif output_format == "dict":
-            return self.all_output_lines
+            return self.all_output_dicts
 
         else:
             raise NotImplementedError(output_format)
 
+    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    def sort_lines(self, after_lines, all_output_dicts):
+        """
+        Typical output line dict-format...
+        {
+            "linenum": -1,   # before line numbers are skipped...
+            "diff_side": "before",
+            "diff_word": "keep",
+            "text": bobj.text,
+            "diff_id_list": bobj.diff_id_list,
+        }
+        """
+        pass
+
     # This method is on HDiff()
     @logger.catch(default=True, onerror=lambda _: sys.exit(1))
-    def raw_dict_diffs(self, before_list, after_list):
+    def raw_dict_diffs(self, before_obj_list, after_obj_list):
         ############################################
         # Render diffs
         ############################################
-        all_lines = list()
-        for bobj in before_list:
+        all_dict_lines = list()
+        for bobj in before_obj_list:
             assert isinstance(bobj, BaseCfgLine)
 
             bobj_id_list = bobj.diff_id_list
 
+            assert bobj.diff_side == "before"
             assert bobj.diff_word in set({"keep", "remove"})
 
             # FIXME - I am disabling this to prevent redundant rendering of before_obj and after_obj
             if bobj.diff_word == "keep" and bobj.diff_rendered is False:
                 bobj.diff_rendered = True
-                all_lines.append(
+                all_dict_lines.append(
                     {
+                        "linenum": -1,   # For now, do not include bobj.linenum
                         "diff_side": "before",
                         "diff_word": "keep",
                         "text": bobj.text,
@@ -3478,8 +3518,9 @@ class HDiff:
 
             elif bobj.diff_word == "remove" and bobj.diff_rendered is False:
                 bobj.diff_rendered = True
-                all_lines.append(
+                all_dict_lines.append(
                     {
+                        "linenum": -1,   # For now, do not include bobj.linenum
                         "diff_side": "before",
                         "diff_word": "remove",
                         "text": bobj.text,
@@ -3492,11 +3533,12 @@ class HDiff:
                 raise NotImplementedError()
 
         # Render all "after" lines we haven't considered yet...
-        for aobj in after_list:
-            output = self.render_after_obj_diffs(aobj)
-            all_lines.extend(output)
+        tmp_dict_list = list()
+        for aobj in after_obj_list:
+            tmp_dict_list = self.render_after_obj_diffs(aobj)
+            all_dict_lines.extend(tmp_dict_list)
 
-        return all_lines
+        return all_dict_lines
 
     # This method is on HDiff()
     @logger.catch(default=True, onerror=lambda _: sys.exit(1))
@@ -3504,7 +3546,7 @@ class HDiff:
         self, parse=None, default_diff_word=None, consider_whitespace=False
     ):
         """
-        Return a list of objects which are relevant to the diff...
+        Return a list of *CfgLine() objects which are relevant to the diff...
         """
         assert parse is not None
         assert isinstance(default_diff_word, str)
@@ -3528,24 +3570,33 @@ class HDiff:
 
     # This method is on HDiff()
     @logger.catch(default=True, onerror=lambda _: sys.exit(1))
-    def find_in_before_list(
-        self, before_list, after_obj, consider_whitespace=False, debug=0
+    def find_in_before_obj_list(
+        self, before_obj_list, after_obj, consider_whitespace=False, debug=0
     ):
         """
-        Find matches for after_obj in before_list.  If a match found, the
+        Find matches for after_obj in before_obj_list.  If a match found, the
         before_obj.diff_word is 'keep' and after_obj.diff_word is 'unchanged'.
-        If no match is found in before_list, after_obj.diff_word is 'add'.
+        If no match is found in before_obj_list, after_obj.diff_word is 'add'.
         """
+        # Check before_obj instances...
+        assert isinstance(before_obj_list, list)
+        for before_obj in before_obj_list:
+            assert isinstance(before_obj, BaseCfgLine)
+            assert before_obj.diff_side == "before"
+
+        # Check after_obj...
+        assert isinstance(after_obj, BaseCfgLine)
+        assert after_obj.diff_side == "after"
+
         after_id_list = after_obj.diff_id_list
         if debug > 0:
             logger.info(
-                "Looking for after_obj in before_list.  after_obj:{} -> id_list: {}".format(
+                "Looking for after_obj in before_obj_list.  after_obj:{} -> id_list: {}".format(
                     after_obj, after_id_list
                 )
             )
 
-        for before_obj in before_list:
-            assert isinstance(before_obj, BaseCfgLine)
+        for before_obj in before_obj_list:
 
             before_id_list = before_obj.diff_id_list
 
@@ -3576,7 +3627,7 @@ class HDiff:
                 for aobj in after_obj.geneology:
                     aobj.diff_word = "unchanged"
 
-                return before_list, after_obj
+                return before_obj_list, after_obj
 
             elif before_obj.diff_word == "remove" and (before_id_list != after_id_list):
                 continue
@@ -3595,7 +3646,7 @@ class HDiff:
                 for aobj in after_obj.geneology:
                     aobj.diff_word = "unchanged"
 
-                return before_list, after_obj
+                return before_obj_list, after_obj
 
             else:
                 # We should never hit this condition...
@@ -3607,7 +3658,8 @@ class HDiff:
         if debug > 0:
             logger.debug("    Adding after_obj:'{}'".format(after_obj))
         after_obj.diff_word = "add"
-        return before_list, after_obj
+
+        return before_obj_list, after_obj
 
     # This method is on HDiff()
     @logger.catch(default=True, onerror=lambda _: sys.exit(1))
@@ -3628,6 +3680,7 @@ class HDiff:
             if len(aobj.children) > 0:
                 output.append(
                     {
+                        "linenum": aobj.linenum,
                         "diff_side": "after",
                         "diff_word": aobj.diff_word,
                         "text": aobj.text,
@@ -3643,6 +3696,7 @@ class HDiff:
         elif aobj.diff_word == "add" and aobj.diff_rendered is False:
             output.append(
                 {
+                    "linenum": aobj.linenum,
                     "diff_side": "after",
                     "diff_word": aobj.diff_word,
                     "text": aobj.text,
@@ -3678,6 +3732,7 @@ class HDiff:
 
         ```
         {
+            'linenum': -1,          # do not save the before linenum
             'diff_side': 'before',
             'diff_word': 'remove',
             'text': ' some command here',
@@ -3702,6 +3757,7 @@ class HDiff:
         for dict_line in all_lines:
             assert set(dict_line.keys()) == set(
                 {
+                    "linenum",
                     "diff_side",
                     "diff_word",
                     "text",
@@ -3709,7 +3765,7 @@ class HDiff:
                 }
             )
 
-        all_output_lines = list()
+        all_output_dicts = list()
         all_dict_lines = dict()
 
         for dict_line in all_lines:
@@ -3726,26 +3782,26 @@ class HDiff:
             if all_dict_lines.get(diff_id_list, None) is not None:
                 continue
 
-            # Calculate the next index for all_output_lines...
-            if all_output_lines == []:
+            # Calculate the next index for all_output_dicts...
+            if all_output_dicts == []:
                 next_list_index = 0
             else:
-                next_list_index = len(all_output_lines)
+                next_list_index = len(all_output_dicts)
 
             if diff_side == "before" and diff_word == "keep":
-                all_output_lines.append(dict_line)
-                all_dict_lines[diff_id_list] = len(all_output_lines) - 1
+                all_output_dicts.append(dict_line)
+                all_dict_lines[diff_id_list] = len(all_output_dicts) - 1
 
             # We can remove pretty easily... don't do anything...
             elif diff_side == "before" and diff_word == "remove":
-                all_output_lines.append(dict_line)
-                all_dict_lines[diff_id_list] = len(all_output_lines) - 1
+                all_output_dicts.append(dict_line)
+                all_dict_lines[diff_id_list] = len(all_output_dicts) - 1
 
             elif diff_side == "after" and diff_word == "unchanged":
-                # FIXME - I should insert this somewhere in all_output_lines...
+                # FIXME - I should insert this somewhere in all_output_dicts...
                 if all_dict_lines.get(diff_id_list, None) is None:
-                    all_output_lines.append(dict_line)
-                    all_dict_lines[diff_id_list] = len(all_output_lines) - 1
+                    all_output_dicts.append(dict_line)
+                    all_dict_lines[diff_id_list] = len(all_output_dicts) - 1
 
             elif diff_side == "after" and diff_word == "add":
 
@@ -3757,9 +3813,9 @@ class HDiff:
                     [str(ii) for ii in dict_line["diff_id_list"]]
                 )
 
-                # check all_output_lines and find where we should "add" the
+                # check all_output_dicts and find where we should "add" the
                 # dict_line...
-                for loop_idx, this_dict in enumerate(all_output_lines):
+                for loop_idx, this_dict in enumerate(all_output_dicts):
                     this_id_len = len(this_dict["diff_id_list"])
                     this_id_csv = ",".join(
                         [str(ii) for ii in this_dict["diff_id_list"]]
@@ -3775,14 +3831,14 @@ class HDiff:
                         # longer than dict_line["diff_id_list"], it's a pretty
                         # safe assumption that this_dict is dict_line's parent...
                         if (this_id_len + 1) == dict_line_id_len:
-                            all_output_lines.insert(loop_idx + 1, dict_line)
-                            all_dict_lines[diff_id_list] = len(all_output_lines) - 1
+                            all_output_dicts.insert(loop_idx + 1, dict_line)
+                            all_dict_lines[diff_id_list] = len(all_output_dicts) - 1
                             break
                 else:
                     # If there's no match above, assume we add dict_line as a
-                    # completely new element at the bottom of all_output_lines
-                    all_output_lines.append(dict_line)
-                    all_dict_lines[diff_id_list] = len(all_output_lines) - 1
+                    # completely new element at the bottom of all_output_dicts
+                    all_output_dicts.append(dict_line)
+                    all_dict_lines[diff_id_list] = len(all_output_dicts) - 1
 
             else:
                 raise ValueError(dict_line)
@@ -3794,10 +3850,10 @@ class HDiff:
                     raise ValueError(dict_line)
 
         # FIXME - undo this after I work out all bugs
-        for line in all_output_lines:
+        for line in all_output_dicts:
             del line["diff_id_list"]
 
-        return all_output_lines
+        return all_output_dicts
 
 
 class ConfigList(MutableSequence):
