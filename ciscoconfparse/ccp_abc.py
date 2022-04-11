@@ -51,7 +51,7 @@ class BaseCfgLine(metaclass=ABCMeta):
         self.feature = ""    # Major feature description
         self.set_comment_bool()
 
-        self._diff_id = None
+        self._line_id = None
         self.diff_rendered = None
         self.diff_word = ""  # diff_word: 'keep', 'remove', 'unchanged', 'add'
         self.diff_side = ""  # diff_side: 'before', 'after' or ''
@@ -125,19 +125,19 @@ class BaseCfgLine(metaclass=ABCMeta):
         return self.linenum
 
     # On BaseCfgLine()
-    def calculate_diff_id(self):
+    def calculate_line_id(self):
         """
-        Calculate and return an integer diff_id for BaseCfgLine()
+        Calculate and return an integer line_id for BaseCfgLine()
 
-        diff_id is used to build a numerical identity for a given
+        line_id is used to build a numerical identity for a given
         BaseCfgLine().
 
         Do NOT cache this value.  It may need to be recalculated
         if self.text changes.
         """
 
-        _diff_id = hash(" " * self.indent + " ".join(self.text.strip().split()))
-        return _diff_id
+        _line_id = hash(" " * self.indent + " ".join(self.text.strip().split()))
+        return _line_id
 
     # On BaseCfgLine()
     @property
@@ -145,8 +145,8 @@ class BaseCfgLine(metaclass=ABCMeta):
         """
         Return a list of integers as a context-sensitive diff identifier.
 
-        The returned value includes diff_id of all parents.  The oldest
-        ancestor / parent diff_id is last in the returned list of diff_id
+        The returned value includes line_id of all parents.  The oldest
+        ancestor / parent line_id is last in the returned list of line_id
         hash values.
 
         object id integers are NOT the same between script runs.
@@ -156,25 +156,48 @@ class BaseCfgLine(metaclass=ABCMeta):
 
         for idx, obj in enumerate(self.geneology):
 
-            obj._diff_id = obj.calculate_diff_id()
+            obj._line_id = obj.calculate_line_id()
 
             # idx = 0 is the oldest ancestor
             if idx==0:
                 # This object is NOT a child
                 assert obj.indent == 0
-                retval.insert(0, obj._diff_id)
+                retval.insert(0, obj._line_id)
 
             elif idx <= len_geneology - 1:
                 # This object is a child of self.parent
                 assert obj.indent > 0
-                retval.insert(0, obj._diff_id)
+                retval.insert(0, obj._line_id)
 
         # retval usually looks like this (example with a single parent obj):
         #
         #                          [-1387406312585020591, 3965133112392387338]
-        #  root / oldest _diff_id:                        ^^^^^^^^^^^^^^^^^^^
-        #  child object _diff_id:   ^^^^^^^^^^^^^^^^^^^^
+        #  root / oldest _line_id:                        ^^^^^^^^^^^^^^^^^^^
+        #  child object _line_id:   ^^^^^^^^^^^^^^^^^^^^
         return retval
+
+    @property
+    def text_wo_char(self, wo_char=" ", keep_indent=True):
+        """
+        Return a 'word' that's missing the `wo_char` parameter.
+        `wo_char` is stripped out of the returned string.
+
+        This is useful to compare sentences with `difflib.get_close_matches()`
+        which does not support spaces in the text to be compared.
+        """
+        assert len(wo_char == 1)
+
+        if wo_char == " " and keep_indent is True:
+            newtext = wo_char*self.indent + re.sub(r"\s", "", self._text.rstrip())
+
+        elif wo_char == " " and keep_indent is False:
+            newtext = re.sub(r"\s", "", self._text.strip())
+
+        else:
+            err = "text_wo_char() not supported for wo_char=='%s'" % wo_char
+            raise NotImplementedError(err)
+
+        return newtext
 
     # On BaseCfgLine()
     @property
@@ -189,7 +212,7 @@ class BaseCfgLine(metaclass=ABCMeta):
         self._text = newtext
 
         if previous_text != newtext:
-            self.diff_id = self.calculate_diff_id()
+            self.line_id = self.calculate_line_id()
 
             # After changing text we need to trigger
             #     ConfigObjs.bootstrap_from_text()...
@@ -199,19 +222,22 @@ class BaseCfgLine(metaclass=ABCMeta):
             #
             # I put this here for some debugging but it shouldn't be
             #     used in a general config parsing case.
-            if False and self.confobj is not None:
-                self.confobj._bootstrap_from_text()
+            #
+            # <-- Begin Removed -->
+            #if self.confobj is not None:
+            #    self.confobj._bootstrap_from_text()
+            # <-- End Removed -->
 
     # On BaseCfgLine()
     @property
-    def diff_id(self):
-        return self._diff_id
+    def line_id(self):
+        return self._line_id
 
     # On BaseCfgLine()
-    @diff_id.setter
-    def diff_id(self, value=None):
+    @line_id.setter
+    def line_id(self, value=None):
         assert isinstance(value, int)
-        self._diff_id = value
+        self._line_id = value
 
     # On BaseCfgLine()
     @property
