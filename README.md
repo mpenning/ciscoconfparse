@@ -106,7 +106,7 @@ Building the Package
 Pre-requisites
 --------------
 
-[The ciscoconfparse python package][3] requires Python versions 3.5+ (note: Python version 3.7.0 has a bug - ref [Github issue \#117][18], but version 3.7.1 works); the OS should not matter.
+[The ciscoconfparse python package][3] requires Python versions 3.6+ (note: Python version 3.7.0 has a bug - ref [Github issue \#117][18], but version 3.7.1 works); the OS should not matter.
 
 Installation and Downloads
 --------------------------
