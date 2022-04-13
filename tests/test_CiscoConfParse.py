@@ -351,17 +351,25 @@ This router is protected by a hungry admin
 ^
 !
 """
-    parse = CiscoConfParse(config.splitlines())
-    parent_intf = {
+    parse = CiscoConfParse(config.splitlines(), syntax="ios")
+
+    # parent_intf_dict keeps track of child to parent line number mappings
+    parent_intf_dict = {
+        # Line 0's parent should be 0
+        0: 0,
+        # Line 1's parent should be 1
+        1: 1,
         # Line 2's parent should be 1, etc...
         2: 1,
         3: 1,
         4: 1,
         5: 1,
         6: 1,
+        7: 7,
     }
     for obj in parse.find_objects(""):
-        result_correct = parent_intf.get(obj.linenum, -1)
+
+        result_correct = parent_intf_dict.get(obj.linenum, -1)
         if result_correct:
             test_result = obj.parent.linenum
             ## Does this object parent's line number match?
@@ -393,7 +401,56 @@ def testValues_parent_child_parsing_02(parse_c01):
     cfg = parse_c01
     # Expected child / parent line numbers before the insert
     parent_intf_before_dict = {
+        0: 0,
         # Line 11 is Serial1/0, child is line 13
+        11: 11,
+        12: 11,
+        13: 11,
+        14: 11,
+        # Line 15 is GigabitEthernet4/1
+        15: 15,
+        16: 15,
+        17: 15,
+        18: 15,
+        19: 15,
+        # Line 21 is GigabitEthernet4/2
+        21: 21,
+        22: 21,
+        23: 21,
+        24: 21,
+        25: 21,
+        # Line 27 is GigabitEthernet4/3
+        27: 27,
+        # Line 32 is GigabitEthernet4/4
+        32: 32,
+        # Line 35 is GigabitEthernet4/5
+        35: 35,
+        # Line 39 is GigabitEthernet4/6
+        39: 39,
+        # Line 43 is GigabitEthernet4/7
+        43: 43,
+        # Line 47 is GigabitEthernet4/8
+        47: 47,
+    }
+
+    # Validate line numbers *before* inserting
+    for obj in cfg.find_objects("^interface"):
+        result_correct = parent_intf_before_dict.get(obj.linenum, -1)
+        if result_correct:
+            test_result = obj.parent.linenum
+            ## Does this object parent's line number match?
+            assert result_correct == test_result
+
+
+    # Dictionary of parent linenumber assignments below...
+    parent_linenum_after_dict = {
+        # dictionary format...
+        # - key (integer) is CHILD line number
+        # - value (integer) is PARENT line number
+
+        # Line 11 is Serial1/0
+        11: 11,
+        12: 11,
         13: 11,
         # Line 15 is GigabitEthernet4/1
         16: 15,
@@ -401,20 +458,45 @@ def testValues_parent_child_parsing_02(parse_c01):
         18: 15,
         19: 15,
         # Line 21 is GigabitEthernet4/2
+        21: 21,
         22: 21,
         23: 21,
         24: 21,
         25: 21,
+        26: 21,
+        # Line 27 is GigabitEthernet4/3
+        27: 27,
+        28: 27,
+        29: 27,
+        30: 27,
+        # Line 32 is GigabitEthernet4/4
+        32: 32,
+        33: 32,
+        # Line 34 is a comment
+        34: 34,
+        # Line 35 is GigabitEthernet4/5
+        35: 35,
+        36: 35,
+        37: 35,
+        # Line 38 is a comment
+        38: 38,
+        # Line 39 is GigabitEthernet4/6
+        39: 39,
+        40: 39,
+        41: 39,
+        # Line 42 is a comment
+        42: 42,
+        # Line 43 is GigabitEthernet4/7
+        43: 43,
+        44: 43,
+        45: 43,
+        # Line 46 is a comment
+        46: 46,
+        # Line 47 is GigabitEthernet4/8
+        47: 47,
+        48: 47,
+        49: 47,
     }
-    # Expected child / parent line numbers after the insert
-
-    # Validate line numbers *before* inserting
-    for obj in cfg.find_objects(""):
-        result_correct = parent_intf_before_dict.get(obj.linenum, -1)
-        if result_correct:
-            test_result = obj.parent.linenum
-            ## Does this object parent's line number match?
-            assert result_correct == test_result
 
     # Insert lines here...
     for intf_obj in cfg.find_objects(r"^interface\sGigabitEthernet"):
@@ -423,34 +505,13 @@ def testValues_parent_child_parsing_02(parse_c01):
             intf_obj.insert_after(" spanning-tree portfast")
     cfg.atomic()
 
-    # Dictionary of parent assignments below...
-    parent_linenum_after_dict = {
-        # dictionary format...
-        # - key (integer) is CHILD line number
-        # - value (integer) is PARENT line number
-
-        # Line 11 is Serial1/0, child is line 13
-        13: 11,
-        # Line 15 is GigabitEthernet4/1
-        16: 15,
-        17: 15,
-        18: 15,
-        19: 15,
-        # Line 22 is GigabitEthernet4/2
-        23: 22,
-        24: 22,
-        25: 22,
-        26: 22,
-    }
     # Validate line numbers *after* inserting
     for parent_obj in cfg.find_objects("^interface"):
-        print("\nTEST_LINE", parent_obj)
         for child_obj in parent_obj.all_children:
-            print("TEST_LINE", child_obj)
             # result_correct is the **correct parent line number** after insert...
             result_correct = parent_linenum_after_dict.get(child_obj.linenum, -1)
 
-            test_result = obj.parent.linenum
+            test_result = child_obj.parent.linenum
             ## Does this object parent's line number match?
             assert result_correct == test_result
 
