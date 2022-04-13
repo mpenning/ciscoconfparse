@@ -17,6 +17,7 @@ r""" ccp_abc.py - Parse, Query, Build, and Modify IOS-style configurations
      mike [~at~] pennington [/dot\] net
 """
 
+from difflib import get_close_matches
 from operator import methodcaller
 from abc import ABCMeta
 import warnings
@@ -132,8 +133,8 @@ class BaseCfgLine(metaclass=ABCMeta):
         line_id is used to build a numerical identity for a given
         BaseCfgLine().
 
-        Do NOT cache this value.  It may need to be recalculated
-        if self.text changes.
+        Do NOT cache this value.  It must be recalculated when self._text
+        changes.
         """
 
         _line_id = hash(" " * self.indent + " ".join(self.text.strip().split()))
@@ -176,29 +177,6 @@ class BaseCfgLine(metaclass=ABCMeta):
         #  child object _line_id:   ^^^^^^^^^^^^^^^^^^^^
         return retval
 
-    @property
-    def text_wo_char(self, wo_char=" ", keep_indent=True):
-        """
-        Return a 'word' that's missing the `wo_char` parameter.
-        `wo_char` is stripped out of the returned string.
-
-        This is useful to compare sentences with `difflib.get_close_matches()`
-        which does not support spaces in the text to be compared.
-        """
-        assert len(wo_char == 1)
-
-        if wo_char == " " and keep_indent is True:
-            newtext = wo_char*self.indent + re.sub(r"\s", "", self._text.rstrip())
-
-        elif wo_char == " " and keep_indent is False:
-            newtext = re.sub(r"\s", "", self._text.strip())
-
-        else:
-            err = "text_wo_char() not supported for wo_char=='%s'" % wo_char
-            raise NotImplementedError(err)
-
-        return newtext
-
     # On BaseCfgLine()
     @property
     def text(self):
@@ -212,7 +190,7 @@ class BaseCfgLine(metaclass=ABCMeta):
         self._text = newtext
 
         if previous_text != newtext:
-            self.line_id = self.calculate_line_id()
+            self._line_id = self.calculate_line_id()
 
             # After changing text we need to trigger
             #     ConfigObjs.bootstrap_from_text()...
@@ -539,9 +517,11 @@ class BaseCfgLine(metaclass=ABCMeta):
 
     # On BaseCfgLine()
     @junos_unsupported
-    def insert_before(self, insertstr):
-        """Usage:
-            confobj.insert_before('! insert text before this confobj')"""
+    def insert_before(self, insertstr=""):
+        """
+        Usage:
+        confobj.insert_before('! insert text before this confobj')
+        """
         retval = None
         calling_fn_index = 1
         calling_filename = inspect.stack()[calling_fn_index].filename
@@ -549,25 +529,30 @@ class BaseCfgLine(metaclass=ABCMeta):
         calling_lineno = inspect.stack()[calling_fn_index].lineno
         error =  "FATAL CALL: in {} line {} {}(insertstr='{}')".format(calling_filename, calling_lineno, calling_function, insertstr)
         if isinstance(insertstr, str) is True:
-            retval = self.confobj.insert_before(self, insertstr, atomic=False)
+            retval = self.confobj.insert_before(insertstr, atomic=False)
+
         elif isinstance(insertstr, BaseCfgLine) is True:
-            retval = self.confobj.insert_before(self, insertstr.text, atomic=False)
+            retval = self.confobj.insert_before(insertstr.text, atomic=False)
+
         else:
             raise ValueError(error)
+
         #retval = self.confobj.insert_after(self, insertstr, atomic=False)
         return retval
 
     # On BaseCfgLine()
     @junos_unsupported
-    def insert_after(self, insertstr):
+    def insert_after(self, insertstr=""):
         """Usage:
             confobj.insert_after('! insert text after this confobj')"""
+
         # Fail if insertstr is not the correct object type...
         #   only strings and *CfgLine() are allowed...
-        if not getattr(insertstr, "capitalize", False) and not isinstance(insertstr, 'BaseCfgLine'):
+        if not isinstance(insertstr, str) and not isinstance(insertstr, 'BaseCfgLine'):
             error = "Cannot insert object type - %s" % type(insertstr)
             logger.error(error)
             raise NotImplementedError(error)
+
         retval = None
         calling_fn_index = 1
         calling_filename = inspect.stack()[calling_fn_index].filename
@@ -576,12 +561,15 @@ class BaseCfgLine(metaclass=ABCMeta):
         error =  "FATAL CALL: in {} line {} {}(insertstr='{}')".format(calling_filename, calling_lineno, calling_function, insertstr)
         if self.confobj.debug >= 1:
             logger.debug("Inserting '{}' after '{}'".format(insertstr, self))
-        if getattr(insertstr, "capitalize", False):
+
+        if isinstance(insertstr, str) is True:
             # Handle insertion of a plain-text line
-            retval = self.confobj.insert_after(self, insertstr, atomic=False)
+            retval = self.confobj.insert_after(insertstr, atomic=False)
+
         elif isinstance(insertstr, 'BaseCfgLine'):
             # Handle insertion of a configuration line obj such as IOSCfgLine()
-            retval = self.confobj.insert_after(self, insertstr.text, atomic=False)
+            retval = self.confobj.insert_after(insertstr.text, atomic=False)
+
         else:
             logger.error(error)
             raise ValueError(error)
@@ -725,10 +713,12 @@ class BaseCfgLine(metaclass=ABCMeta):
             A string or python regular expression, which should replace the text matched by ``regex``.
         ignore_rgx : str
             A string or python regular expression; the replacement is skipped if :class:`~models_cisco.IOSCfgLine` text matches ``ignore_rgx``.  ``ignore_rgx`` defaults to None, which means no lines matching ``regex`` are skipped.
+
         Returns
         -------
         str
             The new text after replacement
+
         Examples
         --------
         This example illustrates how you can use
@@ -760,14 +750,17 @@ class BaseCfgLine(metaclass=ABCMeta):
         """
         # When replacing objects, check whether they should be deleted, or
         #   whether they are a comment
-        if ignore_rgx and re.search(ignore_rgx, self.text):
-            return self.text
-        retval = re.sub(regex, replacergx, self.text)
+        if ignore_rgx and re.search(ignore_rgx, self._text):
+            return self._text
+
+        retval = re.sub(regex, replacergx, self._text)
+
         # Delete empty lines
         if retval.strip() == "":
             self.delete()
             return
-        self.text = retval
+
+        self._text = retval
         self.set_comment_bool()
         return retval
 
