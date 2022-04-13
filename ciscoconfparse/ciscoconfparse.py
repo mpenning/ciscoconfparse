@@ -90,9 +90,10 @@ def configure_loguru(
     retention="1 month",
     compression="zip",
     level="DEBUG",
+    colorize=True,
     debug=0,
 ):
-    assert (sink is sys.stderr) or (sink is sys.stdout) or isinstance(sink, str)
+    assert (sink == sys.stderr) or (sink == sys.stdout) or isinstance(sink, str)
     assert isinstance(action, str)
     assert action == "remove" or action == "add" or action == "enable" or action == "disable" or action == ""
     assert isinstance(rotation, str)
@@ -100,6 +101,7 @@ def configure_loguru(
     assert isinstance(compression, str)
     assert compression == "zip"
     assert isinstance(level, str)
+    assert isinstance(colorize, bool)
     assert isinstance(debug, int) and (0 <= debug <= 5)
     assert bool(ccp_logger_control)
 
@@ -108,10 +110,10 @@ def configure_loguru(
     ccp_logger_control(action="remove", handler_id=0)
         #ccp_logger_control(action="add", sink=sys.stderr, rotation="midnight", compression="gzip")
 
-    log_config = logger.configure(sink=sys.stdout, level="DEBUG", rotation='midnight', retention="1 month", compression=compression)
+    log_config = logger.configure(sink=sys.stdout, level="DEBUG", rotation='midnight', retention="1 month", compression=compression, colorize=colorize)
     logger.add(log_config)
 
-    ccp_logger_control(action="add", sink=sys.stdout, level="DEBUG", rotation='midnight', retention="1 month", compression=compression)
+    ccp_logger_control(action="add", sink=sys.stdout, level="DEBUG", rotation='midnight', retention="1 month", compression=compression, colorize=colorize)
     ccp_logger_control(action="enable")
 #configure_loguru()
 
@@ -302,7 +304,9 @@ class CiscoConfParse:
 
     # This method is on CiscoConfParse()
     def get_config_lines(self, config=None, logger=None, linesplit_rgx=r"\r*\n+"):
-        """Enforce rules - If config is a str, assume it's a filepath.  If config is a list, assume it's a router config."""
+        """
+        Enforce rules - If config is a str, assume it's a filepath.  If config is a list, assume it's a router config.
+        """
         config_lines = None
 
         # config string - assume a filename... open file return lines...
@@ -342,8 +346,7 @@ class CiscoConfParse:
         """
         if sys.version_info >= (
                 3,
-                5,
-                0,
+                6,
         ):
             retval = {"mode": "r", "newline": None, "encoding": self.encoding}
         else:
@@ -393,7 +396,8 @@ class CiscoConfParse:
 
     # This method is on CiscoConfParse()
     def commit(self):
-        """Alias for calling the :func:`~ciscoconfparse.CiscoConfParse.atomic`
+        """
+        Alias for calling the :func:`~ciscoconfparse.CiscoConfParse.atomic`
         method.  This method is slow; try to batch calls to
         :func:`~ciscoconfparse.CiscoConfParse.commit()` if possible.
 
@@ -414,7 +418,7 @@ class CiscoConfParse:
         --------
         :func:`~ciscoconfparse.CiscoConfParse.atomic`
         """
-        self.atomic()
+        self.atomic() # atomic() calls self.ConfigObjs._bootstrap_from_text()
 
     # This method is on CiscoConfParse()
     def convert_braces_to_ios(self, input_list, stop_width=4):
@@ -2073,7 +2077,8 @@ class CiscoConfParse:
 
     # This method is on CiscoConfParse()
     def find_lineage(self, linespec, exactmatch=False):
-        """Iterate through to the oldest ancestor of this object, and return
+        """
+        Iterate through to the oldest ancestor of this object, and return
         a list of all ancestors / children in the direct line.  Cousins or
         aunts / uncles are *not* returned.  Note, all children
         of this object are returned.
@@ -2113,14 +2118,60 @@ class CiscoConfParse:
     @logger.catch(default=True, onerror=lambda _: sys.exit(1))
     def insert_before(
         self,
-        exist_val,
+        exist_val="",
         new_val="",
         exactmatch=False,
         ignore_ws=False,
         atomic=False,
+        new_val_indent = -1,
         **kwargs
     ):
-        """Find all objects whose text matches exist_val, and insert 'new_val' before those line objects"""
+        r"""
+        Find all :class:`~models_cisco.IOSCfgLine` objects whose text
+        matches ``exist_val``, and insert ``new_val`` before those line
+        objects.
+
+        If ``new_val_indent`` >= 0, then ``new_val`` will be inserted with
+        the requested indent regardless of any existing indent on ``new_val``.
+
+        Parameters
+        ----------
+        exist_val : str
+            Text regular expression for the line to be matched
+        new_val : str
+            Text regular expression for the line to be matched
+        exactmatch : bool
+            Text regular expression for the line to be matched
+        ignore_ws : bool
+            Text regular expression for the line to be matched
+        atomic : bool
+            Text regular expression for the line to be matched
+        new_val_ident : int
+            Text regular expression for the line to be matched
+
+
+        Examples
+        --------
+
+        .. code-block:: python
+           :emphasize-lines: 15
+
+           >>> from ciscoconfparse import CiscoConfParse
+           >>> config = ['!',
+           ...           'interface FastEthernet 0/1',
+           ...           ' description Test intf to CloudFlare',
+           ...           ' ip address 192.0.2.1 255.255.255.252',
+           ...           ' no ip unreachables',
+           ...           '!',
+           ...           'interface FastEthernet 0/2',
+           ...           ' description ProxySG model 8100',
+           ...           ' ip address 192.0.2.5 255.255.255.252',
+           ...           ' no ip unreachables',
+           ...           '!',
+           ...     ]
+           >>> p = CiscoConfParse(config=config)
+           >>> p.insert_before(r"interface\s+FastEthernet\s+0\/2", "default interface FastEthernet 0/2", new_val_indent=0)
+        """
 
         ######################################################################
         #
@@ -2130,31 +2181,38 @@ class CiscoConfParse:
         #   - `linespec` is now called exist_val
         #   - `insertstr` is now called new_val
         ######################################################################
-        if kwargs.get("linespec", ""):
+        if kwargs.get("linespec", "") != "":
             exist_val = kwargs.get("linespec")
             logger.info(
                 "The parameter named `linespec` is deprecated.  Please use `exist_val` instead",
             )
-        if kwargs.get("insertstr", ""):
+        if kwargs.get("insertstr", "") != "":
             new_val = kwargs.get("insertstr")
             logger.info(
                 "The parameter named `insertstr` is deprecated.  Please use `new_val` instead",
             )
 
-        error_exist_val = "FATAL: exist_val:'%s' must be a string" % exist_val
-        error_new_val = "FATAL: new_val:'%s' must be a string" % new_val
-        assert isinstance(exist_val, str), error_exist_val
-        assert isinstance(new_val, str), error_new_val
+        err_exist_val = "FATAL: exist_val:'%s' must be a string" % exist_val
+        err_new_val = "FATAL: new_val:'%s' must be a string" % new_val
+        assert isinstance(exist_val, str), err_exist_val
+        assert exist_val != ""
+        assert isinstance(new_val, str), err_new_val
+        assert new_val != ""
+        assert isinstance(exactmatch, bool)
+        assert isinstance(ignore_ws, bool)
+        assert isinstance(new_val_indent, int)
 
-        # WORKS
-        #objs = self.find_objects(exist_val, exactmatch, ignore_ws)
-        #self.ConfigObjs.insert_before(exist_val, new_val, atomic=atomic)
-        #self.commit()
-        # END-WORKS
+        objs = self.find_objects(linespec=exist_val, exactmatch=exactmatch, ignore_ws=ignore_ws)
+        for exist_obj in objs:
+            exist_indent = len(exist_obj._text) - len(exist_obj._text.lstrip())
+            assert exist_indent == exist_obj.indent
+            if new_val_indent >= 0:
+                # Forces an indent on ``new_val``...
+                self.ConfigObjs.insert_before(exist_val, new_val_indent*" " + new_val.lstrip())
+            else:
+                # Does not force an indent on ``new_val``...
+                self.ConfigObjs.insert_before(exist_val, new_val)
 
-        objs = self.find_objects(exist_val, exactmatch, ignore_ws)
-        for obj in objs:
-            obj.insert_before(new_val)
         if atomic is True:
             self.atomic()
         return [ii.text for ii in sorted(objs)]
@@ -2183,7 +2241,7 @@ class CiscoConfParse:
         --------
 
         .. code-block:: python
-           :emphasize-lines: 23
+           :emphasize-lines: 15
 
            >>> from ciscoconfparse import CiscoConfParse
            >>> config = ['!',
@@ -2242,14 +2300,14 @@ class CiscoConfParse:
             assert exist_indent == exist_obj.indent
             if new_val_indent >= 0:
                 # Forces an indent on ``new_val``...
-                self.ConfigObjs.insert_after(new_val_indent*" " + new_val.lstrip())
+                self.ConfigObjs.insert_after(exist_val, new_val_indent*" " + new_val.lstrip())
             else:
                 # Does not force an indent on ``new_val``...
-                self.ConfigObjs.insert_after(new_val)
+                self.ConfigObjs.insert_after(exist_val, new_val)
 
         if atomic is True:
             self.atomic()
-        return [ii._text for ii in parse.objs]
+        return [ii.text for ii in sorted(objs)]
 
     # This method is on CiscoConfParse()
     def insert_after_child(
@@ -3429,6 +3487,9 @@ class HDiff:
         assert isinstance(allow_duplicates, bool)
         assert isinstance(output_format, str) and output_format in set({"dict", "unified"})
 
+        # TODO - incorporate difflib.get_close_matches() to reorder the
+        #     diff (in unified format)
+
         # FIXME -> no support for an ordered_diff yet... specifically, parents are
         # not ordered yet and siblings are not ordered either in the diff results.
         # The ordered_diff bool support should order diff parents lines (such as
@@ -3511,7 +3572,8 @@ class HDiff:
                     print(" " + " " + line_dict["text"])
 
         elif output_format == "dict":
-            return self.all_output_dicts
+            # diff is stored in self.all_output_dicts
+            pass
 
         else:
             raise NotImplementedError(output_format)
@@ -4096,7 +4158,7 @@ class ConfigList(MutableSequence):
 
         elif self.syntax == 'junos':
             # FIXME junos syntax should have its own bootstrap method...
-            self._list = self._bootstrap_obj_init_ios(tmp_list)
+            self._list = self._bootstrap_obj_init_ios(tmp_list, syntax="junos")
 
         else:
             error = "no defined bootstrap method for syntax='%s'" % self.syntax
@@ -4191,7 +4253,7 @@ class ConfigList(MutableSequence):
             new_val,
         )
         # exist_val MUST be a string
-        if isinstance(exist_val, str) is True:
+        if isinstance(exist_val, str) is True and exist_val != "":
             pass
 
         # Matches "IOSCfgLine", "NXOSCfgLine" and "ASACfgLine"... (and others)
@@ -4317,7 +4379,7 @@ class ConfigList(MutableSequence):
             new_val,
         )
         # exist_val MUST be a string
-        if isinstance(exist_val, str) is True:
+        if isinstance(exist_val, str) is True and exist_val != "":
             pass
 
         # Matches "IOSCfgLine", "NXOSCfgLine" and "ASACfgLine"... (and others)
@@ -4359,6 +4421,12 @@ class ConfigList(MutableSequence):
 
         elif self.syntax == "asa":
             new_obj = ASACfgLine(
+                text=new_val,
+                comment_delimiter=self.comment_delimiter,
+            )
+
+        elif self.syntax == "junos":
+            new_obj = JunosCfgLine(
                 text=new_val,
                 comment_delimiter=self.comment_delimiter,
             )
@@ -4553,8 +4621,11 @@ class ConfigList(MutableSequence):
                     finished = True
 
     # This method is on ConfigList()
-    def _bootstrap_obj_init_ios(self, text_list):
-        """Accept a text list and format into proper IOSCfgLine() objects"""
+    def _bootstrap_obj_init_ios(self, text_list, syntax="ios"):
+        """
+        Accept a text list, and format into a list of proper
+        IOSCfgLine() objects or JunosCfgLine() objects.
+        """
         # Append text lines as IOSCfgLine objects...
         BANNER_STR = {
             "login",
@@ -4584,8 +4655,11 @@ class ConfigList(MutableSequence):
             if self.ignore_blank_lines and line.strip() == "":
                 continue
             #
-            if not self.factory:
+            if not self.factory and syntax=="ios":
                 obj = IOSCfgLine(line, self.comment_delimiter)
+
+            elif not self.factory and syntax=="junos":
+                obj = JunosCfgLine(line, self.comment_delimiter)
 
             elif self.syntax in ALL_VALID_SYNTAX:
                 obj = ConfigLineFactory(
@@ -4678,8 +4752,11 @@ class ConfigList(MutableSequence):
         return retval
 
     # This method is on ConfigList()
-    def _bootstrap_obj_init_asa(self, text_list):
-        """Accept a text list and format into proper objects"""
+    def _bootstrap_obj_init_asa(self, text_list, syntax="asa"):
+        """
+        Accept a text list, and format into a list of proper
+        ASACfgLine() objects
+        """
         # Append text lines as IOSCfgLine objects...
         retval = list()
         idx = 0
@@ -4778,8 +4855,11 @@ class ConfigList(MutableSequence):
         return retval
 
     # This method is on ConfigList()
-    def _bootstrap_obj_init_nxos(self, text_list):
-        """Accept a text list and format into proper objects"""
+    def _bootstrap_obj_init_nxos(self, text_list, syntax="nxos"):
+        """
+        Accept a text list, and format into a list of proper
+        NXOSCfgLine() objects
+        """
         # Append text lines as NXOSCfgLine objects...
         BANNER_STR = {
             "login",
