@@ -282,6 +282,7 @@ def ccp_logger_control(
     retention="1 month",
     compression="zip",
     level="DEBUG",
+    colorize=True,
     debug=0,
 ):
     """A simple function to handle logging... Enable / Disable all ciscoconfparse logging here... also see Github issue #211.
@@ -290,7 +291,7 @@ def ccp_logger_control(
     -------
     """
 
-    msg = "ccp_logger_control() was called with sink='{}', action='{}', handler_id='{}', allow_enqueue={}, rotation='{}', retention='{}', compression='{}', level='{}', debug={}".format(
+    msg = "ccp_logger_control() was called with sink='{}', action='{}', handler_id='{}', allow_enqueue={}, rotation='{}', retention='{}', compression='{}', level='{}', colorize={}, debug={}".format(
         sink,
         action,
         handler_id,
@@ -299,6 +300,7 @@ def ccp_logger_control(
         retention,
         compression,
         level,
+        colorize,
         debug,
     )
     logger.info(msg)
@@ -335,7 +337,6 @@ def ccp_logger_control(
 
         logger.add(
             sink=sink,
-            colorize=True,
             diagnose=True,
             backtrace=True,
             # https://github.com/mpenning/ciscoconfparse/issues/215
@@ -345,6 +346,7 @@ def ccp_logger_control(
             rotation="00:00",
             retention="1 day",
             compression="zip",
+            colorize=True,
             level="DEBUG",
         )
         # format='<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>'
