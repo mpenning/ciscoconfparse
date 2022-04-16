@@ -27,7 +27,7 @@ r""" __init__.py - Parse, Query, Build, and Modify IOS-style configurations
 import sys
 import os
 
-assert sys.version_info > (3, 0)
+assert sys.version_info >= (3, 6)
 
 from ciscoconfparse.ccp_util import PythonOptimizeCheck
 from ciscoconfparse.ciscoconfparse import *
