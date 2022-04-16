@@ -4582,6 +4582,7 @@ class ConfigList(MutableSequence):
                             )
                         pass
                     elif bannerdelimit in obj.text.strip():
+                        # Hit the bannerdelimit char... Exit banner parsing here...
                         if self.debug > 0:
                             logger.debug(
                                 "{} ends at line"
@@ -4593,12 +4594,18 @@ class ConfigList(MutableSequence):
                         parent.child_indent = 0
                         obj.parent = parent
                         break
+                    else:
+                        # all non-banner-parent lines should hit this condition
+                        if self.debug > 0:
+                            logger.debug("found banner child {}".format(obj))
+
                     # Commenting the following lines out; fix Github issue #115
                     # elif obj.is_comment and (obj.indent == 0):
                     #    break
                     parent.children.append(obj)
                     parent.child_indent = 0
                     obj.parent = parent
+
                 except IndexError:
                     break
 
@@ -4744,6 +4751,7 @@ class ConfigList(MutableSequence):
             idx += 1
 
         self._list = retval
+        # Mark begin and end config line objects in self._banner_mark_regex()
         self._banner_mark_regex(BANNER_RE)
         # We need to use a different method for macros than banners because
         #   macros don't specify a delimiter on their parent line, but
