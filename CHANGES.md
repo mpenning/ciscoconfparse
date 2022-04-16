@@ -2,13 +2,17 @@
 - Released: Not released
 - Summary:
     - Add `CHANGES.md` and deprecate `CHANGES`
-    - Add `HDiff()`, remove `NXOSConfigList()` and `ASAConfigList()`.
+    - Require at least Python3.6
+    - Add `HDiff()` which fixes [Github issue #184](https://github.com/mpenning/ciscoconfparse/issues/184)
+    - Add `ciscoconfparse/models_iosxr.py` which is mostly broken (but this also comes with the caveat of an 'unsupported feature').  Ref - [Github issue #235](https://github.com/mpenning/ciscoconfparse/issues/235)
+    - Restore `tests/test_CiscoConfParse.py` to proper functionality.  See [git commit hash `840b11ce334f0b7120bbfc90d2d83fbdc5ed1bd1`](https://github.com/mpenning/ciscoconfparse/commit/840b11ce334f0b7120bbfc90d2d83fbdc5ed1bd1)
+    - Remove `NXOSConfigList()` and `ASAConfigList()` which were dead code and unused
+    - Remove other dead / unreachable code
 
 ## Version: [`1.6.40`](https://pypi.org/project/ciscoconfparse/ "To download the package from pypi, visit https://pypi.org/project/ciscoconfparse/")
 - Released: 2022-03-09
 - Summary:
     - Fix various git merge conflicts
-    - Restore `tests/test_CiscoConfParse.py` to proper functionality
 
 ## Version: `l.6.38`
 - Released: 2022-03-04
