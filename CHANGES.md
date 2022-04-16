@@ -1,7 +1,14 @@
-## Version: `l.7.0`
-- Released: 2022-03-04
+## Version: TBD
+- Released: Not released
 - Summary:
+    - Add `CHANGES.md` and deprecate `CHANGES`
     - Add `HDiff()`, remove `NXOSConfigList()` and `ASAConfigList()`.
+
+## Version: [`1.6.40`](https://pypi.org/project/ciscoconfparse/ "To download the package from pypi, visit https://pypi.org/project/ciscoconfparse/")
+- Released: 2022-03-09
+- Summary:
+    - Fix various git merge conflicts
+    - Restore `tests/test_CiscoConfParse.py` to proper functionality
 
 ## Version: `l.6.38`
 - Released: 2022-03-04
