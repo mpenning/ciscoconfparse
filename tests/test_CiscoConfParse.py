@@ -39,7 +39,9 @@ import os
 sys.path.insert(0, "..")
 
 from ciscoconfparse.ciscoconfparse import CiscoConfParse, IOSCfgLine, IOSIntfLine
+from ciscoconfparse.ciscoconfparse import IOSCfgLine, IOSIntfLine
 from ciscoconfparse.ciscoconfparse import CiscoPassword
+from ciscoconfparse.models_junos import JunosCfgLine
 from ciscoconfparse.ccp_util import ccp_logger_control
 from ciscoconfparse.ccp_util import IPv4Obj, IPv6Obj
 from ciscoconfparse.ccp_abc import BaseCfgLine
@@ -1704,12 +1706,11 @@ base_hello {
     # test overall geneology list length
     assert(len(geneology)==3)
 
-    # FIXME - one day build JunosCfgLine()...
     # For now, we are abusing IOSCfgLine() by using it in the **junos** parser
-    result_kindof_correct = IOSCfgLine
-    assert isinstance(geneology[0], result_kindof_correct)
-    assert isinstance(geneology[1], result_kindof_correct)
-    assert isinstance(geneology[2], result_kindof_correct)
+    # OLD VALUE ->  result_kindof_correct = IOSCfgLine
+    assert isinstance(geneology[0], JunosCfgLine)
+    assert isinstance(geneology[1], JunosCfgLine)
+    assert isinstance(geneology[2], JunosCfgLine)
 
     # test individual geneology .text fields
     result_correct = 'base_hello'
