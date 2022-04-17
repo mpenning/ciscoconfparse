@@ -31,19 +31,20 @@ import re
 import os
 
 from collections.abc import MutableSequence
-
-from ciscoconfparse.protocol_values import ASA_TCP_PORTS, ASA_UDP_PORTS
-from ciscoconfparse.errors import PythonOptimizeException
-import ciscoconfparse
-from dns.exception import DNSException
-from dns.resolver import Resolver
-from dns import reversename, query, zone
-
 from ipaddress import IPv4Network, IPv6Network, IPv4Address, IPv6Address
 from ipaddress import collapse_addresses as ipaddr_collapse_addresses
 from ipaddress import AddressValueError
 
+
+from dns.exception import DNSException
+from dns.resolver import Resolver
+from dns import reversename, query, zone
 from loguru import logger
+
+from ciscoconfparse.protocol_values import ASA_TCP_PORTS, ASA_UDP_PORTS
+from ciscoconfparse.errors import PythonOptimizeException
+import ciscoconfparse
+
 
 # Maximum ipv4 as an integer
 IPV4_MAXINT = 4294967295
@@ -116,6 +117,7 @@ _RGX_IPV4ADDR_NETMASK = re.compile(
 class UnsupportedFeatureWarning(SyntaxWarning):
     pass
 
+
 class PythonOptimizeCheck:
     """
     Check if we're running under "python -O ...".  The -O option removes
@@ -172,12 +174,14 @@ class PythonOptimizeCheck:
             print("exception_info", str(exception_info))
             raise RuntimeError("Something bad happened in PYTHONOPTIMIZE checks.  Please report this problem as a ciscoconfparse bug")
 
-        if error!="__no_error__":
+        if error != "__no_error__":
             raise PythonOptimizeException(error)
 
 
 def as_text_list(object_list):
-    """This is a helper-function to convert a list of configuration objects into a list of text config lines.
+    """
+    This is a helper-function to convert a list of configuration objects into
+    a list of text config lines.
 
     Examples
     --------
@@ -203,7 +207,7 @@ def as_text_list(object_list):
     >>>
 
     """
-    assert isinstance(object_list, list) or isinstance(object_list, tuple)
+    assert isinstance(object_list, (list, tuple,))
     for obj in object_list:
         assert isinstance(obj.linenum, int)
         assert isinstance(obj.text, str)
@@ -278,41 +282,38 @@ def ccp_logger_control(
     action="",
     handler_id=None,
     allow_enqueue=True,
-    rotation="00:00",
-    retention="1 month",
-    compression="zip",
+    # rotation="00:00",
+    # retention="1 month",
+    # compression="zip",
     level="DEBUG",
     colorize=True,
     debug=0,
 ):
-    """A simple function to handle logging... Enable / Disable all ciscoconfparse logging here... also see Github issue #211.
+    """
+    A simple function to handle logging... Enable / Disable all
+    ciscoconfparse logging here... also see Github issue #211.
 
     Example
     -------
     """
 
-    msg = "ccp_logger_control() was called with sink='{}', action='{}', handler_id='{}', allow_enqueue={}, rotation='{}', retention='{}', compression='{}', level='{}', colorize={}, debug={}".format(
+    msg = "ccp_logger_control() was called with sink='{}', action='{}', handler_id='{}', allow_enqueue={}, level='{}', colorize={}, debug={}".format(
         sink,
         action,
         handler_id,
         allow_enqueue,
-        rotation,
-        retention,
-        compression,
+        # rotation,
+        # retention,
+        # compression,
         level,
         colorize,
         debug,
     )
-    logger.info(msg)
+    if debug > 0:
+        logger.info(msg)
 
     assert isinstance(action, str)
-    assert (
-        action == "remove"
-        or action == "add"
-        or action == "disable"
-        or action == "enable"
-        or action == ""
-    )
+    assert action in ("remove", "add", "disable", "enable", "",)
 
     package_name = "ciscoconfparse"
 
@@ -343,13 +344,12 @@ def ccp_logger_control(
             enqueue=allow_enqueue,
             serialize=False,
             catch=True,
-            rotation="00:00",
-            retention="1 day",
-            compression="zip",
+            # rotation="00:00",
+            # retention="1 day",
+            # compression="zip",
             colorize=True,
             level="DEBUG",
         )
-        # format='<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>'
         logger.enable(package_name)
         return True
 
@@ -363,8 +363,12 @@ def ccp_logger_control(
             "action='%s' is an unsupported logger action" % action
         )
 
+
 class __ccp_re__:
-    """A wrapper around python's re.  This is an experimental object... it may disappear at any time as long as this message exists.
+    """
+    A wrapper around python's re.  This is an experimental object... it may
+    disappear at any time as long as this message exists.
+
     self.regex = r'{}'.format(regex)
     self.compiled = re.compile(self.regex, flags=flags)
     self.group = group
@@ -392,7 +396,8 @@ class __ccp_re__:
     """
 
     @logger.catch(default=True, onerror=lambda _: sys.exit(1))
-    def __init__(self, regex_str=r"", target_str=None, groups=None, flags=0, debug=0):
+    def __init__(self, regex_str=r"", target_str=None, groups=None, flags=0,
+        debug=0):
         assert isinstance(regex_str, str)
         assert isinstance(flags, int)
         assert isinstance(debug, int)
@@ -428,6 +433,7 @@ class __ccp_re__:
         self.regex_str = regex_str
         self.compiled = re.compile(regex_str)
         self.attempted_search = False
+
 
     def s(self, target_str):
         assert self.attempted_search is False

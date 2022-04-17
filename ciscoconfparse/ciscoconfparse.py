@@ -1,8 +1,7 @@
-r""" ciscoconfparse.py - Parse, Query, Build, and Modify IOS-style configs
+""" ciscoconfparse.py - Parse, Query, Build, and Modify IOS-style configs
 
      Copyright (C) 2021-2022 David Michael Pennington
-     Copyright (C) 2020-2021 David Michael Pennington at Cisco Systems
-     Copyright (C) 2019      David Michael Pennington at ThousandEyes
+     Copyright (C) 2019-2021 David Michael Pennington at Cisco Systems / ThousandEyes
      Copyright (C) 2012-2019 David Michael Pennington at Samsung Data Services
      Copyright (C) 2011-2012 David Michael Pennington at Dell Computer Corp
      Copyright (C) 2007-2011 David Michael Pennington
@@ -21,10 +20,24 @@ r""" ciscoconfparse.py - Parse, Query, Build, and Modify IOS-style configs
      along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
      If you need to contact the author, you can do so by emailing:
-     mike [~at~] pennington [/dot\] net
+     mike [~at~] pennington [.dot.] net
 """
 
-from loguru import logger as logger
+from difflib import SequenceMatcher, get_close_matches
+from collections.abc import MutableSequence, Iterator
+from functools import partial
+from operator import is_not
+import inspect
+import pathlib
+import locale
+import time
+import copy
+import sys
+import re
+import os
+
+from loguru import logger
+import toml
 
 from ciscoconfparse.models_cisco import IOSHostnameLine, IOSRouteLine
 from ciscoconfparse.models_cisco import IOSIntfLine
@@ -37,16 +50,16 @@ from ciscoconfparse.models_cisco import IOSAaaExecAccountingLine
 from ciscoconfparse.models_cisco import IOSAaaGroupServerLine
 from ciscoconfparse.models_cisco import IOSCfgLine
 
-from ciscoconfparse.models_nxos import NXOSHostnameLine, NXOSRouteLine, NXOSIntfLine
+from ciscoconfparse.models_nxos import NXOSHostnameLine, NXOSRouteLine
 from ciscoconfparse.models_nxos import NXOSAccessLine, NXOSIntfGlobal
 from ciscoconfparse.models_nxos import NXOSAaaLoginAuthenticationLine
 from ciscoconfparse.models_nxos import NXOSAaaEnableAuthenticationLine
 from ciscoconfparse.models_nxos import NXOSAaaCommandsAuthorizationLine
 from ciscoconfparse.models_nxos import NXOSAaaCommandsAccountingLine
 from ciscoconfparse.models_nxos import NXOSAaaExecAccountingLine
+from ciscoconfparse.models_nxos import NXOSCfgLine, NXOSIntfLine
 from ciscoconfparse.models_nxos import NXOSAaaGroupServerLine
 from ciscoconfparse.models_nxos import NXOSvPCLine
-from ciscoconfparse.models_nxos import NXOSCfgLine
 
 from ciscoconfparse.models_asa import ASAObjGroupNetwork
 from ciscoconfparse.models_asa import ASAObjGroupService
@@ -66,56 +79,59 @@ from ciscoconfparse.ccp_abc import BaseCfgLine
 from ciscoconfparse.ccp_util import junos_unsupported
 from ciscoconfparse.ccp_util import ccp_logger_control
 # Not using ccp_re yet... still a work in progress
-#from ciscoconfparse.ccp_util import ccp_re
-import toml
+# from ciscoconfparse.ccp_util import ccp_re
 
-
-from difflib import SequenceMatcher, get_close_matches
-from collections.abc import MutableSequence, Iterator
-from functools import partial
-from operator import is_not
-import inspect
-import pathlib
-import locale
-import time
-import copy
-import sys
-import re
-import os
 
 def configure_loguru(
     sink=sys.stderr,
     action="",
-    rotation="midnight",
-    retention="1 month",
-    compression="zip",
+    # rotation="midnight",
+    # retention="1 month",
+    # compression="zip",
     level="DEBUG",
     colorize=True,
     debug=0,
 ):
-    assert (sink == sys.stderr) or (sink == sys.stdout) or isinstance(sink, str)
+    """
+    configure_loguru()
+    """
     assert isinstance(action, str)
-    assert action == "remove" or action == "add" or action == "enable" or action == "disable" or action == ""
-    assert isinstance(rotation, str)
-    assert isinstance(retention, str)
-    assert isinstance(compression, str)
-    assert compression == "zip"
+    assert action in ('remove', 'add', 'enable', 'disable', '',)
+    # assert isinstance(rotation, str)
+    # assert isinstance(retention, str)
+    # assert isinstance(compression, str)
+    # assert compression == "zip"
     assert isinstance(level, str)
     assert isinstance(colorize, bool)
     assert isinstance(debug, int) and (0 <= debug <= 5)
-    assert bool(ccp_logger_control)
 
-        # logger_control() was imported above...
-        #    Remove the default loguru logger to stderr (handler_id==0)...
+    # logger_control() was imported above...
+    #    Remove the default loguru logger to stderr (handler_id==0)...
     ccp_logger_control(action="remove", handler_id=0)
-        #ccp_logger_control(action="add", sink=sys.stderr, rotation="midnight", compression="gzip")
 
-    log_config = logger.configure(sink=sys.stdout, level="DEBUG", rotation='midnight', retention="1 month", compression=compression, colorize=colorize)
-    logger.add(log_config)
+#    _logger_config = logger.configure(
+#        sys.stdout,
+#        level="DEBUG",
+#        rotation='midnight',
+#        retention="1 month",
+#        compression=compression,
+#        colorize=colorize,
+#    )
+#    logger.add(_logger_config)
 
-    ccp_logger_control(action="add", sink=sys.stdout, level="DEBUG", rotation='midnight', retention="1 month", compression=compression, colorize=colorize)
+    ccp_logger_control(
+        sink=sys.stdout,
+        action="add",
+        level="DEBUG",
+        # rotation='midnight',   # ALE barks about the rotation keyword...
+        # retention="1 month",
+        # compression=compression,
+        colorize=colorize
+    )
     ccp_logger_control(action="enable")
-#configure_loguru()
+
+
+configure_loguru()
 
 ENCODING = locale.getpreferredencoding()
 ALL_VALID_SYNTAX = (
@@ -125,14 +141,14 @@ ALL_VALID_SYNTAX = (
     'junos',
 )
 
-## Docstring props: http://stackoverflow.com/a/1523456/667301
+# Docstring props: http://stackoverflow.com/a/1523456/667301
 # __version__ if-else below fixes Github issue #123
 pyproject_path = os.path.join(
     os.path.dirname(os.path.abspath(__file__)),
     "../pyproject.toml",
 )
 if os.path.isfile(pyproject_path):
-    ## Retrieve the version number from pyproject.toml...
+    # Retrieve the version number from pyproject.toml...
     toml_values = dict()
     with open(pyproject_path, encoding=ENCODING) as fh:
         toml_values = toml.loads(fh.read())
@@ -160,10 +176,9 @@ def build_space_tolerant_regex(linespec):
     if isinstance(linespec, str):
         linespec = re.sub(r"\s+", escaped_space, linespec)
 
-    elif isinstance(linespec, list) or isinstance(linespec, tuple):
-        for idx in range(0, len(linespec)):
-            ## Ensure this list element is a string...
-            tmp = linespec[idx]
+    elif isinstance(linespec, (list, tuple,)):
+        for idx, tmp in enumerate(linespec):
+            # Ensure this list element is a string...
             assert isinstance(tmp, str)
             linespec[idx] = re.sub(r"\s+", escaped_space, tmp)
 
@@ -262,7 +277,15 @@ class CiscoConfParse:
 
         # Define a functools.partial() wrapper around ConfigList()...
         # functools.partial() info->https://stackoverflow.com/a/5737892/667301
-        self.config_list = partial(ConfigList, syntax=syntax, comment_delimiter=comment, factory=factory, ignore_blank_lines=ignore_blank_lines, ccp_ref=self, debug=debug)
+        self.config_list = partial(
+            ConfigList,
+            syntax=syntax,
+            comment_delimiter=comment,
+            factory=factory,
+            ignore_blank_lines=ignore_blank_lines,
+            ccp_ref=self,
+            debug=debug
+        )
 
         config = self.get_config_lines(config=config, logger=logger)
         valid_syntax = copy.copy(set(ALL_VALID_SYNTAX))
@@ -283,6 +306,7 @@ class CiscoConfParse:
                 logger.info("assigning self.ConfigObjs = ConfigList()")
             # self.config_list is a partial wrapper around ConfigList()
             self.ConfigObjs = self.config_list(data=config)
+
         else:
             error = "'{}' is an unknown syntax".format(syntax)
             logger.error(error)
@@ -314,7 +338,7 @@ class CiscoConfParse:
             logger.debug("parsing config from '%s'" % config)
 
         try:
-            assert isinstance(config, str) or isinstance(config, pathlib.Path)
+            assert isinstance(config, (str, pathlib.Path,))
             assert os.path.isfile(config) is True
             with open(config, **self.openargs) as fh:
                 text = fh.read()
@@ -331,7 +355,7 @@ class CiscoConfParse:
             # Allow list / iterator config to fall through the next logic below
             pass
 
-        if isinstance(config, list) or isinstance(config, Iterator):
+        if isinstance(config, (Iterator, list,)):
             config_lines = config
             return config_lines
 
@@ -815,8 +839,8 @@ class CiscoConfParse:
             return_matrix = list()
             #branchspec = (r"^interfaces", r"\s+(\S+)", r"\s+(unit\s+\d+)", r"family\s+(inet)", r"address\s+(\S+)")
             #for idx_matrix, row in enumerate(self.find_object_branches(branchspec)):
-            for idx_matrix, row in enumerate(branches):
-                assert isinstance(row, list) or isinstance(row, tuple)
+            for _, row in enumerate(branches):
+                assert isinstance(row, (list, tuple,))
 
                 # Before we check regex capture groups, allocate an "empty return_row"
                 #   of the correct length...
@@ -849,7 +873,10 @@ class CiscoConfParse:
                     elif element is None:
                         return_row[idx] = (None,)
                     else:
-                        raise ValueError("regex matches on {}('{}') are not supported".format(type(element), element.text))
+                        substr_01 = "regex matches on {}('{}')".format(
+                            type(element), element.text)
+                        err_str = substr_01 + " are not supported"
+                        raise ValueError(err_str)
                 return_matrix.append(return_row)
 
             branches = return_matrix
@@ -902,26 +929,27 @@ class CiscoConfParse:
 
         """
         if (self.factory is not True):
-            error = "find_interface_objects() must be called with 'factory=True'"
-            logger.error(error)
-            raise ValueError(error)
+            err_text = "find_interface_objects() must be" \
+                " called with 'factory=True'"
+            logger.error(err_text)
+            raise ValueError(err_text)
 
         retval = list()
-        if (self.syntax == "ios") or (self.syntax == "nxos"):
-            if exactmatch:
+        if self.syntax in ("ios", "nxos",):
+            if exactmatch is True:
                 for obj in self.find_objects("^interface"):
                     if intfspec.lower() in obj.abbvs:
                         retval.append(obj)
                         break  # Only break if exactmatch is True
             else:
-                error = "This method requires exactmatch set True"
-                logger.error(error)
-                raise NotImplementedError(error)
+                err_text = "This method requires exactmatch set True"
+                logger.error(err_text)
+                raise NotImplementedError(err_text)
         ## TODO: implement ASAConfigLine.abbvs and others
         else:
-            error = "This method requires exactmatch set True"
-            logger.error(error)
-            raise NotImplementedError(error)
+            err_text = "This method requires exactmatch set True"
+            logger.error(err_text)
+            raise NotImplementedError(err_text)
 
         return retval
 
@@ -974,17 +1002,19 @@ class CiscoConfParse:
             )
             logger.info(message)
 
-        if not self.factory:
-            error = "find_objects_dna() must be called with 'factory=True'"
-            logger.error(error)
-            raise ValueError(error)
+        if self.factory is False:
+            err_text = "find_objects_dna() must be called with 'factory=True'"
+            logger.error(err_text)
+            raise ValueError(err_text)
 
-        if not exactmatch:
+        if exactmatch is False:
             # Return objects whose text attribute matches linespec
             linespec_re = re.compile(dnaspec)
-        elif exactmatch:
+
+        elif exactmatch is True:
             # Return objects whose text attribute matches linespec exactly
             linespec_re = re.compile("^{}$".format(dnaspec))
+
         return list(
             filter(lambda obj: linespec_re.search(obj.dna), self.ConfigObjs),
         )
@@ -1533,7 +1563,7 @@ class CiscoConfParse:
         """
 
         #assert bool(getattr(childspec, "append"))  # Childspec must be a list
-        assert isinstance(childspec, list) or isinstance(childspec, tuple)
+        assert isinstance(childspec, (list, tuple,))
         retval = list()
         if ignore_ws is True:
             parentspec = build_space_tolerant_regex(parentspec)
@@ -1553,8 +1583,7 @@ class CiscoConfParse:
                 )
             if False in results:
                 continue
-            else:
-                retval.append(parentobj)
+            retval.append(parentobj)
 
         return retval
 
@@ -1591,8 +1620,9 @@ class CiscoConfParse:
                 childspec = [build_space_tolerant_regex(ii) for ii in childspec]
 
             else:
-                error = "Cannot call build_space_tolerant_regex() on childspec"
-                raise ValueError(error)
+                err_txt = "Cannot call build_space_tolerant_regex()" \
+                    " on childspec"
+                raise ValueError(err_text)
 
         for parentobj in self.find_objects(parentspec):
             results = set()
@@ -2097,9 +2127,9 @@ class CiscoConfParse:
         """
         tmp = self.find_objects(linespec, exactmatch=exactmatch)
         if len(tmp) > 1:
-            error = "linespec must be unique"
-            logger.error(error)
-            raise ValueError(error)
+            err_txt = "linespec must be unique"
+            logger.error(err_txt)
+            raise ValueError(err_txt)
 
         return [obj.text for obj in tmp[0].lineage]
 
@@ -2139,16 +2169,15 @@ class CiscoConfParse:
         exist_val : str
             Text regular expression for the line to be matched
         new_val : str
-            Text regular expression for the line to be matched
+            text to be inserted before all occurances of exist_val
         exactmatch : bool
-            Text regular expression for the line to be matched
+            if exactmatch is True, do not match on substrings
         ignore_ws : bool
-            Text regular expression for the line to be matched
+            if ignore_ws is True, ignore whitespace differences
         atomic : bool
-            Text regular expression for the line to be matched
+            if atomic is True, this change will be commited
         new_val_ident : int
-            Text regular expression for the line to be matched
-
+            integer indent for new_val
 
         Examples
         --------
@@ -2203,9 +2232,9 @@ class CiscoConfParse:
         assert isinstance(new_val_indent, int)
 
         objs = self.find_objects(linespec=exist_val, exactmatch=exactmatch, ignore_ws=ignore_ws)
-        for exist_obj in objs:
-            exist_indent = len(exist_obj._text) - len(exist_obj._text.lstrip())
-            assert exist_indent == exist_obj.indent
+        for _obj in objs:
+            exist_indent = len(_obj._text) - len(_obj._text.lstrip())
+            assert exist_indent == _obj.indent
             if new_val_indent >= 0:
                 # Forces an indent on ``new_val``...
                 self.ConfigObjs.insert_before(exist_val, new_val_indent*" " + new_val.lstrip())
@@ -2236,6 +2265,21 @@ class CiscoConfParse:
 
         If ``new_val_indent`` >= 0, then ``new_val`` will be inserted with
         the requested indent regardless of any existing indent on ``new_val``.
+
+        Parameters
+        ----------
+        exist_val : str
+            Text regular expression for the line to be matched
+        new_val : str
+            text to be inserted after all occurances of exist_val
+        exactmatch : bool
+            if exactmatch is True, do not match on substrings
+        ignore_ws : bool
+            if ignore_ws is True, ignore whitespace differences
+        atomic : bool
+            if atomic is True, this change will be commited
+        new_val_ident : int
+            integer indent for new_val
 
         Examples
         --------
@@ -2295,9 +2339,9 @@ class CiscoConfParse:
         #self.ConfigObjs.insert_after(exist_val, new_val, atomic=atomic)
         # END-WORKS!!
         objs = self.find_objects(linespec=exist_val, exactmatch=exactmatch, ignore_ws=ignore_ws)
-        for exist_obj in objs:
-            exist_indent = len(exist_obj._text) - len(exist_obj._text.lstrip())
-            assert exist_indent == exist_obj.indent
+        for _obj in objs:
+            exist_indent = len(_obj._text) - len(_obj._text.lstrip())
+            assert exist_indent == _obj.indent
             if new_val_indent >= 0:
                 # Forces an indent on ``new_val``...
                 self.ConfigObjs.insert_after(exist_val, new_val_indent*" " + new_val.lstrip())
@@ -4374,7 +4418,7 @@ class ConfigList(MutableSequence):
         calling_filename = inspect.stack()[calling_fn_index].filename
         calling_function = inspect.stack()[calling_fn_index].function
         calling_lineno = inspect.stack()[calling_fn_index].lineno
-        error = "FATAL CALL: in {} line {} {}(exist_val='{}', new_val='{}')".format(
+        err_txt = "FATAL CALL: in {} line {} {}(exist_val='{}', new_val='{}')".format(
             calling_filename, calling_lineno, calling_function, exist_val,
             new_val,
         )
@@ -4387,8 +4431,8 @@ class ConfigList(MutableSequence):
             exist_val = exist_val.text
 
         else:
-            logger.error(error)
-            raise ValueError(error)
+            logger.error(err_txt)
+            raise ValueError(err_txt)
 
         # new_val MUST be a string
         if isinstance(new_val, str) is True:
@@ -4398,10 +4442,10 @@ class ConfigList(MutableSequence):
             new_val = new_val.text
 
         else:
-            logger.error(error)
-            raise ValueError(error)
+            logger.error(err_txt)
+            raise ValueError(err_txt)
 
-        if self.factory:
+        if self.factory is True:
             new_obj = ConfigLineFactory(
                 text=new_val,
                 comment_delimiter=self.comment_delimiter,
@@ -4444,7 +4488,7 @@ class ConfigList(MutableSequence):
         for idx in sorted(all_idx, reverse=True):
             self._list.insert(idx + 1, new_obj)
 
-        if atomic:
+        if atomic is True:
             # Reparse the whole config as a text list
             self._bootstrap_from_text()
         else:
@@ -4484,13 +4528,13 @@ class ConfigList(MutableSequence):
                 )
 
             else:
-                error = 'insert() cannot insert "{}"'.format(val)
-                logger.error(error)
-                raise ValueError(error)
+                err_txt = 'insert() cannot insert "{}"'.format(val)
+                logger.error(err_txt)
+                raise ValueError(err_txt)
         else:
-            error = 'insert() cannot insert "{}"'.format(val)
-            logger.error(error)
-            raise ValueError(error)
+            err_txt = 'insert() cannot insert "{}"'.format(val)
+            logger.error(err_txt)
+            raise ValueError(err_txt)
 
         ## Insert something at index ii
         self._list.insert(ii, obj)
@@ -4510,8 +4554,8 @@ class ConfigList(MutableSequence):
         at each parent 'level': (list_of_parent_sibling_objs, list_of_nonparent_sibling_objs)
 
         """
-        parent_siblings = list()
-        nonparent_siblings = list()
+        parent_siblings = []
+        nonparent_siblings = []
 
         for obj in self.ccp_ref.find_objects(r"^\S+"):
             if obj.is_comment:
@@ -4628,11 +4672,12 @@ class ConfigList(MutableSequence):
                     finished = True
 
     # This method is on ConfigList()
-    def _bootstrap_obj_init_ios(self, text_list, syntax="ios"):
+    def _bootstrap_obj_init_ios(self, text_list):
         """
         Accept a text list, and format into a list of proper
         IOSCfgLine() objects or JunosCfgLine() objects.
         """
+        assert isinstance(text_list, (list, tuple,))
         # Append text lines as IOSCfgLine objects...
         BANNER_STR = {
             "login",
@@ -4662,10 +4707,10 @@ class ConfigList(MutableSequence):
             if self.ignore_blank_lines and line.strip() == "":
                 continue
             #
-            if not self.factory and syntax=="ios":
+            if not self.factory and self.syntax=="ios":
                 obj = IOSCfgLine(line, self.comment_delimiter)
 
-            elif not self.factory and syntax=="junos":
+            elif not self.factory and self.syntax=="junos":
                 obj = JunosCfgLine(line, self.comment_delimiter)
 
             elif self.syntax in ALL_VALID_SYNTAX:
@@ -4676,12 +4721,12 @@ class ConfigList(MutableSequence):
                 )
 
             else:
-                error = (
+                err_txt = (
                     "Cannot classify config list item '%s' "
                     "into a proper configuration object line" % line
                 )
-                logger.error(error)
-                raise ValueError(error)
+                logger.error(err_txt)
+                raise ValueError(err_txt)
 
             obj.confobj = self
             obj.linenum = idx
@@ -4760,11 +4805,12 @@ class ConfigList(MutableSequence):
         return retval
 
     # This method is on ConfigList()
-    def _bootstrap_obj_init_asa(self, text_list, syntax="asa"):
+    def _bootstrap_obj_init_asa(self, text_list):
         """
         Accept a text list, and format into a list of proper
         ASACfgLine() objects
         """
+        assert isinstance(text_list, (list, tuple,))
         # Append text lines as IOSCfgLine objects...
         retval = list()
         idx = 0
@@ -4788,12 +4834,12 @@ class ConfigList(MutableSequence):
                     comment_delimiter=self.comment_delimiter,
                 )
             else:
-                error = (
+                err_txt = (
                     "Cannot classify config list item '%s' "
                     "into a proper configuration object line" % line
                 )
-                logger.error(error)
-                raise ValueError(error)
+                logger.error(err_txt)
+                raise ValueError(err_txt)
 
             obj.confobj = self
             obj.linenum = idx
@@ -4863,11 +4909,12 @@ class ConfigList(MutableSequence):
         return retval
 
     # This method is on ConfigList()
-    def _bootstrap_obj_init_nxos(self, text_list, syntax="nxos"):
+    def _bootstrap_obj_init_nxos(self, text_list):
         """
         Accept a text list, and format into a list of proper
         NXOSCfgLine() objects
         """
+        assert isinstance(text_list, (list, tuple,))
         # Append text lines as NXOSCfgLine objects...
         BANNER_STR = {
             "login",
@@ -4992,7 +5039,7 @@ class ConfigList(MutableSequence):
                 parentobj.children,
                 ),
             )
-            pass
+
         if childobj.is_comment and (_list[idx - 1].indent > indent):
             ## I *really* hate making this exception, but legacy
             ##   ciscoconfparse never marked a comment as a child
@@ -5244,9 +5291,9 @@ def ConfigLineFactory(text="", comment_delimiter="!", syntax="ios"):
     elif syntax == "junos":
         classes = [IOSCfgLine]
     else:
-        error = "'{}' is an unknown syntax".format(syntax)
-        logger.error(error)
-        raise ValueError(error)
+        err_txt = "'{}' is an unknown syntax".format(syntax)
+        logger.error(err_txt)
+        raise ValueError(err_txt)
 
     for cls in classes:
         if cls.is_object_for(text):
@@ -5254,9 +5301,9 @@ def ConfigLineFactory(text="", comment_delimiter="!", syntax="ios"):
                 text=text, comment_delimiter=comment_delimiter,
             )  # instance of the proper subclass
             return inst
-    error = "Could not find an object for '%s'" % line
-    logger.error(error)
-    raise ValueError(error)
+    err_txt = "Could not find an object for '%s'" % line
+    logger.error(err_txt)
+    raise ValueError(err_txt)
 
 
 ### TODO: Add unit tests below
