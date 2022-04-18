@@ -118,7 +118,6 @@ class BaseCfgLine(metaclass=ABCMeta):
         self.is_comment = retval
         return retval
 
-
     # On BaseCfgLine()
     @property
     def index(self):
@@ -136,8 +135,8 @@ class BaseCfgLine(metaclass=ABCMeta):
         Do NOT cache this value.  It must be recalculated when self._text
         changes.
         """
-
-        _line_id = hash(" " * self.indent + " ".join(self.text.strip().split()))
+        indent = self.indent
+        _line_id = hash(" " * indent + " ".join(self.text.strip().split()))
         return _line_id
 
     # On BaseCfgLine()
@@ -152,7 +151,7 @@ class BaseCfgLine(metaclass=ABCMeta):
 
         object id integers are NOT the same between script runs.
         """
-        retval = list()
+        retval = []
         len_geneology = len(self.geneology)
 
         for idx, obj in enumerate(self.geneology):
@@ -160,7 +159,7 @@ class BaseCfgLine(metaclass=ABCMeta):
             obj._line_id = obj.calculate_line_id()
 
             # idx = 0 is the oldest ancestor
-            if idx==0:
+            if idx == 0:
                 # This object is NOT a child
                 assert obj.indent == 0
                 retval.insert(0, obj._line_id)
