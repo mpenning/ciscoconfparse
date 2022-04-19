@@ -166,7 +166,7 @@ The word \"Cisco\" is a registered trademark of [Cisco Systems][27].
 Author
 ------
 
-[ciscoconfparse][3] was written by [David Michael Pennington][25] (mike \[\~at\~\] pennington \[/dot\] net).
+[ciscoconfparse][3] was written by [David Michael Pennington][25] (mike \[\~at\~\] pennington \[.dot.\] net).
 
 
   [1]: https://github.com/mpenning/ciscoconfparse/tree/master/.github/workflows
