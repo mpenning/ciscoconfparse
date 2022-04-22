@@ -74,6 +74,8 @@ from ciscoconfparse.models_asa import ASAAclLine
 
 from ciscoconfparse.models_junos import JunosCfgLine
 
+from ciscoconfparse.models_terraform import TerraformLine
+
 from ciscoconfparse.ccp_abc import BaseCfgLine
 
 from ciscoconfparse.ccp_util import junos_unsupported
@@ -139,6 +141,7 @@ ALL_VALID_SYNTAX = (
     'nxos',
     'asa',
     'junos',
+    'terraform',
 )
 
 # Docstring props: http://stackoverflow.com/a/1523456/667301
@@ -221,7 +224,7 @@ class CiscoConfParse:
         ignore_blank_lines : bool
             ``ignore_blank_lines`` defaults to True; when this is set True, ciscoconfparse ignores blank configuration lines.  You might want to set ``ignore_blank_lines`` to False if you intentionally use blank lines in your configuration (ref: Github Issue #2), or you are parsing configurations which naturally have blank lines (such as Cisco Nexus configurations).
         syntax : str
-            A string holding the configuration type.  Default: 'ios'.  Must be one of: 'ios', 'nxos', 'asa', 'junos'.  Use 'junos' for any brace-delimited configuration (including F5, Palo Alto, etc...).
+            A string holding the configuration type.  Default: 'ios'.  Must be one of: 'ios', 'nxos', 'asa', 'junos', 'terraform'.  Use 'junos' for any brace-delimited network configuration (including F5, Palo Alto, etc...).
         encoding : str
             A string holding the coding type.  Default is `locale.getpreferredencoding()`
 
@@ -265,11 +268,11 @@ class CiscoConfParse:
         openargs : dict
             Returns a dictionary of valid arguments for `open()` (these change based on the running python version).
         syntax : str
-            A string holding the configuration type.  Default: 'ios'.  Must be one of: 'ios', 'nxos', 'asa', 'junos'.  Use 'junos' for any brace-delimited configuration (including F5, Palo Alto, etc...).
+            A string holding the configuration type.  Default: 'ios'.  Must be one of: 'ios', 'nxos', 'asa', 'junos', 'terraform'.  Use 'junos' for any brace-delimited network configuration (including F5, Palo Alto, etc...).
 
         """
         assert isinstance(syntax, str)
-        assert syntax in {"ios", "nxos", "asa", "junos"}
+        assert syntax in {"ios", "nxos", "asa", "junos", "terraform"}
         assert isinstance(debug, int) and debug >= 0
 
         # all IOSCfgLine object instances...
@@ -294,7 +297,10 @@ class CiscoConfParse:
 
         config = self.get_config_lines(config=config, logger=logger)
         valid_syntax = copy.copy(set(ALL_VALID_SYNTAX))
+
+        # add exceptions for brace-delimited syntax...
         valid_syntax.discard("junos")
+        valid_syntax.discard("terraform")
         if syntax in valid_syntax:
 
             if self.debug > 0:
@@ -308,7 +314,17 @@ class CiscoConfParse:
             err_msg = "junos parser factory is not yet" \
                 " enabled; use factory=False"
             assert factory is False, err_msg
-            config = self.convert_braces_to_ios(config)
+            config = self.convert_junos_to_ios(config)
+            if self.debug > 0:
+                logger.info("assigning self.ConfigObjs = ConfigList()")
+            # self.config_list is a partial wrapper around ConfigList()
+            self.ConfigObjs = self.config_list(data=config)
+
+        elif syntax == "terraform":
+            err_msg = "terraform parser factory is not yet" \
+                " enabled; use factory=False"
+            assert factory is False, err_msg
+            config = self.convert_terraform_to_ios(config)
             if self.debug > 0:
                 logger.info("assigning self.ConfigObjs = ConfigList()")
             # self.config_list is a partial wrapper around ConfigList()
@@ -454,7 +470,7 @@ class CiscoConfParse:
     # This method was copied from the same method in git commit below...
     # https://raw.githubusercontent.com/mpenning/ciscoconfparse/bb3f77436023873da344377d3c839387f5131e7f/ciscoconfparse/ciscoconfparse.py
     @logger.catch(default=True, onerror=lambda _: sys.exit(1))
-    def convert_braces_to_ios(self, input_list, stop_width=4):
+    def convert_junos_to_ios(self, input_list, stop_width=4):
         """
         This method accepts `input_list` (it should be a list of
         junos-brace-formatted-string config lines).
@@ -489,7 +505,7 @@ class CiscoConfParse:
 
             if nn is not None:
                 results = nn.groupdict()
-                return (indent_this_line, indent_child, results.get('delimiter')+results.get('comment', ''))
+                return (indent_this_line, indent_child, results.get('delimiter') + results.get('comment', ''))
 
             elif mm is not None:
                 results = mm.groupdict()
@@ -565,10 +581,12 @@ class CiscoConfParse:
                     return (indent_this_line, indent_child, '')
 
                 else:
-                    raise ValueError('Cannot parse junos match:"{}"'.format(line_txt))
+                    raise ValueError('Cannot parse {} match:"{}"'.format(
+                            self.syntax, line_txt))
 
             else:
-                raise ValueError('Cannot parse junos:"{}"'.format(line_txt))
+                raise ValueError('Cannot parse {}:"{}"'.format(self.syntax,
+                            line_txt))
 
         lines = list()
         offset = 0
@@ -578,6 +596,142 @@ class CiscoConfParse:
                 logger.debug("Parse line {}:'{}'".format(idx+1, tmp.strip()))
             (indent_this_line, indent_child, line) = parse_line_braces(
                 tmp.strip())
+            lines.append((" " * STOP_WIDTH * (offset + indent_this_line)) + line.strip())
+            offset += indent_child
+        return lines
+
+    # This method is on CiscoConfParse()
+    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    def convert_terraform_to_ios(self, input_list, stop_width=4, quotes=False):
+        """
+        This method accepts `input_list` (it should be a list of
+        terraform-brace-formatted-string config lines).
+
+        This method strips off semicolons / braces / quotes from the string
+        lines in `input_list` and returns the lines in a new list where all
+        lines are explicitly indented as IOS would (as if IOS understood
+        terraform).
+        """
+        ## Note to self, I made this regex fairly terraform-specific...
+        assert isinstance(input_list, list) and len(input_list) >= 1
+        assert '{' not in set(self.comment_delimiter)
+        assert '}' not in set(self.comment_delimiter)
+
+        terraform_re_str = r"""^
+        (?:\s*
+            (?P<braces_close_left>\})*(?P<line1>.*?)(?P<braces_open_right>\{)*;*
+           |(?P<line2>[^\{\}]*?)(?P<braces_open_left>\{)(?P<condition2>.*?)(?P<braces_close_right>\});*\s*
+           |(?P<line3>[^\{\}]*?);*\s*
+        )$
+        """
+        line_re = re.compile(terraform_re_str, re.VERBOSE)
+
+        comment_re = re.compile(r'^\s*(?P<delimiter>[{0}]+)(?P<comment>[^{0}]*)$'.format(re.escape(self.comment_delimiter)))
+
+        def parse_line_braces(line_txt, quotes=quotes):
+            assert isinstance(line_txt, str)
+            indent_child = 0
+            indent_this_line = 0
+
+            if quotes is False:
+                line_txt = line_txt.replace('"', "").replace("'", "")
+
+            mm = line_re.search(line_txt.strip())
+            nn = comment_re.search(line_txt.strip())
+
+            if nn is not None:
+                results = nn.groupdict()
+                return (indent_this_line, indent_child, results.get('delimiter') + results.get('comment', ''))
+
+            elif mm is not None:
+                results = mm.groupdict()
+
+                # } line1 { foo bar this } {
+                braces_close_left = bool(results.get('braces_close_left', ''))
+                braces_open_right = bool(results.get('braces_open_right', ''))
+
+                # line2
+                braces_open_left = bool(results.get('braces_open_left', ''))
+                braces_close_right = bool(results.get('braces_close_right', ''))
+
+                # line3
+                line1_str = results.get('line1', '')
+                line3_str = results.get('line3', '')
+
+                if braces_close_left and braces_open_right:
+                    # Based off line1
+                    #     } elseif { bar baz } {
+                    indent_this_line -= 1
+                    indent_child     += 0
+                    retval = results.get('line1', None)
+                    return (indent_this_line, indent_child, retval)
+
+                elif bool(line1_str) and (braces_close_left is False) and (braces_open_right is False):
+                    # Based off line1:
+                    #     address 1.1.1.1
+                    indent_this_line -= 0
+                    indent_child     += 0
+                    retval = results.get('line1', '').strip()
+                    # Strip empty braces here
+                    retval = re.sub(r'\s*\{\s*\}\s*', '', retval)
+                    return (indent_this_line, indent_child, retval)
+
+                elif (line1_str == '') and (braces_close_left is False) and (braces_open_right is False):
+                    # Based off line1:
+                    #     return empty string
+                    indent_this_line -= 0
+                    indent_child += 0
+                    return (indent_this_line, indent_child, '')
+
+                elif braces_open_left and braces_close_right:
+                    # Based off line2
+                    #    this { bar baz }
+                    indent_this_line -= 0
+                    indent_child += 0
+                    line = results.get('line2', None) or ''
+                    condition = results.get('condition2', None) or ''
+                    if condition.strip() == '':
+                        retval = line
+                    else:
+                        retval = line + " {" + condition + " }"
+                    return (indent_this_line, indent_child, retval)
+
+                elif braces_close_left:
+                    # Based off line1
+                    #   }
+                    indent_this_line -= 1
+                    indent_child     -= 1
+                    return (indent_this_line, indent_child, '')
+
+                elif braces_open_right:
+                    # Based off line1
+                    #   this that foo {
+                    indent_this_line -= 0
+                    indent_child     += 1
+                    line = results.get('line1', None) or ''
+                    return (indent_this_line, indent_child, line)
+
+                elif (line3_str != '') and (line3_str is not None):
+                    indent_this_line += 0
+                    indent_child     += 0
+                    return (indent_this_line, indent_child, '')
+
+                else:
+                    raise ValueError('Cannot parse {} match:"{}"'.format(
+                            self.syntax, line_txt))
+
+            else:
+                raise ValueError('Cannot parse {}:"{}"'.format(self.syntax,
+                            line_txt))
+
+        lines = list()
+        offset = 0
+        STOP_WIDTH = stop_width
+        for idx, tmp in enumerate(input_list):
+            if self.debug is True:
+                logger.debug("Parse line {}:'{}'".format(idx+1, tmp.strip()))
+            (indent_this_line, indent_child, line) = parse_line_braces(
+                tmp.strip(), quotes=quotes)
             lines.append((" " * STOP_WIDTH * (offset + indent_this_line)) + line.strip())
             offset += indent_child
         return lines
@@ -3476,6 +3630,8 @@ class UnifiedDiffHunk:
         self.after = after_lines
 
 class HDiff:
+    """
+    """
 
     # This method is on HDiff()
     @logger.catch(default=True, onerror=lambda _: sys.exit(1))
@@ -4067,9 +4223,11 @@ class ConfigList(MutableSequence):
                 self._list = self._bootstrap_obj_init_nxos(data)
 
             elif self.syntax == "junos":
-                # FIXME - abusing ios bootstrap for now... junos
-                #    should have its own bootstrap method...
                 self._list = self._bootstrap_obj_init_junos(data)
+
+            elif self.syntax == "terraform":
+                # FIXME - Create terraform bootstrap method
+                self._list = self._bootstrap_obj_init_terraform(data)
 
             else:
                 error = "No bootstrap method for syntax='%s'" % self.syntax
@@ -4178,8 +4336,11 @@ class ConfigList(MutableSequence):
             self._list = self._bootstrap_obj_init_asa(tmp_list)
 
         elif self.syntax == 'junos':
-            # FIXME junos syntax should have its own bootstrap method...
-            self._list = self._bootstrap_obj_init_ios(tmp_list, syntax="junos")
+            self._list = self._bootstrap_obj_init_junos(tmp_list)
+
+        elif self.syntax == 'terraform':
+            # FIXME terraform syntax should have its own bootstrap method...
+            self._list = self._bootstrap_obj_init_terraform(tmp_list)
 
         else:
             error = "no defined bootstrap method for syntax='%s'" % self.syntax
@@ -4326,6 +4487,12 @@ class ConfigList(MutableSequence):
                 comment_delimiter=self.comment_delimiter,
             )
 
+        elif self.syntax == "terraform":
+            new_obj = TerraformLine(
+                text=new_val,
+                comment_delimiter=self.comment_delimiter,
+            )
+
         else:
             logger.error(error)
             raise ValueError(error)
@@ -4452,6 +4619,12 @@ class ConfigList(MutableSequence):
                 comment_delimiter=self.comment_delimiter,
             )
 
+        elif self.syntax == "terraform":
+            new_obj = TerraformLine(
+                text=new_val,
+                comment_delimiter=self.comment_delimiter,
+            )
+
         else:
             logger.error(error)
             raise ValueError(error)
@@ -4551,12 +4724,12 @@ class ConfigList(MutableSequence):
             filter(lambda obj: REGEX.search(obj.text), self._list),
         )
 
-        BANNER_STR_RE = r"^(?:(?P<btype>(?:set\s+)*banner\s\w+\s+)(?P<bchar>\S))"
+        banner_re_str = r"^(?:(?P<btype>(?:set\s+)*banner\s\w+\s+)(?P<bchar>\S))"
         for parent in banner_objs:
             parent.oldest_ancestor = True
 
             ## Parse out the banner type and delimiting banner character
-            mm = re.search(BANNER_STR_RE, parent.text)
+            mm = re.search(banner_re_str, parent.text)
             if (mm is not None):
                 mm_results = mm.groupdict()
                 (banner_lead, bannerdelimit) = (
@@ -4656,7 +4829,7 @@ class ConfigList(MutableSequence):
         """
         assert isinstance(text_list, (list, tuple,))
         # Append text lines as IOSCfgLine objects...
-        BANNER_STR = {
+        banner_str = {
             "login",
             "motd",
             "incoming",
@@ -4664,13 +4837,13 @@ class ConfigList(MutableSequence):
             "telnet",
             "lcd",
         }
-        BANNER_ALL = [
-            r"^(set\s+)*banner\s+{}".format(ii) for ii in BANNER_STR
+        banner_all = [
+            r"^(set\s+)*banner\s+{}".format(ii) for ii in banner_str
         ]
-        BANNER_ALL.append(
+        banner_all.append(
             "aaa authentication fail-message",
         )  # Github issue #76
-        BANNER_RE = re.compile("|".join(BANNER_ALL))
+        banner_re = re.compile("|".join(banner_all))
 
         retval = list()
         idx = 0
@@ -4774,7 +4947,7 @@ class ConfigList(MutableSequence):
 
         self._list = retval
         # Mark begin and end config line objects in self._banner_mark_regex()
-        self._banner_mark_regex(BANNER_RE)
+        self._banner_mark_regex(banner_re)
         # We need to use a different method for macros than banners because
         #   macros don't specify a delimiter on their parent line, but
         #   banners call out a delimiter.
@@ -5127,6 +5300,14 @@ class ConfigList(MutableSequence):
         self._macro_mark_children(macro_parent_idx_list)  # Process macros
         return retval
 
+    def _bootstrap_obj_init_terraform(self, text_list):
+        """
+        Accept a text list, and format into a list of proper
+        TerraformLine() objects.
+        """
+        assert isinstance(text_list, (list, tuple,))
+        raise NotImplementedError()
+
     # This method is on ConfigList()
     def _add_child_to_parent(self, _list, idx, indent, parentobj, childobj):
         ## parentobj could be None when trying to add a child that should not
@@ -5397,6 +5578,9 @@ def ConfigLineFactory(text="", comment_delimiter="!", syntax="ios"):
         ]
     elif syntax == "junos":
         classes = [JunosCfgLine]
+
+    elif syntax == "terraform":
+        classes = [TerraformLine]
 
     else:
         err_txt = "'{}' is an unknown syntax".format(syntax)
