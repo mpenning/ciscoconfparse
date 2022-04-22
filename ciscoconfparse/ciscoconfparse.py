@@ -5066,7 +5066,7 @@ class ConfigList(MutableSequence):
         """
         assert isinstance(text_list, (list, tuple,))
         # Append text lines as NXOSCfgLine objects...
-        BANNER_STR = {
+        banner_str = {
             "login",
             "motd",
             "incoming",
@@ -5074,9 +5074,9 @@ class ConfigList(MutableSequence):
             "telnet",
             "lcd",
         }
-        BANNER_RE = re.compile(
+        banner_re = re.compile(
             "|".join(
-            [r"^(set\s+)*banner\s+{}".format(ii) for ii in BANNER_STR],
+                [r"^(set\s+)*banner\s+{}".format(ii) for ii in banner_str],
             ),
         )
         retval = list()
@@ -5167,7 +5167,7 @@ class ConfigList(MutableSequence):
             idx += 1
 
         self._list = retval
-        self._banner_mark_regex(BANNER_RE)  # Process IOS banners
+        self._banner_mark_regex(banner_re)  # Process IOS banners
         return retval
 
     # This method is on ConfigList()
@@ -5178,7 +5178,7 @@ class ConfigList(MutableSequence):
         """
         assert isinstance(text_list, (list, tuple,))
         # Append text lines as JunosCfgLine objects...
-        BANNER_STR = {
+        banner_str = {
             "login",
             "motd",
             "incoming",
@@ -5186,13 +5186,13 @@ class ConfigList(MutableSequence):
             "telnet",
             "lcd",
         }
-        BANNER_ALL = [
-            r"^(set\s+)*banner\s+{}".format(ii) for ii in BANNER_STR
+        banner_all = [
+            r"^(set\s+)*banner\s+{}".format(ii) for ii in banner_str
         ]
-        BANNER_ALL.append(
+        banner_all.append(
             "aaa authentication fail-message",
         )  # Github issue #76
-        BANNER_RE = re.compile("|".join(BANNER_ALL))
+        banner_re = re.compile("|".join(banner_all))
 
         retval = list()
         idx = 0
@@ -5293,7 +5293,7 @@ class ConfigList(MutableSequence):
 
         self._list = retval
         # Mark begin and end config line objects in self._banner_mark_regex()
-        self._banner_mark_regex(BANNER_RE)
+        self._banner_mark_regex(banner_re)
         # We need to use a different method for macros than banners because
         #   macros don't specify a delimiter on their parent line, but
         #   banners call out a delimiter.
