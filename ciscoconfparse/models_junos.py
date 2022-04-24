@@ -1,22 +1,6 @@
-from __future__ import absolute_import
-import sys
-import re
-import os
-
-from ciscoconfparse.ccp_abc import BaseCfgLine
-from ciscoconfparse.ccp_util import IPv4Obj
-
-### HUGE UGLY WARNING:
-###   Anything in models_junos.py could change at any time, until I remove this
-###   warning.  I have good reason to believe that these methods are stable and
-###   function correctly, but I've been wrong before.  There are no unit tests
-###   for this functionality yet, so I consider all this code alpha quality.
-###
-###   Use models_junos.py at your own risk.  You have been warned :-)
-
 r""" models_junos.py - Parse, Query, Build, and Modify Junos-style configurations
 
-     Copyright (C) 2021      David Michael Pennington
+     Copyright (C) 2021-2022 David Michael Pennington
      Copyright (C) 2020-2021 David Michael Pennington at Cisco Systems
      Copyright (C) 2019      David Michael Pennington at ThousandEyes
      Copyright (C) 2015-2019 David Michael Pennington at Samsung Data Services
@@ -37,6 +21,20 @@ r""" models_junos.py - Parse, Query, Build, and Modify Junos-style configuration
      If you need to contact the author, you can do so by emailing:
      mike [~at~] pennington [/dot\] net
 """
+### HUGE UGLY WARNING:
+###   Anything in models_junos.py could change at any time, until I remove this
+###   warning.  I have good reason to believe that these methods are stable and
+###   function correctly, but I've been wrong before.  There are no unit tests
+###   for this functionality yet, so I consider all this code alpha quality.
+###
+###   Use models_junos.py at your own risk.  You have been warned :-)
+
+import re
+
+from ciscoconfparse.ccp_abc import BaseCfgLine
+from ciscoconfparse.ccp_util import IPv4Obj
+
+
 
 ##
 ##-------------  Junos Configuration line object
@@ -92,7 +90,7 @@ class JunosCfgLine(BaseCfgLine):
     def __init__(self, *args, **kwargs):
         r"""Accept an Junos line number and initialize family relationship
         attributes"""
-        super(JunosCfgLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     @classmethod
     def is_object_for(cls, line="", re=re):
@@ -288,7 +286,7 @@ class JunosCfgLine(BaseCfgLine):
 
 class BaseJunosIntfLine(JunosCfgLine):
     def __init__(self, *args, **kwargs):
-        super(BaseJunosIntfLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.ifindex = None  # Optional, for user use
         self.default_ipv4_addr_object = IPv4Obj("127.0.0.1/32", strict=False)
 
@@ -299,15 +297,15 @@ class BaseJunosIntfLine(JunosCfgLine):
             else:
                 ip = str(self.ipv4_addr_object.ip)
                 prefixlen = str(self.ipv4_addr_object.prefixlen)
-                addr = "{0}/{1}".format(ip, prefixlen)
-            return "<%s # %s '%s' info: '%s'>" % (
+                addr = "{}/{}".format(ip, prefixlen)
+            return "<{} # {} '{}' info: '{}'>".format(
                 self.classname,
                 self.linenum,
                 self.name,
                 addr,
             )
         else:
-            return "<%s # %s '%s' info: 'switchport'>" % (
+            return "<{} # {} '{}' info: 'switchport'>".format(
                 self.classname,
                 self.linenum,
                 self.name,
@@ -519,7 +517,7 @@ class BaseJunosIntfLine(JunosCfgLine):
             intf_regex = r"^interface\s+[A-Za-z\-]+\s*(\d+.*?)(\.\d+)*(\s\S+)*\s*$"
             intf_number = self.re_match(intf_regex, group=1, default="")
             if intf_number:
-                return tuple([int(ii) for ii in intf_number.split("/")])
+                return tuple(int(ii) for ii in intf_number.split("/"))
             else:
                 return ()
 
@@ -555,11 +553,11 @@ class BaseJunosIntfLine(JunosCfgLine):
 
 class JunosIntfGlobal(BaseCfgLine):
     def __init__(self, *args, **kwargs):
-        super(JunosIntfGlobal, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.feature = "interface global"
 
     def __repr__(self):
-        return "<%s # %s '%s'>" % (self.classname, self.linenum, self.text)
+        return "<{} # {} '{}'>".format(self.classname, self.linenum, self.text)
 
     @classmethod
     def is_object_for(cls, line="", re=re):
@@ -608,11 +606,11 @@ class JunosIntfGlobal(BaseCfgLine):
 
 class JunosHostnameLine(BaseCfgLine):
     def __init__(self, *args, **kwargs):
-        super(JunosHostnameLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.feature = "hostname"
 
     def __repr__(self):
-        return "<%s # %s '%s'>" % (self.classname, self.linenum, self.hostname)
+        return "<{} # {} '{}'>".format(self.classname, self.linenum, self.hostname)
 
     @classmethod
     def is_object_for(cls, line="", re=re):
@@ -633,10 +631,10 @@ class JunosHostnameLine(BaseCfgLine):
 
 class BaseJunosRouteLine(BaseCfgLine):
     def __init__(self, *args, **kwargs):
-        super(BaseJunosRouteLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def __repr__(self):
-        return "<%s # %s '%s' info: '%s'>" % (
+        return "<{} # {} '{}' info: '{}'>".format(
             self.classname,
             self.linenum,
             self.network_object,
@@ -698,7 +696,7 @@ class BaseJunosRouteLine(BaseCfgLine):
 
 class JunosRouteLine(BaseJunosRouteLine):
     def __init__(self, *args, **kwargs):
-        super(JunosRouteLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         if "ipv6" in self.text:
             self.feature = "ipv6 route"
         else:
@@ -762,9 +760,9 @@ class JunosRouteLine(BaseJunosRouteLine):
     def network_object(self):
         try:
             if self.address_family == "ip":
-                return IPv4Obj("%s/%s" % (self.network, self.netmask), strict=False)
+                return IPv4Obj("{}/{}".format(self.network, self.netmask), strict=False)
             elif self.address_family == "ipv6":
-                return IPv6Network("%s/%s" % (self.network, self.netmask))
+                return IPv6Network("{}/{}".format(self.network, self.netmask))
         except:
             return None
 
