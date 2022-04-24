@@ -96,7 +96,10 @@ Docs
 Building the Package
 --------------------
 
--   `cd` into the root ciscoconfparse directory
+-   `git clone https://github.com/mpenning/ciscoconfparse`
+-   `cd ciscoconfparse`
+-   `git checkout -b develop`
+-   change ciscoconfparse and `git commit` your changes
 -   Edit the version number in [pyproject.toml][12] (as required)
 -   `git commit` all pending changes
 -   `make test`
