@@ -222,7 +222,7 @@ class CiscoConfParse:
         linesplit_rgx : str
             ``linesplit_rgx`` is used when parsing configuration files to find where new configuration lines are.  It is best to leave this as the default, unless you're working on a system that uses unusual line terminations (for instance something besides Unix, OSX, or Windows)
         ignore_blank_lines : bool
-            ``ignore_blank_lines`` defaults to True; when this is set True, ciscoconfparse ignores blank configuration lines.  You might want to set ``ignore_blank_lines`` to False if you intentionally use blank lines in your configuration (ref: Github Issue #2), or you are parsing configurations which naturally have blank lines (such as Cisco Nexus configurations).
+            ``ignore_blank_lines`` defaults to True; when this is set True, ciscoconfparse ignores blank configuration lines.  You might want to set ``ignore_blank_lines`` to False if you intentionally use blank lines in your configuration (ref: Github Issue #3), or you are parsing configurations which naturally have blank lines (such as Cisco Nexus configurations).
         syntax : str
             A string holding the configuration type.  Default: 'ios'.  Must be one of: 'ios', 'nxos', 'asa', 'junos', 'terraform'.  Use 'junos' for any brace-delimited network configuration (including F5, Palo Alto, etc...).
         encoding : str
