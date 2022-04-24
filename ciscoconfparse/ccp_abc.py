@@ -46,7 +46,6 @@ class BaseCfgLine(metaclass=ABCMeta):
         self.child_indent = 0
         self.is_comment = None
         self.children = list()
-        self.oldest_ancestor = False
         self.indent = 0      # Whitespace indentation on the object
         self.confobj = None  # Reference to the list object which owns it
         self.feature = ""    # Major feature description
