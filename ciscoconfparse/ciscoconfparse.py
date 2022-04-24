@@ -4162,7 +4162,7 @@ class ConfigList(MutableSequence):
         debug : int
             ``debug`` defaults to 0, and should be kept that way unless you're working on a very tricky config parsing problem.  Debug output is not particularly friendly
         ignore_blank_lines : bool
-            ``ignore_blank_lines`` defaults to True; when this is set True, ciscoconfparse ignores blank configuration lines.  You might want to set ``ignore_blank_lines`` to False if you intentionally use blank lines in your configuration (ref: Github Issue #2).
+            ``ignore_blank_lines`` defaults to True; when this is set True, ciscoconfparse ignores blank configuration lines.  You might want to set ``ignore_blank_lines`` to False if you intentionally use blank lines in your configuration (ref: Github Issue #3).
 
         Returns
         -------
@@ -4744,7 +4744,7 @@ class ConfigList(MutableSequence):
                 logger.debug("bannerdelimit = '{}'".format(bannerdelimit))
                 logger.debug(
                     "{} starts at line {}".format(
-                    banner_lead, parent.linenum,
+                        banner_lead, parent.linenum,
                     ),
                 )
 
@@ -4851,21 +4851,22 @@ class ConfigList(MutableSequence):
         max_indent = 0
         macro_parent_idx_list = list()
         parents = dict()
-        for line in text_list:
+        for txt in text_list:
             # Reject empty lines if ignore_blank_lines...
-            assert isinstance(line, str)
-            if self.ignore_blank_lines and line.strip() == "":
+            assert isinstance(txt, str)
+
+            if self.ignore_blank_lines and txt.strip() == "":
                 continue
             #
             if not self.factory and self.syntax=="ios":
-                obj = IOSCfgLine(line, self.comment_delimiter)
+                obj = IOSCfgLine(txt, self.comment_delimiter)
 
             elif not self.factory and self.syntax=="junos":
-                obj = JunosCfgLine(line, self.comment_delimiter)
+                obj = JunosCfgLine(txt, self.comment_delimiter)
 
             elif self.syntax in ALL_VALID_SYNTAX:
                 obj = ConfigLineFactory(
-                    line,
+                    txt,
                     self.comment_delimiter,
                     syntax=self.syntax,
                 )
@@ -4873,14 +4874,14 @@ class ConfigList(MutableSequence):
             else:
                 err_txt = (
                     "Cannot classify config list item '%s' "
-                    "into a proper configuration object line" % line
+                    "into a proper configuration object line" % txt
                 )
                 logger.error(err_txt)
                 raise ValueError(err_txt)
 
             obj.confobj = self
             obj.linenum = idx
-            indent = len(line) - len(line.lstrip())
+            indent = len(txt) - len(txt.lstrip())
             obj.indent = indent
 
             is_config_line = obj.is_config_line
@@ -4967,33 +4968,33 @@ class ConfigList(MutableSequence):
 
         max_indent = 0
         parents = dict()
-        for line in text_list:
+        for txt in text_list:
             # Reject empty lines if ignore_blank_lines...
-            if self.ignore_blank_lines and line.strip() == "":
+            if self.ignore_blank_lines and txt.strip() == "":
                 continue
 
             if self.syntax == "asa" and self.factory:
                 obj = ConfigLineFactory(
-                    line,
+                    txt,
                     self.comment_delimiter,
                     syntax="asa",
                 )
             elif self.syntax == "asa" and not self.factory:
                 obj = ASACfgLine(
-                    text=line,
+                    text=txt,
                     comment_delimiter=self.comment_delimiter,
                 )
             else:
                 err_txt = (
                     "Cannot classify config list item '%s' "
-                    "into a proper configuration object line" % line
+                    "into a proper configuration object line" % txt
                 )
                 logger.error(err_txt)
                 raise ValueError(err_txt)
 
             obj.confobj = self
             obj.linenum = idx
-            indent = len(line) - len(line.lstrip())
+            indent = len(txt) - len(txt.lstrip())
             obj.indent = indent
 
             is_config_line = obj.is_config_line
@@ -5084,28 +5085,28 @@ class ConfigList(MutableSequence):
 
         max_indent = 0
         parents = dict()
-        for line in text_list:
+        for txt in text_list:
             # Reject empty lines if ignore_blank_lines...
-            assert isinstance(line, str)
-            if self.ignore_blank_lines and line.strip() == "":
+            assert isinstance(txt, str)
+            if self.ignore_blank_lines and txt.strip() == "":
                 continue
             #
             if not self.factory:
-                obj = NXOSCfgLine(line, self.comment_delimiter)
+                obj = NXOSCfgLine(txt, self.comment_delimiter)
             elif self.syntax == "nxos":
                 obj = ConfigLineFactory(
-                    line,
+                    txt,
                     self.comment_delimiter,
                     syntax="nxos",
                 )
             else:
-                error = "Unexpected line in the config: '%s'" % line
+                error = "Unexpected line in the config: '%s'" % txt
                 logger.error(error)
                 raise ValueError(error)
 
             obj.confobj = self
             obj.linenum = idx
-            indent = len(line) - len(line.lstrip())
+            indent = len(txt) - len(txt.lstrip())
             obj.indent = indent
 
             is_config_line = obj.is_config_line
@@ -5200,18 +5201,18 @@ class ConfigList(MutableSequence):
         max_indent = 0
         macro_parent_idx_list = list()
         parents = dict()
-        for line in text_list:
+        for txt in text_list:
             # Reject empty lines if ignore_blank_lines...
-            assert isinstance(line, str)
-            if self.ignore_blank_lines and line.strip() == "":
+            assert isinstance(txt, str)
+            if self.ignore_blank_lines and txt.strip() == "":
                 continue
             #
             if not self.factory and self.syntax=="junos":
-                obj = JunosCfgLine(line, self.comment_delimiter)
+                obj = JunosCfgLine(txt, self.comment_delimiter)
 
             elif self.syntax in ALL_VALID_SYNTAX:
                 obj = ConfigLineFactory(
-                    line,
+                    txt,
                     self.comment_delimiter,
                     syntax=self.syntax,
                 )
@@ -5219,14 +5220,14 @@ class ConfigList(MutableSequence):
             else:
                 err_txt = (
                     "Cannot classify config list item '%s' "
-                    "into a proper configuration object line" % line
+                    "into a proper configuration object line" % txt
                 )
                 logger.error(err_txt)
                 raise ValueError(err_txt)
 
             obj.confobj = self
             obj.linenum = idx
-            indent = len(line) - len(line.lstrip())
+            indent = len(txt) - len(txt.lstrip())
             obj.indent = indent
 
             is_config_line = obj.is_config_line
@@ -5324,7 +5325,7 @@ class ConfigList(MutableSequence):
             )
             logger.debug(
                 "BEFORE parent.children - {}".format(
-                parentobj.children,
+                    parentobj.children,
                 ),
             )
 
