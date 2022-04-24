@@ -300,7 +300,10 @@ class BaseCfgLine(metaclass=ABCMeta):
     # On BaseCfgLine()
     @property
     def is_config_line(self):
-        """Return a boolean for whether this is a config statement; returns False if this object is a blank line, or a comment"""
+        """
+        Return a boolean for whether this is a config statement; returns False
+        if this object is a blank line, or a comment.
+        """
         if len(self.text.strip()) > 0 and not self.is_comment:
             return True
         return False
