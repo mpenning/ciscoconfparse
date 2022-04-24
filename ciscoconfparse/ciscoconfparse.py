@@ -4718,15 +4718,14 @@ class ConfigList(MutableSequence):
         return parent_siblings, nonparent_siblings
 
     # This method is on ConfigList()
-    def _banner_mark_regex(self, REGEX):
+    def _banner_mark_regex(self, regex):
         # Build a list of all leading banner lines
         banner_objs = list(
-            filter(lambda obj: REGEX.search(obj.text), self._list),
+            filter(lambda obj: regex.search(obj.text), self._list),
         )
 
         banner_re_str = r"^(?:(?P<btype>(?:set\s+)*banner\s\w+\s+)(?P<bchar>\S))"
         for parent in banner_objs:
-            parent.oldest_ancestor = True
 
             ## Parse out the banner type and delimiting banner character
             mm = re.search(banner_re_str, parent.text)
@@ -4852,9 +4851,9 @@ class ConfigList(MutableSequence):
         macro_parent_idx_list = list()
         parents = dict()
         for txt in text_list:
-            # Reject empty lines if ignore_blank_lines...
             assert isinstance(txt, str)
 
+            # Reject empty lines if ignore_blank_lines...
             if self.ignore_blank_lines and txt.strip() == "":
                 continue
             #
@@ -4927,8 +4926,6 @@ class ConfigList(MutableSequence):
                         # We found the parent
                         parent = candidate_parent
                         parents[indent] = parent  # Cache the parent
-                        if indent == 0:
-                            parent.oldest_ancestor = True
                         break
                     else:
                         candidate_parent_index -= 1
@@ -5036,8 +5033,6 @@ class ConfigList(MutableSequence):
                         # We found the parent
                         parent = candidate_parent
                         parents[indent] = parent  # Cache the parent
-                        if indent == 0:
-                            parent.oldest_ancestor = True
                         break
                     else:
                         candidate_parent_index -= 1
@@ -5148,8 +5143,6 @@ class ConfigList(MutableSequence):
                         # We found the parent
                         parent = candidate_parent
                         parents[indent] = parent  # Cache the parent
-                        if indent == 0:
-                            parent.oldest_ancestor = True
                         break
                     else:
                         candidate_parent_index -= 1
@@ -5273,8 +5266,6 @@ class ConfigList(MutableSequence):
                         # We found the parent
                         parent = candidate_parent
                         parents[indent] = parent  # Cache the parent
-                        if indent == 0:
-                            parent.oldest_ancestor = True
                         break
                     else:
                         candidate_parent_index -= 1
