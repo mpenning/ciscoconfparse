@@ -1,28 +1,6 @@
-from __future__ import absolute_import
-import sys
-import re
-import os
+""" models_nxos.py - Parse, Query, Build, and Modify IOS-style configurations
 
-from ciscoconfparse.errors import DynamicAddressException
-
-from ciscoconfparse.ccp_util import (
-    _IPV6_REGEX_STR_COMPRESSED1,
-    _IPV6_REGEX_STR_COMPRESSED2,
-)
-from ciscoconfparse.ccp_util import _IPV6_REGEX_STR_COMPRESSED3
-from ciscoconfparse.ccp_util import CiscoRange, IPv4Obj, IPv6Obj
-from ciscoconfparse.ccp_abc import BaseCfgLine
-
-### HUGE UGLY WARNING:
-###   Anything in models_nxos.py could change at any time, until I remove this
-###   warning.
-###
-###   THIS FILE IS NOT FULLY FUNCTIONAL.  IT IS INCOMPLETE
-###
-###   You have been warned :-)
-r""" models_nxos.py - Parse, Query, Build, and Modify IOS-style configurations
-
-     Copyright (C) 2021      David Michael Pennington
+     Copyright (C) 2021-2022 David Michael Pennington
      Copyright (C) 2020-2021 David Michael Pennington at Cisco Systems
      Copyright (C) 2019      David Michael Pennington at ThousandEyes
      Copyright (C) 2016-2019 David Michael Pennington at Samsung Data Services
@@ -42,8 +20,28 @@ r""" models_nxos.py - Parse, Query, Build, and Modify IOS-style configurations
      along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
      If you need to contact the author, you can do so by emailing:
-     mike [~at~] pennington [/dot\] net
+     mike [~at~] pennington [.dot.] net
 """
+### HUGE UGLY WARNING:
+###   Anything in models_nxos.py could change at any time, until I remove this
+###   warning.
+###
+###   THIS FILE IS NOT FULLY FUNCTIONAL.  IT IS INCOMPLETE
+###
+###   You have been warned :-)
+
+import re
+
+from ciscoconfparse.errors import DynamicAddressException
+
+from ciscoconfparse.ccp_util import (
+    _IPV6_REGEX_STR_COMPRESSED1,
+    _IPV6_REGEX_STR_COMPRESSED2,
+)
+from ciscoconfparse.ccp_util import _IPV6_REGEX_STR_COMPRESSED3
+from ciscoconfparse.ccp_util import CiscoRange, IPv4Obj, IPv6Obj
+from ciscoconfparse.ccp_abc import BaseCfgLine
+
 
 ##
 ##-------------  IOS Configuration line object
@@ -78,7 +76,7 @@ class NXOSCfgLine(BaseCfgLine):
     def __init__(self, *args, **kwargs):
         r"""Accept an IOS line number and initialize family relationship
         attributes"""
-        super(NXOSCfgLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     @classmethod
     def is_object_for(cls, line="", re=re):
@@ -303,7 +301,7 @@ urn -1 if it's not configured in a port-channel
 
 class BaseNXOSIntfLine(NXOSCfgLine):
     def __init__(self, *args, **kwargs):
-        super(BaseNXOSIntfLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.ifindex = None  # Optional, for user use
         self.default_ipv4_addr_object = IPv4Obj("127.0.0.1/32", strict=False)
 
@@ -322,15 +320,15 @@ class BaseNXOSIntfLine(NXOSCfgLine):
             else:
                 ip = str(self.ipv4_addr_object.ip)
                 prefixlen = str(self.ipv4_addr_object.prefixlen)
-                addr = "{0}/{1}".format(ip, prefixlen)
-            return "<%s # %s '%s' info: '%s'>" % (
+                addr = "{}/{}".format(ip, prefixlen)
+            return "<{} # {} '{}' info: '{}'>".format(
                 self.classname,
                 self.linenum,
                 self.name,
                 addr,
             )
         else:
-            return "<%s # %s '%s' info: 'switchport'>" % (
+            return "<{} # {} '{}' info: 'switchport'>".format(
                 self.classname,
                 self.linenum,
                 self.name,
@@ -338,13 +336,13 @@ class BaseNXOSIntfLine(NXOSCfgLine):
 
     def _build_abbvs(self):
         """Build a set of valid abbreviations (lowercased) for the interface"""
-        retval = set([])
+        retval = set()
         port_type_chars = self.port_type.lower()
         subinterface_number = self.subinterface_number
         for sep in ["", " "]:
             for ii in range(1, len(port_type_chars) + 1):
                 retval.add(
-                    "{0}{1}{2}".format(port_type_chars[0:ii], sep, subinterface_number)
+                    "{}{}{}".format(port_type_chars[0:ii], sep, subinterface_number)
                 )
         return retval
 
@@ -560,7 +558,7 @@ class BaseNXOSIntfLine(NXOSCfgLine):
         else:
             intf_number = self.interface_number
             if intf_number:
-                return tuple([int(ii) for ii in intf_number.split("/")])
+                return tuple(int(ii) for ii in intf_number.split("/"))
             else:
                 return ()
 
@@ -729,7 +727,7 @@ class BaseNXOSIntfLine(NXOSCfgLine):
     def ipv4_addr_object(self):
         """Return a ccp_util.IPv4Obj object representing the address on this interface; if there is no address, return IPv4Obj('127.0.0.1/32')"""
         try:
-            return IPv4Obj("%s/%s" % (self.ipv4_addr, self.ipv4_masklength))
+            return IPv4Obj("{}/{}".format(self.ipv4_addr, self.ipv4_masklength))
         except DynamicAddressException as e:
             raise DynamicAddressException(e)
         except Exception:
@@ -745,7 +743,7 @@ class BaseNXOSIntfLine(NXOSCfgLine):
         # Simplified on 2014-12-02
         try:
             return IPv4Obj(
-                "{0}/{1}".format(self.ipv4_addr, self.ipv4_netmask), strict=False
+                "{}/{}".format(self.ipv4_addr, self.ipv4_netmask), strict=False
             )
         except DynamicAddressException as e:
             raise DynamicAddressException(e)
@@ -921,7 +919,7 @@ class BaseNXOSIntfLine(NXOSCfgLine):
             r"^\s+ip\s+address\s+(dhcp)\s*$", result_type=str, default=""
         )
         if condition1.lower() == "dhcp":
-            error = "Cannot parse address from a dhcp interface: {0}".format(self.name)
+            error = "Cannot parse address from a dhcp interface: {}".format(self.name)
             raise DynamicAddressException(error)
         else:
             return retval
@@ -999,7 +997,7 @@ class BaseNXOSIntfLine(NXOSCfgLine):
                 return self.ipv4_network_object in ipv4network
             except (Exception) as e:
                 raise ValueError(
-                    "FATAL: %s.in_ipv4_subnet(ipv4network={0}) is an invalid arg: {1}".format(
+                    "FATAL: %s.in_ipv4_subnet(ipv4network={}) is an invalid arg: {}".format(
                         ipv4network, e
                     )
                 )
@@ -1328,7 +1326,7 @@ class BaseNXOSIntfLine(NXOSCfgLine):
 
         # The default values...
         if self.is_switchport and not self.has_manual_switch_access:
-            retval = CiscoRange("1-{0}".format(MAX_VLAN), result_type=int)
+            retval = CiscoRange("1-{}".format(MAX_VLAN), result_type=int)
         else:
             return 0
 
@@ -1372,7 +1370,7 @@ class BaseNXOSIntfLine(NXOSCfgLine):
                     if "absolute" in key:
                         if val.lower() == "all":
                             retval = CiscoRange(
-                                "1-{0}".format(MAX_VLAN), result_type=int
+                                "1-{}".format(MAX_VLAN), result_type=int
                             )
                         elif val.lower() == "none":
                             retval = CiscoRange(result_type=int)
@@ -1381,7 +1379,7 @@ class BaseNXOSIntfLine(NXOSCfgLine):
                     elif "add" in key:
                         retval.append(val)
                     elif "except" in key:
-                        retval = CiscoRange("1-{0}".format(MAX_VLAN), result_type=int)
+                        retval = CiscoRange("1-{}".format(MAX_VLAN), result_type=int)
                         retval.remove(val)
                     elif "remove" in key:
                         retval.remove(val)
@@ -1686,7 +1684,7 @@ class NXOSIntfLine(BaseNXOSIntfLine):
 
           All :class:`~models_nxos.NXOSIntfLine` methods are still considered beta-quality, until this notice is removed.  The behavior of APIs on this object could change at any time.
         """
-        super(NXOSIntfLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.feature = "interface"
 
     @classmethod
@@ -1703,11 +1701,11 @@ class NXOSIntfLine(BaseNXOSIntfLine):
 
 class NXOSIntfGlobal(BaseCfgLine):
     def __init__(self, *args, **kwargs):
-        super(NXOSIntfGlobal, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.feature = "interface global"
 
     def __repr__(self):
-        return "<%s # %s '%s'>" % (self.classname, self.linenum, self.text)
+        return "<{} # {} '{}'>".format(self.classname, self.linenum, self.text)
 
     @classmethod
     def is_object_for(cls, line="", re=re):
@@ -1748,11 +1746,11 @@ class NXOSIntfGlobal(BaseCfgLine):
 ##
 class NXOSvPCLine(BaseCfgLine):
     def __init__(self, *args, **kwargs):
-        super(NXOSvPCLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.feature = "vpc"
 
     def __repr__(self):
-        return "<%s # %s '%s'>" % (self.classname, self.linenum, self.vpc_domain_id)
+        return "<{} # {} '{}'>".format(self.classname, self.linenum, self.vpc_domain_id)
 
     @classmethod
     def is_object_for(cls, line="", re=re):
@@ -1897,11 +1895,11 @@ class NXOSvPCLine(BaseCfgLine):
 
 class NXOSHostnameLine(BaseCfgLine):
     def __init__(self, *args, **kwargs):
-        super(NXOSHostnameLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.feature = "hostname"
 
     def __repr__(self):
-        return "<%s # %s '%s'>" % (self.classname, self.linenum, self.hostname)
+        return "<{} # {} '{}'>".format(self.classname, self.linenum, self.hostname)
 
     @classmethod
     def is_object_for(cls, line="", re=re):
@@ -1922,11 +1920,11 @@ class NXOSHostnameLine(BaseCfgLine):
 
 class NXOSAccessLine(BaseCfgLine):
     def __init__(self, *args, **kwargs):
-        super(NXOSAccessLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.feature = "access line"
 
     def __repr__(self):
-        return "<%s # %s '%s' info: '%s'>" % (
+        return "<{} # {} '{}' info: '{}'>".format(
             self.classname,
             self.linenum,
             self.name,
@@ -2001,10 +1999,10 @@ class NXOSAccessLine(BaseCfgLine):
 
 class BaseNXOSRouteLine(BaseCfgLine):
     def __init__(self, *args, **kwargs):
-        super(BaseNXOSRouteLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def __repr__(self):
-        return "<%s # %s '%s' info: '%s'>" % (
+        return "<{} # {} '{}' info: '{}'>".format(
             self.classname,
             self.linenum,
             self.network_object,
@@ -2083,10 +2081,10 @@ _RE_IP_ROUTE = re.compile(
 _RE_IPV6_ROUTE = re.compile(
     r"""^ipv6\s+route
 (?:\s+vrf\s+(?P<vrf>\S+))?
-(?:\s+(?P<prefix>{0})\/(?P<masklength>\d+))    # Prefix detection
+(?:\s+(?P<prefix>{})\/(?P<masklength>\d+))    # Prefix detection
 (?:
-  (?:\s+(?P<nh_addr1>{1}))
-  |(?:\s+(?P<nh_intf>\S+(?:\s+\d\S*?\/\S+)?)(?:\s+(?P<nh_addr2>{2}))?)
+  (?:\s+(?P<nh_addr1>{}))
+  |(?:\s+(?P<nh_intf>\S+(?:\s+\d\S*?\/\S+)?)(?:\s+(?P<nh_addr2>{}))?)
 )
 (?:\s+nexthop-vrf\s+(?P<nexthop_vrf>\S+))?
 (?:\s+(?P<ad>\d+))?              # Administrative distance
@@ -2103,7 +2101,7 @@ _RE_IPV6_ROUTE = re.compile(
 
 class NXOSRouteLine(BaseNXOSRouteLine):
     def __init__(self, *args, **kwargs):
-        super(NXOSRouteLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         if "ipv6" in self.text[0:4]:
             self.feature = "ipv6 route"
             self._address_family = "ipv6"
@@ -2111,7 +2109,7 @@ class NXOSRouteLine(BaseNXOSRouteLine):
             if (mm is not None):
                 self.route_info = mm.groupdict()
             else:
-                raise ValueError("Could not parse '{0}'".format(self.text))
+                raise ValueError("Could not parse '{}'".format(self.text))
         else:
             self.feature = "ip route"
             self._address_family = "ip"
@@ -2119,7 +2117,7 @@ class NXOSRouteLine(BaseNXOSRouteLine):
             if (mm is not None):
                 self.route_info = mm.groupdict()
             else:
-                raise ValueError("Could not parse '{0}'".format(self.text))
+                raise ValueError("Could not parse '{}'".format(self.text))
 
     @classmethod
     def is_object_for(cls, line="", re=re):
@@ -2169,9 +2167,9 @@ class NXOSRouteLine(BaseNXOSRouteLine):
     def network_object(self):
         try:
             if self._address_family == "ip":
-                return IPv4Obj("%s/%s" % (self.network, self.masklen), strict=False)
+                return IPv4Obj("{}/{}".format(self.network, self.masklen), strict=False)
             elif self._address_family == "ipv6":
-                return IPv6Obj("%s/%s" % (self.network, self.masklen))
+                return IPv6Obj("{}/{}".format(self.network, self.masklen))
         except Exception:
             return None
 
@@ -2245,7 +2243,7 @@ class NXOSRouteLine(BaseNXOSRouteLine):
 ##
 class NXOSAaaGroupServerLine(BaseCfgLine):
     def __init__(self, *args, **kwargs):
-        super(NXOSAaaGroupServerLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.feature = "aaa group server"
 
         REGEX = r"^aaa\sgroup\sserver\s(?P<protocol>\S+)\s(?P<group>\S+)\s*$"
@@ -2280,7 +2278,7 @@ class NXOSAaaGroupServerLine(BaseCfgLine):
 
     @property
     def server_private(self, re=re):
-        retval = set([])
+        retval = set()
         rgx_priv = re.compile(r"^\s+server-private\s+(\S+)\s")
         for cobj in self.children:
             mm = rgx_priv.search(cobj.text)
@@ -2296,7 +2294,7 @@ class NXOSAaaGroupServerLine(BaseCfgLine):
 
 class NXOSAaaLoginAuthenticationLine(BaseCfgLine):
     def __init__(self, *args, **kwargs):
-        super(NXOSAaaLoginAuthenticationLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.feature = "aaa authentication login"
 
         regex = r"^aaa\sauthentication\slogin\s(\S+)\sgroup\s(\S+)(.+?)$"
@@ -2316,7 +2314,7 @@ class NXOSAaaLoginAuthenticationLine(BaseCfgLine):
 
 class NXOSAaaEnableAuthenticationLine(BaseCfgLine):
     def __init__(self, *args, **kwargs):
-        super(NXOSAaaEnableAuthenticationLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.feature = "aaa authentication enable"
 
         regex = r"^aaa\sauthentication\senable\s(\S+)\sgroup\s(\S+)(.+?)$"
@@ -2336,7 +2334,7 @@ class NXOSAaaEnableAuthenticationLine(BaseCfgLine):
 
 class NXOSAaaCommandsAuthorizationLine(BaseCfgLine):
     def __init__(self, *args, **kwargs):
-        super(NXOSAaaCommandsAuthorizationLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.feature = "aaa authorization commands"
 
         regex = r"^aaa\sauthorization\scommands\s(\d+)\s(\S+)\sgroup\s(\S+)(.+?)$"
@@ -2357,7 +2355,7 @@ class NXOSAaaCommandsAuthorizationLine(BaseCfgLine):
 
 class NXOSAaaCommandsAccountingLine(BaseCfgLine):
     def __init__(self, *args, **kwargs):
-        super(NXOSAaaCommandsAccountingLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.feature = "aaa accounting commands"
 
         regex = r"^aaa\saccounting\scommands\s(\d+)\s(\S+)\s(none|stop\-only|start\-stop)\sgroup\s(\S+)$"
@@ -2379,7 +2377,7 @@ class NXOSAaaCommandsAccountingLine(BaseCfgLine):
 
 class NXOSAaaExecAccountingLine(BaseCfgLine):
     def __init__(self, *args, **kwargs):
-        super(NXOSAaaExecAccountingLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.feature = "aaa accounting exec"
 
         regex = r"^aaa\saccounting\sexec\s(\S+)\s(none|stop\-only|start\-stop)\sgroup\s(\S+)$"
