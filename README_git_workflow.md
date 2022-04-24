@@ -3,7 +3,7 @@ my typical git workflow...
 
 ```
 cd ciscoconfparse/
-git checkout master
+git checkout main
 # Ensure I start with a local git master branch in sync with remote master
 #   -> https://stackoverflow.com/a/62653400/667301
 git pull --ff-only
@@ -14,7 +14,7 @@ git switch -c some_feature_branch
 # -> run tests after modifying some_feature_branch
 make test
 
-# -> be sure to update pyproject.toml and CHANGES
+# -> be sure to update pyproject.toml and CHANGES.md
 git commit <files> -m "Describe changes here"
 
 # Merge some_feature_branch into master
