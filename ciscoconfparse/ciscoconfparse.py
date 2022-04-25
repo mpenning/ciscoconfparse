@@ -4147,7 +4147,7 @@ class ConfigList(MutableSequence):
             debug=0,
             factory=False,
             ignore_blank_lines=True,
-            #syntax="__undefined__",
+            # syntax="__undefined__",
             syntax="ios",
             **kwargs
     ):
@@ -4722,6 +4722,9 @@ class ConfigList(MutableSequence):
         Use the regex input parameter to identify all banner parent
         objects. Find banner object children and formally build references
         between banner parent / child objects.
+
+        Set the blank_line_keep attribute for all banner parent / child objs
+        Banner blank lines are automatically kept.
         """
         # Build a list of all banner parent objects...
         banner_objs = list(
@@ -4730,6 +4733,8 @@ class ConfigList(MutableSequence):
 
         banner_re_str = r"^(?:(?P<btype>(?:set\s+)*banner\s\w+\s+)(?P<bchar>\S))"
         for parent in banner_objs:
+            # blank_line_keep for Github Issue #229
+            parent.blank_line_keep = True
 
             ## Parse out the banner type and delimiting banner character
             mm = re.search(banner_re_str, parent.text)
@@ -4787,6 +4792,7 @@ class ConfigList(MutableSequence):
                                     banner_lead, obj.linenum,
                                 ),
                             )
+                        # blank_line_keep for Github Issue #229
                         parent.children.append(obj)
                         parent.child_indent = 0
                         obj.parent = parent
@@ -4802,15 +4808,23 @@ class ConfigList(MutableSequence):
                     parent.children.append(obj)
                     parent.child_indent = 0
                     obj.parent = parent
+                    obj.blank_line_keep = True
 
                 except IndexError:
                     break
 
     # This method is on ConfigList()
     def _macro_mark_children(self, macro_parent_idx_list):
+        """
+        Set the blank_line_keep attribute for all banner parent / child objs.
+
+        Macro blank lines are automatically kept.
+        """
         # Mark macro children appropriately...
         for idx in macro_parent_idx_list:
             pobj = self._list[idx]
+            # blank_line_keep for Github Issue #229
+            pobj.blank_line_keep = True
             pobj.child_indent = 0
 
             # Walk the next configuration lines looking for the macro's children
@@ -4818,6 +4832,8 @@ class ConfigList(MutableSequence):
             while not finished:
                 idx += 1
                 cobj = self._list[idx]
+                # blank_line_keep for Github Issue #229
+                cobj.blank_line_keep = True
                 cobj.parent = pobj
                 pobj.children.append(cobj)
                 # If we hit the end of the macro, break out of the loop
@@ -4859,9 +4875,6 @@ class ConfigList(MutableSequence):
         for txt in text_list:
             assert isinstance(txt, str)
 
-            # Reject empty lines if ignore_blank_lines...
-            if self.ignore_blank_lines and txt.strip() == "":
-                continue
             #
             if not self.factory and self.syntax=="ios":
                 obj = IOSCfgLine(txt, self.comment_delimiter)
@@ -4950,6 +4963,7 @@ class ConfigList(MutableSequence):
             idx += 1
 
         self._list = retval
+
         # Call _banner_mark_regex() to process banners in the returned obj
         # list.
         # Mark IOS banner begin and end config line objects...
@@ -4958,6 +4972,13 @@ class ConfigList(MutableSequence):
         #   macros don't specify a delimiter on their parent line, but
         #   banners call out a delimiter.
         self._macro_mark_children(macro_parent_idx_list)  # Process macros
+
+        # change ignore_blank_lines behavior for Github Issue #229...
+        #    Always allow a blank line if it's in a banner or macro...
+        if self.ignore_blank_lines is True:
+            retval = [obj for obj in self._list if obj.text.strip()!="" or obj.blank_line_keep is True]
+            self._list = retval
+
         return retval
 
     # This method is on ConfigList()
@@ -5095,8 +5116,7 @@ class ConfigList(MutableSequence):
         for txt in text_list:
             # Reject empty lines if ignore_blank_lines...
             assert isinstance(txt, str)
-            if self.ignore_blank_lines and txt.strip() == "":
-                continue
+
             #
             if not self.factory:
                 obj = NXOSCfgLine(txt, self.comment_delimiter)
@@ -5177,6 +5197,13 @@ class ConfigList(MutableSequence):
         # list.
         # Mark NXOS banner begin and end config line objects...
         self._banner_mark_regex(banner_re)  # Process NXOS banners
+
+        # change ignore_blank_lines behavior for Github Issue #229...
+        #    Always allow a blank line if it's in a banner or macro...
+        if self.ignore_blank_lines is True:
+            retval = [obj for obj in self._list if obj.text.strip()!="" or obj.blank_line_keep is True]
+            self._list = retval
+
         return retval
 
     # This method is on ConfigList()

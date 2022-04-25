@@ -29,12 +29,12 @@ from loguru import logger
 
 DEFAULT_TEXT = "__undefined__"
 
-##
-##-------------  Config Line ABC
-##
+#
+# -------------  Config Line ABC
+#
 class BaseCfgLine(metaclass=ABCMeta):
     # deprecating py2.foo metaclass syntax in version 1.6.8...
-    #__metaclass__ = ABCMeta
+    # __metaclass__ = ABCMeta
     def __init__(self, text=DEFAULT_TEXT, comment_delimiter="!"):
         """Accept an IOS line number and initialize family relationship
         attributes"""
@@ -49,6 +49,7 @@ class BaseCfgLine(metaclass=ABCMeta):
         self.indent = 0      # Whitespace indentation on the object
         self.confobj = None  # Reference to the list object which owns it
         self.feature = ""    # Major feature description
+        self.blank_line_keep = False  # set blank_line_keep True for banner / macro
         self.set_comment_bool()
 
         self._line_id = None
