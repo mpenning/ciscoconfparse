@@ -8,7 +8,7 @@
     - Add a dedicated bootstrap method (`_bootstrap_obj_init_junos()`) for parsing `syntax==junos`
     - Add `JunosCfgLine()`
     - Add `ciscoconfparse/models_iosxr.py` which is mostly broken (but this also comes with the caveat of an 'unsupported feature').  Ref   - [Github issue #235](https://github.com/mpenning/ciscoconfparse/issues/235)
-    - Restore `tests/test_CiscoConfParse.py` to proper functionality.  See [git commit hash `840b11ce334f0b7120bbfc90d2d83fbdc5ed1bd1`](ht  tps://github.com/mpenning/ciscoconfparse/commit/840b11ce334f0b7120bbfc90d2d83fbdc5ed1bd1)
+    - Restore `tests/test_CiscoConfParse.py` to proper functionality.  See [git commit hash 840b11ce334f0b7120bbfc90d2d83fbdc5ed1bd1](ht  tps://github.com/mpenning/ciscoconfparse/commit/840b11ce334f0b7120bbfc90d2d83fbdc5ed1bd1)
     - Remove `NXOSConfigList()` and `ASAConfigList()` which were dead code and unused
     - Change `ignore_blank_lines` behavior for [Github Issue #229](https://github.com/mpenning/ciscoconfparse/issues/229).  Now blank line  s are always allowed in banners or macros regardless of what `ignore_blank_lines` is set to.
     - Rename loop variables that overlapped scope with other code sections
