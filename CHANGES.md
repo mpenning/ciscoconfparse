@@ -5,9 +5,13 @@
     - Require at least Python3.6
     - Add `HDiff()` which fixes [Github issue #184](https://github.com/mpenning/ciscoconfparse/issues/184)
     - Modify `uncfgtext`.  Deprecate `add_uncfgtext()`
+    - Add `JunosCfgLine()` and a dedicated bootstrap method for `syntax==junos`
+    - Add `_bootstrap_obj_init_junos()` for parsing `syntax==junos`
     - Add `ciscoconfparse/models_iosxr.py` which is mostly broken (but this also comes with the caveat of an 'unsupported feature').  Ref - [Github issue #235](https://github.com/mpenning/ciscoconfparse/issues/235)
     - Restore `tests/test_CiscoConfParse.py` to proper functionality.  See [git commit hash `840b11ce334f0b7120bbfc90d2d83fbdc5ed1bd1`](https://github.com/mpenning/ciscoconfparse/commit/840b11ce334f0b7120bbfc90d2d83fbdc5ed1bd1)
     - Remove `NXOSConfigList()` and `ASAConfigList()` which were dead code and unused
+    - Change `ignore_blank_lines` behavior for Github Issue #229.  Now blank lines are always allowed in banners or macros.
+    - Rename loop variables that overlapped scope with other code sections
     - Remove other dead / unreachable code
 
 ## Version: [`1.6.40`](https://pypi.org/project/ciscoconfparse/ "To download the package from pypi, visit https://pypi.org/project/ciscoconfparse/")
