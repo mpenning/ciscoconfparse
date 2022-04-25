@@ -4200,7 +4200,6 @@ class ConfigList(MutableSequence):
         self.syntax = syntax
         self.dna = "ConfigList"
         self.debug = debug
-        self.config_obj_dict = dict()
 
         is_valid_syntax = False
         for valid_syntax in ALL_VALID_SYNTAX:
