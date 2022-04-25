@@ -4210,7 +4210,7 @@ class ConfigList(MutableSequence):
                 pass
         assert is_valid_syntax is True
 
-        ## Support either a list or a generator instance
+        # Support input configuration as either a list or a generator instance
         if getattr(data, "__iter__", False):
             if self.syntax == "ios":
                 self._list = self._bootstrap_obj_init_ios(data)
@@ -4718,7 +4718,12 @@ class ConfigList(MutableSequence):
 
     # This method is on ConfigList()
     def _banner_mark_regex(self, regex):
-        # Build a list of all leading banner lines
+        """
+        Use the regex input parameter to identify all banner parent
+        objects. Find banner object children and formally build references
+        between banner parent / child objects.
+        """
+        # Build a list of all banner parent objects...
         banner_objs = list(
             filter(lambda obj: regex.search(obj.text), self._list),
         )
@@ -4824,6 +4829,8 @@ class ConfigList(MutableSequence):
         """
         Accept a text list, and format into a list of proper
         IOSCfgLine() objects or JunosCfgLine() objects.
+
+        This method returns a list of IOSCfgLine() objects.
         """
         assert isinstance(text_list, (list, tuple,))
         # Append text lines as IOSCfgLine objects...
@@ -4943,7 +4950,9 @@ class ConfigList(MutableSequence):
             idx += 1
 
         self._list = retval
-        # Mark begin and end config line objects in self._banner_mark_regex()
+        # Call _banner_mark_regex() to process banners in the returned obj
+        # list.
+        # Mark IOS banner begin and end config line objects...
         self._banner_mark_regex(banner_re)
         # We need to use a different method for macros than banners because
         #   macros don't specify a delimiter on their parent line, but
@@ -4956,6 +4965,8 @@ class ConfigList(MutableSequence):
         """
         Accept a text list, and format into a list of proper
         ASACfgLine() objects
+
+        This method returns a list of ASACfgLine() objects.
         """
         assert isinstance(text_list, (list, tuple,))
         # Append text lines as IOSCfgLine objects...
@@ -5058,6 +5069,8 @@ class ConfigList(MutableSequence):
         """
         Accept a text list, and format into a list of proper
         NXOSCfgLine() objects
+
+        This method returns a list of NXOSCfgLine() objects.
         """
         assert isinstance(text_list, (list, tuple,))
         # Append text lines as NXOSCfgLine objects...
@@ -5160,7 +5173,10 @@ class ConfigList(MutableSequence):
             idx += 1
 
         self._list = retval
-        self._banner_mark_regex(banner_re)  # Process IOS banners
+        # Call _banner_mark_regex() to process banners in the returned obj
+        # list.
+        # Mark NXOS banner begin and end config line objects...
+        self._banner_mark_regex(banner_re)  # Process NXOS banners
         return retval
 
     # This method is on ConfigList()
@@ -5168,6 +5184,8 @@ class ConfigList(MutableSequence):
         """
         Accept a text list, and format into a list of proper
         JunosCfgLine() objects.
+
+        This method returns a list of JunosCfgLine() objects.
         """
         assert isinstance(text_list, (list, tuple,))
         # Append text lines as JunosCfgLine objects...
@@ -5283,8 +5301,10 @@ class ConfigList(MutableSequence):
             idx += 1
 
         self._list = retval
-        # Mark begin and end config line objects in self._banner_mark_regex()
-        self._banner_mark_regex(banner_re)
+        # Call _banner_mark_regex() to process banners in the returned obj
+        # list.
+        # Mark JunOS banner begin and end config line objects...
+        self._banner_mark_regex(banner_re)  # Junos banner
         # We need to use a different method for macros than banners because
         #   macros don't specify a delimiter on their parent line, but
         #   banners call out a delimiter.
@@ -5295,6 +5315,8 @@ class ConfigList(MutableSequence):
         """
         Accept a text list, and format into a list of proper
         TerraformLine() objects.
+
+        This method returns a list of TerraformLine() objects.
         """
         assert isinstance(text_list, (list, tuple,))
         raise NotImplementedError()
