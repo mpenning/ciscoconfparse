@@ -57,6 +57,12 @@ class BaseCfgLine(metaclass=ABCMeta):
         self.diff_word = ""  # diff_word: 'keep', 'remove', 'unchanged', 'add'
         self.diff_side = ""  # diff_side: 'before', 'after' or ''
 
+        # FIXME
+        #   Bypass @text.setter method for now...  @text.setter writes to
+        #   self._text, but currently children do not associate correctly if
+        #   @text.setter is used as-is...
+        # self.text = text
+
     # On BaseCfgLine()
     def __repr__(self):
         if not self.is_child:
@@ -184,7 +190,18 @@ class BaseCfgLine(metaclass=ABCMeta):
     # On BaseCfgLine()
     @text.setter
     def text(self, newtext=None):
+        # FIXME - children do not associate correctly if this is used as-is...
+        raise NotImplementedError()
         assert isinstance(newtext, str)
+
+        # escape braces since single braces could be misunderstood as
+        # f-string or string.format() delimiters...
+        #
+        # Sometimes brace escaping is not required... we need better fencing
+        # around safe_escape_curly_braces()
+        if False:
+            newtext = self.safe_escape_curly_braces(newtext)
+
         previous_text = self._text
         self._text = newtext
 
@@ -204,6 +221,30 @@ class BaseCfgLine(metaclass=ABCMeta):
             #if self.confobj is not None:
             #    self.confobj._bootstrap_from_text()
             # <-- End Removed -->
+
+    def safe_escape_curly_braces(self, text):
+        """
+        Escape curly braces in strings since they could be misunderstood as
+        f-string or string.format() delimiters...
+
+        If BaseCfgLine receives line with curly-braces, this method can
+        escape the curly braces so they are not mis-interpreted as python
+        string formatting delimiters.
+        """
+        # Bypass escaping curly braces if there aren't any...
+        if not ("{" in text) and not ("}" in text):
+            return text
+
+        assert ("{" in text) or ("}" in text)
+
+        # Skip escaping curly braces if text already has double curly braces...
+        if ("{{" in text) or ("}}" in text):
+            return text
+
+        text = text.replace("{", "{{")
+        text = text.replace("}", "}}")
+        return text
+
 
     # On BaseCfgLine()
     @property
