@@ -25,6 +25,7 @@
 
 from difflib import SequenceMatcher, get_close_matches
 from collections.abc import MutableSequence, Iterator
+from datetime import datetime
 from functools import partial
 from operator import is_not
 import inspect
@@ -3622,13 +3623,6 @@ class CiscoConfParse:
 
 
 #########################################################################3
-
-class UnifiedDiffHunk:
-
-    def __init__(self, before_lines=None, after_lines=None):
-        self.before = before_lines
-        self.after = after_lines
-
 class HDiff:
     """
     """
@@ -3637,8 +3631,8 @@ class HDiff:
     @logger.catch(default=True, onerror=lambda _: sys.exit(1))
     def __init__(
         self,
-        before_lines=None,
-        after_lines=None,
+        before_config=None,
+        after_config=None,
         syntax="ios",
         ordered_diff=False,
         allow_duplicates=False,
@@ -3650,7 +3644,7 @@ class HDiff:
         If ordered_diff is False, perform an *unordered diff* on the two lists
         of configuration lines.
 
-:       $ diff -u3 <(echo "a\nb\nc") <(echo "a\nb\nb")
+        $ diff -u0 <(echo "a\nb\nc") <(echo "a\nb\nb")
         --- /dev/fd/63  2022-04-07 04:24:32.794608252 -0500
         +++ /dev/fd/62  2022-04-07 04:24:32.794608252 -0500
         @@ -1 +1 @@
@@ -3658,8 +3652,8 @@ class HDiff:
         +a\nb\nb
 
         """
-        assert isinstance(before_lines, list)
-        assert isinstance(after_lines, list)
+        assert isinstance(before_config, list) or os.path.isfile(before_config)
+        assert isinstance(after_config, list) or os.path.isfile(after_config)
         assert isinstance(syntax, str) and syntax in set({"ios"})
         assert isinstance(allow_duplicates, bool)
         assert isinstance(output_format, str) and output_format in set({"dict", "unified"})
@@ -3676,8 +3670,8 @@ class HDiff:
         # FIXME ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         #       no ordered_diff support yet
 
-        parse_before = CiscoConfParse(before_lines, syntax=syntax, ignore_blank_lines=False)
-        parse_after = CiscoConfParse(after_lines, syntax=syntax, ignore_blank_lines=False)
+        parse_before = CiscoConfParse(before_config, syntax=syntax, ignore_blank_lines=False)
+        parse_after = CiscoConfParse(after_config, syntax=syntax, ignore_blank_lines=False)
 
         for bobj in parse_before.objs:
             bobj.diff_side = "before"
@@ -3685,21 +3679,23 @@ class HDiff:
         for aobj in parse_after.objs:
             aobj.diff_side = "after"
 
-        # Initialize the output attribute...
+        # Initialize the output attributes...
+        self.before_obj_list = None
+        self.after_obj_list = None
         self.all_output_dicts = list()
 
         default_diff_word_before = "remove"
         default_diff_word_after = "unknown"
         valid_after_obj_diff_words = set({"add", "unchanged"})
-        before_obj_list = self.build_diff_obj_list(
+        self.before_obj_list = self.build_diff_obj_list(
             parse=parse_before, default_diff_word=default_diff_word_before
         )
-        after_obj_list = self.build_diff_obj_list(
+        self.after_obj_list = self.build_diff_obj_list(
             parse=parse_after, default_diff_word=default_diff_word_after
         )
 
         # Handle add / move / change. change is diff_word: remove + diff_word: add
-        for after_obj in after_obj_list:
+        for after_obj in self.after_obj_list:
 
             # Ensure we start with after_obj.diff_word as default_word...
             # it's unknownat this time... NOTE - even though all
@@ -3710,51 +3706,103 @@ class HDiff:
 
             # Check whether we keep the before object, or add a new after object...
             # before_list and after_obj may be rewritten / changed here...
-            before_obj_list, after_obj = self.find_in_before_obj_list(
-                before_obj_list, after_obj)
+            self.before_obj_list, after_obj = self.find_in_before_obj_list(
+                self.before_obj_list, after_obj)
 
             # Ensure that we rewrote after_obj.diff_word from default_diff_word_after
             assert after_obj.diff_word in valid_after_obj_diff_words
         # Relocate end
 
         # At this stage, `raw_dict_diffs()` returns duplicate parent lines...
-        tmp_line_dicts = self.raw_dict_diffs(before_obj_list, after_obj_list)
+        tmp_line_dicts = self.raw_dict_diffs(self.before_obj_list, self.after_obj_list)
 
         # Remove duplicate parent lines with `compress_dict_diffs()`
         self.all_output_dicts = self.compress_dict_diffs(tmp_line_dicts)
 
         self.sort_lines(parse_after, self.all_output_dicts)
 
+    # This method is on HDiff()
+    def raw_diff_dicts(self):
+        return self.all_output_dicts
+
+    # This method is on HDiff()
+    def unified_diff_header(self):
+        """
+        Return a unified diff header similar to this...
+
+        --- /dev/null 2022-04-25 16:33:07.434605
+        +++ /dev/null 2022-04-25 16:33:07.434605
+        @@ -7,3 +9,3 @@
+
+        """
+        # Good unified diff header description here:
+        #     https://unix.stackexchange.com/a/480542/6766
+
+        # return the unified diff header output... suitable for ydiff
+        unified_diff_header = list()
+        # Tally lines for the unified diff header...
+        udiff_timestamp = str(datetime.now().isoformat()).replace("T", " ")
+        unified_diff_header.append("--- /dev/null " + udiff_timestamp)
+        unified_diff_header.append("+++ /dev/null " + udiff_timestamp)
+
+        left_hand_changed, right_hand_changed = 0, 0
+        left_hand_start, right_hand_start = 0, 0
+        for idx, obj in enumerate(self.before_obj_list):
+            before_word = obj.diff_word
+            if before_word == "remove":
+                left_hand_start = idx + 1
+                break
+        for idx, obj in enumerate(self.before_obj_list):
+            before_word = obj.diff_word
+            if before_word == "remove":
+                left_hand_changed += 1
+
+        for idx, obj in enumerate(self.after_obj_list):
+            after_word = obj.diff_word
+            if after_word == "add":
+                right_hand_start = idx + 1
+                break
+        for idx, obj in enumerate(self.after_obj_list):
+            after_word = obj.diff_word
+            if after_word == "add":
+                right_hand_changed += 1
+
+        # render the unified diff header. Assume we only generate one diff hunk
+        unified_diff_header.append("@@ -{},{} +{},{} @@".format(
+                    left_hand_changed, left_hand_start, right_hand_changed,
+                    right_hand_start))
+
+        return unified_diff_header
+
+    # This method is on HDiff()
+    def unified_diffs(self, header=True):
+        """
+        Return a python list of text which contains the unified diff of the
+        before and after HDiff() configurations.
+        """
         # print unified diff output... I need to enhance this output since
         # `ydiff()` still can't process it yet... the unified diff header
         # isn't calculated yet...
-        if output_format == "unified":
-            """
-            diff --git a/README_git_workflow.md b/README_git_workflow.md
-            index 303d06a..e4ff34b 100644
-
-            --- a/README_git_workflow.md
-            +++ b/README_git_workflow.md
-            @@ -3,7 +3,7 @@
-            """
-            for line_dict in self.all_output_dicts:
-
-                assert isinstance(line_dict, dict)
-
-                if line_dict["diff_word"] == "add":
-                    print("+" + " " + line_dict["text"])
-                elif line_dict["diff_word"] == "remove":
-                    print("-" + " " + line_dict["text"])
-                else:
-                    print(" " + " " + line_dict["text"])
-
-        elif output_format == "dict":
-            # diff is stored in self.all_output_dicts
-            pass
-
+        if header is True:
+            unified_diff_list = self.unified_diff_header()
         else:
-            raise NotImplementedError(output_format)
+            # Unit tests are easier without the unified diff header...
+            unified_diff_list = list()
 
+        for line_dict in self.all_output_dicts:
+
+            assert isinstance(line_dict, dict)
+
+            if line_dict["diff_word"] == "add":
+                unified_diff_list.append("+" + line_dict["text"])
+            elif line_dict["diff_word"] == "remove":
+                unified_diff_list.append("-" + line_dict["text"])
+            else:
+                unified_diff_list.append(" " + line_dict["text"])
+
+        return unified_diff_list
+
+    # This method is on HDiff()
     @logger.catch(default=True, onerror=lambda _: sys.exit(1))
     def sort_lines(self, after_lines, all_output_dicts):
         """
@@ -3778,8 +3826,6 @@ class HDiff:
         all_dict_lines = list()
         for bobj in before_obj_list:
             assert isinstance(bobj, BaseCfgLine)
-
-            bobj_id_list = bobj.diff_id_list
 
             assert bobj.diff_side == "before"
             assert bobj.diff_word in set({"keep", "remove"})
