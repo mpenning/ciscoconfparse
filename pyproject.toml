@@ -6,7 +6,7 @@ authors = [
     "Mike Pennington <mike@pennington.net>",
 ]
 license = "GPLv3"
-readme = "README.rst"
+readme = "README.md"
 homepage = "https://github.com/mpenning/ciscoconfparse"
 documentation = "http://www.pennington.net/py/ciscoconfparse/"
 keywords = ["Parse", "audit", "query", "modify", "Cisco IOS", "Cisco", "NXOS", "ASA", "Juniper",]
