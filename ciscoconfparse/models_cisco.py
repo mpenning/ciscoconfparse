@@ -1368,6 +1368,20 @@ class BaseIOSIntfLine(IOSCfgLine):
         return retval
 
     @property
+    def voice_vlan(self):
+        r"""Return an integer with the voice vlan number.  Return 1, if the switchport has no explicit voice vlan configured; return 0 if the port isn't a switchport"""
+        if self.is_switchport:
+            default_val = 1
+        else:
+            default_val = 0
+        retval = self.re_match_iter_typed(
+            r"^\s*switchport\s+voice\s+vlan\s+(\d+)$",
+            result_type=int,
+            default=default_val,
+        )
+        return retval
+
+    @property
     def trunk_vlans_allowed(self):
         r"""Return a CiscoRange() with the list of allowed vlan numbers (as int).  Return 0 if the port isn't a switchport in trunk mode"""
 
