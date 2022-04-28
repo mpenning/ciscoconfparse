@@ -5,6 +5,14 @@ VERSION := $(shell grep version pyproject.toml | tr -s ' ' | tr -d "'" | tr -d '
 
 .DEFAULT_GOAL := test
 
+# Ref -> https://stackoverflow.com/a/26737258/667301
+# Ref -> https://packaging.python.org/en/latest/guides/making-a-pypi-friendly-readme/
+.PHONY: pypi-packaging
+pypi-packaging:
+	pip install -U setuptools >= 38.6.0
+	pip install -U wheel >= 0.31.0
+	pip install -U twine >= 1.11.0
+	pip install -U poetry
 .PHONY: pypi
 pypi:
 	make clean
@@ -93,9 +101,7 @@ doctest:
 	cd sphinx-doc; make doctest
 .PHONY: test
 test:
-	# Run the unit tests
-	make clean
-	cd tests; ./runtests.sh
+	cd tests && ./runtests.sh
 .PHONY: clean
 clean:
 	find ./* -name '*.pyc' -exec rm {} \;
