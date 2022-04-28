@@ -21,17 +21,17 @@ r""" __init__.py - Parse, Query, Build, and Modify IOS-style configurations
      along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
      If you need to contact the author, you can do so by emailing:
-     mike [~at~] pennington [/dot\] net
+     mike [~at~] pennington [.dot.] net
 """
 
 import sys
-import os
-
-assert sys.version_info >= (3, 6)
 
 from ciscoconfparse.ccp_util import PythonOptimizeCheck
 from ciscoconfparse.ciscoconfparse import *
 from ciscoconfparse.ccp_util import *
+
+assert sys.version_info >= (3, 6)
+
 
 # Throw errors for PYTHONOPTIMIZE and `python -O ...` by executing
 #     PythonOptimizeCheck()...
