@@ -1,16 +1,30 @@
 #!/bin/bash
 
-set -eu
+##############################################################################
+# Change into your virtualenv before running the script                      #
+##############################################################################
 
-# Change into your virtualenv before running the script
+# Print very verbose debugging info to STDOUT
+set -xT
+# -v: Print STDIN lines as they are read
+# -e: Stop this script if a command exits w/ a non-zero code
+# -u: Stop this script if a variable has an error
+set -veu
+# -o pipefail: Stop this script if a pipeline has an error
+set -o pipefail
+# https://unix.stackexchange.com/a/521780/6766
+set -o functrace
+# IFS is "Initial Field Seperator"...
+#     By default, bash sets $IFS to $' \n\t' - space, newline, tab
+#     bash $IFS default to split on spaces can cause unexpected problems
+IFS=$'\n\t'
 
-# --durations=5 triggers a report for the five slowest tests...
-py.test -sxl --durations=5 --show-capture=all --tb=long test_CiscoConfParse.py
-sleep 0.05
-py.test -sxl --durations=5 --show-capture=all --tb=long test_Ccp_Util.py
-sleep 0.05
-py.test -sxl --durations=5 --show-capture=all --tb=long test_Models_Cisco.py
-sleep 0.05
-py.test -sxl --durations=5 --show-capture=all --tb=long test_Models_Asa.py
-sleep 0.05
-py.test -sxl --durations=5 --show-capture=all --tb=long test_Models_Junos.py
+
+# bash loop syntax...
+#     https://stackoverflow.com/a/8880633/667301
+declare -a all_tests=("test_CiscoConfParse.py" "test_Ccp_Util.py" "test_Models_Cisco.py" "test_Models_Asa.py" "test_Models_Junos.py")
+for test_filename in "${all_tests[@]}"
+do
+   pytest -r=fE --exitfirst --durations=5 --strict-config --cache-clear --show-capture=all --tb=line --strict-config --color=yes --code-highlight=yes --showlocals "$test_filename"
+   sleep 0.05
+done
