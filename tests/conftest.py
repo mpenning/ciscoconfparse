@@ -1,14 +1,3 @@
-import platform
-import sys
-import os
-
-THIS_DIR = os.path.dirname(__file__)
-sys.path.insert(0, "..")
-
-
-import pytest
-from ciscoconfparse.ciscoconfparse import CiscoConfParse
-
 r""" conftest.py - Parse, Query, Build, and Modify IOS-style configs
 
      Copyright (C) 2020-2021 David Michael Pennington at Cisco Systems
@@ -31,6 +20,16 @@ r""" conftest.py - Parse, Query, Build, and Modify IOS-style configs
      If you need to contact the author, you can do so by emailing:
      mike [~at~] pennington [/dot\] net
 """
+
+import platform
+import sys
+import os
+sys.path.insert(0, "..")
+
+from ciscoconfparse.ciscoconfparse import CiscoConfParse
+import pytest
+
+THIS_DIR = os.path.dirname(__file__)
 
 
 c01 = """policy-map QOS_1
