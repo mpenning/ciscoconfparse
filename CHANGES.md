@@ -10,7 +10,8 @@
     - Add `ciscoconfparse/models_iosxr.py` which is mostly broken (but this also comes with the caveat of an 'unsupported feature').  Ref   - [Github issue #235](https://github.com/mpenning/ciscoconfparse/issues/235)
     - Restore `tests/test_CiscoConfParse.py` to proper functionality.  See [git commit hash `840b11ce334f0b7120bbfc90d2d83fbdc5ed1bd1`](https://github.com/mpenning/ciscoconfparse/commit/840b11ce334f0b7120bbfc90d2d83fbdc5ed1bd1)
     - Remove `NXOSConfigList()` and `ASAConfigList()` which were dead code and unused
-    - Change `ignore_blank_lines` behavior for [Github Issue #229](https://github.com/mpenning/ciscoconfparse/issues/229).  Now blank line  s are always allowed in banners or macros regardless of what `ignore_blank_lines` is set to.
+    - Change `ignore_blank_lines` behavior for [Github Issue #229](https://github.com/mpenning/ciscoconfparse/issues/229).  Now blank line  s are **always allowed** in banners or macros regardless of what `ignore_blank_lines` is set to.
+    - Add test coverage for "parsing F5 configs as ios", "parsing F5 configs as junos"
     - Rename loop variables that overlapped scope with other code sections
     - Remove other dead / unreachable code
 
