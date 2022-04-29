@@ -169,6 +169,116 @@ __license__ = "GPLv3"
 __status__ = "Production"
 
 
+@logger.catch
+def _parse_line_braces(line_txt=None, comment_delimiter=None):
+    """
+    """
+    assert isinstance(line_txt, str)
+    assert isinstance(comment_delimiter, str) and len(comment_delimiter)==1
+
+    child_indent = 0
+    this_line_indent = 0
+
+    junos_re_str = r"""^
+    (?:\s*
+        (?P<braces_close_left>\})*(?P<line1>.*?)(?P<braces_open_right>\{)*;*
+        |(?P<line2>[^\{\}]*?)(?P<braces_open_left>\{)(?P<condition2>.*?)(?P<braces_close_right>\});*\s*
+        |(?P<line3>[^\{\}]*?);*\s*
+    )$
+    """
+    line_re = re.compile(junos_re_str, re.VERBOSE)
+    comment_re = re.compile(r'^\s*(?P<delimiter>[{0}]+)(?P<comment>[^{0}]*)$'.format(re.escape(comment_delimiter)))
+
+    mm = line_re.search(line_txt.strip())
+    nn = comment_re.search(line_txt.strip())
+
+    if nn is not None:
+        results = nn.groupdict()
+        return (this_line_indent, child_indent, results.get('delimiter') + results.get('comment', ''))
+
+    elif mm is not None:
+        results = mm.groupdict()
+
+        # } line1 { foo bar this } {
+        braces_close_left = bool(results.get('braces_close_left', ''))
+        braces_open_right = bool(results.get('braces_open_right', ''))
+
+        # line2
+        braces_open_left = bool(results.get('braces_open_left', ''))
+        braces_close_right = bool(results.get('braces_close_right', ''))
+
+        # line3
+        line1_str = results.get('line1', '')
+        line2_str = results.get('line2', '')
+        line3_str = results.get('line3', '')
+
+        if braces_close_left and braces_open_right:
+            # Based off line1
+            #     } elseif { bar baz } {
+            this_line_indent -= 1
+            child_indent     += 0
+            retval = results.get('line1', None)
+            return (this_line_indent, child_indent, retval)
+
+        elif bool(line1_str) and (braces_close_left is False) and (braces_open_right is False):
+            # Based off line1:
+            #     address 1.1.1.1
+            this_line_indent -= 0
+            child_indent     += 0
+            retval = results.get('line1', '').strip()
+            # Strip empty braces here
+            retval = re.sub(r'\s*\{\s*\}\s*', '', retval)
+            return (this_line_indent, child_indent, retval)
+
+        elif (line1_str == '') and (braces_close_left is False) and (braces_open_right is False):
+            # Based off line1:
+            #     return empty string
+            this_line_indent -= 0
+            child_indent += 0
+            return (this_line_indent, child_indent, '')
+
+        elif braces_open_left and braces_close_right:
+            # Based off line2
+            #    this { bar baz }
+            this_line_indent -= 0
+            child_indent += 0
+            line = results.get('line2', None) or ''
+            condition = results.get('condition2', None) or ''
+            if condition.strip() == '':
+                retval = line
+            else:
+                retval = line + " {" + condition + " }"
+            return (this_line_indent, child_indent, retval)
+
+        elif braces_close_left:
+            # Based off line1
+            #   }
+            this_line_indent -= 1
+            child_indent     -= 1
+            return (this_line_indent, child_indent, '')
+
+        elif braces_open_right:
+            # Based off line1
+            #   this that foo {
+            this_line_indent -= 0
+            child_indent     += 1
+            line = results.get('line1', None) or ''
+            return (this_line_indent, child_indent, line)
+
+        elif (line3_str != '') and (line3_str is not None):
+            this_line_indent += 0
+            child_indent     += 0
+            return (this_line_indent, child_indent, '')
+
+        else:
+            raise ValueError('Cannot parse {} match:"{}"'.format(
+                    self.syntax, line_txt))
+
+    else:
+        raise ValueError('Cannot parse {}:"{}"'.format(self.syntax,
+                    line_txt))
+
+@logger.catch
 def build_space_tolerant_regex(linespec):
     r"""SEMI-PRIVATE: Accept a string, and return a string with all
     spaces replaced with '\s+'"""
@@ -189,13 +299,47 @@ def build_space_tolerant_regex(linespec):
 
     return linespec
 
+# This method was copied from the same method in git commit below...
+# https://raw.githubusercontent.com/mpenning/ciscoconfparse/bb3f77436023873da344377d3c839387f5131e7f/ciscoconfparse/ciscoconfparse.py
+@logger.catch
+def convert_junos_to_ios(input_list=None, stop_width=4, comment_delimiter="!",
+        debug=0):
+    """
+    This method accepts `input_list` (it should be a list of
+    junos-brace-formatted-string config lines).
+
+    This method strips off semicolons / braces from the string lines in
+    `input_list` and returns the lines in a new list where all lines
+    are explicitly indented as IOS would (as if IOS understood braces).
+    """
+    ## Note to self, I made this regex fairly junos-specific...
+    assert isinstance(input_list, list) and len(input_list) > 0
+    assert '{' not in set(comment_delimiter)
+    assert '}' not in set(comment_delimiter)
+
+    lines = list()
+    offset = 0
+    STOP_WIDTH = stop_width
+    for idx, tmp in enumerate(input_list):
+        if debug > 0:
+            logger.debug("Parse line {}:'{}'".format(idx + 1, tmp.strip()))
+        (this_line_indent, child_indent, line) = _parse_line_braces(
+            tmp.strip(), comment_delimiter=comment_delimiter)
+        lines.append((" " * STOP_WIDTH * (offset + this_line_indent)) + line.strip())
+        offset += child_indent
+
+    assert isinstance(lines, list) and len(lines) > 0
+    return lines
+
 
 class CiscoConfParse:
     """
     Parse Cisco IOS configurations and answers queries about the configs.
     """
 
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    # IMPORTANT: do NOT decorate CiscoConfParse().__init__()
+    # with @logger.catch.  Something about CiscoConfParse breaks
+    @logger.catch
     def __init__(
         self,
         config="",
@@ -284,17 +428,15 @@ class CiscoConfParse:
         self.encoding = encoding or ENCODING
         self.debug = debug
 
-        # Define a functools.partial() wrapper around ConfigList()...
-        # functools.partial() info->https://stackoverflow.com/a/5737892/667301
-        self.config_list = partial(
-            ConfigList,
-            syntax=syntax,
-            comment_delimiter=comment,
-            factory=factory,
-            ignore_blank_lines=ignore_blank_lines,
-            ccp_ref=self,
-            debug=debug
-        )
+        # Important: Ensure we have a sane copy of self and self.ConfigObjs...
+        if not isinstance(self, CiscoConfParse):
+            err = "CiscoConfParse() did not populate self.ConfigObjs"
+            raise ValueError(err)
+
+        # FIXME !!! why isn't ConfigObjs an instance of MutableSequence
+        # assert isinstance(self.ConfigObjs, MutableSequence)
+
+        assert self.syntax in ALL_VALID_SYNTAX
 
         config = self.get_config_lines(config=config, logger=logger)
         valid_syntax = copy.copy(set(ALL_VALID_SYNTAX))
@@ -305,41 +447,66 @@ class CiscoConfParse:
         if syntax in valid_syntax:
 
             if self.debug > 0:
-                log_msg = "assigning self.ConfigObjs =" \
-                    " ConfigList(syntax='%s')" % syntax
+                log_msg = ("assigning self.ConfigObjs ="
+                    " ConfigList(syntax='%s')" % syntax)
                 logger.info(log_msg)
+
             # self.config_list is a partial wrapper around ConfigList()
-            self.ConfigObjs = self.config_list(data=config)
+            self.ConfigObjs = ConfigList(
+                initlist=config,
+                comment_delimiter=comment,
+                debug=debug,
+                factory=factory,
+                ignore_blank_lines=ignore_blank_lines,
+                syntax=syntax,
+                ccp_ref=self,
+            )
 
         elif syntax == "junos":
-            err_msg = "junos parser factory is not yet" \
-                " enabled; use factory=False"
+            err_msg = ("junos parser factory is not yet"
+                " enabled; use factory=False")
             assert factory is False, err_msg
-            config = self.convert_junos_to_ios(config)
+            config = convert_junos_to_ios(config, comment_delimiter="#")
             if self.debug > 0:
                 logger.info("assigning self.ConfigObjs = ConfigList()")
+
             # self.config_list is a partial wrapper around ConfigList()
-            self.ConfigObjs = self.config_list(data=config)
+            self.ConfigObjs = ConfigList(
+                initlist=config,
+                comment_delimiter=comment,
+                debug=debug,
+                factory=factory,
+                ignore_blank_lines=ignore_blank_lines,
+                syntax=syntax,
+                ccp_ref=self,
+            )
 
         elif syntax == "terraform":
-            err_msg = "terraform parser factory is not yet" \
-                " enabled; use factory=False"
+            err_msg = ("terraform parser factory is not yet"
+                " enabled; use factory=False")
             assert factory is False, err_msg
             config = self.convert_terraform_to_ios(config)
             if self.debug > 0:
                 logger.info("assigning self.ConfigObjs = ConfigList()")
+
             # self.config_list is a partial wrapper around ConfigList()
-            self.ConfigObjs = self.config_list(data=config)
+            self.ConfigObjs = ConfigList(
+                initlist=config,
+                comment_delimiter=comment,
+                debug=debug,
+                factory=factory,
+                ignore_blank_lines=ignore_blank_lines,
+                syntax=syntax,
+                ccp_ref=self,
+            )
 
         else:
             error = "'{}' is an unknown syntax".format(syntax)
             logger.error(error)
             raise ValueError(error)
 
-        # Important: Ensure we have a sane copy of ConfigObjs....
-        assert isinstance(self.ConfigObjs, MutableSequence)
-
     # This method is on CiscoConfParse()
+    @logger.catch(onerror=lambda _: sys.exit(1))
     def __repr__(self):
         return (
             "<CiscoConfParse: %s lines / syntax: %s / comment delimiter: '%s' / factory: %s / encoding: '%s'>"
@@ -411,6 +578,11 @@ class CiscoConfParse:
     @property
     def objs(self):
         """An alias to the ``ConfigObjs`` attribute"""
+        if self.ConfigObjs is None:
+            err_txt = ("ConfigObjs is set to None.  ConfigObjs should be a "
+                       "list of text {} config strings".format(self.syntax))
+            logger.error(err_txt)
+            raise ValueError(err_txt)
         return self.ConfigObjs
 
     # This method is on CiscoConfParse()
@@ -467,23 +639,12 @@ class CiscoConfParse:
         """
         self.atomic()  # atomic() calls self.ConfigObjs._bootstrap_from_text()
 
-    # This method is on CiscoConfParse()
-    # This method was copied from the same method in git commit below...
-    # https://raw.githubusercontent.com/mpenning/ciscoconfparse/bb3f77436023873da344377d3c839387f5131e7f/ciscoconfparse/ciscoconfparse.py
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
-    def convert_junos_to_ios(self, input_list, stop_width=4):
+    def _parse_line_braces_DEPRECATED(self, line_txt):
         """
-        This method accepts `input_list` (it should be a list of
-        junos-brace-formatted-string config lines).
-
-        This method strips off semicolons / braces from the string lines in
-        `input_list` and returns the lines in a new list where all lines
-        are explicitly indented as IOS would (as if IOS understood braces).
         """
-        ## Note to self, I made this regex fairly junos-specific...
-        assert isinstance(input_list, list) and len(input_list) >= 1
-        assert '{' not in set(self.comment_delimiter)
-        assert '}' not in set(self.comment_delimiter)
+        assert isinstance(line_txt, str)
+        child_indent = 0
+        this_line_indent = 0
 
         junos_re_str = r"""^
         (?:\s*
@@ -493,117 +654,100 @@ class CiscoConfParse:
         )$
         """
         line_re = re.compile(junos_re_str, re.VERBOSE)
-
         comment_re = re.compile(r'^\s*(?P<delimiter>[{0}]+)(?P<comment>[^{0}]*)$'.format(re.escape(self.comment_delimiter)))
 
-        def parse_line_braces(line_txt):
-            assert isinstance(line_txt, str)
-            indent_child = 0
-            indent_this_line = 0
+        mm = line_re.search(line_txt.strip())
+        nn = comment_re.search(line_txt.strip())
 
-            mm = line_re.search(line_txt.strip())
-            nn = comment_re.search(line_txt.strip())
+        if nn is not None:
+            results = nn.groupdict()
+            return (this_line_indent, child_indent, results.get('delimiter') + results.get('comment', ''))
 
-            if nn is not None:
-                results = nn.groupdict()
-                return (indent_this_line, indent_child, results.get('delimiter') + results.get('comment', ''))
+        elif mm is not None:
+            results = mm.groupdict()
 
-            elif mm is not None:
-                results = mm.groupdict()
+            # } line1 { foo bar this } {
+            braces_close_left = bool(results.get('braces_close_left', ''))
+            braces_open_right = bool(results.get('braces_open_right', ''))
 
-                # } line1 { foo bar this } {
-                braces_close_left = bool(results.get('braces_close_left', ''))
-                braces_open_right = bool(results.get('braces_open_right', ''))
+            # line2
+            braces_open_left = bool(results.get('braces_open_left', ''))
+            braces_close_right = bool(results.get('braces_close_right', ''))
 
-                # line2
-                braces_open_left = bool(results.get('braces_open_left', ''))
-                braces_close_right = bool(results.get('braces_close_right', ''))
+            # line3
+            line1_str = results.get('line1', '')
+            line3_str = results.get('line3', '')
 
-                # line3
-                line1_str = results.get('line1', '')
-                line3_str = results.get('line3', '')
+            if braces_close_left and braces_open_right:
+                # Based off line1
+                #     } elseif { bar baz } {
+                this_line_indent -= 1
+                child_indent     += 0
+                retval = results.get('line1', None)
+                return (this_line_indent, child_indent, retval)
 
-                if braces_close_left and braces_open_right:
-                    # Based off line1
-                    #     } elseif { bar baz } {
-                    indent_this_line -= 1
-                    indent_child     += 0
-                    retval = results.get('line1', None)
-                    return (indent_this_line, indent_child, retval)
+            elif bool(line1_str) and (braces_close_left is False) and (braces_open_right is False):
+                # Based off line1:
+                #     address 1.1.1.1
+                this_line_indent -= 0
+                child_indent     += 0
+                retval = results.get('line1', '').strip()
+                # Strip empty braces here
+                retval = re.sub(r'\s*\{\s*\}\s*', '', retval)
+                return (this_line_indent, child_indent, retval)
 
-                elif bool(line1_str) and (braces_close_left is False) and (braces_open_right is False):
-                    # Based off line1:
-                    #     address 1.1.1.1
-                    indent_this_line -= 0
-                    indent_child     += 0
-                    retval = results.get('line1', '').strip()
-                    # Strip empty braces here
-                    retval = re.sub(r'\s*\{\s*\}\s*', '', retval)
-                    return (indent_this_line, indent_child, retval)
+            elif (line1_str == '') and (braces_close_left is False) and (braces_open_right is False):
+                # Based off line1:
+                #     return empty string
+                this_line_indent -= 0
+                child_indent += 0
+                return (this_line_indent, child_indent, '')
 
-                elif (line1_str == '') and (braces_close_left is False) and (braces_open_right is False):
-                    # Based off line1:
-                    #     return empty string
-                    indent_this_line -= 0
-                    indent_child += 0
-                    return (indent_this_line, indent_child, '')
-
-                elif braces_open_left and braces_close_right:
-                    # Based off line2
-                    #    this { bar baz }
-                    indent_this_line -= 0
-                    indent_child += 0
-                    line = results.get('line2', None) or ''
-                    condition = results.get('condition2', None) or ''
-                    if condition.strip() == '':
-                        retval = line
-                    else:
-                        retval = line + " {" + condition + " }"
-                    return (indent_this_line, indent_child, retval)
-
-                elif braces_close_left:
-                    # Based off line1
-                    #   }
-                    indent_this_line -= 1
-                    indent_child     -= 1
-                    return (indent_this_line, indent_child, '')
-
-                elif braces_open_right:
-                    # Based off line1
-                    #   this that foo {
-                    indent_this_line -= 0
-                    indent_child     += 1
-                    line = results.get('line1', None) or ''
-                    return (indent_this_line, indent_child, line)
-
-                elif (line3_str != '') and (line3_str is not None):
-                    indent_this_line += 0
-                    indent_child     += 0
-                    return (indent_this_line, indent_child, '')
-
+            elif braces_open_left and braces_close_right:
+                # Based off line2
+                #    this { bar baz }
+                this_line_indent -= 0
+                child_indent += 0
+                line = results.get('line2', None) or ''
+                condition = results.get('condition2', None) or ''
+                if condition.strip() == '':
+                    retval = line
                 else:
-                    raise ValueError('Cannot parse {} match:"{}"'.format(
-                            self.syntax, line_txt))
+                    retval = line + " {" + condition + " }"
+                return (this_line_indent, child_indent, retval)
+
+            elif braces_close_left:
+                # Based off line1
+                #   }
+                this_line_indent -= 1
+                child_indent     -= 1
+                return (this_line_indent, child_indent, '')
+
+            elif braces_open_right:
+                # Based off line1
+                #   this that foo {
+                this_line_indent -= 0
+                child_indent     += 1
+                line = results.get('line1', None) or ''
+                return (this_line_indent, child_indent, line)
+
+            elif (line3_str != '') and (line3_str is not None):
+                this_line_indent += 0
+                child_indent     += 0
+                return (this_line_indent, child_indent, '')
 
             else:
-                raise ValueError('Cannot parse {}:"{}"'.format(self.syntax,
-                            line_txt))
+                raise ValueError('Cannot parse {} match:"{}"'.format(
+                        self.syntax, line_txt))
 
-        lines = list()
-        offset = 0
-        STOP_WIDTH = stop_width
-        for idx, tmp in enumerate(input_list):
-            if self.debug is True:
-                logger.debug("Parse line {}:'{}'".format(idx+1, tmp.strip()))
-            (indent_this_line, indent_child, line) = parse_line_braces(
-                tmp.strip())
-            lines.append((" " * STOP_WIDTH * (offset + indent_this_line)) + line.strip())
-            offset += indent_child
-        return lines
+        else:
+            raise ValueError('Cannot parse {}:"{}"'.format(self.syntax,
+                        line_txt))
+
 
     # This method is on CiscoConfParse()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
-    def convert_terraform_to_ios(self, input_list, stop_width=4, quotes=False):
+    @logger.catch(onerror=lambda _: sys.exit(1))
+    def convert_terraform_to_ios(self, input_list, stop_width=4, quotes=False, comment_delimiter="#"):
         """
         This method accepts `input_list` (it should be a list of
         terraform-brace-formatted-string config lines).
@@ -613,128 +757,23 @@ class CiscoConfParse:
         lines are explicitly indented as IOS would (as if IOS understood
         terraform).
         """
+        raise NotImplementedError()
+
         ## Note to self, I made this regex fairly terraform-specific...
         assert isinstance(input_list, list) and len(input_list) >= 1
-        assert '{' not in set(self.comment_delimiter)
-        assert '}' not in set(self.comment_delimiter)
-
-        terraform_re_str = r"""^
-        (?:\s*
-            (?P<braces_close_left>\})*(?P<line1>.*?)(?P<braces_open_right>\{)*;*
-           |(?P<line2>[^\{\}]*?)(?P<braces_open_left>\{)(?P<condition2>.*?)(?P<braces_close_right>\});*\s*
-           |(?P<line3>[^\{\}]*?);*\s*
-        )$
-        """
-        line_re = re.compile(terraform_re_str, re.VERBOSE)
-
-        comment_re = re.compile(r'^\s*(?P<delimiter>[{0}]+)(?P<comment>[^{0}]*)$'.format(re.escape(self.comment_delimiter)))
-
-        def parse_line_braces(line_txt, quotes=quotes):
-            assert isinstance(line_txt, str)
-            indent_child = 0
-            indent_this_line = 0
-
-            if quotes is False:
-                line_txt = line_txt.replace('"', "").replace("'", "")
-
-            mm = line_re.search(line_txt.strip())
-            nn = comment_re.search(line_txt.strip())
-
-            if nn is not None:
-                results = nn.groupdict()
-                return (indent_this_line, indent_child, results.get('delimiter') + results.get('comment', ''))
-
-            elif mm is not None:
-                results = mm.groupdict()
-
-                # } line1 { foo bar this } {
-                braces_close_left = bool(results.get('braces_close_left', ''))
-                braces_open_right = bool(results.get('braces_open_right', ''))
-
-                # line2
-                braces_open_left = bool(results.get('braces_open_left', ''))
-                braces_close_right = bool(results.get('braces_close_right', ''))
-
-                # line3
-                line1_str = results.get('line1', '')
-                line3_str = results.get('line3', '')
-
-                if braces_close_left and braces_open_right:
-                    # Based off line1
-                    #     } elseif { bar baz } {
-                    indent_this_line -= 1
-                    indent_child     += 0
-                    retval = results.get('line1', None)
-                    return (indent_this_line, indent_child, retval)
-
-                elif bool(line1_str) and (braces_close_left is False) and (braces_open_right is False):
-                    # Based off line1:
-                    #     address 1.1.1.1
-                    indent_this_line -= 0
-                    indent_child     += 0
-                    retval = results.get('line1', '').strip()
-                    # Strip empty braces here
-                    retval = re.sub(r'\s*\{\s*\}\s*', '', retval)
-                    return (indent_this_line, indent_child, retval)
-
-                elif (line1_str == '') and (braces_close_left is False) and (braces_open_right is False):
-                    # Based off line1:
-                    #     return empty string
-                    indent_this_line -= 0
-                    indent_child += 0
-                    return (indent_this_line, indent_child, '')
-
-                elif braces_open_left and braces_close_right:
-                    # Based off line2
-                    #    this { bar baz }
-                    indent_this_line -= 0
-                    indent_child += 0
-                    line = results.get('line2', None) or ''
-                    condition = results.get('condition2', None) or ''
-                    if condition.strip() == '':
-                        retval = line
-                    else:
-                        retval = line + " {" + condition + " }"
-                    return (indent_this_line, indent_child, retval)
-
-                elif braces_close_left:
-                    # Based off line1
-                    #   }
-                    indent_this_line -= 1
-                    indent_child     -= 1
-                    return (indent_this_line, indent_child, '')
-
-                elif braces_open_right:
-                    # Based off line1
-                    #   this that foo {
-                    indent_this_line -= 0
-                    indent_child     += 1
-                    line = results.get('line1', None) or ''
-                    return (indent_this_line, indent_child, line)
-
-                elif (line3_str != '') and (line3_str is not None):
-                    indent_this_line += 0
-                    indent_child     += 0
-                    return (indent_this_line, indent_child, '')
-
-                else:
-                    raise ValueError('Cannot parse {} match:"{}"'.format(
-                            self.syntax, line_txt))
-
-            else:
-                raise ValueError('Cannot parse {}:"{}"'.format(self.syntax,
-                            line_txt))
+        assert '{' not in set(comment_delimiter)
+        assert '}' not in set(comment_delimiter)
 
         lines = list()
         offset = 0
         STOP_WIDTH = stop_width
         for idx, tmp in enumerate(input_list):
-            if self.debug is True:
-                logger.debug("Parse line {}:'{}'".format(idx+1, tmp.strip()))
-            (indent_this_line, indent_child, line) = parse_line_braces(
-                tmp.strip(), quotes=quotes)
-            lines.append((" " * STOP_WIDTH * (offset + indent_this_line)) + line.strip())
-            offset += indent_child
+            if self.debug > 0:
+                logger.debug("Parse line {}:'{}'".format(idx + 1, tmp.strip()))
+            (this_line_indent, child_indent, line) = _parse_line_braces(
+                tmp.strip(), comment_delimiter=comment_delimiter)
+            lines.append((" " * STOP_WIDTH * (offset + this_line_indent)) + line.strip())
+            offset += child_indent
         return lines
 
     # This method is on CiscoConfParse()
@@ -1133,6 +1172,13 @@ class CiscoConfParse:
                 self.__class__.__name__, method_name, dnaspec,
             )
             logger.info(message)
+
+        if self.ConfigObjs is None:
+            # ConfigObjs should be a list, tuple or MutableSequence
+            err_text = ("CiscoConfParse().ConfigObjs should be a list of "
+                        "config lines, but it's not initialized.")
+            logger.error(err_text)
+            raise ValueError(err_text)
 
         if self.factory is False:
             err_text = "find_objects_dna() must be called with 'factory=True'"
@@ -2277,7 +2323,7 @@ class CiscoConfParse:
         return bool(matching_conftext)
 
     # This method is on CiscoConfParse()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(onerror=lambda _: sys.exit(1))
     def insert_before(
         self,
         exist_val="",
@@ -2379,7 +2425,7 @@ class CiscoConfParse:
         return [ii.text for ii in sorted(objs)]
 
     # This method is on CiscoConfParse()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(onerror=lambda _: sys.exit(1))
     def insert_after(
         self,
         exist_val="",
@@ -3557,6 +3603,10 @@ class CiscoConfParse:
     def _find_line_OBJ(self, linespec, exactmatch=False):
         """SEMI-PRIVATE: Find objects whose text matches the linespec"""
 
+        if self.ConfigObjs is None:
+            err = "ConfigObjs is None. self.ConfigObjs logic failed."
+            raise ValueError(err)
+
         if self.debug >= 2:
             logger.debug(
                 "Looking for match of linespec='%s', exactmatch=%s" %
@@ -3570,6 +3620,7 @@ class CiscoConfParse:
         elif exactmatch:
             # Return objects whose text attribute matches linespec exactly
             linespec_re = re.compile("^%s$" % linespec)
+
 
         return list(
             filter(lambda obj: linespec_re.search(obj.text), self.ConfigObjs),
@@ -3628,7 +3679,7 @@ class HDiff:
     """
 
     # This method is on HDiff()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(onerror=lambda _: sys.exit(1))
     def __init__(
         self,
         before_config=None,
@@ -3654,7 +3705,7 @@ class HDiff:
         """
         assert isinstance(before_config, list) or os.path.isfile(before_config)
         assert isinstance(after_config, list) or os.path.isfile(after_config)
-        assert isinstance(syntax, str) and syntax in set({"ios"})
+        assert isinstance(syntax, str) and syntax in set({"ios", "junos"})
         assert isinstance(allow_duplicates, bool)
         assert isinstance(output_format, str) and output_format in set({"dict", "unified"})
 
@@ -3780,9 +3831,8 @@ class HDiff:
         Return a python list of text which contains the unified diff of the
         before and after HDiff() configurations.
         """
-        # print unified diff output... I need to enhance this output since
-        # `ydiff()` still can't process it yet... the unified diff header
-        # isn't calculated yet...
+
+        # gather unified diff output...
         if header is True:
             unified_diff_list = self.unified_diff_header()
         else:
@@ -3803,7 +3853,7 @@ class HDiff:
         return unified_diff_list
 
     # This method is on HDiff()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(onerror=lambda _: sys.exit(1))
     def sort_lines(self, after_lines, all_output_dicts):
         """
         Typical output line dict-format...
@@ -3818,7 +3868,7 @@ class HDiff:
         pass
 
     # This method is on HDiff()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(onerror=lambda _: sys.exit(1))
     def raw_dict_diffs(self, before_obj_list, after_obj_list):
         ############################################
         # Render diffs
@@ -3869,7 +3919,7 @@ class HDiff:
         return all_dict_lines
 
     # This method is on HDiff()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(onerror=lambda _: sys.exit(1))
     def build_diff_obj_list(
         self, parse=None, default_diff_word=None, consider_whitespace=False
     ):
@@ -3897,7 +3947,7 @@ class HDiff:
         return retval
 
     # This method is on HDiff()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(onerror=lambda _: sys.exit(1))
     def find_in_before_obj_list(
         self, before_obj_list, after_obj, consider_whitespace=False, debug=0
     ):
@@ -3990,7 +4040,7 @@ class HDiff:
         return before_obj_list, after_obj
 
     # This method is on HDiff()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(onerror=lambda _: sys.exit(1))
     def render_after_obj_diffs(self, aobj=None):
         """
         Print after_obj (aobj) diffs to stdout.  before_obj should not be
@@ -4044,7 +4094,7 @@ class HDiff:
         return output
 
     # This method is on HDiff()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(onerror=lambda _: sys.exit(1))
     def compress_dict_diffs(self, all_lines=None):
         """
         Summary
@@ -4188,7 +4238,7 @@ class ConfigList(MutableSequence):
     """A custom list to hold :class:`~ccp_abc.BaseCfgLine` objects.  Most people will never need to use this class directly."""
     def __init__(
             self,
-            data=None,
+            initlist=None,
             comment_delimiter="!",
             debug=0,
             factory=False,
@@ -4201,7 +4251,7 @@ class ConfigList(MutableSequence):
 
         Parameters
         ----------
-        data : list
+        initlist : list
             A list of parsed :class:`~models_cisco.IOSCfgLine` objects
         comment_delimiter : str
             A comment delimiter.  This should only be changed when parsing non-Cisco IOS configurations, which do not use a !  as the comment delimiter.  ``comment`` defaults to '!'
@@ -4222,7 +4272,8 @@ class ConfigList(MutableSequence):
         # ignore_blank_lines = kwargs.get('ignore_blank_lines', True)
         # syntax = kwargs.get('syntax', 'ios')
         # CiscoConfParse = kwargs.get('CiscoConfParse', None)
-        super().__init__()
+
+        #super().__init__()
 
         #######################################################################
         # Parse out CiscoConfParse and ccp_ref keywords...
@@ -4238,6 +4289,16 @@ class ConfigList(MutableSequence):
         ccp_value = ccp_ref_kwarg_val or ciscoconfparse_kwarg_val
 
         self._list = list()
+        if initlist is not None:
+            # XXX should this accept an arbitrary sequence?
+            if type(initlist) == type(self._list):
+                self._list[:] = initlist
+            elif isinstance(initlist, ConfigList):
+                self._list[:] = initlist._list[:]
+            else:
+                self._list = list(initlist)
+
+
         self.CiscoConfParse = ccp_value  # FIXME - CiscoConfParse attribute should go away soon
         self.ccp_ref = ccp_value
         self.comment_delimiter = comment_delimiter
@@ -4257,22 +4318,22 @@ class ConfigList(MutableSequence):
         assert is_valid_syntax is True
 
         # Support input configuration as either a list or a generator instance
-        if getattr(data, "__iter__", False):
+        if getattr(initlist, "__iter__", False):
             if self.syntax == "ios":
-                self._list = self._bootstrap_obj_init_ios(data)
+                self._list = self._bootstrap_obj_init_ios(initlist)
 
             elif self.syntax == "asa":
-                self._list = self._bootstrap_obj_init_asa(data)
+                self._list = self._bootstrap_obj_init_asa(initlist)
 
             elif self.syntax == "nxos":
-                self._list = self._bootstrap_obj_init_nxos(data)
+                self._list = self._bootstrap_obj_init_nxos(initlist)
 
             elif self.syntax == "junos":
-                self._list = self._bootstrap_obj_init_junos(data)
+                self._list = self._bootstrap_obj_init_junos(initlist)
 
             elif self.syntax == "terraform":
                 # FIXME - Create terraform bootstrap method
-                self._list = self._bootstrap_obj_init_terraform(data)
+                self._list = self._bootstrap_obj_init_terraform(initlist)
 
             else:
                 error = "No bootstrap method for syntax='%s'" % self.syntax
@@ -4298,12 +4359,51 @@ class ConfigList(MutableSequence):
             self._network_cache = dict()
 
     # This method is on ConfigList()
+    def __repr__(self):
+        return """<ConfigList, syntax='{}', comment='{}', conf={}>""".format(
+            self.syntax,
+            self.comment_delimiter,
+            self._list,
+        )
+
+    # This method is on ConfigList()
+    def __lt__(self, other):
+        return self._list < self.__cast(other)
+
+    # This method is on ConfigList()
+    def __le__(self, other):
+        return self._list < self.__cast(other)
+
+    # This method is on ConfigList()
+    def __eq__(self, other):
+        return self._list == self.__cast(other)
+
+    # This method is on ConfigList()
+    def __gt__(self, other):
+        return self._list > self.__cast(other)
+
+    # This method is on ConfigList()
+    def __ge__(self, other):
+        return self._list >= self.__cast(other)
+
+    # This method is on ConfigList()
+    def __cast(self, other):
+        return other._list if isinstance(other, ConfigList) else other
+
+    # This method is on ConfigList()
     def __len__(self):
         return len(self._list)
 
     # This method is on ConfigList()
     def __getitem__(self, ii):
-        return self._list[ii]
+        if isinstance(ii, slice):
+            return self.__class__(self._list[ii])
+        else:
+            return self._list[ii]
+
+    # This method is on ConfigList()
+    def __setitem__(self, ii, val):
+        self._list[ii] = val
 
     # This method is on ConfigList()
     def __delitem__(self, ii):
@@ -4311,8 +4411,48 @@ class ConfigList(MutableSequence):
         self._bootstrap_from_text()
 
     # This method is on ConfigList()
-    def __setitem__(self, ii, val):
-        return self._list[ii]
+    def __add__(self, other):
+        if isinstance(other, ConfigList):
+            return self.__class__(self._list + other._list)
+        elif isinstance(other, type(self._list)):
+            return self.__class__(self._list + other)
+        return self.__class__(self._list + list(other))
+
+    # This method is on ConfigList()
+    def __radd__(self, other):
+        if isinstance(other, ConfigList):
+            return self.__class__(other._list + self._list)
+        elif isinstance(other, type(self._list)):
+            return self.__class__(other + self._list)
+        return self.__class__(list(other) + self._list)
+
+    # This method is on ConfigList()
+    def __iadd__(self, other):
+        if isinstance(other, ConfigList):
+            self._list += other._list
+        elif isinstance(other, type(self._list)):
+            self._list += other
+        else:
+            self._list += list(other)
+        return self
+
+    # This method is on ConfigList()
+    def __mul__(self, val):
+        return self.__class__(self._list * val)
+
+    __rmul__ = __mul__
+
+    def __imul__(self, val):
+        self._list *= val
+        return self
+
+    # This method is on ConfigList()
+    def __copy__(self):
+        inst = self.__class__.__new__(self.__class__)
+        inst.__dict__.update(self.__dict__)
+        # Create a copy and avoid triggering descriptors
+        inst.__dict__["_list"] = self.__dict__["_list"][:]
+        return inst
 
     # This method is on ConfigList()
     def __str__(self):
@@ -4328,14 +4468,6 @@ class ConfigList(MutableSequence):
     def __exit__(self, *args, **kwargs):
         # FIXME: *with* statements dont work
         self._list[0].confobj.CiscoConfParse.atomic()
-
-    # This method is on ConfigList()
-    def __repr__(self):
-        return """<ConfigList, syntax='{}', comment='{}', conf={}>""".format(
-            self.syntax,
-            self.comment_delimiter,
-            self._list,
-        )
 
     # This method is on ConfigList()
     def __getattribute__(self, arg):
@@ -4365,6 +4497,54 @@ class ConfigList(MutableSequence):
         except Exception as ff:
             logger.error(str(ff))
             sys.exit(1)
+
+    # This method is on ConfigList()
+    def append(self, val):
+        self._list.append(val)
+
+    # This method is on ConfigList()
+    def insert(self, ii, val):
+        self._list.insert(ii, val)
+
+    # This method is on ConfigList()
+    def pop(self, ii=-1):
+        return self._list.pop(ii)
+
+    # This method is on ConfigList()
+    def remove(self, val):
+        self._list.remove(val)
+
+    # This method is on ConfigList()
+    def clear(self):
+        self._list.clear()
+
+    # This method is on ConfigList()
+    def copy(self):
+        return self.__class__(self)
+
+    # This method is on ConfigList()
+    def count(self, val):
+        return self._list.count(val)
+
+    # This method is on ConfigList()
+    def index(self, val, *args):
+        return self._list.index(val, *args)
+
+    # This method is on ConfigList()
+    def reverse(self):
+        self._list.reverse()
+
+    # This method is on ConfigList()
+    # def sort(self, /, *args, **kwds):
+    def sort(self, _unknown_arg, *args, **kwds):
+        self._list.sort(*args, **kwds)
+
+    # This method is on ConfigList()
+    def extend(self, other):
+        if isinstance(other, ConfigList):
+            self._list.extend(other._list)
+        else:
+            self._list.extend(other)
 
     # This method is on ConfigList()
     def _bootstrap_from_text(self):
