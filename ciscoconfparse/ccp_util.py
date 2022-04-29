@@ -39,6 +39,7 @@ from ipaddress import AddressValueError
 from dns.exception import DNSException
 from dns.resolver import Resolver
 from dns import reversename, query, zone
+
 from loguru import logger
 
 from ciscoconfparse.protocol_values import ASA_TCP_PORTS, ASA_UDP_PORTS
@@ -142,7 +143,6 @@ class PythonOptimizeCheck:
 
 
     """
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
     def __init__(self):
 
         self.PYTHONOPTIMIZE_env_value = os.environ.get("PYTHONOPTIMIZE", None)
@@ -395,7 +395,6 @@ class __ccp_re__:
 
     """
 
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
     def __init__(self, regex_str=r"", target_str=None, groups=None, flags=0,
         debug=0):
         assert isinstance(regex_str, str)
@@ -526,7 +525,7 @@ def _get_ipv4(val="", strict=False, stdlib=False, debug=0):
                 assert isinstance(obj.network, IPv4Network)
                 return obj.network
     except Exception as ee:
-        raise AddressValueError(str(ee))
+        raise AddressValueError("_get_ipv4(val='%s')" % (val))
 
 
 def _get_ipv6(val="", strict=False, stdlib=False, debug=0):
@@ -555,7 +554,7 @@ def _get_ipv6(val="", strict=False, stdlib=False, debug=0):
                 return obj.network
 
     except Exception as ee:
-        raise AddressValueError(str(ee))
+        raise AddressValueError("_get_ipv6(val='%s')" % (val))
 
 def ip_factory(val="", stdlib=False, mode="auto_detect", debug=0):
     """
@@ -643,6 +642,9 @@ def collapse_addresses(network_list):
 # interfaces (such as persisting host-bits when the intf masklen changes) and
 # add custom @properties
 class IPv4Obj:
+
+    # This method is on IPv4Obj().  Do NOT add @logger.catch to __init__()...
+    # that breaks it.
     def __init__(self, arg=f"127.0.0.1/{IPV4_MAX_PREFIXLEN}", strict=False, debug=0):
         """An object to represent IPv4 addresses and IPv4 networks.
 
@@ -771,7 +773,11 @@ class IPv4Obj:
         self.params_dict = {}
 
         # Build params_dict... this needs to work with any supported input...
-        if isinstance(arg, str) or isinstance(arg, int):
+        if isinstance(arg, str):
+            params_dict = self._ipv4_params_dict(arg)
+            self.params_dict = params_dict
+
+        elif isinstance(arg, int):
             params_dict = self._ipv4_params_dict(arg)
             self.params_dict = params_dict
 
@@ -828,7 +834,10 @@ class IPv4Obj:
 
     # On IPv4Obj()
     def _ipv4_params_dict(self, arg, debug=0):
-        """Parse out important IPv4 parameters from arg.  This method must run to completion for address parsing to work correctly."""
+        """
+        Parse out important IPv4 parameters from arg.  This method must run to
+        completion for IPv4 address parsing to work correctly.
+        """
         assert isinstance(arg, str) or isinstance(arg, int) or isinstance(arg, IPv4Obj)
 
         if isinstance(arg, str):
@@ -1361,6 +1370,9 @@ class IPv4Obj:
 # interfaces (such as persisting host-bits when the intf masklen changes) and
 # add custom @properties
 class IPv6Obj:
+
+    # This method is on IPv6Obj().  Do NOT add @logger.catch to __init__()...
+    # that breaks it.
     def __init__(self, arg=f"::1/{IPV6_MAX_PREFIXLEN}", strict=False, debug=0):
         """An object to represent IPv6 addresses and IPv6 networks.
 
@@ -1464,15 +1476,14 @@ class IPv6Obj:
             return None
 
         else:
-            raise AddressValueError(
-                "Could not parse '{}' (type: {}) into an IPv6 Address".format(
-                    arg, type(arg)
-                )
-            )
+            raise AddressValueError("IPv6Obj(arg='%s') is an unknown argument type" % (arg))
 
     # On IPv6Obj()
     def _ipv6_params_dict(self, arg, debug=0):
-        """Parse out important IPv6 parameters from arg.  This method must run to completion for address parsing to work correctly."""
+        """
+        Parse out important IPv6 parameters from arg.  This method must run to
+        completion for IPv6 address parsing to work correctly.
+        """
         assert isinstance(arg, str) or isinstance(arg, int) or isinstance(arg, IPv6Obj)
 
         if isinstance(arg, str):
@@ -1515,23 +1526,23 @@ class IPv6Obj:
             masklen = arg.masklen
 
         else:
-            raise AddressValueError("IPv6Obj(arg='%s') is an unknown argument type" % (arg))
+            raise AddressValueError("IPv6Obj(arg='%s')" % (arg))
 
         assert 0 <= masklen <= IPV6_MAX_PREFIXLEN
+
         params_dict = {
             'ipv6_addr': addr,
             'ip_version': 6,
-            'ip_arg_str': None,
+            'ip_arg_str': str(addr) + "/" + str(masklen),
             'netmask': netmask,
             'masklen': masklen,
         }
 
         if params_dict.get('masklen', None) is not None:
             ip_arg_str = f"{addr}/{masklen}"
+            params_dict['ip_arg_str'] = ip_arg_str
         else:
-            raise AddressValueError()
-
-        params_dict['ip_arg_str'] = ip_arg_str
+            raise AddressValueError("IPv6Obj(arg='%s')" % (arg))
 
         return params_dict
 
