@@ -191,7 +191,6 @@ class BaseCfgLine(metaclass=ABCMeta):
     @text.setter
     def text(self, newtext=None):
         # FIXME - children do not associate correctly if this is used as-is...
-        raise NotImplementedError()
         assert isinstance(newtext, str)
 
         # escape braces since single braces could be misunderstood as
