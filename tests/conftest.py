@@ -410,6 +410,78 @@ of all tresspassers.
 !
 alias exec showthang show ip route vrf THANG""".splitlines()
 
+# Using configs/sample_01.f5
+f01 = """
+ltm profile udp DNS-UDP {
+    app-service none
+    datagram-load-balancing disabled
+    idle-timeout 31
+}
+ltm rule contrail-monitor {
+    when HTTP_REQUEST {
+                if {[active_members APN-DNS-TCP] > 0 & [active_members APN-DNS-UDP] > 0  } {
+                        HTTP::respond 200 content "up"
+                }
+        }
+}
+ltm rule contrail-monitor1 {
+    when HTTP_REQUEST {
+                if {[active_members APN-DNS-TCP] >= 0 & [active_members APN-DNS-UDP] >= 0  } {
+                        HTTP::respond 200 content "up"
+                }
+        }
+}
+ltm tacdb licenseddb licensed-tacdb {
+    partition none
+}
+
+ltm virtual ACME_VIP {
+    destination 192.168.1.191:http
+    ip-protocol tcp
+    mask 255.255.255.255
+    pool pool1
+    profiles {
+        http { }
+        tcp { }
+    }
+    rules {
+        MOBILE
+    }
+    source 0.0.0.0/0
+    source-address-translation {
+        type automap
+    }
+    translate-address enabled
+    translate-port enabled
+    vs-index 17
+}
+sys state-mirroring { }
+sys syslog {
+    include "
+template t_remotetmpl {
+template (\"<$PRI>$STAMP $HOST $FACILITY[$PID]: $MSGONLY\"); template_escape(no);
+};
+filter f_remote_loghost {
+level(info..emerg);
+};
+destination d_remote_loghost {
+udp(\"102.223.51.181\" port(519) template(t_remotetmpl));
+};
+log {
+source(s_syslog_pipe);
+filter(f_remote_loghost);
+destination(d_remote_loghost);
+};
+"
+remote-servers {
+        JSA {
+            host 102.223.51.181
+        }
+    }
+}
+sys url-db download-schedule urldb { }
+""".splitlines()
+
 j01 = """## Last commit: 2015-06-28 13:00:59 CST by mpenning
     system {
     host-name TEST01_EX;
@@ -1213,6 +1285,21 @@ def parse_c03_factory(request):
 
     yield parse_c03_factory
 
+## parse_f01 yields configs/sample_01.f5
+@pytest.fixture(scope="function")
+def parse_f01_ios(request):
+    """Preparsed j01"""
+    parse_f01_ios = CiscoConfParse(f01, syntax="ios", comment="#", factory=False)
+
+    yield parse_f01_ios
+
+## parse_f01 yields configs/sample_01.f5
+@pytest.fixture(scope="function")
+def parse_f01_junos(request):
+    """Preparsed j01"""
+    parse_f01_junos = CiscoConfParse(f01, syntax="junos", comment="#", factory=False)
+
+    yield parse_f01_junos
 
 ## parse_j01 yields configs/sample_01.junos
 @pytest.fixture(scope="function")
