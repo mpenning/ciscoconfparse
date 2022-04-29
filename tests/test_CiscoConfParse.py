@@ -1,8 +1,7 @@
 r""" test_CiscoConfParse.py - Parse, Query, Build, and Modify IOS-style configs
 
      Copyright (C) 2021-2022 David Michael Pennington
-     Copyright (C) 2020-2021 David Michael Pennington at Cisco Systems
-     Copyright (C) 2019      David Michael Pennington at ThousandEyes
+     Copyright (C) 2019-2021 David Michael Pennington at Cisco Systems / ThousandEyes
      Copyright (C) 2012-2019 David Michael Pennington at Samsung Data Services
      Copyright (C) 2011-2012 David Michael Pennington at Dell Computer Corporation
 
@@ -20,7 +19,7 @@ r""" test_CiscoConfParse.py - Parse, Query, Build, and Modify IOS-style configs
      along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
      If you need to contact the author, you can do so by emailing:
-     mike [~at~] pennington [/dot\] net
+     mike [~at~] pennington [.dot.] net
 """
 
 from operator import attrgetter
@@ -38,15 +37,17 @@ import os
 
 sys.path.insert(0, "..")
 
+from loguru import logger
+from passlib.hash import cisco_type7
+import pytest
 from ciscoconfparse.ciscoconfparse import CiscoConfParse, IOSCfgLine, IOSIntfLine
 from ciscoconfparse.ciscoconfparse import IOSCfgLine, IOSIntfLine
 from ciscoconfparse.ciscoconfparse import CiscoPassword
+from ciscoconfparse.ciscoconfparse import HDiff
 from ciscoconfparse.models_junos import JunosCfgLine
 from ciscoconfparse.ccp_util import ccp_logger_control
 from ciscoconfparse.ccp_util import IPv4Obj, IPv6Obj
 from ciscoconfparse.ccp_abc import BaseCfgLine
-from passlib.hash import cisco_type7
-import pytest
 
 
 def testParse_invalid_filepath():
@@ -67,6 +68,91 @@ def testParse_invalid_filepath():
         parse = CiscoConfParse(bad_filename)
 
     #ccp_logger_control(action="enable")
+
+def testParse_f5_as_ios(parse_f01_ios):
+    """
+    Test parsing an f5 config with ios syntax.  Use configs/sample_01.f5 as
+    the test config.  That f5 config is pre-parsed in conftest.py as
+    'parse_f01_ios'.
+    """
+    assert len(parse_f01_ios.objs)==67
+
+    result_correct = [
+        "ltm profile udp DNS-UDP {",
+        "    app-service none",
+        "    datagram-load-balancing disabled",
+        "    idle-timeout 31",
+        "}",
+        "ltm rule contrail-monitor {",
+        "    when HTTP_REQUEST {",
+        "                if {[active_members APN-DNS-TCP] > 0 & [active_members APN-DNS-UDP] > 0  } {",
+        '''                        HTTP::respond 200 content "up"''',
+        "                }",
+        "        }",
+        "}",
+        "ltm rule contrail-monitor1 {",
+        "    when HTTP_REQUEST {",
+        "                if {[active_members APN-DNS-TCP] >= 0 & [active_members APN-DNS-UDP] >= 0  } {",
+        '''                        HTTP::respond 200 content "up"''',
+        "                }",
+        "        }",
+        "}",
+        "ltm tacdb licenseddb licensed-tacdb {",
+        "    partition none",
+        "}",
+        "ltm virtual ACME_VIP {",
+        "    destination 192.168.1.191:http",
+        "    ip-protocol tcp",
+        "    mask 255.255.255.255",
+        "    pool pool1",
+        "    profiles {",
+        "        http { }",
+        "        tcp { }",
+        "    }",
+        "    rules {",
+        "        MOBILE",
+        "    }",
+        "    source 0.0.0.0/0",
+        "    source-address-translation {",
+        "        type automap",
+        "    }",
+        "    translate-address enabled",
+        "    translate-port enabled",
+        "    vs-index 17",
+        "}",
+        "sys state-mirroring { }",
+        "sys syslog {",
+        '''    include "''',
+        '''template t_remotetmpl {''',
+        '''template (\"<$PRI>$STAMP $HOST $FACILITY[$PID]: $MSGONLY\"); template_escape(no);''',
+        "};",
+        "filter f_remote_loghost {",
+        "level(info..emerg);",
+        "};",
+        "destination d_remote_loghost {",
+        "udp(\"102.223.51.181\" port(519) template(t_remotetmpl));",
+        "};",
+        "log {",
+        "source(s_syslog_pipe);",
+        "filter(f_remote_loghost);",
+        "destination(d_remote_loghost);",
+        "};",
+        '''"''',
+        "remote-servers {",
+        "        JSA {",
+        "            host 102.223.51.181",
+        "        }",
+        "    }",
+        "}",
+        "sys url-db download-schedule urldb { }",
+    ]
+    for idx, obj in enumerate(parse_f01_ios.objs):
+        print(result_correct[idx], file=sys.stderr)
+        assert result_correct[idx] == obj.text
+
+def testParse_f5_as_junos(parse_f01_junos):
+    """Test parsing f5 config as junos syntax"""
+    assert len(parse_f01_junos.objs)==48
 
 def testParse_asa_as_ios(config_a02):
     """Test for Github issue #42 parse asa banner with ios syntax"""
@@ -207,7 +293,10 @@ end""".splitlines()
 
 
 def testValues_banner_delimiter_07():
-    """Test banners with blank lines in them and ignore_blank_lines=False"""
+    """
+    Test banners with blank lines in them regardless of the setting in
+    ignore_blank_lines.
+    """
     CONFIG = """!
 banner motd z
 
@@ -224,6 +313,12 @@ line con 0
  login authentication AAA_METHOD
 !
 end""".splitlines()
+    # Blank lines in banner should always be accepted, even if
+    # ignore_blank_lines is True.
+    # See Github Issue #229
+    parse = CiscoConfParse(CONFIG, ignore_blank_lines=True)
+    assert len(parse.find_objects(r"banner")[0].children) == 8
+
     parse = CiscoConfParse(CONFIG, ignore_blank_lines=False)
     assert len(parse.find_objects(r"banner")[0].children) == 8
 
@@ -1600,6 +1695,263 @@ def testValues_sync_diff_09():
     )
     assert result_correct == test_result
 
+def testValues_HDiff_01():
+    """Test HDiff(header=False) output for matching input configurations"""
+    before_config = ["logging 1.1.3.4", "logging 1.1.3.5", "logging 1.1.3.6",]
+    after_config = ["logging 1.1.3.4", "logging 1.1.3.5", "logging 1.1.3.6",]
+    diff_obj = HDiff(before_config=before_config, after_config=after_config)
+    test_result = diff_obj.unified_diffs(header=False)
+    result_correct = [
+        " logging 1.1.3.4",
+        " logging 1.1.3.5",
+        " logging 1.1.3.6",
+    ]
+    assert test_result == result_correct
+
+@pytest.mark.xfail(
+    sys.version_info[0] == 3, reason="HDiff() does not order diffs at the parent or child level."
+)
+def testValues_HDiff_02():
+    """Test HDiff(header=False) output for different input configurations"""
+    before_config = ["logging 1.1.3.4", "logging 1.1.3.5", "logging 1.1.3.6",]
+    after_config = ["logging 1.1.3.255", "logging 1.1.3.5", "logging 1.1.3.6",]
+    diff_obj = HDiff(before_config=before_config, after_config=after_config)
+    test_result = diff_obj.unified_diffs(header=False)
+    result_correct = [
+        "-logging 1.1.3.4",
+        "+logging 1.1.3.255",
+        " logging 1.1.3.5",
+        " logging 1.1.3.6",
+    ]
+    assert test_result == result_correct
+
+@pytest.mark.xfail(
+    sys.version_info[0] == 3, reason="HDiff() does not order diffs at the parent or child level."
+)
+def testValues_HDiff_10():
+    """
+    Test parsing an f5 config with ios syntax.  Use configs/sample_01.f5 as
+    the test config.  That f5 config is pre-parsed in conftest.py as
+    'parse_f01_ios'.
+    """
+
+    test_before = [
+        "ltm profile udp DNS-UDP {",
+        "    app-service none",
+        "    datagram-load-balancing disabled",
+        "    idle-timeout 31",
+        "}",
+        "ltm rule contrail-monitor {",
+        "    when HTTP_REQUEST {",
+        "                if {[active_members APN-DNS-TCP] > 0 & [active_members APN-DNS-UDP] > 0  } {",
+        '''                        HTTP::respond 200 content "up"''',
+        "                }",
+        "        }",
+        "}",
+        "ltm rule contrail-monitor1 {",
+        "    when HTTP_REQUEST {",
+        "                if {[active_members APN-DNS-TCP] >= 0 & [active_members APN-DNS-UDP] >= 0  } {",
+        '''                        HTTP::respond 200 content "up"''',
+        "                }",
+        "        }",
+        "}",
+        "ltm tacdb licenseddb licensed-tacdb {",
+        "    partition none",
+        "}",
+        "ltm virtual ACME_VIP {",
+        "    destination 192.168.1.191:http",
+        "    ip-protocol tcp",
+        "    mask 255.255.255.255",
+        "    pool pool1",
+        "    profiles {",
+        "        http { }",
+        "        tcp { }",
+        "    }",
+        "    rules {",
+        "        MOBILE",
+        "    }",
+        "    source 0.0.0.0/0",
+        "    source-address-translation {",
+        "        type automap",
+        "    }",
+        "    translate-address enabled",
+        "    translate-port enabled",
+        "    vs-index 17",
+        "}",
+        "sys state-mirroring { }",
+        "sys syslog {",
+        '''    include "''',
+        '''template t_remotetmpl {''',
+        '''template (\"<$PRI>$STAMP $HOST $FACILITY[$PID]: $MSGONLY\"); template_escape(no);''',
+        "};",
+        "filter f_remote_loghost {",
+        "level(info..emerg);",
+        "};",
+        "destination d_remote_loghost {",
+        "udp(\"102.223.51.181\" port(519) template(t_remotetmpl));",
+        "};",
+        "log {",
+        "source(s_syslog_pipe);",
+        "filter(f_remote_loghost);",
+        "destination(d_remote_loghost);",
+        "};",
+        '''"''',
+        "remote-servers {",
+        "        JSA {",
+        "            host 102.223.51.181",
+        "        }",
+        "    }",
+        "}",
+        "sys url-db download-schedule urldb { }",
+    ]
+
+    test_after = [
+        "ltm profile udp DNS-UDP {",
+        "    app-service none",
+        "    datagram-load-balancing disabled",
+        "    idle-timeout 31",
+        "}",
+        "ltm rule contrail-monitor {",
+        "    when HTTP_REQUEST {",
+        "                if {[active_members APN-DNS-TCP] > 0 & [active_members APN-DNS-UDP] > 0  } {",
+        '''                        HTTP::respond 200 content "up"''',
+        "                }",
+        "        }",
+        "}",
+        "ltm rule contrail-monitor1 {",
+        "    when HTTP_REQUEST {",
+        "                if {[active_members APN-DNS-TCP] >= 0 & [active_members APN-DNS-UDP] >= 0  } {",
+        '''                        HTTP::respond 200 content "up"''',
+        "                }",
+        "        }",
+        "}",
+        "ltm tacdb licenseddb licensed-tacdb {",
+        "    partition none",
+        "}",
+        "ltm virtual ACME_VIP {",
+        "    destination 192.168.1.191:http",
+        "    ip-protocol tcp",
+        "    mask 255.255.255.255",
+        "    pool pool1",
+        "    profiles {",
+        "        http { }",
+        "        tcp { }",
+        "    }",
+        "    rules {",
+        "        BLAH",
+        "    }",
+        "    source 0.0.0.0/0",
+        "    source-address-translation {",
+        "        type automap",
+        "    }",
+        "    translate-address enabled",
+        "    translate-port enabled",
+        "    vs-index 17",
+        "}",
+        "sys state-mirroring { }",
+        "sys syslog {",
+        '''    include "''',
+        '''template t_remotetmpl {''',
+        '''template (\"<$PRI>$STAMP $HOST $FACILITY[$PID]: $MSGONLY\"); template_escape(no);''',
+        "};",
+        "filter f_remote_loghost {",
+        "level(info..emerg);",
+        "};",
+        "destination d_remote_loghost {",
+        "udp(\"102.223.51.181\" port(519) template(t_remotetmpl));",
+        "};",
+        "log {",
+        "source(s_syslog_pipe);",
+        "filter(f_remote_loghost);",
+        "destination(d_remote_loghost);",
+        "};",
+        '''"''',
+        "remote-servers {",
+        "        JSA {",
+        "            host 102.223.51.181",
+        "        }",
+        "    }",
+        "}",
+        "sys url-db download-schedule urldb { }",
+    ]
+
+    result_correct_unified_diff = [
+        " ltm profile udp DNS-UDP {",
+        "     app-service none",
+        "     datagram-load-balancing disabled",
+        "     idle-timeout 31",
+        " }",
+        " ltm rule contrail-monitor {",
+        "     when HTTP_REQUEST {",
+        "                 if {[active_members APN-DNS-TCP] > 0 & [active_members APN-DNS-UDP] > 0  } {",
+        '''                         HTTP::respond 200 content " up" ''',
+        "                 }",
+        "         }",
+        " }",
+        " ltm rule contrail-monitor1 {",
+        "     when HTTP_REQUEST {",
+        "                 if {[active_members APN-DNS-TCP] >= 0 & [active_members APN-DNS-UDP] >= 0  } {",
+        '''                         HTTP::respond 200 content " up" ''',
+        "                 }",
+        "         }",
+        " }",
+        " ltm tacdb licenseddb licensed-tacdb {",
+        "     partition none",
+        " }",
+        " ltm virtual ACME_VIP {",
+        "     destination 192.168.1.191:http",
+        "     ip-protocol tcp",
+        "     mask 255.255.255.255",
+        "     pool pool1",
+        "     profiles {",
+        "         http { }",
+        "         tcp { }",
+        "     }",
+        "     rules {",
+        "         BLAH",
+        "     }",
+        "     source 0.0.0.0/0",
+        "     source-address-translation {",
+        "         type automap",
+        "     }",
+        "     translate-address enabled",
+        "     translate-port enabled",
+        "     vs-index 17",
+        " }",
+        " sys state-mirroring { }",
+        " sys syslog {",
+        '''     include " ''',
+        ''' template t_remotetmpl {''',
+        ''' template (\" <$PRI>$STAMP $HOST $FACILITY[$PID]: $MSGONLY\" ); template_escape(no);''',
+        " };",
+        " filter f_remote_loghost {",
+        " level(info..emerg);",
+        " };",
+        " destination d_remote_loghost {",
+        " udp(\" 102.223.51.181\"  port(519) template(t_remotetmpl));",
+        " };",
+        " log {",
+        " source(s_syslog_pipe);",
+        " filter(f_remote_loghost);",
+        " destination(d_remote_loghost);",
+        " };",
+        ''' " ''',
+        " remote-servers {",
+        "         JSA {",
+        "             host 102.223.51.181",
+        "         }",
+        "     }",
+        " }",
+        " sys url-db download-schedule urldb { }",
+    ]
+
+    test_diff = HDiff(before_config=test_before, after_config=test_after)
+    test_result = test_diff.unified_diffs(header=False)
+    for idx, result_correct_line in enumerate(result_correct_unified_diff):
+        test_result_line = test_result[idx]
+        print("TEST_RESULT" + test_result_line, file=sys.stderr)
+        print("RESULT_CORR" + result_correct_line, file=sys.stderr)
+        assert test_result_line == result_correct_line
 
 def testValues_req_cfgspec_excl_diff(parse_c01):
     ## test req_cfgspec_excl_diff
@@ -1843,10 +2195,9 @@ def testValues_find_objects(parse_c01):
         ("interface GigabitEthernet4/8", 47),
     ]
     c01_find_objects = list()
-    for line, linenum in lines:
+    for config_line, linenum in lines:
         # Mock up the correct object
-        obj = IOSCfgLine()
-        obj.text = line
+        obj = IOSCfgLine(config_line)
         obj.linenum = linenum
         c01_find_objects.append(obj)
 
