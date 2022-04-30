@@ -5,15 +5,17 @@
 ##############################################################################
 
 # Print very verbose debugging info to STDOUT
-set -xT
+# functionally, '-o functrace' is the same as the -T option above...
+# set -xT
+
 # -v: Print STDIN lines as they are read
 # -e: Stop this script if a command exits w/ a non-zero code
 # -u: Stop this script if a variable has an error
 set -veu
+
 # -o pipefail: Stop this script if a pipeline has an error
 set -o pipefail
-# https://unix.stackexchange.com/a/521780/6766
-set -o functrace
+
 # IFS is "Initial Field Seperator"...
 #     By default, bash sets $IFS to $' \n\t' - space, newline, tab
 #     bash $IFS default to split on spaces can cause unexpected problems
