@@ -1,0 +1,323 @@
+# From - https://networkengineering.stackexchange.com/q/17713/775
+version 11.4R7.5;
+system {
+    ports {
+        console {
+            log-out-on-disconnect;
+            type vt100;
+        }
+    }
+    login {
+        user admin {
+            uid 2000;
+            class super-user;
+        }
+    }
+    services {
+        ssh {
+            root-login allow;
+        }
+        telnet;
+    }
+    syslog {
+        user * {
+            any emergency;
+        }
+        file messages {
+            any notice;
+            authorization info;
+        }
+        file interactive-commands {
+            interactive-commands any;
+        }
+    }
+}
+chassis {
+    alarm {
+        management-ethernet {
+            link-down ignore;
+        }
+    }
+}
+interfaces {
+    ge-0/0/0 {
+        unit 0 {
+            description "[intf to core router]";
+            family inet {
+                address 172.16.0.13/24;
+            }
+        }
+
+    }
+    ge-0/0/1 {
+        unit 0 {
+            description "[intf to router001]";
+            family inet {
+                address 172.16.1.13/24;
+            }
+        }
+    }
+    ge-0/0/2 {
+        unit 0 {
+            description "[intf to router002]";
+            family inet {
+                address 172.16.2.13/24;
+            }
+        }
+    }
+    ge-0/0/3 {
+        unit 0 {
+            description "[intf to core router003]";
+            family inet {
+                address 172.16.3.13/24;
+            }
+        }
+    }
+    ge-0/0/4 {
+        unit 0 {
+            description "[intf to core router004]";
+            family inet {
+                address 172.16.4.13/24;
+            }
+        }
+    }
+    ge-0/0/5 {
+        unit 0 {
+            description "[intf to core router005]";
+            family inet {
+                address 172.16.5.13/24;
+            }
+        }
+    }
+    ge-0/0/6 {
+        unit 0 {
+            description "[intf to core router006]";
+            family inet {
+                address 172.16.6.13/24;
+            }
+        }
+    }
+    ge-0/0/7 {
+        unit 0 {
+            description "[intf to core router007]";
+            family inet {
+                address 172.16.7.13/24;
+            }
+        }
+    }
+    ge-0/0/8 {
+        unit 0 {
+            description "[intf to core router008]";
+            family inet {
+                address 172.16.8.13/24;
+            }
+        }
+    }
+    ge-0/0/9 {
+        unit 0 {
+            description "[intf to core router009]";
+            family inet {
+                address 172.16.9.13/24;
+            }
+        }
+    }
+    ge-0/0/10 {
+        unit 0 {
+            description "[intf to core router010]";
+            family inet {
+                address 172.16.10.13/24;
+            }
+        }
+    }
+    ge-0/0/11 {
+        unit 0 {
+            description "[intf to core router011]";
+            family inet {
+                address 172.16.11.13/24;
+            }
+        }
+    }
+    ge-0/0/12 {
+        unit 0 {
+            description "[intf to core router012]";
+            family inet {
+                address 172.16.12.13/24;
+            }
+        }
+    }
+    ge-0/0/13 {
+        unit 0 {
+            description "[intf to core router013]";
+            family inet {
+                address 172.16.13.13/24;
+            }
+        }
+    }
+    ge-0/0/14 {
+        unit 0 {
+            description "[intf to core router014]";
+            family inet {
+                address 172.16.14.13/24;
+            }
+        }
+    }
+    ge-0/0/15 {
+        unit 0 {
+            description "[intf to core router015]";
+            family inet {
+                address 172.16.15.13/24;
+            }
+        }
+    }
+    ge-0/0/16 {
+        unit 0 {
+            description "[intf to core router016]";
+            family inet {
+                address 172.16.16.13/24;
+            }
+        }
+    }
+    ge-0/0/17 {
+        unit 0 {
+            description "[intf to core router017]";
+            family inet {
+                address 172.16.17.13/24;
+            }
+        }
+    }
+    ge-0/0/18 {
+        unit 0 {
+            description "[intf to core router018]";
+            family inet {
+                address 172.16.18.13/24;
+            }
+        }
+    }
+    ge-0/0/19 {
+        unit 0 {
+            description "[intf to core router019]";
+            family inet {
+                address 172.16.19.13/24;
+            }
+        }
+    }
+    ge-0/0/20 {
+        unit 0 {
+            description "[intf to core router020]";
+            family inet {
+                address 172.16.20.13/24;
+            }
+        }
+    }
+    ge-0/0/21 {
+        unit 0 {
+            description "[intf to core router021]";
+            family inet {
+                address 172.16.21.13/24;
+            }
+        }
+    }
+    ge-0/0/22 {
+        unit 0 {
+            description "[intf to core router022]";
+            family inet {
+                address 172.16.22.13/24;
+            }
+        }
+    }
+    ge-0/0/23 {
+        unit 0 {
+            description "[intf to core router023]";
+            family inet {
+                address 172.16.23.13/24;
+            }
+        }
+    }
+    ge-0/1/0 {
+        unit 0 {
+            description "[intf to core router110]";
+            family inet {
+                address 172.16.110.13/24;
+            }
+        }
+    }
+    ge-0/1/1 {
+        unit 0 {
+            description "[intf to core router111]";
+            family inet {
+                address 172.16.111.13/24;
+            }
+        }
+    }
+    ge-0/1/2 {
+        unit 0 {
+            description "[intf to core router112]";
+            family inet {
+                address 172.16.112.13/24;
+            }
+        }
+    }
+    ge-0/1/3 {
+        unit 0 {
+            description "[intf to core router113]";
+            family inet {
+                address 172.16.113.13/24;
+            }
+        }
+    }
+}
+snmp {
+    community school-ro {
+        authorization read-only;
+        clients {
+            10.143.255.0/24;
+        }
+    }
+    trap-group ESMA {
+        targets {
+            10.143.255.2;
+            10.143.255.6;
+            10.143.255.10;
+            10.143.255.14;
+            10.143.255.42;
+        }
+    }
+}
+routing-options {
+    static {
+        route 0.0.0.0/0 next-hop 10.129.152.129;
+    }
+}
+protocols {
+    igmp-snooping {
+        vlan all;
+    }
+    rstp;
+    lldp {
+        interface all;
+    }
+    lldp-med {
+        interface all;
+    }
+}
+ethernet-switching-options {
+    storm-control {
+        interface all;
+    }
+}
+vlans {
+    management {
+        vlan-id 10;
+        l3-interface vlan.10;
+    }
+    private-eth {
+        vlan-id 20;
+    }
+    public-eth {
+        vlan-id 30;
+    }
+    wan {
+        vlan-id 100;
+        l3-interface vlan.100;
+    }
+}
