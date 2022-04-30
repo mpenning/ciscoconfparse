@@ -338,7 +338,7 @@ class CiscoConfParse:
     """
 
     # IMPORTANT: do NOT decorate CiscoConfParse().__init__()
-    # with @logger.catch.  Something about CiscoConfParse breaks
+    # if using @logger.catch, Something breaks CiscoConfParse()
     @logger.catch
     def __init__(
         self,
