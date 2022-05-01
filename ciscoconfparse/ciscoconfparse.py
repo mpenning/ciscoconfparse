@@ -299,6 +299,25 @@ def build_space_tolerant_regex(linespec):
 
     return linespec
 
+
+@logger.catch
+def assign_parent_to_closing_braces(input_list=None):
+    """
+    Accept a list of BaseCfgLine() objects
+
+    Return a list of BaseCfgLine() objects
+    """
+    assert isinstance(input_list, (list, tuple, MutableSequence,))
+    if len(input_list) > 0:
+        parent = input_list[0]
+        for obj in input_list:
+            assert isinstance(obj, BaseCfgLine)
+            if obj.text.strip()=="}":
+                obj.parent = parent
+                # print("PIZZA3", obj)
+            parent = obj.parent
+    return input_list
+
 # This method was copied from the same method in git commit below...
 # https://raw.githubusercontent.com/mpenning/ciscoconfparse/bb3f77436023873da344377d3c839387f5131e7f/ciscoconfparse/ciscoconfparse.py
 @logger.catch
@@ -4225,7 +4244,7 @@ class HDiff:
             if dict_line["diff_word"] != "remove":
                 try:
                     assert tuple(dict_line["diff_id_list"]) in all_dict_lines.keys()
-                except:
+                except Exception:
                     raise ValueError(dict_line)
 
         # FIXME - undo this after I work out all bugs
@@ -4236,7 +4255,9 @@ class HDiff:
 
 
 class ConfigList(MutableSequence):
-    """A custom list to hold :class:`~ccp_abc.BaseCfgLine` objects.  Most people will never need to use this class directly."""
+    """
+    A custom list to hold :class:`~ccp_abc.BaseCfgLine` objects.  Most people will never need to use this class directly.
+    """
     def __init__(
             self,
             initlist=None,
@@ -4298,7 +4319,6 @@ class ConfigList(MutableSequence):
                 self._list[:] = initlist._list[:]
             else:
                 self._list = list(initlist)
-
 
         self.CiscoConfParse = ccp_value  # FIXME - CiscoConfParse attribute should go away soon
         self.ccp_ref = ccp_value
@@ -4366,6 +4386,9 @@ class ConfigList(MutableSequence):
             self.comment_delimiter,
             self._list,
         )
+
+    def __iter__(self):
+        return iter(self._list)
 
     # This method is on ConfigList()
     def __lt__(self, other):
@@ -5075,7 +5098,7 @@ class ConfigList(MutableSequence):
 
         This method returns a list of IOSCfgLine() objects.
         """
-        assert isinstance(text_list, (list, tuple,))
+        assert isinstance(text_list, (list, tuple, MutableSequence))
         # Append text lines as IOSCfgLine objects...
         banner_str = {
             "login",
@@ -5190,6 +5213,9 @@ class ConfigList(MutableSequence):
             idx += 1
 
         self._list = retval
+
+        # Manually assign a parent on all closing braces
+        self._list = assign_parent_to_closing_braces(input_list=self._list)
 
         # Call _banner_mark_regex() to process banners in the returned obj
         # list.

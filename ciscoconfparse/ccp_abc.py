@@ -172,7 +172,8 @@ class BaseCfgLine(metaclass=ABCMeta):
 
             elif idx <= len_geneology - 1:
                 # This object is a child of self.parent
-                assert obj.indent > 0
+                if False:
+                    assert obj.indent > 0
                 retval.insert(0, obj._line_id)
 
         # retval usually looks like this (example with a single parent obj):
