@@ -320,7 +320,6 @@ def testVal_ASAAclLine_DNA(line):
 
 def testVal_ASAAclLine_DNA_negative():
 
-
     # Ensure that parsing the bogus ACL line in a config list raises a ValueError
     #     but ValueError triggers a SystemExit
     broken_config_list = ["access-list TESTME_01 extended VpAAmit987 ip any any log deactivate"]
