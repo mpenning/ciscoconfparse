@@ -3805,8 +3805,8 @@ class HDiff:
             assert after_obj.diff_word in valid_after_obj_diff_words
         # Relocate end
 
-        # At this stage, `raw_dict_diffs()` returns duplicate parent lines...
-        tmp_line_dicts = self.raw_dict_diffs(self.before_obj_list, self.after_obj_list)
+        # At this stage, `dict_diffs()` returns duplicate parent lines...
+        tmp_line_dicts = self.dict_diffs(self.before_obj_list, self.after_obj_list)
 
         # Remove duplicate parent lines with `compress_dict_diffs()`
         self.all_output_dicts = self.compress_dict_diffs(tmp_line_dicts)
@@ -3834,8 +3834,8 @@ class HDiff:
         unified_diff_header = list()
         # Tally lines for the unified diff header...
         udiff_timestamp = str(datetime.now().isoformat()).replace("T", " ")
-        unified_diff_header.append("--- /dev/null " + udiff_timestamp)
-        unified_diff_header.append("+++ /dev/null " + udiff_timestamp)
+        unified_diff_header.append("--- /tmp/before " + udiff_timestamp)
+        unified_diff_header.append("+++ /tmp/after " + udiff_timestamp)
 
         left_hand_changed, right_hand_changed = 0, 0
         left_hand_start, right_hand_start = 0, 0
@@ -3910,7 +3910,7 @@ class HDiff:
 
     # This method is on HDiff()
     @logger.catch(onerror=lambda _: sys.exit(1))
-    def raw_dict_diffs(self, before_obj_list, after_obj_list):
+    def dict_diffs(self, before_obj_list, after_obj_list):
         ############################################
         # Render diffs
         ############################################
