@@ -93,14 +93,17 @@ Docs
 - The latest copy of the docs are [archived on the web][15]
 - There is also a [CiscoConfParse Tutorial][16]
 
-Building the Package
---------------------
+Editing the Package
+-------------------
 
 -   `git clone https://github.com/mpenning/ciscoconfparse`
 -   `cd ciscoconfparse`
 -   `git checkout -b develop`
--   change ciscoconfparse and `git commit` your changes
--   Edit the version number in [pyproject.toml][12] (as required)
+-   Make the required changes to [`ciscoconfparse`][17] and `git commit` your changes
+-   `make test`
+-   (as required) Edit the version number in [pyproject.toml][12]
+-   `git checkout main`
+-   `git merge develop`
 -   `git commit` all pending changes
 -   `make test`
 -   `make repo-push`
