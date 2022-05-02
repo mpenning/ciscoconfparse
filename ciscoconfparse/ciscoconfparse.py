@@ -75,7 +75,7 @@ from ciscoconfparse.models_asa import ASAAclLine
 
 from ciscoconfparse.models_junos import JunosCfgLine
 
-from ciscoconfparse.models_terraform import TerraformLine
+from ciscoconfparse.models_terraform import TfLine
 
 from ciscoconfparse.ccp_abc import BaseCfgLine
 
@@ -5905,15 +5905,17 @@ def ConfigLineFactory(text="", comment_delimiter="!", syntax="ios"):
         logger.error(err_txt)
         raise ValueError(err_txt)
 
-    for cls in classes:
-        if cls.is_object_for(text):
-            inst = cls(
-                text=text, comment_delimiter=comment_delimiter,
-            )  # instance of the proper subclass
-            return inst
-    err_txt = "Could not find an object for '%s'" % line
-    logger.error(err_txt)
-    raise ValueError(err_txt)
+    try:
+        for cls in classes:
+            if cls.is_object_for(text):
+                inst = cls(
+                    text=text, comment_delimiter=comment_delimiter,
+                )  # instance of the proper subclass
+                return inst
+    except ValueError:
+        err_txt = "Could not find an object for '%s'" % text
+        logger.error(err_txt)
+        raise ValueError(err_txt)
 
 
 ### TODO: Add unit tests below
