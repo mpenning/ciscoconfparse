@@ -1,0 +1,68 @@
+ltm profile udp DNS-UDP {
+    app-service none
+    datagram-load-balancing disabled
+    idle-timeout 31
+}
+ltm rule contrail-monitor {
+    when HTTP_REQUEST {
+                if {[active_members APN-DNS-TCP] > 0 & [active_members APN-DNS-UDP] > 0  } {
+                        HTTP::respond 200 content "up"
+                }
+        }
+}
+ltm rule contrail-monitor1 {
+    when HTTP_REQUEST {
+                if {[active_members APN-DNS-TCP] >= 0 & [active_members APN-DNS-UDP] >= 0  } {
+                        HTTP::respond 200 content "up"
+                }
+        }
+}
+ltm tacdb licenseddb licensed-tacdb {
+    partition none
+}
+
+ltm virtual ACME_VIP {
+    destination 192.168.1.191:http
+    ip-protocol tcp
+    mask 255.255.255.255
+    pool pool1
+    profiles {
+        http { }
+        tcp { }
+    }
+    rules {
+        MOBILE
+    }
+    source 0.0.0.0/0
+    source-address-translation {
+        type automap
+    }
+    translate-address enabled
+    translate-port enabled
+    vs-index 17
+}
+sys state-mirroring { }
+sys syslog {
+    include "
+template t_remotetmpl {
+template (\"<$PRI>$STAMP $HOST $FACILITY[$PID]: $MSGONLY\"); template_escape(no);
+};
+filter f_remote_loghost {
+level(info..emerg);
+};
+destination d_remote_loghost {
+udp(\"102.223.51.181\" port(519) template(t_remotetmpl));
+};
+log {
+source(s_syslog_pipe);
+filter(f_remote_loghost);
+destination(d_remote_loghost);
+};
+"
+remote-servers {
+        JSA {
+            host 102.223.51.181
+        }
+    }
+}
+sys url-db download-schedule urldb { }
