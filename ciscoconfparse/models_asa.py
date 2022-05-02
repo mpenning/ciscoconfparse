@@ -86,6 +86,9 @@ class ASACfgLine(BaseCfgLine):
         attributes"""
         super().__init__(*args, **kwargs)
 
+        self.text = kwargs.get("text", None)
+        self._mm_results = None
+
     @classmethod
     def is_object_for(cls, line="", re=re):
         ## Default object, for now
