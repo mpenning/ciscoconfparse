@@ -99,12 +99,11 @@ Editing the Package
 -   `git clone https://github.com/mpenning/ciscoconfparse`
 -   `cd ciscoconfparse`
 -   `git checkout -b develop`
--   Make the required changes to [`ciscoconfparse`][17] and `git commit` your changes
+-   Add / modify / delete on the `develop` branch
 -   `make test`
+-   If tests run clean, `git commit` all the pending changes on the `develop` branch
 -   (as required) Edit the version number in [pyproject.toml][12]
 -   `git checkout main`
--   `git merge develop`
--   `git commit` all pending changes
 -   `make test`
 -   `make repo-push`
 -   `make pypi`
