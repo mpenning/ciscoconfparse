@@ -320,18 +320,25 @@ def testVal_ASAAclLine_DNA(line):
 
 def testVal_ASAAclLine_DNA_negative():
 
-    # with pytest.raises(ValueError):
-    # with pytest.raises(OSError):
-    with pytest.raises(Exception) as exc_obj:
-        print("DBG", str(exc_obj))
-        # Ensure that parsing the bogus ACL line in a config list raises a ValueError
-        #     but ValueError triggers a SystemExit
-        broken_config_list = ["access-list TESTME_01 extended VpAAmit987 ip any any log deactivate",]
-        broken_filepath = "/%s" % str(uuid.uuid4())
 
+    # Ensure that parsing the bogus ACL line in a config list raises a ValueError
+    #     but ValueError triggers a SystemExit
+    broken_config_list = ["access-list TESTME_01 extended VpAAmit987 ip any any log deactivate"]
+    broken_filepath = "/%s" % str(uuid.uuid4())
+
+    try:
         if isinstance(broken_config_list, (MutableSequence, tuple, list,)):
             parse = CiscoConfParse(broken_config_list, factory=True, syntax="asa")
 
         # Ensure that parsing the bogus filepath string raises OSError
         elif isinstance(broken_filepath, str):
             parse = CiscoConfParse(broken_filepath, factory=True, syntax="asa")
+
+        return parse
+
+    except ValueError as eee:
+        # with pytest.raises(ValueError):
+        # with pytest.raises(OSError):
+        with pytest.raises(ValueError):
+            logger.critical(str(eee))
+            raise ValueError(str(eee))
