@@ -1306,13 +1306,14 @@ def parse_c03_factory(request):
 
     yield parse_c03_factory
 
+
 ## parse_f01 yields configs/sample_01.f5
 @pytest.fixture(scope="function")
-def parse_f01_ios_01(request):
+def parse_f01_ios(request):
     """Preparsed F5 f01 configuration as ios syntax"""
-    parse_f01_ios_01 = CiscoConfParse(f01, syntax="ios", comment="#", factory=False)
+    parse_f01_ios = CiscoConfParse(f01, syntax="ios", comment="#", factory=False)
 
-    yield parse_f01_ios_01
+    yield parse_f01_ios
 
 
 ## parse_f02 yields configs/sample_02.f5

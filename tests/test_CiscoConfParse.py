@@ -69,8 +69,8 @@ def testParse_invalid_filepath():
 
     #ccp_logger_control(action="enable")
 
-#def testParse_f5_as_ios_00(parse_f01_ios_01):
-#    pass
+def testParse_f5_as_ios_00(parse_f01_ios):
+    assert len(parse_f01_ios.objs)==20
 
 def testParse_f5_as_ios_02(parse_f02_ios_02):
     """
