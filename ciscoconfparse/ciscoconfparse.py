@@ -314,7 +314,6 @@ def assign_parent_to_closing_braces(input_list=None):
             assert isinstance(obj, BaseCfgLine)
             if obj.text.strip()=="}":
                 obj.parent = parent
-                # print("PIZZA3", obj)
             parent = obj.parent
     return input_list
 
@@ -5581,6 +5580,10 @@ class ConfigList(MutableSequence):
             idx += 1
 
         self._list = retval
+
+        # Manually assign a parent on all closing braces
+        self._list = assign_parent_to_closing_braces(input_list=self._list)
+
         # Call _banner_mark_regex() to process banners in the returned obj
         # list.
         # Mark JunOS banner begin and end config line objects...
