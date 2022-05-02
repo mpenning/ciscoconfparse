@@ -284,11 +284,11 @@ class BaseASAIntfLine(ASACfgLine):
                 "{}/{}".format(self.ipv4_addr, self.ipv4_netmask), strict=False
             ).network
         except AttributeError:
-            return IPv4Obj(
-                "{}/{}".format(self.ipv4_addr, self.ipv4_netmask), strict=False
-            ).network_address
+            err_text = "{}/{} does not have a .network attribute.".format(self.ipv4_addr, self.ipv4_netmask)
+            raise AttributeError(err_text)
         except Exception as ee:
-            return self.default_ipv4_addr_object
+            err_text = "{}/{} does not seem to have a valid network address.".format(self.ipv4_addr, self.ipv4_netmask)
+            raise ValueError(err_text)
 
     @property
     def has_autonegotiation(self):
@@ -1117,16 +1117,22 @@ class ASAAclLine(ASACfgLine):
     def __init__(self, *args, **kwargs):
         """Provide attributes on Cisco ASA Access-Lists"""
         super().__init__(*args, **kwargs)
-        mm = _RE_ACLOBJECT.search(self.text)
+
+        # Parse out the most common parameter names...
+        text = kwargs.get("text", None)
+        syntax = kwargs.get("syntax", "asa")
+        comment_delimiter = kwargs.get("comment_delimiter", None)
+
+        mm = _RE_ACLOBJECT.search(text)
         if (mm is not None):
             self._mm_results = mm.groupdict()  # All regex match results
         else:
-            raise ValueError("[FATAL] ASAAclLine() cannot parse '{}'".format(self.text))
+            raise ValueError("[FATAL] ASAAclLine() cannot parse text:'{}'".format(text))
 
     @classmethod
     def is_object_for(cls, line="", re=re):
         # if _RE_ACLOBJECT.search(line):
-        if "access-list " in line[0:13].lower():
+        if "access-list " in line[0:12].lower():
             return True
         return False
 
