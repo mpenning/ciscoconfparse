@@ -38,19 +38,19 @@ from ciscoconfparse.ccp_util import IPv4Obj
 # -------------  Terraform Configuration line object
 #
 
-class TerraformLine(BaseCfgLine):
+class TfLine(BaseCfgLine):
     r"""An object for a parsed terraform-style configuration line.
-    :class:`~models_terraform.TerraformLine` objects contain references to other
-    parent and child :class:`~models_terraform.TerraformLine` objects.
+    :class:`~models_terraform.TfLine` objects contain references to other
+    parent and child :class:`~models_terraform.TfLine` objects.
 
     Notes
     -----
-    Originally, :class:`~models_terraform.TerraformLine` objects were only
+    Originally, :class:`~models_terraform.TfLine` objects were only
     intended for advanced ciscoconfparse users.  As of ciscoconfparse
     version 0.9.10, *all users* are strongly encouraged to prefer the
-    methods directly on :class:`~models_terraform.TerraformLine` objects.
+    methods directly on :class:`~models_terraform.TfLine` objects.
     Ultimately, if you write scripts which call methods on
-    :class:`~models_terraform.TerraformLine` objects, your scripts will be much
+    :class:`~models_terraform.TfLine` objects, your scripts will be much
     more efficient than if you stick strictly to the classic
     :class:`~ciscoconfparse.CiscoConfParse` methods.
 
@@ -67,10 +67,10 @@ class TerraformLine(BaseCfgLine):
         A string containing the parsed terraform configuration statement
     linenum : int
         The line number of this configuration statement in the original config; default is -1 when first initialized.
-    parent : :class:`~models_terraform.TerraformLine()`
+    parent : :class:`~models_terraform.TfLine()`
         The parent of this object; defaults to ``self``.
     children : list
-        A list of ``TerraformLine()`` objects which are children of this object.
+        A list of ``TfLine()`` objects which are children of this object.
     child_indent : int
         An integer with the indentation of this object's children
     indent : int
@@ -80,7 +80,7 @@ class TerraformLine(BaseCfgLine):
 
     Returns
     -------
-    :class:`~models_terraform.TerraformLine`
+    :class:`~models_terraform.TfLine`
 
     """
 
@@ -92,7 +92,7 @@ class TerraformLine(BaseCfgLine):
         raise NotImplementedError()
 
     def __repr__(self):
-        return """<TerraformLine {}>""".format(self.line_type, )
+        return """<TfLine {}>""".format(self.line_type, )
 
     @classmethod
     def is_object_for(cls, line="", re=re):
