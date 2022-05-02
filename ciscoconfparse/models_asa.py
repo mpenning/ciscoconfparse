@@ -1121,7 +1121,7 @@ class ASAAclLine(ASACfgLine):
         if (mm is not None):
             self._mm_results = mm.groupdict()  # All regex match results
         else:
-            raise ValueError("[FATAL] models_asa cannot parse '{}'".format(self.text))
+            raise ValueError("[FATAL] ASAAclLine() cannot parse '{}'".format(self.text))
 
     @classmethod
     def is_object_for(cls, line="", re=re):
