@@ -104,6 +104,7 @@ Editing the Package
 -   If tests run clean, `git commit` all the pending changes on the `develop` branch
 -   (as required) Edit the version number in [pyproject.toml][12]
 -   `git checkout main`
+-   `git merge develop`
 -   `make test`
 -   `make repo-push`
 -   `make pypi`
