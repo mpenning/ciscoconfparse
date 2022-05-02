@@ -1123,6 +1123,9 @@ class ASAAclLine(ASACfgLine):
         syntax = kwargs.get("syntax", "asa")
         comment_delimiter = kwargs.get("comment_delimiter", None)
 
+        self.text = text
+        self._mm_results = None
+
         mm = _RE_ACLOBJECT.search(text)
         if (mm is not None):
             self._mm_results = mm.groupdict()  # All regex match results
