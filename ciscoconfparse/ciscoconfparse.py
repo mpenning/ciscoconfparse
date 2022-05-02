@@ -300,20 +300,38 @@ def build_space_tolerant_regex(linespec):
     return linespec
 
 
-@logger.catch
 def assign_parent_to_closing_braces(input_list=None):
     """
-    Accept a list of BaseCfgLine() objects
+    Accept a list of brace-delimited BaseCfgLine() objects; these objects
+    should not already have a parent assigned.
 
-    Return a list of BaseCfgLine() objects
+    Walk the list and assign parents to the closing braces.  Return this list.
+
+    Closing Brace Assignment Example:
+
+    line 1 {
+        line 2 {
+            line 3 {
+            }    # Assign this closing-brace's parent as line 3
+        }        # Assign this closing-brace's parent as line 2
+    }            # Assign this closing-brace's parent as line 1
     """
-    assert isinstance(input_list, (list, tuple, MutableSequence,))
+    if input_list is None:
+        raise ValueError("Cannot modify.  The input_list is None")
+
+    assert isinstance(input_list, (list, tuple, MutableSequence))
     if len(input_list) > 0:
+        opening_brace_objs = list()
         parent = input_list[0]
         for obj in input_list:
             assert isinstance(obj, BaseCfgLine)
-            if obj.text.strip()=="}":
-                obj.parent = parent
+            assert isinstance(obj.text, str)
+            if len(obj.text)>=1 and obj.text.rstrip()[-1] == '{':
+                opening_brace_objs.append(obj)
+            elif len(obj.text)>=1 and obj.text.lstrip()[0]=='}':
+                assert len(opening_brace_objs) >= 1
+                obj.parent = opening_brace_objs.pop()
+            # This is a typical child / parent mapping...
             parent = obj.parent
     return input_list
 
@@ -358,7 +376,7 @@ class CiscoConfParse:
     # IMPORTANT: do NOT decorate CiscoConfParse().__init__()
     #
     # Something breaks in CiscoConfParse() if using @logger.catch, below...
-    # @logger.catch
+    @logger.catch
     def __init__(
         self,
         config="",
@@ -525,12 +543,16 @@ class CiscoConfParse:
             raise ValueError(error)
 
     # This method is on CiscoConfParse()
-    @logger.catch(onerror=lambda _: sys.exit(1))
+    #@logger.catch(onerror=lambda _: sys.exit(1))
     def __repr__(self):
+        if isinstance(self.ConfigObjs, (list, tuple, MutableSequence)):
+            num_lines = str(len(self.ConfigObjs))
+        elif self.ConfigObjs is None:
+            num_lines = "None"
         return (
             "<CiscoConfParse: %s lines / syntax: %s / comment delimiter: '%s' / factory: %s / encoding: '%s'>"
             % (
-                len(self.ConfigObjs), self.syntax, self.comment_delimiter,
+                num_lines, self.syntax, self.comment_delimiter,
                 self.factory, self.encoding,
             )
         )
