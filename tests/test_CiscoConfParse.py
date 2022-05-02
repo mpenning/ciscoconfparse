@@ -72,11 +72,11 @@ def testParse_invalid_filepath():
 def testParse_f5_as_ios_00(parse_f01_ios):
     assert len(parse_f01_ios.objs)==20
 
-def testParse_f5_as_ios_02(parse_f02_ios_02):
+def testParse_f5_as_ios_02(parse_f02_ios_01):
     """
     Test parsing a brace-delimited f5 config with ios syntax.  Use
     configs/sample_02.f5 as the test config.  That f5 config is pre-parsed in
-    conftest.py as 'parse_f01_ios'.
+    conftest.py as 'parse_f02_ios'.
 
     This Config Parsing Syntax:
     parse_f02_ios = CiscoConfParse('configs/sample_02.f5', syntax='ios')
@@ -85,7 +85,7 @@ def testParse_f5_as_ios_02(parse_f02_ios_02):
     correctly... important note... closing curly-braces should be assigned as
     a child of the opening curly-brace.
     """
-    assert len(parse_f02_ios_02.objs)==67
+    assert len(parse_f02_ios_01.objs)==67
 
     result_correct = [
         "ltm profile udp DNS-UDP {",
@@ -168,15 +168,15 @@ def testParse_f5_as_ios_02(parse_f02_ios_02):
         7: {'linenum': 8, 'parent_linenum': 7,},
         8: {'linenum': 9, 'parent_linenum': 8,},
         9: {'linenum': 10, 'parent_linenum': 8,},
-        10: {'linenum': 11, 'parent_linenum': 8,},
-        11: {'linenum': 12, 'parent_linenum': 8,},
+        10: {'linenum': 11, 'parent_linenum': 7,},
+        11: {'linenum': 12, 'parent_linenum': 6,},
         12: {'linenum': 13, 'parent_linenum': 13,},
         13: {'linenum': 14, 'parent_linenum': 13,},
         14: {'linenum': 15, 'parent_linenum': 14,},
         15: {'linenum': 16, 'parent_linenum': 15,},
         16: {'linenum': 17, 'parent_linenum': 15,},
-        17: {'linenum': 18, 'parent_linenum': 15,},
-        18: {'linenum': 19, 'parent_linenum': 15,},
+        17: {'linenum': 18, 'parent_linenum': 14,},
+        18: {'linenum': 19, 'parent_linenum': 13,},
         19: {'linenum': 20, 'parent_linenum': 20,},
         20: {'linenum': 21, 'parent_linenum': 20,},
         21: {'linenum': 22, 'parent_linenum': 20,},
@@ -205,28 +205,28 @@ def testParse_f5_as_ios_02(parse_f02_ios_02):
         44: {'linenum': 45, 'parent_linenum': 44,},
         45: {'linenum': 46, 'parent_linenum': 46,},
         46: {'linenum': 47, 'parent_linenum': 47,},
-        47: {'linenum': 48, 'parent_linenum': 48,},
+        47: {'linenum': 48, 'parent_linenum': 46,},
         48: {'linenum': 49, 'parent_linenum': 49,},
         49: {'linenum': 50, 'parent_linenum': 50,},
-        50: {'linenum': 51, 'parent_linenum': 51,},
+        50: {'linenum': 51, 'parent_linenum': 49,},
         51: {'linenum': 52, 'parent_linenum': 52,},
         52: {'linenum': 53, 'parent_linenum': 53,},
-        53: {'linenum': 54, 'parent_linenum': 54,},
+        53: {'linenum': 54, 'parent_linenum': 52,},
         54: {'linenum': 55, 'parent_linenum': 55,},
         55: {'linenum': 56, 'parent_linenum': 56,},
         56: {'linenum': 57, 'parent_linenum': 57,},
         57: {'linenum': 58, 'parent_linenum': 58,},
-        58: {'linenum': 59, 'parent_linenum': 59,},
+        58: {'linenum': 59, 'parent_linenum': 55,},
         59: {'linenum': 60, 'parent_linenum': 60,},
         60: {'linenum': 61, 'parent_linenum': 61,},
         61: {'linenum': 62, 'parent_linenum': 61,},
         62: {'linenum': 63, 'parent_linenum': 62,},
         63: {'linenum': 64, 'parent_linenum': 62,},
-        64: {'linenum': 65, 'parent_linenum': 62,},
-        65: {'linenum': 66, 'parent_linenum': 62,},
+        64: {'linenum': 65, 'parent_linenum': 61,},
+        65: {'linenum': 66, 'parent_linenum': 44,},
         66: {'linenum': 67, 'parent_linenum': 67,},
     }
-    for idx, obj in enumerate(parse_f02_ios_02.objs):
+    for idx, obj in enumerate(parse_f02_ios_01.objs):
         # CiscoConfParse object line numbers start with 1...
         assert idx + 1 == obj.linenum
         assert result_correct[idx] == obj.text
