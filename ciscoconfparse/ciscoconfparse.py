@@ -4758,7 +4758,7 @@ class ConfigList(MutableSequence):
             )
 
         elif self.syntax == "terraform":
-            new_obj = TerraformLine(
+            new_obj = TfLine(
                 text=new_val,
                 comment_delimiter=self.comment_delimiter,
             )
@@ -4890,10 +4890,8 @@ class ConfigList(MutableSequence):
             )
 
         elif self.syntax == "terraform":
-            new_obj = TerraformLine(
-                text=new_val,
-                comment_delimiter=self.comment_delimiter,
-            )
+            new_obj = TfLine(text=new_val,
+                             comment_delimiter=self.comment_delimiter)
 
         else:
             logger.error(error)
@@ -5619,9 +5617,9 @@ class ConfigList(MutableSequence):
     def _bootstrap_obj_init_terraform(self, text_list):
         """
         Accept a text list, and format into a list of proper
-        TerraformLine() objects.
+        TfLine() objects.
 
-        This method returns a list of TerraformLine() objects.
+        This method returns a list of TfLine() objects.
         """
         assert isinstance(text_list, (list, tuple,))
         raise NotImplementedError()
@@ -5898,7 +5896,7 @@ def ConfigLineFactory(text="", comment_delimiter="!", syntax="ios"):
         classes = [JunosCfgLine]
 
     elif syntax == "terraform":
-        classes = [TerraformLine]
+        classes = [TfLine]
 
     else:
         err_txt = "'{}' is an unknown syntax".format(syntax)
