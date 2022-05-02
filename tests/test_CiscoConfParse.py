@@ -69,13 +69,23 @@ def testParse_invalid_filepath():
 
     #ccp_logger_control(action="enable")
 
-def testParse_f5_as_ios(parse_f01_ios):
+#def testParse_f5_as_ios_00(parse_f01_ios_01):
+#    pass
+
+def testParse_f5_as_ios_02(parse_f02_ios_02):
     """
-    Test parsing an f5 config with ios syntax.  Use configs/sample_01.f5 as
-    the test config.  That f5 config is pre-parsed in conftest.py as
-    'parse_f01_ios'.
+    Test parsing a brace-delimited f5 config with ios syntax.  Use
+    configs/sample_02.f5 as the test config.  That f5 config is pre-parsed in
+    conftest.py as 'parse_f01_ios'.
+
+    This Config Parsing Syntax:
+    parse_f02_ios = CiscoConfParse('configs/sample_02.f5', syntax='ios')
+
+    Ensure that line numbers, parent line numbers, and config text line up
+    correctly... important note... closing curly-braces should be assigned as
+    a child of the opening curly-brace.
     """
-    assert len(parse_f01_ios.objs)==67
+    assert len(parse_f02_ios_02.objs)==67
 
     result_correct = [
         "ltm profile udp DNS-UDP {",
@@ -146,13 +156,87 @@ def testParse_f5_as_ios(parse_f01_ios):
         "}",
         "sys url-db download-schedule urldb { }",
     ]
-    for idx, obj in enumerate(parse_f01_ios.objs):
-        print(result_correct[idx], file=sys.stderr)
+    # Close curly-braces should be assigned as children of the open curly-brace
+    result_correct_linenum_dict = {
+        0: {'linenum': 1, 'parent_linenum': 1,},
+        1: {'linenum': 2, 'parent_linenum': 1,},
+        2: {'linenum': 3, 'parent_linenum': 1,},
+        3: {'linenum': 4, 'parent_linenum': 1,},
+        4: {'linenum': 5, 'parent_linenum': 1,},
+        5: {'linenum': 6, 'parent_linenum': 6,},
+        6: {'linenum': 7, 'parent_linenum': 6,},
+        7: {'linenum': 8, 'parent_linenum': 7,},
+        8: {'linenum': 9, 'parent_linenum': 8,},
+        9: {'linenum': 10, 'parent_linenum': 8,},
+        10: {'linenum': 11, 'parent_linenum': 8,},
+        11: {'linenum': 12, 'parent_linenum': 8,},
+        12: {'linenum': 13, 'parent_linenum': 13,},
+        13: {'linenum': 14, 'parent_linenum': 13,},
+        14: {'linenum': 15, 'parent_linenum': 14,},
+        15: {'linenum': 16, 'parent_linenum': 15,},
+        16: {'linenum': 17, 'parent_linenum': 15,},
+        17: {'linenum': 18, 'parent_linenum': 15,},
+        18: {'linenum': 19, 'parent_linenum': 15,},
+        19: {'linenum': 20, 'parent_linenum': 20,},
+        20: {'linenum': 21, 'parent_linenum': 20,},
+        21: {'linenum': 22, 'parent_linenum': 20,},
+        22: {'linenum': 23, 'parent_linenum': 23,},
+        23: {'linenum': 24, 'parent_linenum': 23,},
+        24: {'linenum': 25, 'parent_linenum': 23,},
+        25: {'linenum': 26, 'parent_linenum': 23,},
+        26: {'linenum': 27, 'parent_linenum': 23,},
+        27: {'linenum': 28, 'parent_linenum': 23,},
+        28: {'linenum': 29, 'parent_linenum': 28,},
+        29: {'linenum': 30, 'parent_linenum': 28,},
+        30: {'linenum': 31, 'parent_linenum': 28,},
+        31: {'linenum': 32, 'parent_linenum': 23,},
+        32: {'linenum': 33, 'parent_linenum': 32,},
+        33: {'linenum': 34, 'parent_linenum': 32,},
+        34: {'linenum': 35, 'parent_linenum': 23,},
+        35: {'linenum': 36, 'parent_linenum': 23,},
+        36: {'linenum': 37, 'parent_linenum': 36,},
+        37: {'linenum': 38, 'parent_linenum': 36,},
+        38: {'linenum': 39, 'parent_linenum': 23,},
+        39: {'linenum': 40, 'parent_linenum': 23,},
+        40: {'linenum': 41, 'parent_linenum': 23,},
+        41: {'linenum': 42, 'parent_linenum': 23,},
+        42: {'linenum': 43, 'parent_linenum': 43,},
+        43: {'linenum': 44, 'parent_linenum': 44,},
+        44: {'linenum': 45, 'parent_linenum': 44,},
+        45: {'linenum': 46, 'parent_linenum': 46,},
+        46: {'linenum': 47, 'parent_linenum': 47,},
+        47: {'linenum': 48, 'parent_linenum': 48,},
+        48: {'linenum': 49, 'parent_linenum': 49,},
+        49: {'linenum': 50, 'parent_linenum': 50,},
+        50: {'linenum': 51, 'parent_linenum': 51,},
+        51: {'linenum': 52, 'parent_linenum': 52,},
+        52: {'linenum': 53, 'parent_linenum': 53,},
+        53: {'linenum': 54, 'parent_linenum': 54,},
+        54: {'linenum': 55, 'parent_linenum': 55,},
+        55: {'linenum': 56, 'parent_linenum': 56,},
+        56: {'linenum': 57, 'parent_linenum': 57,},
+        57: {'linenum': 58, 'parent_linenum': 58,},
+        58: {'linenum': 59, 'parent_linenum': 59,},
+        59: {'linenum': 60, 'parent_linenum': 60,},
+        60: {'linenum': 61, 'parent_linenum': 61,},
+        61: {'linenum': 62, 'parent_linenum': 61,},
+        62: {'linenum': 63, 'parent_linenum': 62,},
+        63: {'linenum': 64, 'parent_linenum': 62,},
+        64: {'linenum': 65, 'parent_linenum': 62,},
+        65: {'linenum': 66, 'parent_linenum': 62,},
+        66: {'linenum': 67, 'parent_linenum': 67,},
+    }
+    for idx, obj in enumerate(parse_f02_ios_02.objs):
+        # CiscoConfParse object line numbers start with 1...
+        assert idx + 1 == obj.linenum
         assert result_correct[idx] == obj.text
 
-def testParse_f5_as_junos(parse_f01_junos):
+        assert result_correct_linenum_dict[idx]['linenum'] == obj.linenum
+        assert result_correct_linenum_dict[idx]['parent_linenum'] == obj.parent.linenum
+
+def testParse_f5_as_junos(parse_f01_junos_01):
     """Test parsing f5 config as junos syntax"""
-    assert len(parse_f01_junos.objs)==48
+    assert len(parse_f01_junos_01.objs)==16
 
 def testParse_asa_as_ios(config_a02):
     """Test for Github issue #42 parse asa banner with ios syntax"""

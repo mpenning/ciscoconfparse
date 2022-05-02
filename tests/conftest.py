@@ -410,8 +410,30 @@ of all tresspassers.
 !
 alias exec showthang show ip route vrf THANG""".splitlines()
 
-# Using configs/sample_01.f5
-f01 = """
+f01 = """ltm virtual ACME {
+    destination 192.168.1.191:http
+    ip-protocol tcp
+    mask 255.255.255.255
+    pool pool1
+    profiles {
+        http { }
+        tcp { }
+    }
+    rules {
+        MOBILE
+    }
+    source 0.0.0.0/0
+    source-address-translation {
+        type automap
+    }
+    translate-address enabled
+    translate-port enabled
+    vs-index 17
+}""".splitlines()
+
+
+# Using configs/sample_02.f5
+f02 = """
 ltm profile udp DNS-UDP {
     app-service none
     datagram-load-balancing disabled
@@ -434,7 +456,6 @@ ltm rule contrail-monitor1 {
 ltm tacdb licenseddb licensed-tacdb {
     partition none
 }
-
 ltm virtual ACME_VIP {
     destination 192.168.1.191:http
     ip-protocol tcp
@@ -1287,19 +1308,27 @@ def parse_c03_factory(request):
 
 ## parse_f01 yields configs/sample_01.f5
 @pytest.fixture(scope="function")
-def parse_f01_ios(request):
-    """Preparsed j01"""
-    parse_f01_ios = CiscoConfParse(f01, syntax="ios", comment="#", factory=False)
+def parse_f01_ios_01(request):
+    """Preparsed F5 f01 configuration as ios syntax"""
+    parse_f01_ios_01 = CiscoConfParse(f01, syntax="ios", comment="#", factory=False)
 
-    yield parse_f01_ios
+    yield parse_f01_ios_01
 
-## parse_f01 yields configs/sample_01.f5
+
+## parse_f02 yields configs/sample_02.f5
 @pytest.fixture(scope="function")
-def parse_f01_junos(request):
-    """Preparsed j01"""
-    parse_f01_junos = CiscoConfParse(f01, syntax="junos", comment="#", factory=False)
+def parse_f02_ios_02(request):
+    """Preparsed F5 f02 configuration as ios syntax"""
+    parse_f02_ios_02 = CiscoConfParse(f02, syntax="ios", comment="#", factory=False)
 
-    yield parse_f01_junos
+    yield parse_f02_ios_02
+
+@pytest.fixture(scope="function")
+def parse_f01_junos_01(request):
+    """Preparsed F5 f01 configuration as junos syntax"""
+    parse_f01_junos_01 = CiscoConfParse(f01, syntax="junos", comment="#", factory=False)
+
+    yield parse_f01_junos_01
 
 ## parse_j01 yields configs/sample_01.junos
 @pytest.fixture(scope="function")
@@ -1308,7 +1337,6 @@ def parse_j01(request):
     parse_j01 = CiscoConfParse(j01, syntax="junos", comment="#!", factory=False)
 
     yield parse_j01
-
 
 ## parse_j01_factory yields configs/sample_01.junos
 @pytest.fixture(scope="function")
