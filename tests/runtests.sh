@@ -6,7 +6,7 @@
 
 # Print very verbose debugging info to STDOUT
 # functionally, '-o functrace' is the same as the -T option above...
-# set -xT
+set -xT
 
 # -v: Print STDIN lines as they are read
 # -e: Stop this script if a command exits w/ a non-zero code
