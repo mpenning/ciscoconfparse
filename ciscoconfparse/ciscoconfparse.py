@@ -307,14 +307,21 @@ def assign_parent_to_closing_braces(input_list=None):
 
     Walk the list and assign parents to the closing braces.  Return this list.
 
-    Closing Brace Assignment Example:
+    Closing Brace Assignment Example
+    --------------------------------
 
-    line 1 {
-        line 2 {
-            line 3 {
-            }    # Assign this closing-brace's parent as line 3
-        }        # Assign this closing-brace's parent as line 2
-    }            # Assign this closing-brace's parent as line 1
+    line number 1
+    line number 2 {
+        line number 3 {
+            line number 4
+            line number 5 {
+                line number 6
+                line number 7
+                line number 8
+            }            # Assign this closing-brace's parent as line 5
+        }                # Assign this closing-brace's parent as line 3
+    }                    # Assign this closing-brace's parent as line 2
+    line number 11
     """
     if input_list is None:
         raise ValueError("Cannot modify.  The input_list is None")
