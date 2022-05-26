@@ -3842,7 +3842,7 @@ class HDiff:
         # Tally lines for the unified diff header...
         udiff_timestamp = str(datetime.now().isoformat()).replace("T", " ")
         unified_diff_header.append("--- /tmp/before " + udiff_timestamp)
-        unified_diff_header.append("+++ /tmp/after " + udiff_timestamp)
+        unified_diff_header.append("+++ /tmp/after  " + udiff_timestamp)
 
         left_hand_changed, right_hand_changed = 0, 0
         left_hand_start, right_hand_start = 0, 0
