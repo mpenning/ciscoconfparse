@@ -28,6 +28,7 @@ from collections.abc import MutableSequence, Iterator
 from datetime import datetime
 from functools import partial
 from operator import is_not
+import warnings
 import inspect
 import pathlib
 import locale
@@ -3038,6 +3039,11 @@ class CiscoConfParse:
         One example use of this method is when you need to enforce routing
         protocol standards, or standards against interface configurations.
 
+        .. warning::
+
+           `sync_diff()`, `req_cfgspec_excl_diff()` and `req_cfgspec_all_diff()` will be deprecated / removed in the future.  `HDiff().unified_diffs()` or `HDiff().raw_diff_dicts()` can be used going forward; however, "some assembly will be required".
+
+
         Examples
         --------
 
@@ -3056,6 +3062,10 @@ class CiscoConfParse:
         ['logging 172.16.1.5']
         >>>
         """
+
+        # warning issued 2022-06-01
+        deprecation_warn_str = "`req_cfgspec_all_diff()` will be deprecated and removed in future versions."
+        warnings.warn(deprecation_warn_str, DeprecationWarning)
 
         rgx = dict()
         if ignore_ws is True:
@@ -3097,6 +3107,10 @@ class CiscoConfParse:
         Uses for this method include the need to enforce syslog, acl, or
         aaa standards.
 
+        .. warning::
+
+           `sync_diff()`, `req_cfgspec_excl_diff()` and `req_cfgspec_all_diff()` will be deprecated / removed in the future.  `HDiff().unified_diffs()` or `HDiff().raw_diff_dicts()` can be used going forward; however, "some assembly will be required".
+
         Examples
         --------
 
@@ -3119,6 +3133,11 @@ class CiscoConfParse:
         ['no logging 172.28.26.15', 'logging 172.16.1.5', 'logging 1.10.20.30', 'logging 192.168.1.1']
         >>>
         """
+
+        # warning issued 2022-06-01
+        deprecation_warn_str = "`req_cfgspec_excl_diff()` will be deprecated and removed in future versions."
+        warnings.warn(deprecation_warn_str, DeprecationWarning)
+
         violate_objs = list()
         uncfg_objs = list()
         skip_cfgspec = dict()
@@ -3276,6 +3295,12 @@ class CiscoConfParse:
         a linespec, and an unconfig spec.  This method return a list of
         configuration diffs to make the configuration comply with cfgspec.
 
+
+        .. warning::
+
+           `sync_diff()`, `req_cfgspec_excl_diff()` and `req_cfgspec_all_diff()` will be deprecated / removed in the future.  `HDiff().unified_diffs()` or `HDiff().raw_diff_dicts()` can be used going forward; however, "some assembly will be required".
+
+
         Parameters
         ----------
         cfgspec : list
@@ -3322,6 +3347,10 @@ class CiscoConfParse:
         ['no logging 172.28.26.15', 'logging 172.16.1.5', 'logging 1.10.20.30', 'logging 192.168.1.1']
         >>>
         """
+
+        # warning issued 2022-06-01
+        deprecation_warn_str = "`sync_diff()` will be deprecated and removed in future versions."
+        warnings.warn(deprecation_warn_str, DeprecationWarning)
 
         tmp = self._find_line_OBJ(linespec)
         if uncfgspec is None:
