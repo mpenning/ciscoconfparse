@@ -9,6 +9,7 @@
     - Add `JunosCfgLine()`
     - Add `ciscoconfparse/models_iosxr.py` which is mostly broken (but this also comes with the caveat of an 'unsupported feature').  Ref   - [Github issue #235](https://github.com/mpenning/ciscoconfparse/issues/235)
     - Restore `tests/test_CiscoConfParse.py` to proper functionality.  See [git commit hash `840b11ce334f0b7120bbfc90d2d83fbdc5ed1bd1`](https://github.com/mpenning/ciscoconfparse/commit/840b11ce334f0b7120bbfc90d2d83fbdc5ed1bd1)
+    - Add deprecation notices on `sync_diff()`, `req_cfgspec_excl_diff()` and `req_cfgspec_all_diff()`
     - Remove `NXOSConfigList()` and `ASAConfigList()` which were dead code and unused
     - Change `ignore_blank_lines` behavior for [Github Issue #229](https://github.com/mpenning/ciscoconfparse/issues/229).  Now blank line  s are **always allowed** in banners or macros regardless of what `ignore_blank_lines` is set to.
     - Modify `tests/runtests.sh` for simplicity and consistency.
