@@ -19,7 +19,7 @@ repos:
     rev: v3.2
     hooks:
       - id: pyroma
-        args: ["-a"]
+        args: ["-d ./"]   # Run against the current directory
 
 ##
 #  - repo: https://github.com/asottile/dead
