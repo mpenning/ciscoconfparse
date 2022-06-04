@@ -18,6 +18,7 @@ classifiers=[
     "Intended Audience :: Information Technology",
     "Intended Audience :: Telecommunications Industry",
     "License :: OSI Approved :: GNU General Public License (GPL)",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
     "Natural Language :: English",
     "Operating System :: OS Independent",
     "Programming Language :: Python",
