@@ -15,6 +15,12 @@ repos:
       - id: pyupgrade
         args: ["--py3-plus"]
 
+  - repo: https://github.com/regebro/pyroma
+    rev: v3.2
+    hooks:
+      - id: pyroma
+        args: ["-a"]
+
 ##
 #  - repo: https://github.com/asottile/dead
 #    rev: v1.4.0
