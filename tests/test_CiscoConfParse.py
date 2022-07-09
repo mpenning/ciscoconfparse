@@ -1243,6 +1243,31 @@ def testValues_find_objects_w_all_children(parse_c01):
     )
     assert test_result == result_correct
 
+def testValues_delete_children_matching():
+    config = [
+        '!',
+        'interface Serial1/0',
+        ' description Some lame description',
+        ' ip address 1.1.1.1 255.255.255.252',
+        '!',
+        'interface Serial1/1',
+        ' description Another lame description',
+        ' ip address 1.1.1.5 255.255.255.252',
+        '!',
+    ]
+    result_correct = [
+        '!',
+        'interface Serial1/0',
+        ' ip address 1.1.1.1 255.255.255.252',
+        '!',
+        'interface Serial1/1',
+        ' ip address 1.1.1.5 255.255.255.252',
+        '!',
+    ]
+    parse = CiscoConfParse(config, syntax="ios")
+    for obj in parse.find_objects(r'^interface'):
+        obj.delete_children_matching('description')
+    assert parse.ioscfg == result_correct
 
 def testValues_delete_lines_01():
     """Catch bugs similar to those fixed by https://github.com/mpenning/ciscoconfparse/pull/140"""
