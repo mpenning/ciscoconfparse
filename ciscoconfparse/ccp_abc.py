@@ -18,8 +18,6 @@ r""" ccp_abc.py - Parse, Query, Build, and Modify IOS-style configurations
 """
 
 from difflib import get_close_matches
-from operator import methodcaller
-from collections import deque
 from abc import ABCMeta
 import warnings
 import inspect
@@ -539,10 +537,8 @@ class BaseCfgLine(metaclass=ABCMeta):
            !
            >>>
         """
-        cobjs = list(filter(methodcaller("re_search", linespec), self.children))
-        retval = [ii.text for ii in cobjs]
-        # Delete the children
-        deque(map(methodcaller("delete"), cobjs))
+        # if / else in a list comprehension... ref ---> https://stackoverflow.com/a/9442777/667301
+        retval = [(obj.delete() if obj.re_search(linespec) else obj) for obj in self.children]
         return retval
 
     # On BaseCfgLine()
