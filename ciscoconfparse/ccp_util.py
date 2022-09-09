@@ -119,7 +119,7 @@ class UnsupportedFeatureWarning(SyntaxWarning):
     pass
 
 
-class PythonOptimizeCheck:
+class PythonOptimizeCheck(object):
     """
     Check if we're running under "python -O ...".  The -O option removes
     all `assert` statements at runtime.  ciscoconfparse depends heavily on
@@ -143,6 +143,7 @@ class PythonOptimizeCheck:
 
 
     """
+    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
     def __init__(self):
 
         self.PYTHONOPTIMIZE_env_value = os.environ.get("PYTHONOPTIMIZE", None)
@@ -178,6 +179,7 @@ class PythonOptimizeCheck:
             raise PythonOptimizeException(error)
 
 
+@logger.catch(default=True, onerror=lambda _: sys.exit(1))
 def as_text_list(object_list):
     """
     This is a helper-function to convert a list of configuration objects into
@@ -215,9 +217,11 @@ def as_text_list(object_list):
     return list(map(attrgetter("text"), object_list))
 
 
+@logger.catch(default=True, onerror=lambda _: sys.exit(1))
 def junos_unsupported(func):
     """A function wrapper to warn junos users of unsupported features"""
 
+    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
     def wrapper(*args, **kwargs):
         warn = "syntax='junos' does not fully support config modifications such as .{}(); see Github Issue #185.  https://github.com/mpenning/ciscoconfparse/issues/185".format(
             func.__name__
@@ -236,6 +240,7 @@ def junos_unsupported(func):
     return wrapper
 
 
+@logger.catch(default=True, onerror=lambda _: sys.exit(1))
 def log_function_call(function=None, *args, **kwargs):
     """A wrapper; this decorator uses loguru to log function calls.
 
@@ -248,6 +253,7 @@ def log_function_call(function=None, *args, **kwargs):
 
     """
 
+    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
     def logging_decorator(ff):
         @wraps(ff)
         def wrapped_logging(*args, **kwargs):
@@ -277,6 +283,7 @@ def log_function_call(function=None, *args, **kwargs):
     return logging_decorator
 
 
+@logger.catch(default=True, onerror=lambda _: sys.exit(1))
 def ccp_logger_control(
     sink=sys.stderr,
     action="",
@@ -364,7 +371,7 @@ def ccp_logger_control(
         )
 
 
-class __ccp_re__:
+class __ccp_re__(object):
     """
     A wrapper around python's re.  This is an experimental object... it may
     disappear at any time as long as this message exists.
@@ -395,6 +402,7 @@ class __ccp_re__:
 
     """
 
+    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
     def __init__(self, regex_str=r"", target_str=None, groups=None, flags=0,
         debug=0):
         assert isinstance(regex_str, str)
@@ -416,16 +424,20 @@ class __ccp_re__:
         self.groups = groups
         self.search_result = None
 
+    # do NOT wrap with @logger.catch(...)
     def __repr__(self):
         return f"""ccp_re({self.regex}, {self.target_str})"""
 
+    # do NOT wrap with @logger.catch(...)
     def __str__(self):
         return f"""ccp_re({self.regex}, {self.target_str})"""
 
+    # do NOT wrap with @logger.catch(...)
     @property
     def regex(self):
         return r"""%s""" % self.regex_str
 
+    # do NOT wrap with @logger.catch(...)
     @regex.setter
     def regex(self, regex_str):
         assert isinstance(regex_str, str)
@@ -434,6 +446,7 @@ class __ccp_re__:
         self.attempted_search = False
 
 
+    # do NOT wrap with @logger.catch(...)
     def s(self, target_str):
         assert self.attempted_search is False
         assert isinstance(target_str, str)
@@ -450,10 +463,12 @@ class __ccp_re__:
         else:
             return None
 
+    # do NOT wrap with @logger.catch(...)
     @property
     def result(self):
         raise NotImplementedError()
 
+    # do NOT wrap with @logger.catch(...)
     @property
     def captured(self):
         rv_groups = list()
@@ -500,6 +515,7 @@ class __ccp_re__:
         return rv_groups, rv_groupdict
 
 
+# do NOT wrap with @logger.catch(...)
 def _get_ipv4(val="", strict=False, stdlib=False, debug=0):
     """Return the requested IPv4 object to the caller.  This method heavily depends on IPv4Obj()"""
     assert isinstance(val, str) or isinstance(val, int)
@@ -528,6 +544,7 @@ def _get_ipv4(val="", strict=False, stdlib=False, debug=0):
         raise AddressValueError("_get_ipv4(val='%s')" % (val))
 
 
+# do NOT wrap with @logger.catch(...)
 def _get_ipv6(val="", strict=False, stdlib=False, debug=0):
     """Return the requested IPv6 object to the caller.  This method heavily depends on IPv6Obj()"""
     assert isinstance(val, str) or isinstance(val, int)
@@ -556,6 +573,7 @@ def _get_ipv6(val="", strict=False, stdlib=False, debug=0):
     except Exception as ee:
         raise AddressValueError("_get_ipv6(val='%s')" % (val))
 
+# do NOT wrap with @logger.catch(...)
 def ip_factory(val="", stdlib=False, mode="auto_detect", debug=0):
     """
     Accept an IPv4 or IPv6 address / (mask or masklength).  Return an appropriate IPv4 or IPv6 object
@@ -610,6 +628,7 @@ def ip_factory(val="", stdlib=False, mode="auto_detect", debug=0):
         error_str = "Cannot parse '%s' as ipv4 or ipv6" % val
         raise AddressValueError(error_str)
 
+@logger.catch(default=True, onerror=lambda _: sys.exit(1))
 def collapse_addresses(network_list):
     """
     This is a ciscoconfparse proxy for ipaddress.collapse_addresses()
@@ -623,6 +642,7 @@ def collapse_addresses(network_list):
     """
     assert isinstance(network_list, list) or isinstance(network_list, tuple)
 
+    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
     def ip_net(arg):
         if isinstance(arg, IPv4Obj):
             return arg.network
@@ -641,7 +661,7 @@ def collapse_addresses(network_list):
 # Build a wrapper around ipaddress classes to mimic the behavior of network
 # interfaces (such as persisting host-bits when the intf masklen changes) and
 # add custom @properties
-class IPv4Obj:
+class IPv4Obj(object):
 
     # This method is on IPv4Obj().  Do NOT add @logger.catch to __init__()...
     # that breaks it.
@@ -832,6 +852,7 @@ class IPv4Obj:
                 )
             )
 
+    # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     def _ipv4_params_dict(self, arg, debug=0):
         """
@@ -899,11 +920,13 @@ class IPv4Obj:
 
         return params_dict
 
+    # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     def __repr__(self):
         assert isinstance(self.prefixlen, int)
         return f"""<IPv4Obj {str(self.ip_object)}/{self.prefixlen}>"""
 
+    # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     def __eq__(self, val):
         try:
@@ -925,10 +948,12 @@ class IPv4Obj:
             )
             raise AttributeError(errmsg)
 
+    # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     def __ne__(self, val):
         return not self.__eq__(val)
 
+    # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     def __gt__(self, val):
         try:
@@ -963,6 +988,7 @@ class IPv4Obj:
             errmsg = f"{self.__repr__()} cannot compare itself to '{val}'"
             raise ValueError(errmsg)
 
+    # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     def __lt__(self, val):
         try:
@@ -998,6 +1024,7 @@ class IPv4Obj:
             logger.error(errmsg)
             raise ValueError(errmsg)
 
+    # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     def __int__(self):
         """Return this object as an integer"""
@@ -1006,6 +1033,7 @@ class IPv4Obj:
         else:
             return False
 
+    # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     def __index__(self):
         """Return this object as an integer (used for hex() and bin() operations)"""
@@ -1014,6 +1042,7 @@ class IPv4Obj:
         else:
             return False
 
+    # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     def __add__(self, val):
         """Add an integer to IPv4Obj() and return an IPv4Obj()"""
@@ -1028,6 +1057,7 @@ class IPv4Obj:
         retval.prefixlen = orig_prefixlen
         return retval
 
+    # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     def __sub__(self, val):
         """Subtract an integer from IPv4Obj() and return an IPv4Obj()"""
@@ -1042,6 +1072,7 @@ class IPv4Obj:
         retval.prefixlen = orig_prefixlen
         return retval
 
+    # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     def __contains__(self, val):
         # Used for "foo in bar"... python calls bar.__contains__(foo)
@@ -1071,25 +1102,30 @@ class IPv4Obj:
                 )
             )
 
+    # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     def __hash__(self):
         # Python3 needs __hash__()
         return hash(str(self.ip_object)) + hash(str(self.prefixlen))
 
+    # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     def __iter__(self):
         return self.network_object.__iter__()
 
+    # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     def __next__(self):
         ## For Python3 iteration...
         return self.network_object.__next__()
 
+    # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     def next(self):
         ## For Python2 iteration...
         return self.network_object.__next__()
 
+    # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     @property
     def _version(self):
@@ -1098,6 +1134,7 @@ class IPv4Obj:
         """
         return self.version
 
+    # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     @property
     def _prefixlen(self):
@@ -1106,6 +1143,7 @@ class IPv4Obj:
         """
         return self.prefixlen
 
+    # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     @property
     def _max_prefixlen(self):
@@ -1117,35 +1155,41 @@ class IPv4Obj:
         else:
             return IPV6_MAX_PREFIXLEN
 
+    # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     @staticmethod
     def get_regex():
         return _IPV4_REGEX_STR
 
+    # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     @property
     def _ip(self):
         """Returns the address as an integer.  This property exists for compatibility with ipaddress.IPv4Address() in stdlib"""
         return int(self.ip_object)
 
+    # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     @property
     def ip(self):
         """Returns the address as an :class:`ipaddress.IPv4Address` object."""
         return self.ip_object
 
+    # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     @property
     def netmask(self):
         """Returns the network mask as an :class:`ipaddress.IPv4Address` object."""
         return self.network_object.netmask
 
+    # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     @property
     def masklen(self):
         """Returns the length of the network mask as an integer."""
         return int(self.network_object.prefixlen)
 
+    # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     @masklen.setter
     def masklen(self, arg):
@@ -1154,17 +1198,20 @@ class IPv4Obj:
             f"{str(self.ip_object)}/{arg}", strict=False
         )
 
+    # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     @property
     def netmask(self):
         return self.network_object.netmask
 
+    # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     @property
     def masklength(self):
         """Returns the length of the network mask as an integer."""
         return self.prefixlen
 
+    # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     @masklength.setter
     def masklength(self, arg):
@@ -1173,12 +1220,14 @@ class IPv4Obj:
             f"{str(self.ip_object)}/{arg}", strict=False
         )
 
+    # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     @property
     def prefixlen(self):
         """Returns the length of the network mask as an integer."""
         return int(self.network_object.prefixlen)
 
+    # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     @prefixlen.setter
     def prefixlen(self, arg):
@@ -1187,12 +1236,14 @@ class IPv4Obj:
             f"{str(self.ip_object)}/{arg}", strict=False
         )
 
+    # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     @property
     def prefixlength(self):
         """Returns the length of the network mask as an integer."""
         return self.prefixlen
 
+    # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     @prefixlength.setter
     def prefixlength(self, arg):
@@ -1201,18 +1252,21 @@ class IPv4Obj:
             f"{str(self.ip_object)}/{arg}", strict=False
         )
 
+    # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     @property
     def exploded(self):
         """Returns the IPv4 Address object as a string.  The string representation is in dotted decimal notation. Leading zeroes are never included in the representation."""
         return self.ip_object.exploded
 
+    # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     @property
     def packed(self):
         """Returns the IPv4 object as packed hex bytes"""
         return self.ip_object.packed
 
+    # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     @property
     def broadcast(self):
@@ -1222,6 +1276,7 @@ class IPv4Obj:
         else:
             return self.network_object.broadcast_address
 
+    # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     @property
     def network(self):
@@ -1241,30 +1296,35 @@ class IPv4Obj:
     #        [int(num, 16) * (65536 ** idx) for idx, num in enumerate(num_strings)]
     #    )
 
+    # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     @property
     def hostmask(self):
         """Returns the host mask as an :class:`ipaddress.IPv4Address` object."""
         return self.network_object.hostmask
 
+    # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     @property
     def max_int(self):
         """Return the maximum size of an IPv4 Address object as an integer"""
         return IPV4_MAXINT
 
+    # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     @property
     def inverse_netmask(self):
         """Returns the host mask as an :class:`ipaddress.IPv4Address` object."""
         return self.network_object.hostmask
 
+    # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     @property
     def version(self):
         """Returns the IP version of the object as an integer.  i.e. 4"""
         return 4
 
+    # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     @property
     def numhosts(self):
@@ -1274,6 +1334,7 @@ class IPv4Obj:
         else:
             return 2 ** (IPV4_MAX_PREFIXLEN - self.network_object.prefixlen)
 
+    # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     @property
     def as_decimal(self):
@@ -1282,6 +1343,7 @@ class IPv4Obj:
         num_strings.reverse()  # reverse the order
         return sum(int(num) * (256**idx) for idx, num in enumerate(num_strings))
 
+    # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     @property
     def as_decimal_network(self):
@@ -1290,12 +1352,14 @@ class IPv4Obj:
         num_strings.reverse()  # reverse the order
         return sum(int(num) * (256**idx) for idx, num in enumerate(num_strings))
 
+    # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     @property
     def as_int(self):
         """Returns the IP address as a decimal integer"""
         return self.as_decimal
 
+    # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     @property
     def as_zeropadded(self):
@@ -1303,6 +1367,7 @@ class IPv4Obj:
         num_strings = str(self.ip).split(".")
         return ".".join([f"{int(num):03}" for num in num_strings])
 
+    # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     @property
     def as_zeropadded_network(self):
@@ -1314,30 +1379,35 @@ class IPv4Obj:
             + str(self.prefixlen)
         )
 
+    # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     @property
     def as_hex(self):
         """Returns the IP address as a hex string"""
         return hex(self)
 
+    # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     @property
     def as_binary_tuple(self):
         """Returns the IP address as a tuple of zero-padded binary strings"""
         return tuple(f"{int(num):08b}" for num in str(self.ip).split("."))
 
+    # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     @property
     def as_hex_tuple(self):
         """Returns the IP address as a tuple of zero-padded hex strings"""
         return tuple(f"{int(num):02x}" for num in str(self.ip).split("."))
 
+    # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     @property
     def as_cidr_addr(self):
         """Returns a string with the address in CIDR notation"""
         return str(self.ip) + "/" + str(self.prefixlen)
 
+    # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     @property
     def as_cidr_net(self):
@@ -1347,18 +1417,21 @@ class IPv4Obj:
         else:
             return str(self.network)
 
+    # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     @property
     def is_multicast(self):
         """Returns a boolean for whether this is a multicast address"""
         return self.network_object.is_multicast
 
+    # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     @property
     def is_private(self):
         """Returns a boolean for whether this is a private address"""
         return self.network_object.is_private
 
+    # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     @property
     def is_reserved(self):
@@ -1369,7 +1442,7 @@ class IPv4Obj:
 # Build a wrapper around ipaddress classes to mimic the behavior of network
 # interfaces (such as persisting host-bits when the intf masklen changes) and
 # add custom @properties
-class IPv6Obj:
+class IPv6Obj(object):
 
     # This method is on IPv6Obj().  Do NOT add @logger.catch to __init__()...
     # that breaks it.
@@ -2025,7 +2098,7 @@ class IPv6Obj:
         return self.network_object.sixtofour
 
 
-class L4Object:
+class L4Object(object):
     """Object for Transport-layer protocols; the object ensures that logical operators (such as le, gt, eq, and ne) are parsed correctly, as well as mapping service names to port numbers
 
     Examples
@@ -2110,7 +2183,7 @@ class L4Object:
         return f"<L4Object {self.protocol} ports: {crobj.compressed_str}>"
 
 
-class DNSResponse:
+class DNSResponse(object):
     """A universal DNS Response object
 
     Parameters
@@ -2169,6 +2242,7 @@ class DNSResponse:
             )
 
 
+@logger.catch(default=True, onerror=lambda _: sys.exit(1))
 def dns_query(input_str="", query_type="", server="", timeout=2.0):
     """A unified IPv4 & IPv6 DNS lookup interface; this is essentially just a wrapper around dnspython's API.  When you query a PTR record, you can use an IPv4 or IPv6 address (which will automatically be converted into an in-addr.arpa name.  This wrapper only supports a subset of DNS records: 'A', 'AAAA', 'CNAME', 'MX', 'NS', 'PTR', and 'TXT'
 
@@ -2361,6 +2435,7 @@ def dns_query(input_str="", query_type="", server="", timeout=2.0):
     return retval
 
 
+@logger.catch(default=True, onerror=lambda _: sys.exit(1))
 def dns_lookup(input_str, timeout=3, server="", record_type="A"):
     """Perform a simple DNS lookup, return results in a dictionary"""
     rr = Resolver()
@@ -2400,6 +2475,7 @@ def dns_lookup(input_str, timeout=3, server="", record_type="A"):
         }
 
 
+@logger.catch(default=True, onerror=lambda _: sys.exit(1))
 def dns6_lookup(input_str, timeout=3, server=""):
     """Perform a simple DNS lookup, return results in a dictionary"""
     rr = Resolver()
@@ -2424,35 +2500,77 @@ def dns6_lookup(input_str, timeout=3, server=""):
 
 _REVERSE_DNS_REGEX = re.compile(r"^\s*\d+\.\d+\.\d+\.\d+\s*$")
 
+@logger.catch(default=True, onerror=lambda _: sys.exit(1))
+def check_valid_ipaddress(input_addr=None):
+    """
+    Accept an input string with an IPv4 or IPv6 address. If the address is
+    valid, return a tuple of:
+    (input_addr, ipaddr_family)
 
-def reverse_dns_lookup(input_str, timeout=3, server=""):
-    """Perform a simple reverse DNS lookup, return results in a dictionary"""
-    assert _REVERSE_DNS_REGEX.search(input_str), "Invalid address format: '{}'".format(
-        input_str
-    )
-    rr = Resolver()
-    rr.timeout = float(timeout)
-    rr.lifetime = float(timeout)
-    if server:
-        rr.nameservers = [server]
+    Throw an error if the address is not valid.
+    """
+    assert isinstance(input_addr, str)
+    input_addr = input_addr.strip()
+    ipaddr_family = 0
     try:
-        tmp = input_str.strip().split(".")
-        tmp.reverse()
-        inaddr = ".".join(tmp) + ".in-addr.arpa"
-        records = rr.query(inaddr, "PTR")
-        return {
-            "name": records[0].to_text(),
-            "lookup": inaddr,
+        assert IPv4Obj(input_addr)
+        ipaddr_family = 4
+    except Exception as _:
+        pass
+
+    if ipaddr_family == 0:
+        try:
+            assert IPv6Obj(input_addr)
+            ipaddr_family = 6
+        except Exception as _:
+            pass
+
+    error = "FATAL: '{0}' is not a valid IPv4 or IPv6 address.".format(input_addr)
+    assert (ipaddr_family == 4 or ipaddr_family == 6), error
+    return (input_addr, ipaddr_family)
+
+@logger.catch(default=True, onerror=lambda _: sys.exit(1))
+def reverse_dns_lookup(input_str, timeout=3.0, server="", proto="udp"):
+    """Perform a simple reverse DNS lookup on an IPv4 or IPv6 address; return results in a python dictionary"""
+    assert isinstance(proto, str) and (proto=="udp" or proto=="tcp")
+    assert isinstance(float(timeout), float) and float(timeout) > 0.0
+
+    input_str, ipaddr_family = check_valid_ipaddress(input_str)
+
+    tcp_flag = None
+    if proto=="tcp":
+        tcp_flag = True
+    elif proto=="udp":
+        tcp_flag = False
+    else:
+        raise ValueError()
+
+    rr = Resolver()
+    #rr = rr.resolve_address(ipaddr=input_str, tcp=tcp_flag, rdtype="PTR", lifetime=float(timeout))
+    #rr = rr.resolve_address(ipaddr=input_str, tcp=tcp_flag, lifetime=float(timeout))
+
+    if server != "":
+        rr.nameservers = [server]
+
+    records = []
+    retval = {}
+    try:
+        records = rr.resolve_address(ipaddr=input_str, tcp=tcp_flag, lifetime=float(timeout))
+        retval = {
+            "name": records[0].to_text(), # this key was called "addrs"
+            "lookup": input_str,
             "error": "",
-            "addr": input_str,
+            "addrs": [input_str],
         }
     except DNSException as e:
-        return {
-            "addrs": [],
-            "lookup": inaddr,
+        retval = {
+            "name": "",   # this key was called "addrs"
+            "lookup": input_str,
             "error": repr(e),
-            "name": input_str,
+            "addrs": [input_str],
         }
+
+    return retval
 
 
 class CiscoRange(MutableSequence):
