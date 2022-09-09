@@ -588,9 +588,9 @@ def test_dns_lookup():
 
 
 def test_reverse_dns_lookup():
-    result_correct = {"addr": "127.0.0.1", "name": "localhost.", "error": ""}
+    result_correct = {"addrs": ["127.0.0.1"], "name": "localhost.", "error": ""}
     test_result = reverse_dns_lookup("127.0.0.1")
-    if not test_result["error"]:
+    if test_result["error"] != "":
         assert "localhost" in test_result["name"].lower()
     else:
         pytest.skip(test_result["error"])
