@@ -8,7 +8,7 @@ git checkout main
 #   -> https://stackoverflow.com/a/62653400/667301
 git pull --ff-only
 
-# Checkout a new branch (some_feature_branch) add / modify code...
+# Create and checkout a new branch (named some_feature_branch) and edit code...
 git switch -c some_feature_branch
 
 # -> run tests after modifying some_feature_branch
@@ -17,14 +17,16 @@ make test
 # -> be sure to update pyproject.toml and CHANGES.md
 git commit <files> -m "Describe changes here"
 
-# Bump version number in pyproject.toml...
+# If releasing on pypi, bump version number in pyproject.toml...
 vi pyproject.toml
+git commit pyproject.toml -m "Roll version number"
 
 # Merge some_feature_branch into master...
-git checkout master
+git checkout main
 git merge some_feature_branch -m "Bring a new feature into the main branch"
 make repo-push-tag
 make pypi
+git push origin main
 
 # Clean up the working feature branch
 git branch -d some_feature_branch
