@@ -2,6 +2,11 @@
 - Released: Not released
 - Summary:
     - Add `CHANGES.md` and deprecate `CHANGES`
+
+## Version: [`1.6.41`](https://pypi.org/project/ciscoconfparse/ "To download the package from pypi, visit https://pypi.org/project/ciscoconfparse/")
+- Released: 2022-00-00
+- Summary:
+    - Add `CHANGES.md` and deprecate `CHANGES`
     - Require at least Python3.6
     - Add `HDiff()` which fixes [Github issue #184](https://github.com/mpenning/ciscoconfparse/issues/184)
     - Modify `uncfgtext`.  Deprecate `add_uncfgtext()`
