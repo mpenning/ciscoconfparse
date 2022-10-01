@@ -905,7 +905,11 @@ def testValues_list_insert_04():
      no security-level
      no ip address"""
 
-    parse = CiscoConfParse(config.splitlines(), syntax=this_syntax)
+    parse = CiscoConfParse(
+        config.splitlines(),
+        syntax=this_syntax,
+        ignore_blank_lines=False,
+        )
     parse.insert_after(r'^interface\s+GigabitEthernet0/6\s*$', 'interface GigabitEthernet0/6.30')
     parse.commit()
     assert parse.ConfigObjs[0].text=="interface GigabitEthernet0/6"
@@ -1572,7 +1576,10 @@ def testValues_sync_diff_04():
     ]
 
     linespec = r""
-    parse = CiscoConfParse(config_01)
+    parse = CiscoConfParse(config_01,
+        syntax="nxos",
+        ignore_blank_lines=False,
+        )
     test_result = parse.sync_diff(required_config, linespec, linespec)
     assert result_correct == test_result
 
@@ -1645,7 +1652,7 @@ def testValues_sync_diff_06():
     ]
 
     linespec = r"vlan\s+\S+|name\s+\S+|state.+"
-    parse = CiscoConfParse(config_01)
+    parse = CiscoConfParse(config_01, syntax="nxos", ignore_blank_lines=False)
     test_result = parse.sync_diff(required_config, linespec, linespec)
     assert result_correct == test_result
 
@@ -2289,6 +2296,74 @@ def testValues_find_objects(parse_c01):
     result_correct = c01_find_objects
     test_result = parse_c01.find_objects("^interface")
     assert result_correct == test_result
+
+def test_blank_line_01():
+    """
+    Test blank line in NXOS parser. See github issue #248
+    """
+
+    config = """feature fex
+
+feature lldp"""
+
+    for test_syntax in ["nxos",]:
+        if test_syntax=="nxos":
+            ignore_blank_lines = False
+        else:
+            ignore_blank_lines = True
+        parse = CiscoConfParse(config.splitlines(),
+           syntax=test_syntax,
+           ignore_blank_lines=ignore_blank_lines,
+           )
+        ####################################################################
+        # Legacy bug in NXOS parser...
+        ####################################################################
+        assert len(parse.ioscfg) == 3
+
+def test_blank_line_02():
+    """
+    Test blank line in NXOS parser. See github issue #248
+    """
+
+    config = """logging logfile messages 6
+logging server 10.110.180.23
+logging server 10.30.183.174
+logging source-interface loopback0
+logging timestamp milliseconds
+logging monitor 6
+logging level local6 6
+no logging console
+
+scheduler aaa-authentication username VCC_Network_Cisco password 7 redacted
+
+scheduler job name auto_checkpoint
+checkpoint
+
+end-job
+
+scheduler job name VCC_NW_Cisco_auto_checkpoint
+checkpoint
+
+end-job
+
+scheduler schedule name 8hr_checkpoint
+job name auto_checkpoint
+time start 2013:03:12:21:14 repeat 0:8:0
+
+scheduler schedule name 8hr_checkpoint_VCC_NW_Cisco
+job name VCC_NW_Cisco_auto_checkpoint
+time start 2017:06:01:17:42 repeat 0:8:0"""
+
+    for test_syntax in ["nxos",]:
+
+        if test_syntax=="nxos":
+            ignore_blank_lines = False
+        else:
+            ignore_blank_lines = True
+        parse = CiscoConfParse(config.splitlines(),
+           syntax=test_syntax,
+           ignore_blank_lines=ignore_blank_lines,
+           )
 
 def test_has_line_with_all_syntax():
     config = """
