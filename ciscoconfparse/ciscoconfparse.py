@@ -601,8 +601,10 @@ class CiscoConfParse(object):
         else:
             raise ValueError("config='%s' is an unexpected type()" % config)
 
+    #########################################################################
     # This method is on CiscoConfParse()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    #      do NOT wrap this method in logger.catch() - github issue #249
+    #########################################################################
     @property
     def openargs(self):
         """Fix for Py3.5 deprecation of universal newlines - Ref Github #114
