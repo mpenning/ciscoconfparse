@@ -1,7 +1,16 @@
 ## Version: GIT HEAD
 - Released: Not released
 - Summary:
+
+## Version: 1.6.42
+
+- Released: 2022-10-04
+- Summary:
     - Add `CHANGES.md` and deprecate `CHANGES`
+    - Fixes [Github issue #249](https://github.com/mpenning/ciscoconfparse/issues/249) [Bug]: ciscoconfparse.get_config_lines TypeError: open() argument after ** must be a mapping, not method
+    - Fixes [Github issue #248](https://github.com/mpenning/ciscoconfparse/issues/248)
+    - Modify [nxos test cases](https://github.com/mpenning/ciscoconfparse/commit/cbe0f489ce98029457d7632667a63330b4d34244)
+    - Formally deprecate and remove references to Python3.6 support (Python3.6 went EOL on 2021-12-23 -> https://endoflife.date/python)
 
 ## Version: [`1.6.41`](https://pypi.org/project/ciscoconfparse/ "To download the package from pypi, visit https://pypi.org/project/ciscoconfparse/")
 - Released: 2022-00-00
