@@ -24,6 +24,16 @@ def parse_args(input_str=""):
     ## Create a master subparser for all commands
     parse_optional = parser.add_argument_group("optional")
 
+    parse_optional.add_argument(
+        "-c",
+        "--checkout",
+        help="git checkout to this branch string (default: '')",
+        action="store",
+        type=str,
+        default="",
+        required=False,
+    )
+
     # Add a boolean flag to store_true...
     parse_optional.add_argument(
         "-f",
@@ -142,10 +152,20 @@ def tag_git_version(args=None):
     else:
         git_push_flag1 = ""
 
+    if args.checkout != "":
+        LogIt("DEBUG", "Checking out git branch: {}".format(args.checkout))
+        stdout, stderr = run_cmd("git checkout {}".format(args.checkout))
+
     stdout, stderr = run_cmd("git remote remove origin")
     stdout, stderr = run_cmd('git remote add origin "git@github.com:mpenning/ciscoconfparse"')
 
+    # TODO: build CHANGES.md management / edit tool... automate version change lists
+    # TODO: support for push local tag to a remote 'git push origin 1.6.42'
+    # TODO: support for delete remote tags 'git push origin ":refs/tags/waat"'
+    # TODO: support for finding remote tags on a specific git hash 'git ls-remote -t <remote> | grep <commit-hash>'
+
     if args.tag is True:
+        # Create a local git tag at git HEAD
         stdout, stderr = run_cmd('git tag -a {0} -m "Tag with {0}"'.format(VERSION))
 
     if args.force is True:
