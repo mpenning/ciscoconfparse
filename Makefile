@@ -19,7 +19,7 @@ pypi:
 	make clean
 	make pypi-packaging
 	poetry build
-	poetry publish
+	python -m twine upload dist/*
 .PHONY: repo-push
 repo-push:
 	git remote remove origin
