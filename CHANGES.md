@@ -2,6 +2,12 @@
 - Released: Not released
 - Summary:
 
+## Version: 1.6.43
+
+- Released: 2022-10-14
+- Summary:
+    - Fixes []Github issue #250](https://github.com/mpenning/ciscoconfparse/issues/250) Change all logger.catch() decorators to use reraise=True
+
 ## Version: 1.6.42
 
 - Released: 2022-10-04

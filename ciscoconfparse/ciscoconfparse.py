@@ -86,7 +86,7 @@ from ciscoconfparse.ccp_util import ccp_logger_control
 # from ciscoconfparse.ccp_util import ccp_re
 
 
-@logger.catch(default=True, onerror=lambda _: sys.exit(1))
+@logger.catch(reraise=True)
 def configure_loguru(
     sink=sys.stderr,
     action="",
@@ -171,7 +171,7 @@ __license__ = "GPLv3"
 __status__ = "Production"
 
 
-@logger.catch(default=True, onerror=lambda _: sys.exit(1))
+@logger.catch(reraise=True)
 def _parse_line_braces(line_txt=None, comment_delimiter=None) -> tuple:
     """
     """
@@ -281,7 +281,7 @@ def _parse_line_braces(line_txt=None, comment_delimiter=None) -> tuple:
         raise ValueError('Cannot parse {}:"{}"'.format(syntax,
                     line_txt))
 
-@logger.catch(default=True, onerror=lambda _: sys.exit(1))
+@logger.catch(reraise=True)
 def build_space_tolerant_regex(linespec):
     r"""SEMI-PRIVATE: Accept a string, and return a string with all
     spaces replaced with '\s+'"""
@@ -302,7 +302,7 @@ def build_space_tolerant_regex(linespec):
 
     return linespec
 
-@logger.catch(default=True, onerror=lambda _: sys.exit(1))
+@logger.catch(reraise=True)
 def assign_parent_to_closing_braces(input_list=None):
     """
     Accept a list of brace-delimited BaseCfgLine() objects; these objects
@@ -344,7 +344,7 @@ def assign_parent_to_closing_braces(input_list=None):
 
 # This method was copied from the same method in git commit below...
 # https://raw.githubusercontent.com/mpenning/ciscoconfparse/bb3f77436023873da344377d3c839387f5131e7f/ciscoconfparse/ciscoconfparse.py
-@logger.catch(default=True, onerror=lambda _: sys.exit(1))
+@logger.catch(reraise=True)
 def convert_junos_to_ios(input_list=None, stop_width=4, comment_delimiter="!",
         debug=0):
     """
@@ -383,7 +383,7 @@ class CiscoConfParse(object):
     # IMPORTANT: do NOT decorate CiscoConfParse().__init__()
     #
     # Something breaks in CiscoConfParse() if using @logger.catch, below...
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def __init__(
         self,
         config="",
@@ -550,7 +550,7 @@ class CiscoConfParse(object):
             raise ValueError(error)
 
     # This method is on CiscoConfParse()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def __repr__(self):
         if isinstance(self.ConfigObjs, (list, tuple, MutableSequence)):
             num_lines = str(len(self.ConfigObjs))
@@ -565,7 +565,7 @@ class CiscoConfParse(object):
         )
 
     # This method is on CiscoConfParse()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def get_config_lines(self, config=None, logger=None, linesplit_rgx=r"\r*\n+"):
         """
         Enforce rules - If config is a str, assume it's a filepath.  If config is a list, assume it's a router config.
@@ -638,7 +638,7 @@ class CiscoConfParse(object):
         return self.ConfigObjs
 
     # This method is on CiscoConfParse()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def atomic(self):
         """Call :func:`~ciscoconfparse.CiscoConfParse.atomic` to manually fix
         up ``ConfigObjs`` relationships
@@ -667,7 +667,7 @@ class CiscoConfParse(object):
         self.ConfigObjs._bootstrap_from_text()
 
     # This method is on CiscoConfParse()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def commit(self):
         """
         Alias for calling the :func:`~ciscoconfparse.CiscoConfParse.atomic`
@@ -800,7 +800,7 @@ class CiscoConfParse(object):
 
 
     # This method is on CiscoConfParse()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def convert_terraform_to_ios(self, input_list, stop_width=4, quotes=False, comment_delimiter="#"):
         """
         This method accepts `input_list` (it should be a list of
@@ -831,7 +831,7 @@ class CiscoConfParse(object):
         return lines
 
     # This method is on CiscoConfParse()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def find_object_branches(
         self,
         branchspec=(),
@@ -1112,7 +1112,7 @@ class CiscoConfParse(object):
         return branches
 
     # This method is on CiscoConfParse()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def find_interface_objects(self, intfspec, exactmatch=True):
         """Find all :class:`~cisco.IOSCfgLine` or
         :class:`~models_cisco.NXOSCfgLine` objects whose text
@@ -1181,7 +1181,7 @@ class CiscoConfParse(object):
         return retval
 
     # This method is on CiscoConfParse()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def find_objects_dna(self, dnaspec, exactmatch=False):
         """Find all :class:`~models_cisco.IOSCfgLine` objects whose text
         matches ``dnaspec`` and return the :class:`~models_cisco.IOSCfgLine`
@@ -1255,7 +1255,7 @@ class CiscoConfParse(object):
         )
 
     # This method is on CiscoConfParse()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def find_objects(self, linespec, exactmatch=False, ignore_ws=False):
         """Find all :class:`~models_cisco.IOSCfgLine` objects whose text
         matches ``linespec`` and return the :class:`~models_cisco.IOSCfgLine`
@@ -1319,7 +1319,7 @@ class CiscoConfParse(object):
         return self._find_line_OBJ(linespec, exactmatch)
 
     # This method is on CiscoConfParse()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def find_lines(self, linespec, exactmatch=False, ignore_ws=False):
         """This method is the equivalent of a simple configuration grep
         (Case-sensitive).
@@ -1351,7 +1351,7 @@ class CiscoConfParse(object):
             )
 
     # This method is on CiscoConfParse()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def find_children(self, linespec, exactmatch=False, ignore_ws=False):
         """Returns the parents matching the linespec, and their immediate
         children.  This method is different than :meth:`find_all_children`,
@@ -1406,7 +1406,7 @@ class CiscoConfParse(object):
         return [ii.text for ii in sorted(allobjs)]
 
     # This method is on CiscoConfParse()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def find_all_children(self, linespec, exactmatch=False, ignore_ws=False):
         """Returns the parents matching the linespec, and all their children.
         This method is different than :meth:`find_children`, because
@@ -1484,7 +1484,7 @@ class CiscoConfParse(object):
         return [ii.text for ii in sorted(allobjs)]
 
     # This method is on CiscoConfParse()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def find_blocks(self, linespec, exactmatch=False, ignore_ws=False):
         """Find all siblings matching the linespec, then find all parents of
         those siblings. Return a list of config lines sorted by line number,
@@ -1607,7 +1607,7 @@ class CiscoConfParse(object):
         return [ii.text for ii in sorted(tmp)]
 
     # This method is on CiscoConfParse()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def find_objects_w_child(
         self,
         parentspec,
@@ -1712,7 +1712,7 @@ class CiscoConfParse(object):
         )
 
     # This method is on CiscoConfParse()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def find_objects_w_all_children(
         self,
         parentspec,
@@ -1830,7 +1830,7 @@ class CiscoConfParse(object):
         return retval
 
     # This method is on CiscoConfParse()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def find_objects_w_missing_children(
         self,
         parentspec,
@@ -1879,7 +1879,7 @@ class CiscoConfParse(object):
         return retval
 
     # This method is on CiscoConfParse()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def find_parents_w_child(self, parentspec, childspec, ignore_ws=False):
         """Parse through all children matching childspec, and return a list of
         parents that matched the parentspec.  Only the parent lines will be
@@ -1967,7 +1967,7 @@ class CiscoConfParse(object):
         return [ii.text for ii in tmp]
 
     # This method is on CiscoConfParse()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def find_objects_wo_child(self, parentspec, childspec, ignore_ws=False):
         r"""Return a list of parent :class:`~models_cisco.IOSCfgLine` objects, which matched the ``parentspec`` and whose children did not match ``childspec``.  Only the parent :class:`~models_cisco.IOSCfgLine` objects will be returned.  For simplicity, this method only finds oldest_ancestors without immediate children that match.
 
@@ -2055,7 +2055,7 @@ class CiscoConfParse(object):
         ]
 
     # This method is on CiscoConfParse()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def find_parents_wo_child(self, parentspec, childspec, ignore_ws=False):
         r"""Parse through all parents matching parentspec, and return a list of parents that did NOT have children match the childspec.  For simplicity, this method only finds oldest_ancestors without immediate children that match.
 
@@ -2142,7 +2142,7 @@ class CiscoConfParse(object):
         return [ii.text for ii in tmp]
 
     # This method is on CiscoConfParse()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def find_children_w_parents(self, parentspec, childspec, ignore_ws=False):
         r"""Parse through the children of all parents matching parentspec,
         and return a list of children that matched the childspec.
@@ -2253,7 +2253,7 @@ class CiscoConfParse(object):
         return [ii.text for ii in sorted(retval)]
 
     # This method is on CiscoConfParse()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def find_objects_w_parents(self, parentspec, childspec, ignore_ws=False):
         r"""Parse through the children of all parents matching parentspec,
         and return a list of child objects, which matched the childspec.
@@ -2354,7 +2354,7 @@ class CiscoConfParse(object):
         return sorted(retval)
 
     # This method is on CiscoConfParse()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def find_lineage(self, linespec, exactmatch=False):
         """
         Iterate through to the oldest ancestor of this object, and return
@@ -2383,7 +2383,7 @@ class CiscoConfParse(object):
         return [obj.text for obj in tmp[0].lineage]
 
     # This method is on CiscoConfParse()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def has_line_with(self, linespec):
         # https://stackoverflow.com/a/16097112/667301
         matching_conftext = list(
@@ -2395,7 +2395,7 @@ class CiscoConfParse(object):
         return bool(matching_conftext)
 
     # This method is on CiscoConfParse()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def insert_before(
         self,
         exist_val="",
@@ -2497,7 +2497,7 @@ class CiscoConfParse(object):
         return [ii.text for ii in sorted(objs)]
 
     # This method is on CiscoConfParse()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def insert_after(
         self,
         exist_val="",
@@ -2604,7 +2604,7 @@ class CiscoConfParse(object):
         return [ii.text for ii in sorted(objs)]
 
     # This method is on CiscoConfParse()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def insert_after_child(
         self,
         parentspec,
@@ -2645,7 +2645,7 @@ class CiscoConfParse(object):
         return retval
 
     # This method is on CiscoConfParse()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def delete_lines(self, linespec, exactmatch=False, ignore_ws=False):
         """Find all :class:`~models_cisco.IOSCfgLine` objects whose text
         matches linespec, and delete the object"""
@@ -2657,7 +2657,7 @@ class CiscoConfParse(object):
             obj.delete()
 
     # This method is on CiscoConfParse()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def prepend_line(self, linespec):
         """Unconditionally insert an :class:`~models_cisco.IOSCfgLine` object
         for ``linespec`` (a text line) at the top of the configuration"""
@@ -2665,7 +2665,7 @@ class CiscoConfParse(object):
         return self.ConfigObjs[0]
 
     # This method is on CiscoConfParse()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def append_line(self, linespec):
         """Unconditionally insert ``linespec`` (a text line) at the end of the
         configuration
@@ -2684,7 +2684,7 @@ class CiscoConfParse(object):
         return self.ConfigObjs[-1]
 
     # This method is on CiscoConfParse()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def replace_lines(
         self,
         linespec,
@@ -2801,7 +2801,7 @@ class CiscoConfParse(object):
         return retval
 
     # This method is on CiscoConfParse()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def replace_children(
         self,
         parentspec,
@@ -2889,7 +2889,7 @@ class CiscoConfParse(object):
         return retval
 
     # This method is on CiscoConfParse()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def replace_all_children(
         self,
         parentspec,
@@ -2925,7 +2925,7 @@ class CiscoConfParse(object):
         return retval
 
     # This method is on CiscoConfParse()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def re_search_children(self, regex, recurse=False):
         """Use ``regex`` to search for root parents in the config with text matching regex.  If `recurse` is False, only root parent objects are returned.  A list of matching objects is returned.
 
@@ -2955,7 +2955,7 @@ class CiscoConfParse(object):
             return [obj for obj in self.find_objects(regex)]
 
     # This method is on CiscoConfParse()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def re_match_iter_typed(
         self,
         regex,
@@ -3061,7 +3061,7 @@ class CiscoConfParse(object):
             return result_type(default)
 
     # This method is on CiscoConfParse()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def req_cfgspec_all_diff(self, cfgspec, ignore_ws=False):
         """
         req_cfgspec_all_diff takes a list of required configuration lines,
@@ -3129,7 +3129,7 @@ class CiscoConfParse(object):
         return retval
 
     # This method is on CiscoConfParse()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def req_cfgspec_excl_diff(self, linespec, uncfgspec, cfgspec):
         r"""
         req_cfgspec_excl_diff accepts a linespec, an unconfig spec, and
@@ -3207,7 +3207,7 @@ class CiscoConfParse(object):
         return retval
 
     # This method is on CiscoConfParse()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def _sequence_nonparent_lines(self, a_nonparent_objs, b_nonparent_objs):
         """Assume a_nonparent_objs is the existing config sequence, and
         b_nonparent_objs is the *desired* config sequence
@@ -3251,7 +3251,7 @@ class CiscoConfParse(object):
         return a_parse, a_lines, a_linenums
 
     # This method is on CiscoConfParse()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def _sequence_parent_lines(self, a_parent_objs, b_parent_objs):
         """Assume a_parent_objs is the existing config sequence, and
         b_parent_objs is the *desired* config sequence
@@ -3317,7 +3317,7 @@ class CiscoConfParse(object):
         return a_parse, a_lines, a_linenums
 
     # This method is on CiscoConfParse()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def sync_diff(
         self,
         cfgspec,
@@ -3697,7 +3697,7 @@ class CiscoConfParse(object):
         return retval
 
     # This method is on CiscoConfParse()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def save_as(self, filepath):
         """Save a text copy of the configuration at ``filepath``; this
         method uses the OperatingSystem's native line separators (such as
@@ -3715,7 +3715,7 @@ class CiscoConfParse(object):
     ###  or iterable of objects instead of the configuration text itself.
 
     # This method is on CiscoConfParse()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def _find_line_OBJ(self, linespec, exactmatch=False):
         """SEMI-PRIVATE: Find objects whose text matches the linespec"""
 
@@ -3743,7 +3743,7 @@ class CiscoConfParse(object):
         )
 
     # This method is on CiscoConfParse()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def _find_sibling_OBJ(self, lineobject):
         """SEMI-PRIVATE: Takes a singe object and returns a list of sibling
         objects"""
@@ -3751,7 +3751,7 @@ class CiscoConfParse(object):
         return siblings
 
     # This method is on CiscoConfParse()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def _find_all_child_OBJ(self, lineobject):
         """SEMI-PRIVATE: Takes a single object and returns a list of
         decendants in all 'children' / 'grandchildren' / etc... after it.
@@ -3766,7 +3766,7 @@ class CiscoConfParse(object):
         return retval
 
     # This method is on CiscoConfParse()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def _unique_OBJ(self, objectlist):
         """SEMI-PRIVATE: Returns a list of unique objects (i.e. with no
         duplicates).
@@ -3778,7 +3778,7 @@ class CiscoConfParse(object):
         return sorted(retval)
 
     # This method is on CiscoConfParse()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def _objects_to_uncfg(self, objectlist, unconflist):
         # Used by req_cfgspec_excl_diff()
         retval = list()
@@ -3799,7 +3799,7 @@ class HDiff(object):
     """
 
     # This method is on HDiff()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def __init__(
         self,
         before_config=None,
@@ -3893,12 +3893,12 @@ class HDiff(object):
         self.sort_lines(parse_after, self.all_output_dicts)
 
     # This method is on HDiff()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def raw_diff_dicts(self):
         return self.all_output_dicts
 
     # This method is on HDiff()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def unified_diff_header(self):
         """
         Return a unified diff header similar to this...
@@ -3948,7 +3948,7 @@ class HDiff(object):
         return unified_diff_header
 
     # This method is on HDiff()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def unified_diffs(self, header=True):
         """
         Return a python list of text which contains the unified diff of the
@@ -3976,7 +3976,7 @@ class HDiff(object):
         return unified_diff_list
 
     # This method is on HDiff()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def sort_lines(self, after_lines, all_output_dicts):
         """
         Typical output line dict-format...
@@ -3991,7 +3991,7 @@ class HDiff(object):
         pass
 
     # This method is on HDiff()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def dict_diffs(self, before_obj_list, after_obj_list):
         ############################################
         # Render diffs
@@ -4042,7 +4042,7 @@ class HDiff(object):
         return all_dict_lines
 
     # This method is on HDiff()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def build_diff_obj_list(
         self, parse=None, default_diff_word=None, consider_whitespace=False
     ):
@@ -4070,7 +4070,7 @@ class HDiff(object):
         return retval
 
     # This method is on HDiff()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def find_in_before_obj_list(
         self, before_obj_list, after_obj, consider_whitespace=False, debug=0
     ):
@@ -4163,7 +4163,7 @@ class HDiff(object):
         return before_obj_list, after_obj
 
     # This method is on HDiff()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def render_after_obj_diffs(self, aobj=None):
         """
         Print after_obj (aobj) diffs to stdout.  before_obj should not be
@@ -4217,7 +4217,7 @@ class HDiff(object):
         return output
 
     # This method is on HDiff()
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def compress_dict_diffs(self, all_lines=None):
         """
         Summary

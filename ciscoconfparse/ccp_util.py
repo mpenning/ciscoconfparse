@@ -143,7 +143,7 @@ class PythonOptimizeCheck(object):
 
 
     """
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def __init__(self):
 
         self.PYTHONOPTIMIZE_env_value = os.environ.get("PYTHONOPTIMIZE", None)
@@ -179,7 +179,7 @@ class PythonOptimizeCheck(object):
             raise PythonOptimizeException(error)
 
 
-@logger.catch(default=True, onerror=lambda _: sys.exit(1))
+@logger.catch(reraise=True)
 def as_text_list(object_list):
     """
     This is a helper-function to convert a list of configuration objects into
@@ -217,11 +217,11 @@ def as_text_list(object_list):
     return list(map(attrgetter("text"), object_list))
 
 
-@logger.catch(default=True, onerror=lambda _: sys.exit(1))
+@logger.catch(reraise=True)
 def junos_unsupported(func):
     """A function wrapper to warn junos users of unsupported features"""
 
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def wrapper(*args, **kwargs):
         warn = "syntax='junos' does not fully support config modifications such as .{}(); see Github Issue #185.  https://github.com/mpenning/ciscoconfparse/issues/185".format(
             func.__name__
@@ -240,7 +240,7 @@ def junos_unsupported(func):
     return wrapper
 
 
-@logger.catch(default=True, onerror=lambda _: sys.exit(1))
+@logger.catch(reraise=True)
 def log_function_call(function=None, *args, **kwargs):
     """A wrapper; this decorator uses loguru to log function calls.
 
@@ -253,7 +253,7 @@ def log_function_call(function=None, *args, **kwargs):
 
     """
 
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def logging_decorator(ff):
         @wraps(ff)
         def wrapped_logging(*args, **kwargs):
@@ -283,7 +283,7 @@ def log_function_call(function=None, *args, **kwargs):
     return logging_decorator
 
 
-@logger.catch(default=True, onerror=lambda _: sys.exit(1))
+@logger.catch(reraise=True)
 def ccp_logger_control(
     sink=sys.stderr,
     action="",
@@ -402,7 +402,7 @@ class __ccp_re__(object):
 
     """
 
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def __init__(self, regex_str=r"", target_str=None, groups=None, flags=0,
         debug=0):
         assert isinstance(regex_str, str)
@@ -628,7 +628,7 @@ def ip_factory(val="", stdlib=False, mode="auto_detect", debug=0):
         error_str = "Cannot parse '%s' as ipv4 or ipv6" % val
         raise AddressValueError(error_str)
 
-@logger.catch(default=True, onerror=lambda _: sys.exit(1))
+@logger.catch(reraise=True)
 def collapse_addresses(network_list):
     """
     This is a ciscoconfparse proxy for ipaddress.collapse_addresses()
@@ -642,7 +642,7 @@ def collapse_addresses(network_list):
     """
     assert isinstance(network_list, list) or isinstance(network_list, tuple)
 
-    @logger.catch(default=True, onerror=lambda _: sys.exit(1))
+    @logger.catch(reraise=True)
     def ip_net(arg):
         if isinstance(arg, IPv4Obj):
             return arg.network
@@ -2242,7 +2242,7 @@ class DNSResponse(object):
             )
 
 
-@logger.catch(default=True, onerror=lambda _: sys.exit(1))
+@logger.catch(reraise=True)
 def dns_query(input_str="", query_type="", server="", timeout=2.0):
     """A unified IPv4 & IPv6 DNS lookup interface; this is essentially just a wrapper around dnspython's API.  When you query a PTR record, you can use an IPv4 or IPv6 address (which will automatically be converted into an in-addr.arpa name.  This wrapper only supports a subset of DNS records: 'A', 'AAAA', 'CNAME', 'MX', 'NS', 'PTR', and 'TXT'
 
@@ -2435,7 +2435,7 @@ def dns_query(input_str="", query_type="", server="", timeout=2.0):
     return retval
 
 
-@logger.catch(default=True, onerror=lambda _: sys.exit(1))
+@logger.catch(reraise=True)
 def dns_lookup(input_str, timeout=3, server="", record_type="A"):
     """Perform a simple DNS lookup, return results in a dictionary"""
     rr = Resolver()
@@ -2475,7 +2475,7 @@ def dns_lookup(input_str, timeout=3, server="", record_type="A"):
         }
 
 
-@logger.catch(default=True, onerror=lambda _: sys.exit(1))
+@logger.catch(reraise=True)
 def dns6_lookup(input_str, timeout=3, server=""):
     """Perform a simple DNS lookup, return results in a dictionary"""
     rr = Resolver()
@@ -2500,7 +2500,7 @@ def dns6_lookup(input_str, timeout=3, server=""):
 
 _REVERSE_DNS_REGEX = re.compile(r"^\s*\d+\.\d+\.\d+\.\d+\s*$")
 
-@logger.catch(default=True, onerror=lambda _: sys.exit(1))
+@logger.catch(reraise=True)
 def check_valid_ipaddress(input_addr=None):
     """
     Accept an input string with an IPv4 or IPv6 address. If the address is
@@ -2529,7 +2529,7 @@ def check_valid_ipaddress(input_addr=None):
     assert (ipaddr_family == 4 or ipaddr_family == 6), error
     return (input_addr, ipaddr_family)
 
-@logger.catch(default=True, onerror=lambda _: sys.exit(1))
+@logger.catch(reraise=True)
 def reverse_dns_lookup(input_str, timeout=3.0, server="", proto="udp"):
     """Perform a simple reverse DNS lookup on an IPv4 or IPv6 address; return results in a python dictionary"""
     assert isinstance(proto, str) and (proto=="udp" or proto=="tcp")
