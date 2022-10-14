@@ -2,11 +2,17 @@
 - Released: Not released
 - Summary:
 
+## Version: 1.6.44
+
+- Released: 2022-10-14
+- Summary:
+    - Merge [Github PR #244](https://github.com/mpenning/ciscoconfparse/pull/244) Fix functionality of delete_children_matching
+
 ## Version: 1.6.43
 
 - Released: 2022-10-14
 - Summary:
-    - Fixes []Github issue #250](https://github.com/mpenning/ciscoconfparse/issues/250) Change all logger.catch() decorators to use reraise=True
+    - Fixes [Github issue #250](https://github.com/mpenning/ciscoconfparse/issues/250) Change all logger.catch() decorators to use reraise=True
 
 ## Version: 1.6.42
 
