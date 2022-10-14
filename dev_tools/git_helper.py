@@ -104,7 +104,7 @@ def run_cmd(
         LogIt("DEBUG", "Processing Popen() string cmd='{}'".format(cmd))
     assert cmd != ""
     assert cwd != ""
-    cwd = os.path.expanduser(cwd)
+    cwd = os.path.expanduser(cwd)+"/../"
 
     if debug > 1:
         LogIt("DEBUG", "Popen() started")
