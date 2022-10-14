@@ -69,6 +69,10 @@ def testParse_invalid_filepath():
 
     #ccp_logger_control(action="enable")
 
+def testParse_invalid_config():
+    with pytest.raises(ValueError, match=""):
+        CiscoConfParse("this is not a filename or list")
+
 def testParse_f5_as_ios_00(parse_f01_ios):
     assert len(parse_f01_ios.objs)==20
 
