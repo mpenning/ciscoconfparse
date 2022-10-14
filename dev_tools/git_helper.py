@@ -3,6 +3,7 @@ from argparse import ArgumentParser
 import shlex
 import sys
 import os
+import re
 
 from loguru import logger as loguru_logger
 
@@ -54,7 +55,18 @@ def parse_args(input_str=""):
     )
 
     args = parser.parse_args()
+    #args.tag_value = get_version()
+
     return args
+
+def check_exists_tag_value(tag_value=None):
+    """Check 'git tag' for an exact string match for tag_value."""
+    assert isinstance(tag_value, str)
+    stdout, stderr = run_cmd("git tag")
+    for line in stdout.splitlines():
+        if tag_value.strip()==line.strip():
+            return True
+    return False
 
 def LogIt(level=None, message=None):
     """Modest loguru hack to indent the log message based on log level."""
@@ -104,7 +116,7 @@ def run_cmd(
         LogIt("DEBUG", "Processing Popen() string cmd='{}'".format(cmd))
     assert cmd != ""
     assert cwd != ""
-    cwd = os.path.expanduser(cwd)+"/../"
+    cwd = os.path.expanduser(cwd)
 
     if debug > 1:
         LogIt("DEBUG", "Popen() started")
@@ -129,23 +141,32 @@ def run_cmd(
         LogIt("DEBUG", "Popen().communicate() returned stdout=%s" % stdout)
     return (stdout, stderr)
 
-def tag_git_version(args=None):
-    # The VERSION environment variable should be set in a Makefile which calls
-    # this script...
-    VERSION = os.environ.get("VERSION")
-    try:
-        assert isinstance(VERSION, str)
-    except AssertionError:
-        LogIt("WARNING", "Could not find an env variable named 'VERSION'")
-    except:
-        raise NotImplementedError("")
+def git_root_directory():
+    """
+    return a string with the path name of the git root directory.
+    """
+    stdout, stderr = run_cmd("git rev-parse --show-toplevel")
+    retval = None
+    for line in stdout.splitlines():
+        if line.strip()!="":
+            retval = line.strip()
+            return retval
+    raise OSError()
 
-    try:
-        assert VERSION != "\${VERSION}"
-    except AssertionError:
-        LogIt("WARNING", "Env variable 'VERSION' assigned literal \${VERSION}")
-    except:
-        raise NotImplementedError("")
+def get_version():
+    """Read the version from pyproject.toml"""
+    filepath = os.path.join(git_root_directory(), "pyproject.toml")
+    assert os.path.isfile(filepath)
+    for line in open(filepath).read().splitlines():
+        if "version" in line:
+            rr = re.search(r"\s*version\s*=\s*(\S+)$", line.strip())
+            if rr is not None:
+                return rr.group(1).strip().strip("'").strip('"')
+    raise ValueError()
+
+def tag_git_version(args):
+    version = get_version()
+    LogIt("DEBUG", "Found version '{}'".format(version))
 
     if args.force is True:
         git_push_flag1 = "--force-with-lease"
@@ -164,9 +185,24 @@ def tag_git_version(args=None):
     # TODO: support for delete remote tags 'git push origin ":refs/tags/waat"'
     # TODO: support for finding remote tags on a specific git hash 'git ls-remote -t <remote> | grep <commit-hash>'
 
-    if args.tag is True:
-        # Create a local git tag at git HEAD
-        stdout, stderr = run_cmd('git tag -a {0} -m "Tag with {0}"'.format(VERSION))
+    version = get_version() # Get the version from pyproject.toml
+    assert isinstance(version, str)
+
+    if check_exists_tag_value(version) is True:
+        if args.force is False and args.tag is True:
+            raise ValueError("Cannot tag with '{0}', the tag already exists in this local git repo".format(version))
+
+        elif args.force is True and args.tag is True:
+            # Create a local git tag at git HEAD
+            stdout, stderr = run_cmd('git tag -a {0} -m "Tag with {0}"'.format(version))
+        else:
+            raise ValueError()
+
+    else:
+        if args.tag is True:
+            # Create a local git tag at git HEAD
+            stdout, stderr = run_cmd('git tag -a {0} -m "Tag with {0}"'.format(version))
+
 
     if args.force is True:
         stdout, stderr = run_cmd('git push {} git@github.com:mpenning/ciscoconfparse.git'.format(git_push_flag1))
@@ -175,11 +211,11 @@ def tag_git_version(args=None):
 
     if args.force is True and args.tag is True:
         stdout, stderr = run_cmd('git push {} --tags origin +main'.format(git_push_flag1))
-        stdout, stderr = run_cmd('git push {} --tags origin {}'.format(git_push_flag1, VERSION))
+        stdout, stderr = run_cmd('git push {} --tags origin {}'.format(git_push_flag1, version))
 
     elif args.force is False and args.tag is True:
         stdout, stderr = run_cmd('git push --tags origin +main')
-        stdout, stderr = run_cmd('git push --tags origin {}'.format(VERSION))
+        stdout, stderr = run_cmd('git push --tags origin {}'.format(version))
 
     elif args.force is True and args.tag is False:
         stdout, stderr = run_cmd('git push {} origin +main'.format(git_push_flag1))
@@ -189,3 +225,4 @@ def tag_git_version(args=None):
 if __name__=="__main__":
     args = parse_args()
     tag_git_version(args)
+    #sys.exit(1)
