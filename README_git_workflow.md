@@ -9,7 +9,7 @@ git checkout main
 git pull --ff-only
 
 # Create and checkout a new branch (named some_feature_branch) and edit code...
-git switch -c some_feature_branch
+git checkout -b some_feature_branch
 
 # -> run tests after modifying some_feature_branch
 make test
@@ -31,7 +31,6 @@ git checkout main
 git merge some_feature_branch -m "Bring a new feature into the main branch"
 make repo-push-tag
 make pypi
-git push origin main
 
 # Clean up the working feature branch
 git branch -d some_feature_branch
