@@ -10,6 +10,7 @@ VERSION := $(shell grep version pyproject.toml | tr -s ' ' | tr -d "'" | tr -d '
 .PHONY: pypi-packaging
 pypi-packaging:
 	pip install -U setuptools>=58.0.0
+	pip install -U wheel>=0.37.1
 	pip install -U twine>=4.0.1
 	pip install -U poetry>=1.0.0
 	# Delete bogus files... see https://stackoverflow.com/a/73992288/667301
@@ -19,6 +20,7 @@ pypi:
 	make clean
 	make pypi-packaging
 	poetry build
+	# twine is the simplest pypi package uploader...
 	python -m twine upload dist/*
 .PHONY: repo-push
 repo-push:
@@ -29,12 +31,18 @@ repo-push:
 	$(shell python dev_tools/git_helper.py)
 .PHONY: repo-push-force
 repo-push-force:
-	$(shell python dev_tools/git_helper.py -f)
+	git remote remove origin
+	git remote add origin "git@github.com:mpenning/ciscoconfparse"
+	git push --force-with-lease git@github.com:mpenning/ciscoconfparse.git
+	git push --force-with-lease origin +main
+	$(shell python dev_tools/git_helper.py)
 .PHONY: repo-push-tag
 repo-push-tag:
+	make repo-push
 	$(shell python dev_tools/git_helper.py -t)
 .PHONY: repo-push-tag-force
 repo-push-tag-force:
+	make repo-push-force
 	$(shell python dev_tools/git_helper.py -t -f)
 .PHONY: pylama
 pylama:
