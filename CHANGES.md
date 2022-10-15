@@ -2,6 +2,12 @@
 - Released: Not released
 - Summary:
 
+## Version: 1.6.45
+
+- Released: 2022-10-15
+- Summary:
+    - Reorganize ciscoconfparse initialization
+
 ## Version: 1.6.44
 
 - Released: 2022-10-14

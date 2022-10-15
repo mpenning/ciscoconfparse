@@ -38,9 +38,6 @@ import sys
 import re
 import os
 
-from loguru import logger
-import toml
-
 from ciscoconfparse.models_cisco import IOSHostnameLine, IOSRouteLine
 from ciscoconfparse.models_cisco import IOSIntfLine
 from ciscoconfparse.models_cisco import IOSAccessLine, IOSIntfGlobal
@@ -85,13 +82,15 @@ from ciscoconfparse.ccp_util import configure_loguru
 # Not using ccp_re yet... still a work in progress
 # from ciscoconfparse.ccp_util import ccp_re
 
+from loguru import logger
+import toml
 
-# do NOT decorate get_version_number() with logger.catch()
+@logger.catch(reraise=True)
 def get_version_number():
     # Docstring props: http://stackoverflow.com/a/1523456/667301
-    # __version__ if-else below fixes Github issue #123
+    # version: if-else below fixes Github issue #123
 
-    __version__ = "0.0.0"  # __version__ read failed
+    version = "0.0.0"  # version read failed
 
     pyproject_path = os.path.join(
         os.path.dirname(os.path.abspath(__file__)),
@@ -102,16 +101,21 @@ def get_version_number():
         toml_values = dict()
         with open(pyproject_path, encoding=ENCODING) as fh:
             toml_values = toml.loads(fh.read())
-        __version__ = toml_values.get("version")
+            version = toml_values["tool"]["poetry"].get("version", -1.0)
+
+        assert isinstance(version, str)
 
     else:
-        # This case is required for importing from a zipfile... Github issue #123
-        __version__ = "0.0.0"  # __version__ read failed
+        # This is required for importing from a zipfile... Github issue #123
+        version = "0.0.0"  # __version__ read failed
 
-    return __version__
+    return version
 
-# do NOT decorate initialize_globals() with logger.catch()
+@logger.catch(reraise=True)
 def initialize_globals():
+    """
+    Initialize ciscoconfparse global dunder variables and a couple others.
+    """
     global ALL_VALID_SYNTAX
     global ENCODING
     global __author_email__
@@ -119,6 +123,7 @@ def initialize_globals():
     global __copyright__
     global __license__
     global __status__
+    global __version__
 
     ENCODING = locale.getpreferredencoding()
     ALL_VALID_SYNTAX = (
@@ -129,15 +134,48 @@ def initialize_globals():
         'terraform',
     )
 
-    __author_email__ = r"mike /at\ pennington [dot] net"
-    __author__ = "David Michael Pennington <{}>".format(__author_email__)
-    __copyright__ = "2007-{}, {}".format(time.strftime("%Y"), __author__)
-    __license__ = "GPLv3"
-    __status__ = "Production"
-    __version__ = get_version_number()
+    try:
+        __author_email__ = r"mike /at\ pennington [dot] net"
+        __author__ = "David Michael Pennington <{}>".format(__author_email__)
+        __copyright__ = "2007-{}, {}".format(time.strftime("%Y"), __author__)
+        __license__ = "GPLv3"
+        __status__ = "Production"
+        __version__ = get_version_number()
 
-initialize_globals()
-configure_loguru()
+    except:
+        raise ValueError()
+
+    finally:
+        # These are all the 'dunder variables' required...
+        globals_dict = {
+            '__author_email__': __author_email__,
+            '__author__': __author__,
+            '__copyright__': __copyright__,
+            '__license__': __license__,
+            '__status__': __status__,
+            '__version__': __version__,
+        }
+        return globals_dict
+
+@logger.catch(reraise=True)
+def initialize_ciscoconfparse():
+    """
+    Initialize ciscoconfparse global variables and configure logging
+    """
+    configure_loguru()
+
+    globals_dict = initialize_globals()
+    for key, value in globals_dict.items():
+        # Example, this will set __version__ to content of 'value'
+        #     from -> https://stackoverflow.com/a/3972978/667301
+        globals()[key] = value
+
+    return globals_dict
+
+
+# ALL ciscoconfparse global variables initizalization happens here...
+initialize_ciscoconfparse()
+
 
 @logger.catch(reraise=True)
 def _parse_line_braces(line_txt=None, comment_delimiter=None) -> tuple:
