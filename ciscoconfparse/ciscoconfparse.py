@@ -85,7 +85,7 @@ from ciscoconfparse.ccp_util import configure_loguru
 from loguru import logger
 import toml
 
-# do NOT decorate get_version_number() with logger.catch()
+@logger.catch(reraise=True)
 def get_version_number():
     # Docstring props: http://stackoverflow.com/a/1523456/667301
     # version: if-else below fixes Github issue #123
@@ -111,8 +111,11 @@ def get_version_number():
 
     return version
 
-# do NOT decorate initialize_globals() with logger.catch()
+@logger.catch(reraise=True)
 def initialize_globals():
+    """
+    Initialize ciscoconfparse global dunder variables and a couple others.
+    """
     global ALL_VALID_SYNTAX
     global ENCODING
     global __author_email__
@@ -154,18 +157,24 @@ def initialize_globals():
         }
         return globals_dict
 
-def init_ciscoconfparse():
+@logger.catch(reraise=True)
+def initialize_ciscoconfparse():
+    """
+    Initialize ciscoconfparse global variables and configure logging
+    """
     configure_loguru()
+
     globals_dict = initialize_globals()
     for key, value in globals_dict.items():
         # Example, this will set __version__ to content of 'value'
         #     from -> https://stackoverflow.com/a/3972978/667301
         globals()[key] = value
+
     return globals_dict
 
 
 # ALL ciscoconfparse global variables initizalization happens here...
-globals_dict = init_ciscoconfparse()
+initialize_ciscoconfparse()
 
 
 @logger.catch(reraise=True)
