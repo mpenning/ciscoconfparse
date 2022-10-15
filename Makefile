@@ -12,6 +12,8 @@ pypi-packaging:
 	pip install -U setuptools>=58.0.0
 	pip install -U twine>=4.0.1
 	pip install -U poetry>=1.0.0
+	# Delete bogus files... see https://stackoverflow.com/a/73992288/667301
+	perl -e 'unlink( grep { /^\W\d*\.*\d*/ && !-d } glob( "*" ) );'
 .PHONY: pypi
 pypi:
 	make clean
