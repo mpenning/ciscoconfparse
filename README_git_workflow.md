@@ -19,7 +19,12 @@ git commit <files> -m "Describe changes here"
 
 # If releasing on pypi, bump version number in pyproject.toml...
 vi pyproject.toml
+
+# If releasing on pypi, add changes into CHANGES.md
+vi CHANGES.md
+
 git commit pyproject.toml -m "Roll version number"
+git commit CHANGES.md -m "Roll version number"
 
 # Merge some_feature_branch into master...
 git checkout main
