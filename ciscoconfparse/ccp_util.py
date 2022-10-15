@@ -178,6 +178,134 @@ class PythonOptimizeCheck(object):
         if error != "__no_error__":
             raise PythonOptimizeException(error)
 
+@logger.catch(reraise=True)
+def ccp_logger_control(
+    sink=sys.stderr,
+    action="",
+    handler_id=None,
+    allow_enqueue=True,
+    # rotation="00:00",
+    # retention="1 month",
+    # compression="zip",
+    level="DEBUG",
+    colorize=True,
+    debug=0,
+):
+    """
+    A simple function to handle logging... Enable / Disable all
+    ciscoconfparse logging here... also see Github issue #211.
+
+    Example
+    -------
+    """
+
+    msg = "ccp_logger_control() was called with sink='{}', action='{}', handler_id='{}', allow_enqueue={}, level='{}', colorize={}, debug={}".format(
+        sink,
+        action,
+        handler_id,
+        allow_enqueue,
+        # rotation,
+        # retention,
+        # compression,
+        level,
+        colorize,
+        debug,
+    )
+    if debug > 0:
+        logger.info(msg)
+
+    assert isinstance(action, str)
+    assert action in ("remove", "add", "disable", "enable", "",)
+
+    package_name = "ciscoconfparse"
+
+    if action == "remove":
+        # Require an explicit loguru handler_id to remove...
+        assert isinstance(handler_id, int)
+
+        logger.remove(handler_id)
+        return True
+
+    elif action == "disable":
+        # Administratively disable this loguru logger
+        logger.disable(package_name)
+        return True
+
+    elif action == "enable":
+        # Administratively enable this loguru logger
+        logger.enable(package_name)
+        return True
+
+    elif action == "add":
+
+        logger.add(
+            sink=sink,
+            diagnose=True,
+            backtrace=True,
+            # https://github.com/mpenning/ciscoconfparse/issues/215
+            enqueue=allow_enqueue,
+            serialize=False,
+            catch=True,
+            # rotation="00:00",
+            # retention="1 day",
+            # compression="zip",
+            colorize=True,
+            level="DEBUG",
+        )
+        logger.enable(package_name)
+        return True
+
+    elif action == "":
+        raise ValueError(
+            "action='' is not supported.  Please use a valid action keyword"
+        )
+
+    else:
+        raise NotImplementedError(
+            "action='%s' is an unsupported logger action" % action
+        )
+
+
+@logger.catch(reraise=True)
+def configure_loguru(
+    sink=sys.stderr,
+    action="",
+    # rotation="midnight",
+    # retention="1 month",
+    # compression="zip",
+    level="DEBUG",
+    colorize=True,
+    debug=0,
+):
+    """
+    configure_loguru()
+    """
+    assert isinstance(action, str)
+    assert action in ('remove', 'add', 'enable', 'disable', '',)
+    # assert isinstance(rotation, str)
+    # assert isinstance(retention, str)
+    # assert isinstance(compression, str)
+    # assert compression == "zip"
+    assert isinstance(level, str)
+    assert isinstance(colorize, bool)
+    assert isinstance(debug, int) and (0 <= debug <= 5)
+
+    # logger_control() was imported above...
+    #    Remove the default loguru logger to stderr (handler_id==0)...
+    ccp_logger_control(action="remove", handler_id=0)
+
+    # Add log to STDOUT
+    ccp_logger_control(
+        sink=sys.stdout,
+        action="add",
+        level="DEBUG",
+        # rotation='midnight',   # ALE barks about the rotation keyword...
+        # retention="1 month",
+        # compression=compression,
+        colorize=colorize
+    )
+    ccp_logger_control(action="enable")
+
 
 @logger.catch(reraise=True)
 def as_text_list(object_list):
@@ -282,93 +410,6 @@ def log_function_call(function=None, *args, **kwargs):
     logger.info("Type 5 log_function_call: %s()" % (function.__qualname__))
     return logging_decorator
 
-
-@logger.catch(reraise=True)
-def ccp_logger_control(
-    sink=sys.stderr,
-    action="",
-    handler_id=None,
-    allow_enqueue=True,
-    # rotation="00:00",
-    # retention="1 month",
-    # compression="zip",
-    level="DEBUG",
-    colorize=True,
-    debug=0,
-):
-    """
-    A simple function to handle logging... Enable / Disable all
-    ciscoconfparse logging here... also see Github issue #211.
-
-    Example
-    -------
-    """
-
-    msg = "ccp_logger_control() was called with sink='{}', action='{}', handler_id='{}', allow_enqueue={}, level='{}', colorize={}, debug={}".format(
-        sink,
-        action,
-        handler_id,
-        allow_enqueue,
-        # rotation,
-        # retention,
-        # compression,
-        level,
-        colorize,
-        debug,
-    )
-    if debug > 0:
-        logger.info(msg)
-
-    assert isinstance(action, str)
-    assert action in ("remove", "add", "disable", "enable", "",)
-
-    package_name = "ciscoconfparse"
-
-    if action == "remove":
-        # Require an explicit loguru handler_id to remove...
-        assert isinstance(handler_id, int)
-
-        logger.remove(handler_id)
-        return True
-
-    elif action == "disable":
-        # Administratively disable this loguru logger
-        logger.disable(package_name)
-        return True
-
-    elif action == "enable":
-        # Administratively enable this loguru logger
-        logger.enable(package_name)
-        return True
-
-    elif action == "add":
-
-        logger.add(
-            sink=sink,
-            diagnose=True,
-            backtrace=True,
-            # https://github.com/mpenning/ciscoconfparse/issues/215
-            enqueue=allow_enqueue,
-            serialize=False,
-            catch=True,
-            # rotation="00:00",
-            # retention="1 day",
-            # compression="zip",
-            colorize=True,
-            level="DEBUG",
-        )
-        logger.enable(package_name)
-        return True
-
-    elif action == "":
-        raise ValueError(
-            "action='' is not supported.  Please use a valid action keyword"
-        )
-
-    else:
-        raise NotImplementedError(
-            "action='%s' is an unsupported logger action" % action
-        )
 
 
 class __ccp_re__(object):

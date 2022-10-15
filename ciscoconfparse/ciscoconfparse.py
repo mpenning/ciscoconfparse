@@ -81,95 +81,63 @@ from ciscoconfparse.models_terraform import TfLine
 from ciscoconfparse.ccp_abc import BaseCfgLine
 
 from ciscoconfparse.ccp_util import junos_unsupported
-from ciscoconfparse.ccp_util import ccp_logger_control
+from ciscoconfparse.ccp_util import configure_loguru
 # Not using ccp_re yet... still a work in progress
 # from ciscoconfparse.ccp_util import ccp_re
 
 
-@logger.catch(reraise=True)
-def configure_loguru(
-    sink=sys.stderr,
-    action="",
-    # rotation="midnight",
-    # retention="1 month",
-    # compression="zip",
-    level="DEBUG",
-    colorize=True,
-    debug=0,
-):
-    """
-    configure_loguru()
-    """
-    assert isinstance(action, str)
-    assert action in ('remove', 'add', 'enable', 'disable', '',)
-    # assert isinstance(rotation, str)
-    # assert isinstance(retention, str)
-    # assert isinstance(compression, str)
-    # assert compression == "zip"
-    assert isinstance(level, str)
-    assert isinstance(colorize, bool)
-    assert isinstance(debug, int) and (0 <= debug <= 5)
+# do NOT decorate get_version_number() with logger.catch()
+def get_version_number():
+    # Docstring props: http://stackoverflow.com/a/1523456/667301
+    # __version__ if-else below fixes Github issue #123
 
-    # logger_control() was imported above...
-    #    Remove the default loguru logger to stderr (handler_id==0)...
-    ccp_logger_control(action="remove", handler_id=0)
-
-#    _logger_config = logger.configure(
-#        sys.stdout,
-#        level="DEBUG",
-#        rotation='midnight',
-#        retention="1 month",
-#        compression=compression,
-#        colorize=colorize,
-#    )
-#    logger.add(_logger_config)
-
-    ccp_logger_control(
-        sink=sys.stdout,
-        action="add",
-        level="DEBUG",
-        # rotation='midnight',   # ALE barks about the rotation keyword...
-        # retention="1 month",
-        # compression=compression,
-        colorize=colorize
-    )
-    ccp_logger_control(action="enable")
-
-
-configure_loguru()
-
-ENCODING = locale.getpreferredencoding()
-ALL_VALID_SYNTAX = (
-    'ios',
-    'nxos',
-    'asa',
-    'junos',
-    'terraform',
-)
-
-# Docstring props: http://stackoverflow.com/a/1523456/667301
-# __version__ if-else below fixes Github issue #123
-pyproject_path = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)),
-    "../pyproject.toml",
-)
-if os.path.isfile(pyproject_path):
-    # Retrieve the version number from pyproject.toml...
-    toml_values = dict()
-    with open(pyproject_path, encoding=ENCODING) as fh:
-        toml_values = toml.loads(fh.read())
-    __version__ = toml_values.get("version")
-
-else:
-    # This case is required for importing from a zipfile... Github issue #123
     __version__ = "0.0.0"  # __version__ read failed
 
-__author_email__ = r"mike /at\ pennington [dot] net"
-__author__ = "David Michael Pennington <{}>".format(__author_email__)
-__copyright__ = "2007-{}, {}".format(time.strftime("%Y"), __author__)
-__license__ = "GPLv3"
-__status__ = "Production"
+    pyproject_path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        "../pyproject.toml",
+    )
+    if os.path.isfile(pyproject_path):
+        # Retrieve the version number from pyproject.toml...
+        toml_values = dict()
+        with open(pyproject_path, encoding=ENCODING) as fh:
+            toml_values = toml.loads(fh.read())
+        __version__ = toml_values.get("version")
 
+    else:
+        # This case is required for importing from a zipfile... Github issue #123
+        __version__ = "0.0.0"  # __version__ read failed
+
+    return __version__
+
+# do NOT decorate initialize_globals() with logger.catch()
+def initialize_globals():
+    global ALL_VALID_SYNTAX
+    global ENCODING
+    global __author_email__
+    global __author__
+    global __copyright__
+    global __license__
+    global __status__
+
+    ENCODING = locale.getpreferredencoding()
+    ALL_VALID_SYNTAX = (
+        'ios',
+        'nxos',
+        'asa',
+        'junos',
+        'terraform',
+    )
+
+    __author_email__ = r"mike /at\ pennington [dot] net"
+    __author__ = "David Michael Pennington <{}>".format(__author_email__)
+    __copyright__ = "2007-{}, {}".format(time.strftime("%Y"), __author__)
+    __license__ = "GPLv3"
+    __status__ = "Production"
+    __version__ = get_version_number()
+
+initialize_globals()
+configure_loguru()
 
 @logger.catch(reraise=True)
 def _parse_line_braces(line_txt=None, comment_delimiter=None) -> tuple:
