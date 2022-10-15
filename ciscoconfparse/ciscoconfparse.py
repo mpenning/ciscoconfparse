@@ -81,60 +81,9 @@ from ciscoconfparse.models_terraform import TfLine
 from ciscoconfparse.ccp_abc import BaseCfgLine
 
 from ciscoconfparse.ccp_util import junos_unsupported
-from ciscoconfparse.ccp_util import ccp_logger_control
+from ciscoconfparse.ccp_util import configure_loguru
 # Not using ccp_re yet... still a work in progress
 # from ciscoconfparse.ccp_util import ccp_re
-
-
-@logger.catch(reraise=True)
-def configure_loguru(
-    sink=sys.stderr,
-    action="",
-    # rotation="midnight",
-    # retention="1 month",
-    # compression="zip",
-    level="DEBUG",
-    colorize=True,
-    debug=0,
-):
-    """
-    configure_loguru()
-    """
-    assert isinstance(action, str)
-    assert action in ('remove', 'add', 'enable', 'disable', '',)
-    # assert isinstance(rotation, str)
-    # assert isinstance(retention, str)
-    # assert isinstance(compression, str)
-    # assert compression == "zip"
-    assert isinstance(level, str)
-    assert isinstance(colorize, bool)
-    assert isinstance(debug, int) and (0 <= debug <= 5)
-
-    # logger_control() was imported above...
-    #    Remove the default loguru logger to stderr (handler_id==0)...
-    ccp_logger_control(action="remove", handler_id=0)
-
-#    _logger_config = logger.configure(
-#        sys.stdout,
-#        level="DEBUG",
-#        rotation='midnight',
-#        retention="1 month",
-#        compression=compression,
-#        colorize=colorize,
-#    )
-#    logger.add(_logger_config)
-
-    ccp_logger_control(
-        sink=sys.stdout,
-        action="add",
-        level="DEBUG",
-        # rotation='midnight',   # ALE barks about the rotation keyword...
-        # retention="1 month",
-        # compression=compression,
-        colorize=colorize
-    )
-    ccp_logger_control(action="enable")
-
 
 configure_loguru()
 
