@@ -11,7 +11,6 @@ VERSION := $(shell grep version pyproject.toml | tr -s ' ' | tr -d "'" | tr -d '
 pypi-packaging:
 	#pip install -U setuptools >= 58.0.0
 	pip install -U setuptools
-	pip install -U wheel >= 0.37.1
 	pip install -U twine >= 4.0.1
 	pip install -U poetry
 .PHONY: pypi
