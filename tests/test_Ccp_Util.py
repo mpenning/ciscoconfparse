@@ -581,19 +581,24 @@ def test_dns_lookup():
     #   ref http://stackoverflow.com/a/7714208/667301
     result_correct = {"addrs": ["127.0.0.1"], "name": "*.vcap.me", "error": "", "record_type": "A"}
     test_result = dns_lookup("*.vcap.me")
-    if not test_result["error"]:
+    if test_result["error"] != "":
         assert dns_lookup("*.vcap.me") == result_correct
     else:
         pytest.skip(test_result["error"])
 
 
 def test_reverse_dns_lookup():
+
     result_correct = {"addrs": ["127.0.0.1"], "name": "localhost.", "error": ""}
+
     test_result = reverse_dns_lookup("127.0.0.1")
-    if test_result["error"] != "":
-        assert "localhost" in test_result["name"].lower()
-    else:
+    assert test_result["name"] != ""
+    assert "localhost" in test_result["name"].lower()
+    try:
+        assert test_result["error"] == ""
+    except:
         pytest.skip(test_result["error"])
+
 
 
 def test_CiscoRange_01():

@@ -2571,12 +2571,13 @@ def check_valid_ipaddress(input_addr=None):
     return (input_addr, ipaddr_family)
 
 @logger.catch(reraise=True)
-def reverse_dns_lookup(input_str, timeout=3.0, server="", proto="udp"):
+def reverse_dns_lookup(input_str, timeout=3.0, server="4.2.2.2", proto="udp"):
     """Perform a simple reverse DNS lookup on an IPv4 or IPv6 address; return results in a python dictionary"""
     assert isinstance(proto, str) and (proto=="udp" or proto=="tcp")
     assert isinstance(float(timeout), float) and float(timeout) > 0.0
 
-    input_str, ipaddr_family = check_valid_ipaddress(input_str)
+    addr, addr_family = check_valid_ipaddress(input_str)
+    assert addr_family==4 or addr_family==6
 
     tcp_flag = None
     if proto=="tcp":
@@ -2587,11 +2588,15 @@ def reverse_dns_lookup(input_str, timeout=3.0, server="", proto="udp"):
         raise ValueError()
 
     rr = Resolver()
+    rr.nameservers = []
+
+    # Append valid addresses to rr.nameservers...
+    for candidate_server_addr in server.split(","):
+        addr, addr_family = check_valid_ipaddress(input_addr=candidate_server_addr)
+        rr.nameservers.append(addr)
+
     #rr = rr.resolve_address(ipaddr=input_str, tcp=tcp_flag, rdtype="PTR", lifetime=float(timeout))
     #rr = rr.resolve_address(ipaddr=input_str, tcp=tcp_flag, lifetime=float(timeout))
-
-    if server != "":
-        rr.nameservers = [server]
 
     records = []
     retval = {}
