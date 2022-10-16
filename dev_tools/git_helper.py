@@ -177,10 +177,11 @@ def run_cmd(
     )
     if debug > 1:
         loguru_logger.log("DEBUG", "|" + "Calling Popen().communicate()")
+    loguru_logger.log("INFO", "|" + "run_cmd('{}')".format(cmd))
     stdout, stderr = process.communicate()
-    print("STDOUT: '{}'".format(cmd))
+    print("STDOUT: '{}'\n".format(cmd))
     print(stdout)
-    print("STDERR: '{}'".format(cmd))
+    print("STDERR: '{}'\n".format(cmd))
     print(stderr)
     if debug > 1:
         loguru_logger.log(
