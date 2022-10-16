@@ -242,7 +242,7 @@ def git_tag_and_push(args):
 
     if check_exists_tag_value(tag_value=version) is True:
         loguru_logger.log(
-            "INFO",
+            "DEBUG",
             "|"
             + "The -t argument is rejected; the '{0}' tag already exists in this local git repo".format(
                 version
