@@ -214,7 +214,7 @@ def get_version():
 
 def git_tag_and_push(args):
     version = get_version()
-    loguru_logger.log("DEBUG", "|" + "Tagging this repo with '{}'".format(version))
+    loguru_logger.log("DEBUG", "|" + "Using tag '{}' for this git transaction".format(version))
 
     if args.branch != "":
         loguru_logger.log(
