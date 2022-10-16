@@ -183,11 +183,6 @@ def git_tag_and_push(args):
     version = get_version()
     LogIt("DEBUG", "Tagging this repo with '{}'".format(version))
 
-    if args.force is True:
-        git_push_flag1 = "--force-with-lease"
-    else:
-        git_push_flag1 = ""
-
     if args.checkout != "":
         LogIt("DEBUG", "Checking out git branch: {}".format(args.checkout))
         stdout, stderr = run_cmd("git checkout {}".format(args.checkout))
@@ -223,6 +218,8 @@ def git_tag_and_push(args):
             stdout, stderr = run_cmd('git tag -a {0} -m "Tag with {0}"'.format(version))
 
 
+    stdout, stderr = run_cmd('git checkout main')
+
     if args.force is False and args.push is True and args.tag is False:
         # Do NOT force push
         stdout, stderr = run_cmd('git push git@github.com:mpenning/ciscoconfparse.git')
@@ -234,12 +231,15 @@ def git_tag_and_push(args):
 
     elif args.force is True and args.tag is True:
         # Force push and tag
-        stdout, stderr = run_cmd('git push --force-with-lease git@github.com:mpenning/ciscoconfparse.git'.format(git_push_flag1))
+        stdout, stderr = run_cmd('git push --force-with-lease git@github.com:mpenning/ciscoconfparse.git')
         stdout, stderr = run_cmd('git push --force-with-lease --tags origin +main')
         stdout, stderr = run_cmd('git push --force-with-lease --tags origin {}'.format(version))
 
     elif args.force is True and args.tag is False:
         stdout, stderr = run_cmd('git push --force-with-lease origin +main')
+
+    else:
+        ValueError("Found an invalid combination of CLI options")
 
 
 if __name__=="__main__":
