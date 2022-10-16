@@ -2,6 +2,12 @@
 - Released: Not released
 - Summary:
 
+## Version: 1.6.46
+
+- Released: 2022-10-15
+- Summary:
+    - Reorganize reverse_dns_lookup() in ciscoconfparse/ccp_util.py
+
 ## Version: 1.6.45
 
 - Released: 2022-10-15

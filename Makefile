@@ -24,25 +24,25 @@ pypi:
 	python -m twine upload dist/*
 .PHONY: repo-push
 repo-push:
-	git remote remove origin
-	git remote add origin "git@github.com:mpenning/ciscoconfparse"
-	git push git@github.com:mpenning/ciscoconfparse.git
-	git push origin +main
-	$(shell python dev_tools/git_helper.py)
+	#git remote remove origin
+	#git remote add origin "git@github.com:mpenning/ciscoconfparse"
+	#git push git@github.com:mpenning/ciscoconfparse.git
+	#git push origin +main
+	$(shell python dev_tools/git_helper.py -p)
 .PHONY: repo-push-force
 repo-push-force:
-	git remote remove origin
-	git remote add origin "git@github.com:mpenning/ciscoconfparse"
-	git push --force-with-lease git@github.com:mpenning/ciscoconfparse.git
-	git push --force-with-lease origin +main
-	$(shell python dev_tools/git_helper.py)
+	#git remote remove origin
+	#git remote add origin "git@github.com:mpenning/ciscoconfparse"
+	#git push --force-with-lease git@github.com:mpenning/ciscoconfparse.git
+	#git push --force-with-lease origin +main
+	$(shell python dev_tools/git_helper.py -f)
 .PHONY: repo-push-tag
 repo-push-tag:
-	make repo-push
-	$(shell python dev_tools/git_helper.py -t)
+	#make repo-push
+	$(shell python dev_tools/git_helper.py -p -t)
 .PHONY: repo-push-tag-force
 repo-push-tag-force:
-	make repo-push-force
+	#make repo-push-force
 	$(shell python dev_tools/git_helper.py -t -f)
 .PHONY: pylama
 pylama:
