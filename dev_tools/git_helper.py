@@ -27,12 +27,12 @@ def parse_args(input_str=""):
     parse_optional = parser.add_argument_group("optional")
 
     parse_optional.add_argument(
-        "-c",
-        "--checkout",
+        "-b",
+        "--branch",
         help="git checkout to this branch string (default: '')",
         action="store",
         type=str,
-        default="",
+        default="main",
         required=False,
     )
 
@@ -203,11 +203,11 @@ def git_tag_and_push(args):
     version = get_version()
     loguru_logger.log("DEBUG", "|" + "Tagging this repo with '{}'".format(version))
 
-    if args.checkout != "":
+    if args.branch != "":
         loguru_logger.log(
-            "DEBUG", "|" + "Checking out git branch: {}".format(args.checkout)
+            "DEBUG", "|" + "Checking out git branch: {}".format(args.branch)
         )
-        stdout, stderr = run_cmd("git checkout {}".format(args.checkout))
+        stdout, stderr = run_cmd("git checkout {}".format(args.branch))
 
     stdout, stderr = run_cmd("git remote remove origin")
     stdout, stderr = run_cmd(
@@ -221,10 +221,6 @@ def git_tag_and_push(args):
 
     version = get_version()  # Get the version from pyproject.toml
     assert isinstance(version, str)
-
-    print("ARGS push", args.push)
-    print("ARGS tag", args.tag)
-    print("ARGS force", args.force)
 
     if check_exists_tag_value(tag_value=version) is True:
         loguru_logger.log(
