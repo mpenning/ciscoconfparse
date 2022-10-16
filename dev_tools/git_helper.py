@@ -201,17 +201,23 @@ def git_root_directory():
 
 def get_version():
     """Read the version from pyproject.toml"""
+    version = None
     filepath = os.path.join(git_root_directory(), "pyproject.toml")
     assert os.path.isfile(filepath)
     for line in open(filepath).read().splitlines():
         if "version" in line:
             rr = re.search(r"\s*version\s*=\s*(\S+)$", line.strip())
             if rr is not None:
+                version = rr.group(1).strip().strip("'").strip('"')
                 loguru_logger.log("DEBUG", "|" + "Found version '{0}' defined in {1}".format(version, filepath))
-                return rr.group(1).strip().strip("'").strip('"')
+                return version
         else:
             continue
-    raise ValueError()
+
+    if version is None:
+        raise ValueError()
+    else:
+        return True
 
 
 def git_tag_and_push(args):
