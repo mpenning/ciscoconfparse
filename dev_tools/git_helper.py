@@ -80,6 +80,15 @@ def parse_args(input_str=""):
         if args.method is None:
             raise ValueError("git push requires use of -m / --method")
 
+    if args.method is not None:
+        loguru_logger.log(
+            "INFO",
+            "|"
+            + "Resolving git branch conflicts with: {}".format(
+                args.method
+            ),
+        )
+
     # args.tag_value = get_version()
 
     return args
@@ -177,10 +186,11 @@ def run_cmd(
     )
     if debug > 1:
         loguru_logger.log("DEBUG", "|" + "Calling Popen().communicate()")
+    loguru_logger.log("INFO", "|" + "run_cmd('{}')".format(cmd))
     stdout, stderr = process.communicate()
-    print("STDOUT: '{}'".format(cmd))
+    print("STDOUT: '{}'\n".format(cmd))
     print(stdout)
-    print("STDERR: '{}'".format(cmd))
+    print("STDERR: '{}'\n".format(cmd))
     print(stderr)
     if debug > 1:
         loguru_logger.log(
