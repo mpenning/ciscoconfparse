@@ -75,16 +75,17 @@ def parse_args(input_str=""):
 def check_exists_tag_value(tag_value=None):
     """Check 'git tag' for an exact string match for tag_value."""
     assert isinstance(tag_value, str)
-    LogIt("INFO", "Using version '{}' from pyproject.toml".format(tag_value))
+    loguru_logger.log("INFO", "|" + "Checking whether version '{}' is defined in pyproject.toml".format(tag_value))
     stdout, stderr = run_cmd("git tag")
     for line in stdout.splitlines():
         if tag_value.strip() == line.strip():
+            loguru_logger.log("INFO", "|" + "Tag '{}' already exists.".format(tag_value))
             return True
-    LogIt("INFO", "'{}' is a new git tag".format(tag_value))
+    loguru_logger.log("INFO", "|" + "'{}' is a new git tag".format(tag_value))
     return False
 
 
-def LogIt(level=None, message=None):
+def LogItDeprecated(level=None, message=None):
     """Modest loguru hack to indent the log message based on log level."""
 
     message_indent = {
@@ -127,16 +128,16 @@ def run_cmd(
     args = parse_args()
 
     if debug > 0:
-        LogIt("INFO", "Calling run_cmd(cmd='%s')".format(cmd))
+        loguru_logger.log("INFO", "|" + "Calling run_cmd(cmd='%s')".format(cmd))
 
     if debug > 1:
-        LogIt("DEBUG", "Processing Popen() string cmd='{}'".format(cmd))
+        loguru_logger.log("DEBUG", "|" + "Processing Popen() string cmd='{}'".format(cmd))
     assert cmd != ""
     assert cwd != ""
     cwd = os.path.expanduser(cwd)
 
     if debug > 1:
-        LogIt("DEBUG", "Popen() started")
+        loguru_logger.log("DEBUG", "|" + "Popen() started")
 
     process = Popen(
         shlex.split(cmd),
@@ -152,10 +153,10 @@ def run_cmd(
         encoding="utf-8",
     )
     if debug > 1:
-        LogIt("DEBUG", "Calling Popen().communicate()")
+        loguru_logger.log("DEBUG", "|" + "Calling Popen().communicate()")
     stdout, stderr = process.communicate()
     if debug > 1:
-        LogIt("DEBUG", "Popen().communicate() returned stdout=%s" % stdout)
+        loguru_logger.log("DEBUG", "|" + "Popen().communicate() returned stdout=%s" % stdout)
     return (stdout, stderr)
 
 
@@ -188,10 +189,10 @@ def get_version():
 
 def git_tag_and_push(args):
     version = get_version()
-    LogIt("DEBUG", "Tagging this repo with '{}'".format(version))
+    loguru_logger.log("DEBUG", "|" + "Tagging this repo with '{}'".format(version))
 
     if args.checkout != "":
-        LogIt("DEBUG", "Checking out git branch: {}".format(args.checkout))
+        loguru_logger.log("DEBUG", "|" + "Checking out git branch: {}".format(args.checkout))
         stdout, stderr = run_cmd("git checkout {}".format(args.checkout))
 
     stdout, stderr = run_cmd("git remote remove origin")
@@ -207,21 +208,12 @@ def git_tag_and_push(args):
     version = get_version()  # Get the version from pyproject.toml
     assert isinstance(version, str)
 
+    print("ARGS push", args.push)
+    print("ARGS tag", args.tag)
+    print("ARGS force", args.force)
+
     if check_exists_tag_value(tag_value=version) is True:
-
-        # This version tag already exists...
-        if args.force is False and args.tag is True:
-            LogIt(
-                "INFO",
-                "The '{0}' tag already exists in this local git repo".format(version),
-            )
-
-        elif args.force is True and args.tag is True:
-            # Create a local git tag at git HEAD
-            stdout, stderr = run_cmd('git tag -a {0} -m "Tag with {0}"'.format(version))
-
-        else:
-            raise ValueError("Found an unexpected combination of CLI flags")
+        loguru_logger.log("INFO", "|" + "The -t argument is rejected; the '{0}' tag already exists in this local git repo".format(version))
 
     else:
         # args.tag is a new tag value...
@@ -231,26 +223,29 @@ def git_tag_and_push(args):
 
     stdout, stderr = run_cmd("git checkout main")
 
+
     if args.force is False and args.push is True and args.tag is False:
         # Do NOT force push
+        loguru_logger.log("SUCCESS", "|" + "git push (without tags) to the main branch at git origin."
         stdout, stderr = run_cmd("git push git@github.com:mpenning/ciscoconfparse.git")
         stdout, stderr = run_cmd("git push origin +main")
 
     elif args.force is False and args.push is True and args.tag is True:
+        loguru_logger.log("SUCCESS", "|" + "git push (with tags) to the main branch at git origin."
         stdout, stderr = run_cmd("git push --tags origin +main")
         stdout, stderr = run_cmd("git push --tags origin {}".format(version))
 
     elif args.force is True and args.tag is True:
         # Force push and tag
+        loguru_logger.log("SUCCESS", "|" + "git push FORCED (with tags) to the main branch at git origin."
         stdout, stderr = run_cmd(
-            "git push --force-with-lease git@github.com:mpenning/ciscoconfparse.git"
+            "git push --force-with-lease --tags git@github.com:mpenning/ciscoconfparse.git"
         )
         stdout, stderr = run_cmd("git push --force-with-lease --tags origin +main")
-        stdout, stderr = run_cmd(
-            "git push --force-with-lease --tags origin {}".format(version)
-        )
+        stdout, stderr = run_cmd("git push --force-with-lease --tags origin {}".format(version))
 
     elif args.force is True and args.tag is False:
+        loguru_logger.log("SUCCESS", "|" + "git push FORCED (without tags) to the main branch at git origin.")
         stdout, stderr = run_cmd("git push --force-with-lease origin +main")
 
     else:
