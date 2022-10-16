@@ -46,6 +46,15 @@ def parse_args(input_str=""):
     )
 
     parse_optional.add_argument(
+        "-p",
+        "--push",
+        action="store_true",
+        default=False,
+        required=False,
+        help="git push",
+    )
+
+    parse_optional.add_argument(
         "-t",
         "--tag",
         action="store_true",
@@ -55,6 +64,8 @@ def parse_args(input_str=""):
     )
 
     args = parser.parse_args()
+    if args.force is True:
+        args.push = True
     #args.tag_value = get_version()
 
     return args
@@ -62,10 +73,12 @@ def parse_args(input_str=""):
 def check_exists_tag_value(tag_value=None):
     """Check 'git tag' for an exact string match for tag_value."""
     assert isinstance(tag_value, str)
+    LogIt("INFO", "Using version '{}' from pyproject.toml".format(tag_value))
     stdout, stderr = run_cmd("git tag")
     for line in stdout.splitlines():
         if tag_value.strip()==line.strip():
             return True
+    LogIt("INFO", "'{}' is a new git tag".format(tag_value))
     return False
 
 def LogIt(level=None, message=None):
@@ -162,11 +175,13 @@ def get_version():
             rr = re.search(r"\s*version\s*=\s*(\S+)$", line.strip())
             if rr is not None:
                 return rr.group(1).strip().strip("'").strip('"')
+        else:
+            continue
     raise ValueError()
 
-def tag_git_version(args):
+def git_tag_and_push(args):
     version = get_version()
-    LogIt("DEBUG", "Found version '{}'".format(version))
+    LogIt("DEBUG", "Tagging this repo with '{}'".format(version))
 
     if args.force is True:
         git_push_flag1 = "--force-with-lease"
@@ -188,41 +203,46 @@ def tag_git_version(args):
     version = get_version() # Get the version from pyproject.toml
     assert isinstance(version, str)
 
-    if check_exists_tag_value(version) is True:
+    if check_exists_tag_value(tag_value=version) is True:
+
+        # This version tag already exists...
         if args.force is False and args.tag is True:
-            raise ValueError("Cannot tag with '{0}', the tag already exists in this local git repo".format(version))
+            LogIt("INFO", "The '{0}' tag already exists in this local git repo".format(version))
 
         elif args.force is True and args.tag is True:
             # Create a local git tag at git HEAD
             stdout, stderr = run_cmd('git tag -a {0} -m "Tag with {0}"'.format(version))
+
         else:
-            raise ValueError()
+            raise ValueError("Found an unexpected combination of CLI flags")
 
     else:
+        # args.tag is a new tag value...
         if args.tag is True:
             # Create a local git tag at git HEAD
             stdout, stderr = run_cmd('git tag -a {0} -m "Tag with {0}"'.format(version))
 
 
-    if args.force is True:
-        stdout, stderr = run_cmd('git push {} git@github.com:mpenning/ciscoconfparse.git'.format(git_push_flag1))
-    else:
+    if args.force is False and args.push is True and args.tag is False:
+        # Do NOT force push
         stdout, stderr = run_cmd('git push git@github.com:mpenning/ciscoconfparse.git')
+        stdout, stderr = run_cmd('git push origin +main')
 
-    if args.force is True and args.tag is True:
-        stdout, stderr = run_cmd('git push {} --tags origin +main'.format(git_push_flag1))
-        stdout, stderr = run_cmd('git push {} --tags origin {}'.format(git_push_flag1, version))
-
-    elif args.force is False and args.tag is True:
+    elif args.force is False and args.push is True and args.tag is True:
         stdout, stderr = run_cmd('git push --tags origin +main')
         stdout, stderr = run_cmd('git push --tags origin {}'.format(version))
 
+    elif args.force is True and args.tag is True:
+        # Force push and tag
+        stdout, stderr = run_cmd('git push --force-with-lease git@github.com:mpenning/ciscoconfparse.git'.format(git_push_flag1))
+        stdout, stderr = run_cmd('git push --force-with-lease --tags origin +main')
+        stdout, stderr = run_cmd('git push --force-with-lease --tags origin {}'.format(version))
+
     elif args.force is True and args.tag is False:
-        stdout, stderr = run_cmd('git push {} origin +main'.format(git_push_flag1))
-    elif args.force is False and args.tag is False:
-        stdout, stderr = run_cmd('git push origin +main')
+        stdout, stderr = run_cmd('git push --force-with-lease origin +main')
+
 
 if __name__=="__main__":
     args = parse_args()
-    tag_git_version(args)
+    git_tag_and_push(args)
     #sys.exit(1)
