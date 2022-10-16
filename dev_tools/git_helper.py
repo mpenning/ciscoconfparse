@@ -80,6 +80,15 @@ def parse_args(input_str=""):
         if args.method is None:
             raise ValueError("git push requires use of -m / --method")
 
+    if args.method is not None:
+        loguru_logger.log(
+            "INFO",
+            "|"
+            + "Resolving git branch conflicts with: {}".format(
+                args.method
+            ),
+        )
+
     # args.tag_value = get_version()
 
     return args
