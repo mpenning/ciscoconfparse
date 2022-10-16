@@ -89,7 +89,7 @@ def check_exists_tag_value(tag_value=None):
     """Check 'git tag' for an exact string match for tag_value."""
     assert isinstance(tag_value, str)
     loguru_logger.log(
-        "INFO",
+        "DEBUG",
         "|"
         + "Checking whether version '{}' is defined in pyproject.toml".format(
             tag_value
@@ -99,10 +99,10 @@ def check_exists_tag_value(tag_value=None):
     for line in stdout.splitlines():
         if tag_value.strip() == line.strip():
             loguru_logger.log(
-                "INFO", "|" + "Tag '{}' already exists.".format(tag_value)
+                "DEBUG", "|" + "Tag '{}' already exists.".format(tag_value)
             )
             return True
-    loguru_logger.log("INFO", "|" + "'{}' is a new git tag".format(tag_value))
+    loguru_logger.log("DEBUG", "|" + "'{}' is a new git tag".format(tag_value))
     return False
 
 
