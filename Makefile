@@ -15,6 +15,9 @@ pypi-packaging:
 	pip install -U poetry>=1.0.0
 	# Delete bogus files... see https://stackoverflow.com/a/73992288/667301
 	perl -e 'unlink( grep { /^\W\d*\.*\d*/ && !-d } glob( "*" ) );'
+.PHONY: dev
+dev:
+	make devpkgs
 .PHONY: pypi
 pypi:
 	make clean
@@ -77,6 +80,7 @@ devpkgs:
 	pip install -U virtualenvwrapper>=4.8.0
 	pip install -U passlib==1.7.4
 	pip install -U loguru==0.6.0
+	pip install -U toml>=0.10.2
 	pip install -U pss
 	pip install -U mock
 	pip install -U highlights>=0.1.1
@@ -112,6 +116,8 @@ test:
 	cd tests && ./runtests.sh
 .PHONY: clean
 clean:
+	# Delete bogus files... see https://stackoverflow.com/a/73992288/667301
+	perl -e 'unlink( grep { /^=\d*\.*\d*/ && !-d } glob( "*" ) );'
 	find ./* -name '*.pyc' -exec rm {} \;
 	find ./* -name '*.so' -exec rm {} \;
 	find ./* -name '*.coverage' -exec rm {} \;
