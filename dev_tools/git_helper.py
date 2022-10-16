@@ -171,7 +171,7 @@ def run_cmd(
         stdout=PIPE,
         # bufsize = 0  -> unbuffered
         # bufsize = 1  -> line buffered
-        bufsize=0,
+        bufsize=1,
         # encoding parameter... https://stackoverflow.com/a/57970619/667301
         encoding="utf-8",
     )
@@ -179,10 +179,6 @@ def run_cmd(
         loguru_logger.log("DEBUG", "|" + "Calling Popen().communicate()")
     loguru_logger.log("INFO", "|" + "run_cmd('{}')".format(cmd))
     stdout, stderr = process.communicate()
-    print("STDOUT: '{}'\n".format(cmd))
-    print(stdout)
-    print("STDERR: '{}'\n".format(cmd))
-    print(stderr)
     if debug > 1:
         loguru_logger.log(
             "DEBUG", "|" + "Popen().communicate() returned stdout=%s" % stdout
