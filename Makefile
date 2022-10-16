@@ -31,22 +31,22 @@ repo-push:
 	#git remote add origin "git@github.com:mpenning/ciscoconfparse"
 	#git push git@github.com:mpenning/ciscoconfparse.git
 	#git push origin +main
-	$(shell python dev_tools/git_helper.py -p)
+	$(shell python dev_tools/git_helper.py -p -m merge)
 .PHONY: repo-push-force
 repo-push-force:
 	#git remote remove origin
 	#git remote add origin "git@github.com:mpenning/ciscoconfparse"
 	#git push --force-with-lease git@github.com:mpenning/ciscoconfparse.git
 	#git push --force-with-lease origin +main
-	$(shell python dev_tools/git_helper.py -p -f)
+	$(shell python dev_tools/git_helper.py -p -f -m merge)
 .PHONY: repo-push-tag
 repo-push-tag:
 	#make repo-push
-	$(shell python dev_tools/git_helper.py -p -t)
+	$(shell python dev_tools/git_helper.py -p -t -m merge)
 .PHONY: repo-push-tag-force
 repo-push-tag-force:
 	#make repo-push-force
-	$(shell python dev_tools/git_helper.py -t -p -f)
+	$(shell python dev_tools/git_helper.py -t -p -f -m merge)
 .PHONY: pylama
 pylama:
 	# Good usability info here -> https://pythonspeed.com/articles/pylint/
