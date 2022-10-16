@@ -43,7 +43,7 @@ def parse_args(input_str=""):
         action="store_true",
         default=False,
         required=False,
-        help="git push using --force-with-lease",
+        help="Force a git push (using --force-with-lease)",
     )
 
     parse_optional.add_argument(
@@ -56,6 +56,16 @@ def parse_args(input_str=""):
     )
 
     parse_optional.add_argument(
+        "-m",
+        "--method",
+        action="store",
+        default=None,
+        required=False,
+        choices=["merge", "rebase", "ff"], # ff -> fast-forward
+        help="Use this git method to incorporate pending changes: merge, rebase, or ff (fast-forward)",
+    )
+
+    parse_optional.add_argument(
         "-t",
         "--tag",
         action="store_true",
@@ -65,8 +75,11 @@ def parse_args(input_str=""):
     )
 
     args = parser.parse_args()
-    if args.force is True:
+    if args.force is True or args.push is True:
         args.push = True
+        if args.method is None:
+            raise ValueError("git push requires use of -m / --method")
+
     # args.tag_value = get_version()
 
     return args
