@@ -207,6 +207,7 @@ def get_version():
         if "version" in line:
             rr = re.search(r"\s*version\s*=\s*(\S+)$", line.strip())
             if rr is not None:
+                loguru_logger.log("DEBUG", "|" + "Found version '{0}' defined in {1}".format(version, filepath))
                 return rr.group(1).strip().strip("'").strip('"')
         else:
             continue
