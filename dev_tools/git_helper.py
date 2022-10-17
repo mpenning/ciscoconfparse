@@ -47,12 +47,13 @@ def parse_args(input_str=""):
     )
 
     parse_optional.add_argument(
-        "-p",
-        "--push",
-        action="store_true",
-        default=False,
+        "-I",
+        "--increment_version",
+        action="store",
+        default=None,
         required=False,
-        help="git push",
+        choices=["major", "minor", "patch",],
+        help="Increment the version tag",
     )
 
     parse_optional.add_argument(
@@ -63,6 +64,15 @@ def parse_args(input_str=""):
         required=False,
         choices=["merge", "rebase", "ff"], # ff -> fast-forward
         help="Use this git method to incorporate pending changes: merge, rebase, or ff (fast-forward)",
+    )
+
+    parse_optional.add_argument(
+        "-p",
+        "--push",
+        action="store_true",
+        default=False,
+        required=False,
+        help="git push",
     )
 
     parse_optional.add_argument(
@@ -80,10 +90,32 @@ def parse_args(input_str=""):
         if args.method is None:
             raise ValueError("git push requires use of -m / --method")
 
-    # args.tag_value = get_version()
-
     return args
 
+def increment_tag_version(value=None):
+    assert isinstance(value, str)
+    assert value in set({"major", "minor", "patch"})
+    versions = get_version_list()
+    assert len(versions) > 0
+    this_version = versions[-1]
+    assert len(this_version) == 3
+    assert isinstance(this_version, tuple)
+    assert isinstance(this_version[0], int)
+    assert isinstance(this_version[1], int)
+    assert isinstance(this_version[2], int)
+
+    if value == "patch":
+        this_version = (this_version[0], this_version[1], this_version[2]+1)
+
+    elif value == "minor":
+        this_version = (this_version[0], this_version[1]+1, 0)
+
+    elif value == "major":
+        this_version = (this_version[0]+1, 0, 0)
+    else:
+        raise ValueError()
+
+    return this_version
 
 def check_exists_tag_value(tag_value=None):
     """Check 'git tag' for an exact string match for tag_value."""
@@ -198,6 +230,20 @@ def git_root_directory():
             return retval
     raise OSError()
 
+def get_tags():
+    # git ls-remote --tags origin
+    pass
+
+def get_version_list(source=None):
+    """Return a list of tuples; one tuple per version number tag"""
+    versions = []
+    stdout, stderr = run_cmd("git tag")
+    for version in stdout.splitlines():
+        vv = re.search(r"^v*(\d+\.\d+\.\d+)", version)
+        if vv is not None:
+            tt = [int(ii) for ii in vv.group(1).split(".")]
+            versions.append(tuple(tt))
+    return sorted(versions)
 
 def get_version():
     """Read the version from pyproject.toml"""
@@ -219,16 +265,17 @@ def get_version():
     else:
         return True
 
+def git_checkout(branch=None):
+    assert isinstance(branch, str)
+    loguru_logger.log(
+        "DEBUG", "|" + "Checking out git branch: {}".format(branch)
+    )
+    stdout, stderr = run_cmd("git checkout {}".format(branch))
 
 def git_tag_and_push(args):
     version = get_version()
     loguru_logger.log("DEBUG", "|" + "Using tag '{}' for this git transaction".format(version))
 
-    if args.branch != "":
-        loguru_logger.log(
-            "DEBUG", "|" + "Checking out git branch: {}".format(args.branch)
-        )
-        stdout, stderr = run_cmd("git checkout {}".format(args.branch))
 
     stdout, stderr = run_cmd("git remote remove origin")
     stdout, stderr = run_cmd(
@@ -302,5 +349,8 @@ def git_tag_and_push(args):
 
 if __name__ == "__main__":
     args = parse_args()
+    print("FOO", args.branch)
+    git_checkout(args.branch)
+    print(increment_tag_version(args.increment_version))
     git_tag_and_push(args)
     # sys.exit(1)
