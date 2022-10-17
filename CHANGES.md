@@ -2,6 +2,13 @@
 - Released: Not released
 - Summary:
 
+## Version: 1.6.47
+
+- Released: 2022-10-17
+- Summary:
+    - Add repo version management into the Makefile ('make bump-version-patch' / 'make bump-version-minor')
+    - Add repo version management to 'dev_tools/git_helper.py'
+
 ## Version: 1.6.46
 
 - Released: 2022-10-15
