@@ -1,5 +1,6 @@
 from subprocess import Popen, PIPE, STDOUT
 from argparse import ArgumentParser
+import fileinput
 import shlex
 import sys
 import os
@@ -52,7 +53,11 @@ def parse_args(input_str=""):
         action="store",
         default=None,
         required=False,
-        choices=["major", "minor", "patch",],
+        choices=[
+            "major",
+            "minor",
+            "patch",
+        ],
         help="Increment the version tag",
     )
 
@@ -62,7 +67,7 @@ def parse_args(input_str=""):
         action="store",
         default=None,
         required=False,
-        choices=["merge", "rebase", "ff"], # ff -> fast-forward
+        choices=["merge", "rebase", "ff"],  # ff -> fast-forward
         help="Use this git method to incorporate pending changes: merge, rebase, or ff (fast-forward)",
     )
 
@@ -84,6 +89,15 @@ def parse_args(input_str=""):
         help="git push with a git tag",
     )
 
+    parse_optional.add_argument(
+        "-w",
+        "--write_tag",
+        action="store_true",
+        default=False,
+        required=False,
+        help="write the new tag into pyproject.toml",
+    )
+
     args = parser.parse_args()
     if args.force is True or args.push is True:
         args.push = True
@@ -92,7 +106,12 @@ def parse_args(input_str=""):
 
     return args
 
+
 def increment_tag_version(value=None):
+    """
+    Accept a string value and modify existing version tag tuple according
+    to the string value input. Return the modified tag tuple.
+    """
     assert isinstance(value, str)
     assert value in set({"major", "minor", "patch"})
     versions = get_version_list()
@@ -100,22 +119,28 @@ def increment_tag_version(value=None):
     this_version = versions[-1]
     assert len(this_version) == 3
     assert isinstance(this_version, tuple)
-    assert isinstance(this_version[0], int)
-    assert isinstance(this_version[1], int)
-    assert isinstance(this_version[2], int)
+    this_version = (
+        int(this_version[0]),
+        int(this_version[1]),
+        int(this_version[2]),
+    )
 
+    new_version = None
     if value == "patch":
-        this_version = (this_version[0], this_version[1], this_version[2]+1)
+        new_version = (this_version[0], this_version[1], this_version[2] + 1)
 
     elif value == "minor":
-        this_version = (this_version[0], this_version[1]+1, 0)
+        new_version = (this_version[0], this_version[1] + 1, 0)
 
     elif value == "major":
-        this_version = (this_version[0]+1, 0, 0)
+        new_version = (this_version[0] + 1, 0, 0)
     else:
-        raise ValueError()
+        raise ValueError(
+            "increment_tag_version('{0}') cannot parse verion='{0}'".format(value)
+        )
 
-    return this_version
+    return new_version
+
 
 def check_exists_tag_value(tag_value=None):
     """Check 'git tag' for an exact string match for tag_value."""
@@ -230,11 +255,15 @@ def git_root_directory():
             return retval
     raise OSError()
 
+def pyproject_filepath():
+    filepath = os.path.join(git_root_directory(), "pyproject.toml")
+    return filepath
+
 def get_tags():
     # git ls-remote --tags origin
     pass
 
-def get_version_list(source=None):
+def get_version_list():
     """Return a list of tuples; one tuple per version number tag"""
     versions = []
     stdout, stderr = run_cmd("git tag")
@@ -245,17 +274,21 @@ def get_version_list(source=None):
             versions.append(tuple(tt))
     return sorted(versions)
 
-def get_version():
+def get_pyproject_version():
     """Read the version from pyproject.toml"""
     version = None
-    filepath = os.path.join(git_root_directory(), "pyproject.toml")
+    filepath = pyproject_filepath()
     assert os.path.isfile(filepath)
     for line in open(filepath).read().splitlines():
         if "version" in line:
             rr = re.search(r"\s*version\s*=\s*(\S+)$", line.strip())
             if rr is not None:
                 version = rr.group(1).strip().strip("'").strip('"')
-                loguru_logger.log("DEBUG", "|" + "Found version '{0}' defined in {1}".format(version, filepath))
+                loguru_logger.log(
+                    "DEBUG",
+                    "|"
+                    + "Found version '{0}' defined in {1}".format(version, filepath),
+                )
                 return version
         else:
             continue
@@ -265,17 +298,34 @@ def get_version():
     else:
         return True
 
-def git_checkout(branch=None):
-    assert isinstance(branch, str)
-    loguru_logger.log(
-        "DEBUG", "|" + "Checking out git branch: {}".format(branch)
-    )
-    stdout, stderr = run_cmd("git checkout {}".format(branch))
+def write_tag(args):
+    """Write the version tag into pyproject.toml"""
+    if args.increment_version is None:
+        tag = ".".join([str(ii) for ii in get_version_list[-1]])
+    else:
+        tag = ".".join([str(ii) for ii in increment_tag_version(args.increment_version)])
+
+    filepath = os.path.join(git_root_directory(), "pyproject.toml")
+    assert os.path.isfile(filepath)
+
+    # https://stackoverflow.com/a/290494/667301
+    for line in fileinput.input(filepath, inplace=True):
+        if re.search(r"^version", line) is not None:
+            print('{} = "{}"{}'.format("version", tag, os.linesep), end='')
+        else:
+            print(line.strip(os.linesep))
+    return True
+
+def git_checkout(args):
+    assert isinstance(args.branch, str)
+    loguru_logger.log("DEBUG", "|" + "Checking out git branch: {}".format(args.branch))
+    stdout, stderr = run_cmd("git checkout {}".format(args.branch))
 
 def git_tag_and_push(args):
-    version = get_version()
-    loguru_logger.log("DEBUG", "|" + "Using tag '{}' for this git transaction".format(version))
-
+    version = get_pyproject_version()
+    loguru_logger.log(
+        "DEBUG", "|" + "Using tag '{}' for this git transaction".format(version)
+    )
 
     stdout, stderr = run_cmd("git remote remove origin")
     stdout, stderr = run_cmd(
@@ -283,11 +333,11 @@ def git_tag_and_push(args):
     )
 
     # TODO: build CHANGES.md management / edit tool... automate version change lists
-    # TODO: support for push local tag to a remote 'git push origin 1.6.42'
+    # TODO: support for push local tag to a remote 'git push --tags origin 1.6.42'
     # TODO: support for delete remote tags 'git push origin ":refs/tags/waat"'
     # TODO: support for finding remote tags on a specific git hash 'git ls-remote -t <remote> | grep <commit-hash>'
 
-    version = get_version()  # Get the version from pyproject.toml
+    version = get_pyproject_version()  # Get the version from pyproject.toml
     assert isinstance(version, str)
 
     if check_exists_tag_value(tag_value=version) is True:
@@ -349,8 +399,8 @@ def git_tag_and_push(args):
 
 if __name__ == "__main__":
     args = parse_args()
-    print("FOO", args.branch)
-    git_checkout(args.branch)
-    print(increment_tag_version(args.increment_version))
+    git_checkout(args)
+    if args.write_tag is True:
+        write_tag(args)
     git_tag_and_push(args)
     # sys.exit(1)
