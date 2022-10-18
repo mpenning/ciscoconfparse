@@ -8,6 +8,7 @@
 - Summary:
     - Add repo version management into the Makefile ('make bump-version-patch' / 'make bump-version-minor')
     - Add repo version management to 'dev_tools/git_helper.py'
+    - Revise README_git_workflow.md to include more rebase and merge details
 
 ## Version: 1.6.46
 
