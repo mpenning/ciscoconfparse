@@ -26,9 +26,19 @@ vi CHANGES.md
 git commit pyproject.toml -m "Roll version number"
 git commit CHANGES.md -m "Roll version number"
 
-# Merge some_feature_branch into master...
+# Use either A> or B> below...
+#   A> rebase some_feature_branch into the main branch...  then 'git merge'...
+git checkout some_feature_branch (warning: do NOT rebase a public branch!)
+git rebase main
 git checkout main
-git merge some_feature_branch -m "Bring a new feature into the main branch"
+# https://stackoverflow.com/a/21717431/667301
+git merge --no-ff some_feature_branch
+
+#   B> Merge some_feature_branch into master...
+git checkout main
+# https://stackoverflow.com/a/21717431/667301
+git merge --no-ff some_feature_branch -m "Bring a new feature into the main branch"
+
 make repo-push-tag
 make pypi
 
