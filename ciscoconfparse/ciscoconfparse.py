@@ -87,19 +87,23 @@ import toml
 
 @logger.catch(reraise=True)
 def get_version_number():
+    """
+    Read the version number from 'pyproject.toml', or use version 0.0.0 in odd
+    circumstances.
+    """
     # Docstring props: http://stackoverflow.com/a/1523456/667301
     # version: if-else below fixes Github issue #123
 
     version = "0.0.0"  # version read failed
 
-    pyproject_path = os.path.join(
+    pyproject_toml_path = os.path.join(
         os.path.dirname(os.path.abspath(__file__)),
         "../pyproject.toml",
     )
-    if os.path.isfile(pyproject_path):
+    if os.path.isfile(pyproject_toml_path):
         # Retrieve the version number from pyproject.toml...
         toml_values = dict()
-        with open(pyproject_path, encoding=ENCODING) as fh:
+        with open(pyproject_toml_path, encoding=ENCODING) as fh:
             toml_values = toml.loads(fh.read())
             version = toml_values["tool"]["poetry"].get("version", -1.0)
 
