@@ -341,9 +341,9 @@ def assign_parent_to_closing_braces(input_list=None):
         for obj in input_list:
             assert isinstance(obj, BaseCfgLine)
             assert isinstance(obj.text, str)
-            if len(obj.text)>=1 and obj.text.rstrip()[-1] == '{':
+            if len(obj.text.rstrip())>=1 and obj.text.rstrip()[-1] == '{':
                 opening_brace_objs.append(obj)
-            elif len(obj.text)>=1 and obj.text.lstrip()[0]=='}':
+            elif len(obj.text.rstrip())>=1 and obj.text.lstrip()[0]=='}':
                 assert len(opening_brace_objs) >= 1
                 obj.parent = opening_brace_objs.pop()
     return input_list
