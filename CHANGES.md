@@ -6,7 +6,8 @@
 
 - Released: 2022-10-21
 - Summary:
-    - Add code to catch misconfigurations such as parsing a string instead of a list (see Github Issue #251)
+    - Add code to catch misconfigurations such as parsing a string instead of a list
+    - Avoid problems with reading empty lines (see Github Issue #251)
 
 ## Version: 1.6.47
 
