@@ -4411,6 +4411,14 @@ class ConfigList(MutableSequence):
         #     FIXME the CiscoConfParse attribute / parameter should go away
         #     use self.ccp_ref instead of self.CiscoConfParse
         #######################################################################
+
+        # This assert is intended to catch user error such as the problems
+        # that the submitter of Github issue #251 had. CiscoConfParse() could
+        # not read his configuration because he submitted a multi-line list
+        #
+        # This check will explicitly catch problems like that...
+        assert isinstance(initlist, (list, tuple, MutableSequence))
+
         ciscoconfparse_kwarg_val = kwargs.get("CiscoConfParse", None)
         ccp_ref_kwarg_val = kwargs.get("ccp_ref", None)
         if ciscoconfparse_kwarg_val is not None:
