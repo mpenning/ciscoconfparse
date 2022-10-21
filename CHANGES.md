@@ -2,6 +2,12 @@
 - Released: Not released
 - Summary:
 
+## Version: 1.6.48
+
+- Released: 2022-10-21
+- Summary:
+    - Add code to catch misconfigurations such as parsing a string instead of a list (see Github Issue #251)
+
 ## Version: 1.6.47
 
 - Released: 2022-10-17
