@@ -341,11 +341,20 @@ def assign_parent_to_closing_braces(input_list=None):
         for obj in input_list:
             assert isinstance(obj, BaseCfgLine)
             assert isinstance(obj.text, str)
+
+            # These rstrip() are one of two fixes, intended to catch user error such as
+            # the problems that the submitter of Github issue #251 had.
+            # CiscoConfParse() could not read his configuration because he submitted
+            # a multi-line string...
+            #
+            # This check will explicitly catch some problems like that...
             if len(obj.text.rstrip())>=1 and obj.text.rstrip()[-1] == '{':
                 opening_brace_objs.append(obj)
-            elif len(obj.text.rstrip())>=1 and obj.text.lstrip()[0]=='}':
+
+            elif len(obj.text.strip())>=1 and obj.text.strip()[0]=='}':
                 assert len(opening_brace_objs) >= 1
                 obj.parent = opening_brace_objs.pop()
+
     return input_list
 
 # This method was copied from the same method in git commit below...
@@ -4412,11 +4421,12 @@ class ConfigList(MutableSequence):
         #     use self.ccp_ref instead of self.CiscoConfParse
         #######################################################################
 
-        # This assert is intended to catch user error such as the problems
-        # that the submitter of Github issue #251 had. CiscoConfParse() could
-        # not read his configuration because he submitted a multi-line list
+        # This assert is one of two fixes, intended to catch user error such as
+        # the problems that the submitter of Github issue #251 had.
+        # CiscoConfParse() could not read his configuration because he submitted
+        # a multi-line string...
         #
-        # This check will explicitly catch problems like that...
+        # This check will explicitly catch some problems like that...
         assert isinstance(initlist, (list, tuple, MutableSequence))
 
         ciscoconfparse_kwarg_val = kwargs.get("CiscoConfParse", None)
