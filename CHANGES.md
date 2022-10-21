@@ -2,11 +2,17 @@
 - Released: Not released
 - Summary:
 
+## Version: 1.6.49
+
+- Released: 2022-10-21
+- Summary:
+    - Adjust string strip() conditions on config lines in ``assign_parent_to_closing_braces()``
+
 ## Version: 1.6.48
 
 - Released: 2022-10-21
 - Summary:
-    - Add code to catch misconfigurations such as parsing a string instead of a list
+    - Add code to catch misconfigurations such as parsing a string instead of a list in `ciscoconfparse.ConfigList(``)`
     - Avoid problems with reading empty lines (see Github Issue #251)
 
 ## Version: 1.6.47
