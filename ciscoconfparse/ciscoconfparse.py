@@ -488,6 +488,7 @@ class CiscoConfParse(object):
         self.factory = factory
         self.ConfigObjs = None
         self.syntax = syntax
+        self.ignore_blank_lines = ignore_blank_lines
         self.encoding = encoding or ENCODING
         self.debug = debug
 
@@ -576,10 +577,10 @@ class CiscoConfParse(object):
         elif self.ConfigObjs is None:
             num_lines = "None"
         return (
-            "<CiscoConfParse: %s lines / syntax: %s / comment delimiter: '%s' / factory: %s / encoding: '%s'>"
+            "<CiscoConfParse: %s lines / syntax: %s / comment delimiter: '%s' / factory: %s / ignore_blank_lines: %s / encoding: '%s'>"
             % (
                 num_lines, self.syntax, self.comment_delimiter,
-                self.factory, self.encoding,
+                self.factory, self.ignore_blank_lines, self.encoding,
             )
         )
 
