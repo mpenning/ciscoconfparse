@@ -22,6 +22,7 @@ dev:
 pypi:
 	make clean
 	make pypi-packaging
+	poetry lock --no-update
 	poetry build
 	# twine is the simplest pypi package uploader...
 	python -m twine upload dist/*
