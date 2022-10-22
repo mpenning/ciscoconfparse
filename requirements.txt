@@ -1,7 +1,6 @@
 poetry
 poetry-core
 pytest
-pytest-loguru
 
 pyroma
 black>=20.8b1
