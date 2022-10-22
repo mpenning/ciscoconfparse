@@ -80,7 +80,9 @@ jobs:
           pip install -U pytest
 
       - name: Install all ciscoconfparse package requirements
-        run: pip install -U -r requirements.txt
+        run: |
+          pip install -U black
+          pip install -U -r requirements.txt
 
       - name: Set up ciscoconfparse Python dependencies
         uses: actions/setup-python@v4

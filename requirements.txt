@@ -4,7 +4,6 @@ pytest
 
 pyroma
 diff-highlight
-black
 fabric == 2.6.0
 Sphinx == 4.3.0
 sphinx-bootstrap-theme == 0.8.0
