@@ -44,7 +44,7 @@ env:
 #     https://github.com/matplotlib/matplotlib/blob/main/.github/workflows/tests.yml
 jobs:
   tests:
-    name: "Test ciscoconfparse with Python ${{ matrix.python }} on ${{ matrix.os }}"
+    name: "Test ccp with Py ${{ matrix.python }} on ${{ matrix.os }}"
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -72,15 +72,15 @@ jobs:
 
       - name: Update poetry package versions
         run: |
-          pip install -U poetry==1.1.11
-          pip install -U poetry-core==1.0.7
+          pip install -U poetry
+          pip install -U poetry-core
 
       - name: Install pytest for ciscoconfparse
         run: |
           pip install -U pytest
 
       - name: Install all ciscoconfparse package requirements
-        run: pip install -r requirements.txt
+        run: pip install -U -r requirements.txt
 
       - name: Set up ciscoconfparse Python dependencies
         uses: actions/setup-python@v4
