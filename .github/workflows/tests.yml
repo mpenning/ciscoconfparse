@@ -90,8 +90,6 @@ jobs:
           pip install -U -r requirements.txt
 
       - name: Set up ciscoconfparse Python dependencies
-        uses: actions/checkout@v3
-        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python }}
           #cache: pip
