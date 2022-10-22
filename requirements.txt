@@ -1,14 +1,16 @@
 poetry
 poetry-core
 pytest
-loguru==0.6.0
-passlib==1.7.4
-toml>=0.10.2
-dnspython
-diff-highlight
 
 pyroma
 black>=20.8b1
 fabric==2.6.0
 Sphinx==4.3.0
 sphinx-bootstrap-theme==0.8.0
+
+# for some strange reason, github workflow is rejecting loguru v 0.6.0
+loguru
+passlib==1.7.4
+toml>=0.10.2
+dnspython
+diff-highlight
