@@ -1,8 +1,8 @@
 #python>=3.6
 passlib==1.7.4
-dnspython3==2.2.1
 loguru==0.6.0
 toml>=0.10.2
+dnspython
 diff-highlight
 
 pyroma
