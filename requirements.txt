@@ -1,0 +1,15 @@
+poetry
+poetry-core
+pytest
+
+pyroma
+diff-highlight
+black > 22.8.0
+fabric == 2.6.0
+Sphinx == 4.3.0
+sphinx-bootstrap-theme == 0.8.0
+
+loguru == 0.6.0
+passlib == 1.7.4
+toml > 0.10.1
+dnspython
