@@ -2,6 +2,14 @@
 - Released: Not released
 - Summary:
 
+## Version: 1.6.50
+
+- Released: 2022-10-21
+- Summary:
+    - Modify .github/workflows/tests.yml with improved yml
+    - Enhance CiscoConfParse().__repr__() string output
+    - Minor package documentation tweaks
+
 ## Version: 1.6.49
 
 - Released: 2022-10-21
