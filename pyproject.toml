@@ -1,6 +1,4 @@
-#[tool.poetry]
-
-[project]
+[tool.poetry]
 name = "ciscoconfparse"
 version = "1.6.50"
 description = "Parse, Audit, Query, Build, and Modify Cisco IOS-style and JunOS-style configurations"
