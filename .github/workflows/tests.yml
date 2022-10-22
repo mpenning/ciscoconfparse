@@ -75,17 +75,6 @@ jobs:
           pip install -U poetry==1.1.11
           pip install -U poetry-core==1.0.7
 
-      - name: Get the pip cache directory name
-        # https://github.blog/changelog/2022-10-11-github-actions-deprecating-save-state-and-set-output-commands/
-        id: pip-cache
-        run: echo "{name}={dir::$(pip cache dir)}" >> $GITHUB_OUTPUT
-
-      - name: cache pip
-        uses: actions/cache@v3
-        with:
-          path: ${{ steps.pip-cache.outputs.dir }}
-          key: pip|${{ runner.os }}|${{ matrix.python }}|${{ hashFiles('pyproject.toml') }}|${{ hashFiles('requirements.txt') }}
-
       - name: Install pytest for ciscoconfparse
         run: pip install pytest==6.2.5
 
