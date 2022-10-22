@@ -66,17 +66,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: cache pip
-        uses: actions/cache@v2
-        with:
-          path: ${{ steps.pip-cache.outputs.dir }}
-          key: pip|${{ runner.os }}|${{ matrix.python }}|${{ hashFiles('pyproject.toml') }}|${{ hashFiles('requirements.txt') }}
-
-      - name: Get the pip cache directory name
-        # https://github.blog/changelog/2022-10-11-github-actions-deprecating-save-state-and-set-output-commands/
-        id: pip-cache
-        run: echo "{name}={dir::$(pip cache dir)}" >> $GITHUB_OUTPUT
-
       - name: Update setuptools / wheel / pip versions
         run: |
           python -m pip install -U setuptools wheel pip
@@ -86,18 +75,29 @@ jobs:
           pip install -U poetry==1.1.11
           pip install -U poetry-core==1.0.7
 
-      - name: Set up ciscoconfparse Python dependencies
-        uses: actions/setup-python@v4
+      - name: Get the pip cache directory name
+        # https://github.blog/changelog/2022-10-11-github-actions-deprecating-save-state-and-set-output-commands/
+        id: pip-cache
+        run: echo "{name}={dir::$(pip cache dir)}" >> $GITHUB_OUTPUT
+
+      - name: cache pip
+        uses: actions/cache@v3
         with:
-          python-version: ${{ matrix.python }}
-          cache: pip
-          cache-dependency-path: 'requirements*.txt'
+          path: ${{ steps.pip-cache.outputs.dir }}
+          key: pip|${{ runner.os }}|${{ matrix.python }}|${{ hashFiles('pyproject.toml') }}|${{ hashFiles('requirements.txt') }}
 
       - name: Install pytest for ciscoconfparse
         run: pip install pytest==6.2.5
 
       - name: Install all ciscoconfparse package requirements
         run: pip install -r requirements.txt
+
+      - name: Set up ciscoconfparse Python dependencies
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+          cache-dependency-path: 'requirements*.txt'
 
       - name: Run unit-tests
         run: make test
