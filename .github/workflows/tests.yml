@@ -76,7 +76,8 @@ jobs:
           pip install -U poetry-core==1.0.7
 
       - name: Install pytest for ciscoconfparse
-        run: pip install pytest==6.2.5
+        run: |
+          pip install -U pytest
 
       - name: Install all ciscoconfparse package requirements
         run: pip install -r requirements.txt
