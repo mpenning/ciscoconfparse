@@ -3,7 +3,7 @@ poetry-core
 pytest
 
 pyroma
-black>=20.8b1
+black>=22.10.0
 fabric==2.6.0
 Sphinx==4.3.0
 sphinx-bootstrap-theme==0.8.0
