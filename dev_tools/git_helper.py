@@ -25,6 +25,28 @@ def parse_args(input_str=""):
     )
 
     ## Create a master subparser for all commands
+    parse_required = parser.add_argument_group("required")
+    parse_required.add_argument(
+        "-P",
+        "--project",
+        help="name of project",
+        action="store",
+        type=str,
+        default="",
+        required=True,
+    )
+
+    parse_required.add_argument(
+        "-u",
+        "--user",
+        help="github username",
+        action="store",
+        type=str,
+        default="",
+        required=True,
+    )
+
+    ## Create a master subparser for all optional commands
     parse_optional = parser.add_argument_group("optional")
 
     parse_optional.add_argument(
@@ -329,7 +351,7 @@ def git_tag_and_push(args):
 
     stdout, stderr = run_cmd("git remote remove origin")
     stdout, stderr = run_cmd(
-        'git remote add origin "git@github.com:mpenning/ciscoconfparse"'
+        'git remote add origin "git@github.com:{0}/{1}"'.format(args.user, args.project)
     )
 
     # TODO: build CHANGES.md management / edit tool... automate version change lists
@@ -362,7 +384,7 @@ def git_tag_and_push(args):
         loguru_logger.log(
             "SUCCESS", "|" + "git push (without tags) to the main branch at git origin."
         )
-        stdout, stderr = run_cmd("git push git@github.com:mpenning/ciscoconfparse.git")
+        stdout, stderr = run_cmd("git push git@github.com:{0}/{1}.git".format(args.user, args.project))
         stdout, stderr = run_cmd("git push origin +main")
 
     elif args.force is False and args.push is True and args.tag is True:
@@ -379,7 +401,7 @@ def git_tag_and_push(args):
             "|" + "git push FORCED (with tags) to the main branch at git origin.",
         )
         stdout, stderr = run_cmd(
-            "git push --force-with-lease --tags git@github.com:mpenning/ciscoconfparse.git"
+            "git push --force-with-lease --tags git@github.com:{0}/{1}.git".format(args.user, args.project)
         )
         stdout, stderr = run_cmd("git push --force-with-lease --tags origin +main")
         stdout, stderr = run_cmd(
