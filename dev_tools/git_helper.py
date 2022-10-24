@@ -26,25 +26,6 @@ def parse_args(input_str=""):
 
     ## Create a master subparser for all commands
     parse_required = parser.add_argument_group("required")
-    parse_required.add_argument(
-        "-P",
-        "--project",
-        help="name of project",
-        action="store",
-        type=str,
-        default="",
-        required=True,
-    )
-
-    parse_required.add_argument(
-        "-u",
-        "--user",
-        help="github username",
-        action="store",
-        type=str,
-        default="",
-        required=True,
-    )
 
     ## Create a master subparser for all optional commands
     parse_optional = parser.add_argument_group("optional")
@@ -120,11 +101,35 @@ def parse_args(input_str=""):
         help="write the new tag into pyproject.toml",
     )
 
+    parse_optional.add_argument(
+        "-P",
+        "--project",
+        help="name of project",
+        action="store",
+        type=str,
+        default="",
+        required=False,
+    )
+
+    parse_optional.add_argument(
+        "-u",
+        "--user",
+        help="github username",
+        action="store",
+        type=str,
+        default="",
+        required=False,
+    )
+
     args = parser.parse_args()
     if args.force is True or args.push is True:
         args.push = True
         if args.method is None:
             raise ValueError("git push requires use of -m / --method")
+
+    if args.push is True:
+        if args.user =="" or args.project=="":
+            raise ValueError("git push requires use of -u / --user and -P / --project")
 
     return args
 
