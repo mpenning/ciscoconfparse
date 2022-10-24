@@ -28,32 +28,32 @@ pypi:
 	python -m twine upload dist/*
 .PHONY: bump-version-patch
 bump-version-patch:
-	$(shell python dev_tools/git_helper.py -I patch -w)
+	$(shell python dev_tools/git_helper.py -u mpenning -P ciscoconfparse -I patch -w)
 .PHONY: bump-version-minor
 bump-version-minor:
-	$(shell python dev_tools/git_helper.py -I minor -w)
+	$(shell python dev_tools/git_helper.py -u mpenning -P ciscoconfparse -I minor -w)
 .PHONY: repo-push
 repo-push:
 	#git remote remove origin
 	#git remote add origin "git@github.com:mpenning/ciscoconfparse"
 	#git push git@github.com:mpenning/ciscoconfparse.git
 	#git push origin +main
-	$(shell python dev_tools/git_helper.py --push -m merge)
+	$(shell python dev_tools/git_helper.py -u mpenning -P ciscoconfparse --push -m merge)
 .PHONY: repo-push-force
 repo-push-force:
 	#git remote remove origin
 	#git remote add origin "git@github.com:mpenning/ciscoconfparse"
 	#git push --force-with-lease git@github.com:mpenning/ciscoconfparse.git
 	#git push --force-with-lease origin +main
-	$(shell python dev_tools/git_helper.py --push --force --method merge)
+	$(shell python dev_tools/git_helper.py -u mpenning -P ciscoconfparse --push --force --method merge)
 .PHONY: repo-push-tag
 repo-push-tag:
 	#make repo-push
-	$(shell python dev_tools/git_helper.py --push --tag --method merge)
+	$(shell python dev_tools/git_helper.py -u mpenning -P ciscoconfparse --push --tag --method merge)
 .PHONY: repo-push-tag-force
 repo-push-tag-force:
 	#make repo-push-force
-	$(shell python dev_tools/git_helper.py --push --tag --force --method merge)
+	$(shell python dev_tools/git_helper.py -u mpenning -P ciscoconfparse --push --tag --force --method merge)
 .PHONY: pylama
 pylama:
 	# Good usability info here -> https://pythonspeed.com/articles/pylint/
