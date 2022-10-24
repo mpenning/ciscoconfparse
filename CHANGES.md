@@ -1,6 +1,7 @@
 ## Version: GIT HEAD
 - Released: Not released
 - Summary:
+    - Add user and project parameters to dev_tools/git_helper.py.  Modify the Makefile accordingly
 
 ## Version: 1.6.50
 
