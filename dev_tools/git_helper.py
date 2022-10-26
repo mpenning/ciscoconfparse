@@ -8,7 +8,6 @@ import re
 
 from loguru import logger as loguru_logger
 
-
 def parse_args(input_str=""):
     """Parse CLI arguments, or parse args from the input_str variable"""
 
