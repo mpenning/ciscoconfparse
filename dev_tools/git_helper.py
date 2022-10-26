@@ -57,10 +57,10 @@ def parse_args(input_str=""):
         "-d",
         "--debug",
         action="store",
-        type=bool,
+        type=int,
         default=False,
         required=False,
-        help="Debug git_helper.py",
+        help="git_helper.py debug level",
     )
 
     # Add a boolean flag to store_true...
@@ -587,12 +587,8 @@ def git_tag_and_push(args):
 
 def main(args):
 
-    debug_level = 0
-    if args.debug is True:
-        debug_level = 1
-
     if args.status is True:
-        stdout, stderr = run_cmd("git status", debug=debug_level)
+        stdout, stderr = run_cmd("git status", debug=args.debug)
         print(stdout)
 
 
