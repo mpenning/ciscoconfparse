@@ -591,6 +591,9 @@ def main(args):
         stdout, stderr = run_cmd("git status", debug=args.debug)
         print(stdout)
 
+    elif args.combine != "":
+        stdout, stderr = run_cmd("git {0} {1} -m '{2}'".format(args.method, args.combine, args.message), debug=args.debug)
+
 
 if __name__ == "__main__":
     args = parse_args()
