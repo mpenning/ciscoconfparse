@@ -147,14 +147,6 @@ def parse_args(input_str=""):
             raise ValueError("git_helper.py --combine requires use of -m / --message")
 
     if args.push is True:
-        if args.message == "":
-            loguru_logger.log(
-                "INFO",
-                "--message '' is required.  Interactive message input follows...",
-            )
-            args.message = input("")
-
-    if args.push is True:
         if args.user == "":
             raise ValueError("git_helper.py --push requires use of -u / --user")
 
