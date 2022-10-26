@@ -112,6 +112,15 @@ def parse_args(input_str=""):
     )
 
     parse_optional.add_argument(
+        "-s",
+        "--status",
+        action="store_true",
+        default=False,
+        required=False,
+        help="return the git status",
+    )
+
+    parse_optional.add_argument(
         "-t",
         "--tag",
         action="store_true",
