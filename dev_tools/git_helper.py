@@ -579,5 +579,8 @@ def git_tag_and_push(args):
 
 if __name__ == "__main__":
     args = parse_args()
+    if args.status is True:
+        stdout, stderr = run_cmd("git status")
+        print(stdout)
     # Lots of work to do before calling git_tag_and_push()
     # git_tag_and_push(args)
