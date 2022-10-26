@@ -99,7 +99,7 @@ def parse_args(input_str=""):
         action="store",
         default="",
         required=False,
-        help="push / merge message",
+        help="Add a push / merge message",
     )
 
     parse_optional.add_argument(
@@ -127,7 +127,7 @@ def parse_args(input_str=""):
         help="github username",
         action="store",
         type=str,
-        default="",
+        default=os.environ.get("USER", ""),
         required=False,
     )
 
@@ -135,19 +135,19 @@ def parse_args(input_str=""):
 
     if args.combine == "main":
         assert args.method is not None
-        raise ValueError("-c / --combine cannot combine the 'main' branch with itself.")
+        raise ValueError("git_helper.py --combine cannot combine the 'main' branch with itself.")
 
     if args.combine != "":
         if args.method is None:
-            raise ValueError("-c / --combine requires use of -m / --method")
+            raise ValueError("git_helper.py --combine requires use of -m / --method")
 
-    if args.push is True:
+    if args.push is True and args.combine is True:
         if args.message =="":
-            raise ValueError("git push requires use of -M / --message")
+            raise ValueError("git_helper.py --push or git_helper.py --combine requires use of -M / --message")
 
     if args.push is True:
         if args.user =="" or args.project=="":
-            raise ValueError("git push requires use of -u / --user and -P / --project")
+            raise ValueError("git_helper.py --push requires use of -u / --user and -P / --project")
 
     return args
 
