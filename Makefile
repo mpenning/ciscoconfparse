@@ -28,10 +28,10 @@ pypi:
 	python -m twine upload dist/*
 .PHONY: bump-version-patch
 bump-version-patch:
-	$(shell python dev_tools/git_helper.py -I patch -w)
+	$(shell python dev_tools/git_helper.py -I patch)
 .PHONY: bump-version-minor
 bump-version-minor:
-	$(shell python dev_tools/git_helper.py -I minor -w)
+	$(shell python dev_tools/git_helper.py -I minor)
 .PHONY: repo-push
 repo-push:
 	#git remote remove origin
