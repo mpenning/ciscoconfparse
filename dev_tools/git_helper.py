@@ -165,7 +165,6 @@ def parse_args(input_str=""):
 
     return args
 
-
 def is_pyproject_version_in_origin(args):
     pyproject_version = get_pyproject_version(args)
 
