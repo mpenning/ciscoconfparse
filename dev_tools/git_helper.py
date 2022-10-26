@@ -33,21 +33,21 @@ def parse_args(input_str=""):
     parse_optional.add_argument(
         "-b",
         "--branch",
-        help="git checkout to this branch string (default: '')",
         action="store",
         type=str,
         default="main",
         required=False,
+        help="git checkout to this branch string (default: '')",
     )
 
     parse_optional.add_argument(
         "-c",
         "--combine",
-        help="combine a git branch with the 'main' branch",
         action="store",
         type=str,
         default="",
         required=False,
+        help="combine a git branch with the 'main' branch",
     )
 
     # Add a boolean flag to store_true...
@@ -105,11 +105,11 @@ def parse_args(input_str=""):
     parse_optional.add_argument(
         "-P",
         "--project",
-        help="name of project",
         action="store",
         type=str,
         default="",
         required=False,
+        help="name of project",
     )
 
     parse_optional.add_argument(
