@@ -76,21 +76,21 @@ def parse_args(input_str=""):
 
     parse_optional.add_argument(
         "-m",
+        "--message",
+        action="store",
+        default="",
+        required=False,
+        help="Add a push / merge message",
+    )
+
+    parse_optional.add_argument(
+        "-M",
         "--method",
         action="store",
         default=None,
         required=False,
         choices=["merge", "rebase", "ff"],  # ff -> fast-forward
         help="Use this git method to combine pending branches: merge, rebase, or ff (fast-forward)",
-    )
-
-    parse_optional.add_argument(
-        "-M",
-        "--message",
-        action="store",
-        default="",
-        required=False,
-        help="Add a push / merge message",
     )
 
     parse_optional.add_argument(
@@ -101,7 +101,6 @@ def parse_args(input_str=""):
         required=False,
         help="git push",
     )
-
 
     parse_optional.add_argument(
         "-P",
@@ -130,6 +129,7 @@ def parse_args(input_str=""):
         type=str,
         default=os.environ.get("USER", ""),
         required=False,
+        help="git username (default: $USER)",
     )
 
     args = parser.parse_args()
@@ -140,11 +140,15 @@ def parse_args(input_str=""):
 
     if args.combine != "":
         if args.method is None:
-            raise ValueError("git_helper.py --combine requires use of -m / --method")
+            raise ValueError("git_helper.py --combine requires use of -M / --method")
 
-    if args.push is True and args.combine is True:
+    if args.combine != "":
         if args.message =="":
-            raise ValueError("git_helper.py --push or git_helper.py --combine requires use of -M / --message")
+            raise ValueError("git_helper.py --combine requires use of -m / --message")
+
+    if args.push is True:
+        if args.message =="":
+            raise ValueError("git_helper.py --push requires use of -m / --message")
 
     if args.push is True:
         if args.user =="":
