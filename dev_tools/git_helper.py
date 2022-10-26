@@ -53,6 +53,16 @@ def parse_args(input_str=""):
         help="combine a git branch with the 'main' branch",
     )
 
+    parse_optional.add_argument(
+        "-d",
+        "--debug",
+        action="store",
+        type=bool,
+        default=False,
+        required=False,
+        help="Debug git_helper.py",
+    )
+
     # Add a boolean flag to store_true...
     parse_optional.add_argument(
         "-f",
@@ -172,7 +182,6 @@ def parse_args(input_str=""):
 def is_pyproject_version_in_origin(args):
     pyproject_version = get_pyproject_version(args)
 
-
 def epoch_ts(commit_hash=None):
     """
     Return the number of integer epoch seconds for the commit hash.
@@ -185,7 +194,6 @@ def epoch_ts(commit_hash=None):
         return -1
     else:
         return int(stdout.strip())
-
 
 def ls_remote_origin(args):
     stdout, stderr = run_cmd("git ls-remote origin")
@@ -255,7 +263,6 @@ def ls_remote_origin(args):
 
     return short_hash, long_hash
 
-
 def increment_tag_version(value=None):
     """
     Accept a string value and modify existing version tag tuple according
@@ -289,7 +296,6 @@ def increment_tag_version(value=None):
         )
 
     return new_version
-
 
 def check_exists_tag_local(tag_value=None):
     """Check 'git tag' for an exact string match for tag_value."""
@@ -579,11 +585,19 @@ def git_tag_and_push(args):
     else:
         ValueError("Found an invalid combination of CLI options")
 
+def main(args):
+
+    debug_level = 0
+    if args.debug is True:
+        debug_level = 1
+
+    if args.status is True:
+        stdout, stderr = run_cmd("git status", debug=debug_level)
+        print(stdout)
+
 
 if __name__ == "__main__":
     args = parse_args()
-    if args.status is True:
-        stdout, stderr = run_cmd("git status")
-        print(stdout)
+    main(args)
     # Lots of work to do before calling git_tag_and_push()
     # git_tag_and_push(args)
