@@ -153,7 +153,7 @@ def parse_args(input_str=""):
                 "INFO",
                 "--message '' is required.  Interactive message input follows...",
             )
-            message = input("Input the --push message:")
+            args.message = input("")
 
     if args.push is True:
         if args.user == "":
