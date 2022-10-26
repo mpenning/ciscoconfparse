@@ -149,7 +149,7 @@ def parse_args(input_str=""):
 
     if args.push is True:
         if args.message == "":
-            loguru_logger(
+            loguru_logger.log(
                 "INFO",
                 "--message '' is required.  Interactive message input follows...",
             )
