@@ -124,7 +124,6 @@ def parse_args(input_str=""):
     parse_optional.add_argument(
         "-u",
         "--user",
-        help="github username",
         action="store",
         type=str,
         default=os.environ.get("USER", ""),
@@ -136,32 +135,36 @@ def parse_args(input_str=""):
 
     if args.combine == "main":
         assert args.method is not None
-        raise ValueError("git_helper.py --combine cannot combine the 'main' branch with itself.")
+        raise ValueError(
+            "git_helper.py --combine cannot combine the 'main' branch with itself."
+        )
 
     if args.combine != "":
         if args.method is None:
             raise ValueError("git_helper.py --combine requires use of -M / --method")
 
     if args.combine != "":
-        if args.message =="":
+        if args.message == "":
             raise ValueError("git_helper.py --combine requires use of -m / --message")
 
     if args.push is True:
-        if args.message =="":
+        if args.message == "":
             raise ValueError("git_helper.py --push requires use of -m / --message")
 
     if args.push is True:
-        if args.user =="":
+        if args.user == "":
             raise ValueError("git_helper.py --push requires use of -u / --user")
 
     if args.push is True:
-        if args.project=="":
+        if args.project == "":
             raise ValueError("git_helper.py --push requires use of -P / --project")
 
     return args
 
+
 def is_pyproject_version_in_origin(args):
     pyproject_version = get_pyproject_version(args)
+
 
 def epoch_ts(commit_hash=None):
     """
@@ -176,18 +179,35 @@ def epoch_ts(commit_hash=None):
     else:
         return int(stdout.strip())
 
+
 def ls_remote_origin(args):
     stdout, stderr = run_cmd("git ls-remote origin")
-    short_hash = {"tag": {}, "branch_head": {}, "pull_head": {}, "pull_merge": {}, "hash_epoch_ts": {},}
-    long_hash = {"tag": {}, "branch_head": {}, "pull_head": {}, "pull_merge": {}, "hash_epoch_ts": {},} 
+    short_hash = {
+        "tag": {},
+        "branch_head": {},
+        "pull_head": {},
+        "pull_merge": {},
+        "hash_epoch_ts": {},
+    }
+    long_hash = {
+        "tag": {},
+        "branch_head": {},
+        "pull_head": {},
+        "pull_merge": {},
+        "hash_epoch_ts": {},
+    }
     for line in stdout.splitlines():
         parse_tag = re.search(r"^(\w+)\s+refs\Wtags\W(\S+?)\^\{\}\s*$", line.strip())
-        #refs/heads/main
+        # refs/heads/main
         parse_branch = re.search(r"^(\w+)\s+refs\Wheads\W(\S+?)\s*$", line.strip())
         # refs/pull/100/head refs/pull/100/head
-        parse_pull_head = re.search(r"^(\w+)\s+refs\Wpull\W(\d+)\Whead\s*$", line.strip())
+        parse_pull_head = re.search(
+            r"^(\w+)\s+refs\Wpull\W(\d+)\Whead\s*$", line.strip()
+        )
         # refs/pull/100/head refs/pull/100/merge
-        parse_pull_merge = re.search(r"^(\w+)\s+refs\Wpull\W(\d+)\Wmerge\s*$", line.strip())
+        parse_pull_merge = re.search(
+            r"^(\w+)\s+refs\Wpull\W(\d+)\Wmerge\s*$", line.strip()
+        )
         parsed = False
         what = "N/A"
         if parse_tag is not None:
@@ -206,27 +226,28 @@ def ls_remote_origin(args):
             parsed = True
         elif parse_pull_head is not None:
             git_commit_hash = parse_pull_head.group(1)
-            git_ref = int(parse_pull_head.group(2)) # Pull Request number
+            git_ref = int(parse_pull_head.group(2))  # Pull Request number
             short_hash["pull_head"][git_ref] = git_commit_hash[0:7]
             long_hash["pull_head"][git_ref] = git_commit_hash
             what = "pull_head"
             parsed = True
         elif parse_pull_merge is not None:
             git_commit_hash = parse_pull_merge.group(1)
-            git_ref = int(parse_pull_merge.group(2)) # Pull Request number
+            git_ref = int(parse_pull_merge.group(2))  # Pull Request number
             short_hash["pull_merge"][git_ref] = git_commit_hash[0:7]
             long_hash["pull_merge"][git_ref] = git_commit_hash
             what = "pull_merge"
             parsed = True
 
         # Some Pull Request hash values don't have timestamps
-        if parsed is True and (what=="tag" or what=="branch_head"):
+        if parsed is True and (what == "tag" or what == "branch_head"):
             ts = epoch_ts(git_commit_hash)
             if ts > 0:
                 short_hash["hash_epoch_ts"][git_commit_hash[0:7]] = ts
                 long_hash["hash_epoch_ts"][git_commit_hash] = ts
 
     return short_hash, long_hash
+
 
 def increment_tag_version(value=None):
     """
@@ -379,9 +400,11 @@ def git_root_directory():
             return retval
     raise OSError()
 
+
 def pyproject_filepath():
     filepath = os.path.join(git_root_directory(), "pyproject.toml")
     return filepath
+
 
 def get_version_list():
     """Return a list of tuples; one tuple per version number tag"""
@@ -393,6 +416,7 @@ def get_version_list():
             tt = [int(ii) for ii in vv.group(1).split(".")]
             versions.append(tuple(tt))
     return sorted(versions)
+
 
 def get_pyproject_version(args):
     """Read the version from pyproject.toml"""
@@ -418,6 +442,7 @@ def get_pyproject_version(args):
     else:
         return True
 
+
 def bump_pyproject_version(args):
     """
     Bump the version up, as required; write the version tag into pyproject.toml.
@@ -425,7 +450,9 @@ def bump_pyproject_version(args):
     if args.increment_version is None:
         tag = ".".join([str(ii) for ii in get_version_list[-1]])
     else:
-        tag = ".".join([str(ii) for ii in increment_tag_version(args.increment_version)])
+        tag = ".".join(
+            [str(ii) for ii in increment_tag_version(args.increment_version)]
+        )
 
     filepath = os.path.join(git_root_directory(), "pyproject.toml")
     assert os.path.isfile(filepath)
@@ -433,21 +460,26 @@ def bump_pyproject_version(args):
     # https://stackoverflow.com/a/290494/667301
     for line in fileinput.input(filepath, inplace=True):
         if re.search(r"^version", line) is not None:
-            print('{} = "{}"{}'.format("version", tag, os.linesep), end='')
+            print('{} = "{}"{}'.format("version", tag, os.linesep), end="")
         else:
             print(line.strip(os.linesep))
     return True
+
 
 def git_checkout_branch(args):
     assert isinstance(args.branch, str)
     loguru_logger.log("DEBUG", "|" + "Checking out git branch: {}".format(args.branch))
     stdout, stderr = run_cmd("git checkout {}".format(args.branch))
 
+
 def git_tag_commit_version(args):
     """
     Tag the latest git commit with the version listed in pyproject.toml
     """
-    stdout, stderr = run_cmd('git tag -a {0} -m "Tag with {0}"'.format(get_pyproject_version()))
+    stdout, stderr = run_cmd(
+        'git tag -a {0} -m "Tag with {0}"'.format(get_pyproject_version())
+    )
+
 
 def git_tag_and_push(args):
     version = get_pyproject_version()
@@ -487,16 +519,24 @@ def git_tag_and_push(args):
     git_checkout_branch(args)
 
     if args.combine != "":
-        assert args.combine != "main", "FATAL: we are currently on the main branch and cannot combine it with itself"
-        assert args.message != "", "FATAL: A {0} message is required".format(args.message)
-        stdout, stderr = run_cmd("git {0} {1} -m'{2}'".format(args.method, args.combine, args.message))
+        assert (
+            args.combine != "main"
+        ), "FATAL: we are currently on the main branch and cannot combine it with itself"
+        assert args.message != "", "FATAL: A {0} message is required".format(
+            args.message
+        )
+        stdout, stderr = run_cmd(
+            "git {0} {1} -m'{2}'".format(args.method, args.combine, args.message)
+        )
 
     if args.force is False and args.push is True and args.tag is False:
         # Do NOT force push
         loguru_logger.log(
             "SUCCESS", "|" + "git push (without tags) to the main branch at git origin."
         )
-        stdout, stderr = run_cmd("git push git@github.com:{0}/{1}.git".format(args.user, args.project))
+        stdout, stderr = run_cmd(
+            "git push git@github.com:{0}/{1}.git".format(args.user, args.project)
+        )
         stdout, stderr = run_cmd("git push origin +{0}".format(args.branch))
 
     elif args.force is False and args.push is True and args.tag is True:
@@ -513,7 +553,9 @@ def git_tag_and_push(args):
             "|" + "git push FORCED (with tags) to the main branch at git origin.",
         )
         stdout, stderr = run_cmd(
-            "git push --force-with-lease --tags git@github.com:{0}/{1}.git".format(args.user, args.project)
+            "git push --force-with-lease --tags git@github.com:{0}/{1}.git".format(
+                args.user, args.project
+            )
         )
         stdout, stderr = run_cmd("git push --force-with-lease --tags origin +main")
         stdout, stderr = run_cmd(
@@ -534,4 +576,4 @@ def git_tag_and_push(args):
 if __name__ == "__main__":
     args = parse_args()
     # Lots of work to do before calling git_tag_and_push()
-    #git_tag_and_push(args)
+    # git_tag_and_push(args)
