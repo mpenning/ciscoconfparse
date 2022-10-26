@@ -85,15 +85,6 @@ def parse_args(input_str=""):
     )
 
     parse_optional.add_argument(
-        "-p",
-        "--push",
-        action="store_true",
-        default=False,
-        required=False,
-        help="git push",
-    )
-
-    parse_optional.add_argument(
         "-M",
         "--message",
         action="store",
@@ -103,13 +94,14 @@ def parse_args(input_str=""):
     )
 
     parse_optional.add_argument(
-        "-t",
-        "--tag",
+        "-p",
+        "--push",
         action="store_true",
         default=False,
         required=False,
-        help="git push with a git tag",
+        help="git push",
     )
+
 
     parse_optional.add_argument(
         "-P",
@@ -119,6 +111,15 @@ def parse_args(input_str=""):
         type=str,
         default="",
         required=False,
+    )
+
+    parse_optional.add_argument(
+        "-t",
+        "--tag",
+        action="store_true",
+        default=False,
+        required=False,
+        help="git push with a git tag",
     )
 
     parse_optional.add_argument(
