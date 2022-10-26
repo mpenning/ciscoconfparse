@@ -146,8 +146,12 @@ def parse_args(input_str=""):
             raise ValueError("git_helper.py --push or git_helper.py --combine requires use of -M / --message")
 
     if args.push is True:
-        if args.user =="" or args.project=="":
-            raise ValueError("git_helper.py --push requires use of -u / --user and -P / --project")
+        if args.user =="":
+            raise ValueError("git_helper.py --push requires use of -u / --user")
+
+    if args.push is True:
+        if args.project=="":
+            raise ValueError("git_helper.py --push requires use of -P / --project")
 
     return args
 
