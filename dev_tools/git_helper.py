@@ -149,7 +149,11 @@ def parse_args(input_str=""):
 
     if args.push is True:
         if args.message == "":
-            raise ValueError("git_helper.py --push requires use of -m / --message")
+            loguru_logger(
+                "INFO",
+                "--message '' is required.  Interactive message input follows...",
+            )
+            message = input("Input the --push message:")
 
     if args.push is True:
         if args.user == "":
