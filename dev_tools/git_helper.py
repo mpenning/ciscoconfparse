@@ -1,3 +1,7 @@
+"""
+A git wrapper to simplify git operations.
+"""
+
 from subprocess import Popen, PIPE, STDOUT
 from argparse import ArgumentParser
 import fileinput
