@@ -140,7 +140,7 @@ def parse_args(input_str=""):
         action="store_true",
         default=False,
         required=False,
-        help="git push with a git tag",
+        help="git push with a git tag from pyproject.toml",
     )
 
     parse_optional.add_argument(
@@ -455,6 +455,15 @@ def get_pyproject_version(args):
     else:
         return True
 
+def get_branch_name(args):
+    stdout, stderr = run_cmd("git branch", debug=args.debug)
+    #'* develop\n  main\n'
+    retval = None
+    for line in stdout.splitlines():
+        if '*' in line:
+            return line.replace('*', '').strip()
+    raise ValueError("Could not find local git branch name")
+
 
 def bump_pyproject_version(args):
     """
@@ -485,7 +494,7 @@ def git_checkout_branch(args):
     stdout, stderr = run_cmd("git checkout {}".format(args.branch))
 
 
-def git_tag_commit_version(args):
+def git_tag_commit_version():
     """
     Tag the latest git commit with the version listed in pyproject.toml
     """
@@ -592,7 +601,32 @@ def main(args):
         print(stdout)
 
     elif args.combine != "":
-        stdout, stderr = run_cmd("git {0} {1} -m '{2}'".format(args.method, args.combine, args.message), debug=args.debug)
+        original_branch_name = get_branch_name(args)
+
+        # This is used for 'git merge <branch_name>' situations...
+        assert args.combine != "main", "FATAL merging main with {} is not supported".format(original_branch_name)
+
+        # checkout the main branch...
+        if original_branch_name != "main":
+            args.branch = "main"
+            git_checkout_branch(args)
+
+        if args.tag is True:
+            tag_value = git_tag_commit_version()     # Read version from pyproject.toml...
+            if check_exists_tag_local(tag_value=tag_value) is False:
+                git_tag_commit_version() 
+            else:
+                raise ValueError("FATAL tag {} already exists".format(tag_value))
+
+        stdout, stderr = run_cmd("git merge {0} -m '{1}'".format(args.combine, args.message), debug=args.debug)
+        stdout, stderr = run_cmd("git push origin main", debug=args.debug)
+
+        if args.tag is True:
+            stdout, stderr = run_cmd("git push origin main --tags", debug=args.debug)
+
+        if original_branch_name != "main":
+            args.branch = original_branch_name
+            git_checkout_branch(args)
 
 
 if __name__ == "__main__":
