@@ -60,7 +60,7 @@ dnspython = "^2.1.0"
 loguru = "0.6.0"
 toml = ">=0.10.2"
 
-[tool.poetry.project.urls]
+[tool.poetry.urls]
 source = "https://github.com/mpenning/ciscoconfparse"
 homepage = "http://www.pennington.net/py/ciscoconfparse/"
 repository = "https://github.com/mpenning/ciscoconfparse"
