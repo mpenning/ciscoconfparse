@@ -100,7 +100,7 @@ jobs:
         run: |
           pip install -U black
           #pip install -U -r requirements.txt
-          pip uninstall passlib dnspython loguru
+          pip uninstall -y passlib dnspython loguru
           pip install .
 
       - name: Run unit-tests
