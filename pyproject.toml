@@ -18,7 +18,7 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry]
 name = "ciscoconfparse"
 description = "Parse, Audit, Query, Build, and Modify Cisco IOS-style and JunOS-style configurations"
-version = "1.6.52"
+version = "1.6.53"
 license = "GPL-3.0-only"
 authors = ["Mike Pennington <mike@pennington.net>"]
 readme = "README.md"

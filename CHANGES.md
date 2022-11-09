@@ -4,9 +4,16 @@
 - Summary:
     - Nothing to see here, move on
 
+## Version: 1.6.53
+
+- Released: 2022-11-09
+- Summary:
+    - Reformat pyproject.toml to be most compatible with 'pip install'
+    - Several internal project-level optimizations...
+
 ## Version: 1.6.52
 
-- Released: 2022-10-21
+- Released: 2022-11-09
 - Summary:
     - Fix Github Issue #254
 
