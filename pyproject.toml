@@ -1,9 +1,5 @@
 [project]
-dynamic = ["dependencies"]
 requires-python = ">=3.7.0"
-
-[tool.setuptools.dynamic]
-dependencies = {file = ["requirements.txt"]}
 
 [tool.poetry]
 name = "ciscoconfparse"
@@ -56,6 +52,10 @@ pre-commit = "2.20.0"
 
 [tool.poetry.dependencies]
 python = ">=3.7.0"
+passlib = "^1.7.4"
+dnspython = "^2.1.0"
+loguru = "0.6.0"
+toml = "0.10.2"
 
 [build-system]
 requires = ["poetry-core>=1.0.0", "wheel>=0.37.0"]
