@@ -2,7 +2,8 @@
 
 - Released: Not released
 - Summary:
-    - Nothing to see here, move on
+    - Update Makefile to delete poetry.lock file
+
 
 ## Version: 1.6.53
 
