@@ -2,7 +2,7 @@
 requires = ["poetry-core>=1.0.0", "wheel>=0.37.0", "packaging>=21.0"]
 build-backend = "poetry.core.masonry.api"
 
-[project]
+[tool.poetry]
 name = "ciscoconfparse"
 description = "Parse, Audit, Query, Build, and Modify Cisco IOS-style and JunOS-style configurations"
 version = "1.6.52"
