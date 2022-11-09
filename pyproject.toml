@@ -1,28 +1,15 @@
-[project]
-requires-python = ">=3.7.0"
+[build-system]
+requires = ["poetry-core>=1.0.0", "wheel>=0.37.0", "packaging>=21.0"]
+build-backend = "poetry.core.masonry.api"
 
-[tool.poetry]
+[project]
 name = "ciscoconfparse"
-version = "1.6.52"
 description = "Parse, Audit, Query, Build, and Modify Cisco IOS-style and JunOS-style configurations"
+version = "1.6.52"
 license = "GPL-3.0-only"
-authors = [
-    "Mike Pennington <mike@pennington.net>",
-]
+authors = [{name = "Mike Pennington", email = "mike@pennington.net"}]
 readme = "README.md"
-include = [
-    "CHANGES.md",
-    "CONTRIBUTING.md",
-    "LICENSE",
-    "Makefile",
-    "README_git_workflow.md"
-]
-exclude = [
-    "coverage.json"
-]
-homepage = "http://www.pennington.net/py/ciscoconfparse/"
-repository = "https://github.com/mpenning/ciscoconfparse"
-documentation = "http://www.pennington.net/py/ciscoconfparse/"
+requires-python = ">=3.7.0"
 keywords = ["Parse", "audit", "query", "modify", "Cisco IOS", "Cisco", "NXOS", "ASA", "Juniper",]
 classifiers=[
     "Development Status :: 5 - Production/Stable",
@@ -42,6 +29,24 @@ classifiers=[
     "Topic :: System :: Networking :: Monitoring",
 ]
 
+[project.urls]
+source = "https://github.com/mpenning/ciscoconfparse"
+homepage = "http://www.pennington.net/py/ciscoconfparse/"
+repository = "https://github.com/mpenning/ciscoconfparse"
+documentation = "http://www.pennington.net/py/ciscoconfparse/"
+
+[tool.poetry]
+include = [
+    "CHANGES.md",
+    "CONTRIBUTING.md",
+    "LICENSE",
+    "Makefile",
+    "README_git_workflow.md"
+]
+exclude = [
+    "coverage.json"
+]
+
 [tool.poetry.dev-dependencies]
 pytest = "6.2.5"
 pre-commit = "2.20.0"
@@ -51,12 +56,8 @@ pre-commit = "2.20.0"
 #sphinx-bootstrap-theme = "^0.8.0"
 
 [tool.poetry.dependencies]
-python = ">=3.7.0"
 passlib = "^1.7.4"
 dnspython = "^2.1.0"
 loguru = "0.6.0"
 toml = "0.10.2"
 
-[build-system]
-requires = ["poetry-core>=1.0.0", "wheel>=0.37.0"]
-build-backend = "poetry.core.masonry.api"
