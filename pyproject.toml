@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ciscoconfparse"
-version = "1.6.50"
+version = "1.6.51"
 description = "Parse, Audit, Query, Build, and Modify Cisco IOS-style and JunOS-style configurations"
 requires-python = ">=3.7"
 license = "GPL-3.0-only"

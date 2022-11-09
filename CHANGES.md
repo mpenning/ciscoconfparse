@@ -1,7 +1,17 @@
 ## Version: GIT HEAD
+
 - Released: Not released
 - Summary:
+    - Nothing to see here, move on
+
+## Version: 1.6.51
+
+- Released: 2022-10-21
+- Summary:
     - Add user and project parameters to dev_tools/git_helper.py.  Modify the Makefile accordingly
+    - Fix `.delete(recurse=True)` implementation (see Github Issue #253)
+    - Fix incorrect debug level check in _bootstrap_from_text()
+    - Add more debug logs... however, many methods still lack debug messages
 
 ## Version: 1.6.50
 
