@@ -15,10 +15,12 @@ build-backend = "poetry.core.masonry.api"
 # [project] section work with 'pip install ciscoconfparse'.
 #
 ##############################################################################
-[tool.poetry]
+[project]
 name = "ciscoconfparse"
-description = "Parse, Audit, Query, Build, and Modify Cisco IOS-style and JunOS-style configurations"
+
+[tool.poetry]
 version = "1.6.53"
+description = "Parse, Audit, Query, Build, and Modify Cisco IOS-style and JunOS-style configurations"
 license = "GPL-3.0-only"
 authors = ["Mike Pennington <mike@pennington.net>"]
 readme = "README.md"
