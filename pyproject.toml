@@ -1,8 +1,4 @@
-[build-system]
-requires = ["poetry-core>=1.0.0", "wheel>=0.37.0", "packaging>=21.0"]
-build-backend = "poetry.core.masonry.api"
-
-[tool.poetry]
+[poetry]
 name = "ciscoconfparse"
 description = "Parse, Audit, Query, Build, and Modify Cisco IOS-style and JunOS-style configurations"
 version = "1.6.52"
@@ -47,7 +43,16 @@ exclude = [
     "coverage.json"
 ]
 
-[tool.poetry.dev-dependencies]
+[project.dependencies]
+#[tool.poetry.dependencies]
+passlib = "^1.7.4"
+dnspython = "^2.1.0"
+loguru = "0.6.0"
+toml = "0.10.2"
+
+
+[project.dev-dependencies]
+#[tool.poetry.dev-dependencies]
 pytest = "6.2.5"
 pre-commit = "2.20.0"
 #black = ">=20.8b1"
@@ -55,9 +60,7 @@ pre-commit = "2.20.0"
 #Sphinx = "^4.3.0"
 #sphinx-bootstrap-theme = "^0.8.0"
 
-[tool.poetry.dependencies]
-passlib = "^1.7.4"
-dnspython = "^2.1.0"
-loguru = "0.6.0"
-toml = "0.10.2"
+[build-system]
+requires = ["poetry-core>=1.0.0", "wheel>=0.37.0", "packaging>=21.0"]
+build-backend = "poetry.core.masonry.api"
 
