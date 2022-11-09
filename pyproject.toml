@@ -48,7 +48,7 @@ classifiers=[
 
 [tool.poetry.dev-dependencies]
 pytest = "6.2.5"
-pre-commit = "4.3.0"
+pre-commit = "2.20.0"
 #black = ">=20.8b1"
 #fabric = "2.6.0"
 #Sphinx = "^4.3.0"
