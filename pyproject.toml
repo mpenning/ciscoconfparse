@@ -55,7 +55,7 @@ pre-commit = "2.20.0"
 #sphinx-bootstrap-theme = "^0.8.0"
 
 [tool.poetry.dependencies]
-ciscoconfparse = { python = ">=3.7" }
+ciscoconfparse = { version = "^1.6.*", python = ">=3.7" }
 
 [build-system]
 requires = ["poetry-core>=1.0.0", "wheel>=0.37.0"]
