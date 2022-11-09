@@ -34,7 +34,7 @@ repos:
     - id: rst-backticks
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.1.0
+    rev: v4.1.0  # WARNING changing this to v4.3.0 was a timesuck and I rolled-back
     hooks:
     - id: check-yaml
     - id: check-json
