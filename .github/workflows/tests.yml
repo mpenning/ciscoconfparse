@@ -96,10 +96,8 @@ jobs:
           #cache: pip
           #cache-dependency-path: 'requirements*.txt'
 
-      - name: Catch install dependency problems
+      - name: Catch install problems such as pyproject.toml doesn't require auto-dependency installs (ref https://github.com/mpenning/ciscoconfparse/issues/254)
         run: |
-          pip install -U black
-          #pip install -U -r requirements.txt
           pip uninstall -y passlib dnspython loguru
           pip install .
 
