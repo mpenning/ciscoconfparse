@@ -1,8 +1,14 @@
+[project]
+dynamic = ["dependencies"]
+requires-python = ">=3.7.0"
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+
 [tool.poetry]
 name = "ciscoconfparse"
 version = "1.6.51"
 description = "Parse, Audit, Query, Build, and Modify Cisco IOS-style and JunOS-style configurations"
-requires-python = ">=3.7.0"
 license = "GPL-3.0-only"
 authors = [
     "Mike Pennington <mike@pennington.net>",
@@ -39,13 +45,6 @@ classifiers=[
     "Topic :: System :: Networking",
     "Topic :: System :: Networking :: Monitoring",
 ]
-dependencies = [
-    "passlib=^1.7.4",
-    "dnspython=^2.1.0",
-    "loguru=0.6.0",
-    "toml=0.10.2",
-]
-
 
 [tool.poetry.dev-dependencies]
 pytest = "6.2.5"
