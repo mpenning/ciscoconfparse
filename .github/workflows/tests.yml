@@ -96,5 +96,12 @@ jobs:
           #cache: pip
           #cache-dependency-path: 'requirements*.txt'
 
+      - name: Catch install dependency problems
+        run: |
+          pip install -U black
+          #pip install -U -r requirements.txt
+          pip uninstall passlib dnspython loguru
+          pip install .
+
       - name: Run unit-tests
         run: make test
