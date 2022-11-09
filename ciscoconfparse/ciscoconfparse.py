@@ -4704,6 +4704,10 @@ class ConfigList(MutableSequence):
 
     # This method is on ConfigList()
     def _bootstrap_from_text(self):
+
+        if self.debug >= 1:
+             logger.info("ConfigList()._bootstrap_from_text() was called.")
+
         ## reparse all objects from their text attributes... this is *very* slow
         ## Ultimate goal: get rid of all reparsing from text...
         tmp_list = [ii.text for ii in self._list]
@@ -4727,7 +4731,7 @@ class ConfigList(MutableSequence):
             error = "no defined bootstrap method for syntax='%s'" % self.syntax
             raise NotImplementedError(error)
 
-        if self.debug > 0:
+        if self.debug >= 3:
             logger.debug("self._list = {}".format(self._list))
 
     # This method is on ConfigList()
