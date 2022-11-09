@@ -465,28 +465,45 @@ class BaseCfgLine(metaclass=ABCMeta):
     def delete(self, recurse=True):
         """Delete this object.  By default, if a parent object is deleted, the child objects are also deleted; this happens because ``recurse`` defaults True.
         """
-        if recurse:
+        if self.confobj.debug >= 1:
+            logger.info("{}.delete(recurse={}) was called.".format(self, recurse))
+
+        # Build a set of all IOSCfgLine() object instances to be deleted...
+        delete_these = set({self,})
+
+        if recurse is True:
+            if self.confobj.debug >= 1:
+                logger.debug("Executing <IOSCfgLine line #{}>.delete(recurse=True)".format(self.linenum))
+
             # NOTE - 1.5.30 changed this from iterating over self.children
             #        to self.all_children
-            #for child in self.children:
-            for child in sorted(self.all_children, reverse=True):
-                child.delete()
-        ## Consistency check to refuse deletion of the wrong object...
-        ##    only delete if the line numbers are consistent
-        text = self.text
-        linenum = self.linenum
-        if self.confobj._list[self.linenum].text == text:
-            del self.confobj._list[self.linenum]
-            # renumber remaining objects after this deletion...
-            #
-            # NOTE 1.5.30 removed self._list_reassign_linenums() to speed up
-            #     obj.delete() behavior... instead we just iterate through
-            #     the list of remaining objects and renumber them
-            #
-            #self._list_reassign_linenums()
-            for obj in self.confobj._list[self.linenum:]:
-                obj.linenum = linenum
-                linenum += 1
+            for child in self.all_children:
+                delete_these.add(child)
+
+            # reverse is important here so we can delete a range of line numbers
+            # without clobbering the line numbers that haven't been deleted
+            # yet...
+            for obj in sorted(delete_these, reverse=True):
+                linenum = obj.linenum
+                if self.confobj.debug >= 1:
+                    logger.debug("    Deleting <IOSCfgLine(line # {})>.".format(linenum))
+                del self.confobj._list[linenum]
+
+        else:
+            if self.confobj.debug >= 1:
+                logger.debug("Executing <IOSCfgLine line #{}>.delete(recurse=False)".format(self.linenum))
+            ## Consistency check to refuse deletion of the wrong object...
+            ##    only delete if the line numbers are consistent
+            text = self.text
+            linenum = self.linenum
+            assert self.confobj._list[linenum].text == text
+
+            if self.confobj.debug >= 1:
+                logger.debug("    Deleting <IOSCfgLine(line # {})>.".format(linenum))
+            del self.confobj._list[linenum]
+
+        self.confobj._reassign_linenums()
+        return True
 
     # On BaseCfgLine()
     @junos_unsupported
