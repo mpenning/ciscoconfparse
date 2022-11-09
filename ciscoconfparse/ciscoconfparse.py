@@ -4657,6 +4657,10 @@ class ConfigList(MutableSequence):
 
     # This method is on ConfigList()
     def append(self, val):
+
+        if self.debug >= 1:
+            logger.debug("    ConfigList().append(val={}) was called.".format(val))
+
         self._list.append(val)
 
     # This method is on ConfigList()
@@ -4707,7 +4711,7 @@ class ConfigList(MutableSequence):
     def _bootstrap_from_text(self):
 
         if self.debug >= 1:
-             logger.info("ConfigList()._bootstrap_from_text() was called.")
+            logger.debug("    ConfigList()._bootstrap_from_text() was called.")
 
         ## reparse all objects from their text attributes... this is *very* slow
         ## Ultimate goal: get rid of all reparsing from text...
