@@ -361,7 +361,7 @@ def run_cmd(
     args = parse_args()
 
     if debug > 0:
-        loguru_logger.log("INFO", "|" + "Calling run_cmd(cmd='%s')".format(cmd))
+        loguru_logger.log("INFO", "|" + "Calling run_cmd(cmd='{}')".format(cmd))
 
     if debug > 1:
         loguru_logger.log(
@@ -619,7 +619,11 @@ def main(args):
                 raise ValueError("FATAL tag {} already exists".format(tag_value))
 
         stdout, stderr = run_cmd("git merge {0} -m '{1}'".format(args.combine, args.message), debug=args.debug)
+        print("STDOUT", stdout)
+        print("STDOUT", stderr)
         stdout, stderr = run_cmd("git push origin main", debug=args.debug)
+        print("STDOUT", stdout)
+        print("STDOUT", stderr)
 
         if args.tag is True:
             stdout, stderr = run_cmd("git push origin main --tags", debug=args.debug)
