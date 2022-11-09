@@ -4,6 +4,12 @@
 - Summary:
     - Nothing to see here, move on
 
+## Version: 1.6.52
+
+- Released: 2022-10-21
+- Summary:
+    - Fix Github Issue #254
+
 ## Version: 1.6.51
 
 - Released: 2022-10-21
