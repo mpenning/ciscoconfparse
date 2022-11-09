@@ -1,4 +1,5 @@
 pytest == 7.1.3
+packaging > 21.0
 poetry
 poetry-core
 gitpython
