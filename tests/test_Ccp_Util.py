@@ -577,12 +577,13 @@ def test_collapse_addresses_02():
 
 
 def test_dns_lookup():
-    # Use VMWare's opencloud A-record to test...
-    #   ref http://stackoverflow.com/a/7714208/667301
-    result_correct = {"addrs": ["127.0.0.1"], "name": "*.vcap.me", "error": "", "record_type": "A"}
-    test_result = dns_lookup("*.vcap.me")
+    # Use my hostname to test...
+    test_hostname = "www.pennington.net"
+    result_correct_address = "65.19.187.2"
+    result_correct = {"addrs": [result_correct_address], "name": test_hostname, "error": "", "record_type": "A"}
+    test_result = dns_lookup(test_hostname)
     if test_result["error"] != "":
-        assert dns_lookup("*.vcap.me") == result_correct
+        assert dns_lookup(test_hostname) == result_correct
     else:
         pytest.skip(test_result["error"])
 
