@@ -602,14 +602,15 @@ def main(args):
 
     elif args.combine != "":
         original_branch_name = get_branch_name(args)
+        assert original_branch_name != "main"
 
+        loguru_logger.debug(original_branch_name)
         # This is used for 'git merge <branch_name>' situations...
         assert args.combine != "main", "FATAL merging main with {} is not supported".format(original_branch_name)
 
         # checkout the main branch...
-        if original_branch_name != "main":
-            args.branch = "main"
-            git_checkout_branch(args)
+        args.branch = "main"
+        git_checkout_branch(args)
 
         if args.tag is True:
             tag_value = git_tag_commit_version()     # Read version from pyproject.toml...
@@ -618,12 +619,11 @@ def main(args):
             else:
                 raise ValueError("FATAL tag {} already exists".format(tag_value))
 
-        stdout, stderr = run_cmd("git merge {0} -m '{1}'".format(args.combine, args.message), debug=args.debug)
-        print("STDOUT", stdout)
-        print("STDOUT", stderr)
+        assert get_branch_name(args) == "main"
+        ## FIXME git merge command below does NOT merge anything...
+        raise NotImplementedError("git merge functionality is broken... it cannot merge the develop branch into main")
+        stdout, stderr = run_cmd("git merge {0} -m '{1}'".format(original_branch_name, args.message), debug=args.debug)
         stdout, stderr = run_cmd("git push origin main", debug=args.debug)
-        print("STDOUT", stdout)
-        print("STDOUT", stderr)
 
         if args.tag is True:
             stdout, stderr = run_cmd("git push origin main --tags", debug=args.debug)
