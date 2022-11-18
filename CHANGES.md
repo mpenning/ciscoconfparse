@@ -7,10 +7,11 @@
 
 ## Version: 1.6.53
 
-- Released: 2022-11-09
+- Released: 2022-11-18
 - Summary:
     - Reformat pyproject.toml to be most compatible with 'pip install'
     - Several internal project-level optimizations...
+    - git changes committed on 2022-11-09... somehow 1.6.53 wasn't pushed to pypi on 9-Nov-2022.  It was pushed to pypi on 18-Nov-2022
 
 ## Version: 1.6.52
 
