@@ -129,6 +129,11 @@ If you\'re interested in the source, you can always pull from the [github repo][
         cd ciscoconfparse/
         python -m pip install .
 
+Github Star Timeline
+--------------------
+
+[![Star History Chart](https://api.star-history.com/svg?repos=mpenning/ciscoconfparse&type=Date)](https://star-history.com/#mpenning/ciscoconfparse&Date)
+
 Other Resources
 ---------------
 
