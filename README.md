@@ -132,7 +132,7 @@ If you\'re interested in the source, you can always pull from the [github repo][
 Github Star Timeline
 --------------------
 
-[![Star History Chart](https://api.star-history.com/svg?repos=mpenning/ciscoconfparse&type=Date)](https://star-history.com/#mpenning/ciscoconfparse&Date)
+[![Github Star History Chart][40]][40]
 
 Other Resources
 ---------------
@@ -219,3 +219,4 @@ Author
   [37]: https://snyk.io/advisor/python/ciscoconfparse/badge.svg
   [38]: https://snyk.io/advisor/python/ciscoconfparse
   [39]: https://www.reddit.com/r/Python/
+  [40]: https://api.star-history.com/svg?repos=mpenning/ciscoconfparse&type=Date
