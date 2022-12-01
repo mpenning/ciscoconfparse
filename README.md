@@ -1,7 +1,7 @@
 ciscoconfparse
 ==============
 
-[![Github unittest workflow][4]][5] [![Code Health][37]][38] [![Version][2]][3] [![Downloads][6]][7] [![License][8]][9]
+[![Github unittest workflow][4]][5] [![Code Health][37]][38] [![git commits][41]][42] [![Version][2]][3] [![Downloads][6]][7] [![License][8]][9]
 
 
 Introduction: What is ciscoconfparse?
@@ -220,3 +220,5 @@ Author
   [38]: https://snyk.io/advisor/python/ciscoconfparse
   [39]: https://www.reddit.com/r/Python/
   [40]: https://api.star-history.com/svg?repos=mpenning/ciscoconfparse&type=Date
+  [41]: https://img.shields.io/github/commit-activity/m/mpenning/ciscoconfparse
+  [42]: https://img.shields.io/github/commit-activity/m/mpenning/ciscoconfparse
