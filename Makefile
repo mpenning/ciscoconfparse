@@ -35,6 +35,7 @@ bump-version-patch:
 bump-version-minor:
 	$(shell python dev_tools/git_helper.py -I minor)
 
+
 .PHONY: repo-push
 repo-push:
 	@echo ">> git push (w/o force) ciscoconfparse local main branch to github"
@@ -46,12 +47,14 @@ repo-push:
 
 .PHONY: repo-push-force
 repo-push-force:
-	@echo ">> git push (w/ force) ciscoconfparse local main branch to github"
-	#git remote remove origin
-	#git remote add origin "git@github.com:mpenning/ciscoconfparse"
-	#git push --force-with-lease git@github.com:mpenning/ciscoconfparse.git
-	#git push --force-with-lease origin +main
-	$(shell python dev_tools/git_helper.py -P ciscoconfparse --push --force)
+	@echo ">> git push (w/o force) ciscoconfparse local main branch to github"
+	ping -q -c1 -W1 4.2.2.2                   # quiet ping to the internet...
+	-git checkout master || git checkout main # Add dash to ignore checkout fails
+	# Now the main branch is checked out...
+	THIS_BRANCH=$(shell git branch --show-current)  # assign 'main' to $THIS_BRANCH
+	git merge @{-1}                           # merge the previous branch into main...
+	git push --force origin $(THIS_BRANCH)    # force push to origin / $THIS_BRANCH
+	git checkout @{-1}                        # checkout the previous branch...
 
 .PHONY: repo-push-tag
 repo-push-tag:
