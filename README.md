@@ -1,7 +1,7 @@
 ciscoconfparse
 ==============
 
-[![Github unittest workflow][4]][5] [![Code Health][37]][38] [![git commits][41]][42] [![Repo Code Grade][43]][43]  [![Version][2]][3] [![Downloads][6]][7] [![License][8]][9]
+[![Github unittest workflow][4]][5] [![Code Health][37]][38] [![git commits][41]][42] [![Repo Code Grade][43]][44]  [![Version][2]][3] [![Downloads][6]][7] [![License][8]][9]
 
 
 Introduction: What is ciscoconfparse?
@@ -223,3 +223,4 @@ Author
   [41]: https://img.shields.io/github/commit-activity/m/mpenning/ciscoconfparse
   [42]: https://img.shields.io/github/commit-activity/m/mpenning/ciscoconfparse
   [43]: https://www.codefactor.io/Content/badges/B.svg
+  [44]: https://www.codefactor.io/repository/github/mpenning/ciscoconfparse/
