@@ -1580,14 +1580,14 @@ def testVal_IOSRouteLine_01():
 
 
 def testVal_IOSRouteLine_02():
-    line = "ip route vrf mgmtVrf 0.0.0.0 0.0.0.0 172.16.1.254"
+    line = "ip route vrf mgmtVrf 3.0.0.0 255.255.0.0 172.16.1.254"
     cfg = CiscoConfParse([line], factory=True)
     obj = cfg.ConfigObjs[0]
     assert obj.address_family == "ip"
     assert obj.vrf == "mgmtVrf"
-    assert obj.network == "0.0.0.0"
-    assert obj.netmask == "0.0.0.0"
-    assert obj.masklen == 0
+    assert obj.network == "3.0.0.0"
+    assert obj.netmask == "255.255.0.0"
+    assert obj.masklen == 16
     assert obj.next_hop_interface == ""
     assert obj.next_hop_addr == "172.16.1.254"
     assert obj.multicast is False
@@ -1599,14 +1599,14 @@ def testVal_IOSRouteLine_02():
     assert obj.tag == ""
 
 def testVal_IOSRouteLine_03():
-    line = "ip route vrf mgmtVrf 8.0.0.0 128.0.0.0 172.16.1.254 254"
+    line = "ip route vrf mgmtVrf 8.0.0.0 192.0.0.0 172.16.1.254 254"
     cfg = CiscoConfParse([line], factory=True)
     obj = cfg.ConfigObjs[0]
     assert obj.address_family == "ip"
     assert obj.vrf == "mgmtVrf"
     assert obj.network == "8.0.0.0"
-    assert obj.netmask == "128.0.0.0"
-    assert obj.masklen == 1
+    assert obj.netmask == "192.0.0.0"
+    assert obj.masklen == 2
     assert obj.next_hop_interface == ""
     assert obj.next_hop_addr == "172.16.1.254"
     assert obj.multicast is False
@@ -1619,14 +1619,14 @@ def testVal_IOSRouteLine_03():
 
 
 def testVal_IOSRouteLine_04():
-    line = "ip route vrf mgmtVrf 0.0.0.0 0.0.0.0 172.16.1.254 global 254"
+    line = "ip route vrf mgmtVrf 2.0.0.0 255.0.0.0 172.16.1.254 global 254"
     cfg = CiscoConfParse([line], factory=True)
     obj = cfg.ConfigObjs[0]
     assert obj.address_family == "ip"
     assert obj.vrf == "mgmtVrf"
-    assert obj.network == "0.0.0.0"
-    assert obj.netmask == "0.0.0.0"
-    assert obj.masklen == 0
+    assert obj.network == "2.0.0.0"
+    assert obj.netmask == "255.0.0.0"
+    assert obj.masklen == 8
     assert obj.next_hop_interface == ""
     assert obj.next_hop_addr == "172.16.1.254"
     assert obj.multicast is False
@@ -1638,14 +1638,14 @@ def testVal_IOSRouteLine_04():
     assert obj.tag == ""
 
 def testVal_IOSRouteLine_05():
-    line = "ip route vrf mgmtVrf 0.0.0.0 0.0.0.0 172.16.1.254 global 254 track 35"
+    line = "ip route vrf mgmtVrf 1.0.0.0 255.0.0.0 172.16.1.254 global 254 track 35"
     cfg = CiscoConfParse([line], factory=True)
     obj = cfg.ConfigObjs[0]
     assert obj.address_family == "ip"
     assert obj.vrf == "mgmtVrf"
-    assert obj.network == "0.0.0.0"
-    assert obj.netmask == "0.0.0.0"
-    assert obj.masklen == 0
+    assert obj.network == "1.0.0.0"
+    assert obj.netmask == "255.0.0.0"
+    assert obj.masklen == 8
     assert obj.next_hop_interface == ""
     assert obj.next_hop_addr == "172.16.1.254"
     assert obj.multicast is False
