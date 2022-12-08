@@ -855,6 +855,7 @@ class IPv4Obj(object):
         else:
             raise ValueError("type(%s) is not supported" % arg)
 
+
         if isinstance(arg, str):
             # Removing string length checks in 1.6.29... there are too many
             #    options such as IPv4Obj("111.111.111.111      255.255.255.255")
@@ -1191,10 +1192,7 @@ class IPv4Obj(object):
         """
         Fix github issue #203... build a `_prefixlen` attribute...
         """
-        if self.version == 4:
-            return IPV4_MAX_PREFIXLEN
-        else:
-            return IPV6_MAX_PREFIXLEN
+        return IPV4_MAX_PREFIXLEN
 
     # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
@@ -1625,7 +1623,10 @@ class IPv6Obj(object):
             except Exception as ee:
                 masklen = IPV6_MAX_PREFIXLEN
 
-            netmask_int = 2**(128 - masklen) - 1
+            assert isinstance(masklen, int) and masklen <= 128
+            # If we have to derive the netmask as a long hex string,
+            # calculate the netmask from the masklen as follows...
+            netmask_int = (2**128 - 1) - (2**(128 - masklen) - 1)
             netmask = str(IPv6Address(netmask_int))
 
         elif isinstance(arg, int):
@@ -1637,7 +1638,7 @@ class IPv6Obj(object):
         elif isinstance(arg, IPv6Obj):
             addr = str(arg.ip)
             netmask = str(arg.netmask)
-            masklen = arg.masklen
+            masklen = int(arg.masklen)
 
         else:
             raise AddressValueError("IPv6Obj(arg='%s')" % (arg))
@@ -1883,10 +1884,7 @@ class IPv6Obj(object):
         """
         Fix github issue #203... build a `_prefixlen` attribute...
         """
-        if self.version == 4:
-            return IPV4_MAX_PREFIXLEN
-        else:
-            return IPV6_MAX_PREFIXLEN
+        return IPV6_MAX_PREFIXLEN
 
     # On IPv6Obj()
     @property
