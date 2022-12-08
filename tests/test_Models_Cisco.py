@@ -1571,7 +1571,7 @@ def testVal_IOSRouteLine_01():
     assert obj.next_hop_interface == ""
     assert obj.next_hop_addr == "172.16.1.254"
     assert obj.multicast is False
-    assert obj.tracking_object_name  == ""
+    assert obj.tracking_object_name == ""
     assert obj.route_name == ""
     assert obj.permanent is False
     assert obj.global_next_hop is True # All non-vrf routes have global NHs
@@ -1591,7 +1591,7 @@ def testVal_IOSRouteLine_02():
     assert obj.next_hop_interface == ""
     assert obj.next_hop_addr == "172.16.1.254"
     assert obj.multicast is False
-    assert obj.tracking_object_name  == ""
+    assert obj.tracking_object_name == ""
     assert obj.route_name == ""
     assert obj.permanent is False
     assert obj.global_next_hop is False
@@ -1610,7 +1610,7 @@ def testVal_IOSRouteLine_03():
     assert obj.next_hop_interface == ""
     assert obj.next_hop_addr == "172.16.1.254"
     assert obj.multicast is False
-    assert obj.tracking_object_name  == ""
+    assert obj.tracking_object_name == ""
     assert obj.route_name == ""
     assert obj.permanent is False
     assert obj.global_next_hop is False
@@ -1630,7 +1630,7 @@ def testVal_IOSRouteLine_04():
     assert obj.next_hop_interface == ""
     assert obj.next_hop_addr == "172.16.1.254"
     assert obj.multicast is False
-    assert obj.tracking_object_name  == ""
+    assert obj.tracking_object_name == ""
     assert obj.route_name == ""
     assert obj.permanent is False
     assert obj.global_next_hop is True
@@ -1649,7 +1649,7 @@ def testVal_IOSRouteLine_05():
     assert obj.next_hop_interface == ""
     assert obj.next_hop_addr == "172.16.1.254"
     assert obj.multicast is False
-    assert obj.tracking_object_name  == "35"
+    assert obj.tracking_object_name == "35"
     assert obj.route_name == ""
     assert obj.permanent is False
     assert obj.global_next_hop is True
@@ -1668,7 +1668,7 @@ def testVal_IOSRouteLine_06():
     assert obj.next_hop_interface == "FastEthernet0/0"
     assert obj.next_hop_addr == "172.16.1.254"
     assert obj.multicast is False
-    assert obj.tracking_object_name  == "35"
+    assert obj.tracking_object_name == "35"
     assert obj.route_name == ""
     assert obj.permanent is False
     assert obj.global_next_hop is True
@@ -1687,7 +1687,7 @@ def testVal_IOSRouteLine_07():
     assert obj.next_hop_interface == "FastEthernet0/0"
     assert obj.next_hop_addr == ""
     assert obj.multicast is False
-    assert obj.tracking_object_name  == "35"
+    assert obj.tracking_object_name == "35"
     assert obj.route_name == ""
     assert obj.permanent is False
     assert obj.global_next_hop is False  # TODO: Figure out if False is right
