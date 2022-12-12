@@ -3,13 +3,20 @@ DOCHOST ?= $(shell bash -c 'read -p "documentation host: " dochost; echo $$docho
 #    Ref -> https://stackoverflow.com/a/71592061/667301
 VERSION := $(shell grep version pyproject.toml | tr -s ' ' | tr -d "'" | tr -d '"' | cut -d' ' -f3)
 
+# Makefile color codes...
+COL_GREEN=\033[0;32m
+COL_CYAN=\033[0;36m
+COL_YELLOW=\033[0;33m
+COL_RED=\033[0;31m
+COL_END=\033[0;0m
+
 .DEFAULT_GOAL := test
 
 # Ref -> https://stackoverflow.com/a/26737258/667301
 # Ref -> https://packaging.python.org/en/latest/guides/making-a-pypi-friendly-readme/
 .PHONY: pypi-packaging
 pypi-packaging:
-	@echo ">> building ciscoconfparse pypi artifacts (wheel and tar.gz)"
+	@echo "$(COL_GREEN)>> building ciscoconfparse pypi artifacts (wheel and tar.gz)$(COL_END)"
 	pip install -U setuptools>=58.0.0
 	pip install -U wheel>=0.37.1
 	pip install -U twine>=4.0.1
@@ -19,7 +26,7 @@ pypi-packaging:
 
 .PHONY: pypi
 pypi:
-	@echo ">> uploading ciscoconfparse pypi artifacts to pypi"
+	@echo "$(COL_CYAN)>> uploading ciscoconfparse pypi artifacts to pypi$(COL_END)"
 	make clean
 	make pypi-packaging
 	poetry lock --no-update
@@ -38,16 +45,7 @@ bump-version-minor:
 
 .PHONY: repo-push
 repo-push:
-	@echo ">> git push (w/o force) ciscoconfparse local main branch to github"
-	#git remote remove origin
-	#git remote add origin "git@github.com:mpenning/ciscoconfparse"
-	#git push git@github.com:mpenning/ciscoconfparse.git
-	#git push origin +main
-	$(shell python dev_tools/git_helper.py -P ciscoconfparse --push)
-
-.PHONY: repo-push
-repo-push:
-	@echo ">> git push (w/o force) ciscoconfparse local main branch to github"
+	@echo "$(COL_GREEN)>> git push and merge (w/o force) to ciscoconfparse main branch to github$(COL_END)"
 	ping -q -c1 -W1 4.2.2.2                   # quiet ping to the internet...
 	-git checkout master || git checkout main # Add dash to ignore checkout fails
 	# Now the main branch is checked out...
@@ -59,7 +57,7 @@ repo-push:
 
 .PHONY: repo-push-force
 repo-push-force:
-	@echo ">> git push (w/ force) ciscoconfparse local main branch to github"
+	@echo "$(COL_GREEN)>> git push and merge (w/ force) ciscoconfparse local main branch to github$(COL_END)"
 	ping -q -c1 -W1 4.2.2.2                   # quiet ping to the internet...
 	-git checkout master || git checkout main # Add dash to ignore checkout fails
 	# Now the main branch is checked out...
@@ -70,25 +68,25 @@ repo-push-force:
 
 .PHONY: repo-push-tag
 repo-push-tag:
-	@echo ">> git push (w/ local tag) ciscoconfparse local main branch to github"
-	#make repo-push
-	$(shell python dev_tools/git_helper.py -P ciscoconfparse --push --tag)
+	@echo "$(COL_GREEN)>> git push (w/ local tag) ciscoconfparse local main branch to github$(COL_END)"
+	git push origin +main
+	git push --tags origin +main
 
 .PHONY: repo-push-tag-force
 repo-push-tag-force:
-	@echo ">> git push (w/ local tag and w/ force) ciscoconfparse local main branch to github"
-	#make repo-push-force
-	$(shell python dev_tools/git_helper.py -P ciscoconfparse --push --tag --force)
+	@echo "$(COL_GREEN)>> git push (w/ local tag and w/ force) ciscoconfparse local main branch to github$(COL_END)"
+	git push --force-with-lease origin +main
+	git push --force-with-lease --tags origin +main
 
 .PHONY: pylama
 pylama:
-	@echo ">> running pylama against ciscoconfparse"
+	@echo "$(COL_GREEN)>> running pylama against ciscoconfparse$(COL_END)"
 	# Good usability info here -> https://pythonspeed.com/articles/pylint/
 	pylama --ignore=E501,E301,E265,E266 ciscoconfparse/*py | less -XR
 
 .PHONY: pylint
 pylint:
-	@echo ">> running pylint against ciscoconfparse"
+	@echo "$(COL_GREEN)>> running pylint against ciscoconfparse$(COL_END)"
 	# Good usability info here -> https://pythonspeed.com/articles/pylint/
 	pylint --rcfile=./utils/pylintrc --ignore-patterns='^build|^dist|utils/pylintrc|README.rst|CHANGES|LICENSE|MANIFEST.in|Makefile|TODO' --output-format=colorized * | less -XR
 
@@ -133,12 +131,12 @@ doctest:
 
 .PHONY: pip
 pip:
-	@echo ">> Upgrading pip to the latest version"
+	@echo "$(COL_GREEN)>> Upgrading pip to the latest version$(COL_END)"
 	pip install -U pip
 
 .PHONY: dep
 dep:
-	@echo ">> installing all ciscoconfparse prod dependencies"
+	@echo "$(COL_GREEN)>> installing all ciscoconfparse prod dependencies$(COL_END)"
 	make pip
 	pip install -U pip>=22.2.0
 	pip install -U dnspython==2.1.0 # Previously version 1.14.0
@@ -148,7 +146,7 @@ dep:
 
 .PHONY: dev
 dev:
-	@echo ">> installing all prod and development ciscoconfparse dependencies"
+	@echo "$(COL_GREEN)>> installing all prod and development ciscoconfparse dependencies$(COL_END)"
 	make dep
 	pip install -U pip>=22.2.0
 	pip install -U virtualenv
@@ -174,12 +172,14 @@ dev:
 
 .PHONY: test
 test:
-	ping -q -c1 -W1 4.2.2.2       # quiet ping to the internet...
+	@echo "$(COL_GREEN)>> running unit tests$(COL_END)"
+	ping -q -c1 -W1 4.2.2.2 || (echo "$(COL_RED)'ping 4.2.2.2' failed; exit status: $$?$(COL_END)"; exit 1)
 	make clean
 	cd tests && ./runtests.sh
 
 .PHONY: clean
 clean:
+	@echo "$(COL_GREEN)>> cleaning the repo$(COL_END)"
 	# Delete bogus files... see https://stackoverflow.com/a/73992288/667301
 	perl -e 'unlink( grep { /^=\d*\.*\d*/ && !-d } glob( "*" ) );'
 	find ./* -name '*.pyc' -exec rm {} \;
