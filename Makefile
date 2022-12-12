@@ -4,6 +4,7 @@ DOCHOST ?= $(shell bash -c 'read -p "documentation host: " dochost; echo $$docho
 VERSION := $(shell grep version pyproject.toml | tr -s ' ' | tr -d "'" | tr -d '"' | cut -d' ' -f3)
 
 # Makefile color codes...
+#     ref -> https://stackoverflow.com/a/5947802/667301
 COL_GREEN=\033[0;32m
 COL_CYAN=\033[0;36m
 COL_YELLOW=\033[0;33m
