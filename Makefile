@@ -174,7 +174,7 @@ dev:
 .PHONY: test
 test:
 	@echo "$(COL_GREEN)>> running unit tests$(COL_END)"
-	ping -q -c1 -W1 4.2.2.2 || (echo "$(COL_RED)'ping 4.2.2.2' failed; exit status: $$?$(COL_END)"; exit 1)
+	ping -q -c1 -W1 4.2.2.2
 	make clean
 	cd tests && ./runtests.sh
 
