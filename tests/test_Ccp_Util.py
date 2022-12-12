@@ -44,6 +44,7 @@ else:
     from ipaddress import IPv4Network, IPv6Network, IPv4Address, IPv6Address
     import ipaddress
 
+import dns.resolver
 
 
 @pytest.mark.parametrize(
@@ -581,7 +582,11 @@ def test_dns_lookup():
     test_hostname = "www.pennington.net"
     result_correct_address = "65.19.187.2"
     result_correct = {"addrs": [result_correct_address], "name": test_hostname, "error": "", "record_type": "A"}
-    test_result = dns_lookup(test_hostname)
+    try:
+        test_result = dns_lookup(test_hostname)
+    except dns.resolver.LifetimeTimeout:
+        pytest.skip("Skipping due to DNS resolver timeout")
+
     if test_result["error"] != "":
         assert dns_lookup(test_hostname) == result_correct
     else:
