@@ -83,6 +83,7 @@ from ciscoconfparse.ccp_util import configure_loguru
 # Not using ccp_re yet... still a work in progress
 # from ciscoconfparse.ccp_util import ccp_re
 
+from deprecat import deprecat
 from loguru import logger
 import toml
 
@@ -437,6 +438,8 @@ class CiscoConfParse(object):
         encoding : str
             A string holding the coding type.  Default is `locale.getpreferredencoding()`
 
+
+
         Returns
         -------
         :class:`~ciscoconfparse.CiscoConfParse`
@@ -503,7 +506,9 @@ class CiscoConfParse(object):
 
         assert self.syntax in ALL_VALID_SYNTAX
 
+        # Read the configuration lines and detect invalid inputs...
         config = self.get_config_lines(config=config, logger=logger)
+
         valid_syntax = copy.copy(set(ALL_VALID_SYNTAX))
 
         # add exceptions for brace-delimited syntax...
@@ -589,38 +594,54 @@ class CiscoConfParse(object):
     @logger.catch(reraise=True)
     def get_config_lines(self, config=None, logger=None, linesplit_rgx=r"\r*\n+"):
         """
-        Enforce rules - If config is a str, assume it's a filepath.  If config is a list, assume it's a router config.
+        If the config parameter is a str, assume it's a filepath and read the config.  If the config parameter is a list, assume it's a list of text config commands.  Return the list of text configuration commands or raise an error.
         """
         config_lines = None
 
-        # config string - assume a filename... open file return lines...
-        if self.debug > 0:
-            logger.debug("parsing config from '%s'" % config)
+        if config is None:
+            raise ValueError("config='%s' is unsupported.  `config` must be either a python string, patlib.Path, or list" % config)
 
-        try:
-            assert isinstance(config, (str, pathlib.Path,))
-            assert os.path.isfile(config) is True
-            with open(config, **self.openargs) as fh:
-                text = fh.read()
-            rgx = re.compile(linesplit_rgx)
-            config_lines = rgx.split(text)
-            return config_lines
-
-        except (OSError or FileNotFoundError):
-            error = "CiscoConfParse could not open() the filepath '%s'" % config
-            logger.critical(error)
-            raise OSError
-
-        except AssertionError:
-            # Allow list / iterator config to fall through the next logic below
-            pass
-
-        if isinstance(config, (Iterator, list,)):
+        elif isinstance(config, list) or isinstance(config, Iterator):
+            # Here we assume that `config` is a list of text config lines...
+            #
+            # config list of text lines...
+            assert len(config) > 0, "FATAL - there is no configuration stored in the list()"
+            if self.debug > 0:
+                logger.debug("parsing config stored in this list: '%s'" % config)
             config_lines = config
             return config_lines
 
+        elif isinstance(config, (str, pathlib.Path,)) and os.path.isfile(config) is True:
+
+            # config string - assume a filename... open file return lines...
+            if self.debug > 0:
+                logger.debug("parsing config from the filepath named '%s'" % config)
+
+            try:
+                with open(file=config, **self.openargs) as fh:
+                    text = fh.read()
+                rgx = re.compile(linesplit_rgx)
+                config_lines = rgx.split(text)
+                return config_lines
+
+            except OSError:
+                error = "CiscoConfParse could not open() the filepath named '%s'" % config
+                logger.critical(error)
+                raise OSError("FATAL - could not open() the config filepath named '{}'".format(config))
+
+            except Exception as eee:
+                error = "FATAL - {}".format(str(eee))
+                logger.critical(error)
+                raise OSError(error)
+
+        elif isinstance(config, (str, pathlib.Path,)) and os.path.isfile(config) is False:
+            if self.debug > 0:
+                logger.debug("filepath not found - '%s'" % config)
+            error = """FATAL - Attempted to open(file='{0}', mode='r', encoding='{1}'); however, file filepath named:"{0}" does not exist.""".format(config, self.openargs['encoding'])
+            raise ValueError(error)
+
         else:
-            raise ValueError("config='%s' is an unexpected type()" % config)
+            raise ValueError("config='%s' is an unexpected type().  `config` must be either a python string, patlib.Path, or list" % config)
 
     #########################################################################
     # This method is on CiscoConfParse()
@@ -643,17 +664,17 @@ class CiscoConfParse(object):
     # This method is on CiscoConfParse()
     @property
     def ioscfg(self):
-        """A list containing all text configuration statements"""
+        """Return a list containing all text configuration statements"""
         ## I keep ioscfg to emulate legacy ciscoconfparse behavior
         return [ii.text for ii in self.ConfigObjs]
 
     # This method is on CiscoConfParse()
     @property
     def objs(self):
-        """An alias to the ``ConfigObjs`` attribute"""
+        """CiscoConfParse().objs is an alias for the CiscoConfParse().ConfigObjs property; it returns a ConfigList() of config-line objects."""
         if self.ConfigObjs is None:
             err_txt = ("ConfigObjs is set to None.  ConfigObjs should be a "
-                       "list of text {} config strings".format(self.syntax))
+                       "ConfigList() of configuration-line objects".format(self.syntax))
             logger.error(err_txt)
             raise ValueError(err_txt)
         return self.ConfigObjs
@@ -661,7 +682,7 @@ class CiscoConfParse(object):
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
     def atomic(self):
-        """Call :func:`~ciscoconfparse.CiscoConfParse.atomic` to manually fix
+        """Use :func:`~ciscoconfparse.CiscoConfParse.atomic` to manually fix
         up ``ConfigObjs`` relationships
         after modifying a parsed configuration.  This method is slow; try to
         batch calls to :func:`~ciscoconfparse.CiscoConfParse.atomic()` if
@@ -2977,6 +2998,7 @@ class CiscoConfParse(object):
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
+    @deprecat(reason="req_cfgspec_all_diff() is obsolete; use HDiff() instead.  req_cfgspec_all_diff() will be removed", version = '1.7.0')
     def req_cfgspec_all_diff(self, cfgspec, ignore_ws=False):
         """
         req_cfgspec_all_diff takes a list of required configuration lines,
@@ -3045,6 +3067,7 @@ class CiscoConfParse(object):
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
+    @deprecat(reason="req_cfgspec_excl_diff() is obsolete; use HDiff() instead.  req_cfgspec_excl_diff() will be removed", version = '1.7.0')
     def req_cfgspec_excl_diff(self, linespec, uncfgspec, cfgspec):
         r"""
         req_cfgspec_excl_diff accepts a linespec, an unconfig spec, and
@@ -3233,6 +3256,7 @@ class CiscoConfParse(object):
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
+    @deprecat(reason="sync_diff() is obsolete; use HDiff() instead.  sync_diff() will be removed", version = '1.7.0')
     def sync_diff(
         self,
         cfgspec,
@@ -3303,6 +3327,10 @@ class CiscoConfParse(object):
         # warning issued 2022-06-01
         deprecation_warn_str = "`sync_diff()` will be deprecated and removed in future versions."
         warnings.warn(deprecation_warn_str, DeprecationWarning)
+
+        assert isinstance(cfgspec, (list, tuple, Iterator)), "FATAL - `cfgspec` requires a python Iterable, typically a `list()`."
+        assert isinstance(linespec, str) and len(linespec) > 0, "FATAL - `linespec` requires a python string."
+        assert isinstance(unconfspec, str) and len(unconfspec) > 0, "FATAL - `unconfspec` requires a python string."
 
         tmp = self._find_line_OBJ(linespec)
         if uncfgspec is None:
