@@ -174,7 +174,7 @@ dev:
 
 .PHONY: test
 test:
-	ping -c 1 -W 1 4.2.2.2  # Internet connectivity required
+	ping -q -c1 -W1 4.2.2.2       # quiet ping to the internet...
 	make clean
 	cd tests && ./runtests.sh
 
