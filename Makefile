@@ -140,7 +140,7 @@ dep:
 	@echo "$(COL_GREEN)>> installing all ciscoconfparse prod dependencies$(COL_END)"
 	make pip
 	pip install -U pip>=22.2.0
-	pip install -U dnspython==2.1.0 # Previously version 1.14.0
+	pip install -U dnspython==1.15.0 # Previously version 1.14.0
 	pip install -U passlib==1.7.4
 	pip install -U loguru==0.6.0
 	pip install -U toml>=0.10.2
@@ -175,6 +175,7 @@ dev:
 test:
 	@echo "$(COL_GREEN)>> running unit tests$(COL_END)"
 	#ping -q -c1 -W1 4.2.2.2
+	pip install -U pip>=22.2.0, dnspython==1.15.0, passlib==1.7.4, loguru==0.6.0, toml>=0.10.2
 	make clean
 	cd tests && ./runtests.sh
 
