@@ -174,7 +174,7 @@ dev:
 .PHONY: test
 test:
 	@echo "$(COL_GREEN)>> running unit tests$(COL_END)"
-	ping -q -c1 -W1 4.2.2.2
+	#ping -q -c1 -W1 4.2.2.2
 	make clean
 	cd tests && ./runtests.sh
 
