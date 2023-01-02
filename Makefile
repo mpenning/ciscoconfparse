@@ -1,7 +1,12 @@
 DOCHOST ?= $(shell bash -c 'read -p "documentation host: " dochost; echo $$dochost')
 # VERSION detection:
 #    Ref -> https://stackoverflow.com/a/71592061/667301
-VERSION := $(shell grep version pyproject.toml | tr -s ' ' | tr -d "'" | tr -d '"' | cut -d' ' -f3)
+export VERSION := $(shell grep version pyproject.toml | tr -s ' ' | tr -d "'" | tr -d '"' | cut -d' ' -f3)
+
+# We MUST escape Makefile dollar signs as $$foo
+export TMP := $(shell perl -e '@output = qx/ping -q -W0.5 -c1 4.2.2.2/; $$alloutput = join "", @output; if ( $$alloutput =~ /\s0\sreceived/ ) { print "failure"; } else { print "success"; }')
+
+export NUMBER_OF_CCP_TESTS := $(shell grep "def " tests/test*py | wc -l)
 
 # Makefile color codes...
 #     ref -> https://stackoverflow.com/a/5947802/667301
@@ -35,6 +40,9 @@ pypi:
 	# twine is the simplest pypi package uploader...
 	python -m twine upload dist/*
 
+.PHONY: readme
+readme:
+
 .PHONY: bump-version-patch
 bump-version-patch:
 	$(shell python dev_tools/git_helper.py -I patch)
@@ -47,7 +55,7 @@ bump-version-minor:
 .PHONY: repo-push
 repo-push:
 	@echo "$(COL_GREEN)>> git push and merge (w/o force) to ciscoconfparse main branch to github$(COL_END)"
-	ping -q -c1 -W1 4.2.2.2                   # quiet ping to the internet...
+	make ping
 	-git checkout master || git checkout main # Add dash to ignore checkout fails
 	# Now the main branch is checked out...
 	THIS_BRANCH=$(shell git branch --show-current)  # assign 'main' to $THIS_BRANCH
@@ -59,7 +67,7 @@ repo-push:
 .PHONY: repo-push-force
 repo-push-force:
 	@echo "$(COL_GREEN)>> git push and merge (w/ force) ciscoconfparse local main branch to github$(COL_END)"
-	ping -q -c1 -W1 4.2.2.2                   # quiet ping to the internet...
+	make ping
 	-git checkout master || git checkout main # Add dash to ignore checkout fails
 	# Now the main branch is checked out...
 	THIS_BRANCH=$(shell git branch --show-current)  # assign 'main' to $THIS_BRANCH
@@ -133,23 +141,23 @@ doctest:
 .PHONY: pip
 pip:
 	@echo "$(COL_GREEN)>> Upgrading pip to the latest version$(COL_END)"
-	pip install -U pip
+	make ping
+	pip install -U pip>=22.2.0
 
 .PHONY: dep
 dep:
 	@echo "$(COL_GREEN)>> installing all ciscoconfparse prod dependencies$(COL_END)"
-	make pip
-	pip install -U pip>=22.2.0
 	pip install -U dnspython==1.15.0 # Previously version 1.14.0
 	pip install -U passlib==1.7.4
 	pip install -U loguru==0.6.0
 	pip install -U toml>=0.10.2
+	pip install -U deprecat
 
 .PHONY: dev
 dev:
 	@echo "$(COL_GREEN)>> installing all prod and development ciscoconfparse dependencies$(COL_END)"
+	make pip
 	make dep
-	pip install -U pip>=22.2.0
 	pip install -U virtualenv
 	pip install -U virtualenvwrapper>=4.8.0
 	pip install -U pss
@@ -170,16 +178,29 @@ dev:
 	pip install -U invoke>=1.7.0
 	pip install -U ipaddr>=2.2.0
 
+.PHONY: rm-timestamp
+rm-timestamp:
+	@echo "$(COL_GREEN)>> delete .pip_dependency if older than a day$(COL_END)"
+	#delete .pip_dependency if older than a day
+	$(shell find .pip_dependency -mtime +1 -exec rm {} \;)
+
+.PHONY: timestamp
+timestamp:
+	@echo "$(COL_GREEN)>> delete .pip_dependency if older than a day$(COL_END)"
+	$(shell touch .pip_dependency)
+
+.PHONY: ping
+ping:
+	@echo "$(COL_GREEN)>> ping to ensure internet connectivity$(COL_END)"
+	@if [ "$${TMP}" = 'success' ]; then return 0; else return 1; fi
 
 .PHONY: test
 test:
 	@echo "$(COL_GREEN)>> running unit tests$(COL_END)"
 	#ping -q -c1 -W1 4.2.2.2
-	pip install -U pip>=22.2.0
-	pip install -U dnspython==1.15.0
-	pip install -U passlib==1.7.4
-	pip install -U loguru==0.6.0
-	pip install -U toml>=0.10.2
+	$(shell touch .pip_dependency)
+	make timestamp
+	make ping
 	make clean
 	cd tests && ./runtests.sh
 
