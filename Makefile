@@ -199,7 +199,7 @@ test:
 	@echo "$(COL_GREEN)>> running unit tests$(COL_END)"
 	$(shell touch .pip_dependency)
 	make timestamp
-	make ping
+	#make ping
 	make clean
 	cd tests && ./runtests.sh
 
