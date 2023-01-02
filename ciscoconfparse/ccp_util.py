@@ -40,6 +40,8 @@ from dns.exception import DNSException
 from dns.resolver import Resolver
 from dns import reversename, query, zone
 
+from deprecat import deprecat
+
 from loguru import logger
 
 from ciscoconfparse.protocol_values import ASA_TCP_PORTS, ASA_UDP_PORTS
@@ -2329,7 +2331,7 @@ def dns_query(input_str="", query_type="", server="", timeout=2.0):
     start = time.time()
     if (query_type == "A") or (query_type == "AAAA"):
         try:
-            answer = rr.query(input_str, query_type)
+            answer = query(input_str, query_type)
             duration = time.time() - start
             for result in answer:
                 response = DNSResponse(
@@ -2475,14 +2477,21 @@ def dns_query(input_str="", query_type="", server="", timeout=2.0):
 
 
 @logger.catch(reraise=True)
+@deprecat(reason="dns_lookup() is obsolete; use dns_query() instead.  dns_lookup() will be removed", version = '1.7.0')
 def dns_lookup(input_str, timeout=3, server="", record_type="A"):
     """Perform a simple DNS lookup, return results in a dictionary"""
+    assert isinstance(input_str, str)
+    assert isinstance(timeout, int)
+    assert isinstance(server, str)
+    assert isinstance(record_type, str)
+
     rr = Resolver()
     rr.timeout = float(timeout)
     rr.lifetime = float(timeout)
-    if server:
+    if server != "":
         rr.nameservers = [server]
-    dns_session = rr.resolve(input_str, record_type)
+    #dns_session = rr.resolve(input_str, record_type)
+    dns_session = rr.query(input_str, record_type)
     responses = list()
     for rdata in dns_session:
         responses.append(str(rdata))
@@ -2515,6 +2524,7 @@ def dns_lookup(input_str, timeout=3, server="", record_type="A"):
 
 
 @logger.catch(reraise=True)
+@deprecat(reason="dns6_lookup() is obsolete; use dns_query() instead.  dns6_lookup() will be removed", version = '1.7.0')
 def dns6_lookup(input_str, timeout=3, server=""):
     """Perform a simple DNS lookup, return results in a dictionary"""
     rr = Resolver()
@@ -2569,6 +2579,7 @@ def check_valid_ipaddress(input_addr=None):
     return (input_addr, ipaddr_family)
 
 @logger.catch(reraise=True)
+@deprecat(reason="reverse_dns_lookup() is obsolete; use dns_query() instead.  reverse_dns_lookup() will be removed", version = '1.7.0')
 def reverse_dns_lookup(input_str, timeout=3.0, server="4.2.2.2", proto="udp"):
     """Perform a simple reverse DNS lookup on an IPv4 or IPv6 address; return results in a python dictionary"""
     assert isinstance(proto, str) and (proto=="udp" or proto=="tcp")
@@ -2585,35 +2596,16 @@ def reverse_dns_lookup(input_str, timeout=3.0, server="4.2.2.2", proto="udp"):
     else:
         raise ValueError()
 
-    rr = Resolver()
-    rr.nameservers = []
+    raw_result = dns_query(input_str, query_type="PTR", server=server, timeout=timeout)
+    assert isinstance(raw_result, set)
+    assert len(raw_result)==1
+    tmp = raw_result.pop()
+    assert isinstance(tmp, DNSResponse)
 
-    # Append valid addresses to rr.nameservers...
-    for candidate_server_addr in server.split(","):
-        addr, addr_family = check_valid_ipaddress(input_addr=candidate_server_addr)
-        rr.nameservers.append(addr)
-
-    #rr = rr.resolve_address(ipaddr=input_str, tcp=tcp_flag, rdtype="PTR", lifetime=float(timeout))
-    #rr = rr.resolve_address(ipaddr=input_str, tcp=tcp_flag, lifetime=float(timeout))
-
-    records = []
-    retval = {}
-    try:
-        records = rr.resolve_address(ipaddr=input_str, tcp=tcp_flag, lifetime=float(timeout))
-        retval = {
-            "name": records[0].to_text(), # this key was called "addrs"
-            "lookup": input_str,
-            "error": "",
-            "addrs": [input_str],
-        }
-    except DNSException as e:
-        retval = {
-            "name": "",   # this key was called "addrs"
-            "lookup": input_str,
-            "error": repr(e),
-            "addrs": [input_str],
-        }
-
+    if tmp.has_error is True:
+        retval = {'addrs': [input_str], 'error': str(tmp.error_str), 'name': tmp.result_str}
+    else:
+        retval = {'addrs': [input_str], 'error': '', 'name': tmp.result_str}
     return retval
 
 
