@@ -4,7 +4,7 @@ DOCHOST ?= $(shell bash -c 'read -p "documentation host: " dochost; echo $$docho
 export VERSION := $(shell grep version pyproject.toml | tr -s ' ' | tr -d "'" | tr -d '"' | cut -d' ' -f3)
 
 # We MUST escape Makefile dollar signs as $$foo
-export TMP := $(shell perl -e '@output = qx/ping -q -W0.5 -c1 4.2.2.2/; $$alloutput = join "", @output; if ( $$alloutput =~ /\s0\sreceived/ ) { print "failure"; } else { print "success"; }')
+export PING_OUTPUT := $(shell perl -e '@output = qx/ping -q -W0.5 -c1 4.2.2.2/; $$alloutput = join "", @output; if ( $$alloutput =~ /\s0\sreceived/ ) { print "failure"; } else { print "success"; }')
 
 export NUMBER_OF_CCP_TESTS := $(shell grep "def " tests/test*py | wc -l)
 
@@ -192,12 +192,11 @@ timestamp:
 .PHONY: ping
 ping:
 	@echo "$(COL_GREEN)>> ping to ensure internet connectivity$(COL_END)"
-	@if [ "$${TMP}" = 'success' ]; then return 0; else return 1; fi
+	@if [ "$${PING_OUTPUT}" = 'success' ]; then return 0; else return 1; fi
 
 .PHONY: test
 test:
 	@echo "$(COL_GREEN)>> running unit tests$(COL_END)"
-	#ping -q -c1 -W1 4.2.2.2
 	$(shell touch .pip_dependency)
 	make timestamp
 	make ping
