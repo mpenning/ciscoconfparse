@@ -8,6 +8,7 @@ loguru == 0.6.0
 passlib == 1.7.4
 toml > 0.10.1
 dnspython
+deprecat
 
 pyroma
 fabric == 2.6.0
