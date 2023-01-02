@@ -151,7 +151,7 @@ dep:
 	pip install -U passlib==1.7.4
 	pip install -U loguru==0.6.0
 	pip install -U toml>=0.10.2
-	pip install -U deprecat
+	pip install -U deprecat>=2.1.1
 
 .PHONY: dev
 dev:
@@ -199,6 +199,7 @@ test:
 	@echo "$(COL_GREEN)>> running unit tests$(COL_END)"
 	$(shell touch .pip_dependency)
 	make timestamp
+	make dep
 	#make ping
 	make clean
 	cd tests && ./runtests.sh
