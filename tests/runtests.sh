@@ -22,9 +22,9 @@ set -o pipefail
 IFS=$'\n\t'
 
 
+declare -a all_tests=("test_CiscoConfParse.py" "test_Ccp_Util.py" "test_Models_Cisco.py" "test_Models_Asa.py" "test_Models_Junos.py")
 # bash loop syntax...
 #     https://stackoverflow.com/a/8880633/667301
-declare -a all_tests=("test_CiscoConfParse.py" "test_Ccp_Util.py" "test_Models_Cisco.py" "test_Models_Asa.py" "test_Models_Junos.py")
 for test_filename in "${all_tests[@]}"
 do
    pytest -r=fE --exitfirst --durations=5 --strict-config --cache-clear --capture=sys --show-capture=all --tb=short --strict-config --color=yes --code-highlight=yes --showlocals "$test_filename"
