@@ -2598,7 +2598,7 @@ def reverse_dns_lookup(input_str, timeout=3.0, server="4.2.2.2", proto="udp"):
 
     raw_result = dns_query(input_str, query_type="PTR", server=server, timeout=timeout)
     assert isinstance(raw_result, set)
-    assert len(raw_result)==1
+    assert len(raw_result)>=1
     tmp = raw_result.pop()
     assert isinstance(tmp, DNSResponse)
 
