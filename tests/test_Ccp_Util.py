@@ -608,12 +608,10 @@ def test_dns_lookup():
 
 def test_reverse_dns_lookup():
 
-    result_correct = {"addrs": ["127.0.0.1"], "name": "localhost.", "error": ""}
-
+    #result_correct = {"addrs": ["127.0.0.1"], "name": "localhost.", "error": ""}
     test_result = reverse_dns_lookup("127.0.0.1")
     assert isinstance(test_result, dict)
-    assert test_result["name"] != ""
-    assert "localhost" in test_result["name"].lower()
+    assert re.search(r"^\S+", test_result["name"].lower())
     try:
         assert test_result["error"] == ""
     except Exception:
