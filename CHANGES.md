@@ -2,7 +2,17 @@
 
 - Released: Not released
 - Summary:
+    - Insert something here
+
+## Version: 1.7.0
+
+- Released: 2023-01-02
+- Summary:
+    - Add deprecat dependency
+    - Add more Makefile targets
+    - Makefile will successfully ping to internet or fail
     - Update Makefile to delete poetry.lock file
+    - Correct 'make ping' logic and other tricky Makefile syntax
 
 
 ## Version: 1.6.53
