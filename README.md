@@ -9,7 +9,7 @@ Introduction: What is ciscoconfparse?
 
 Short answer: ciscoconfparse is a [Python][10] library
 that helps you quickly answer questions like these about your
-configurations:
+Cisco configurations:
 
 - What interfaces are shutdown?
 - Which interfaces are in trunk mode?
