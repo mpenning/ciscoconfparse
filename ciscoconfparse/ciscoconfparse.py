@@ -4386,11 +4386,8 @@ class ConfigList(MutableSequence):
 
         is_valid_syntax = False
         for valid_syntax in ALL_VALID_SYNTAX:
-            try:
-                assert self.syntax == valid_syntax
+            if self.syntax == valid_syntax:
                 is_valid_syntax = True
-            except Exception:
-                pass
         assert is_valid_syntax is True
 
         # Support input configuration as either a list or a generator instance
@@ -4560,9 +4557,6 @@ class ConfigList(MutableSequence):
         try:
             return object.__getattribute__(self, arg)
         except Exception:
-            pass
-
-        try:
             calling_function = inspect.stack()[1].function
             caller = inspect.getframeinfo(inspect.stack()[1][0])
 
@@ -4573,9 +4567,6 @@ class ConfigList(MutableSequence):
             )
             logger.warning(message)
             return ccp_method
-        except Exception as ff:
-            logger.error(str(ff))
-            sys.exit(1)
 
     # This method is on ConfigList()
     def append(self, val):
