@@ -148,8 +148,8 @@ def initialize_globals():
         __status__ = "Production"
         __version__ = get_version_number()
 
-    except:
-        raise ValueError()
+    except Exception as eee:
+        raise ValueError(str(eee))
 
     finally:
         # These are all the 'dunder variables' required...
