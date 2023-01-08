@@ -231,7 +231,7 @@ def _parse_line_braces(line_txt=None, comment_delimiter=None) -> tuple:
             # Based off line1
             #     } elseif { bar baz } {
             this_line_indent -= 1
-            child_indent     += 0
+            child_indent += 0
             retval = results.get('line1', None)
             return (this_line_indent, child_indent, retval)
 
@@ -239,7 +239,7 @@ def _parse_line_braces(line_txt=None, comment_delimiter=None) -> tuple:
             # Based off line1:
             #     address 1.1.1.1
             this_line_indent -= 0
-            child_indent     += 0
+            child_indent += 0
             retval = results.get('line1', '').strip()
             # Strip empty braces here
             retval = re.sub(r'\s*\{\s*\}\s*', '', retval)
@@ -269,20 +269,20 @@ def _parse_line_braces(line_txt=None, comment_delimiter=None) -> tuple:
             # Based off line1
             #   }
             this_line_indent -= 1
-            child_indent     -= 1
+            child_indent -= 1
             return (this_line_indent, child_indent, '')
 
         elif braces_open_right:
             # Based off line1
             #   this that foo {
             this_line_indent -= 0
-            child_indent     += 1
+            child_indent += 1
             line = results.get('line1', None) or ''
             return (this_line_indent, child_indent, line)
 
         elif (line3_str != '') and (line3_str is not None):
             this_line_indent += 0
-            child_indent     += 0
+            child_indent += 0
             return (this_line_indent, child_indent, '')
 
         else:
