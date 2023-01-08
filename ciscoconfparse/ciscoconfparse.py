@@ -4168,7 +4168,7 @@ class HDiff(object):
 
         - Accept a list of diff dicts (diff dicts are hereafter known as
           a "line_dict")
-        - Duplicate line_dict parent lines may exist in the input
+        - Note that duplicate line_dict parent lines may exist in the input
         - Organize the lines such that diff parent lines (example: interface Foo) are not duplicated.
         - Return the updated and reorganized line list.
 
