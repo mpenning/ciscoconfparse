@@ -4055,8 +4055,8 @@ class ConfigList(MutableSequence):
             self._list = list(initlist)
             #self._list = self.create_config_list(initlist)
 
-        ciscoconfparse_kwarg_val = kwargs.get("CiscoConfParse", None)
         ccp_ref_kwarg_val = kwargs.get("ccp_ref", None)
+        ciscoconfparse_kwarg_val = kwargs.get("CiscoConfParse", None)
         if ciscoconfparse_kwarg_val is not None:
             logger.warning(
                 "The CiscoConfParse keyword will be deprecated soon.  Please use ccp_ref instead",
@@ -4102,6 +4102,7 @@ class ConfigList(MutableSequence):
             self._list,
         )
 
+    # This method is on ConfigList()
     def __iter__(self):
         return iter(self._list)
 
@@ -4179,8 +4180,11 @@ class ConfigList(MutableSequence):
     def __mul__(self, val):
         return self.__class__(self._list * val)
 
-    __rmul__ = __mul__
+    # This method is on ConfigList()
+    def __rmul__(self, val):
+        return self.__mul__(val)
 
+    # This method is on ConfigList()
     def __imul__(self, val):
         self._list *= val
         return self
@@ -4231,6 +4235,7 @@ class ConfigList(MutableSequence):
             logger.warning(message)
             return ccp_method
 
+    # This method is on ConfigList()
     def create_config_list(self, initlist):
         # Support input configuration as either a list or a generator instance
         assert type(initlist) in (list, tuple, ConfigList)
