@@ -4,6 +4,13 @@
 - Summary:
     - Insert something here
 
+## Version: 1.7.1
+
+- Released: 2023-01-18
+- Summary:
+    - Improve config parsing code
+    - Make ConfigList() more stable
+
 ## Version: 1.7.0
 
 - Released: 2023-01-02
