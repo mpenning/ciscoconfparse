@@ -599,7 +599,7 @@ class CiscoConfParse(object):
         config_lines = None
 
         if config is None:
-            raise ValueError("config=None is unsupported.  `config` must be either a python string, patlib.Path, or list")
+            raise ValueError("config='%s' is unsupported.  `config` must be either a python string, patlib.Path, or list" % config)
 
         elif isinstance(config, list) or isinstance(config, Iterator):
             # Here we assume that `config` is a list of text config lines...
@@ -608,7 +608,8 @@ class CiscoConfParse(object):
             assert len(config) > 0, "FATAL - there is no configuration stored in the list()"
             if self.debug > 0:
                 logger.debug("parsing config stored in this list: '%s'" % config)
-            return config
+            config_lines = config
+            return config_lines
 
         elif isinstance(config, (str, pathlib.Path,)) and os.path.isfile(config) is True:
 
@@ -636,7 +637,7 @@ class CiscoConfParse(object):
         elif isinstance(config, (str, pathlib.Path,)) and os.path.isfile(config) is False:
             if self.debug > 0:
                 logger.debug("filepath not found - '%s'" % config)
-            error = """FATAL - a configuration filepath named:"{0}" does not exist.""".format(config)
+            error = """FATAL - Attempted to open(file='{0}', mode='r', encoding='{1}'); however, file filepath named:"{0}" does not exist.""".format(config, self.openargs['encoding'])
             raise ValueError(error)
 
         else:
@@ -3323,10 +3324,320 @@ class CiscoConfParse(object):
         >>>
         """
 
-        # warning was added on 2022-06-01
-        deprecation_warn_str = "`sync_diff()` is deprecated; HDiff() is the supported alternative."
-        # warnings.warn(deprecation_warn_str, DeprecationWarning)
-        raise DeprecationWarning(deprecation_warn_str)
+        # warning issued 2022-06-01
+        deprecation_warn_str = "`sync_diff()` will be deprecated and removed in future versions."
+        warnings.warn(deprecation_warn_str, DeprecationWarning)
+
+        assert isinstance(cfgspec, (list, tuple, Iterator)), "FATAL - `cfgspec` requires a python Iterable, typically a `list()`."
+        assert isinstance(linespec, str) and len(linespec) > 0, "FATAL - `linespec` requires a python string."
+        assert isinstance(unconfspec, str) and len(unconfspec) > 0, "FATAL - `unconfspec` requires a python string."
+
+        tmp = self._find_line_OBJ(linespec)
+        if uncfgspec is None:
+            uncfgspec = linespec
+        a_lines = [ii.text for ii in tmp]
+        a = CiscoConfParse(config=a_lines)
+
+        b = CiscoConfParse(config=cfgspec, factory=False)
+        b_lines = b.ioscfg
+
+        a_hierarchy = list()
+        b_hierarchy = list()
+
+        ## Build heirarchical, equal-length lists of parents / non-parents
+        a_parents, a_nonparents = a.ConfigObjs.config_hierarchy()
+        b_parents, b_nonparents = b.ConfigObjs.config_hierarchy()
+
+        obj = DiffObject(0, a_nonparents, a_parents)
+        a_hierarchy.append(obj)
+
+        obj = DiffObject(0, b_nonparents, b_parents)
+        b_hierarchy.append(obj)
+
+        retval = list()
+        ## Assign config_this and unconfig_this attributes by "diff level"
+        for adiff_level, bdiff_level in zip(a_hierarchy, b_hierarchy):
+            for attr in ["parents", "nonparents"]:
+                if attr == "parents":
+                    if ignore_order:
+                        a_parents = getattr(adiff_level, attr)
+                        b_parents = getattr(bdiff_level, attr)
+
+                        # Rewrite a, since we reordered everything
+                        a, a_lines, a_linenums = self._sequence_parent_lines(
+                            a_parents, b_parents,
+                        )
+                    else:
+                        a_lines = list()
+                        a_linenums = list()
+                        for obj in adiff_level.parents:
+                            a_lines.append(obj.text)
+                            a_linenums.append(obj.linenum)
+                            a_lines.extend(
+                                [ii.text for ii in obj.all_children],
+                            )
+                            a_linenums.extend(
+                                [ii.linenum for ii in obj.all_children],
+                            )
+                    b_lines = list()
+                    b_linenums = list()
+                    for obj in bdiff_level.parents:
+                        b_lines.append(obj.text)
+                        b_linenums.append(obj.linenum)
+                        b_lines.extend(
+                            [ii.text for ii in obj.all_children],
+                        )
+                        b_linenums.extend(
+                            [ii.linenum for ii in obj.all_children],
+                        )
+                else:
+                    if ignore_order:
+                        a_nonparents = getattr(adiff_level, attr)
+                        b_nonparents = getattr(bdiff_level, attr)
+
+                        # Rewrite a, since we reordered everything
+                        a, a_lines, a_linenums = self._sequence_nonparent_lines(
+                            a_nonparents, b_nonparents,
+                        )
+                    else:
+                        a_lines = [ii.text for ii in getattr(adiff_level, attr)]
+                        # Build a map from a_lines index to a.ConfigObjs index
+                        a_linenums = [ii.linenum for ii in getattr(adiff_level, attr)]
+                    b_lines = [ii.text for ii in getattr(bdiff_level, attr)]
+                    # Build a map from b_lines index to b.ConfigObjs index
+                    b_linenums = [ii.linenum for ii in getattr(bdiff_level, attr)]
+
+                ###
+                ### Mark diffs here
+                ###
+
+                # Get a SequenceMatcher instance to calculate diffs at this level
+                matcher = difflib.SequenceMatcher(isjunk=None, a=a_lines, b=b_lines)
+
+                # Use the SequenceMatcher instance to label objects appropriately:
+                #  - tag is the diff evaluation: equal, replace, insert, or delete
+                #  - i1 and i2 are the begin and end points for arg a
+                #  - j1 and j2 are the begin and end points for arg b
+                for tag, i1, i2, j1, j2 in matcher.get_opcodes():
+                    # print ("%7s a[%d:%d] (%s) b[%d:%d] (%s)" % (tag, i1, i2, a_lines[i1:i2], j1, j2, b_lines[j1:j2]))
+                    if (debug > 0) or (self.debug > 0):
+                        logger.debug("TAG='{}'".format(tag))
+
+                    # if tag=='equal', check whether the parent objs are the same
+                    #     if parent objects are the same, then do nothing
+                    #     if parent objects are different, then delete a & config b
+                    # if tag=='replace'
+                    #     delete a & config b
+                    # if tag=='insert', then configure b
+                    aobjs = list(
+                    )  # List of a IOSCfgLine objects at this level
+                    bobjs = list(
+                    )  # List of b IOSCfgLine objects at this level
+                    for num in range(i1, i2):
+                        aobj = a.ConfigObjs[a_linenums[num]]
+                        aobjs.append(aobj)
+                    for num in range(j1, j2):
+                        bobj = b.ConfigObjs[b_linenums[num]]
+                        bobjs.append(bobj)
+
+                    max_len = max(len(aobjs), len(bobjs))
+                    for idx in range(0, max_len):
+                        try:
+                            aobj = aobjs[idx]
+                            # set aparent_text to all parents' text (joined)
+                            aparent_text = " ".join(
+                                #map(lambda x: x.text, aobj.all_parents)
+                                [ii.text for ii in aobj.all_parents],
+                            )
+                        except IndexError:
+                            # aobj doesn't exist, if we get an index error
+                            #    fake some data...
+                            aobj = None
+                            aparent_text = "__ANOTHING__"
+                        if (debug > 0) or (self.debug > 0):
+                            logger.debug("    aobj:'{}'".format(aobj))
+                            logger.debug(
+                                "    aobj parents:'{}'".format(aparent_text),
+                            )
+
+                        try:
+                            bobj = bobjs[idx]
+                            # set bparent_text to all parents' text (joined)
+                            bparent_text = " ".join(
+                                #map(lambda x: x.text, bobj.all_parents)
+                                [ii.text for ii in bobj.all_parents],
+                            )
+                        except IndexError:
+                            # bobj doesn't exist, if we get an index error
+                            #    fake some data...
+                            bobj = None
+                            bparent_text = "__BNOTHING__"
+
+                        if (debug > 0) or (self.debug > 0):
+                            logger.debug("    bobj:'{}'".format(bobj))
+                            logger.debug(
+                                "    bobj parents:'{}'".format(bparent_text),
+                            )
+
+                        if tag == "equal":
+                            # If the diff claims that these lines are equal, they
+                            #   aren't truly equal unless parents match
+                            if aparent_text != bparent_text:
+                                if (debug > 0) or (self.debug > 0):
+                                    logger.debug(
+                                        "    tagged 'equal', aparent_text!=bparent_text",
+                                    )
+                                # a & b parents are *not* the same
+                                #  therefore a & b are not equal
+                                if aobj:
+                                    # Only configure parent if it's not already
+                                    #    slated for removal
+                                    if not getattr(
+                                        aobj.parent,
+                                        "unconfig_this", False,
+                                    ):
+                                        aobj.parent.config_this = True
+                                    aobj.unconfig_this = True
+                                    if debug > 0:
+                                        logger.debug(
+                                            "    unconfigure aobj",
+                                        )
+                                if bobj:
+                                    bobj.config_this = True
+                                    bobj.parent.config_this = True
+                                    if debug > 0:
+                                        logger.debug("    configure bobj")
+                            elif aparent_text == bparent_text:
+                                # Both a & b parents match, so these lines are equal
+                                aobj.unconfig_this = False
+                                bobj.config_this = False
+                                if debug > 0:
+                                    logger.debug(
+                                        "    tagged 'equal', aparent_text==bparent_text",
+                                    )
+                                    logger.debug(
+                                        "    do nothing with aobj / bobj",
+                                    )
+                        elif tag == "replace":
+                            # tag: replace, I'm not going to check parents for now
+                            if debug > 0:
+                                logger.debug("    tagged 'replace'")
+                            if aobj:
+                                # Only configure parent if it's not already
+                                #    slated for removal
+                                if not getattr(
+                                    aobj.parent, "unconfig_this",
+                                    False,
+                                ):
+                                    aobj.parent.config_this = True
+                                aobj.unconfig_this = True
+                                if debug > 0:
+                                    logger.debug("    unconfigure aobj")
+                            if bobj:
+                                bobj.config_this = True
+                                bobj.parent.config_this = True
+                                if debug > 0:
+                                    logger.debug("    configure bobj")
+                        elif tag == "insert":
+                            if debug > 0:
+                                logger.debug("    tagged 'insert'")
+                            # I don't think tag: insert ever applies to a objects...
+                            if aobj:
+                                # Only configure parent if it's not already
+                                #    slated for removal
+                                if not getattr(
+                                    aobj.parent, "unconfig_this",
+                                    False,
+                                ):
+                                    aobj.parent.config_this = True
+                                aobj.unconfig_this = True
+                                if debug > 0:
+                                    logger.debug("    unconfigure aobj")
+                            # tag: insert certainly applies to b objects...
+                            if bobj:
+                                bobj.config_this = True
+                                bobj.parent.config_this = True
+                                if debug > 0:
+                                    logger.debug("    configure bobj")
+                        elif tag == "delete":
+                            # NOTE: I'm not deleting b objects, for now
+                            if debug > 0:
+                                logger.debug("    tagged 'delete'")
+                            if aobj:
+                                # Only configure parent if it's not already
+                                #    slated for removal
+                                for pobj in aobj.all_parents:
+                                    if not getattr(
+                                        pobj, "unconfig_this",
+                                        False,
+                                    ):
+                                        pobj.config_this = True
+                                aobj.unconfig_this = True
+                                if debug > 0:
+                                    logger.debug("    unconfigure aobj")
+                        else:
+                            error = "Unknown action: {}".format(tag)
+                            logger.error(error)
+                            raise ValueError(error)
+
+                ###
+                ### Write a object diffs here
+                ###
+
+                ## Unconfigure A objects, at *each level*, as required
+                for obj in a.ConfigObjs:
+                    if remove_lines and getattr(obj, "unconfig_this", False):
+                        ## FIXME: This should only be applied to IOS and ASA configs
+                        if uncfgspec:
+                            mm = re.search(uncfgspec, obj.text)
+                            if (mm is not None):
+                                obj.add_uncfgtext(mm.group(0))
+                                retval.append(obj.uncfgtext)
+                            else:
+                                retval.append(
+                                    " " * obj.indent + "no " +
+                                    obj.text.lstrip(),
+                                )
+                        else:
+                            retval.append(
+                                " " * obj.indent + "no " +
+                                obj.text.lstrip(),
+                            )
+                    elif remove_lines and getattr(obj, "config_this", False):
+                        retval.append(obj.text)
+
+                    # Clean up the attributes we used temporarily in this method
+                    for attr in ["config_this", "unconfig_this"]:
+                        try:
+                            delattr(obj.text, attr)
+                        except Exception:
+                            pass
+
+        ###
+        ### Write b object diffs here
+        ###
+        for obj in b.ConfigObjs:
+            if getattr(obj, "config_this", False):
+                retval.append(obj.text)
+
+            # Clean up the attributes we used temporarily in this method
+            try:
+                delattr(obj.text, "config_this")
+            except Exception:
+                pass
+
+        ## Strip out 'double negatives' (i.e. 'no no ')
+        for idx in range(0, len(retval)):
+            retval[idx] = re.sub(
+                r"(\s+)no\s+no\s+(\S+.+?)$", r"\g<1>\g<2>",
+                retval[idx],
+            )
+
+        if debug > 0:
+            logger.debug("Completed diff:")
+            for line in retval:
+                logger.debug("'{}'".format(line))
+        return retval
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
@@ -4045,26 +4356,27 @@ class ConfigList(MutableSequence):
         #
         # This check will explicitly catch some problems like that...
         assert isinstance(initlist, (list, tuple, MutableSequence))
-        if isinstance(initlist, (list, tuple)):
-            self._list[:] = initlist
-            #self._list = self.create_config_list(initlist)
-        elif isinstance(initlist, MutableSequence):
-            self._list[:] = initlist._list[:]
-            #self._list[:] = self.create_config_list(initlist._list[:])
-        else:
-            self._list = list(initlist)
-            #self._list = self.create_config_list(initlist)
 
-        ccp_ref_kwarg_val = kwargs.get("ccp_ref", None)
         ciscoconfparse_kwarg_val = kwargs.get("CiscoConfParse", None)
+        ccp_ref_kwarg_val = kwargs.get("ccp_ref", None)
         if ciscoconfparse_kwarg_val is not None:
             logger.warning(
                 "The CiscoConfParse keyword will be deprecated soon.  Please use ccp_ref instead",
             )
         ccp_value = ccp_ref_kwarg_val or ciscoconfparse_kwarg_val
+
+        self._list = list()
+        if initlist is not None:
+            # XXX should this accept an arbitrary sequence?
+            if type(initlist) == type(self._list):
+                self._list[:] = initlist
+            elif isinstance(initlist, ConfigList):
+                self._list[:] = initlist._list[:]
+            else:
+                self._list = list(initlist)
+
         self.CiscoConfParse = ccp_value  # FIXME - CiscoConfParse attribute should go away soon
         self.ccp_ref = ccp_value
-
         self.comment_delimiter = comment_delimiter
         self.factory = factory
         self.ignore_blank_lines = ignore_blank_lines
@@ -4078,6 +4390,31 @@ class ConfigList(MutableSequence):
                 is_valid_syntax = True
         assert is_valid_syntax is True
 
+        # Support input configuration as either a list or a generator instance
+        if getattr(initlist, "__iter__", False):
+            if self.syntax == "ios":
+                self._list = self._bootstrap_obj_init_ios(initlist)
+
+            elif self.syntax == "asa":
+                self._list = self._bootstrap_obj_init_asa(initlist)
+
+            elif self.syntax == "nxos":
+                self._list = self._bootstrap_obj_init_nxos(initlist)
+
+            elif self.syntax == "junos":
+                self._list = self._bootstrap_obj_init_junos(initlist)
+
+            elif self.syntax == "terraform":
+                # FIXME - Create terraform bootstrap method
+                self._list = self._bootstrap_obj_init_terraform(initlist)
+
+            else:
+                error = "No bootstrap method for syntax='%s'" % self.syntax
+                logger.critical(error)
+                raise NotImplementedError(error)
+
+        else:
+            self._list = list()
 
         if self.debug > 0:
             message = "Create ConfigList() with %i elements" % len(self._list)
@@ -4102,7 +4439,6 @@ class ConfigList(MutableSequence):
             self._list,
         )
 
-    # This method is on ConfigList()
     def __iter__(self):
         return iter(self._list)
 
@@ -4180,11 +4516,8 @@ class ConfigList(MutableSequence):
     def __mul__(self, val):
         return self.__class__(self._list * val)
 
-    # This method is on ConfigList()
-    def __rmul__(self, val):
-        return self.__mul__(val)
+    __rmul__ = __mul__
 
-    # This method is on ConfigList()
     def __imul__(self, val):
         self._list *= val
         return self
@@ -4234,37 +4567,6 @@ class ConfigList(MutableSequence):
             )
             logger.warning(message)
             return ccp_method
-
-    # This method is on ConfigList()
-    def create_config_list(self, initlist):
-        # Support input configuration as either a list or a generator instance
-        assert type(initlist) in (list, tuple, ConfigList)
-        if getattr(initlist, "__iter__", False):
-            if self.syntax == "ios":
-                return self._bootstrap_obj_init_ios(initlist)
-
-            elif self.syntax == "asa":
-                return self._bootstrap_obj_init_asa(initlist)
-
-            elif self.syntax == "nxos":
-                return self._bootstrap_obj_init_nxos(initlist)
-
-            elif self.syntax == "junos":
-                return self._bootstrap_obj_init_junos(initlist)
-
-            elif self.syntax == "terraform":
-                # FIXME - Create terraform bootstrap method
-                return self._bootstrap_obj_init_terraform(initlist)
-
-            else:
-                error = "No bootstrap method for syntax='%s'" % self.syntax
-                logger.critical(error)
-                raise NotImplementedError(error)
-
-        else:
-            error = "No __iter__ attribute found on ConfigList()."
-            logger.critical(error)
-            raise NotImplementedError(error)
 
     # This method is on ConfigList()
     def append(self, val):
@@ -4327,7 +4629,25 @@ class ConfigList(MutableSequence):
         ## reparse all objects from their text attributes... this is *very* slow
         ## Ultimate goal: get rid of all reparsing from text...
         tmp_list = [ii.text for ii in self._list]
-        self._list = self.create_config_list(tmp_list)
+        if self.syntax == 'ios':
+            self._list = self._bootstrap_obj_init_ios(tmp_list)
+
+        elif self.syntax == 'nxos':
+            self._list = self._bootstrap_obj_init_nxos(tmp_list)
+
+        elif self.syntax == 'asa':
+            self._list = self._bootstrap_obj_init_asa(tmp_list)
+
+        elif self.syntax == 'junos':
+            self._list = self._bootstrap_obj_init_junos(tmp_list)
+
+        elif self.syntax == 'terraform':
+            # FIXME terraform syntax should have its own bootstrap method...
+            self._list = self._bootstrap_obj_init_terraform(tmp_list)
+
+        else:
+            error = "no defined bootstrap method for syntax='%s'" % self.syntax
+            raise NotImplementedError(error)
 
         if self.debug >= 3:
             logger.debug("self._list = {}".format(self._list))
