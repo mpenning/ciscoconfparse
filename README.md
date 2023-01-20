@@ -160,6 +160,16 @@ The project\'s [test workflow][1] checks ciscoconfparse on Python versions 3.6 a
 
 Click the image below for details; the current build status is: [![Github unittest status][4]][5]
 
+Sphinx Documentation
+--------------------
+
+Building the ciscoconfparse documentation tarball comes down to this one wierd trick:
+
+- `cd sphinx-doc/`
+- `pip install -r ./requirements.txt;  # install Sphinx dependencies`
+- `pip install -r ../requirements.txt; # install ccp dependencies`
+- `make html`
+
 License and Copyright
 ---------------------
 
