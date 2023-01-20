@@ -1,0 +1,5 @@
+# Please keep documentation packages pinned to exact version numbers for the
+# best control over documentation output.
+Sphinx == 4.3.0
+sphinx-bootstrap-theme == 0.8.0
+numpydoc==1.5.0
