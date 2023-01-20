@@ -4,6 +4,17 @@
 - Summary:
     - Insert something here
 
+## Version: 1.7.2
+
+- Released: 2023-01-20
+- Summary:
+    - Update for [CVE-2022-40898](https://nvd.nist.gov/vuln/detail/CVE-2022-40898) in the python `wheel <= 0.38.0` package.
+      - Technically this is not a ciscoconfparse vulnerability.  The `wheel` package comes with base python installs.
+      - [github issue #257](https://github.com/mpenning/ciscoconfparse/issues/257)) reported this issue.
+      - Modified `requirements.txt` to manually upgrade `python`'s default `wheel` version to a patched version of `wheel`.
+    - Move documentation package dependencies to `sphinx-doc/requirements.txt`
+    - Add documentation build instructions to `README.md`
+
 ## Version: 1.7.1
 
 - Released: 2023-01-18
