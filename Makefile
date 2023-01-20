@@ -24,13 +24,13 @@ COL_END=\033[0;0m
 
 # Ref -> https://stackoverflow.com/a/26737258/667301
 # Ref -> https://packaging.python.org/en/latest/guides/making-a-pypi-friendly-readme/
-.PHONY: pypi-packaging
-pypi-packaging:
+.PHONY: pypi-package-infra
+pypi-package-infra:
 	@echo "$(COL_GREEN)>> building ciscoconfparse pypi artifacts (wheel and tar.gz)$(COL_END)"
-	pip install -U setuptools>=58.0.0
-	pip install -U wheel>=0.37.1
-	pip install -U twine>=4.0.1
-	pip install -U poetry>=1.0.0
+	pip install -U setuptools>=66.1.0
+	pip install -U wheel>=0.38.1
+	pip install -U twine>=4.0.2
+	pip install -U poetry>=1.3.2
 	# Delete bogus files... see https://stackoverflow.com/a/73992288/667301
 	perl -e 'unlink( grep { /^\W\d*\.*\d*/ && !-d } glob( "*" ) );'
 
@@ -38,14 +38,14 @@ pypi-packaging:
 pypi:
 	@echo "$(COL_CYAN)>> uploading ciscoconfparse pypi artifacts to pypi$(COL_END)"
 	make clean
-	make pypi-packaging
+	make pypi-package-infra
+	# tag the repo with $VERSION and push to origin
+	git tag $$VERSION
+	git push origin $$VERSION
 	poetry lock --no-update
 	poetry build
 	# twine is the simplest pypi package uploader...
 	python -m twine upload dist/*
-
-.PHONY: readme
-readme:
 
 .PHONY: bump-version-patch
 bump-version-patch:
