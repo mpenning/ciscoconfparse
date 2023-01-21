@@ -1,0 +1,32 @@
+---
+version: 1
+
+# Please visit https://docs.embold.io/v2-quick-start-guide/#default-configurations
+#  to know more about configurations available
+
+sources:
+  #Files or Directories to be Excluded are mentioned in exclusions
+  exclusions:
+    - 'ciscoconfparse/ciscoconfparse.py.0'
+    - 'ciscoconfparse/models_asa.py'
+    - 'ciscoconfparse/models_cisco.py'
+    - 'ciscoconfparse/models_nxos.py'
+    - 'ciscoconfparse/models_iosxr.py'
+    - 'ciscoconfparse/models_junos.py'
+    - 'ciscoconfparse/protocol_values.py'
+    - 'ciscoconfparse/errors.py'
+    - 'tests'
+    - '.git'
+    - '.github'
+
+# Specify the languages you would like to Scan. Default is all Detected
+#languages: 'JAVA,CPP'
+
+
+# Define modules one would like to run or disable. This is enough for Basic Users
+# Get List of Modules (Which are Default Enabled/Disabled) at the documentation link above
+modules:
+  - name: pmd
+    enabled: true
+  - name: gamma_cxx
+    enabled: false
