@@ -15,9 +15,10 @@ sources:
     - 'ciscoconfparse/models_junos.py'
     - 'ciscoconfparse/protocol_values.py'
     - 'ciscoconfparse/errors.py'
-    - 'tests'
-    - '.git'
-    - '.github'
+    - 'tests/*py'
+    - 'sphinx-doc/*py'
+    - '.git/'
+    - '.github/'
 
 # Specify the languages you would like to Scan. Default is all Detected
 #languages: 'JAVA,CPP'
