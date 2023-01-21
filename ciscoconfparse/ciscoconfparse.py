@@ -75,8 +75,6 @@ from ciscoconfparse.models_asa import ASAAclLine
 
 from ciscoconfparse.models_junos import JunosCfgLine
 
-from ciscoconfparse.models_terraform import TfLine
-
 from ciscoconfparse.ccp_abc import BaseCfgLine
 
 from ciscoconfparse.ccp_util import junos_unsupported
@@ -684,33 +682,6 @@ class CiscoConfParse(object):
         :func:`~ciscoconfparse.CiscoConfParse.atomic`.
         """
         self.atomic()  # atomic() calls self.ConfigObjs._bootstrap_from_text()
-
-    # This method is on CiscoConfParse()
-    @logger.catch(reraise=True)
-    def convert_terraform_to_ios(self, input_list, stop_width=4, quotes=False, comment_delimiter="#"):
-        """This method accepts `input_list` (it should be a list of terraform-brace-formatted-string config lines).
-
-        This method strips off semicolons / braces / quotes from the string lines in `input_list` and returns the lines in a new list where all lines are explicitly indented as IOS would (as if IOS understood terraform).
-        """
-        # FIXME this method (and claims about handling terraform) probably need to be removed. Parsing terraform is quite different than parsing JunOS.  See github issue #260
-        raise NotImplementedError()
-
-        ## Note to self, I made this regex fairly terraform-specific...
-        assert isinstance(input_list, list) and len(input_list) >= 1
-        assert '{' not in set(comment_delimiter)
-        assert '}' not in set(comment_delimiter)
-
-        lines = list()
-        offset = 0
-        STOP_WIDTH = stop_width
-        for idx, tmp in enumerate(input_list):
-            if self.debug > 0:
-                logger.debug("Parse line {}:'{}'".format(idx + 1, tmp.strip()))
-            (this_line_indent, child_indent, line) = _parse_line_braces(
-                tmp.strip(), comment_delimiter=comment_delimiter)
-            lines.append((" " * STOP_WIDTH * (offset + this_line_indent)) + line.strip())
-            offset += child_indent
-        return lines
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
@@ -4350,10 +4321,6 @@ class ConfigList(MutableSequence):
             elif self.syntax == "junos":
                 self._list = self._bootstrap_obj_init_junos(initlist)
 
-            elif self.syntax == "terraform":
-                # FIXME - Create terraform bootstrap method
-                self._list = self._bootstrap_obj_init_terraform(initlist)
-
             else:
                 error = "No bootstrap method for syntax='%s'" % self.syntax
                 logger.critical(error)
@@ -4587,10 +4554,6 @@ class ConfigList(MutableSequence):
         elif self.syntax == 'junos':
             self._list = self._bootstrap_obj_init_junos(tmp_list)
 
-        elif self.syntax == 'terraform':
-            # FIXME terraform syntax should have its own bootstrap method...
-            self._list = self._bootstrap_obj_init_terraform(tmp_list)
-
         else:
             error = "no defined bootstrap method for syntax='%s'" % self.syntax
             raise NotImplementedError(error)
@@ -4736,12 +4699,6 @@ class ConfigList(MutableSequence):
                 comment_delimiter=self.comment_delimiter,
             )
 
-        elif self.syntax == "terraform":
-            new_obj = TfLine(
-                text=new_val,
-                comment_delimiter=self.comment_delimiter,
-            )
-
         else:
             logger.error(error)
             raise ValueError(error)
@@ -4867,10 +4824,6 @@ class ConfigList(MutableSequence):
                 text=new_val,
                 comment_delimiter=self.comment_delimiter,
             )
-
-        elif self.syntax == "terraform":
-            new_obj = TfLine(text=new_val,
-                             comment_delimiter=self.comment_delimiter)
 
         else:
             logger.error(error)
@@ -5593,15 +5546,6 @@ class ConfigList(MutableSequence):
         self._macro_mark_children(macro_parent_idx_list)  # Process macros
         return retval
 
-    def _bootstrap_obj_init_terraform(self, text_list):
-        """
-        Accept a text list, and format into a list of proper
-        TfLine() objects.
-
-        This method returns a list of TfLine() objects.
-        """
-        assert isinstance(text_list, (list, tuple,))
-        raise NotImplementedError()
 
     # This method is on ConfigList()
     def _add_child_to_parent(self, _list, idx, indent, parentobj, childobj):
@@ -5873,9 +5817,6 @@ def ConfigLineFactory(text="", comment_delimiter="!", syntax="ios"):
         ]
     elif syntax == "junos":
         classes = [JunosCfgLine]
-
-    elif syntax == "terraform":
-        classes = [TfLine]
 
     else:
         err_txt = "'{}' is an unknown syntax".format(syntax)
