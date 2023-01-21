@@ -137,6 +137,11 @@ coverage:
 	@echo "[[[ py.test Coverage ]]]"
 	cd tests;py.test --cov-report term-missing --cov=ciscoconfparse.py -s -v
 
+.PHONY: pydocstyle
+pydocstyle:
+	# Run a numpy-style doc checker against all files matching ciscoconfparse/*py
+	find ciscoconfparse/*py | xargs -I{} pydocstyle --convention=numpy {}
+
 .PHONY: doctest
 doctest:
 	# Run the doc tests
