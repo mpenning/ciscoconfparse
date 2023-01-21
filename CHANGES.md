@@ -4,6 +4,15 @@
 - Summary:
     - Insert something here
 
+## Version: 1.7.3
+
+- Released: 2023-01-21
+- Summary:
+    - Edit in documentation style fixes recommended by `pydocstyle -e --convention=numpy <filename>`.
+    - Convert some of the assertions that validated `CiscoConfParse()` method parameters and variables into if-statements for more idiomatic python.
+    - Convert some of the clunky-python-syntax into more idiomatic python.
+    - Rip out all `terraform` parsing attempts.
+
 ## Version: 1.7.2
 
 - Released: 2023-01-20
