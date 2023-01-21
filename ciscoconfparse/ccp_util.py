@@ -180,6 +180,7 @@ class PythonOptimizeCheck(object):
         if error != "__no_error__":
             raise PythonOptimizeException(error)
 
+
 @logger.catch(reraise=True)
 def ccp_logger_control(
     sink=sys.stderr,
@@ -446,8 +447,7 @@ class __ccp_re__(object):
     """
 
     @logger.catch(reraise=True)
-    def __init__(self, regex_str=r"", target_str=None, groups=None, flags=0,
-        debug=0):
+    def __init__(self, regex_str=r"", target_str=None, groups=None, flags=0, debug=0):
         assert isinstance(regex_str, str)
         assert isinstance(flags, int)
         assert isinstance(debug, int)
@@ -583,7 +583,7 @@ def _get_ipv4(val="", strict=False, stdlib=False, debug=0):
                 # Return IPv6Network()
                 assert isinstance(obj.network, IPv4Network)
                 return obj.network
-    except Exception as ee:
+    except Exception:
         raise AddressValueError("_get_ipv4(val='%s')" % (val))
 
 
@@ -613,8 +613,9 @@ def _get_ipv6(val="", strict=False, stdlib=False, debug=0):
                 assert isinstance(obj.network, IPv6Network)
                 return obj.network
 
-    except Exception as ee:
+    except Exception:
         raise AddressValueError("_get_ipv6(val='%s')" % (val))
+
 
 # do NOT wrap with @logger.catch(...)
 def ip_factory(val="", stdlib=False, mode="auto_detect", debug=0):
@@ -655,7 +656,7 @@ def ip_factory(val="", stdlib=False, mode="auto_detect", debug=0):
         try:
             obj = _get_ipv4(val=val, stdlib=stdlib, debug=debug)
             return obj
-        except:
+        except Exception:
             error_str = "Cannot parse '%s' as ipv4" % val
             raise AddressValueError(error_str)
 
@@ -663,13 +664,14 @@ def ip_factory(val="", stdlib=False, mode="auto_detect", debug=0):
         try:
             obj = _get_ipv6(val=val, stdlib=stdlib, debug=debug)
             return obj
-        except:
+        except Exception:
             error_str = "Cannot parse '%s' as ipv6" % val
             raise AddressValueError(error_str)
 
     else:
         error_str = "Cannot parse '%s' as ipv4 or ipv6" % val
         raise AddressValueError(error_str)
+
 
 @logger.catch(reraise=True)
 def collapse_addresses(network_list):
@@ -848,7 +850,7 @@ class IPv4Obj(object):
             params_dict = {
                 'ipv4_addr': str(arg.ip),
                 'ip_version': 4,
-                'ip_arg_str': str(arg.ip)+"/"+str(arg.masklen),
+                'ip_arg_str': str(arg.ip) + "/" + str(arg.masklen),
                 'netmask': str(arg.netmask),
                 'masklen': str(arg.masklen),
             }
@@ -862,7 +864,6 @@ class IPv4Obj(object):
             # Removing string length checks in 1.6.29... there are too many
             #    options such as IPv4Obj("111.111.111.111      255.255.255.255")
             # RECURSION
-            #obj = _get_ipv4(arg, strict=strict)
             self.network_object = IPv4Network(params_dict['ip_arg_str'], strict=strict)
             self.ip_object = IPv4Address(params_dict['ipv4_addr'])
             return None
@@ -918,10 +919,8 @@ class IPv4Obj(object):
 
             mm_result = mm.groupdict()
             addr = (
-                mm_result["addr0"]
-                or mm_result["addr1"]
-                or mm_result["addr2"]
-                or "127.0.0.1"
+                mm_result["addr0"] or mm_result["addr1"]
+                or mm_result["addr2"] or "127.0.0.1"
             )
             ## Normalize if we get zero-padded strings, i.e. 172.001.001.001
             assert re.search(r"^\d+\.\d+.\d+\.\d+", addr)
@@ -1242,12 +1241,6 @@ class IPv4Obj(object):
     # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     @property
-    def netmask(self):
-        return self.network_object.netmask
-
-    # do NOT wrap with @logger.catch(...)
-    # On IPv4Obj()
-    @property
     def masklength(self):
         """Returns the length of the network mask as an integer."""
         return self.prefixlen
@@ -1416,8 +1409,7 @@ class IPv4Obj(object):
         num_strings = self.as_cidr_net.split("/")[0].split(".")
         return (
             ".".join([f"{int(num):03}" for num in num_strings])
-            + "/"
-            + str(self.prefixlen)
+            + "/" + str(self.prefixlen)
         )
 
     # do NOT wrap with @logger.catch(...)
@@ -1617,12 +1609,12 @@ class IPv6Obj(object):
             try:
                 addr = mm_result["addr"]
 
-            except Exception as ee:
+            except Exception:
                 addr = "::1"
 
             try:
                 masklen = int(mm_result['masklen'])
-            except Exception as ee:
+            except Exception:
                 masklen = IPV6_MAX_PREFIXLEN
 
             assert isinstance(masklen, int) and masklen <= 128
@@ -2416,18 +2408,18 @@ def dns_query(input_str="", query_type="", server="", timeout=2.0):
     elif query_type == "PTR":
 
         try:
-            tmp = IPv4Address(input_str)
+            IPv4Address(input_str)
             is_valid_v4 = True
-        except:
+        except Exception:
             is_valid_v4 = False
 
         try:
-            tmp = IPv6Address(input_str)
+            IPv6Address(input_str)
             is_valid_v6 = True
-        except:
+        except Exception:
             is_valid_v6 = False
 
-        if (is_valid_v4 is True) or (is_valid_ipv6 is True):
+        if (is_valid_v4 is True) or (is_valid_v6 is True):
             inaddr = reversename.from_address(input_str)
         elif "in-addr.arpa" in input_str.lower():
             inaddr = input_str
@@ -2477,7 +2469,7 @@ def dns_query(input_str="", query_type="", server="", timeout=2.0):
 
 
 @logger.catch(reraise=True)
-@deprecat(reason="dns_lookup() is obsolete; use dns_query() instead.  dns_lookup() will be removed", version = '1.7.0')
+@deprecat(reason="dns_lookup() is obsolete; use dns_query() instead.  dns_lookup() will be removed", version='1.7.0')
 def dns_lookup(input_str, timeout=3, server="", record_type="A"):
     """Perform a simple DNS lookup, return results in a dictionary"""
     assert isinstance(input_str, str)
@@ -2490,7 +2482,7 @@ def dns_lookup(input_str, timeout=3, server="", record_type="A"):
     rr.lifetime = float(timeout)
     if server != "":
         rr.nameservers = [server]
-    #dns_session = rr.resolve(input_str, record_type)
+    # dns_session = rr.resolve(input_str, record_type)
     dns_session = rr.query(input_str, record_type)
     responses = list()
     for rdata in dns_session:
@@ -2508,7 +2500,6 @@ def dns_lookup(input_str, timeout=3, server="", record_type="A"):
 
     try:
         return {
-            #"addrs": [ii.address for ii in records],
             "record_type": record_type,
             "addrs": responses,
             "error": "",
@@ -2524,7 +2515,7 @@ def dns_lookup(input_str, timeout=3, server="", record_type="A"):
 
 
 @logger.catch(reraise=True)
-@deprecat(reason="dns6_lookup() is obsolete; use dns_query() instead.  dns6_lookup() will be removed", version = '1.7.0')
+@deprecat(reason="dns6_lookup() is obsolete; use dns_query() instead.  dns6_lookup() will be removed", version='1.7.0')
 def dns6_lookup(input_str, timeout=3, server=""):
     """Perform a simple DNS lookup, return results in a dictionary"""
     rr = Resolver()
@@ -2549,6 +2540,7 @@ def dns6_lookup(input_str, timeout=3, server=""):
 
 _REVERSE_DNS_REGEX = re.compile(r"^\s*\d+\.\d+\.\d+\.\d+\s*$")
 
+
 @logger.catch(reraise=True)
 def check_valid_ipaddress(input_addr=None):
     """
@@ -2562,24 +2554,25 @@ def check_valid_ipaddress(input_addr=None):
     input_addr = input_addr.strip()
     ipaddr_family = 0
     try:
-        assert IPv4Obj(input_addr)
+        IPv4Obj(input_addr)
         ipaddr_family = 4
-    except Exception as _:
+    except Exception:
         pass
 
     if ipaddr_family == 0:
         try:
-            assert IPv6Obj(input_addr)
+            IPv6Obj(input_addr)
             ipaddr_family = 6
-        except Exception as _:
+        except Exception:
             pass
 
     error = "FATAL: '{0}' is not a valid IPv4 or IPv6 address.".format(input_addr)
     assert (ipaddr_family == 4 or ipaddr_family == 6), error
     return (input_addr, ipaddr_family)
 
+
 @logger.catch(reraise=True)
-@deprecat(reason="reverse_dns_lookup() is obsolete; use dns_query() instead.  reverse_dns_lookup() will be removed", version = '1.7.0')
+@deprecat(reason="reverse_dns_lookup() is obsolete; use dns_query() instead.  reverse_dns_lookup() will be removed", version='1.7.0')
 def reverse_dns_lookup(input_str, timeout=3.0, server="4.2.2.2", proto="udp"):
     """Perform a simple reverse DNS lookup on an IPv4 or IPv6 address; return results in a python dictionary"""
     assert isinstance(proto, str) and (proto=="udp" or proto=="tcp")
@@ -2588,12 +2581,7 @@ def reverse_dns_lookup(input_str, timeout=3.0, server="4.2.2.2", proto="udp"):
     addr, addr_family = check_valid_ipaddress(input_str)
     assert addr_family==4 or addr_family==6
 
-    tcp_flag = None
-    if proto=="tcp":
-        tcp_flag = True
-    elif proto=="udp":
-        tcp_flag = False
-    else:
+    if proto!="tcp" and proto!="udp":
         raise ValueError()
 
     raw_result = dns_query(input_str, query_type="PTR", server=server, timeout=timeout)
@@ -2712,7 +2700,7 @@ class CiscoRange(MutableSequence):
                 if idx > 0:
 
                     # Unicode is the only type with .isnumeric()...
-                    prefix_removed = ii[len(common_prefix) :]
+                    prefix_removed = ii[len(common_prefix):]
 
                     if prefix_removed.isnumeric():
                         _tmp.append(prefix_removed)
@@ -2814,7 +2802,7 @@ class CiscoRange(MutableSequence):
             # Assign ii to the trailing number after prefix_str...
             #    this is much faster than regexp processing...
             trailing_digits_len = complete_len - prefix_str_len
-            trailing_digits = unicode_ii[-1 * trailing_digits_len :]
+            trailing_digits = unicode_ii[-1 * trailing_digits_len:]
             input_str.append(int(trailing_digits))
 
         if len(input_str) == 0:  # Special case, handle empty list
