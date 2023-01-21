@@ -1,0 +1,16 @@
+---
+name: GitHub Actions
+run-name: ${{ github.actor }} is running GitHub Actions 🚀
+on: [push]
+jobs:
+  CodeAnalysis-GitHub-Actions:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Embold.io Github CodeAnalysis Actions
+        uses: embold/github-action-docker@v0.2
+      - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
+      - run: echo "🖥️ foo"
+      - name: List files in the repository
+        run: |
+          ls ${{ github.workspace }}
+      - run: echo "🍏 This job's status is ${{ job.status }}."
