@@ -159,6 +159,7 @@ def initialize_globals():
         }
         return globals_dict
 
+
 @logger.catch(reraise=True)
 def initialize_ciscoconfparse():
     """Initialize ciscoconfparse global variables and configure logging."""
@@ -223,7 +224,6 @@ def _parse_line_braces(line_txt=None, comment_delimiter=None) -> tuple:
         # line3
         line1_str = results.get('line1', '')
         line2_str = results.get('line2', '')
-        line3_str = results.get('line3', '')
 
         if braces_close_left and braces_open_right:
             # Based off line1
@@ -278,7 +278,7 @@ def _parse_line_braces(line_txt=None, comment_delimiter=None) -> tuple:
             line = results.get('line1', None) or ''
             return (this_line_indent, child_indent, line)
 
-        elif (line3_str != '') and (line3_str is not None):
+        elif (line2_str != '') and (line3_str is not None):
             this_line_indent += 0
             child_indent += 0
             return (this_line_indent, child_indent, '')
@@ -4450,16 +4450,13 @@ class ConfigList(MutableSequence):
             return ccp_method
 
     # This method is on ConfigList()
+    @junos_unsupported
     def append(self, val):
 
         if self.debug >= 1:
             logger.debug("    ConfigList().append(val={}) was called.".format(val))
 
         self._list.append(val)
-
-    # This method is on ConfigList()
-    def insert(self, ii, val):
-        self._list.insert(ii, val)
 
     # This method is on ConfigList()
     def pop(self, ii=-1):
@@ -4860,11 +4857,6 @@ class ConfigList(MutableSequence):
         ## Just renumber lines...
         self._reassign_linenums()
 
-    # This method is on ConfigList()
-    @junos_unsupported
-    def append(self, val):
-        list_idx = len(self._list)
-        self.insert(list_idx, val)
 
     # This method is on ConfigList()
     def config_hierarchy(self):
