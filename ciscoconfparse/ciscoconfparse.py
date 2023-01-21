@@ -712,7 +712,6 @@ class CiscoConfParse(object):
 
         Examples
         --------
-
         >>> from operator import attrgetter
         >>> from ciscoconfparse import CiscoConfParse
         >>> config = [
@@ -955,19 +954,16 @@ class CiscoConfParse(object):
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
     def find_interface_objects(self, intfspec, exactmatch=True):
-        """Find all :class:`~cisco.IOSCfgLine` or
-        :class:`~models_cisco.NXOSCfgLine` objects whose text
-        is an abbreviation for ``intfspec`` and return the
-        objects in a python list.
+        """Find all :class:`~cisco.IOSCfgLine` or :class:`~models_cisco.NXOSCfgLine` objects whose text is an abbreviation for ``intfspec`` and return the objects in a python list.
 
         Notes
         -----
-        The configuration *must* be parsed with ``factory=True`` to use this method
+        The configuration *must* be parsed with ``factory=True`` to use this method.
 
         Parameters
         ----------
         intfspec : str
-            A string which is the abbreviation (or full name) of the interface
+            A string which is the abbreviation (or full name) of the interface.
         exactmatch : bool
             Defaults to True; when True, this option requires ``intfspec`` match the whole interface name and number.
 
@@ -978,7 +974,6 @@ class CiscoConfParse(object):
 
         Examples
         --------
-
         >>> from ciscoconfparse import CiscoConfParse
         >>> config = [
         ...     '!',
@@ -1024,14 +1019,11 @@ class CiscoConfParse(object):
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
     def find_objects_dna(self, dnaspec, exactmatch=False):
-        """Find all :class:`~models_cisco.IOSCfgLine` objects whose text
-        matches ``dnaspec`` and return the :class:`~models_cisco.IOSCfgLine`
-        objects in a python list.
+        """Find all :class:`~models_cisco.IOSCfgLine` objects whose text matches ``dnaspec`` and return the :class:`~models_cisco.IOSCfgLine` objects in a python list.
 
         Notes
         -----
-        :func:`~ciscoconfparse.CiscoConfParse.find_objects_dna` requires the configuration to be parsed with factory=True
-
+        :func:`~ciscoconfparse.CiscoConfParse.find_objects_dna` requires the configuration to be parsed with factory=True.
 
         Parameters
         ----------
@@ -1047,7 +1039,6 @@ class CiscoConfParse(object):
 
         Examples
         --------
-
         >>> from ciscoconfparse import CiscoConfParse
         >>> config = [
         ...     '!',
@@ -1098,16 +1089,7 @@ class CiscoConfParse(object):
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
     def find_objects(self, linespec, exactmatch=False, ignore_ws=False):
-        """Find all :class:`~models_cisco.IOSCfgLine` objects whose text
-        matches ``linespec`` and return the :class:`~models_cisco.IOSCfgLine`
-        objects in a python list.
-        :func:`~ciscoconfparse.CiscoConfParse.find_objects` is similar to
-        :func:`~ciscoconfparse.CiscoConfParse.find_lines`; however, the former
-        returns a list of :class:`~models_cisco.IOSCfgLine` objects, while the
-        latter returns a list of text configuration statements.  Going
-        forward, I strongly encourage people to start using
-        :func:`~ciscoconfparse.CiscoConfParse.find_objects` instead of
-        :func:`~ciscoconfparse.CiscoConfParse.find_lines`.
+        """Find all :class:`~models_cisco.IOSCfgLine` objects whose text matches ``linespec`` and return the :class:`~models_cisco.IOSCfgLine` objects in a python list.  :func:`~ciscoconfparse.CiscoConfParse.find_objects` is similar to :func:`~ciscoconfparse.CiscoConfParse.find_lines`; however, the former returns a list of :class:`~models_cisco.IOSCfgLine` objects, while the latter returns a list of text configuration statements.  Going forward, I strongly encourage people to start using :func:`~ciscoconfparse.CiscoConfParse.find_objects` instead of :func:`~ciscoconfparse.CiscoConfParse.find_lines`.
 
         Parameters
         ----------
@@ -1128,7 +1110,6 @@ class CiscoConfParse(object):
         This example illustrates the difference between
         :func:`~ciscoconfparse.CiscoConfParse.find_objects` and
         :func:`~ciscoconfparse.CiscoConfParse.find_lines`.
-
         >>> from ciscoconfparse import CiscoConfParse
         >>> config = [
         ...     '!',
@@ -1162,8 +1143,7 @@ class CiscoConfParse(object):
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
     def find_lines(self, linespec, exactmatch=False, ignore_ws=False):
-        """This method is the equivalent of a simple configuration grep
-        (Case-sensitive).
+        """This method is the equivalent of a simple configuration grep (Case-sensitive).
 
         Parameters
         ----------
