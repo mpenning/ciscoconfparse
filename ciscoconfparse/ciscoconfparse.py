@@ -1,27 +1,28 @@
-""" ciscoconfparse.py - Parse, Query, Build, and Modify IOS-style configs
+"""
+ciscoconfparse.py - Parse, Query, Build, and Modify IOS-style configs.
 
-     Copyright (C) 2022 David Michael Pennington
-     Copyright (C) 2022 David Michael Pennington at WellSky
-     Copyright (C) 2019-2021 David Michael Pennington at Cisco Systems / ThousandEyes
-     Copyright (C) 2012-2019 David Michael Pennington at Samsung Data Services
-     Copyright (C) 2011-2012 David Michael Pennington at Dell Computer Corp
-     Copyright (C) 2007-2011 David Michael Pennington
+Copyright (C) 2022 David Michael Pennington
+Copyright (C) 2022 David Michael Pennington at WellSky
+Copyright (C) 2019-2021 David Michael Pennington at Cisco Systems / ThousandEyes
+Copyright (C) 2012-2019 David Michael Pennington at Samsung Data Services
+Copyright (C) 2011-2012 David Michael Pennington at Dell Computer Corp
+Copyright (C) 2007-2011 David Michael Pennington
 
-     This program is free software: you can redistribute it and/or modify
-     it under the terms of the GNU General Public License as published by
-     the Free Software Foundation, either version 3 of the License, or
-     (at your option) any later version.
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-     This program is distributed in the hope that it will be useful,
-     but WITHOUT ANY WARRANTY; without even the implied warranty of
-     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-     GNU General Public License for more details.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
 
-     You should have received a copy of the GNU General Public License
-     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-     If you need to contact the author, you can do so by emailing:
-     mike [~at~] pennington [.dot.] net
+If you need to contact the author, you can do so by emailing:
+mike [~at~] pennington [.dot.] net
 """
 
 from collections.abc import MutableSequence, Iterator
@@ -87,12 +88,10 @@ from deprecat import deprecat
 from loguru import logger
 import toml
 
+
 @logger.catch(reraise=True)
 def get_version_number():
-    """
-    Read the version number from 'pyproject.toml', or use version 0.0.0 in odd
-    circumstances.
-    """
+    """Read the version number from 'pyproject.toml', or use version 0.0.0 in odd circumstances."""
     # Docstring props: http://stackoverflow.com/a/1523456/667301
     # version: if-else below fixes Github issue #123
 
@@ -119,9 +118,7 @@ def get_version_number():
 
 @logger.catch(reraise=True)
 def initialize_globals():
-    """
-    Initialize ciscoconfparse global dunder variables and a couple others.
-    """
+    """Initialize ciscoconfparse global dunder variables and a couple others."""
     global ALL_VALID_SYNTAX
     global ENCODING
     global __author_email__
@@ -165,9 +162,7 @@ def initialize_globals():
 
 @logger.catch(reraise=True)
 def initialize_ciscoconfparse():
-    """
-    Initialize ciscoconfparse global variables and configure logging
-    """
+    """Initialize ciscoconfparse global variables and configure logging."""
     configure_loguru()
 
     globals_dict = initialize_globals()
@@ -185,8 +180,7 @@ initialize_ciscoconfparse()
 
 @logger.catch(reraise=True)
 def _parse_line_braces(line_txt=None, comment_delimiter=None) -> tuple:
-    """
-    """
+    """Internal helper-method for brace-delimited configs (typically JunOS)."""
     assert isinstance(line_txt, str)
     assert isinstance(comment_delimiter, str) and len(comment_delimiter)==1
 
@@ -290,14 +284,12 @@ def _parse_line_braces(line_txt=None, comment_delimiter=None) -> tuple:
                     syntax, line_txt))
 
     else:
-        raise ValueError('Cannot parse {}:"{}"'.format(syntax,
-                    line_txt))
+        raise ValueError('Cannot parse {}:"{}"'.format(syntax, line_txt))
+
 
 @logger.catch(reraise=True)
 def build_space_tolerant_regex(linespec):
-    r"""SEMI-PRIVATE: Accept a string, and return a string with all
-    spaces replaced with '\s+'"""
-
+    r"""SEMI-PRIVATE: Accept a string, and return a string with all spaces replaced with '\s+'."""
     # Define backslash with manual Unicode...
     backslash = "\x5c"
     # escaped_space = "\\s+" (not a raw string)
@@ -314,13 +306,10 @@ def build_space_tolerant_regex(linespec):
 
     return linespec
 
+
 @logger.catch(reraise=True)
 def assign_parent_to_closing_braces(input_list=None):
-    """
-    Accept a list of brace-delimited BaseCfgLine() objects; these objects
-    should not already have a parent assigned.
-
-    Walk the list and assign parents to the closing braces.  Return this list.
+    """Accept a list of brace-delimited BaseCfgLine() objects; these objects should not already have a parent assigned.  Walk the list of BaseCfgLine() objects and assign the 'parent' attribute BaseCfgLine() objects to the closing config braces.  Return the list of objects (with the assigned 'parent' attributes).
 
     Closing Brace Assignment Example
     --------------------------------
@@ -363,19 +352,12 @@ def assign_parent_to_closing_braces(input_list=None):
 
     return input_list
 
+
 # This method was copied from the same method in git commit below...
 # https://raw.githubusercontent.com/mpenning/ciscoconfparse/bb3f77436023873da344377d3c839387f5131e7f/ciscoconfparse/ciscoconfparse.py
 @logger.catch(reraise=True)
-def convert_junos_to_ios(input_list=None, stop_width=4, comment_delimiter="!",
-        debug=0):
-    """
-    This method accepts `input_list` (it should be a list of
-    junos-brace-formatted-string config lines).
-
-    This method strips off semicolons / braces from the string lines in
-    `input_list` and returns the lines in a new list where all lines
-    are explicitly indented as IOS would (as if IOS understood braces).
-    """
+def convert_junos_to_ios(input_list=None, stop_width=4, comment_delimiter="!", debug=0):
+    """Accept `input_list` containing a list of junos-brace-formatted-string config lines.  This method strips off semicolons / braces from the string lines in `input_list` and returns the lines in a new list where all lines are explicitly indented as IOS would (as if IOS understood braces)."""
     ## Note to self, I made this regex fairly junos-specific...
     assert isinstance(input_list, list) and len(input_list) > 0
     assert '{' not in set(comment_delimiter)
@@ -397,12 +379,8 @@ def convert_junos_to_ios(input_list=None, stop_width=4, comment_delimiter="!",
 
 
 class CiscoConfParse(object):
-    """
-    Parse Cisco IOS configurations and answers queries about the configs.
-    """
+    """Parse Cisco IOS configurations and answer queries about the configs."""
 
-    # IMPORTANT: do NOT decorate CiscoConfParse().__init__()
-    #
     # Something breaks in CiscoConfParse() if using @logger.catch, below...
     @logger.catch(reraise=True)
     def __init__(
@@ -578,6 +556,7 @@ class CiscoConfParse(object):
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
     def __repr__(self):
+        """Return a string that represents this CiscoConfParse object instance.  The number of lines embedded in the string is calculated from the length of the ConfigObjs attribute."""
         if isinstance(self.ConfigObjs, (list, tuple, MutableSequence)):
             num_lines = str(len(self.ConfigObjs))
         elif self.ConfigObjs is None:
@@ -593,19 +572,18 @@ class CiscoConfParse(object):
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
     def get_config_lines(self, config=None, logger=None, linesplit_rgx=r"\r*\n+"):
-        """
-        If the config parameter is a str, assume it's a filepath and read the config.  If the config parameter is a list, assume it's a list of text config commands.  Return the list of text configuration commands or raise an error.
-        """
+        """If the config parameter is a str, assume it's a filepath and read the config.  If the config parameter is a list, assume it's a list of text config commands.  Return the list of text configuration commands or raise an error."""
         config_lines = None
 
         if config is None:
             raise ValueError("config='%s' is unsupported.  `config` must be either a python string, patlib.Path, or list" % config)
 
-        elif isinstance(config, list) or isinstance(config, Iterator):
+        elif isinstance(config, (list, Iterator)):
             # Here we assume that `config` is a list of text config lines...
             #
             # config list of text lines...
-            assert len(config) > 0, "FATAL - there is no configuration stored in the list()"
+            if len(config) == 0:
+                raise ValueError("FATAL - the 'config' parameter has no configuration stored in the list()")
             if self.debug > 0:
                 logger.debug("parsing config stored in this list: '%s'" % config)
             config_lines = config
@@ -649,9 +627,7 @@ class CiscoConfParse(object):
     #########################################################################
     @property
     def openargs(self):
-        """Fix for Py3.5 deprecation of universal newlines - Ref Github #114
-        also see https://softwareengineering.stackexchange.com/q/298677/23144
-        """
+        """Fix Py3.5 deprecation of universal newlines - Ref Github #114; also see https://softwareengineering.stackexchange.com/q/298677/23144."""
         if sys.version_info >= (
                 3,
                 6,
@@ -664,7 +640,7 @@ class CiscoConfParse(object):
     # This method is on CiscoConfParse()
     @property
     def ioscfg(self):
-        """Return a list containing all text configuration statements"""
+        """Return a list containing all text configuration statements."""
         ## I keep ioscfg to emulate legacy ciscoconfparse behavior
         return [ii.text for ii in self.ConfigObjs]
 
@@ -682,71 +658,41 @@ class CiscoConfParse(object):
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
     def atomic(self):
-        """Use :func:`~ciscoconfparse.CiscoConfParse.atomic` to manually fix
-        up ``ConfigObjs`` relationships
-        after modifying a parsed configuration.  This method is slow; try to
-        batch calls to :func:`~ciscoconfparse.CiscoConfParse.atomic()` if
-        possible.
+        """Use :func:`~ciscoconfparse.CiscoConfParse.atomic` to manually fix up ``ConfigObjs`` relationships after modifying a parsed configuration.  This method is slow; try to batch calls to :func:`~ciscoconfparse.CiscoConfParse.atomic()` if possible.
 
         Warnings
         --------
-        If you modify a configuration after parsing it with
-        :class:`~ciscoconfparse.CiscoConfParse`, you *must* call
-        :func:`~ciscoconfparse.CiscoConfParse.commit` or
-        :func:`~ciscoconfparse.CiscoConfParse.atomic` before searching
-        the configuration again with methods such as
-        :func:`~ciscoconfparse.CiscoConfParse.find_objects` or
-        :func:`~ciscoconfparse.CiscoConfParse.find_lines`.  Failure to
-        call :func:`~ciscoconfparse.CiscoConfParse.commit` or
-        :func:`~ciscoconfparse.CiscoConfParse.atomic` on config
-        modifications could lead to unexpected search results.
+        If you modify a configuration after parsing it with :class:`~ciscoconfparse.CiscoConfParse`, you *must* call :func:`~ciscoconfparse.CiscoConfParse.commit` or :func:`~ciscoconfparse.CiscoConfParse.atomic` before searching the configuration again with methods such as :func:`~ciscoconfparse.CiscoConfParse.find_objects` or :func:`~ciscoconfparse.CiscoConfParse.find_lines`.  Failure to call :func:`~ciscoconfparse.CiscoConfParse.commit` or :func:`~ciscoconfparse.CiscoConfParse.atomic` on config modifications could lead to unexpected search results.
 
         See Also
         --------
-        :func:`~ciscoconfparse.CiscoConfParse.commit`
-
+        :func:`~ciscoconfparse.CiscoConfParse.commit`.
         """
         self.ConfigObjs._bootstrap_from_text()
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
     def commit(self):
-        """
-        Alias for calling the :func:`~ciscoconfparse.CiscoConfParse.atomic`
-        method.  This method is slow; try to batch calls to
-        :func:`~ciscoconfparse.CiscoConfParse.commit()` if possible.
+        """Alias for calling the :func:`~ciscoconfparse.CiscoConfParse.atomic` method.  This method is slow; try to batch calls to :func:`~ciscoconfparse.CiscoConfParse.commit()` if possible.
 
         Warnings
         --------
-        If you modify a configuration after parsing it with
-        :class:`~ciscoconfparse.CiscoConfParse`, you *must* call
-        :func:`~ciscoconfparse.CiscoConfParse.commit` or
-        :func:`~ciscoconfparse.CiscoConfParse.atomic` before searching
-        the configuration again with methods such as
-        :func:`~ciscoconfparse.CiscoConfParse.find_objects` or
-        :func:`~ciscoconfparse.CiscoConfParse.find_lines`.  Failure to
-        call :func:`~ciscoconfparse.CiscoConfParse.commit` or
-        :func:`~ciscoconfparse.CiscoConfParse.atomic` on config
-        modifications could lead to unexpected search results.
+        If you modify a configuration after parsing it with :class:`~ciscoconfparse.CiscoConfParse`, you *must* call :func:`~ciscoconfparse.CiscoConfParse.commit` or :func:`~ciscoconfparse.CiscoConfParse.atomic` before searching the configuration again with methods such as :func:`~ciscoconfparse.CiscoConfParse.find_objects` or :func:`~ciscoconfparse.CiscoConfParse.find_lines`.  Failure to call :func:`~ciscoconfparse.CiscoConfParse.commit` or :func:`~ciscoconfparse.CiscoConfParse.atomic` on config modifications could lead to unexpected search results.
 
         See Also
         --------
-        :func:`~ciscoconfparse.CiscoConfParse.atomic`
+        :func:`~ciscoconfparse.CiscoConfParse.atomic`.
         """
         self.atomic()  # atomic() calls self.ConfigObjs._bootstrap_from_text()
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
     def convert_terraform_to_ios(self, input_list, stop_width=4, quotes=False, comment_delimiter="#"):
-        """
-        This method accepts `input_list` (it should be a list of
-        terraform-brace-formatted-string config lines).
+        """This method accepts `input_list` (it should be a list of terraform-brace-formatted-string config lines).
 
-        This method strips off semicolons / braces / quotes from the string
-        lines in `input_list` and returns the lines in a new list where all
-        lines are explicitly indented as IOS would (as if IOS understood
-        terraform).
+        This method strips off semicolons / braces / quotes from the string lines in `input_list` and returns the lines in a new list where all lines are explicitly indented as IOS would (as if IOS understood terraform).
         """
+        # FIXME this method (and claims about handling terraform) probably need to be removed. Parsing terraform is quite different than parsing JunOS.  See github issue #260
         raise NotImplementedError()
 
         ## Note to self, I made this regex fairly terraform-specific...
