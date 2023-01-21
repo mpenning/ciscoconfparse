@@ -106,13 +106,15 @@ def get_version_number():
             toml_values = toml.loads(fh.read())
             version = toml_values["tool"]["poetry"].get("version", -1.0)
 
-        assert isinstance(version, str)
+        if not isinstance(version, str):
+            raise ValueError("The version parameter must be a string.")
 
     else:
         # This is required for importing from a zipfile... Github issue #123
         version = "0.0.0"  # __version__ read failed
 
     return version
+
 
 @logger.catch(reraise=True)
 def initialize_globals():
@@ -132,7 +134,6 @@ def initialize_globals():
         'nxos',
         'asa',
         'junos',
-        'terraform',
     )
 
     try:
@@ -179,8 +180,13 @@ initialize_ciscoconfparse()
 @logger.catch(reraise=True)
 def _parse_line_braces(line_txt=None, comment_delimiter=None) -> tuple:
     """Internal helper-method for brace-delimited configs (typically JunOS)."""
-    assert isinstance(line_txt, str)
-    assert isinstance(comment_delimiter, str) and len(comment_delimiter)==1
+    # Removed config parameter assertions in 1.7.2...
+    if not isinstance(line_txt, str):
+        raise ValueError("line_txt parameter must be a string.")
+    if not isinstance(comment_delimiter, str):
+        raise ValueError("comment_delimiter parameter must be a string.")
+    if len(comment_delimiter) > 1:
+        raise ValueError("len(comment_delimiter) must be one.")
 
     syntax = "ios"
     child_indent = 0
@@ -299,7 +305,8 @@ def build_space_tolerant_regex(linespec):
     elif isinstance(linespec, (list, tuple,)):
         for idx, tmp in enumerate(linespec):
             # Ensure this list element is a string...
-            assert isinstance(tmp, str)
+            if not isinstance(tmp, str):
+                raise ValueError("tmp parameter must be a string.")
             linespec[idx] = re.sub(r"\s+", escaped_space, tmp)
 
     return linespec
@@ -410,7 +417,7 @@ class CiscoConfParse(object):
         ignore_blank_lines : bool
             ``ignore_blank_lines`` defaults to True; when this is set True, ciscoconfparse ignores blank configuration lines.  You might want to set ``ignore_blank_lines`` to False if you intentionally use blank lines in your configuration (ref: Github Issue #3), or you are parsing configurations which naturally have blank lines (such as Cisco Nexus configurations).
         syntax : str
-            A string holding the configuration type.  Default: 'ios'.  Must be one of: 'ios', 'nxos', 'asa', 'junos', 'terraform'.  Use 'junos' for any brace-delimited network configuration (including F5, Palo Alto, etc...).
+            A string holding the configuration type.  Default: 'ios'.  Must be one of: 'ios', 'nxos', 'asa', 'junos'.  Use 'junos' for any brace-delimited network configuration (including F5, Palo Alto, etc...).
         encoding : str
             A string holding the coding type.  Default is `locale.getpreferredencoding()`
 
@@ -456,11 +463,11 @@ class CiscoConfParse(object):
         openargs : dict
             Returns a dictionary of valid arguments for `open()` (these change based on the running python version).
         syntax : str
-            A string holding the configuration type.  Default: 'ios'.  Must be one of: 'ios', 'nxos', 'asa', 'junos', 'terraform'.  Use 'junos' for any brace-delimited network configuration (including F5, Palo Alto, etc...).
+            A string holding the configuration type.  Default: 'ios'.  Must be one of: 'ios', 'nxos', 'asa', 'junos'.  Use 'junos' for any brace-delimited network configuration (including F5, Palo Alto, etc...).
 
         """
         assert isinstance(syntax, str)
-        assert syntax in {"ios", "nxos", "asa", "junos", "terraform"}
+        assert syntax in {"ios", "nxos", "asa", "junos",}
         assert isinstance(debug, int) and debug >= 0
 
         # all IOSCfgLine object instances...
@@ -489,7 +496,6 @@ class CiscoConfParse(object):
 
         # add exceptions for brace-delimited syntax...
         valid_syntax.discard("junos")
-        valid_syntax.discard("terraform")
         if syntax in valid_syntax:
 
             if self.debug > 0:
@@ -513,25 +519,6 @@ class CiscoConfParse(object):
                 " enabled; use factory=False")
             assert factory is False, err_msg
             config = convert_junos_to_ios(config, comment_delimiter="#")
-            if self.debug > 0:
-                logger.info("assigning self.ConfigObjs = ConfigList()")
-
-            # self.config_list is a partial wrapper around ConfigList()
-            self.ConfigObjs = ConfigList(
-                initlist=config,
-                comment_delimiter=comment,
-                debug=debug,
-                factory=factory,
-                ignore_blank_lines=ignore_blank_lines,
-                syntax=syntax,
-                ccp_ref=self,
-            )
-
-        elif syntax == "terraform":
-            err_msg = ("terraform parser factory is not yet"
-                " enabled; use factory=False")
-            assert factory is False, err_msg
-            config = self.convert_terraform_to_ios(config)
             if self.debug > 0:
                 logger.info("assigning self.ConfigObjs = ConfigList()")
 
@@ -693,13 +680,13 @@ class CiscoConfParse(object):
         regex_groups=False,
         debug=0,
     ):
-        r"""This method iterates over a tuple of regular expressions in `branchspec` and returns the matching objects in a list of lists (consider it similar to a table of matching config objects). `branchspec` expects to start at some ancestor and walk through the nested object hierarchy (with no limit on depth).
+        r"""Iterate over a tuple of regular expressions in `branchspec` and return matching objects in a list of lists (consider it similar to a table of matching config objects). `branchspec` expects to start at some ancestor and walk through the nested object hierarchy (with no limit on depth).
 
         Previous CiscoConfParse() methods only handled a single parent regex and single child regex (such as :func:`~ciscoconfparse.CiscoConfParse.find_parents_w_child`).
 
-        This method dives beyond a simple parent-child relationship to include multiple nested 'branches' of a single family (i.e. parents, children, grand-children, great-grand-children, etc).  The result of handling longer regex chains is that it flattens what would otherwise be nested loops in your scripts; this makes parsing heavily-nested configuratations like Juniper, Palo-Alto, and F5 much simpler.  Of course, there are plenty of applications for "flatter" config formats like IOS.
+        Transcend past one-level of parent-child relationship parsing to include multiple nested 'branches' of a single family (i.e. parents, children, grand-children, great-grand-children, etc).  The result of handling longer regex chains is that it flattens what would otherwise be nested loops in your scripts; this makes parsing heavily-nested configuratations like Juniper, Palo-Alto, and F5 much simpler.  Of course, there are plenty of applications for "flatter" config formats like IOS.
 
-        This method returns a list of lists (of object 'branches') which are nested to the same depth required in `branchspec`.  However, unlike most other CiscoConfParse() methods, it returns an explicit `None` if there is no object match.  Returning `None` allows a single search over configs that may not be uniformly nested in every branch.
+        Return a list of lists (of object 'branches') which are nested to the same depth required in `branchspec`.  However, unlike most other CiscoConfParse() methods, return an explicit `None` if there is no object match.  Returning `None` allows a single search over configs that may not be uniformly nested in every branch.
 
         Deprecation notice for the allow_none parameter
         -----------------------------------------------
@@ -783,7 +770,6 @@ class CiscoConfParse(object):
         >>> branches[2]
         [<IOSCfgLine # 10 'ltm pool BAR'>, <IOSCfgLine # 11 '    members' (parent is # 10)>, <IOSCfgLine # 12 '        k8s-07.localdomain:8443' (parent is # 11)>, None]
         """
-
         # As of verion 1.6.16, allow_none is always True.  See the Deprecation
         # notice above...
         if allow_none is not None:
@@ -824,7 +810,8 @@ class CiscoConfParse(object):
             # print("PARENT "+str(parent_obj))
 
             # As of version 1.6.16, allow_none must always be True...
-            assert allow_none is True
+            if allow_none is not True:
+                raise ValueError("allow_none parameter must always be True.")
 
             if debug > 1:
                 msg = """Calling list_matching_children(
@@ -916,14 +903,15 @@ class CiscoConfParse(object):
         if regex_groups is True:
 
             return_matrix = list()
-            #branchspec = (r"^interfaces", r"\s+(\S+)", r"\s+(unit\s+\d+)", r"family\s+(inet)", r"address\s+(\S+)")
-            #for idx_matrix, row in enumerate(self.find_object_branches(branchspec)):
+            # branchspec = (r"^interfaces", r"\s+(\S+)", r"\s+(unit\s+\d+)", r"family\s+(inet)", r"address\s+(\S+)")
+            # for idx_matrix, row in enumerate(self.find_object_branches(branchspec)):
             for _, row in enumerate(branches):
-                assert isinstance(row, (list, tuple,))
+                if not isinstance(row, (list, tuple,)):
+                    raise ValueError("'row' parameter must be a list or tuple.")
 
                 # Before we check regex capture groups, allocate an "empty return_row"
                 #   of the correct length...
-                return_row = [(None,)]*len(branchspec)
+                return_row = [(None,)] * len(branchspec)
 
                 # Populate the return_row below...
                 #     return_row will be appended to return_matrix...
