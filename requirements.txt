@@ -1,16 +1,5 @@
-pytest >= 7.2.1
-packaging > 21.0
-wheel >= 0.38.4
-poetry
-poetry-core
-gitpython
-
 loguru == 0.6.0
 passlib == 1.7.4
 toml > 0.10.1
 dnspython >= 2.3.0
 deprecat
-
-pyroma
-fabric == 2.6.0
-
