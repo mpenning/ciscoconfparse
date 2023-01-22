@@ -4,6 +4,13 @@
 - Summary:
     - Insert something here
 
+## Version: 1.7.5
+
+- Released: 2023-01-22
+- Summary:
+    - Move non-essential packages to requirements-dev.txt (github issue #258)
+
+
 ## Version: 1.7.4
 
 - Released: 2023-01-22
