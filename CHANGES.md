@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 1.7.4
+
+- Released: 2023-01-22
+- Summary:
+    - Reorganize pyproject.toml for github issue #258 (as suggested by @verbosemode)
+
 ## Version: 1.7.3
 
 - Released: 2023-01-21
