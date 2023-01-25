@@ -63,6 +63,8 @@ toml = ">=0.10.2"
 deprecat = ">=2.1.1"
 
 [tool.poetry.group.dev.dependencies]
+wheel = ">=0.8.1"
+packaging = ">21.0"
 pyroma = ">=4.0"
 black = ">=20.8b1"
 pre-commit = "2.20.0"
@@ -71,7 +73,6 @@ virtualenvwrapper = "~=4.8.4"
 poetry = ">=1.2.2"
 poetry-core = ">=1.3.2"
 pylint = ">=2.15.5"
-packaging = ">21.0"
 
 [tool.poetry.group.test.dependencies]
 pytest = ">=7.1.3"
