@@ -1,6 +1,5 @@
 # Ensure wheel is upgraded to fix CVE-2022-40898
 #     Also ref Github Issue #257
-wheel >= 0.38.4
 loguru == 0.6.0
 passlib == 1.7.4
 toml > 0.10.1

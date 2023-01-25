@@ -27,10 +27,8 @@ COL_END=\033[0;0m
 .PHONY: pypi-package-infra
 pypi-package-infra:
 	@echo "$(COL_GREEN)>> building ciscoconfparse pypi artifacts (wheel and tar.gz)$(COL_END)"
-	pip install -U setuptools>=66.1.0
-	pip install -U wheel>=0.38.1
-	pip install -U twine>=4.0.2
-	pip install -U poetry>=1.3.2
+	pip install -r requirements.txt
+	pip install -r requirements-dev.txt
 	# Delete bogus files... see https://stackoverflow.com/a/73992288/667301
 	perl -e 'unlink( grep { /^\W\d*\.*\d*/ && !-d } glob( "*" ) );'
 
@@ -38,6 +36,7 @@ pypi-package-infra:
 pypi:
 	@echo "$(COL_CYAN)>> uploading ciscoconfparse pypi artifacts to pypi$(COL_END)"
 	make clean
+	# upgrade packaging infra and ciscoconfparse dependencies...
 	make pypi-package-infra
 	# tag the repo with $VERSION and push to origin
 	git tag $$VERSION
