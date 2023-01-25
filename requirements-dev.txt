@@ -11,5 +11,5 @@ gitpython
 pyroma
 fabric == 2.6.0
 Sphinx == 5.2.3
-bootstrap == 0.8.0
+sphinx-bootstrap-theme == 0.8.0
 
