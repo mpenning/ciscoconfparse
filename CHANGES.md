@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 1.7.6
+
+- Released: 2023-01-25
+- Summary:
+    - Reorganize Makefile, pyproject.toml and requirements.txt to minimize end-user package upgrades
+
 ## Version: 1.7.5
 
 - Released: 2023-01-22
