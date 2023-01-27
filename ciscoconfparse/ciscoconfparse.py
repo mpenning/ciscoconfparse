@@ -1852,7 +1852,7 @@ class CiscoConfParse(object):
            >>>
         """
 
-        if ignore_ws:
+        if ignore_ws is True:
             parentspec = build_space_tolerant_regex(parentspec)
             childspec = build_space_tolerant_regex(childspec)
 
@@ -2192,6 +2192,7 @@ class CiscoConfParse(object):
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
     def has_line_with(self, linespec):
+        """Return True if `linespec` is contained in the configuration."""
         # https://stackoverflow.com/a/16097112/667301
         matching_conftext = list(
             filter(
@@ -2278,15 +2279,19 @@ class CiscoConfParse(object):
                 "The parameter named `insertstr` is deprecated.  Please use `new_val` instead",
             )
 
-        err_exist_val = "FATAL: exist_val:'%s' must be a string" % exist_val
+
+        err_exist_val = "FATAL: exist_val:'%s' must be a non-empty string" % exist_val
+        if not isinstance(exist_val, str) or exist_val =="":
+            raise ValueError(err_exist_val)
         err_new_val = "FATAL: new_val:'%s' must be a string" % new_val
-        assert isinstance(exist_val, str), err_exist_val
-        assert exist_val != ""
-        assert isinstance(new_val, str), err_new_val
-        assert new_val != ""
-        assert isinstance(exactmatch, bool)
-        assert isinstance(ignore_ws, bool)
-        assert isinstance(new_val_indent, int)
+        if not isinstance(new_val, str) or new_val =="":
+            raise ValueError(err_new_val)
+        if not isinstance(exactmatch, bool):
+            raise ValueError
+        if not isinstance(ignore_ws, bool):
+            raise ValueError
+        if not isinstance(new_val_indent, int):
+            raise ValueError
 
         objs = self.find_objects(linespec=exist_val, exactmatch=exactmatch, ignore_ws=ignore_ws)
         for _obj in objs:
@@ -2294,7 +2299,7 @@ class CiscoConfParse(object):
             assert exist_indent == _obj.indent
             if new_val_indent >= 0:
                 # Forces an indent on ``new_val``...
-                self.ConfigObjs.insert_before(exist_val, new_val_indent*" " + new_val.lstrip())
+                self.ConfigObjs.insert_before(exist_val, new_val_indent * " " + new_val.lstrip())
             else:
                 # Does not force an indent on ``new_val``...
                 self.ConfigObjs.insert_before(exist_val, new_val)
@@ -2383,18 +2388,17 @@ class CiscoConfParse(object):
 
         err_exist_val = "FATAL: exist_val:'%s' must be a string" % exist_val
         err_new_val = "FATAL: new_val:'%s' must be a string" % new_val
-        assert isinstance(exist_val, str), err_exist_val
-        assert exist_val != ""
-        assert isinstance(new_val, str), err_new_val
-        assert new_val != ""
-        assert isinstance(exactmatch, bool)
-        assert isinstance(ignore_ws, bool)
-        assert isinstance(new_val_indent, int)
+        if not isinstance(exist_val, str) or exist_val == "":
+            raise ValueError(err_exist_val)
+        if not isinstance(new_val, str) or new_val == "":
+            raise ValueError(err_new_val)
+        if not isinstance(exactmatch, bool):
+            raise ValueError
+        if not isinstance(ignore_ws, bool):
+            raise ValueError
+        if not isinstance(new_val_indent, int):
+            raise ValueError
 
-        # WORKS!!
-        #objs = self.find_objects(exist_val, exactmatch, ignore_ws)
-        #self.ConfigObjs.insert_after(exist_val, new_val, atomic=atomic)
-        # END-WORKS!!
         objs = self.find_objects(linespec=exist_val, exactmatch=exactmatch, ignore_ws=ignore_ws)
         for _obj in objs:
             exist_indent = len(_obj._text) - len(_obj._text.lstrip())
