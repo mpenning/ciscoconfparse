@@ -162,7 +162,7 @@ body:
   id: terms
   attributes:
     label: Code of Conduct
-    description: By submitting this issue, you agree to follow our [Code of Conduct](https://github.com/mpenning/ciscoconfparse/blob/main/CONTRIBUTING.md)
+    description: By submitting this issue, you agree to follow our [Code of Conduct](https://github.com/mpenning/ciscoconfparse/blob/main/CONTRIBUTING.md) as found in [`CONTRIBUTING.md`](https://github.com/mpenning/ciscoconfparse/blob/main/CONTRIBUTING.md)
     options:
     - label: I agree to follow this project's [Code of Conduct](https://github.com/mpenning/ciscoconfparse/blob/main/CONTRIBUTING.md)
       required: true
