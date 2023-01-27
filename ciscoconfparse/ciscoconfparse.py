@@ -3793,7 +3793,8 @@ class HDiff(object):
 
         for line_dict in self.all_output_dicts:
 
-            assert isinstance(line_dict, dict)
+            if not isinstance(line_dict, dict):
+                raise ValueError
 
             if line_dict["diff_word"] == "add":
                 unified_diff_list.append("+" + line_dict["text"])
@@ -3827,7 +3828,9 @@ class HDiff(object):
         ############################################
         all_dict_lines = list()
         for bobj in before_obj_list:
-            assert isinstance(bobj, BaseCfgLine)
+
+            if not isinstance(bobj, BaseCfgLine):
+                raise ValueError
 
             assert bobj.diff_side == "before"
             assert bobj.diff_word in set({"keep", "remove"})
@@ -3879,8 +3882,9 @@ class HDiff(object):
         Return a list of *CfgLine() objects which are relevant to the diff...
         """
         assert parse is not None
-        assert isinstance(default_diff_word, str)
-        retval = list()
+        if not isinstance(default_diff_word, str):
+            raise ValueError
+        retval = []
         for obj in parse.objs:
 
             # Will multiple spaces between diff_words affect a diff match?
@@ -3909,13 +3913,16 @@ class HDiff(object):
         If no match is found in before_obj_list, after_obj.diff_word is 'add'.
         """
         # Check before_obj instances...
-        assert isinstance(before_obj_list, list)
+        if not isinstance(before_obj_list, list):
+            raise ValueError
         for before_obj in before_obj_list:
-            assert isinstance(before_obj, BaseCfgLine)
+            if not isinstance(before_obj, BaseCfgLine):
+                raise ValueError
             assert before_obj.diff_side == "before"
 
         # Check after_obj...
-        assert isinstance(after_obj, BaseCfgLine)
+        if not isinstance(after_obj, BaseCfgLine):
+            raise ValueError
         assert after_obj.diff_side == "after"
 
         after_id_list = after_obj.diff_id_list
@@ -3999,7 +4006,8 @@ class HDiff(object):
         handled here.
         """
         assert aobj is not None
-        assert isinstance(aobj, BaseCfgLine)
+        if not isinstance(aobj, BaseCfgLine):
+            raise ValueError
         assert aobj.diff_word in ["unchanged", "add"]
 
         output = list()
@@ -4081,7 +4089,8 @@ class HDiff(object):
         """
 
         # all_lines must be a python list
-        assert isinstance(all_lines, list)
+        if not isinstance(all_lines, list):
+            raise ValueError
         # all instances in `all_lines` must be dicts
         assert False not in [isinstance(ii, dict) for ii in all_lines]
         for dict_line in all_lines:
