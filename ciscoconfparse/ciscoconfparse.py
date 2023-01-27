@@ -335,25 +335,24 @@ def assign_parent_to_closing_braces(input_list=None):
     if input_list is None:
         raise ValueError("Cannot modify.  The input_list is None")
 
-    assert isinstance(input_list, (list, tuple, MutableSequence))
-    if len(input_list) > 0:
-        opening_brace_objs = list()
+    input_condition = isinstance(input_list, (list, tuple, MutableSequence))
+    if input_condition is True and len(input_list) > 0:
+        opening_brace_objs = []
         for obj in input_list:
-            assert isinstance(obj, BaseCfgLine)
-            assert isinstance(obj.text, str)
+            if isinstance(obj, BaseCfgLine) and isinstance(obj.text, str):
 
-            # These rstrip() are one of two fixes, intended to catch user error such as
-            # the problems that the submitter of Github issue #251 had.
-            # CiscoConfParse() could not read his configuration because he submitted
-            # a multi-line string...
-            #
-            # This check will explicitly catch some problems like that...
-            if len(obj.text.rstrip())>=1 and obj.text.rstrip()[-1] == '{':
-                opening_brace_objs.append(obj)
+                # These rstrip() are one of two fixes, intended to catch user error such as
+                # the problems that the submitter of Github issue #251 had.
+                # CiscoConfParse() could not read his configuration because he submitted
+                # a multi-line string...
+                #
+                # This check will explicitly catch some problems like that...
+                if len(obj.text.rstrip())>=1 and obj.text.rstrip()[-1]=='{':
+                    opening_brace_objs.append(obj)
 
-            elif len(obj.text.strip())>=1 and obj.text.strip()[0]=='}':
-                assert len(opening_brace_objs) >= 1
-                obj.parent = opening_brace_objs.pop()
+                elif len(obj.text.strip())>=1 and obj.text.strip()[0]=='}':
+                    assert len(opening_brace_objs) >= 1
+                    obj.parent = opening_brace_objs.pop()
 
     return input_list
 
