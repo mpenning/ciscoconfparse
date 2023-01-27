@@ -4,6 +4,14 @@
 - Summary:
     - Insert something here
 
+## Version: 1.7.7
+
+- Released: 2023-01-27
+- Summary:
+    - Replace `assert isinstance()`, as requested in github issue #256
+    - Remove test `ping` code from `Makefile`
+    - Small code reorganization in `class CiscoConfParse()`
+
 ## Version: 1.7.6
 
 - Released: 2023-01-25
