@@ -7,9 +7,6 @@ export VERSION := $(shell grep version pyproject.toml | tr -s ' ' | tr -d "'" | 
 # We must escape Makefile dollar signs as $$foo...
 export PING_STATUS := $(shell perl -e '@output = qx/ping -q -W0.5 -c1 4.2.2.2/; $$alloutput = join "", @output; if ( $$alloutput =~ /\s0\sreceived/ ) { print "failure"; } else { print "success"; }')
 
-# Only refresh pip dependencies (via 'make dep') once per day...
-export PIP_DEPENDENCY_AGE := $(shell perl -e 'use File::stat; $$fh = open(FH, "<", ".pip_dependency") or "open_fail"; if ( $$fh != "open_fail" ) { $$age = time() - stat(FH)->mtime; } else { print "creating .pip_dependency\n"; `touch .pip_dependency`; $$age = 0; system("make dep"); }; if ( $$age > 3600*24 ) { print ".pip_dependency aged out\n"; system("make dep"); `rm -rf .pip_dependency`; `touch .pip_dependency`; }')
-
 export NUMBER_OF_CCP_TESTS := $(shell grep "def " tests/test*py | wc -l)
 
 # Makefile color codes...
@@ -205,7 +202,6 @@ ping:
 .PHONY: test
 test:
 	@echo "$(COL_GREEN)>> running unit tests$(COL_END)"
-	@if [ "$${PIP_DEPENDENCY_AGE}" >= 0 ]; then `make dep` && return 0; fi
 	$(shell touch .pip_dependency)
 	make timestamp
 	#make ping
