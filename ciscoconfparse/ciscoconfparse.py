@@ -351,8 +351,10 @@ def assign_parent_to_closing_braces(input_list=None):
                     opening_brace_objs.append(obj)
 
                 elif len(obj.text.strip())>=1 and obj.text.strip()[0]=='}':
-                    assert len(opening_brace_objs) >= 1
-                    obj.parent = opening_brace_objs.pop()
+                    if len(opening_brace_objs) >= 1:
+                        obj.parent = opening_brace_objs.pop()
+                    else:
+                        raise ValueError
 
     return input_list
 
