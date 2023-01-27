@@ -4250,7 +4250,9 @@ class ConfigList(MutableSequence):
         # a multi-line string...
         #
         # This check will explicitly catch some problems like that...
-        assert isinstance(initlist, (list, tuple, MutableSequence))
+        if not isinstance(initlist, (list, tuple, MutableSequence)):
+            raise ValueError
+
 
         ciscoconfparse_kwarg_val = kwargs.get("CiscoConfParse", None)
         ccp_ref_kwarg_val = kwargs.get("ccp_ref", None)
@@ -4824,7 +4826,9 @@ class ConfigList(MutableSequence):
     @junos_unsupported
     def insert(self, ii, val):
 
-        assert isinstance(ii, int)
+        if not isinstance(ii, int):
+            raise ValueError
+
 
         # Coerce a string into the appropriate object
         if getattr(val, "capitalize", False):
@@ -5019,7 +5023,9 @@ class ConfigList(MutableSequence):
 
         This method returns a list of IOSCfgLine() objects.
         """
-        assert isinstance(text_list, (list, tuple, MutableSequence))
+        if not isinstance(text_list, (list, tuple, MutableSequence)):
+            raise ValueError
+
         # Append text lines as IOSCfgLine objects...
         banner_str = {
             "login",
@@ -5044,7 +5050,9 @@ class ConfigList(MutableSequence):
         macro_parent_idx_list = list()
         parents = dict()
         for txt in text_list:
-            assert isinstance(txt, str)
+            if not isinstance(txt, str):
+                raise ValueError
+
 
             #
             if not self.factory and self.syntax=="ios":
@@ -5163,7 +5171,9 @@ class ConfigList(MutableSequence):
 
         This method returns a list of ASACfgLine() objects.
         """
-        assert isinstance(text_list, (list, tuple,))
+        if not isinstance(text_list, (list, tuple,)):
+            raise ValueError
+
         # Append text lines as IOSCfgLine objects...
         retval = list()
         idx = 0
@@ -5267,7 +5277,9 @@ class ConfigList(MutableSequence):
 
         This method returns a list of NXOSCfgLine() objects.
         """
-        assert isinstance(text_list, (list, tuple,))
+        if not isinstance(text_list, (list, tuple,)):
+            raise ValueError
+
         # Append text lines as NXOSCfgLine objects...
         banner_str = {
             "login",
@@ -5289,7 +5301,9 @@ class ConfigList(MutableSequence):
         parents = dict()
         for txt in text_list:
             # Reject empty lines if ignore_blank_lines...
-            assert isinstance(txt, str)
+            if not isinstance(txt, str):
+                raise ValueError
+
 
             #
             if not self.factory:
@@ -5388,7 +5402,9 @@ class ConfigList(MutableSequence):
 
         This method returns a list of JunosCfgLine() objects.
         """
-        assert isinstance(text_list, (list, tuple,))
+        if not isinstance(text_list, (list, tuple,)):
+            raise ValueError
+
         # Append text lines as JunosCfgLine objects...
         banner_str = {
             "login",
@@ -5414,7 +5430,9 @@ class ConfigList(MutableSequence):
         parents = dict()
         for txt in text_list:
             # Reject empty lines if ignore_blank_lines...
-            assert isinstance(txt, str)
+            if not isinstance(txt, str):
+                raise ValueError
+
             if self.ignore_blank_lines and txt.strip() == "":
                 continue
             #
