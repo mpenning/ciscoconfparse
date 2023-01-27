@@ -3203,9 +3203,12 @@ class CiscoConfParse(object):
         deprecation_warn_str = "`sync_diff()` will be deprecated and removed in future versions."
         warnings.warn(deprecation_warn_str, DeprecationWarning)
 
-        assert isinstance(cfgspec, (list, tuple, Iterator)), "FATAL - `cfgspec` requires a python Iterable, typically a `list()`."
-        assert isinstance(linespec, str) and len(linespec) > 0, "FATAL - `linespec` requires a python string."
-        assert isinstance(unconfspec, str) and len(unconfspec) > 0, "FATAL - `unconfspec` requires a python string."
+        if not isinstance(cfgspec, (list, tuple, Iterator)):
+            raise ValueError("FATAL - `cfgspec` requires a python Iterable, typically a `list()`.")
+        if not isinstance(linespec, str) or len(linespec) == 0:
+            raise ValueError("FATAL - `linespec` requires a python string.")
+        if not isinstance(unconfspec, str) or len(unconfspec) == 0:
+            raise ValueError("FATAL - `unconfspec` requires a python string.")
 
         tmp = self._find_line_OBJ(linespec)
         if uncfgspec is None:
@@ -3641,11 +3644,18 @@ class HDiff(object):
         +a\nb\nb
 
         """
-        assert isinstance(before_config, list) or os.path.isfile(before_config)
-        assert isinstance(after_config, list) or os.path.isfile(after_config)
-        assert isinstance(syntax, str) and syntax in set({"ios", "junos"})
-        assert isinstance(allow_duplicates, bool)
-        assert isinstance(output_format, str) and output_format in set({"dict", "unified"})
+        if not (isinstance(before_config, list) or os.path.isfile(before_config)):
+            raise ValueError
+        if not (isinstance(after_config, list) or os.path.isfile(after_config)):
+            raise ValueError
+        if not isinstance(syntax, str):
+            raise ValueError
+        assert syntax in set({"ios", "junos"})
+        if not isinstance(allow_duplicates, bool):
+            raise ValueError
+        if not isinstance(output_format, str):
+            raise ValueError
+        assert output_format in set({"dict", "unified"})
 
         # TODO - incorporate difflib.get_close_matches() to reorder the
         #     diff (in unified format)
@@ -3655,7 +3665,8 @@ class HDiff(object):
         # The ordered_diff bool support should order diff parents lines (such as
         # ^interface foo) in the same manner that they show up in the after_lines
         # parameter...
-        assert isinstance(ordered_diff, bool) and ordered_diff is False
+        if isinstance(ordered_diff, bool):
+            assert ordered_diff is False
         # FIXME ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
         #       no ordered_diff support yet
 
