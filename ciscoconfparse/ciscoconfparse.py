@@ -468,9 +468,10 @@ class CiscoConfParse(object):
             A string holding the configuration type.  Default: 'ios'.  Must be one of: 'ios', 'nxos', 'asa', 'junos'.  Use 'junos' for any brace-delimited network configuration (including F5, Palo Alto, etc...).
 
         """
-        assert isinstance(syntax, str)
-        assert syntax in {"ios", "nxos", "asa", "junos",}
-        assert isinstance(debug, int) and debug >= 0
+        if not (isinstance(syntax, str) and (syntax in ALL_VALID_SYNTAX)):
+            error = "'{}' is an unknown syntax".format(syntax)
+            logger.error(error)
+            raise ValueError(error)
 
         # all IOSCfgLine object instances...
         self.comment_delimiter = comment
@@ -489,56 +490,34 @@ class CiscoConfParse(object):
         # FIXME !!! why isn't ConfigObjs an instance of MutableSequence
         # assert isinstance(self.ConfigObjs, MutableSequence)
 
-        assert self.syntax in ALL_VALID_SYNTAX
-
         # Read the configuration lines and detect invalid inputs...
         config = self.get_config_lines(config=config, logger=logger)
 
-        valid_syntax = copy.copy(set(ALL_VALID_SYNTAX))
+        if self.debug > 0:
+            log_msg = ("assigning self.ConfigObjs = ConfigList(syntax='%s')" % syntax)
+            logger.info(log_msg)
 
+        valid_syntax = copy.copy(set(ALL_VALID_SYNTAX))
         # add exceptions for brace-delimited syntax...
         valid_syntax.discard("junos")
-        if syntax in valid_syntax:
 
-            if self.debug > 0:
-                log_msg = ("assigning self.ConfigObjs ="
-                    " ConfigList(syntax='%s')" % syntax)
-                logger.info(log_msg)
-
-            # self.config_list is a partial wrapper around ConfigList()
-            self.ConfigObjs = ConfigList(
-                initlist=config,
-                comment_delimiter=comment,
-                debug=debug,
-                factory=factory,
-                ignore_blank_lines=ignore_blank_lines,
-                syntax=syntax,
-                ccp_ref=self,
-            )
-
-        elif syntax == "junos":
-            err_msg = ("junos parser factory is not yet"
-                " enabled; use factory=False")
+        if syntax == "junos":
+            err_msg = ("junos parser factory is not yet enabled; use factory=False")
             assert factory is False, err_msg
             config = convert_junos_to_ios(config, comment_delimiter="#")
-            if self.debug > 0:
-                logger.info("assigning self.ConfigObjs = ConfigList()")
 
-            # self.config_list is a partial wrapper around ConfigList()
-            self.ConfigObjs = ConfigList(
-                initlist=config,
-                comment_delimiter=comment,
-                debug=debug,
-                factory=factory,
-                ignore_blank_lines=ignore_blank_lines,
-                syntax=syntax,
-                ccp_ref=self,
-            )
-
-        else:
-            error = "'{}' is an unknown syntax".format(syntax)
-            logger.error(error)
-            raise ValueError(error)
+        if self.debug > 0:
+            logger.info("assigning self.ConfigObjs = ConfigList()")
+        # self.config_list is a partial wrapper around ConfigList()
+        self.ConfigObjs = ConfigList(
+            initlist=config,
+            comment_delimiter=comment,
+            debug=debug,
+            factory=factory,
+            ignore_blank_lines=ignore_blank_lines,
+            syntax=syntax,
+            ccp_ref=self,
+        )
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
@@ -1627,12 +1606,14 @@ class CiscoConfParse(object):
            >>>
         """
 
-        #assert bool(getattr(childspec, "append"))  # Childspec must be a list
-        assert isinstance(childspec, (list, tuple,))
-        retval = list()
+        # childspec must be a list or tuple
+        if not isinstance(childspec, (list, tuple,)):
+            raise ValueError
+
+        retval = []
         if ignore_ws is True:
             parentspec = build_space_tolerant_regex(parentspec)
-            #childspec = map(build_space_tolerant_regex, childspec)
+            # childspec = map(build_space_tolerant_regex, childspec)
             childspec = [build_space_tolerant_regex(ii) for ii in childspec]
 
         for parentobj in self.find_objects(parentspec):
@@ -1678,7 +1659,10 @@ class CiscoConfParse(object):
         -------
         list
             A list of matching parent :class:`~models_cisco.IOSCfgLine` objects"""
-        assert bool(getattr(childspec, "append"))  # Childspec must be a list
+
+        if not isinstance(childspec, (list, tuple)):  # Childspec must be a list
+            raise ValueError
+
         retval = []
         if ignore_ws is True:
             parentspec = build_space_tolerant_regex(parentspec)
