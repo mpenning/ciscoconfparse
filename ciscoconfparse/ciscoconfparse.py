@@ -365,9 +365,11 @@ def assign_parent_to_closing_braces(input_list=None):
 def convert_junos_to_ios(input_list=None, stop_width=4, comment_delimiter="!", debug=0):
     """Accept `input_list` containing a list of junos-brace-formatted-string config lines.  This method strips off semicolons / braces from the string lines in `input_list` and returns the lines in a new list where all lines are explicitly indented as IOS would (as if IOS understood braces)."""
     ## Note to self, I made this regex fairly junos-specific...
-    assert isinstance(input_list, list) and len(input_list) > 0
-    assert '{' not in set(comment_delimiter)
-    assert '}' not in set(comment_delimiter)
+    input_condition_01 = isinstance(input_list, list) and len(input_list) > 0
+    input_condition_02 = '{' not in set(comment_delimiter)
+    input_condition_03 = '}' not in set(comment_delimiter)
+    if not (input_condition_01 and input_condition_02 and input_condition_03):
+        raise ValueError
 
     lines = list()
     offset = 0
@@ -380,7 +382,6 @@ def convert_junos_to_ios(input_list=None, stop_width=4, comment_delimiter="!", d
         lines.append((" " * STOP_WIDTH * (offset + this_line_indent)) + line.strip())
         offset += child_indent
 
-    assert isinstance(lines, list) and len(lines) > 0
     return lines
 
 
