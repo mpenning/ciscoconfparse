@@ -217,14 +217,18 @@ def ccp_logger_control(
     if debug > 0:
         logger.info(msg)
 
-    assert isinstance(action, str)
+    if not isinstance(action, str):
+        raise ValueError
+
     assert action in ("remove", "add", "disable", "enable", "",)
 
     package_name = "ciscoconfparse"
 
     if action == "remove":
         # Require an explicit loguru handler_id to remove...
-        assert isinstance(handler_id, int)
+        if not isinstance(handler_id, int):
+            raise ValueError
+
 
         logger.remove(handler_id)
         return True
@@ -283,15 +287,23 @@ def configure_loguru(
     """
     configure_loguru()
     """
-    assert isinstance(action, str)
+    if not isinstance(action, str):
+        raise ValueError
+
     assert action in ('remove', 'add', 'enable', 'disable', '',)
     # assert isinstance(rotation, str)
     # assert isinstance(retention, str)
     # assert isinstance(compression, str)
     # assert compression == "zip"
-    assert isinstance(level, str)
-    assert isinstance(colorize, bool)
-    assert isinstance(debug, int) and (0 <= debug <= 5)
+    if not isinstance(level, str):
+        raise ValueError
+
+    if not isinstance(colorize, bool):
+        raise ValueError
+
+    if not isinstance(debug, int) or (0 > debug):
+        raise ValueError
+
 
     # logger_control() was imported above...
     #    Remove the default loguru logger to stderr (handler_id==0)...
@@ -340,10 +352,16 @@ def as_text_list(object_list):
     >>>
 
     """
-    assert isinstance(object_list, (list, tuple,))
+    if not isinstance(object_list, (list, tuple,)):
+        raise ValueError
+
     for obj in object_list:
-        assert isinstance(obj.linenum, int)
-        assert isinstance(obj.text, str)
+        if not isinstance(obj.linenum, int):
+            raise ValueError
+
+        if not isinstance(obj.text, str):
+            raise ValueError
+
     # return [ii.text for ii in object_list]
     return list(map(attrgetter("text"), object_list))
 
@@ -448,14 +466,21 @@ class __ccp_re__(object):
 
     @logger.catch(reraise=True)
     def __init__(self, regex_str=r"", target_str=None, groups=None, flags=0, debug=0):
-        assert isinstance(regex_str, str)
-        assert isinstance(flags, int)
-        assert isinstance(debug, int)
+        if not isinstance(regex_str, str):
+            raise ValueError
+
+        if not isinstance(flags, int):
+            raise ValueError
+
+        if not isinstance(debug, int):
+            raise ValueError
+
 
         if isinstance(regex_str, str):
-            assert isinstance(regex_str, str)
             self.regex_str = regex_str
             self.compiled = re.compile(self.regex, flags=flags)
+        else:
+            raise ValueError
 
         self.attempted_search = False
         if isinstance(target_str, str):
@@ -483,7 +508,9 @@ class __ccp_re__(object):
     # do NOT wrap with @logger.catch(...)
     @regex.setter
     def regex(self, regex_str):
-        assert isinstance(regex_str, str)
+        if not isinstance(regex_str, str):
+            raise ValueError
+
         self.regex_str = regex_str
         self.compiled = re.compile(regex_str)
         self.attempted_search = False
@@ -492,7 +519,8 @@ class __ccp_re__(object):
     # do NOT wrap with @logger.catch(...)
     def s(self, target_str):
         assert self.attempted_search is False
-        assert isinstance(target_str, str)
+        if not isinstance(target_str, str):
+            raise ValueError
 
         self.attempted_search = True
         self.search_result = self.compiled.search(target_str)
@@ -561,10 +589,18 @@ class __ccp_re__(object):
 # do NOT wrap with @logger.catch(...)
 def _get_ipv4(val="", strict=False, stdlib=False, debug=0):
     """Return the requested IPv4 object to the caller.  This method heavily depends on IPv4Obj()"""
-    assert isinstance(val, str) or isinstance(val, int)
-    assert isinstance(strict, bool)
-    assert isinstance(stdlib, bool)
-    assert isinstance(debug, int)
+    if not (isinstance(val, str) or isinstance(val, int)):
+        raise ValueError
+
+    if not isinstance(strict, bool):
+        raise ValueError
+
+    if not isinstance(stdlib, bool):
+        raise ValueError
+
+    if not isinstance(debug, int):
+        raise ValueError
+
 
     try:
         # Test val in stdlib and raise ipaddress.AddressValueError()
@@ -577,11 +613,15 @@ def _get_ipv4(val="", strict=False, stdlib=False, debug=0):
         else:
             if obj.prefixlen == IPV4_MAX_PREFIXLEN:
                 # Return IPv6Address()
-                assert isinstance(obj.ip, IPv4Address)
+                if not isinstance(obj.ip, IPv4Address):
+                    raise ValueError
+
                 return obj.ip
             else:
                 # Return IPv6Network()
-                assert isinstance(obj.network, IPv4Network)
+                if not isinstance(obj.network, IPv4Network):
+                    raise ValueError
+
                 return obj.network
     except Exception:
         raise AddressValueError("_get_ipv4(val='%s')" % (val))
@@ -590,10 +630,18 @@ def _get_ipv4(val="", strict=False, stdlib=False, debug=0):
 # do NOT wrap with @logger.catch(...)
 def _get_ipv6(val="", strict=False, stdlib=False, debug=0):
     """Return the requested IPv6 object to the caller.  This method heavily depends on IPv6Obj()"""
-    assert isinstance(val, str) or isinstance(val, int)
-    assert isinstance(strict, bool)
-    assert isinstance(stdlib, bool)
-    assert isinstance(debug, int)
+    if not (isinstance(val, str) or isinstance(val, int)):
+        raise ValueError
+
+    if not isinstance(strict, bool):
+        raise ValueError
+
+    if not isinstance(stdlib, bool):
+        raise ValueError
+
+    if not isinstance(debug, int):
+        raise ValueError
+
 
     try:
         # Test val in stdlib and raise ipaddress.AddressValueError()
@@ -606,11 +654,15 @@ def _get_ipv6(val="", strict=False, stdlib=False, debug=0):
         else:
             if obj.prefixlen == IPV6_MAX_PREFIXLEN:
                 # Return IPv6Address()
-                assert isinstance(obj.ip, IPv6Address)
+                if not isinstance(obj.ip, IPv6Address):
+                    raise ValueError
+
                 return obj.ip
             else:
                 # Return IPv6Network()
-                assert isinstance(obj.network, IPv6Network)
+                if not isinstance(obj.network, IPv6Network):
+                    raise ValueError
+
                 return obj.network
 
     except Exception:
@@ -627,10 +679,16 @@ def ip_factory(val="", stdlib=False, mode="auto_detect", debug=0):
     Throw an error if addr cannot be parsed as a valid IPv4 or IPv6 object.
     """
 
-    assert isinstance(val, str) or isinstance(val, int)
+    if not isinstance(val, (str, int)):
+        raise ValueError
+
     assert mode in {"auto_detect", "ipv4", "ipv6"}
-    assert isinstance(stdlib, bool)
-    assert isinstance(debug, int)
+    if not isinstance(stdlib, bool):
+        raise ValueError
+
+    if not isinstance(debug, int):
+        raise ValueError
+
 
     obj = None
     if mode == "auto_detect":
@@ -685,7 +743,8 @@ def collapse_addresses(network_list):
     addresses is an iterator of IPv4Network or IPv6Network objects. A
     TypeError is raised if addresses contains mixed version objects.
     """
-    assert isinstance(network_list, list) or isinstance(network_list, tuple)
+    if not isinstance(network_list, (list, tuple,)):
+        raise ValueError
 
     @logger.catch(reraise=True)
     def ip_net(arg):
@@ -904,7 +963,8 @@ class IPv4Obj(object):
         Parse out important IPv4 parameters from arg.  This method must run to
         completion for IPv4 address parsing to work correctly.
         """
-        assert isinstance(arg, str) or isinstance(arg, int) or isinstance(arg, IPv4Obj)
+        if not (isinstance(arg, str) or isinstance(arg, int) or isinstance(arg, IPv4Obj)):
+            raise ValueError
 
         if isinstance(arg, str):
             try:
@@ -966,7 +1026,9 @@ class IPv4Obj(object):
     # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     def __repr__(self):
-        assert isinstance(self.prefixlen, int)
+        if not isinstance(self.prefixlen, int):
+            raise ValueError
+
         return f"""<IPv4Obj {str(self.ip_object)}/{self.prefixlen}>"""
 
     # do NOT wrap with @logger.catch(...)
@@ -1089,9 +1151,9 @@ class IPv4Obj(object):
     # On IPv4Obj()
     def __add__(self, val):
         """Add an integer to IPv4Obj() and return an IPv4Obj()"""
-        assert isinstance(val, int), "Cannot add type: '{}' to {}".format(
-            type(val), self
-        )
+        if not isinstance(val, int):
+            raise ValueError("Cannot add type: '{}' to {}".format(type(val)))
+
         orig_prefixlen = self.prefixlen
         total = self.as_decimal + val
         assert total <= IPV4_MAXINT, "Max IPv4 integer exceeded"
@@ -1104,9 +1166,9 @@ class IPv4Obj(object):
     # On IPv4Obj()
     def __sub__(self, val):
         """Subtract an integer from IPv4Obj() and return an IPv4Obj()"""
-        assert isinstance(val, int), "Cannot subtract type: '{}' from {}".format(
-            type(val), self
-        )
+        if not isinstance(val, int):
+            raise ValueError("Cannot subtract type: '{}' from {}".format(type(val), self))
+
         orig_prefixlen = self.prefixlen
         total = self.as_decimal - val
         assert total < IPV4_MAXINT, "Max IPv4 integer exceeded"
@@ -1590,7 +1652,8 @@ class IPv6Obj(object):
         Parse out important IPv6 parameters from arg.  This method must run to
         completion for IPv6 address parsing to work correctly.
         """
-        assert isinstance(arg, str) or isinstance(arg, int) or isinstance(arg, IPv6Obj)
+        if not isinstance(arg, (str, int, IPv6Obj,)):
+            raise ValueError
 
         if isinstance(arg, str):
             try:
@@ -1617,7 +1680,9 @@ class IPv6Obj(object):
             except Exception:
                 masklen = IPV6_MAX_PREFIXLEN
 
-            assert isinstance(masklen, int) and masklen <= 128
+            if not (isinstance(masklen, int) and masklen <= 128):
+                raise ValueError
+
             # If we have to derive the netmask as a long hex string,
             # calculate the netmask from the masklen as follows...
             netmask_int = (2**128 - 1) - (2**(128 - masklen) - 1)
@@ -1776,9 +1841,9 @@ class IPv6Obj(object):
     # On IPv6Obj()
     def __add__(self, val):
         """Add an integer to IPv6Obj() and return an IPv6Obj()"""
-        assert isinstance(val, int), "Cannot add type: '{}' to {}".format(
-            type(val), self
-        )
+        if not isinstance(val, int):
+            raise ValueError("Cannot add type: '{}' to {}".format(type(val), self))
+
         orig_prefixlen = self.prefixlen
         total = self.as_decimal + val
         assert total <= IPV6_MAXINT, "Max IPv6 integer exceeded"
@@ -1790,9 +1855,9 @@ class IPv6Obj(object):
     # On IPv6Obj()
     def __sub__(self, val):
         """Subtract an integer from IPv6Obj() and return an IPv6Obj()"""
-        assert isinstance(val, int), "Cannot subtract type: '{}' from {}".format(
-            type(val), self
-        )
+        if not isinstance(val, int):
+            raise ValueError("Cannot subtract type: '{}' from {}".format(type(val), self))
+
         orig_prefixlen = self.prefixlen
         total = self.as_decimal - val
         assert total < IPV6_MAXINT, "Max IPv6 integer exceeded"
@@ -2472,10 +2537,18 @@ def dns_query(input_str="", query_type="", server="", timeout=2.0):
 @deprecat(reason="dns_lookup() is obsolete; use dns_query() instead.  dns_lookup() will be removed", version='1.7.0')
 def dns_lookup(input_str, timeout=3, server="", record_type="A"):
     """Perform a simple DNS lookup, return results in a dictionary"""
-    assert isinstance(input_str, str)
-    assert isinstance(timeout, int)
-    assert isinstance(server, str)
-    assert isinstance(record_type, str)
+    if not isinstance(input_str, str):
+        raise ValueError
+
+    if not isinstance(timeout, int):
+        raise ValueError
+
+    if not isinstance(server, str):
+        raise ValueError
+
+    if not isinstance(record_type, str):
+        raise ValueError
+
 
     rr = Resolver()
     rr.timeout = float(timeout)
@@ -2550,7 +2623,9 @@ def check_valid_ipaddress(input_addr=None):
 
     Throw an error if the address is not valid.
     """
-    assert isinstance(input_addr, str)
+    if not isinstance(input_addr, str):
+        raise ValueError
+
     input_addr = input_addr.strip()
     ipaddr_family = 0
     try:
@@ -2575,8 +2650,12 @@ def check_valid_ipaddress(input_addr=None):
 @deprecat(reason="reverse_dns_lookup() is obsolete; use dns_query() instead.  reverse_dns_lookup() will be removed", version='1.7.0')
 def reverse_dns_lookup(input_str, timeout=3.0, server="4.2.2.2", proto="udp"):
     """Perform a simple reverse DNS lookup on an IPv4 or IPv6 address; return results in a python dictionary"""
-    assert isinstance(proto, str) and (proto=="udp" or proto=="tcp")
-    assert isinstance(float(timeout), float) and float(timeout) > 0.0
+    if not isinstance(proto, str) and (proto=="udp" or proto=="tcp"):
+        raise ValueError
+
+    if not isinstance(float(timeout), float) and float(timeout) > 0.0:
+        raise ValueError
+
 
     addr, addr_family = check_valid_ipaddress(input_str)
     assert addr_family==4 or addr_family==6
@@ -2585,10 +2664,14 @@ def reverse_dns_lookup(input_str, timeout=3.0, server="4.2.2.2", proto="udp"):
         raise ValueError()
 
     raw_result = dns_query(input_str, query_type="PTR", server=server, timeout=timeout)
-    assert isinstance(raw_result, set)
+    if not isinstance(raw_result, set):
+        raise ValueError
+
     assert len(raw_result)>=1
     tmp = raw_result.pop()
-    assert isinstance(tmp, DNSResponse)
+    if not isinstance(tmp, DNSResponse):
+        raise ValueError
+
 
     if tmp.has_error is True:
         retval = {'addrs': [input_str], 'error': str(tmp.error_str), 'name': tmp.result_str}
