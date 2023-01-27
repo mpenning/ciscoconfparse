@@ -1,15 +1,12 @@
-# Ensure wheel is upgraded to fix CVE-2022-40898
-#     Also ref Github Issue #257
+# Ensure wheel is upgraded... ref Github Issue #257
 wheel >= 0.38.4
 
 # Other development resources...
-packaging > 21.0
+packaging >= 23.0
 pytest >= 7.2.1
 poetry
 poetry-core
 gitpython
 pyroma
-fabric == 2.6.0
-Sphinx == 5.2.3
-sphinx-bootstrap-theme == 0.8.0
-
+invoke >= 2.0.0
+fabric == 3.0.0
