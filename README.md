@@ -64,8 +64,24 @@ for intf_obj in parse.find_objects('^interface'):
     print("{0}: {1}".format(intf_name, intf_ip_addr))
 ```
 
-What if we don\'t use Cisco?
-----------------------------
+Are there private copies of CiscoConfParse()?
+---------------------------------------------
+
+Yes.  Cisco Systems maintains their own copy of `CiscoConfParse()`. The terms of the GPLv3 
+license, allow this as long as they don't redistribute their private copy.  The exact definition of
+redistribute becomes quite important here.
+
+Dear Cisco Systems: please consider porting your improvements back into
+the [`github ciscoconfparse repo`](https://github.com/mpenning/ciscoconfparse).
+
+Is this a tool, or is it artwork?
+---------------------------------
+
+That depends on who you ask.  Many companies use it as part of their
+network engineering toolbox; others regard it as a form of artwork.
+
+What if we don\'t use Cisco IOS?
+--------------------------------
 
 Don\'t let that stop you.
 
