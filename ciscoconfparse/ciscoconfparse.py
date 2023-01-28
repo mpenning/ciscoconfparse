@@ -486,16 +486,25 @@ class CiscoConfParse(object):
         self.debug = debug
 
         # Read the configuration lines and detect invalid inputs...
-        tmp_lines = self._get_ccp_lines(config=config, logger=logger)
+        # tmp_lines = self._get_ccp_lines(config=config, logger=logger)
+        if isinstance(config, (str, pathlib.Path,)):
+            tmp_lines = self.read_config_file(filepath=config, logger=logger)
 
-        # Deal with syntax issues, such as conditionally discarding
-        #    junos closing brace-lines
-        config_lines = self._handle_ccp_syntax(tmp_lines, syntax=syntax)
+        elif isinstance(config, Sequence):
+            tmp_lines = config
+
+        else:
+            raise ValueError
+
+        assert self._check_ccp_input_good(config=tmp_lines) is True
+
+        # conditionally strip off junos-config braces and other syntax
+        #     parsing  issues...
+        config_lines = self._handle_ccp_syntax(tmp_lines=tmp_lines, syntax=syntax)
 
         if self.debug > 0:
             logger.info("assigning self.ConfigObjs = ConfigList()")
 
-        # self.config_list is a partial wrapper around ConfigList()
         self.ConfigObjs = ConfigList(
             initlist=config_lines,
             comment_delimiter=comment,
@@ -505,9 +514,6 @@ class CiscoConfParse(object):
             syntax=syntax,
             ccp_ref=self,
         )
-
-        # ConfigObjs should be None or an instance of Sequence...
-        assert self._validate_ConfigObjs() is True
 
         # IMPORTANT this MUST not be a lie :-)...
         self.finished_config_parse = True
@@ -548,6 +554,7 @@ class CiscoConfParse(object):
     @logger.catch(reraise=True)
     def _validate_ConfigObjs(self):
         """ConfigObjs should be None or an instance of collections.abc.Sequence."""
+        raise RuntimeError
 
         # Important: Ensure we have a sane copy of self and self.ConfigObjs...
         if not isinstance(self, CiscoConfParse):
@@ -569,11 +576,52 @@ class CiscoConfParse(object):
             # self.ConfigObjs is None
             return True
 
+    # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
-    def read_config_file(self, filename=None, logger=None, linesplit_rgx=r"\r*\n+"):
+    def read_config_file(self, filepath=None, logger=None):
+        """Read the config lines from the filepath.  Return the list of text configuration commands or raise an error."""
+
+        assert logger is not None
+        assert self.finished_config_parse is False
+
+        config_lines = None
+
+        if filepath is None:
+            raise ValueError("filepath=None is not supported.  `filepath` must be a python string.")
+
+        elif isinstance(filepath, (str, pathlib.Path,)) and os.path.isfile(filepath) is True:
+
+            # config string - assume a filename... open file return lines...
+            if self.debug > 0:
+                logger.debug("reading config from the filepath named '%s'" % filepath)
+
+            config_lines = self.read_config_file(filename=filepath, logger=logger)
+            return config_lines
+
+        elif isinstance(filepath, (str, pathlib.Path,)) and os.path.isfile(filepath) is False:
+            if self.debug > 0:
+                logger.debug("filepath not found - '%s'" % filepath)
+            try:
+                _ = open(file=filepath, **self.openargs)
+
+            except FileNotFoundError:
+                error = """FATAL - Attempted to open(file='{0}', mode='r', encoding='{1}'); the filepath named:"{0}" does not exist.""".format(filepath, self.openargs['encoding'])
+                raise FileNotFoundError(error)
+
+            except OSError:
+                error = """FATAL - Attempted to open(file='{0}', mode='r', encoding='{1}'); OSError opening "{0}".""".format(filepath, self.openargs['encoding'])
+                raise OSError(error)
+
+            except Exception:
+                raise RuntimeError
+
+        else:
+            raise ValueError("filepath=\"\"\"%s\"\"\" is an unexpected type().  `filepath` must be a python string or patlib.Path." % filepath)
+
+    @logger.catch(reraise=True)
+    def _DEPRECATED_read_config_file(self, filename=None, logger=None, linesplit_rgx=r"\r*\n+"):
         """Read the configuration from a filename."""
         # config string - assume a filename... open file return lines...
-        assert logger is not None
 
         if not isinstance(filename, (str, pathlib.Path,)):
             raise ValueError("FATAL - filepath must be a string or pathlib.Path() instance")
@@ -603,47 +651,17 @@ class CiscoConfParse(object):
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
-    def _get_ccp_lines(self, config=None, logger=None, linesplit_rgx=r"\r*\n+"):
-        """If the config parameter is a str, assume it's a filepath and read the config.  If the config parameter is a list, assume it's a list of text config commands.  Return the list of text configuration commands or raise an error."""
+    def _check_ccp_input_good(self, config=None, logger=None, linesplit_rgx=r"\r*\n+"):
+        """The config parameter is a sequence of text config commands.  Return the list of text configuration commands or raise an error."""
 
         assert self.finished_config_parse is False
-
-        config_lines = None
 
         if config is None:
             raise ValueError("config=None is not supported.  `config` must be either a python string, patlib.Path, or collections.abc.Sequence")
 
-        elif isinstance(config, (str, pathlib.Path,)) and os.path.isfile(config) is True:
-
-            # config string - assume a filename... open file return lines...
-            if self.debug > 0:
-                logger.debug("parsing config from the filepath named '%s'" % config)
-
-            config_lines = self.read_config_file(filename=config, logger=logger)
-            return config_lines
-
-        elif isinstance(config, (str, pathlib.Path,)) and os.path.isfile(config) is False:
-            if self.debug > 0:
-                logger.debug("filepath not found - '%s'" % config)
-            try:
-                with open(file=config, **self.openargs) as fh:
-                    text = fh.read()
-
-            except FileNotFoundError:
-                error = """FATAL - Attempted to open(file='{0}', mode='r', encoding='{1}'); the filepath named:"{0}" does not exist.""".format(config, self.openargs['encoding'])
-                raise FileNotFoundError(error)
-
-            except OSError:
-                error = """FATAL - Attempted to open(file='{0}', mode='r', encoding='{1}'); OSError opening "{0}".""".format(config, self.openargs['encoding'])
-                raise OSError(error)
-
-            except Exception:
-                raise RuntimeError
-
         elif isinstance(config, Sequence) and len(config) == 0:
-            raise ValueError("FATAL - the 'config' parameter has no configuration stored in the 'config' variable.")
             # IMPORTANT - explicitly handle an empty config list...
-            return config
+            raise ValueError("FATAL - the 'config' parameter got an empty {0}".format(type(config)))
 
         elif isinstance(config, Sequence) and len(config) > 0:
             # Here we assume that `config` is a list of text config lines...
@@ -651,10 +669,10 @@ class CiscoConfParse(object):
             # config list of text lines...
             if self.debug > 0:
                 logger.debug("parsing config stored in the config variable: '%s'" % config)
-            return config
+            return True
 
         else:
-            raise ValueError("config=\"\"\"%s\"\"\" is an unexpected type().  `config` must be either a python string, patlib.Path, or instance of a collecitons.abc.Sequence" % config)
+            raise ValueError("config=\"\"\"%s\"\"\" is an unexpected type().  The `config` instance must be an instance of collecitons.abc.Sequence" % config)
 
     #########################################################################
     # This method is on CiscoConfParse()
