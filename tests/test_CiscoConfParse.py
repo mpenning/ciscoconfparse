@@ -50,7 +50,7 @@ from ciscoconfparse.ccp_util import IPv4Obj, IPv6Obj
 from ciscoconfparse.ccp_abc import BaseCfgLine
 
 
-def testParse_invalid_filepath():
+def testParse_invalid_filepath_01():
     """Test that ciscoconfparse raises an error if the filepath is invalid"""
     # REMOVED caplog arg
 
@@ -58,22 +58,33 @@ def testParse_invalid_filepath():
     bad_filename = "./45faa63b-92e0-4449-a247-f20510d50c1b.txt"
     assert os.path.isfile(bad_filename) is False
 
-    #ccp_logger_control(action="disable")  # Silence logs about the missing file error
+    # ccp_logger_control(action="disable")  # Silence logs about the missing file error
 
     # Test that CiscoConfParse raises an IOError() when parsing an invalid file...
-    #with pytest.raises(OSError):
     with pytest.raises(OSError, match=""):
         # Normally logs to stdout... using logging.CRITICAL to hide errors...
-        raise OSError
-        parse = CiscoConfParse(bad_filename)
+        CiscoConfParse(bad_filename)
+        raise OSError   # FIXME
 
     #ccp_logger_control(action="enable")
 
-def testParse_invalid_config():
+def testParse_invalid_filepath_02():
+    # FIXME
+    bad_filename = "this is not a filename or list"
+    assert os.path.isfile(bad_filename) is False
+
+    with pytest.raises(OSError, match=""):
+        CiscoConfParse(bad_filename)
+    #with pytest.raises(ValueError, match=""):
+    #    CiscoConfParse("this is not a filename or list")
+
+def testParse_invalid_config_01():
+    """test whether we raise a ValueError when parsing an empty config list"""
     with pytest.raises(ValueError, match=""):
-        CiscoConfParse("this is not a filename or list")
+        parse = CiscoConfParse([])
 
 def testParse_f5_as_ios_00(parse_f01_ios):
+    print("LEN", len(parse_f01_ios.objs))
     assert len(parse_f01_ios.objs)==20
 
 def testParse_f5_as_ios_02(parse_f02_ios_01):
@@ -906,6 +917,10 @@ def testValues_find_blocks(parse_c01):
 
     test_result = parse_c01.find_blocks("tresspasser")
     assert result_correct == test_result
+
+
+def testValues_list_before_01():
+    """Ensure that CiscoConfParse() raises an error on parsing empty config lists."""
 
 def testValues_list_insert_before_01():
     """test whether we can insert list elements"""
