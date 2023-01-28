@@ -487,8 +487,8 @@ class CiscoConfParse(object):
             err = "CiscoConfParse() did not populate self.ConfigObjs"
             raise ValueError(err)
 
-        # FIXME !!! why isn't ConfigObjs an instance of MutableSequence
-        # assert isinstance(self.ConfigObjs, MutableSequence)
+        # ConfigObjs should be None or an instance of MutableSequence...
+        self._validate_ConfigObjs()
 
         # Read the configuration lines and detect invalid inputs...
         config = self.get_config_lines(config=config, logger=logger)
@@ -519,6 +519,7 @@ class CiscoConfParse(object):
             ccp_ref=self,
         )
 
+
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
     def __repr__(self):
@@ -534,6 +535,22 @@ class CiscoConfParse(object):
                 self.factory, self.ignore_blank_lines, self.encoding,
             )
         )
+
+    # This method is on CiscoConfParse()
+    @logger.catch(reraise=True)
+    def _validate_ConfigObjs(self):
+        """ConfigObjs should be None or an instance of MutableSequence."""
+
+        if self.ConfigObjs is not None:
+            if not isinstance(self.ConfigObjs, MutableSequence):
+                err = "self.ConfigObjs must be an instance of MutableSequence."
+                raise ValueError(err)
+            else:
+                # self.ConfigObjs is an instance of MutableSequence...
+                return True
+        else:
+            # self.ConfigObjs is None
+            return True
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
