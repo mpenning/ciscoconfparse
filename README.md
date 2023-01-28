@@ -69,8 +69,8 @@ Are there private copies of CiscoConfParse()?
 
 Yes.  [Cisco Systems][27] maintains their own copy of `CiscoConfParse()`. The terms of the GPLv3
 license allow this as long as they don't distribute their modified private copy in
-binary form.  Also refer to this [GPLv3 License primer / GPLv3 101][45].  Officially, modified
-copies of CiscoConfParse source-code [must also be licensed as GPLv3][45].
+binary form.  Also refer to this [GPLv3 License primer / GPLv3 101][45].  Officially, [modified
+copies of CiscoConfParse source-code must also be licensed as GPLv3][45].
 
 Dear [Cisco Systems][27]: please consider porting your improvements back into
 the [`github ciscoconfparse repo`](https://github.com/mpenning/ciscoconfparse).
