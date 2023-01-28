@@ -209,7 +209,7 @@ def _parse_line_braces(line_txt=None, comment_delimiter=None) -> tuple:
 
     if nn is not None:
         results = nn.groupdict()
-        return (this_line_indent, child_indent, results.get('delimiter') + results.get('comment', ''))
+        return (this_line_indent, child_indent, results.get('delimiter', '') + results.get('comment', ''))
 
     elif mm is not None:
         results = mm.groupdict()
@@ -279,14 +279,14 @@ def _parse_line_braces(line_txt=None, comment_delimiter=None) -> tuple:
             line = results.get('line1', None) or ''
             return (this_line_indent, child_indent, line)
 
-        elif (line2_str != '') and (line3_str is not None):
+        elif (line2_str != '') and (line2_str is not None):
             this_line_indent += 0
             child_indent += 0
             return (this_line_indent, child_indent, '')
 
         else:
             raise ValueError('Cannot parse {} match:"{}"'.format(
-                    syntax, line_txt))
+                syntax, line_txt))
 
     else:
         raise ValueError('Cannot parse {}:"{}"'.format(syntax, line_txt))
@@ -516,7 +516,7 @@ class CiscoConfParse(object):
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
     def _handle_ccp_syntax(self, tmp_lines=None, syntax=None):
-        """"""
+        """Deal with syntax issues, such as conditionally discarding junos closing brace-lines."""
 
         assert tmp_lines is not None
         if syntax == "junos":
@@ -630,11 +630,11 @@ class CiscoConfParse(object):
                     text = fh.read()
 
             except FileNotFoundError:
-                error = """FATAL - Attempted to open(file='{0}', mode='r', encoding='{1}'); however, file filepath named:"{0}" does not exist.""".format(config, self.openargs['encoding'])
+                error = """FATAL - Attempted to open(file='{0}', mode='r', encoding='{1}'); the filepath named:"{0}" does not exist.""".format(config, self.openargs['encoding'])
                 raise FileNotFoundError(error)
 
             except OSError:
-                error = """FATAL - Attempted to open(file='{0}', mode='r', encoding='{1}'); however, file filepath named:"{0}" does not exist.""".format(config, self.openargs['encoding'])
+                error = """FATAL - Attempted to open(file='{0}', mode='r', encoding='{1}'); OSError opening "{0}".""".format(config, self.openargs['encoding'])
                 raise OSError(error)
 
             except Exception:
