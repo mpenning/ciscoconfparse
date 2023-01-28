@@ -67,11 +67,11 @@ for intf_obj in parse.find_objects('^interface'):
 Are there private copies of CiscoConfParse()?
 ---------------------------------------------
 
-Yes.  Cisco Systems maintains their own copy of `CiscoConfParse()`. The terms of the GPLv3 
-license, allow this as long as they don't redistribute their private copy.  The exact definition of
+Yes.  [Cisco Systems][27] maintains their own copy of `CiscoConfParse()`. The terms of the GPLv3
+license allow this as long as they don't redistribute their private copy.  The exact definition of
 redistribute becomes quite important here.
 
-Dear Cisco Systems: please consider porting your improvements back into
+Dear [Cisco Systems][27]: please consider porting your improvements back into
 the [`github ciscoconfparse repo`](https://github.com/mpenning/ciscoconfparse).
 
 Is this a tool, or is it artwork?
