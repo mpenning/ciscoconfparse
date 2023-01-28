@@ -4,7 +4,7 @@
 - Summary:
     - Insert something here
 
-## Version: 1.7.10
+## Version: 1.7.11
 
 - Released: 2023-01-28
 - Summary:
