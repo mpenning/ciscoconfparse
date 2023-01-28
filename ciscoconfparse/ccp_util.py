@@ -301,7 +301,7 @@ def configure_loguru(
     if not isinstance(colorize, bool):
         raise ValueError
 
-    if not isinstance(debug, int) or (0 > debug):
+    if not isinstance(debug, int) or (debug < 0) or (5 < debug):
         raise ValueError
 
 
