@@ -14,7 +14,7 @@
 
 - Released: 2023-01-28
 - Summary:
-    - Validate that CiscoConfParse().ConfigObjs is None or instance of MutableSequence
+    - Validate that `CiscoConfParse().ConfigObjs` is None or instance of `collections.abc.Sequence()`
     - Convert all checks for `collections.abc.Iterator` to `collections.abc.Sequence`; ref github issue #256
     - Streamline `CiscoConfParse().__init__()` logic and delegate `__init__()` tasks to dedicated methods.
     - Add more unit tests
