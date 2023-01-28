@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 1.7.9
+
+- Released: 2023-01-28
+- Summary:
+    - Fix unit tests to work with version 1.7.8+
+
 ## Version: 1.7.8
 
 - Released: 2023-01-28
