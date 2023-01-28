@@ -336,7 +336,7 @@ def assign_parent_to_closing_braces(input_list=None):
     if input_list is None:
         raise ValueError("Cannot modify.  The input_list is None")
 
-    input_condition = isinstance(input_list, (list, tuple, MutableSequence))
+    input_condition = isinstance(input_list, Sequence)
     if input_condition is True and len(input_list) > 0:
         opening_brace_objs = []
         for obj in input_list:
@@ -611,7 +611,7 @@ class CiscoConfParse(object):
         config_lines = None
 
         if config is None:
-            raise ValueError("config=None is not supported.  `config` must be either a python string, patlib.Path, or MutableSequence")
+            raise ValueError("config=None is not supported.  `config` must be either a python string, patlib.Path, or collections.abc.Sequence")
 
         elif isinstance(config, (str, pathlib.Path,)) and os.path.isfile(config) is True:
 
