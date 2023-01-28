@@ -192,7 +192,7 @@ License and Copyright
 
 [ciscoconfparse][3] is licensed [GPLv3][21]
 
-- Copyright (C) 2021-2022 David Michael Pennington
+- Copyright (C) 2021-2023 David Michael Pennington
 - Copyright (C) 2020-2021 David Michael Pennington at Cisco Systems (post-acquisition: Cisco acquired ThousandEyes)
 - Copyright (C) 2019 David Michael Pennington at ThousandEyes
 - Copyright (C) 2012-2019 David Michael Pennington at Samsung Data Services
