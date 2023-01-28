@@ -40,6 +40,7 @@ import sys
 import re
 import os
 
+
 from ciscoconfparse.models_cisco import IOSHostnameLine, IOSRouteLine
 from ciscoconfparse.models_cisco import IOSIntfLine
 from ciscoconfparse.models_cisco import IOSAccessLine, IOSIntfGlobal
