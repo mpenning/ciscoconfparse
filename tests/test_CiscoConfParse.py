@@ -66,8 +66,6 @@ def testParse_invalid_filepath_01():
         CiscoConfParse(bad_filename)
         raise OSError   # FIXME
 
-    #ccp_logger_control(action="enable")
-
 def testParse_invalid_filepath_02():
     # FIXME
     bad_filename = "this is not a filename or list"
@@ -75,16 +73,13 @@ def testParse_invalid_filepath_02():
 
     with pytest.raises(OSError, match=""):
         CiscoConfParse(bad_filename)
-    #with pytest.raises(ValueError, match=""):
-    #    CiscoConfParse("this is not a filename or list")
 
 def testParse_invalid_config_01():
     """test whether we raise a ValueError when parsing an empty config list"""
     with pytest.raises(ValueError, match=""):
-        parse = CiscoConfParse([])
+        CiscoConfParse([])
 
 def testParse_f5_as_ios_00(parse_f01_ios):
-    print("LEN", len(parse_f01_ios.objs))
     assert len(parse_f01_ios.objs)==20
 
 def testParse_f5_as_ios_02(parse_f02_ios_01):
