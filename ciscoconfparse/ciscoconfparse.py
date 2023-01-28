@@ -25,7 +25,7 @@ If you need to contact the author, you can do so by emailing:
 mike [~at~] pennington [.dot.] net
 """
 
-from collections.abc import MutableSequence, Iterator
+from collections.abc import MutableSequence, Sequence
 from datetime import datetime
 from functools import partial
 from operator import is_not
@@ -473,6 +473,8 @@ class CiscoConfParse(object):
             logger.error(error)
             raise ValueError(error)
 
+        self.finished_config_parse = False
+
         # all IOSCfgLine object instances...
         self.comment_delimiter = comment
         self.factory = factory
@@ -482,35 +484,19 @@ class CiscoConfParse(object):
         self.encoding = encoding or ENCODING
         self.debug = debug
 
-        # Important: Ensure we have a sane copy of self and self.ConfigObjs...
-        if not isinstance(self, CiscoConfParse):
-            err = "CiscoConfParse() did not populate self.ConfigObjs"
-            raise ValueError(err)
-
-        # ConfigObjs should be None or an instance of MutableSequence...
-        self._validate_ConfigObjs()
-
         # Read the configuration lines and detect invalid inputs...
-        config = self.get_config_lines(config=config, logger=logger)
+        tmp_lines = self._get_ccp_lines(config=config, logger=logger)
 
-        if self.debug > 0:
-            log_msg = ("assigning self.ConfigObjs = ConfigList(syntax='%s')" % syntax)
-            logger.info(log_msg)
-
-        valid_syntax = copy.copy(set(ALL_VALID_SYNTAX))
-        # add exceptions for brace-delimited syntax...
-        valid_syntax.discard("junos")
-
-        if syntax == "junos":
-            err_msg = ("junos parser factory is not yet enabled; use factory=False")
-            assert factory is False, err_msg
-            config = convert_junos_to_ios(config, comment_delimiter="#")
+        # Deal with syntax issues, such as conditionally discarding
+        #    junos closing brace-lines
+        config_lines = self._handle_ccp_syntax(tmp_lines, syntax=syntax)
 
         if self.debug > 0:
             logger.info("assigning self.ConfigObjs = ConfigList()")
+
         # self.config_list is a partial wrapper around ConfigList()
         self.ConfigObjs = ConfigList(
-            initlist=config,
+            initlist=config_lines,
             comment_delimiter=comment,
             debug=debug,
             factory=factory,
@@ -519,15 +505,36 @@ class CiscoConfParse(object):
             ccp_ref=self,
         )
 
+        # ConfigObjs should be None or an instance of Sequence...
+        assert self._validate_ConfigObjs() is True
+
+        # IMPORTANT this MUST not be a lie :-)...
+        self.finished_config_parse = True
+
+
+    # This method is on CiscoConfParse()
+    @logger.catch(reraise=True)
+    def _handle_ccp_syntax(self, tmp_lines=None, syntax=None):
+        """"""
+
+        assert tmp_lines is not None
+        if syntax == "junos":
+            err_msg = ("junos parser factory is not yet enabled; use factory=False")
+            assert self.factory is False, err_msg
+            config_lines = convert_junos_to_ios(tmp_lines, comment_delimiter="#")
+        else:
+            config_lines = tmp_lines
+
+        return config_lines
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
     def __repr__(self):
         """Return a string that represents this CiscoConfParse object instance.  The number of lines embedded in the string is calculated from the length of the ConfigObjs attribute."""
-        if isinstance(self.ConfigObjs, (list, tuple, MutableSequence)):
-            num_lines = str(len(self.ConfigObjs))
-        elif self.ConfigObjs is None:
-            num_lines = "None"
+        if self.ConfigObjs is None:
+            num_lines = 0
+        elif isinstance(self.ConfigObjs, Sequence):
+            num_lines = len(self.ConfigObjs)
         return (
             "<CiscoConfParse: %s lines / syntax: %s / comment delimiter: '%s' / factory: %s / ignore_blank_lines: %s / encoding: '%s'>"
             % (
@@ -539,38 +546,71 @@ class CiscoConfParse(object):
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
     def _validate_ConfigObjs(self):
-        """ConfigObjs should be None or an instance of MutableSequence."""
+        """ConfigObjs should be None or an instance of collections.abc.Sequence."""
+
+        # Important: Ensure we have a sane copy of self and self.ConfigObjs...
+        if not isinstance(self, CiscoConfParse):
+            err = "CiscoConfParse() did not populate self.ConfigObjs"
+            raise ValueError(err)
+
+        if self.debug > 0:
+            log_msg = ("assigning self.ConfigObjs = ConfigList(syntax='%s')" % self.syntax)
+            logger.info(log_msg)
 
         if self.ConfigObjs is not None:
-            if not isinstance(self.ConfigObjs, MutableSequence):
-                err = "self.ConfigObjs must be an instance of MutableSequence."
+            if not isinstance(self.ConfigObjs, Sequence):
+                err = "self.ConfigObjs must be an instance of collections.abc.Sequence."
                 raise ValueError(err)
             else:
-                # self.ConfigObjs is an instance of MutableSequence...
+                # self.ConfigObjs is an instance of Sequence...
                 return True
         else:
             # self.ConfigObjs is None
             return True
 
+    @logger.catch(reraise=True)
+    def read_config_file(self, filename=None, logger=None, linesplit_rgx=r"\r*\n+"):
+        """Read the configuration from a filename."""
+        # config string - assume a filename... open file return lines...
+        assert logger is not None
+
+        if not isinstance(filename, (str, pathlib.Path,)):
+            raise ValueError("FATAL - filepath must be a string or pathlib.Path() instance")
+
+        if os.path.isfile(filename) is False:
+            raise OSError("FATAL - could not open() the config filepath named '{}'".format(filename))
+
+        if self.debug > 0:
+            logger.debug("CiscoConfParse().read_config_file() is parsing config from the filepath named '%s'" % filename)
+
+        try:
+            with open(file=filename, **self.openargs) as fh:
+                text = fh.read()
+            rgx = re.compile(linesplit_rgx)
+            config_lines = rgx.split(text)
+            return config_lines
+
+        except OSError:
+            error = "CiscoConfParse could not open() the filepath named '%s'" % filename
+            logger.critical(error)
+            raise OSError("FATAL - could not open() the config filepath named '{}'".format(filename))
+
+        except Exception as eee:
+            error = "FATAL - {}".format(str(eee))
+            logger.critical(error)
+            raise OSError(error) from eee
+
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
-    def get_config_lines(self, config=None, logger=None, linesplit_rgx=r"\r*\n+"):
+    def _get_ccp_lines(self, config=None, logger=None, linesplit_rgx=r"\r*\n+"):
         """If the config parameter is a str, assume it's a filepath and read the config.  If the config parameter is a list, assume it's a list of text config commands.  Return the list of text configuration commands or raise an error."""
+
+        assert self.finished_config_parse is False
+
         config_lines = None
 
         if config is None:
-            raise ValueError("config='%s' is unsupported.  `config` must be either a python string, patlib.Path, or list" % config)
-
-        elif isinstance(config, (list, Iterator)):
-            # Here we assume that `config` is a list of text config lines...
-            #
-            # config list of text lines...
-            if len(config) == 0:
-                raise ValueError("FATAL - the 'config' parameter has no configuration stored in the list()")
-            if self.debug > 0:
-                logger.debug("parsing config stored in this list: '%s'" % config)
-            config_lines = config
-            return config_lines
+            raise ValueError("config=None is not supported.  `config` must be either a python string, patlib.Path, or MutableSequence")
 
         elif isinstance(config, (str, pathlib.Path,)) and os.path.isfile(config) is True:
 
@@ -578,31 +618,42 @@ class CiscoConfParse(object):
             if self.debug > 0:
                 logger.debug("parsing config from the filepath named '%s'" % config)
 
-            try:
-                with open(file=config, **self.openargs) as fh:
-                    text = fh.read()
-                rgx = re.compile(linesplit_rgx)
-                config_lines = rgx.split(text)
-                return config_lines
-
-            except OSError:
-                error = "CiscoConfParse could not open() the filepath named '%s'" % config
-                logger.critical(error)
-                raise OSError("FATAL - could not open() the config filepath named '{}'".format(config))
-
-            except Exception as eee:
-                error = "FATAL - {}".format(str(eee))
-                logger.critical(error)
-                raise OSError(error)
+            config_lines = self.read_config_file(filename=config, logger=logger)
+            return config_lines
 
         elif isinstance(config, (str, pathlib.Path,)) and os.path.isfile(config) is False:
             if self.debug > 0:
                 logger.debug("filepath not found - '%s'" % config)
-            error = """FATAL - Attempted to open(file='{0}', mode='r', encoding='{1}'); however, file filepath named:"{0}" does not exist.""".format(config, self.openargs['encoding'])
-            raise ValueError(error)
+            try:
+                with open(file=config, **self.openargs) as fh:
+                    text = fh.read()
+
+            except FileNotFoundError:
+                error = """FATAL - Attempted to open(file='{0}', mode='r', encoding='{1}'); however, file filepath named:"{0}" does not exist.""".format(config, self.openargs['encoding'])
+                raise FileNotFoundError(error)
+
+            except OSError:
+                error = """FATAL - Attempted to open(file='{0}', mode='r', encoding='{1}'); however, file filepath named:"{0}" does not exist.""".format(config, self.openargs['encoding'])
+                raise OSError(error)
+
+            except Exception:
+                raise RuntimeError
+
+        elif isinstance(config, Sequence) and len(config) == 0:
+            raise ValueError("FATAL - the 'config' parameter has no configuration stored in the 'config' variable.")
+            # IMPORTANT - explicitly handle an empty config list...
+            return config
+
+        elif isinstance(config, Sequence) and len(config) > 0:
+            # Here we assume that `config` is a list of text config lines...
+            #
+            # config list of text lines...
+            if self.debug > 0:
+                logger.debug("parsing config stored in the config variable: '%s'" % config)
+            return config
 
         else:
-            raise ValueError("config='%s' is an unexpected type().  `config` must be either a python string, patlib.Path, or list" % config)
+            raise ValueError("config=\"\"\"%s\"\"\" is an unexpected type().  `config` must be either a python string, patlib.Path, or instance of a collecitons.abc.Sequence" % config)
 
     #########################################################################
     # This method is on CiscoConfParse()
@@ -1061,7 +1112,7 @@ class CiscoConfParse(object):
             logger.info(message)
 
         if self.ConfigObjs is None:
-            # ConfigObjs should be a list, tuple or MutableSequence
+            # ConfigObjs should be a list, tuple or Sequence
             err_text = ("CiscoConfParse().ConfigObjs should be a list of "
                         "config lines, but it's not initialized.")
             logger.error(err_text)
@@ -3220,8 +3271,8 @@ class CiscoConfParse(object):
         deprecation_warn_str = "`sync_diff()` will be deprecated and removed in future versions."
         warnings.warn(deprecation_warn_str, DeprecationWarning)
 
-        if not isinstance(cfgspec, (list, tuple, Iterator)):
-            raise ValueError("FATAL - `cfgspec` requires a python Iterable, typically a `list()`.")
+        if not isinstance(cfgspec, (list, tuple, Sequence)):
+            raise ValueError("FATAL - `cfgspec` requires a python Sequence, typically a `list()`.")
         if not isinstance(linespec, str) or len(linespec) == 0:
             raise ValueError("FATAL - `linespec` requires a python string.")
         if not isinstance(unconfspec, str) or len(unconfspec) == 0:
@@ -4216,6 +4267,8 @@ class ConfigList(MutableSequence):
     """
     A custom list to hold :class:`~ccp_abc.BaseCfgLine` objects.  Most people will never need to use this class directly.
     """
+
+    @logger.catch(reraise=True)
     def __init__(
             self,
             initlist=None,
@@ -4253,7 +4306,7 @@ class ConfigList(MutableSequence):
         # syntax = kwargs.get('syntax', 'ios')
         # CiscoConfParse = kwargs.get('CiscoConfParse', None)
 
-        #super().__init__()
+        super().__init__()
 
         #######################################################################
         # Parse out CiscoConfParse and ccp_ref keywords...
@@ -4267,7 +4320,12 @@ class ConfigList(MutableSequence):
         # a multi-line string...
         #
         # This check will explicitly catch some problems like that...
-        if not isinstance(initlist, (list, tuple, MutableSequence)):
+
+        if isinstance(initlist, str):
+            # IMPORTANT This check MUST come first in ConfigList()
+            raise OSError
+
+        if not isinstance(initlist, Sequence):
             raise ValueError
 
 
@@ -5040,7 +5098,7 @@ class ConfigList(MutableSequence):
 
         This method returns a list of IOSCfgLine() objects.
         """
-        if not isinstance(text_list, (list, tuple, MutableSequence)):
+        if not isinstance(text_list, Sequence):
             raise ValueError
 
         # Append text lines as IOSCfgLine objects...
