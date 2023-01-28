@@ -14,9 +14,10 @@
 
 - Released: 2023-01-28
 - Summary:
+    - Streamline `CiscoConfParse().__init__()` logic and delegate `__init__()` tasks to dedicated methods.
     - Validate that `CiscoConfParse().ConfigObjs` is None or instance of `collections.abc.Sequence()`
     - Convert all checks for `collections.abc.Iterator` to `collections.abc.Sequence`; ref github issue #256
-    - Streamline `CiscoConfParse().__init__()` logic and delegate `__init__()` tasks to dedicated methods.
+    - Add more error conditions and explicit errors in ciscoconfparse/ciscoconfparse.py
     - Add more unit tests
 
 
