@@ -172,7 +172,7 @@ Bug Tracker and Support
 Unit-Tests
 ----------
 
-The project\'s [test workflow][1] checks ciscoconfparse on Python versions 3.6 and higher, as well as a [pypy JIT][22] executable.
+The project\'s [test workflow][1] checks ciscoconfparse on Python versions 3.7 and higher, as well as a [pypy JIT][22] executable.
 
 Click the image below for details; the current build status is: [![Github unittest status][4]][5]
 
@@ -206,7 +206,7 @@ Author
 [ciscoconfparse][3] was written by [David Michael Pennington][25] (mike \[\~at\~\] pennington \[.dot.\] net).
 
 
-  [1]: https://github.com/mpenning/ciscoconfparse/tree/master/.github/workflows
+  [1]: https://github.com/mpenning/ciscoconfparse/blob/main/.github/workflows/tests.yml
   [2]: https://img.shields.io/pypi/v/ciscoconfparse.svg
   [3]: https://pypi.python.org/pypi/ciscoconfparse/
   [4]: https://github.com/mpenning/ciscoconfparse/actions/workflows/tests.yml/badge.svg
