@@ -4,6 +4,15 @@
 - Summary:
     - Insert something here
 
+## Version: 1.7.10
+
+- Released: 2023-01-28
+- Summary:
+    - Improve file `open()` error handling.  NOTE: `FileNotFoundError()` is now raised for invalid file paths.
+    - Improve edge case handling for Cisco IOS banner delimiters.
+    - Remove `_validate_ConfigObjs()` and improve logic in `CiscoConfParse().__init__()`.
+    - Revert back to using `read_config_file()` if the config is stored in a file.
+
 ## Version: 1.7.9
 
 - Released: 2023-01-28
@@ -18,6 +27,7 @@
     - Validate that `CiscoConfParse().ConfigObjs` is None or instance of `collections.abc.Sequence()`
     - Convert all checks for `collections.abc.Iterator` to `collections.abc.Sequence`; ref github issue #256
     - Add more error conditions and explicit errors in ciscoconfparse/ciscoconfparse.py
+    - Implement `read_config_file()` logic
     - Add more unit tests
 
 
