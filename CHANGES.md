@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 1.7.12
+
+- Released: 2023-01-31
+- Summary:
+    - Fix `CiscoConfParse().read_config_file()` argument name test escape (ref github issue #262)
+
 ## Version: 1.7.11
 
 - Released: 2023-01-28
