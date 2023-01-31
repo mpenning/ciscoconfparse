@@ -578,7 +578,7 @@ class CiscoConfParse(object):
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
-    def read_config_file(self, filepath=None, logger=None):
+    def read_config_file(self, filepath=None, logger=None, linesplit_rgx=r"\r*\n+"):
         """Read the config lines from the filepath.  Return the list of text configuration commands or raise an error."""
 
         assert logger is not None
@@ -595,8 +595,8 @@ class CiscoConfParse(object):
             if self.debug > 0:
                 logger.debug("reading config from the filepath named '%s'" % filepath)
 
-            config_lines = self.read_config_file(filepath=filepath, logger=logger)
-            return config_lines
+            #config_lines = self.read_config_file(filepath=filepath, logger=logger)
+            #return config_lines
 
         elif isinstance(filepath, (str, pathlib.Path,)) and os.path.isfile(filepath) is False:
             if self.debug > 0:
@@ -617,6 +617,23 @@ class CiscoConfParse(object):
 
         else:
             raise ValueError("filepath=\"\"\"%s\"\"\" is an unexpected type().  `filepath` must be a python string or patlib.Path." % filepath)
+
+        try:
+            with open(file=filepath, **self.openargs) as fh:
+                text = fh.read()
+            rgx = re.compile(linesplit_rgx)
+            config_lines = rgx.split(text)
+            return config_lines
+
+        except OSError:
+            error = "CiscoConfParse could not open() the filepath named '%s'" % filename
+            logger.critical(error)
+            raise OSError("FATAL - could not open() the config filepath named '{}'".format(filename))
+
+        except Exception as eee:
+            error = "FATAL - {}".format(str(eee))
+            logger.critical(error)
+            raise OSError(error) from eee
 
     @logger.catch(reraise=True)
     def _DEPRECATED_read_config_file(self, filename=None, logger=None, linesplit_rgx=r"\r*\n+"):
