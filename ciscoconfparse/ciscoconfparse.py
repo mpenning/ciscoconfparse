@@ -595,7 +595,7 @@ class CiscoConfParse(object):
             if self.debug > 0:
                 logger.debug("reading config from the filepath named '%s'" % filepath)
 
-            config_lines = self.read_config_file(filename=filepath, logger=logger)
+            config_lines = self.read_config_file(filepath=filepath, logger=logger)
             return config_lines
 
         elif isinstance(filepath, (str, pathlib.Path,)) and os.path.isfile(filepath) is False:
