@@ -5514,23 +5514,6 @@ class ConfigList(MutableSequence):
         if not isinstance(text_list, (list, tuple,)):
             raise ValueError
 
-        # Append text lines as JunosCfgLine objects...
-        banner_str = {
-            "login",
-            "motd",
-            "incoming",
-            "exec",
-            "telnet",
-            "lcd",
-        }
-        banner_all = [
-            r"^(set\s+)*banner\s+{}".format(ii) for ii in banner_str
-        ]
-        banner_all.append(
-            "aaa authentication fail-message",
-        )  # Github issue #76
-        banner_re = re.compile("|".join(banner_all))
-
         retval = list()
         idx = 0
 
@@ -5547,13 +5530,6 @@ class ConfigList(MutableSequence):
             #
             if not self.factory and self.syntax=="junos":
                 obj = JunosCfgLine(txt, self.comment_delimiter)
-
-            elif self.syntax in ALL_VALID_SYNTAX:
-                obj = ConfigLineFactory(
-                    txt,
-                    self.comment_delimiter,
-                    syntax=self.syntax,
-                )
 
             else:
                 err_txt = (
@@ -5633,10 +5609,6 @@ class ConfigList(MutableSequence):
         # Manually assign a parent on all closing braces
         self._list = assign_parent_to_closing_braces(input_list=self._list)
 
-        # Call _banner_mark_regex() to process banners in the returned obj
-        # list.
-        # Mark JunOS banner begin and end config line objects...
-        self._banner_mark_regex(banner_re)  # Junos banner
         # We need to use a different method for macros than banners because
         #   macros don't specify a delimiter on their parent line, but
         #   banners call out a delimiter.
