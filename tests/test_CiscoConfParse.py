@@ -50,6 +50,24 @@ from ciscoconfparse.ccp_util import IPv4Obj, IPv6Obj
 from ciscoconfparse.ccp_abc import BaseCfgLine
 
 
+def testParse_valid_filepath_01():
+    """Test that ciscoconfparse successfully reads a cisco ios config-file on disk"""
+    parse = CiscoConfParse("../configs/sample_01.ios")
+    assert len(parse.ioscfg) == 450
+
+
+def testParse_valid_filepath_02():
+    """Test that ciscoconfparse successfully reads an f5 config-file on disk"""
+    parse = CiscoConfParse("../configs/sample_01.f5", syntax="junos")
+    assert len(parse.ioscfg) == 16
+
+
+def testParse_valid_filepath_03():
+    """Test that ciscoconfparse successfully reads a junos config-file on disk"""
+    parse = CiscoConfParse("../configs/sample_01.junos", syntax="junos")
+    assert len(parse.ioscfg) == 79
+
+
 def testParse_invalid_filepath_01():
     """Test that ciscoconfparse raises an error if the filepath is invalid"""
     # REMOVED caplog arg
