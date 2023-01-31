@@ -4,6 +4,14 @@
 - Summary:
     - Insert something here
 
+## Version: 1.7.13
+
+- Released: 2023-01-31
+- Summary:
+    - Fix `CiscoConfParse().read_config_file()` recursive call in `read_config_file()`.
+    - Fix `CiscoConfParse().read_config_file()` missing `open()` in `read_config_file()`.
+    - Fix file-open test escapes associated with github issue #262.
+
 ## Version: 1.7.12
 
 - Released: 2023-01-31
