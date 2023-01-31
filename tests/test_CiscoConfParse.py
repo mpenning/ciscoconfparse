@@ -51,20 +51,38 @@ from ciscoconfparse.ccp_abc import BaseCfgLine
 
 
 def testParse_valid_filepath_01():
-    """Test that ciscoconfparse successfully reads a cisco ios config-file on disk"""
+    """Test reading a cisco ios config-file on disk (without the config keyword); ref github issue #262."""
     parse = CiscoConfParse("../configs/sample_01.ios")
     assert len(parse.ioscfg) == 450
 
 
 def testParse_valid_filepath_02():
-    """Test that ciscoconfparse successfully reads an f5 config-file on disk"""
-    parse = CiscoConfParse("../configs/sample_01.f5", syntax="junos")
-    assert len(parse.ioscfg) == 16
+    """Test reading a cisco ios config-file on disk (from filename in the config parameter); ref github issue #262."""
+    parse = CiscoConfParse(config="../configs/sample_01.ios")
+    assert len(parse.ioscfg) == 450
 
 
 def testParse_valid_filepath_03():
-    """Test that ciscoconfparse successfully reads a junos config-file on disk"""
-    parse = CiscoConfParse("../configs/sample_01.junos", syntax="junos")
+    """Test reading an f5 config-file on disk (without the config keyword); ref github issue #262."""
+    parse = CiscoConfParse("../configs/sample_01.f5", comment="#", syntax="junos")
+    assert len(parse.ioscfg) == 16
+
+
+def testParse_valid_filepath_04():
+    """Test reading an f5 config-file on disk (from filename in the config parameter); ref github issue #262."""
+    parse = CiscoConfParse(config="../configs/sample_01.f5", comment="#", syntax="junos")
+    assert len(parse.ioscfg) == 16
+
+
+def testParse_valid_filepath_05():
+    """Test reading a junos config-file on disk (without the config keyword); ref github issue #262."""
+    parse = CiscoConfParse("../configs/sample_01.junos", comment="#", syntax="junos")
+    assert len(parse.ioscfg) == 79
+
+
+def testParse_valid_filepath_06():
+    """Test reading a junos config-file on disk (from filename in the config parameter); ref github issue #262."""
+    parse = CiscoConfParse(config="../configs/sample_01.junos", comment="#", syntax="junos")
     assert len(parse.ioscfg) == 79
 
 
