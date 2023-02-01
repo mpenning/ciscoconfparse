@@ -3014,7 +3014,7 @@ class CiscoConfParse(object):
 
         .. warning::
 
-           `sync_diff()`, `req_cfgspec_excl_diff()` and `req_cfgspec_all_diff()` will be deprecated / removed in the future.  `HDiff().unified_diffs()` or `HDiff().raw_diff_dicts()` can be used going forward; however, "some assembly will be required".
+           `req_cfgspec_excl_diff()` and `req_cfgspec_all_diff()` will be deprecated / removed in the future.  `HDiff().unified_diffs()` or `HDiff().raw_diff_dicts()` can be used going forward; however, "some assembly will be required".
 
 
         Examples
@@ -3084,7 +3084,7 @@ class CiscoConfParse(object):
 
         .. warning::
 
-           `sync_diff()`, `req_cfgspec_excl_diff()` and `req_cfgspec_all_diff()` will be deprecated / removed in the future.  `HDiff().unified_diffs()` or `HDiff().raw_diff_dicts()` can be used going forward; however, "some assembly will be required".
+           `req_cfgspec_excl_diff()` and `req_cfgspec_all_diff()` will be deprecated / removed in the future.  `HDiff().unified_diffs()` or `HDiff().raw_diff_dicts()` can be used going forward; however, "some assembly will be required".
 
         Examples
         --------
@@ -3259,7 +3259,7 @@ class CiscoConfParse(object):
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
-    @deprecat(reason="sync_diff() is obsolete; use HDiff() instead.  sync_diff() will be removed", version = '1.7.0')
+    @deprecat(reason="sync_diff() is obsolete; use HDiff() instead.", version = '1.7.0')
     def sync_diff(
         self,
         cfgspec=None,
@@ -3272,12 +3272,8 @@ class CiscoConfParse(object):
         r"""
         ``sync_diff()`` accepts a list of required configuration elements,
         a linespec, and an unconfig spec.  This method return a list of
-        configuration diffs to make the configuration comply with cfgspec.
-
-
-        .. warning::
-
-           `req_cfgspec_excl_diff()` and `req_cfgspec_all_diff()` will be deprecated / removed in the future.  `HDiff().unified_diffs()` or `HDiff().raw_diff_dicts()` can be used going forward; however, "some assembly will be required".
+        Cisco IOS-style configuration diffs to make the configuration comply
+        with cfgspec.
 
 
         Parameters
@@ -3325,6 +3321,7 @@ class CiscoConfParse(object):
         >>> diffs                     # doctest: +SKIP
         ['no logging 172.28.26.15', 'logging 172.16.1.5', 'logging 1.10.20.30', 'logging 192.168.1.1']
         >>>
+        >>> diff.all_output_dicts
         """
         if cfgspec is None:
             cfgspec = self._list
@@ -3356,8 +3353,8 @@ class CiscoConfParse(object):
 
         diff = HDiff(before_config=self.ioscfg, after_config=cfgspec, syntax='ios')
 
-        # Example output contained in diff.all_output_dicts...
         """
+>>> # Example output contained in diff.all_output_dicts...
 >>> diff.all_output_dicts
 [
 {'linenum': -1, 'diff_side': 'before', 'diff_word': 'remove', 'text': 'logging trap debugging'},
@@ -3370,10 +3367,9 @@ class CiscoConfParse(object):
         """
         for tmp in diff.all_output_dicts:
 
-            print(tmp)
-
             action = tmp["diff_word"]
             command = tmp["text"]
+            indent = tmp["indent"]
             parents = tmp["parents"]
 
             # Skip lines that are not part of the expected diff...
@@ -3383,7 +3379,7 @@ class CiscoConfParse(object):
             if remove_lines is True and action == 'remove':
                 if self.syntax in set({"ios", "nxos", }):
                     uu = re.search(uncfgspec, command)
-                    remove_cmd = "no " + uu.group(0)
+                    remove_cmd = indent*" " + "no " + uu.group(0).strip()
 
                     # NOTE: if HDiff().compress_dict_diffs() was working as
                     # planned, this manual parent handling might not be
@@ -3712,6 +3708,8 @@ class HDiff(object):
             "linenum": -1,   # before line numbers are skipped...
             "diff_side": "before",
             "diff_word": "keep",
+            "indent": 0,
+            "parents": [],
             "text": bobj.text,
             "diff_id_list": bobj.diff_id_list,
         }
@@ -3741,6 +3739,7 @@ class HDiff(object):
                         "linenum": -1,   # For now, do not include bobj.linenum
                         "diff_side": "before",
                         "diff_word": "keep",
+                        "indent": bobj.indent,
                         "parents": [ii.text for ii in bobj.all_parents],
                         "text": bobj.text,
                         "diff_id_list": bobj.diff_id_list,
@@ -3755,6 +3754,7 @@ class HDiff(object):
                         "linenum": -1,   # For now, do not include bobj.linenum
                         "diff_side": "before",
                         "diff_word": "remove",
+                        "indent": bobj.indent,
                         "parents": [ii.text for ii in bobj.all_parents],
                         "text": bobj.text,
                         "diff_id_list": bobj.diff_id_list,
@@ -3921,6 +3921,7 @@ class HDiff(object):
                         "linenum": aobj.linenum,
                         "diff_side": "after",
                         "diff_word": aobj.diff_word,
+                        "indent": aobj.indent,
                         "parents": [ii.text for ii in aobj.all_parents],
                         "text": aobj.text,
                         "diff_id_list": aobj.diff_id_list,
@@ -3938,6 +3939,7 @@ class HDiff(object):
                     "linenum": aobj.linenum,
                     "diff_side": "after",
                     "diff_word": aobj.diff_word,
+                    "indent": aobj.indent,
                     "parents": [ii.text for ii in aobj.all_parents],
                     "text": aobj.text,
                     "diff_id_list": aobj.diff_id_list,
@@ -3975,6 +3977,7 @@ class HDiff(object):
             'linenum': -1,          # do not save the before linenum
             'diff_side': 'before',
             'diff_word': 'remove',
+            'indent': 1,
             'parents': [],
             'text': ' some command here',
             'diff_id_list': [-7805827718597648250, -565516812775864492]
@@ -3985,7 +3988,8 @@ class HDiff(object):
         values which are calculated as a unique identifier for the combination
         of parent and child objects.  This list of hashes is required because
         it's possible for multiple parents to have the same child command (for
-        instance the same 'no ip proxy-arp' child on multiple parents).
+        instance the same 'no ip proxy-arp' child on multiple interface parent
+        lines).
 
         Please note that a line object will not get the same `hash()` value for
         different script runs of the same code.
@@ -3995,109 +3999,113 @@ class HDiff(object):
         if not isinstance(all_lines, list):
             raise ValueError
 
-        # all instances in `all_lines` must be dicts
+        # all instances in `all_lines` must be dicts... throw an
+        # AssertionError
         assert False not in [isinstance(ii, dict) for ii in all_lines]
-        for dict_line in all_lines:
-            assert set(dict_line.keys()) == set(
+
+        # Ensure that all dict_line entries have the correct keys...
+        for line in all_lines:
+            assert set(line.keys()) == set(
                 {
                     "linenum",
                     "diff_side",
                     "diff_word",
+                    "indent",
                     "parents",
                     "text",
                     "diff_id_list",
                 }
             )
 
-        all_output_dicts = list()
+        retval = list()
         all_dict_lines = dict()
 
-        for dict_line in all_lines:
+        for line in all_lines:
 
-            # Unwrap keywords and values from the dict_line...
-            diff_side = dict_line["diff_side"]
-            diff_word = dict_line["diff_word"]
-            diff_id_list = tuple(dict_line["diff_id_list"])
+            # Unwrap keywords and values from the line...
+            diff_side = line["diff_side"]
+            diff_word = line["diff_word"]
+            diff_id_list = tuple(line["diff_id_list"])
             diff_id_list_len = len(diff_id_list)
             diff_id_list_csv = ",".join([str(ii) for ii in diff_id_list])
-            text = dict_line["text"]
+            text = line["text"]
 
             # Remove some lines from consideration...
             if all_dict_lines.get(diff_id_list, None) is not None:
                 continue
 
-            # Calculate the next index for all_output_dicts...
-            if all_output_dicts == []:
+            # Calculate the next index for retval...
+            if retval == []:
                 next_list_index = 0
             else:
-                next_list_index = len(all_output_dicts)
+                next_list_index = len(retval)
 
             if diff_side == "before" and diff_word == "keep":
-                all_output_dicts.append(dict_line)
-                all_dict_lines[diff_id_list] = len(all_output_dicts) - 1
+                retval.append(line)
+                all_dict_lines[diff_id_list] = len(retval) - 1
 
             # We can remove pretty easily... don't do anything...
             elif diff_side == "before" and diff_word == "remove":
-                all_output_dicts.append(dict_line)
-                all_dict_lines[diff_id_list] = len(all_output_dicts) - 1
+                retval.append(line)
+                all_dict_lines[diff_id_list] = len(retval) - 1
 
             elif diff_side == "after" and diff_word == "unchanged":
-                # FIXME - I should insert this somewhere in all_output_dicts...
+                # FIXME - I should insert this somewhere in retval...
                 if all_dict_lines.get(diff_id_list, None) is None:
-                    all_output_dicts.append(dict_line)
-                    all_dict_lines[diff_id_list] = len(all_output_dicts) - 1
+                    retval.append(line)
+                    all_dict_lines[diff_id_list] = len(retval) - 1
 
             elif diff_side == "after" and diff_word == "add":
 
                 last_idx = -1
 
-                # Calculate values associated with dict_line
-                dict_line_id_len = len(dict_line["diff_id_list"])
+                # Calculate values associated with line
+                dict_line_id_len = len(line["diff_id_list"])
                 dict_line_id_csv = ",".join(
-                    [str(ii) for ii in dict_line["diff_id_list"]]
+                    [str(ii) for ii in line["diff_id_list"]]
                 )
 
-                # check all_output_dicts and find where we should "add" the
-                # dict_line...
-                for loop_idx, this_dict in enumerate(all_output_dicts):
+                # check retval and find where we should "add" the
+                # line...
+                for loop_idx, this_dict in enumerate(retval):
                     this_id_len = len(this_dict["diff_id_list"])
                     this_id_csv = ",".join(
                         [str(ii) for ii in this_dict["diff_id_list"]]
                     )
 
-                    # if this_dict (as a string csv) is a substring of dict_line's csv,
-                    # check whether this_dict should be dict_line's parent...
+                    # if this_dict (as a string csv) is a substring of line's csv,
+                    # check whether this_dict should be line's parent...
                     if this_id_csv in dict_line_id_csv:
 
                         last_idx = loop_idx
 
                         # If the length of this_dict["diff_id_list"] is one element
-                        # longer than dict_line["diff_id_list"], it's a pretty
-                        # safe assumption that this_dict is dict_line's parent...
+                        # longer than line["diff_id_list"], it's a pretty
+                        # safe assumption that this_dict is line's parent...
                         if (this_id_len + 1) == dict_line_id_len:
-                            all_output_dicts.insert(loop_idx + 1, dict_line)
-                            all_dict_lines[diff_id_list] = len(all_output_dicts) - 1
+                            retval.insert(loop_idx + 1, line)
+                            all_dict_lines[diff_id_list] = len(retval) - 1
                             break
                 else:
-                    # If there's no match above, assume we add dict_line as a
-                    # completely new element at the bottom of all_output_dicts
-                    all_output_dicts.append(dict_line)
-                    all_dict_lines[diff_id_list] = len(all_output_dicts) - 1
+                    # If there's no match above, assume we add line as a
+                    # completely new element at the bottom of retval
+                    retval.append(line)
+                    all_dict_lines[diff_id_list] = len(retval) - 1
 
             else:
-                raise ValueError(dict_line)
+                raise ValueError(line)
 
-            if dict_line["diff_word"] != "remove":
+            if line["diff_word"] != "remove":
                 try:
-                    assert tuple(dict_line["diff_id_list"]) in all_dict_lines.keys()
+                    assert tuple(line["diff_id_list"]) in all_dict_lines.keys()
                 except Exception:
-                    raise ValueError(dict_line)
+                    raise ValueError(line)
 
         # FIXME - undo this after I work out all bugs
-        for line in all_output_dicts:
+        for line in retval:
             del line["diff_id_list"]
 
-        return all_output_dicts
+        return retval
 
 
 class ConfigList(MutableSequence):
