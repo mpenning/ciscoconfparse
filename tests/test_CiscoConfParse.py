@@ -1612,9 +1612,6 @@ def testValues_replace_children_01(parse_c01):
         assert result_correct == test_result
 
 
-@pytest.mark.xfail(
-    sys.version_info[0] == 3, reason="difflib.SequenceMatcher is broken in Python3"
-)
 def testValues_sync_diff_01(parse_c01):
     ## test sync_diff as a drop-in replacement for req_cfgspec_excl_diff()
     ##   This test mirrors testValues_req_cfgspec_excl_diff()
