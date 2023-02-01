@@ -3377,7 +3377,7 @@ class CiscoConfParse(object):
                 continue
 
             if remove_lines is True and action == 'remove':
-                if self.syntax in set({"ios", "nxos", }):
+                if self.syntax in set({"ios", "nxos", "asa", }):
                     uu = re.search(uncfgspec, command)
                     remove_cmd = indent*" " + "no " + uu.group(0).strip()
 
@@ -3965,12 +3965,12 @@ class HDiff(object):
         -------
 
         - Accept a list of diff dicts (diff dicts are hereafter known as
-          a "line_dict")
-        - Note that duplicate line_dict parent lines may exist in the input
+          a "line")
+        - Note that duplicate line parent lines may exist in the input
         - Organize the lines such that diff parent lines (example: interface Foo) are not duplicated.
-        - Return the updated and reorganized line list.
+        - Return the updated and reorganized line (dict) list.
 
-        A `line_dict` line will look similar to this:
+        A `line` dict will look similar to this:
 
         ```
         {
@@ -3991,8 +3991,8 @@ class HDiff(object):
         instance the same 'no ip proxy-arp' child on multiple interface parent
         lines).
 
-        Please note that a line object will not get the same `hash()` value for
-        different script runs of the same code.
+        Please note that a config command object will not get the same `hash()`
+        value for different script runs of the same code.
         """
 
         # all_lines must be a python list
