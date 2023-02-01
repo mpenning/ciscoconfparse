@@ -3384,15 +3384,29 @@ class CiscoConfParse(object):
                 if self.syntax in set({"ios", "nxos", }):
                     uu = re.search(uncfgspec, command)
                     remove_cmd = "no " + uu.group(0)
-                    for pline in parents:
-                        retval.append(pline)
+
+                    # NOTE: if HDiff().compress_dict_diffs() was working as
+                    # planned, this manual parent handling might not be
+                    # required...
+                    #
+                    # Append parent remove_cmd command entries (if any...)
+                    for pcmd in parents:
+                        retval.append(pcmd)
+
                     retval.append(remove_cmd)
                 else:
                     raise ValueError("Cannot remove the command for syntax={}".format(self.syntax))
 
             elif action == 'add':
-                for pline in parents:
-                    retval.append(pline)
+
+                # NOTE: if HDiff().compress_dict_diffs() was working as
+                # planned, this manual parent handling might not be
+                # required...
+                #
+                # Append parent command entries (if any...)
+                for pcmd in parents:
+                    retval.append(pcmd)
+
                 retval.append(command)
 
         return retval
