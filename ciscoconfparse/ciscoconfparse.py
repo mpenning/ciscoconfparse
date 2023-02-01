@@ -3370,8 +3370,11 @@ class CiscoConfParse(object):
         """
         for tmp in diff.all_output_dicts:
 
+            print(tmp)
+
             action = tmp["diff_word"]
             command = tmp["text"]
+            parents = tmp["parents"]
 
             # Skip lines that are not part of the expected diff...
             if not lrgx.search(command):
@@ -3380,12 +3383,16 @@ class CiscoConfParse(object):
             if remove_lines is True and action == 'remove':
                 if self.syntax in set({"ios", "nxos", }):
                     uu = re.search(uncfgspec, command)
-                    remove_cmd = "no " + uu.group(1)
+                    remove_cmd = "no " + uu.group(0)
+                    for pline in parents:
+                        retval.append(pline)
                     retval.append(remove_cmd)
                 else:
                     raise ValueError("Cannot remove the command for syntax={}".format(self.syntax))
 
             elif action == 'add':
+                for pline in parents:
+                    retval.append(pline)
                 retval.append(command)
 
         return retval
@@ -3563,6 +3570,7 @@ class HDiff(object):
         default_diff_word_before = "remove"
         default_diff_word_after = "unknown"
         valid_after_obj_diff_words = set({"add", "unchanged"})
+
         self.before_obj_list = self.build_diff_obj_list(
             parse=parse_before, default_diff_word=default_diff_word_before
         )
@@ -3719,6 +3727,7 @@ class HDiff(object):
                         "linenum": -1,   # For now, do not include bobj.linenum
                         "diff_side": "before",
                         "diff_word": "keep",
+                        "parents": [ii.text for ii in bobj.all_parents],
                         "text": bobj.text,
                         "diff_id_list": bobj.diff_id_list,
                     }
@@ -3732,6 +3741,7 @@ class HDiff(object):
                         "linenum": -1,   # For now, do not include bobj.linenum
                         "diff_side": "before",
                         "diff_word": "remove",
+                        "parents": [ii.text for ii in bobj.all_parents],
                         "text": bobj.text,
                         "diff_id_list": bobj.diff_id_list,
                     }
@@ -3897,6 +3907,7 @@ class HDiff(object):
                         "linenum": aobj.linenum,
                         "diff_side": "after",
                         "diff_word": aobj.diff_word,
+                        "parents": [ii.text for ii in aobj.all_parents],
                         "text": aobj.text,
                         "diff_id_list": aobj.diff_id_list,
                     }
@@ -3913,6 +3924,7 @@ class HDiff(object):
                     "linenum": aobj.linenum,
                     "diff_side": "after",
                     "diff_word": aobj.diff_word,
+                    "parents": [ii.text for ii in aobj.all_parents],
                     "text": aobj.text,
                     "diff_id_list": aobj.diff_id_list,
                 }
@@ -3949,6 +3961,7 @@ class HDiff(object):
             'linenum': -1,          # do not save the before linenum
             'diff_side': 'before',
             'diff_word': 'remove',
+            'parents': [],
             'text': ' some command here',
             'diff_id_list': [-7805827718597648250, -565516812775864492]
         }
@@ -3957,8 +3970,8 @@ class HDiff(object):
         Note that the `diff_id_list` key above contains a list of `hash()`
         values which are calculated as a unique identifier for the combination
         of parent and child objects.  This list of hashes is required because
-        it's possible for multiple parents to have the same child (for instance
-        the same IOS description child on multiple parents).
+        it's possible for multiple parents to have the same child command (for
+        instance the same 'no ip proxy-arp' child on multiple parents).
 
         Please note that a line object will not get the same `hash()` value for
         different script runs of the same code.
@@ -3967,6 +3980,7 @@ class HDiff(object):
         # all_lines must be a python list
         if not isinstance(all_lines, list):
             raise ValueError
+
         # all instances in `all_lines` must be dicts
         assert False not in [isinstance(ii, dict) for ii in all_lines]
         for dict_line in all_lines:
@@ -3975,6 +3989,7 @@ class HDiff(object):
                     "linenum",
                     "diff_side",
                     "diff_word",
+                    "parents",
                     "text",
                     "diff_id_list",
                 }
