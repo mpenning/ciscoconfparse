@@ -3319,9 +3319,9 @@ class CiscoConfParse(object):
         ...     "logging 192.168.1.1",
         ...     ]
         >>> linespec = "logging\s+\d+\.\d+\.\d+\.\d+"
-        >>> unconfspec = linespec
+        >>> uncfgspec = linespec
         >>> diffs = p.sync_diff(required_lines,
-        ...     linespec, unconfspec) # doctest: +SKIP
+        ...     linespec, uncfgspec)  # doctest: +SKIP
         >>> diffs                     # doctest: +SKIP
         ['no logging 172.28.26.15', 'logging 172.16.1.5', 'logging 1.10.20.30', 'logging 192.168.1.1']
         >>>
@@ -3379,9 +3379,11 @@ class CiscoConfParse(object):
 
             if remove_lines is True and action == 'remove':
                 if self.syntax in set({"ios", "nxos", }):
-                    retval.append("no {}".format(command))
+                    uu = re.search(uncfgspec, command)
+                    remove_cmd = "no " + uu.group(1)
+                    retval.append(remove_cmd)
                 else:
-                    raise ValueError("")
+                    raise ValueError("Cannot remove the command for syntax={}".format(self.syntax))
 
             elif action == 'add':
                 retval.append(command)
