@@ -111,9 +111,8 @@ def testParse_invalid_filepath_02():
         CiscoConfParse(bad_filename)
 
 def testParse_invalid_config_01():
-    """test whether we raise a ValueError when parsing an empty config list"""
-    with pytest.raises(ValueError, match=""):
-        CiscoConfParse([])
+    """test that we do not raise an error when parsing an empty config list"""
+    CiscoConfParse([])
 
 def testParse_f5_as_ios_00(parse_f01_ios):
     assert len(parse_f01_ios.objs)==20
