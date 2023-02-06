@@ -3351,7 +3351,7 @@ class CiscoConfParse(object):
         lrgx = re.compile(linespec)
         retval = []
 
-        diff = HDiff(before_config=self.ioscfg, after_config=cfgspec, syntax='ios')
+        diff = HDiff(before_config=self.ioscfg, after_config=cfgspec, syntax='ios', debug=debug)
 
         """
 >>> # Example output contained in diff.all_output_dicts...
@@ -3547,6 +3547,9 @@ class HDiff(object):
         enforce_valid_types(output_format, (str,),
             "output_format parameter must be a str."
         )
+        enforce_valid_types(debug, (int,),
+            "debug parameter must be an int."
+        )
         assert syntax in set({"ios", "junos"})
         assert output_format in set({"dict", "unified"})
 
@@ -3576,6 +3579,7 @@ class HDiff(object):
         self.before_obj_list = None
         self.after_obj_list = None
         self.all_output_dicts = list()
+        self.debug = debug
 
         default_diff_word_before = "remove"
         default_diff_word_after = "unknown"
@@ -3611,7 +3615,7 @@ class HDiff(object):
         tmp_line_dicts = self.dict_diffs(self.before_obj_list, self.after_obj_list)
 
         # Remove duplicate parent lines with `compress_dict_diffs()`
-        self.all_output_dicts = self.compress_dict_diffs(tmp_line_dicts)
+        self.all_output_dicts = self.compress_dict_diffs(tmp_line_dicts, debug=debug)
 
         self.sort_lines(parse_after, self.all_output_dicts)
 
@@ -3959,13 +3963,12 @@ class HDiff(object):
 
     # This method is on HDiff()
     @logger.catch(reraise=True)
-    def compress_dict_diffs(self, all_lines=None):
+    def compress_dict_diffs(self, all_lines=None, debug=0):
         """
         Summary
         -------
 
-        - Accept a list of diff dicts (diff dicts are hereafter known as
-          a "line")
+        - Accept a list of diff dicts (diff dicts are hereafter known as a "line")
         - Note that duplicate line parent lines may exist in the input
         - Organize the lines such that diff parent lines (example: interface Foo) are not duplicated.
         - Return the updated and reorganized line (dict) list.
@@ -3999,11 +4002,7 @@ class HDiff(object):
         if not isinstance(all_lines, list):
             raise ValueError
 
-        # all instances in `all_lines` must be dicts... throw an
-        # AssertionError
-        assert False not in [isinstance(ii, dict) for ii in all_lines]
-
-        # Ensure that all dict_line entries have the correct keys...
+        # Ensure that all_line dict entries have the correct keys...
         for line in all_lines:
             assert set(line.keys()) == set(
                 {
@@ -4017,10 +4016,17 @@ class HDiff(object):
                 }
             )
 
-        retval = list()
-        all_dict_lines = dict()
+        retval = []
+        lines = dict()   # lines, indexed by diff_id
 
+        if debug > 0:
+            logger.info("compress_dict_diffs() will iterate over the `all_lines` variable.")
         for line in all_lines:
+            assert isinstance(line, dict)
+
+            if debug > 0:
+                logger.debug("compress_dict_diffs()")
+                logger.debug("""compress_dict_diffs() - `line`""".format(line))
 
             # Unwrap keywords and values from the line...
             diff_side = line["diff_side"]
@@ -4031,37 +4037,40 @@ class HDiff(object):
             text = line["text"]
 
             # Remove some lines from consideration...
-            if all_dict_lines.get(diff_id_list, None) is not None:
+            if lines.get(diff_id_list, None) is not None:
                 continue
 
-            # Calculate the next index for retval...
-            if retval == []:
-                next_list_index = 0
-            else:
-                next_list_index = len(retval)
-
             if diff_side == "before" and diff_word == "keep":
+                if debug > 0:
+                    logger.info("compress_dict_diffs() {0},{1} APPEND {2}".format(diff_side, diff_word, line))
                 retval.append(line)
-                all_dict_lines[diff_id_list] = len(retval) - 1
+                lines[diff_id_list] = len(retval) - 1
 
             # We can remove pretty easily... don't do anything...
             elif diff_side == "before" and diff_word == "remove":
+                if debug > 0:
+                    logger.info("compress_dict_diffs() {0},{1} APPEND {2}".format(diff_side, diff_word, line))
                 retval.append(line)
-                all_dict_lines[diff_id_list] = len(retval) - 1
+                lines[diff_id_list] = len(retval) - 1
 
             elif diff_side == "after" and diff_word == "unchanged":
                 # FIXME - I should insert this somewhere in retval...
-                if all_dict_lines.get(diff_id_list, None) is None:
+                if lines.get(diff_id_list, None) is None:
+                    if debug > 0:
+                        logger.info("compress_dict_diffs() {0},{1} APPEND {2}".format(diff_side, diff_word, line))
                     retval.append(line)
-                    all_dict_lines[diff_id_list] = len(retval) - 1
+                    lines[diff_id_list] = len(retval) - 1
+                else:
+                    if debug > 0:
+                        logger.info("compress_dict_diffs() {0},{1} SKIP {2}".format(diff_side, diff_word, line))
 
             elif diff_side == "after" and diff_word == "add":
 
                 last_idx = -1
 
-                # Calculate values associated with line
-                dict_line_id_len = len(line["diff_id_list"])
-                dict_line_id_csv = ",".join(
+                # Calculate values associated with lines...
+                line_id_len = len(line["diff_id_list"])
+                line_id_csv = ",".join(
                     [str(ii) for ii in line["diff_id_list"]]
                 )
 
@@ -4075,29 +4084,31 @@ class HDiff(object):
 
                     # if this_dict (as a string csv) is a substring of line's csv,
                     # check whether this_dict should be line's parent...
-                    if this_id_csv in dict_line_id_csv:
+                    if this_id_csv in line_id_csv:
 
                         last_idx = loop_idx
 
                         # If the length of this_dict["diff_id_list"] is one element
                         # longer than line["diff_id_list"], it's a pretty
                         # safe assumption that this_dict is line's parent...
-                        if (this_id_len + 1) == dict_line_id_len:
+                        if (this_id_len + 1) == line_id_len:
                             retval.insert(loop_idx + 1, line)
-                            all_dict_lines[diff_id_list] = len(retval) - 1
+                            lines[diff_id_list] = len(retval) - 1
                             break
                 else:
                     # If there's no match above, assume we add line as a
                     # completely new element at the bottom of retval
+                    if debug > 0:
+                        logger.info("compress_dict_diffs() {0},{1} APPEND {2}".format(diff_side, diff_word, line))
                     retval.append(line)
-                    all_dict_lines[diff_id_list] = len(retval) - 1
+                    lines[diff_id_list] = len(retval) - 1
 
             else:
                 raise ValueError(line)
 
             if line["diff_word"] != "remove":
                 try:
-                    assert tuple(line["diff_id_list"]) in all_dict_lines.keys()
+                    assert tuple(line["diff_id_list"]) in lines.keys()
                 except Exception:
                     raise ValueError(line)
 
