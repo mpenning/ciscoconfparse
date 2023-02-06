@@ -4,6 +4,17 @@
 - Summary:
     - Insert something here
 
+## Version: 1.7.14
+
+- Released: 2023-02-06
+- Summary:
+    - Allow `CiscoConfParse()` to parse an empty configuration command list i.e. `CiscoConfParse([])`; remove the `ValueError()` raised on parsing an empty config.
+    - Re-implement and simplify `CiscoConfParse().sync_diff()` with `HDiff()`.
+    - Rename variables in `HDiff().compress_dict_diffs()`.
+    - Rename dict_line to line and add the command indent rename dict_line to line and add the command indent rename dict_line to line and add the command indent in `CiscoConfParse().sync_diff()`
+    - Add 'parents' to `HDiff()` diff dicts and add parent line output in `sync_diff()`
+    - Expand `CiscoConfParse()` test coverage for reading files from disk
+
 ## Version: 1.7.13
 
 - Released: 2023-01-31
