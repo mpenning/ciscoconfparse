@@ -1612,7 +1612,8 @@ def testValues_replace_children_01(parse_c01):
         assert result_correct == test_result
 
 
-def testValues_sync_diff_01(parse_c01):
+def testValues_ios_sync_diff_01(parse_c01):
+    """Test whether sync_diff() returns the correct diff when modifying logging in parse_c01."""
     ## test sync_diff as a drop-in replacement for req_cfgspec_excl_diff()
     ##   This test mirrors testValues_req_cfgspec_excl_diff()
     result_correct = [
@@ -1631,7 +1632,7 @@ def testValues_sync_diff_01(parse_c01):
 @pytest.mark.xfail(
     sys.version_info[0] == 3, reason="difflib.SequenceMatcher is broken in Python3"
 )
-def testValues_sync_diff_03():
+def testValues_ios_sync_diff_03():
     ## config_01 is the starting point
     config_01 = [
         "!",
