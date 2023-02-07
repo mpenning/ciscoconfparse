@@ -4219,6 +4219,9 @@ class ConfigList(MutableSequence):
         assert is_valid_syntax is True
 
         # Support input configuration as either a list or a generator instance
+        #
+        # as of python 3.9, getattr() below is slightly faster than
+        #     isinstance(initlist, Sequence)
         if getattr(initlist, "__iter__", False):
             if self.syntax == "ios":
                 self._list = self._bootstrap_obj_init_ios(initlist)
