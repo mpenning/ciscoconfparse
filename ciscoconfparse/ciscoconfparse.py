@@ -4452,19 +4452,18 @@ class ConfigList(MutableSequence):
 
         ## reparse all objects from their text attributes... this is *very* slow
         ## Ultimate goal: get rid of all reparsing from text...
-        tmp_list = [ii.text for ii in self._list]
-        tmp_list = [ii.text for ii in self.ConfigObjs]
+
         if self.syntax == 'ios':
-            self._list = self._bootstrap_obj_init_ios(tmp_list)
+            self._list = self._bootstrap_obj_init_ios(self.ioscfg)
 
         elif self.syntax == 'nxos':
-            self._list = self._bootstrap_obj_init_nxos(tmp_list)
+            self._list = self._bootstrap_obj_init_nxos(self.ioscfg)
 
         elif self.syntax == 'asa':
-            self._list = self._bootstrap_obj_init_asa(tmp_list)
+            self._list = self._bootstrap_obj_init_asa(self.ioscfg)
 
         elif self.syntax == 'junos':
-            self._list = self._bootstrap_obj_init_junos(tmp_list)
+            self._list = self._bootstrap_obj_init_junos(self.ioscfg)
 
         else:
             error = "no defined bootstrap method for syntax='%s'" % self.syntax
@@ -4978,22 +4977,21 @@ class ConfigList(MutableSequence):
         )  # Github issue #76
         banner_re = re.compile("|".join(banner_all))
 
-        retval = list()
+        retval = []
         idx = 0
 
         max_indent = 0
-        macro_parent_idx_list = list()
-        parents = dict()
+        macro_parent_idx_list = []
+        parents = {}
         for txt in text_list:
             if not isinstance(txt, str):
                 raise ValueError
 
-
             #
-            if not self.factory and self.syntax=="ios":
+            if self.factory is False and self.syntax=="ios":
                 obj = IOSCfgLine(txt, self.comment_delimiter)
 
-            elif not self.factory and self.syntax=="junos":
+            elif self.factory is False and self.syntax=="junos":
                 obj = JunosCfgLine(txt, self.comment_delimiter)
 
             elif self.syntax in ALL_VALID_SYNTAX:
