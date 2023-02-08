@@ -300,6 +300,45 @@ def _parse_line_braces(line_txt=None, comment_delimiter=None) -> tuple:
     else:
         raise ValueError('Cannot parse {}:"{}"'.format(syntax, line_txt))
 
+# This method was on ConfigList()
+@logger.catch(reraise=True)
+def _build_cfgobj_from_text(txt, idx, syntax=None, comment_delimiter=None, factory=None):
+    """Build cfgobj from configuration text syntax, and factory inputs."""
+    if factory is False and syntax == "ios":
+        obj = IOSCfgLine(txt, comment_delimiter)
+
+    elif factory is False and syntax == "nxos":
+        obj = NXOSCfgLine(txt, comment_delimiter)
+
+    elif factory is False and syntax == "junos":
+        obj = JunosCfgLine(txt, comment_delimiter)
+
+    elif factory is False and syntax == "asa":
+        obj = ASACfgLine(
+            text=txt,
+            comment_delimiter=comment_delimiter,
+        )
+
+    elif syntax in ALL_VALID_SYNTAX:
+        obj = ConfigLineFactory(
+            txt,
+            comment_delimiter,
+            syntax=syntax,
+        )
+
+    else:
+        err_txt = (
+            "Cannot classify config list item '%s' "
+            "into a proper configuration object line" % txt
+        )
+        logger.error(err_txt)
+        raise ValueError(err_txt)
+
+    obj.linenum = idx
+    indent = len(txt) - len(txt.lstrip())
+    obj.indent = indent
+
+    return obj
 
 @logger.catch(reraise=True)
 def build_space_tolerant_regex(linespec):
@@ -4950,17 +4989,8 @@ class ConfigList(MutableSequence):
                     finished = True
 
     # This method is on ConfigList()
-    def _bootstrap_obj_init_ios(self, text_list):
-        """
-        Accept a text list, and format into a list of proper
-        IOSCfgLine() objects or JunosCfgLine() objects.
-
-        This method returns a list of IOSCfgLine() objects.
-        """
-        if not isinstance(text_list, Sequence):
-            raise ValueError
-
-        # Append text lines as IOSCfgLine objects...
+    def _build_banner_re_ios(self):
+        """Return a banner regexp for IOS (and at this point, NXOS)."""
         banner_str = {
             "login",
             "motd",
@@ -4977,6 +5007,24 @@ class ConfigList(MutableSequence):
         )  # Github issue #76
         banner_re = re.compile("|".join(banner_all))
 
+        return banner_re
+
+
+    # This method is on ConfigList()
+    def _bootstrap_obj_init_ios(self, text_list):
+        """
+        Accept a text list, and format into a list of proper
+        IOSCfgLine() objects or JunosCfgLine() objects.
+
+        This method returns a list of IOSCfgLine() objects.
+        """
+        if not isinstance(text_list, Sequence):
+            raise ValueError
+
+        # Build the banner_re regexp... at this point ios
+        #    and nxos share the same method...
+        banner_re = self._build_banner_re_ios()
+
         retval = []
         idx = 0
 
@@ -4987,33 +5035,12 @@ class ConfigList(MutableSequence):
             if not isinstance(txt, str):
                 raise ValueError
 
-            #
-            if self.factory is False and self.syntax=="ios":
-                obj = IOSCfgLine(txt, self.comment_delimiter)
-
-            elif self.factory is False and self.syntax=="junos":
-                obj = JunosCfgLine(txt, self.comment_delimiter)
-
-            elif self.syntax in ALL_VALID_SYNTAX:
-                obj = ConfigLineFactory(
-                    txt,
-                    self.comment_delimiter,
-                    syntax=self.syntax,
-                )
-
-            else:
-                err_txt = (
-                    "Cannot classify config list item '%s' "
-                    "into a proper configuration object line" % txt
-                )
-                logger.error(err_txt)
-                raise ValueError(err_txt)
-
+            obj = _build_cfgobj_from_text(txt, idx,
+                syntax=self.syntax,
+                comment_delimiter=self.comment_delimiter,
+                factory=self.factory)
             obj.confobj = self
-            obj.linenum = idx
-            indent = len(txt) - len(txt.lstrip())
-            obj.indent = indent
-
+            indent = obj.indent
             is_config_line = obj.is_config_line
 
             # list out macro parent line numbers...
@@ -5118,30 +5145,12 @@ class ConfigList(MutableSequence):
             if self.ignore_blank_lines and txt.strip() == "":
                 continue
 
-            if self.syntax == "asa" and self.factory:
-                obj = ConfigLineFactory(
-                    txt,
-                    self.comment_delimiter,
-                    syntax="asa",
-                )
-            elif self.syntax == "asa" and not self.factory:
-                obj = ASACfgLine(
-                    text=txt,
-                    comment_delimiter=self.comment_delimiter,
-                )
-            else:
-                err_txt = (
-                    "Cannot classify config list item '%s' "
-                    "into a proper configuration object line" % txt
-                )
-                logger.error(err_txt)
-                raise ValueError(err_txt)
-
+            obj = _build_cfgobj_from_text(txt, idx,
+                syntax=self.syntax,
+                comment_delimiter=self.comment_delimiter,
+                factory=self.factory)
             obj.confobj = self
-            obj.linenum = idx
-            indent = len(txt) - len(txt.lstrip())
-            obj.indent = indent
-
+            indent = obj.indent
             is_config_line = obj.is_config_line
 
             ## Parent cache:
@@ -5213,20 +5222,10 @@ class ConfigList(MutableSequence):
         if not isinstance(text_list, (list, tuple,)):
             raise ValueError
 
-        # Append text lines as NXOSCfgLine objects...
-        banner_str = {
-            "login",
-            "motd",
-            "incoming",
-            "exec",
-            "telnet",
-            "lcd",
-        }
-        banner_re = re.compile(
-            "|".join(
-                [r"^(set\s+)*banner\s+{}".format(ii) for ii in banner_str],
-            ),
-        )
+        # Build the banner_re regexp... at this point ios
+        #    and nxos share the same method...
+        banner_re = self._build_banner_re_ios()
+
         retval = list()
         idx = 0
 
@@ -5237,6 +5236,13 @@ class ConfigList(MutableSequence):
             if not isinstance(txt, str):
                 raise ValueError
 
+            obj = _build_cfgobj_from_text(txt, idx,
+                syntax=self.syntax,
+                comment_delimiter=self.comment_delimiter,
+                factory=self.factory)
+            obj.confobj = self
+            indent = obj.indent
+            is_config_line = obj.is_config_line
 
             #
             if not self.factory:
@@ -5351,23 +5357,12 @@ class ConfigList(MutableSequence):
 
             if self.ignore_blank_lines and txt.strip() == "":
                 continue
-            #
-            if not self.factory and self.syntax=="junos":
-                obj = JunosCfgLine(txt, self.comment_delimiter)
-
-            else:
-                err_txt = (
-                    "Cannot classify config list item '%s' "
-                    "into a proper configuration object line" % txt
-                )
-                logger.error(err_txt)
-                raise ValueError(err_txt)
-
+            obj = _build_cfgobj_from_text(txt, idx,
+                syntax=self.syntax,
+                comment_delimiter=self.comment_delimiter,
+                factory=self.factory)
             obj.confobj = self
-            obj.linenum = idx
-            indent = len(txt) - len(txt.lstrip())
-            obj.indent = indent
-
+            indent = obj.indent
             is_config_line = obj.is_config_line
 
             # list out macro parent line numbers...
