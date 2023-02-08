@@ -30,7 +30,6 @@ from datetime import datetime
 from functools import partial
 from operator import is_not
 import warnings
-import difflib
 import inspect
 import pathlib
 import locale
