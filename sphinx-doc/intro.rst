@@ -8,7 +8,7 @@ Overview
 ciscoconfparse is a Python_ library, which parses through Cisco IOS-style
 configurations.  It can:
 
-- Audit existing router / switch / firewall / wlc configurations
+- Audit existing router / switch / firewall / wlc configurations against a text configuration template
 - Retrieve portions of the configuration
 - Modify existing configurations
 - Build new configurations
@@ -28,7 +28,7 @@ Then you issue queries against these relationships using a familiar family
 syntax model. Queries can either be in the form of a simple string, or you can
 use `regular expressions`_. The API provides powerful query tools, including
 the ability to find all parents that have or do not have children matching a
-certain criteria.
+certain template.
 
 The package also provides a set of methods to query and manipulate the
 :class:`~models_cisco.IOSCfgLine` objects themselves. This gives you a flexible
@@ -49,7 +49,7 @@ What is ciscoconfparse good for?
 ----------------------------------
 
 After several network evolutions, you may have a tangled mess of conflicting or
-misconfigured Cisco devices.  Misconfigurations of proxy-arp, static routes,
+misconfigured network devices.  Misconfigurations of proxy-arp, static routes,
 FHRP timers, routing protocols, duplicated subnets, cdp, console passwords, or
 aaa schemes have a measurable affect on up time and beg for a tool to audit them.
 However, manually scrubbing configurations is a long and error-prone process.
@@ -157,7 +157,7 @@ the whole project.
 Starting in version 0.9, I initiated a major rewrite; several important
 changes were made:
 
-- Python3 compatibility; Python2.4 deprecation
+- Python3.x compatibility; Python2.4 deprecation
 - Major improvement in config parsing speed
 - Much better unit-test coverage
 - Too many bug fixes to count
