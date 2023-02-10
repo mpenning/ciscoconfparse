@@ -3547,7 +3547,7 @@ class CiscoConfParse(object):
 
 
 class HDiff(object):
-    """An object to implement diffs against configs or config templates.  By default, the output diffs are ordered roughly as before_config, then after_config.  HDiff() is intended as an internal CiscoConfParse building-block to implement methods such as :meth:`ciscoconfparse.sync_diff`"""
+    """An object to implement diffs against configs or config templates.  By default, the output diffs are ordered roughly as before_config, then after_config.  HDiff() is intended as an internal CiscoConfParse building-block to implement methods such as :meth:`ciscoconfparse.CiscoConfParse.sync_diff`"""
 
     # This method is on HDiff()
     @logger.catch(reraise=True)
