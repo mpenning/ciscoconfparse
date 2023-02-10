@@ -3383,7 +3383,7 @@ class CiscoConfParse(object):
             "remove_lines must be a bool"
         )
         enforce_valid_types(debug, (int,),
-            "ignore_order must be an int"
+            "debug must be an int"
         )
 
         lrgx = re.compile(linespec)
@@ -3543,12 +3543,8 @@ class CiscoConfParse(object):
         return retval
 
 
-#########################################################################3
-#
-#########################################################################3
 class HDiff(object):
-    """
-    """
+    """An object to implement diffs against configs or config templates.  By default, the output diffs are ordered roughly as before_config, then after_config."""
 
     # This method is on HDiff()
     @logger.catch(reraise=True)
@@ -3562,63 +3558,126 @@ class HDiff(object):
         output_format="unified",
         debug=0,
     ):
-
         """
-        If ordered_diff is False, perform an *unordered diff* on the two lists
-        of configuration lines.
+        Initialize HDiff().
 
-        $ diff -u0 <(echo "a\nb\nc") <(echo "a\nb\nb")
-        --- /dev/fd/63  2022-04-07 04:24:32.794608252 -0500
-        +++ /dev/fd/62  2022-04-07 04:24:32.794608252 -0500
-        @@ -1 +1 @@
-        -a\nb\nc
-        +a\nb\nb
+        Parameters
+        ----------
+        before_config : list
+            A list of text configuration statements representing the original config. Default value: `None`
+        after_config : list
+            A list of text configuration statements representing the most-recent config. Default value: `None`
+        syntax : str
+            A string holding the configuration type.  Default: 'ios'.  Must be one of: 'ios', 'nxos', 'asa', 'junos'.  Use 'junos' for any brace-delimited network configuration (including F5, Palo Alto, etc...).
+        ordered_diff : bool
+            A boolean for whether the returned-diff lines must be ordered.  Default value: `False`
+        allow_duplicates : bool
+            A boolean for whether the returned-diff lines may be duplicated.  Default value: `False`
+        debug : int
+            ``debug`` defaults to 0, and should be kept that way unless you're working on a tricky config diff problem.  Debug range goes from 0 (no debugging) to 5 (max debugging).  Debug output is not particularly friendly.
 
+
+        Returns
+        -------
+        :class:`~ciscoconfparse.HDiff`
+
+        Examples
+        --------
+        This example illustrates how to diff a simple Cisco IOS configuration
+        with :class:`~ciscoconfparse.HDiff` into a variable called
+        ``parse``.  This example also illustrates what the ``ConfigObjs``
+        and ``ioscfg`` attributes contain.
+
+        >>> from ciscoconfparse import HDiff
+        >>> begin_config = [
+        ...     'logging trap debugging',
+        ...     'logging 172.28.26.15',
+        ...     'interface GigabitEthernet0',
+        ...     ' ip address 1.1.1.1 255.255.255.0',
+        ...     ]
+        >>> desired_config = [
+        ...     'no logging console guaranteed',
+        ...     'logging 172.28.26.15',
+        ...     'interface GigabitEthernet0',
+        ...     ' no ip proxy-arp',
+        ...     ]
+        >>>
+        >>> # by default, diffs are ordered as before_config then after_config
+        >>> diff_obj = HDiff(begin_config, desired_config, ordered_diff=False)
+        >>> diff_obj
+        <ciscoconfparse.ciscoconfparse.HDiff object at 0x7f8fd292c160>
+        >>> for line in diff_obj.unified_diffs():
+        ...     print(line)
+        ...
+        --- /tmp/before 2023-02-10 09:22:08.476463
+        +++ /tmp/after  2023-02-10 09:22:08.476463
+        @@ -2,1 +2,1 @@
+        -logging trap debugging
+         logging 172.28.26.15
+         interface GigabitEthernet0
+        + no ip proxy-arp
+        - ip address 1.1.1.1 255.255.255.0
+        +no logging console-guaranteed
+        >>>
+        >>>
+        >>> for elem in diff_obj.all_output_dicts:
+        ...     print(elem)
+        ...
+        {'linenum': -1, 'diff_side': 'before', 'diff_word': 'remove', 'indent': 0, 'parents': [], 'text': 'logging trap debugging'}
+        {'linenum': -1, 'diff_side': 'before', 'diff_word': 'keep', 'indent': 0, 'parents': [], 'text': 'logging 172.28.26.15'}
+        {'linenum': -1, 'diff_side': 'before', 'diff_word': 'keep', 'indent': 0, 'parents': [], 'text': 'interface GigabitEthernet0'}
+        {'linenum': 3, 'diff_side': 'after', 'diff_word': 'add', 'indent': 1, 'parents': ['interface GigabitEthernet0'], 'text': ' no ip proxy-arp'}
+        {'linenum': -1, 'diff_side': 'before', 'diff_word': 'remove', 'indent': 1, 'parents': ['interface GigabitEthernet0'], 'text': ' ip address 1.1.1.1 255.255.255.0'}
+        {'linenum': 0, 'diff_side': 'after', 'diff_word': 'add', 'indent': 0, 'parents': [], 'text': 'no logging console-guaranteed'}{'linenum': -1, 'diff_side': 'before', 'diff_word': 'remove', 'indent': 0, 'parents': [], 'text': 'logging trap debugging'}
+        >>>
+
+        Attributes
+        ----------
+        parse_before : :class:`~ciscoconfparse.CiscoConfParse`
+            The parsed object for `CiscoConfParse(before_config)`
+        parse_after : :class:`~ciscoconfparse.CiscoConfParse`
+            The parsed object for `CiscoConfParse(after_config)`
+        all_output_dicts : list
+            A `list` of all the output dicts
         """
+
         enforce_valid_types(before_config, (str, Sequence,),
             "before_config parameter must be a instance of string or collections.abc.Sequence."
         )
         enforce_valid_types(after_config, (str, Sequence,),
             "after_config parameter must be a instance of string or collections.abc.Sequence."
         )
+        enforce_valid_types(syntax, (str,),
+            "syntax parameter must be a str."
+        )
+        enforce_valid_types(ordered_diff, (bool,),
+            "ordered_diff parameter must be a bool."
+        )
         enforce_valid_types(allow_duplicates, (bool,),
             "allow_duplicates parameter must be a bool."
-        )
-        enforce_valid_types(output_format, (str,),
-            "output_format parameter must be a str."
         )
         enforce_valid_types(debug, (int,),
             "debug parameter must be an int."
         )
         assert syntax in set(ALL_VALID_SYNTAX)
-        assert output_format in set({"dict", "unified"})
 
         # TODO - incorporate difflib.get_close_matches() to reorder the
         #     diff (in unified format)
+        self.parse_before = CiscoConfParse(before_config, syntax=syntax, ignore_blank_lines=False)
+        self.parse_after = CiscoConfParse(after_config, syntax=syntax, ignore_blank_lines=False)
 
-        # FIXME -> no support for an ordered_diff yet... specifically, parents are
-        # not ordered yet and siblings are not ordered either in the diff results.
-        # The ordered_diff bool support should order diff parents lines (such as
-        # ^interface foo) in the same manner that they show up in the after_config
-        # parameter...
-        if isinstance(ordered_diff, bool):
-            assert ordered_diff is False
-        # FIXME ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-        #       no ordered_diff support yet
-
-        parse_before = CiscoConfParse(before_config, syntax=syntax, ignore_blank_lines=False)
-        parse_after = CiscoConfParse(after_config, syntax=syntax, ignore_blank_lines=False)
-
-        for before_obj in parse_before.objs:
+        for before_obj in self.parse_before.objs:
             before_obj.diff_side = "before"
 
-        for after_obj in parse_after.objs:
+        for after_obj in self.parse_after.objs:
             after_obj.diff_side = "after"
 
+        self.ordered_diff = ordered_diff
         # Initialize the output attributes...
         self.before_obj_list = None
         self.after_obj_list = None
-        self.all_output_dicts = list()
+        # all_output_dicts contains the diff results as a list of dicts...
+        self.all_output_dicts = []
         self.debug = debug
 
         default_diff_word_before = "remove"
@@ -3626,10 +3685,10 @@ class HDiff(object):
         valid_after_obj_diff_words = set({"add", "unchanged"})
 
         self.before_obj_list = self.build_diff_obj_list(
-            parse=parse_before, default_diff_word=default_diff_word_before
+            parse=self.parse_before, default_diff_word=default_diff_word_before
         )
         self.after_obj_list = self.build_diff_obj_list(
-            parse=parse_after, default_diff_word=default_diff_word_after
+            parse=self.parse_after, default_diff_word=default_diff_word_after
         )
 
         # Handle add / move / change. change is diff_word: remove + diff_word: add
@@ -3649,7 +3708,6 @@ class HDiff(object):
 
             # Ensure that we rewrote after_obj.diff_word from default_diff_word_after
             assert after_obj.diff_word in valid_after_obj_diff_words
-        # Relocate end
 
         # At this stage, `dict_diffs()` returns duplicate parent lines...
         tmp_line_dicts = self.dict_diffs(self.before_obj_list, self.after_obj_list)
@@ -3657,11 +3715,16 @@ class HDiff(object):
         # Remove duplicate parent lines with `compress_dict_diffs()`
         self.all_output_dicts = self.compress_dict_diffs(tmp_line_dicts, debug=debug)
 
-        self.sort_lines(parse_after, self.all_output_dicts)
+        if False:
+            # status quo sorts before_config lines, then after_config lines...
+            #
+            # There is no support for special sorting behavior at this point...
+            self.sort_lines()
+
 
     # This method is on HDiff()
     @logger.catch(reraise=True)
-    def raw_diff_dicts(self):
+    def DEPRECATED_raw_diff_dicts(self):
         return self.all_output_dicts
 
     # This method is on HDiff()
@@ -3680,6 +3743,9 @@ class HDiff(object):
 
         # return the unified diff header output... suitable for ydiff
         unified_diff_header = list()
+
+        # Add a text header similar to that found in unix unified diffs
+        #
         # Tally lines for the unified diff header...
         udiff_timestamp = str(datetime.now().isoformat()).replace("T", " ")
         unified_diff_header.append("--- /tmp/before " + udiff_timestamp)
@@ -3745,7 +3811,7 @@ class HDiff(object):
 
     # This method is on HDiff()
     @logger.catch(reraise=True)
-    def sort_lines(self, after_lines, all_output_dicts):
+    def sort_lines(self, after_lines=None):
         """
         Typical output line dict-format...
         {
@@ -3758,6 +3824,12 @@ class HDiff(object):
             "diff_id_list": bobj.diff_id_list,
         }
         """
+        # FIXME -> no support for an ordered_diff yet... specifically, parents are
+        # not ordered yet and siblings are not ordered either in the diff results.
+        # The ordered_diff bool support should order diff parents lines (such as
+        # ^interface foo) in the same manner that they show up in the after_config
+        # parameter...
+        #
         pass
 
     # This method is on HDiff()
@@ -4429,7 +4501,7 @@ class ConfigList(MutableSequence):
 
             ccp_ref = object.__getattribute__(self, 'ccp_ref')
             ccp_method = ccp_ref.__getattribute__(arg)
-            message = "{2} doesn't have an attribute named '{3}'. {0}() line {1} called `__getattribute__('{4}')`. CiscoConfParse() is making this work with duct tape in __getattribute__().".format(
+            message = """{2} doesn't have an attribute named "{3}". {0}() line {1} called `__getattribute__('{4}')`. CiscoConfParse() is making this work with duct tape in __getattribute__().""".format(
                 calling_function, caller.lineno, ccp_ref, ccp_method, arg
             )
             logger.warning(message)
