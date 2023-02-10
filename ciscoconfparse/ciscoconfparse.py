@@ -4429,8 +4429,8 @@ class ConfigList(MutableSequence):
 
             ccp_ref = object.__getattribute__(self, 'ccp_ref')
             ccp_method = ccp_ref.__getattribute__(arg)
-            message = "{}() line {} called this method.  {} doesn't have an attribute named '{}'.  CiscoConfParse() is making this work with duct tape in __getattribute__().".format(
-                calling_function, caller.lineno, ccp_ref, ccp_method,
+            message = "{2} doesn't have an attribute named '{3}'. {0}() line {1} called `__getattribute__('{4}')`. CiscoConfParse() is making this work with duct tape in __getattribute__().".format(
+                calling_function, caller.lineno, ccp_ref, ccp_method, arg
             )
             logger.warning(message)
             return ccp_method
