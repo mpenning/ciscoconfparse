@@ -33,6 +33,8 @@ pypi-package-infra:
 pypi:
 	@echo "$(COL_CYAN)>> uploading ciscoconfparse pypi artifacts to pypi$(COL_END)"
 	make clean
+	# upgrade pip if-required
+	make pip
 	# upgrade packaging infra and ciscoconfparse dependencies...
 	make pypi-package-infra
 	# tag the repo with $$VERSION and push to origin
