@@ -3634,7 +3634,7 @@ class HDiff(object):
         {'linenum': -1, 'diff_side': 'before', 'diff_word': 'keep', 'indent': 0, 'parents': [], 'text': 'interface GigabitEthernet0'}
         {'linenum': 3, 'diff_side': 'after', 'diff_word': 'add', 'indent': 1, 'parents': ['interface GigabitEthernet0'], 'text': ' no ip proxy-arp'}
         {'linenum': -1, 'diff_side': 'before', 'diff_word': 'remove', 'indent': 1, 'parents': ['interface GigabitEthernet0'], 'text': ' ip address 1.1.1.1 255.255.255.0'}
-        {'linenum': 0, 'diff_side': 'after', 'diff_word': 'add', 'indent': 0, 'parents': [], 'text': 'no logging console-guaranteed'}{'linenum': -1, 'diff_side': 'before', 'diff_word': 'remove', 'indent': 0, 'parents': [], 'text': 'logging trap debugging'}
+        {'linenum': 0, 'diff_side': 'after', 'diff_word': 'add', 'indent': 0, 'parents': [], 'text': 'no logging console-guaranteed'}
         >>>
 
         Attributes
