@@ -3313,6 +3313,8 @@ class CiscoConfParse(object):
         Cisco IOS-style configuration diffs to make the configuration comply
         with cfgspec.
 
+        Internally, `sync_diff()` is implemented with :class:`ciscoconfparse.HDiff`.
+
 
         Parameters
         ----------
