@@ -3360,6 +3360,16 @@ class CiscoConfParse(object):
         ['no logging 172.28.26.15', 'logging 172.16.1.5', 'logging 1.10.20.30', 'logging 192.168.1.1']
         >>>
         >>> diff.all_output_dicts
+        [
+        {'linenum': -1, 'diff_side': 'before', 'diff_word': 'remove', 'text': 'logging trap debugging'},
+        {'linenum': -1, 'diff_side': 'before', 'diff_word': 'remove', 'text': 'logging 172.28.26.15'},
+        {'linenum': -1, 'diff_side': 'before', 'diff_word': 'keep', 'text': 'logging 1.10.20.30'},
+        {'linenum': 0, 'diff_side': 'after', 'diff_word': 'add', 'text': 'logging 172.16.1.5'},
+        {'linenum': 2, 'diff_side': 'after', 'diff_word': 'add', 'text': 'logging 192.168.1.30'},
+        {'linenum': 3, 'diff_side': 'after', 'diff_word': 'add', 'text': 'hostname FOO'},
+        ]
+        >>>
+        >>>
         """
         if cfgspec is None:
             cfgspec = self._list
@@ -3391,18 +3401,6 @@ class CiscoConfParse(object):
 
         diff = HDiff(before_config=self.ioscfg, after_config=cfgspec, syntax='ios', debug=debug)
 
-        """
->>> # Example output contained in diff.all_output_dicts...
->>> diff.all_output_dicts
-[
-{'linenum': -1, 'diff_side': 'before', 'diff_word': 'remove', 'text': 'logging trap debugging'},
-{'linenum': -1, 'diff_side': 'before', 'diff_word': 'remove', 'text': 'logging 172.28.26.15'},
-{'linenum': -1, 'diff_side': 'before', 'diff_word': 'keep', 'text': 'logging 1.10.20.30'},
-{'linenum': 0, 'diff_side': 'after', 'diff_word': 'add', 'text': 'logging 172.16.1.5'},
-{'linenum': 2, 'diff_side': 'after', 'diff_word': 'add', 'text': 'logging 192.168.1.30'},
-{'linenum': 3, 'diff_side': 'after', 'diff_word': 'add', 'text': 'hostname FOO'},
-]
-        """
         for tmp in diff.all_output_dicts:
 
             action = tmp["diff_word"]
