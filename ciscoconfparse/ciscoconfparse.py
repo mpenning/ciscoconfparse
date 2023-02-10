@@ -3317,7 +3317,7 @@ class CiscoConfParse(object):
         Parameters
         ----------
         cfgspec : list
-            A list of required configuration lines
+            A list of required configuration lines to be used as a config template
         linespec : str
             A regular expression, which filters lines to be diff'd
         uncfgspec : str
@@ -3544,6 +3544,8 @@ class CiscoConfParse(object):
 
 
 #########################################################################3
+#
+#########################################################################3
 class HDiff(object):
     """
     """
@@ -3588,7 +3590,7 @@ class HDiff(object):
         enforce_valid_types(debug, (int,),
             "debug parameter must be an int."
         )
-        assert syntax in set({"ios", "junos"})
+        assert syntax in set(ALL_VALID_SYNTAX)
         assert output_format in set({"dict", "unified"})
 
         # TODO - incorporate difflib.get_close_matches() to reorder the
@@ -3597,7 +3599,7 @@ class HDiff(object):
         # FIXME -> no support for an ordered_diff yet... specifically, parents are
         # not ordered yet and siblings are not ordered either in the diff results.
         # The ordered_diff bool support should order diff parents lines (such as
-        # ^interface foo) in the same manner that they show up in the after_lines
+        # ^interface foo) in the same manner that they show up in the after_config
         # parameter...
         if isinstance(ordered_diff, bool):
             assert ordered_diff is False
@@ -3607,11 +3609,11 @@ class HDiff(object):
         parse_before = CiscoConfParse(before_config, syntax=syntax, ignore_blank_lines=False)
         parse_after = CiscoConfParse(after_config, syntax=syntax, ignore_blank_lines=False)
 
-        for bobj in parse_before.objs:
-            bobj.diff_side = "before"
+        for before_obj in parse_before.objs:
+            before_obj.diff_side = "before"
 
-        for aobj in parse_after.objs:
-            aobj.diff_side = "after"
+        for after_obj in parse_after.objs:
+            after_obj.diff_side = "after"
 
         # Initialize the output attributes...
         self.before_obj_list = None
