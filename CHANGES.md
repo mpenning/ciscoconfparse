@@ -4,6 +4,16 @@
 - Summary:
     - Insert something here
 
+## Version: 1.7.15
+
+- Released: 2023-02-10
+- Summary:
+    - Streamline `_bootstrap_from_text()` code.
+    - Extract common code into `_build_banner_re_ios()` (for nxos and ios)
+    - Extract common object init code from `CiscoConfParse()._bootstrap_obj_init_foo()` (where foo = asa, ios, nxos and junos) into `_build_cfgobj_from_text()`.
+    - Remove the unused `output_format` parameter from `HDiff()`
+    - Add `HDiff()` docstrings
+
 ## Version: 1.7.14
 
 - Released: 2023-02-06
