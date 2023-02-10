@@ -3359,18 +3359,23 @@ class CiscoConfParse(object):
         >>> diffs                     # doctest: +SKIP
         ['no logging 172.28.26.15', 'logging 172.16.1.5', 'logging 1.10.20.30', 'logging 192.168.1.1']
         >>>
-        >>> diff.all_output_dicts
-        [
-        {'linenum': -1, 'diff_side': 'before', 'diff_word': 'remove', 'text': 'logging trap debugging'},
-        {'linenum': -1, 'diff_side': 'before', 'diff_word': 'remove', 'text': 'logging 172.28.26.15'},
-        {'linenum': -1, 'diff_side': 'before', 'diff_word': 'keep', 'text': 'logging 1.10.20.30'},
-        {'linenum': 0, 'diff_side': 'after', 'diff_word': 'add', 'text': 'logging 172.16.1.5'},
-        {'linenum': 2, 'diff_side': 'after', 'diff_word': 'add', 'text': 'logging 192.168.1.30'},
-        {'linenum': 3, 'diff_side': 'after', 'diff_word': 'add', 'text': 'hostname FOO'},
-        ]
+        >>> before_config = [
+        ... 'logging trap debugging',
+        ... 'logging 172.28.26.15',
+        ... 'interface GigabitEthernet0',
+        ... ' ip address 1.1.1.1 255.255.255.0',
+        ... ]
         >>>
+        >>> after_config = [
+        ... 'no logging console guaranteed',
+        ... 'logging 172.28.26.15',
+        ... 'interface GigabitEthernet0',
+        ... ' no ip proxy-arp',
+        ... ]
         >>>
+        >>> my_diff = HDiff(before_config, desired_config)
         """
+
         if cfgspec is None:
             cfgspec = self._list
 
@@ -3542,7 +3547,7 @@ class CiscoConfParse(object):
 
 
 class HDiff(object):
-    """An object to implement diffs against configs or config templates.  By default, the output diffs are ordered roughly as before_config, then after_config."""
+    """An object to implement diffs against configs or config templates.  By default, the output diffs are ordered roughly as before_config, then after_config.  HDiff() is intended as an internal CiscoConfParse building-block to implement methods such as :meth:`ciscoconfparse.sync_diff`"""
 
     # This method is on HDiff()
     @logger.catch(reraise=True)
@@ -3618,6 +3623,7 @@ class HDiff(object):
         +no logging console-guaranteed
         >>>
         >>>
+        >>> # diff_obj.all_output_dicts is a list of dict
         >>> for elem in diff_obj.all_output_dicts:
         ...     print(elem)
         ...
