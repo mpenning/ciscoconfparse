@@ -3589,7 +3589,7 @@ class HDiff(object):
         Examples
         --------
         This example illustrates how to diff a simple Cisco IOS configuration
-        with :class:`~ciscoconfparse.HDiff` into a variable called
+        with :class:`~ciscoconfparse.HDiff()` into a variable called
         ``parse``.  This example also illustrates what the ``ConfigObjs``
         and ``ioscfg`` attributes contain.
 
@@ -3647,11 +3647,11 @@ class HDiff(object):
             A `list` of all the output dicts
         """
 
-        enforce_valid_types(before_config, (str, Sequence,),
-            "before_config parameter must be a instance of string or collections.abc.Sequence."
+        enforce_valid_types(before_config, (str, Sequence, CiscoConfParse,),
+            "before_config parameter must be a instance of string, collections.abc.Sequence, or CiscoConfParse instance."
         )
-        enforce_valid_types(after_config, (str, Sequence,),
-            "after_config parameter must be a instance of string or collections.abc.Sequence."
+        enforce_valid_types(after_config, (str, Sequence, CiscoConfParse,),
+            "after_config parameter must be a instance of string, collections.abc.Sequence, or CiscoConfParse instance."
         )
         enforce_valid_types(syntax, (str,),
             "syntax parameter must be a str."
@@ -3667,10 +3667,53 @@ class HDiff(object):
         )
         assert syntax in set(ALL_VALID_SYNTAX)
 
+        # Initialize attributes...
+        self.syntax = syntax
+        self.ordered_diff = ordered_diff
+        self.before_config = before_config
+        self.after_config = after_config
+        self.before_obj = None
+        self.after_obj = None
+        self.parse_before = None
+        self.parse_after = None
+
+        self.before_obj_list = None
+        self.after_obj_list = None
+        # all_output_dicts contains the diff results as a list of dicts...
+        self.all_output_dicts = []
+        self.debug = debug
+
+
         # TODO - incorporate difflib.get_close_matches() to reorder the
         #     diff (in unified format)
-        self.parse_before = CiscoConfParse(before_config, syntax=syntax, ignore_blank_lines=False)
-        self.parse_after = CiscoConfParse(after_config, syntax=syntax, ignore_blank_lines=False)
+        if syntax=="nxos":
+            blank_lines_ignore = False
+        else:
+            blank_lines_ignore = True
+
+        if not isinstance(before_config, CiscoConfParse):
+            self.parse_before = CiscoConfParse(before_config, syntax=syntax, ignore_blank_lines=blank_lines_ignore)
+
+        if not isinstance(after_config, CiscoConfParse):
+            self.parse_after = CiscoConfParse(after_config, syntax=syntax, ignore_blank_lines=blank_lines_ignore)
+
+
+        assert self.parse_before.syntax == self.parse_after.syntax
+
+        if debug > 0:
+            logger.info(
+                "HDiff().syntax={}".format(self.parse_before.syntax)
+            )
+
+        if debug > 1:
+            logger.info(
+                "HDiff().before_config={0}{1}".format(
+                os.linesep, '\n'.join(before_config)
+            ))
+            logger.info(
+                "HDiff().after_config={0}{1}".format(
+                os.linesep, '\n'.join(after_config)
+            ))
 
         for before_obj in self.parse_before.objs:
             before_obj.diff_side = "before"
@@ -3678,34 +3721,28 @@ class HDiff(object):
         for after_obj in self.parse_after.objs:
             after_obj.diff_side = "after"
 
-        self.ordered_diff = ordered_diff
-        # Initialize the output attributes...
-        self.before_obj_list = None
-        self.after_obj_list = None
-        # all_output_dicts contains the diff results as a list of dicts...
-        self.all_output_dicts = []
-        self.debug = debug
 
-        default_diff_word_before = "remove"
-        default_diff_word_after = "unknown"
         valid_after_obj_diff_words = set({"add", "unchanged"})
 
+        # Get a list of *CfgLine() before objects which are relevant to the diff...
         self.before_obj_list = self.build_diff_obj_list(
-            parse=self.parse_before, default_diff_word=default_diff_word_before
+            parse=self.parse_before, default_diff_word="remove"
         )
+        # Get a list of *CfgLine() after objects which are relevant to the diff...
         self.after_obj_list = self.build_diff_obj_list(
-            parse=self.parse_after, default_diff_word=default_diff_word_after
+            parse=self.parse_after, default_diff_word="unknown"
         )
 
         # Handle add / move / change. change is diff_word: remove + diff_word: add
         for after_obj in self.after_obj_list:
+            assert isinstance(after_obj, IOSCfgLine)
 
             # Ensure we start with after_obj.diff_word as default_word...
-            # it's unknownat this time... NOTE - even though all
+            # it's unknown at this time... NOTE - even though all
             # after_obj.diff_word values are changed in
             # self.find_in_before_obj_list() below, setting to a default state
             # is useful to catch any future bugs...
-            assert after_obj.diff_word == default_diff_word_after
+            assert after_obj.diff_word == "unknown"
 
             # Check whether we keep the before object, or add a new after object...
             # before_list and after_obj may be rewritten / changed here...
@@ -3799,8 +3836,21 @@ class HDiff(object):
             unified_diff_list = self.unified_diff_header()
         else:
             # Unit tests are easier without the unified diff header...
-            unified_diff_list = list()
+            unified_diff_list = []
 
+        unified_diff_list.extend(self.unified_diffs_contents())
+
+        return unified_diff_list
+
+
+    # This method is on HDiff()
+    @logger.catch(reraise=True)
+    def unified_diffs_contents(self, header=True):
+        """
+        Return a python list of unified diff contents which contain the unified diff of the
+        before and after HDiff() configurations.
+        """
+        unified_diff_list = []
         for line_dict in self.all_output_dicts:
 
             if not isinstance(line_dict, dict):
@@ -5732,6 +5782,17 @@ class CiscoPassword(object):
         #    logger.warning("password decryption failed.")
         return dp
 
+
+if False:
+    def CCP(syntax="ios"):
+        if syntax=="ios":
+            return CiscoConfParse(syntax="ios")
+        elif syntax=="nxos":
+            return CiscoConfParse(syntax="nxos", ignore_blank_lines=False)
+        elif syntax=="asa":
+            return CiscoConfParse(syntax="asa", ignore_blank_lines=True)
+        elif syntax=="junos":
+            return CiscoConfParse(syntax="junos", ignore_blank_lines=True)
 
 def ConfigLineFactory(text="", comment_delimiter="!", syntax="ios"):
     # Complicted & Buggy
