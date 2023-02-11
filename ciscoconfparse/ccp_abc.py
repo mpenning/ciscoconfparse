@@ -54,8 +54,8 @@ class BaseCfgLine(metaclass=ABCMeta):
 
         self._line_id = None
         self.diff_rendered = None
-        self.diff_word = ""  # diff_word: 'keep', 'remove', 'unchanged', 'add'
-        self.diff_side = ""  # diff_side: 'before', 'after' or ''
+        self._diff_word = ""  # see self.diff_word
+        self._diff_side = ""  # see self.diff_side
 
         # FIXME
         #   Bypass @text.setter method for now...  @text.setter writes to
@@ -186,6 +186,28 @@ class BaseCfgLine(metaclass=ABCMeta):
         #  root / oldest _line_id:                        ^^^^^^^^^^^^^^^^^^^
         #  child object _line_id:   ^^^^^^^^^^^^^^^^^^^^
         return retval
+
+    @property
+    def diff_word(self):
+        """A diff_word getter attribute (typically used in HDiff())"""
+        return self._diff_word
+
+    @diff_word.setter
+    def diff_word(self, val):
+        """A diff_word setter attribute (typically used in HDiff())"""
+        assert val in set({'keep', 'remove', 'unchanged', 'add', 'unknown', '',})
+        self._diff_word = val
+
+    @property
+    def diff_side(self):
+        """A diff_side getter attribute (typically used in HDiff())"""
+        return self._diff_side
+
+    @diff_side.setter
+    def diff_side(self, val):
+        """A diff_side setter attribute (typically used in HDiff())"""
+        assert val in set({'before', 'after', '',})
+        self._diff_side = val
 
     # On BaseCfgLine()
     @property
