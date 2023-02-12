@@ -39,23 +39,25 @@ class BaseCfgLine(metaclass=ABCMeta):
         """Accept an IOS line number and initialize family relationship
         attributes"""
         self.comment_delimiter = comment_delimiter
-        self._text = text
         self._uncfgtext_to_be_deprecated = ""
+        self._text = DEFAULT_TEXT
         self.linenum = -1
-        self.parent = self
+        self.parent = self   # by default, assign parent as itself
         self.child_indent = 0
         self.is_comment = None
-        self.children = list()
-        self.indent = 0      # Whitespace indentation on the object
+        self.children = []
+        self.indent = 0      # assign indent in the self.text setter method
         self.confobj = None  # Reference to the list object which owns it
-        self.feature = ""    # Major feature description
-        self.blank_line_keep = False  # set blank_line_keep True for banner / macro
-        self.set_comment_bool()
+        self.blank_line_keep = False  # CiscoConfParse() uses blank_line_keep
+
+        # Call set_comment_bool() in the self.text setter method...
+        self.text = text     # Use self.text setter method to set this value
 
         self._line_id = None
         self.diff_rendered = None
-        self._diff_word = ""  # see self.diff_word
-        self._diff_side = ""  # see self.diff_side
+        self._diff_word = ""  # diff_word: 'keep', 'remove', 'unchanged', 'add'
+        self._diff_side = ""  # diff_side: 'before', 'after' or ''
+
 
         # FIXME
         #   Bypass @text.setter method for now...  @text.setter writes to
@@ -111,18 +113,17 @@ class BaseCfgLine(metaclass=ABCMeta):
 
     # On BaseCfgLine()
     def set_comment_bool(self):
+        """Set the .is_comment attribute for this object."""
         delimiters = set(self.comment_delimiter)
-        retval = None
         ## Use this instead of a regex... nontrivial speed enhancement
         tmp = self.text.lstrip()
         for delimit_char in delimiters:
             if len(tmp) > 0 and (delimit_char == tmp[len(delimit_char) - 1]):
-                retval = True
+                self.is_comment = True
                 break
             else:
-                retval = False
-        self.is_comment = retval
-        return retval
+                self.is_comment = False
+        return self.is_comment
 
     # On BaseCfgLine()
     @property
@@ -167,11 +168,6 @@ class BaseCfgLine(metaclass=ABCMeta):
             # idx = 0 is the oldest ancestor
             if idx == 0:
                 # This object is NOT a child
-                if False:
-                    # FIXME - I'm not sure why this assert fails yet
-                    #     remove 'if False:' to start fixing or removing this
-                    #     behavior
-                    assert obj.indent == 0
                 retval.insert(0, obj._line_id)
 
             elif idx <= len_geneology - 1:
@@ -187,22 +183,26 @@ class BaseCfgLine(metaclass=ABCMeta):
         #  child object _line_id:   ^^^^^^^^^^^^^^^^^^^^
         return retval
 
+    # On BaseCfgLine()
     @property
     def diff_word(self):
         """A diff_word getter attribute (typically used in HDiff())"""
         return self._diff_word
 
+    # On BaseCfgLine()
     @diff_word.setter
     def diff_word(self, val):
         """A diff_word setter attribute (typically used in HDiff())"""
         assert val in set({'keep', 'remove', 'unchanged', 'add', 'unknown', '',})
         self._diff_word = val
 
+    # On BaseCfgLine()
     @property
     def diff_side(self):
         """A diff_side getter attribute (typically used in HDiff())"""
         return self._diff_side
 
+    # On BaseCfgLine()
     @diff_side.setter
     def diff_side(self, val):
         """A diff_side setter attribute (typically used in HDiff())"""
@@ -212,11 +212,13 @@ class BaseCfgLine(metaclass=ABCMeta):
     # On BaseCfgLine()
     @property
     def text(self):
+        """Get the self.text attribute"""
         return self._text
 
     # On BaseCfgLine()
     @text.setter
     def text(self, newtext=None):
+        """Set self.text, self.indent, self.line_id (and all comments' self.parent)"""
         # FIXME - children do not associate correctly if this is used as-is...
         assert isinstance(newtext, str)
 
@@ -228,25 +230,22 @@ class BaseCfgLine(metaclass=ABCMeta):
         if False:
             newtext = self.safe_escape_curly_braces(newtext)
 
-        previous_text = self._text
-        self._text = newtext
+        # Calculate the newtext indent here...
+        newtext_ = newtext.rstrip()
+        _newtext_ = newtext_.lstrip()
+        self.indent = len(newtext_) - len(_newtext_)
 
-        if previous_text != newtext:
-            self._line_id = self.calculate_line_id()
+        # Remove all double-spacing, except for the indent spaces...
+        # self._text = self.indent * " " + " ".join([ii.strip() for ii in _newtext_.split()])
+        self._text = newtext_
+        self.line_id = self.calculate_line_id()
 
-            # After changing text we need to trigger
-            #     ConfigObjs.bootstrap_from_text()...
+        self.set_comment_bool()
+        if self.is_comment is True:
+            # VERY IMPORTANT: due to old behavior, comment parents MUST be self
             #
-            # If we take False out, it would run _bootstrap_from_text()
-            #     too often during initial configuration parsing...
-            #
-            # I put this here for some debugging but it shouldn't be
-            #     used in a general config parsing case.
-            #
-            # <-- Begin Removed -->
-            #if self.confobj is not None:
-            #    self.confobj._bootstrap_from_text()
-            # <-- End Removed -->
+            self.parent = self
+
 
     def safe_escape_curly_braces(self, text):
         """
@@ -1176,3 +1175,5 @@ class BaseCfgLine(metaclass=ABCMeta):
     @classmethod
     def is_object_for(cls, line=""):
         return False
+
+
