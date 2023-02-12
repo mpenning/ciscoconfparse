@@ -303,20 +303,25 @@ def _parse_line_braces(line_txt=None, comment_delimiter=None) -> tuple:
 @logger.catch(reraise=True)
 def _build_cfgobj_from_text(txt, idx, syntax=None, comment_delimiter=None, factory=None):
     """Build cfgobj from configuration text syntax, and factory inputs."""
-    if factory is False and syntax == "ios":
-        obj = IOSCfgLine(txt, comment_delimiter)
+    if factory is False:
 
-    elif factory is False and syntax == "nxos":
-        obj = NXOSCfgLine(txt, comment_delimiter)
+        if syntax == "ios":
+            obj = IOSCfgLine(txt, comment_delimiter)
 
-    elif factory is False and syntax == "junos":
-        obj = JunosCfgLine(txt, comment_delimiter)
+        elif syntax == "nxos":
+            obj = NXOSCfgLine(txt, comment_delimiter)
 
-    elif factory is False and syntax == "asa":
-        obj = ASACfgLine(
-            text=txt,
-            comment_delimiter=comment_delimiter,
-        )
+        elif syntax == "junos":
+            obj = JunosCfgLine(txt, comment_delimiter)
+
+        elif syntax == "asa":
+            obj = ASACfgLine(
+                text=txt,
+                comment_delimiter=comment_delimiter,
+            )
+
+        else:
+            raise ValueError
 
     elif syntax in ALL_VALID_SYNTAX:
         obj = ConfigLineFactory(
@@ -334,8 +339,6 @@ def _build_cfgobj_from_text(txt, idx, syntax=None, comment_delimiter=None, facto
         raise ValueError(err_txt)
 
     obj.linenum = idx
-    indent = len(txt) - len(txt.lstrip())
-    obj.indent = indent
 
     return obj
 
@@ -353,7 +356,7 @@ def build_space_tolerant_regex(linespec):
     if isinstance(linespec, str):
         linespec = re.sub(r"\s+", escaped_space, linespec)
 
-    elif isinstance(linespec, (list, tuple,)):
+    elif isinstance(linespec, Sequence):
         for idx, tmp in enumerate(linespec):
             # Ensure this list element is a string...
             if not isinstance(tmp, str):
@@ -3305,6 +3308,7 @@ class CiscoConfParse(object):
         uncfgspec=None,
         ignore_order=True,
         remove_lines=True,
+        syntax="",
         debug=0,
     ):
         r"""
@@ -3328,6 +3332,8 @@ class CiscoConfParse(object):
             Indicates whether the configuration should be reordered to minimize the number of diffs.  Default: True (usually it's a good idea to leave ``ignore_order`` True, except for ACL comparisions)
         remove_lines : bool
             Indicates whether the lines which are *not* in ``cfgspec`` should be removed.  Default: True.  When ``remove_lines`` is True, all other config lines matching the linespec that are *not* listed in the cfgspec will be removed with the uncfgspec regex.
+        syntax : str
+            The expected syntax of the diff lines.  Default is an empty string, ''
         debug : int
             Miscellaneous debugging; Default: 0
 
@@ -3399,6 +3405,9 @@ class CiscoConfParse(object):
         enforce_valid_types(remove_lines, (bool,),
             "remove_lines must be a bool"
         )
+        enforce_valid_types(syntax, (str,),
+            "syntax must be a str"
+        )
         enforce_valid_types(debug, (int,),
             "debug must be an int"
         )
@@ -3406,7 +3415,8 @@ class CiscoConfParse(object):
         lrgx = re.compile(linespec)
         retval = []
 
-        diff = HDiff(before_config=self.ioscfg, after_config=cfgspec, syntax='ios', debug=debug)
+        _syntax = syntax or self.syntax
+        diff = HDiff(before_config=self.ioscfg, after_config=cfgspec, syntax=_syntax, debug=debug)
 
         for tmp in diff.all_output_dicts:
 
@@ -3420,7 +3430,7 @@ class CiscoConfParse(object):
                 continue
 
             if remove_lines is True and action == 'remove':
-                if self.syntax in set({"ios", "nxos", "asa", }):
+                if _syntax in set({"ios", "nxos", "asa", }):
                     uu = re.search(uncfgspec, command)
                     remove_cmd = indent*" " + "no " + uu.group(0).strip()
 
@@ -3735,7 +3745,7 @@ class HDiff(object):
 
         # Handle add / move / change. change is diff_word: remove + diff_word: add
         for after_obj in self.after_obj_list:
-            assert isinstance(after_obj, IOSCfgLine)
+            assert isinstance(after_obj, (BaseCfgLine,))
 
             # Ensure we start with after_obj.diff_word as default_word...
             # it's unknown at this time... NOTE - even though all
@@ -5260,7 +5270,7 @@ class ConfigList(MutableSequence):
 
         This method returns a list of ASACfgLine() objects.
         """
-        if not isinstance(text_list, (list, tuple,)):
+        if not isinstance(text_list, Sequence):
             raise ValueError
 
         # Append text lines as IOSCfgLine objects...
@@ -5348,7 +5358,7 @@ class ConfigList(MutableSequence):
 
         This method returns a list of NXOSCfgLine() objects.
         """
-        if not isinstance(text_list, (list, tuple,)):
+        if not isinstance(text_list, Sequence):
             raise ValueError
 
         # Build the banner_re regexp... at this point ios
@@ -5470,7 +5480,7 @@ class ConfigList(MutableSequence):
 
         This method returns a list of JunosCfgLine() objects.
         """
-        if not isinstance(text_list, (list, tuple,)):
+        if not isinstance(text_list, Sequence):
             raise ValueError
 
         retval = list()
