@@ -30,7 +30,7 @@ import sys
 import re
 import os
 
-from collections.abc import MutableSequence
+from collections.abc import MutableSequence, Sequence
 from ipaddress import IPv4Network, IPv6Network, IPv4Address, IPv6Address
 from ipaddress import collapse_addresses as ipaddr_collapse_addresses
 from ipaddress import AddressValueError
@@ -352,7 +352,7 @@ def as_text_list(object_list):
     >>>
 
     """
-    if not isinstance(object_list, (list, tuple,)):
+    if not isinstance(object_list, Sequence):
         raise ValueError
 
     for obj in object_list:
@@ -743,7 +743,7 @@ def collapse_addresses(network_list):
     addresses is an iterator of IPv4Network or IPv6Network objects. A
     TypeError is raised if addresses contains mixed version objects.
     """
-    if not isinstance(network_list, (list, tuple,)):
+    if not isinstance(network_list, Sequence):
         raise ValueError
 
     @logger.catch(reraise=True)
