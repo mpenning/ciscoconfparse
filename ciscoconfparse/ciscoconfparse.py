@@ -1346,7 +1346,7 @@ class CiscoConfParse(object):
         ['archive', ' log config', ' path ftp://ns.foo.com//tftpboot/Foo-archive']
         >>>
         """
-        if ignore_ws:
+        if ignore_ws is True:
             linespec = build_space_tolerant_regex(linespec)
 
         if exactmatch is False:
@@ -3584,7 +3584,7 @@ class HDiff(object):
 
         Returns
         -------
-        :class:`~ciscoconfparse.HDiff`
+        :class:`~ciscoconfparse.HDiff()`
 
         Examples
         --------
