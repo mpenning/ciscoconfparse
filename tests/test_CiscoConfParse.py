@@ -96,18 +96,17 @@ def testParse_invalid_filepath_01():
 
     # ccp_logger_control(action="disable")  # Silence logs about the missing file error
 
-    # Test that CiscoConfParse raises an IOError() when parsing an invalid file...
-    with pytest.raises(OSError, match=""):
+    # Test that CiscoConfParse raises an error for an invalid filename...
+    with pytest.raises(FileNotFoundError, match=""):
         # Normally logs to stdout... using logging.CRITICAL to hide errors...
         CiscoConfParse(bad_filename)
-        raise OSError   # FIXME
 
 def testParse_invalid_filepath_02():
     # FIXME
     bad_filename = "this is not a filename or list"
     assert os.path.isfile(bad_filename) is False
 
-    with pytest.raises(OSError, match=""):
+    with pytest.raises(FileNotFoundError, match=""):
         CiscoConfParse(bad_filename)
 
 def testParse_invalid_config_01():
@@ -274,6 +273,11 @@ def testParse_f5_as_ios_02(parse_f02_ios_01):
     for idx, obj in enumerate(parse_f02_ios_01.objs):
         # CiscoConfParse object line numbers start with 1...
         assert idx + 1 == obj.linenum
+
+        # Be sure to strip off any double-spacing before comparing to obj.text
+        tmp = result_correct[idx]
+        indent = len(tmp.rstrip()) - len(tmp.strip())
+        assert indent == obj.indent
         assert result_correct[idx] == obj.text
 
         assert result_correct_linenum_dict[idx]['linenum'] == obj.linenum
@@ -870,6 +874,7 @@ def testValues_find_lines(parse_c01):
 
 
 def testValues_find_children(parse_c01):
+    """Test whether find_children() works correctly."""
     c01_pmap_children = [
         "policy-map QOS_1",
         " class GOLD",
@@ -877,13 +882,17 @@ def testValues_find_children(parse_c01):
         " class BRONZE",
     ]
 
-    find_children_Values = (
-        ({"linespec": "policy-map", "exactmatch": False}, c01_pmap_children),
-        ({"linespec": "policy-map", "exactmatch": True}, []),
-    )
-    for args, result_correct in find_children_Values:
-        test_result = parse_c01.find_children(**args)
-        assert result_correct == test_result
+    # The linespec below will match the substring, b/c exactmatch is False
+    args = {"linespec": "policy-map", "exactmatch": False}
+    test_result_01 = parse_c01.find_children(**args)
+    # Check if the test_result is correct...
+    assert test_result_01 == c01_pmap_children
+
+    # The linespec below will not match the substring, b/c exactmatch is True
+    args = {"linespec": "policy-map", "exactmatch": True}
+    test_result_02 = parse_c01.find_children(**args)
+    # Check if the test_result is correct...
+    assert test_result_02 == []
 
 
 def testValues_find_all_children01(parse_c01):
