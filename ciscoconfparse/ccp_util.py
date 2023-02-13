@@ -432,6 +432,25 @@ def log_function_call(function=None, *args, **kwargs):
     return logging_decorator
 
 
+@logger.catch(reraise=True)
+def fix_repeated_words(cmd="", word=""):
+    """Fix repeated words in the beginning of commands... Example 'no no logging 1.2.3.4' will be returned as 'logging 1.2.3.4' (both 'no' words are removed)."""
+    assert isinstance(cmd, str) and len(cmd) > 0
+    assert isinstance(word, str) and len(word) > 0
+    while True:
+        # look at the command and fix the repeated words in it...
+        rgx = r"^(?P<indent>\s*){0}\s+{0}\s+(?P<remaining_cmd>\S.+)$".format(
+            word.strip())
+        mm = re.search(rgx, cmd)
+        if mm is not None:
+            # We found a repeated word in the command...
+            indent = mm.group('indent')
+            remaining_cmd = mm.group('remaining_cmd')
+            cmd = "{0}{1}".format(indent, remaining_cmd)
+        else:
+            break
+    return cmd
+
 
 class __ccp_re__(object):
     """
