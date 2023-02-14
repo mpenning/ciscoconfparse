@@ -77,6 +77,8 @@ from ciscoconfparse.models_junos import JunosCfgLine
 
 from ciscoconfparse.ccp_abc import BaseCfgLine
 
+from ciscoconfparse.ccp_util import fix_repeated_words
+from ciscoconfparse.ccp_util import enforce_valid_types
 from ciscoconfparse.ccp_util import junos_unsupported
 from ciscoconfparse.ccp_util import configure_loguru
 # Not using ccp_re yet... still a work in progress
@@ -3298,6 +3300,7 @@ class CiscoConfParse(object):
 
         return a_parse, a_lines, a_linenums
 
+
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
     @deprecat(reason="sync_diff() is obsolete; use HDiff() instead.", version = '1.7.0')
@@ -3432,7 +3435,9 @@ class CiscoConfParse(object):
             if remove_lines is True and action == 'remove':
                 if _syntax in set({"ios", "nxos", "asa", }):
                     uu = re.search(uncfgspec, command)
-                    remove_cmd = indent*" " + "no " + uu.group(0).strip()
+                    remove_cmd = indent * " " + "no " + uu.group(0).strip()
+                    # 'no no ' will become ''...
+                    remove_cmd = fix_repeated_words(remove_cmd, word="no")
 
                     # NOTE: if HDiff().compress_dict_diffs() was working as
                     # planned, this manual parent handling might not be
@@ -3618,7 +3623,7 @@ class HDiff(object):
         ...     ]
         >>>
         >>> # by default, diffs are ordered as before_config then after_config
-        >>> diff_obj = HDiff(begin_config, desired_config, ordered_diff=False)
+        >>> diff_obj = HDiff(begin_config, desired_config, syntax='ios')
         >>> diff_obj
         <ciscoconfparse.ciscoconfparse.HDiff object at 0x7f8fd292c160>
         >>> for line in diff_obj.unified_diffs():
@@ -3632,7 +3637,7 @@ class HDiff(object):
          interface GigabitEthernet0
         + no ip proxy-arp
         - ip address 1.1.1.1 255.255.255.0
-        +no logging console-guaranteed
+        +no logging console guaranteed
         >>>
         >>>
         >>> # diff_obj.all_output_dicts is a list of dict
@@ -3725,14 +3730,22 @@ class HDiff(object):
                 os.linesep, '\n'.join(after_config)
             ))
 
+        if syntax=='ios':
+            self.build_ios_diffs()
+
+    def build_ios_diffs(self):
+
+        assert isinstance(self.parse_before, CiscoConfParse)
+        assert isinstance(self.parse_after, CiscoConfParse)
+
         for before_obj in self.parse_before.objs:
             before_obj.diff_side = "before"
 
         for after_obj in self.parse_after.objs:
             after_obj.diff_side = "after"
 
-
-        valid_after_obj_diff_words = set({"add", "unchanged"})
+        # NOTE removed in 1.7.15...
+        # valid_after_obj_diff_words = set({"add", "unchanged"})
 
         # Get a list of *CfgLine() before objects which are relevant to the diff...
         self.before_obj_list = self.build_diff_obj_list(
@@ -3760,13 +3773,14 @@ class HDiff(object):
                 self.before_obj_list, after_obj)
 
             # Ensure that we rewrote after_obj.diff_word from default_diff_word_after
-            assert after_obj.diff_word in valid_after_obj_diff_words
+            # NOTE removed in 1.7.15...
+            #assert after_obj.diff_word in valid_after_obj_diff_words
 
         # At this stage, `dict_diffs()` returns duplicate parent lines...
         tmp_line_dicts = self.dict_diffs(self.before_obj_list, self.after_obj_list)
 
         # Remove duplicate parent lines with `compress_dict_diffs()`
-        self.all_output_dicts = self.compress_dict_diffs(tmp_line_dicts, debug=debug)
+        self.all_output_dicts = self.compress_dict_diffs(tmp_line_dicts, debug=self.debug)
 
         if False:
             # status quo sorts before_config lines, then after_config lines...
@@ -3904,14 +3918,13 @@ class HDiff(object):
         ############################################
         # Render diffs
         ############################################
-        all_dict_lines = list()
+        all_dict_lines = []
         for bobj in before_obj_list:
 
             if not isinstance(bobj, BaseCfgLine):
                 raise ValueError
 
             assert bobj.diff_side == "before"
-            assert bobj.diff_word in set({"keep", "remove"})
 
             # FIXME - I am disabling this to prevent redundant rendering of before_obj and after_obj
             if bobj.diff_word == "keep" and bobj.diff_rendered is False:
