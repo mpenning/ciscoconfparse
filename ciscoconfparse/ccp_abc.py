@@ -193,7 +193,16 @@ class BaseCfgLine(metaclass=ABCMeta):
     @diff_word.setter
     def diff_word(self, val):
         """A diff_word setter attribute (typically used in HDiff())"""
-        assert val in set({'keep', 'remove', 'unchanged', 'add', 'unknown', '',})
+
+        # Check against expected HDiff() values...
+        if self.diff_side=='before':
+            assert val in set({'keep', 'remove', '',})
+
+        elif self.diff_side=='after':
+            assert val in set({'unchanged', 'add', 'unknown', '',})
+
+        else:
+            raise ValueError("diff_side can only be 'before' or 'after'")
         self._diff_word = val
 
     # On BaseCfgLine()
