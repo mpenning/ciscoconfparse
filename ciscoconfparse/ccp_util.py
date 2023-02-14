@@ -432,6 +432,12 @@ def log_function_call(function=None, *args, **kwargs):
     return logging_decorator
 
 
+def enforce_valid_types(var, var_types=None, error_str=None):
+    assert isinstance(var_types, tuple)
+    if not isinstance(var, var_types):
+        raise ValueError(error_str)
+
+
 @logger.catch(reraise=True)
 def fix_repeated_words(cmd="", word=""):
     """Fix repeated words in the beginning of commands... Example 'no no logging 1.2.3.4' will be returned as 'logging 1.2.3.4' (both 'no' words are removed)."""
