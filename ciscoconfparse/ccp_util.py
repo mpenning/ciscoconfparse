@@ -186,7 +186,7 @@ def ccp_logger_control(
     sink=sys.stderr,
     action="",
     handler_id=None,
-    allow_enqueue=True,
+    enqueue=True,
     # rotation="00:00",
     # retention="1 month",
     # compression="zip",
@@ -202,11 +202,11 @@ def ccp_logger_control(
     -------
     """
 
-    msg = "ccp_logger_control() was called with sink='{}', action='{}', handler_id='{}', allow_enqueue={}, level='{}', colorize={}, debug={}".format(
+    msg = "ccp_logger_control() was called with sink='{}', action='{}', handler_id='{}', enqueue={}, level='{}', colorize={}, debug={}".format(
         sink,
         action,
         handler_id,
-        allow_enqueue,
+        enqueue,
         # rotation,
         # retention,
         # compression,
@@ -250,7 +250,7 @@ def ccp_logger_control(
             diagnose=True,
             backtrace=True,
             # https://github.com/mpenning/ciscoconfparse/issues/215
-            enqueue=allow_enqueue,
+            enqueue=enqueue,
             serialize=False,
             catch=True,
             # rotation="00:00",
