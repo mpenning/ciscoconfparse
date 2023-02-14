@@ -4,6 +4,20 @@
 - Summary:
     - Insert something here
 
+## Version: 1.7.16
+
+- Released: 2023-02-13
+- Summary:
+    - Add initial support for `CiscoConfParse()` object instance support in `HDiff()`
+    - Add `HDiff()` documentation
+    - Convert `diff_word` and `diff_side` `HDiff()` attributes to `HDiff()` getter / setter methods
+    - Improve `BaseCfgLine()` initialization
+    - Improve `BaseCfgLine()` attribute handling: `.text`, `.indent`
+    - Remove loop in `testValues_find_children()` to simplify test flow.
+    - Add `ccp_util.fix_repeated_words()`
+    - Change `allow_enqueue` parameter to `enqueue` in `ccp_logger_control()`.  `allow_enqueue` is not a valid `loguru` parameter name.
+
+
 ## Version: 1.7.15
 
 - Released: 2023-02-10
