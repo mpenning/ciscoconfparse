@@ -3730,11 +3730,12 @@ class HDiff(object):
                 os.linesep, '\n'.join(after_config)
             ))
 
+        self.build_diff_obj_lists()
+
         if syntax=='ios':
             self.build_ios_diffs()
 
-    def build_ios_diffs(self):
-
+    def build_diff_obj_lists(self):
         assert isinstance(self.parse_before, CiscoConfParse)
         assert isinstance(self.parse_after, CiscoConfParse)
 
@@ -3756,6 +3757,7 @@ class HDiff(object):
             parse=self.parse_after, default_diff_word="unknown"
         )
 
+    def build_ios_diffs(self):
         # Handle add / move / change. change is diff_word: remove + diff_word: add
         for after_obj in self.after_obj_list:
             assert isinstance(after_obj, (BaseCfgLine,))
