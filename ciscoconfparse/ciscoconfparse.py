@@ -3397,6 +3397,167 @@ class CiscoConfParse(object):
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
+    def ORIGINAL_sync_diff(
+        self,
+        cfgspec=None,
+        linespec=None,
+        uncfgspec=None,
+        ignore_order=True,
+        remove_lines=True,
+        syntax="",
+        debug=0,
+    ):
+        r"""
+        ``sync_diff()`` accepts a list of required configuration elements,
+        a linespec, and an unconfig spec.  This method return a list of
+        Cisco IOS-style configuration diffs to make the configuration comply
+        with cfgspec.
+
+        Internally, `sync_diff()` is implemented with :class:`~ciscoconfparse.HDiff()`.
+
+
+        Parameters
+        ----------
+        cfgspec : list
+            A list of required configuration lines to be used as a config template
+        linespec : str
+            A regular expression, which filters lines to be diff'd
+        uncfgspec : str
+            A regular expression, which is used to unconfigure lines.  When ciscoconfparse removes a line, it takes the entire portion of the line that matches ``uncfgspec``, and prepends "no" to it.
+        ignore_order : bool
+            Indicates whether the configuration should be reordered to minimize the number of diffs.  Default: True (usually it's a good idea to leave ``ignore_order`` True, except for ACL comparisions)
+        remove_lines : bool
+            Indicates whether the lines which are *not* in ``cfgspec`` should be removed.  Default: True.  When ``remove_lines`` is True, all other config lines matching the linespec that are *not* listed in the cfgspec will be removed with the uncfgspec regex.
+        syntax : str
+            The expected syntax of the diff lines.  Default is an empty string, ''
+        debug : int
+            Miscellaneous debugging; Default: 0
+
+        Returns
+        -------
+        list
+            A list of string configuration diffs
+
+
+        Uses for this method include the need to enforce syslog, acl, or
+        aaa standards.
+
+        Examples
+        --------
+
+        >>> from ciscoconfparse import CiscoConfParse
+        >>> config = [
+        ...     'logging trap debugging',
+        ...     'logging 172.28.26.15',
+        ...     ]
+        >>> p = CiscoConfParse(config=config)
+        >>> required_lines = [
+        ...     "logging 172.16.1.5",
+        ...     "logging 1.10.20.30",
+        ...     "logging 192.168.1.1",
+        ...     ]
+        >>> linespec = "logging\s+\d+\.\d+\.\d+\.\d+"
+        >>> uncfgspec = linespec
+        >>> diffs = p.sync_diff(required_lines,
+        ...     linespec, uncfgspec)  # doctest: +SKIP
+        >>> diffs                     # doctest: +SKIP
+        ['no logging 172.28.26.15', 'logging 172.16.1.5', 'logging 1.10.20.30', 'logging 192.168.1.1']
+        >>>
+        >>> before_config = [
+        ... 'logging trap debugging',
+        ... 'logging 172.28.26.15',
+        ... 'interface GigabitEthernet0',
+        ... ' ip address 1.1.1.1 255.255.255.0',
+        ... ]
+        >>>
+        >>> after_config = [
+        ... 'no logging console guaranteed',
+        ... 'logging 172.28.26.15',
+        ... 'interface GigabitEthernet0',
+        ... ' no ip proxy-arp',
+        ... ]
+        >>>
+        >>> my_diff = HDiff(before_config, desired_config)
+        """
+
+        if cfgspec is None:
+            cfgspec = self._list
+
+        if linespec is None:
+            raise ValueError("linespec is a required parameter")
+
+        enforce_valid_types(
+            cfgspec,
+            (Sequence,),
+            "cfgspec must be an instance of collections.abc.Sequence()",
+        )
+        enforce_valid_types(linespec, (str,), "linespec must be a string")
+        enforce_valid_types(uncfgspec, (str,), "uncfgspec must be a string")
+        enforce_valid_types(ignore_order, (bool,), "ignore_order must be a bool")
+        enforce_valid_types(remove_lines, (bool,), "remove_lines must be a bool")
+        enforce_valid_types(syntax, (str,), "syntax must be a str")
+        enforce_valid_types(debug, (int,), "debug must be an int")
+
+        lrgx = re.compile(linespec)
+        retval = []
+
+        _syntax = syntax or self.syntax
+        diff = HDiff(
+            before_config=self.ioscfg, after_config=cfgspec, syntax=_syntax, debug=debug
+        )
+
+        for tmp in diff.all_output_dicts:
+            action = tmp["diff_word"]
+            command = tmp["text"]
+            indent = tmp["indent"]
+            parents = tmp["parents"]
+
+            # Skip lines that are not part of the expected diff...
+            if not lrgx.search(command):
+                continue
+
+            if remove_lines is True and action == "remove":
+                if _syntax in set(
+                    {
+                        "ios",
+                        "nxos",
+                        "asa",
+                    }
+                ):
+                    uu = re.search(uncfgspec, command)
+                    remove_cmd = indent * " " + "no " + uu.group(0).strip()
+                    # 'no no ' will become ''...
+                    remove_cmd = fix_repeated_words(remove_cmd, word="no")
+
+                    # NOTE: if HDiff().compress_dict_diffs() was working as
+                    # planned, this manual parent handling might not be
+                    # required...
+                    #
+                    # Append parent remove_cmd command entries (if any...)
+                    for pcmd in parents:
+                        retval.append(pcmd)
+
+                    retval.append(remove_cmd)
+                else:
+                    raise ValueError(
+                        "Cannot remove the command for syntax={}".format(self.syntax)
+                    )
+
+            elif action == "add":
+                # NOTE: if HDiff().compress_dict_diffs() was working as
+                # planned, this manual parent handling might not be
+                # required...
+                #
+                # Append parent command entries (if any...)
+                for pcmd in parents:
+                    retval.append(pcmd)
+
+                retval.append(command)
+
+        return retval
+
+    # This method is on CiscoConfParse()
+    @logger.catch(reraise=True)
     def sync_diff(
         self,
         cfgspec=None,
@@ -3795,39 +3956,12 @@ class HDiff(object):
         self.all_output_dicts = []
         self.debug = debug
 
-        # TODO - incorporate difflib.get_close_matches() to reorder the
-        #     diff (in unified format)
-        if syntax == "nxos":
-            blank_lines_ignore = False
-        else:
-            blank_lines_ignore = True
 
-        if not isinstance(before_config, CiscoConfParse):
-            self.parse_before = CiscoConfParse(
-                before_config, syntax=syntax, ignore_blank_lines=blank_lines_ignore
-            )
-
-        if not isinstance(after_config, CiscoConfParse):
-            self.parse_after = CiscoConfParse(
-                after_config, syntax=syntax, ignore_blank_lines=blank_lines_ignore
-            )
-
-        assert self.parse_before.syntax == self.parse_after.syntax
 
         if debug > 0:
-            logger.info("HDiff().syntax={}".format(self.parse_before.syntax))
+            logger.info("HDiff().syntax={}".format(self.syntax))
 
-        if debug > 1:
-            logger.info(
-                "HDiff().before_config={0}{1}".format(
-                    os.linesep, "\n".join(before_config)
-                )
-            )
-            logger.info(
-                "HDiff().after_config={0}{1}".format(
-                    os.linesep, "\n".join(after_config)
-                )
-            )
+        self.parse_hdiff_configs()    # OK
 
         self.build_diff_obj_lists()
 
@@ -3838,7 +3972,39 @@ class HDiff(object):
             # FIXME - I think nxos is not going to work as-expected while using `build_ios_diffs()`
             self.build_ios_diffs()
 
+    def parse_hdiff_configs(self):
+
+        if self.debug > 1:
+            logger.info(
+                "HDiff().before_config={0}{1}".format(
+                    os.linesep, "\n".join(self.before_config)
+                )
+            )
+            logger.info(
+                "HDiff().after_config={0}{1}".format(
+                    os.linesep, "\n".join(self.after_config)
+                )
+            )
+
+        # TODO - incorporate difflib.get_close_matches() to reorder the
+        #     diff (in unified format)
+        if self.syntax == "nxos":
+            blank_lines_ignore = False
+        else:
+            blank_lines_ignore = True
+
+        if not isinstance(self.before_config, CiscoConfParse):
+            self.parse_before = CiscoConfParse(
+                self.before_config, syntax=self.syntax, ignore_blank_lines=blank_lines_ignore
+            )
+
+        if not isinstance(self.after_config, CiscoConfParse):
+            self.parse_after = CiscoConfParse(
+                self.after_config, syntax=self.syntax, ignore_blank_lines=blank_lines_ignore
+            )
+
     def build_diff_obj_lists(self):
+        """Assign the `diff_side` attribute to parse_before and parse_after *CfgLine() instances"""
         assert isinstance(self.parse_before, CiscoConfParse)
         assert isinstance(self.parse_after, CiscoConfParse)
 
@@ -3860,6 +4026,36 @@ class HDiff(object):
             parse=self.parse_after, default_diff_word="unknown"
         )
 
+    # This method is on HDiff()
+    @logger.catch(reraise=True)
+    def build_diff_obj_list(
+        self, parse=None, default_diff_word=None, consider_whitespace=False
+    ):
+        """
+        Return a list of *CfgLine() objects which are relevant to the diff...
+        """
+        assert parse is not None
+        if not isinstance(default_diff_word, str):
+            raise ValueError
+        retval = []
+        for obj in parse.objs:
+            # Will multiple spaces between diff_words affect a diff match?
+            if consider_whitespace is False:
+                # Rewrite obj.text to remove multiple spaces between terms...
+                obj.text = " " * obj.indent + " ".join(obj.text.strip().split())
+
+            # Track whether this term was rendered in the output yet...
+            obj.diff_rendered = False
+
+            # Use a single 'diff_word' to describe the diff status of this
+            # configuration line...
+            obj.diff_word = default_diff_word
+            retval.append(obj)
+
+        return retval
+
+    # This method is on HDiff()
+    @logger.catch(reraise=True)
     def build_ios_diffs(self):
         # Handle add / move / change. change is diff_word: remove + diff_word: add
         for after_obj in self.after_obj_list:
@@ -4056,33 +4252,6 @@ class HDiff(object):
 
         return all_dict_lines
 
-    # This method is on HDiff()
-    @logger.catch(reraise=True)
-    def build_diff_obj_list(
-        self, parse=None, default_diff_word=None, consider_whitespace=False
-    ):
-        """
-        Return a list of *CfgLine() objects which are relevant to the diff...
-        """
-        assert parse is not None
-        if not isinstance(default_diff_word, str):
-            raise ValueError
-        retval = []
-        for obj in parse.objs:
-            # Will multiple spaces between diff_words affect a diff match?
-            if consider_whitespace is False:
-                # Rewrite obj.text to remove multiple spaces between terms...
-                obj.text = " " * obj.indent + " ".join(obj.text.strip().split())
-
-            # Track whether this term was rendered in the output yet...
-            obj.diff_rendered = False
-
-            # Use a single 'diff_word' to describe the diff status of this
-            # configuration line...
-            obj.diff_word = default_diff_word
-            retval.append(obj)
-
-        return retval
 
     # This method is on HDiff()
     @logger.catch(reraise=True)
