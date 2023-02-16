@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import sys
-import re
 import os
 
 sys.path.insert(0, "..")
