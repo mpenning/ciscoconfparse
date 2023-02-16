@@ -29,6 +29,7 @@ from loguru import logger
 
 DEFAULT_TEXT = "__undefined__"
 
+
 #
 # -------------  Config Line ABC
 #
@@ -42,22 +43,22 @@ class BaseCfgLine(metaclass=ABCMeta):
         self._uncfgtext_to_be_deprecated = ""
         self._text = DEFAULT_TEXT
         self.linenum = -1
-        self.parent = self   # by default, assign parent as itself
+        self.parent = self  # by default, assign parent as itself
         self.child_indent = 0
         self.is_comment = None
         self.children = []
-        self.indent = 0      # assign indent in the self.text setter method
+        self.indent = 0  # assign indent in the self.text setter method
         self.confobj = None  # Reference to the list object which owns it
         self.blank_line_keep = False  # CiscoConfParse() uses blank_line_keep
 
         # Call set_comment_bool() in the self.text setter method...
-        self.text = text     # Use self.text setter method to set this value
+        self.text = text  # Use self.text setter method to set this value
 
         self._line_id = None
         self.diff_rendered = None
+        self.diff_linenum = -1
         self._diff_word = ""  # diff_word: 'keep', 'remove', 'unchanged', 'add'
         self._diff_side = ""  # diff_side: 'before', 'after' or ''
-
 
         # FIXME
         #   Bypass @text.setter method for now...  @text.setter writes to
@@ -94,7 +95,9 @@ class BaseCfgLine(metaclass=ABCMeta):
             ##   I added hash_arg() inline below for speed... whenever I change
             ##   self.__hash__() I *must* change this
             # FIXME
-            return hash(str(self.linenum) + self.text) == hash(str(val.linenum) + val.text)
+            return hash(str(self.linenum) + self.text) == hash(
+                str(val.linenum) + val.text
+            )
         except Exception:
             return False
 
@@ -162,7 +165,6 @@ class BaseCfgLine(metaclass=ABCMeta):
         len_geneology = len(self.geneology)
 
         for idx, obj in enumerate(self.geneology):
-
             obj._line_id = obj.calculate_line_id()
 
             # idx = 0 is the oldest ancestor
@@ -195,11 +197,24 @@ class BaseCfgLine(metaclass=ABCMeta):
         """A diff_word setter attribute (typically used in HDiff())"""
 
         # Check against expected HDiff() values...
-        if self.diff_side=='before':
-            assert val in set({'keep', 'remove', '',})
+        if self.diff_side == "before":
+            assert val in set(
+                {
+                    "keep",
+                    "remove",
+                    "",
+                }
+            )
 
-        elif self.diff_side=='after':
-            assert val in set({'unchanged', 'add', 'unknown', '',})
+        elif self.diff_side == "after":
+            assert val in set(
+                {
+                    "unchanged",
+                    "add",
+                    "unknown",
+                    "",
+                }
+            )
 
         else:
             raise ValueError("diff_side can only be 'before' or 'after'")
@@ -215,8 +230,29 @@ class BaseCfgLine(metaclass=ABCMeta):
     @diff_side.setter
     def diff_side(self, val):
         """A diff_side setter attribute (typically used in HDiff())"""
-        assert val in set({'before', 'after', '',})
+        assert val in set(
+            {
+                "before",
+                "after",
+                "",
+            }
+        )
         self._diff_side = val
+
+    # On BaseCfgLine()
+    @property
+    def as_diff_dict(self):
+        """An internal dict which is used in :class:`~ciscoconfparse.HDiff()`"""
+        retval = {
+            "linenum": self.diff_linenum,
+            "diff_side": self.diff_side,
+            "diff_word": self.diff_word,
+            "indent": self.indent,
+            "parents": [ii.text for ii in self.all_parents],
+            "text": self.text,
+            "diff_id_list": self.diff_id_list,
+        }
+        return retval
 
     # On BaseCfgLine()
     @property
@@ -255,7 +291,6 @@ class BaseCfgLine(metaclass=ABCMeta):
             #
             self.parent = self
 
-
     def safe_escape_curly_braces(self, text):
         """
         Escape curly braces in strings since they could be misunderstood as
@@ -278,7 +313,6 @@ class BaseCfgLine(metaclass=ABCMeta):
         text = text.replace("{", "{{")
         text = text.replace("}", "}}")
         return text
-
 
     # On BaseCfgLine()
     @property
@@ -315,7 +349,6 @@ class BaseCfgLine(metaclass=ABCMeta):
             return self.linenum
         else:
             return self.all_children[-1].linenum
-
 
     # On BaseCfgLine()
     @property
@@ -476,8 +509,8 @@ class BaseCfgLine(metaclass=ABCMeta):
 
         # Once _uncfgtext_to_be_deprecated is removed, we can make this
         # condition the first in this if-else logic...
-        elif tmp[0].lower()=="no":
-            assert len(tmp) > 1 # join() below only makes sense if len(tmp)>1
+        elif tmp[0].lower() == "no":
+            assert len(tmp) > 1  # join() below only makes sense if len(tmp)>1
             return self.indent * " " + " ".join(tmp[1:])
 
         else:
@@ -498,17 +531,24 @@ class BaseCfgLine(metaclass=ABCMeta):
     # On BaseCfgLine()
     @junos_unsupported
     def delete(self, recurse=True):
-        """Delete this object.  By default, if a parent object is deleted, the child objects are also deleted; this happens because ``recurse`` defaults True.
-        """
+        """Delete this object.  By default, if a parent object is deleted, the child objects are also deleted; this happens because ``recurse`` defaults True."""
         if self.confobj.debug >= 1:
             logger.info("{}.delete(recurse={}) was called.".format(self, recurse))
 
         # Build a set of all IOSCfgLine() object instances to be deleted...
-        delete_these = set({self,})
+        delete_these = set(
+            {
+                self,
+            }
+        )
 
         if recurse is True:
             if self.confobj.debug >= 1:
-                logger.debug("Executing <IOSCfgLine line #{}>.delete(recurse=True)".format(self.linenum))
+                logger.debug(
+                    "Executing <IOSCfgLine line #{}>.delete(recurse=True)".format(
+                        self.linenum
+                    )
+                )
 
             # NOTE - 1.5.30 changed this from iterating over self.children
             #        to self.all_children
@@ -521,12 +561,18 @@ class BaseCfgLine(metaclass=ABCMeta):
             for obj in sorted(delete_these, reverse=True):
                 linenum = obj.linenum
                 if self.confobj.debug >= 1:
-                    logger.debug("    Deleting <IOSCfgLine(line # {})>.".format(linenum))
+                    logger.debug(
+                        "    Deleting <IOSCfgLine(line # {})>.".format(linenum)
+                    )
                 del self.confobj._list[linenum]
 
         else:
             if self.confobj.debug >= 1:
-                logger.debug("Executing <IOSCfgLine line #{}>.delete(recurse=False)".format(self.linenum))
+                logger.debug(
+                    "Executing <IOSCfgLine line #{}>.delete(recurse=False)".format(
+                        self.linenum
+                    )
+                )
             ## Consistency check to refuse deletion of the wrong object...
             ##    only delete if the line numbers are consistent
             text = self.text
@@ -590,14 +636,16 @@ class BaseCfgLine(metaclass=ABCMeta):
            >>>
         """
         # if / else in a list comprehension... ref ---> https://stackoverflow.com/a/9442777/667301
-        retval = [(obj.delete() if obj.re_search(linespec) else obj) for obj in self.children]
+        retval = [
+            (obj.delete() if obj.re_search(linespec) else obj) for obj in self.children
+        ]
         return retval
 
     # On BaseCfgLine()
     def has_child_with(self, linespec, all_children=False):
         assert isinstance(all_children, bool)
         # Old, crusty broken... fixed in 1.6.30...
-        #return bool(filter(methodcaller("re_search", linespec), self.children))
+        # return bool(filter(methodcaller("re_search", linespec), self.children))
         #
         # TODO - check whether using re_match_iter_typed() is faster than this:
         ll = linespec
@@ -619,7 +667,9 @@ class BaseCfgLine(metaclass=ABCMeta):
         calling_filename = inspect.stack()[calling_fn_index].filename
         calling_function = inspect.stack()[calling_fn_index].function
         calling_lineno = inspect.stack()[calling_fn_index].lineno
-        error =  "FATAL CALL: in {} line {} {}(insertstr='{}')".format(calling_filename, calling_lineno, calling_function, insertstr)
+        error = "FATAL CALL: in {} line {} {}(insertstr='{}')".format(
+            calling_filename, calling_lineno, calling_function, insertstr
+        )
         if isinstance(insertstr, str) is True:
             retval = self.confobj.insert_before(insertstr, atomic=False)
 
@@ -629,18 +679,18 @@ class BaseCfgLine(metaclass=ABCMeta):
         else:
             raise ValueError(error)
 
-        #retval = self.confobj.insert_after(self, insertstr, atomic=False)
+        # retval = self.confobj.insert_after(self, insertstr, atomic=False)
         return retval
 
     # On BaseCfgLine()
     @junos_unsupported
     def insert_after(self, insertstr=""):
         """Usage:
-            confobj.insert_after('! insert text after this confobj')"""
+        confobj.insert_after('! insert text after this confobj')"""
 
         # Fail if insertstr is not the correct object type...
         #   only strings and *CfgLine() are allowed...
-        if not isinstance(insertstr, str) and not isinstance(insertstr, 'BaseCfgLine'):
+        if not isinstance(insertstr, str) and not isinstance(insertstr, "BaseCfgLine"):
             error = "Cannot insert object type - %s" % type(insertstr)
             logger.error(error)
             raise NotImplementedError(error)
@@ -650,7 +700,9 @@ class BaseCfgLine(metaclass=ABCMeta):
         calling_filename = inspect.stack()[calling_fn_index].filename
         calling_function = inspect.stack()[calling_fn_index].function
         calling_lineno = inspect.stack()[calling_fn_index].lineno
-        error =  "FATAL CALL: in {} line {} {}(insertstr='{}')".format(calling_filename, calling_lineno, calling_function, insertstr)
+        error = "FATAL CALL: in {} line {} {}(insertstr='{}')".format(
+            calling_filename, calling_lineno, calling_function, insertstr
+        )
         if self.confobj.debug >= 1:
             logger.debug("Inserting '{}' after '{}'".format(insertstr, self))
 
@@ -658,14 +710,14 @@ class BaseCfgLine(metaclass=ABCMeta):
             # Handle insertion of a plain-text line
             retval = self.confobj.insert_after(insertstr, atomic=False)
 
-        elif isinstance(insertstr, 'BaseCfgLine'):
+        elif isinstance(insertstr, "BaseCfgLine"):
             # Handle insertion of a configuration line obj such as IOSCfgLine()
             retval = self.confobj.insert_after(insertstr.text, atomic=False)
 
         else:
             logger.error(error)
             raise ValueError(error)
-        #retval = self.confobj.insert_after(self, insertstr, atomic=False)
+        # retval = self.confobj.insert_after(self, insertstr, atomic=False)
         return retval
 
     # On BaseCfgLine()
@@ -898,7 +950,7 @@ class BaseCfgLine(metaclass=ABCMeta):
            >>>
         """
         mm = re.search(regex, self.text)
-        if (mm is not None):
+        if mm is not None:
             return mm.group(group)
         return default
 
@@ -917,8 +969,8 @@ class BaseCfgLine(metaclass=ABCMeta):
         str
             The :class:`~models_cisco.IOSCfgLine` text which matched.  If there is no match, ``default`` is returned.
         """
-        #assert isinstance(default, str)
-        #assert isinstance(debug, int)
+        # assert isinstance(default, str)
+        # assert isinstance(debug, int)
 
         retval = default
         # Shortcut with a substring match, if possible...
@@ -1012,8 +1064,8 @@ class BaseCfgLine(metaclass=ABCMeta):
            >>>
         """
         mm = re.search(regex, self.text)
-        if (mm is not None):
-            if (mm.group(group) is not None):
+        if mm is not None:
+            if mm.group(group) is not None:
                 return result_type(mm.group(group))
         if untyped_default:
             return default
@@ -1093,7 +1145,7 @@ class BaseCfgLine(metaclass=ABCMeta):
         if recurse is False:
             for cobj in self.children:
                 mm = re.search(regex, cobj.text)
-                if (mm is not None):
+                if mm is not None:
                     return result_type(mm.group(group))
             ## Ref Github issue #121
             if untyped_default:
@@ -1103,7 +1155,7 @@ class BaseCfgLine(metaclass=ABCMeta):
         else:
             for cobj in self.all_children:
                 mm = re.search(regex, cobj.text)
-                if (mm is not None):
+                if mm is not None:
                     return result_type(mm.group(group))
             ## Ref Github issue #121
             if untyped_default:
@@ -1184,5 +1236,3 @@ class BaseCfgLine(metaclass=ABCMeta):
     @classmethod
     def is_object_for(cls, line=""):
         return False
-
-
