@@ -4047,7 +4047,7 @@ class HDiff(object):
         # ^interface foo) in the same manner that they show up in the after_config
         # parameter...
         #
-        pass
+        raise NotImplementedError
 
     # This method is on HDiff()
     @logger.catch(reraise=True)
