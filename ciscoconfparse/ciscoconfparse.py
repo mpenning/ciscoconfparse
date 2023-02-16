@@ -816,7 +816,7 @@ class CiscoConfParse(object):
         self,
         branchspec=(),
         regex_flags=0,
-        allow_none=None,
+        allow_none=True,
         regex_groups=False,
         debug=0,
     ):
@@ -911,13 +911,12 @@ class CiscoConfParse(object):
         """
         # As of verion 1.6.16, allow_none is always True.  See the Deprecation
         # notice above...
-        if allow_none is not None:
+        if allow_none is not True:
             warning = "The allow_none parameter is deprecated as of version 1.6.16.  Going forward, allow_none is always True."
             logger.warning(warning)
-        allow_none = True
+            allow_none = True
 
-        branchspec_is_tuple = isinstance(branchspec, tuple)
-        if branchspec_is_tuple is True:
+        if isinstance(branchspec, tuple):
 
             if debug > 1:
                 message = "{}().find_object_branches(branchspec='{}') was called".format(
@@ -935,6 +934,7 @@ class CiscoConfParse(object):
             logger.error(error)
             raise ValueError(error)
 
+        @logger.catch(reraise=True)
         def list_matching_children(
             parent_obj,
             childspec,
@@ -977,7 +977,7 @@ class CiscoConfParse(object):
                 if re.search(childspec, cobj.text, regex_flags)
             ]
             # Return [None] if no children matched...
-            if (allow_none is True) and len(segment_list) == 0:
+            if len(segment_list) == 0:
                 segment_list = [None]
 
             # FIXME: Insert debugging here...
@@ -989,7 +989,7 @@ class CiscoConfParse(object):
                 )
             return segment_list
 
-        branches = list()
+        branches = []
         # iterate over the regular expressions in branchspec
         for idx, childspec in enumerate(branchspec):
             # FIXME: Insert debugging here...
@@ -1000,17 +1000,14 @@ class CiscoConfParse(object):
                     parent_obj=None,
                     childspec=childspec,
                     regex_flags=regex_flags,
-                    allow_none=allow_none,
+                    allow_none=True,
                     debug=debug,
                 )
-                if allow_none is True:
-                    # Start growing branches from the segments we received...
-                    branches = [[kid] for kid in next_kids]
-                else:
-                    branches = [[kid] for kid in next_kids if kid is not None]
+                # Start growing branches from the segments we received...
+                branches = [[kid] for kid in next_kids]
 
             else:
-                new_branches = list()
+                new_branches = []
                 for branch in branches:
                     # Extend existing branches into the new_branches
                     if branch[-1] is not None:
@@ -1019,7 +1016,7 @@ class CiscoConfParse(object):
                             parent_obj=branch[-1],
                             childspec=childspec,
                             regex_flags=regex_flags,
-                            allow_none=allow_none,
+                            allow_none=True,
                             debug=debug,
                         )
 
@@ -1030,7 +1027,7 @@ class CiscoConfParse(object):
                             tmp = copy.copy(branch)
                             tmp.append(kid)
                             new_branches.append(tmp)
-                    elif allow_none is True:
+                    else:
                         branch.append(None)
                         new_branches.append(branch)
 
@@ -1038,16 +1035,15 @@ class CiscoConfParse(object):
                 branches = new_branches
 
         branches = new_branches
+
         # If regex_groups is True, assign regexp matches to the return matrix.
         if regex_groups is True:
 
-            return_matrix = list()
+            return_matrix = []
             # branchspec = (r"^interfaces", r"\s+(\S+)", r"\s+(unit\s+\d+)", r"family\s+(inet)", r"address\s+(\S+)")
             # for idx_matrix, row in enumerate(self.find_object_branches(branchspec)):
             for _, row in enumerate(branches):
-                enforce_valid_types(row, (Sequence,),
-                    "row parameter must be an instance of collections.abc.Sequence()."
-                )
+                assert isinstance(row, Sequence)
 
                 # Before we check regex capture groups, allocate an "empty return_row"
                 #   of the correct length...
@@ -1057,7 +1053,10 @@ class CiscoConfParse(object):
                 #     return_row will be appended to return_matrix...
                 for idx, element in enumerate(row):
 
-                    if isinstance(element, BaseCfgLine):
+                    if element is None:
+                        return_row[idx] = (None,)
+
+                    else:
                         regex_result = re.search(branchspec[idx], element.text)
                         if regex_result is not None:
                             # Save all the regex capture groups in matched_capture...
@@ -1067,23 +1066,13 @@ class CiscoConfParse(object):
                                 # zero-length tuple, populate this return_row
                                 # with the whole element's text
                                 return_row[idx] = (element.text,)
-                            elif len(matched_capture) > 0:
+                            else:
                                 # In this case, we found regex capture groups
                                 return_row[idx] = matched_capture
-                            else:
-                                raise ValueError
-                        elif (regex_result is None):
+                        else:
                             # No regex capture groups b/c of no regex match...
                             return_row[idx] = (None,)
-                        else:
-                            raise ValueError()
-                    elif element is None:
-                        return_row[idx] = (None,)
-                    else:
-                        substr_01 = "regex matches on {}('{}')".format(
-                            type(element), element.text)
-                        err_str = substr_01 + " are not supported"
-                        raise ValueError(err_str)
+
                 return_matrix.append(return_row)
 
             branches = return_matrix
