@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 import traceback
 import re
-import os
 
 from ciscoconfparse.errors import DynamicAddressException
 
