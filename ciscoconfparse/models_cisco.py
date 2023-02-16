@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 import traceback
-import sys
 import re
 import os
 
@@ -2042,7 +2041,6 @@ class IOSRouteLine(BaseIOSRouteLine):
             return self.route_info["netmask"]
         elif self._address_family == "ipv6":
             return str(self.network_object.netmask)
-        return retval
 
     @property
     def masklen(self):
