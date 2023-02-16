@@ -917,7 +917,6 @@ class CiscoConfParse(object):
             allow_none = True
 
         if isinstance(branchspec, tuple):
-
             if debug > 1:
                 message = "{}().find_object_branches(branchspec='{}') was called".format(
                     self.__class__.__name__, branchspec,
