@@ -139,13 +139,17 @@ class BaseCfgLine(metaclass=ABCMeta):
         """
         Calculate and return an integer line_id for BaseCfgLine()
 
-        line_id is used to build a numerical identity for a given
-        BaseCfgLine().
+        The `hash()` of `self.text` is used to build a numerical identity
+        for a given BaseCfgLine().
 
         Do NOT cache this value.  It must be recalculated when self._text
         changes.
         """
         indent = self.indent
+
+        # Do NOT make changes to _line_id.  This hash() value built from
+        #     _line_id is the glue that holds `ciscoconfparse.HDiff()`
+        #     together.
         _line_id = hash(" " * indent + " ".join(self.text.strip().split()))
 
         if False:
