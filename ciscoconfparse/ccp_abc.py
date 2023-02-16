@@ -146,13 +146,29 @@ class BaseCfgLine(metaclass=ABCMeta):
         changes.
         """
         indent = self.indent
-        if True:
-            _line_id = hash(" " * indent + " ".join(self.text.strip().split()))
-        else:
+        _line_id = hash(" " * indent + " ".join(self.text.strip().split()))
+
+        if False:
+            ##################################################################
             # use str.split() below to ensure that whitespace differences
-            #     hash the same way... I added self.linenum as the result of
-            #     fixing github issue #266
-            _line_id = hash(" " * indent + " ".join((str(self.linenum) + " " + self.text.strip()).split()))
+            #     hash the same way... I added this code as a possible
+            #     implementation for github issue #266... however, after
+            #     using this new code, I decided that it makes HDiff()
+            #     too complicated.
+            #
+            # I am keeping this in calculate_line_id() to document the
+            #     proposal and why I decided against it.
+            ##################################################################
+            indent_str = indent * " "
+            if self.is_comment is False:
+                _line_id = hash(indent_str + " ".join(self.text.strip().split()))
+            elif self.is_comment is True:
+                _line_id = hash(indent_str + " ".join((str(self.linenum) + " " + self.text.strip()).split()))
+            elif self.text.strip() == "":
+                _line_id = hash(str(self.linenum))
+            else:
+                raise NotImplementedError(self.text)
+
         return _line_id
 
     # On BaseCfgLine()
