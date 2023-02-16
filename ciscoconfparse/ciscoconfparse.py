@@ -3397,7 +3397,6 @@ class CiscoConfParse(object):
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
-    @deprecat(reason="sync_diff() is obsolete; use HDiff() instead.", version="1.7.0")
     def sync_diff(
         self,
         cfgspec=None,
@@ -3835,6 +3834,10 @@ class HDiff(object):
         if syntax == "ios":
             self.build_ios_diffs()
 
+        elif syntax == "nxos":
+            # FIXME - I think nxos is not going to work as-expected while using `build_ios_diffs()`
+            self.build_ios_diffs()
+
     def build_diff_obj_lists(self):
         assert isinstance(self.parse_before, CiscoConfParse)
         assert isinstance(self.parse_after, CiscoConfParse)
@@ -4032,32 +4035,14 @@ class HDiff(object):
             # FIXME - I am disabling this to prevent redundant rendering of before_obj and after_obj
             if bobj.diff_word == "keep" and bobj.diff_rendered is False:
                 bobj.diff_rendered = True
-                all_dict_lines.append(
-                    {
-                        "linenum": -1,  # For now, do not include bobj.linenum
-                        "diff_side": "before",
-                        "diff_word": "keep",
-                        "indent": bobj.indent,
-                        "parents": [ii.text for ii in bobj.all_parents],
-                        "text": bobj.text,
-                        "diff_id_list": bobj.diff_id_list,
-                    }
-                )
+                bobj.diff_linenum = -1
+                all_dict_lines.append(bobj.as_diff_dict)
                 continue
 
             elif bobj.diff_word == "remove" and bobj.diff_rendered is False:
                 bobj.diff_rendered = True
-                all_dict_lines.append(
-                    {
-                        "linenum": -1,  # For now, do not include bobj.linenum
-                        "diff_side": "before",
-                        "diff_word": "remove",
-                        "indent": bobj.indent,
-                        "parents": [ii.text for ii in bobj.all_parents],
-                        "text": bobj.text,
-                        "diff_id_list": bobj.diff_id_list,
-                    }
-                )
+                bobj.diff_linenum = -1
+                all_dict_lines.append(bobj.as_diff_dict)
                 continue
 
             else:
@@ -4210,36 +4195,20 @@ class HDiff(object):
         if aobj.diff_word == "unchanged" and aobj.diff_rendered is False:
             # Only render aobj.unchanged if it has children...
             if len(aobj.children) > 0:
-                output.append(
-                    {
-                        "linenum": aobj.linenum,
-                        "diff_side": "after",
-                        "diff_word": aobj.diff_word,
-                        "indent": aobj.indent,
-                        "parents": [ii.text for ii in aobj.all_parents],
-                        "text": aobj.text,
-                        "diff_id_list": aobj.diff_id_list,
-                    }
-                )
                 aobj.diff_rendered = True
+                aobj.diff_linenum = aobj.linenum
+                #aobj.diff_side = "after"
+                output.append(aobj.as_diff_dict)
 
         elif aobj.diff_word == "unchanged" and aobj.diff_rendered is True:
             # Adding this because I think this condition can be removed
             pass
 
         elif aobj.diff_word == "add" and aobj.diff_rendered is False:
-            output.append(
-                {
-                    "linenum": aobj.linenum,
-                    "diff_side": "after",
-                    "diff_word": aobj.diff_word,
-                    "indent": aobj.indent,
-                    "parents": [ii.text for ii in aobj.all_parents],
-                    "text": aobj.text,
-                    "diff_id_list": aobj.diff_id_list,
-                }
-            )
             aobj.diff_rendered = True
+            aobj.diff_linenum = aobj.linenum
+            #aobj.diff_side = "after"
+            output.append(aobj.as_diff_dict)
 
         elif aobj.diff_word == "add" and aobj.diff_rendered is True:
             # Adding this because I think this condition can be removed
@@ -4292,22 +4261,8 @@ class HDiff(object):
         if not isinstance(all_lines, list):
             raise ValueError
 
-        # Ensure that all_line dict entries have the correct keys...
-        for line in all_lines:
-            assert set(line.keys()) == set(
-                {
-                    "linenum",
-                    "diff_side",
-                    "diff_word",
-                    "indent",
-                    "parents",
-                    "text",
-                    "diff_id_list",
-                }
-            )
-
         retval = []
-        lines = dict()  # lines, indexed by diff_id
+        lines = {}   # lines, indexed by diff_id
 
         if debug > 0:
             logger.info(
@@ -4316,17 +4271,10 @@ class HDiff(object):
         for line in all_lines:
             assert isinstance(line, dict)
 
-            if debug > 0:
-                logger.debug("compress_dict_diffs()")
-                logger.debug("""compress_dict_diffs() - `line`""".format(line))
-
             # Unwrap keywords and values from the line...
             diff_side = line["diff_side"]
             diff_word = line["diff_word"]
             diff_id_list = tuple(line["diff_id_list"])
-            diff_id_list_len = len(diff_id_list)
-            diff_id_list_csv = ",".join([str(ii) for ii in diff_id_list])
-            text = line["text"]
 
             # Remove some lines from consideration...
             if lines.get(diff_id_list, None) is not None:
@@ -4335,7 +4283,7 @@ class HDiff(object):
             if diff_side == "before" and diff_word == "keep":
                 if debug > 0:
                     logger.info(
-                        "compress_dict_diffs() {0},{1} APPEND {2}".format(
+                        "compress_dict_diffs() {0},{1} APPEND-00 {2}".format(
                             diff_side, diff_word, line
                         )
                     )
@@ -4346,7 +4294,7 @@ class HDiff(object):
             elif diff_side == "before" and diff_word == "remove":
                 if debug > 0:
                     logger.info(
-                        "compress_dict_diffs() {0},{1} APPEND {2}".format(
+                        "compress_dict_diffs() {0},{1} APPEND-01 {2}".format(
                             diff_side, diff_word, line
                         )
                     )
@@ -4358,7 +4306,7 @@ class HDiff(object):
                 if lines.get(diff_id_list, None) is None:
                     if debug > 0:
                         logger.info(
-                            "compress_dict_diffs() {0},{1} APPEND {2}".format(
+                            "compress_dict_diffs() {0},{1} APPEND-02 {2}".format(
                                 diff_side, diff_word, line
                             )
                         )
@@ -4367,13 +4315,19 @@ class HDiff(object):
                 else:
                     if debug > 0:
                         logger.info(
-                            "compress_dict_diffs() {0},{1} SKIP {2}".format(
+                            "compress_dict_diffs() {0},{1} SKIP-02 {2}".format(
                                 diff_side, diff_word, line
                             )
                         )
 
             elif diff_side == "after" and diff_word == "add":
-                last_idx = -1
+
+                if debug > 0:
+                    logger.info(
+                        "compress_dict_diffs() {0},{1} APPEND-03 {2}".format(
+                            diff_side, diff_word, line
+                        )
+                    )
 
                 # Calculate values associated with lines...
                 line_id_len = len(line["diff_id_list"])
@@ -4381,7 +4335,19 @@ class HDiff(object):
 
                 # check retval and find where we should "add" the
                 # line...
+                if debug > 1:
+                    logger.info(
+                        "compress_dict_diffs() looping through retval to find the correct place to ADD {0}".format(line)
+                    )
                 for loop_idx, this_dict in enumerate(retval):
+
+                    if debug > 1:
+                        logger.info(
+                            "    compress_dict_diffs() retval[{0}] = {1}".format(
+                                loop_idx, this_dict
+                            )
+                        )
+
                     this_id_len = len(this_dict["diff_id_list"])
                     this_id_csv = ",".join(
                         [str(ii) for ii in this_dict["diff_id_list"]]
@@ -4390,12 +4356,17 @@ class HDiff(object):
                     # if this_dict (as a string csv) is a substring of line's csv,
                     # check whether this_dict should be line's parent...
                     if this_id_csv in line_id_csv:
-                        last_idx = loop_idx
 
                         # If the length of this_dict["diff_id_list"] is one element
                         # longer than line["diff_id_list"], it's a pretty
                         # safe assumption that this_dict is line's parent...
                         if (this_id_len + 1) == line_id_len:
+                            if debug > 1:
+                                logger.info(
+                                    "    compress_dict_diffs() INSERT at retval[{0}] -> {1}".format(
+                                        loop_idx+1, this_dict
+                                    )
+                                )
                             retval.insert(loop_idx + 1, line)
                             lines[diff_id_list] = len(retval) - 1
                             break
@@ -4404,7 +4375,7 @@ class HDiff(object):
                     # completely new element at the bottom of retval
                     if debug > 0:
                         logger.info(
-                            "compress_dict_diffs() {0},{1} APPEND {2}".format(
+                            "compress_dict_diffs() {0},{1} APPEND-04 {2}".format(
                                 diff_side, diff_word, line
                             )
                         )
