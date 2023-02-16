@@ -1177,7 +1177,7 @@ class IPv4Obj(object):
     def __add__(self, val):
         """Add an integer to IPv4Obj() and return an IPv4Obj()"""
         if not isinstance(val, int):
-            raise ValueError("Cannot add type: '{}' to {}".format(type(val)))
+            raise ValueError("Cannot add type: '{0}' to IPv4Obj()".format(type(val)))
 
         orig_prefixlen = self.prefixlen
         total = self.as_decimal + val
