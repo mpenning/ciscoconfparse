@@ -3867,21 +3867,16 @@ class HDiff(object):
 
     # This method is on HDiff()
     @logger.catch(reraise=True)
-    def build_diff_obj_list(
-        self, parse=None, default_diff_word=None, consider_whitespace=False
-    ):
+    def build_diff_obj_list(self, parse=None, default_diff_word=None):
         """
         Return a list of *CfgLine() objects which are relevant to the diff...
         """
-        assert parse is not None
+        assert isinstance(parse, CiscoConfParse)
         if not isinstance(default_diff_word, str):
             raise ValueError
+
         retval = []
         for obj in parse.objs:
-            # Will multiple spaces between diff_words affect a diff match?
-            if consider_whitespace is False:
-                # Rewrite obj.text to remove multiple spaces between terms...
-                obj.text = " " * obj.indent + " ".join(obj.text.strip().split())
 
             # Track whether this term was rendered in the output yet...
             obj.diff_rendered = False
