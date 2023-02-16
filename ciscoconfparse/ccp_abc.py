@@ -146,7 +146,13 @@ class BaseCfgLine(metaclass=ABCMeta):
         changes.
         """
         indent = self.indent
-        _line_id = hash(" " * indent + " ".join(self.text.strip().split()))
+        if True:
+            _line_id = hash(" " * indent + " ".join(self.text.strip().split()))
+        else:
+            # use str.split() below to ensure that whitespace differences
+            #     hash the same way... I added self.linenum as the result of
+            #     fixing github issue #266
+            _line_id = hash(" " * indent + " ".join((str(self.linenum) + " " + self.text.strip()).split()))
         return _line_id
 
     # On BaseCfgLine()
