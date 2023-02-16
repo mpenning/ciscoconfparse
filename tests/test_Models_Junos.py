@@ -1,5 +1,4 @@
 import sys
-import re
 import os
 
 sys.path.insert(0, "..")
