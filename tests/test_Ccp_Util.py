@@ -24,7 +24,6 @@ r""" test_Ccp_Util.py - Parse, Query, Build, and Modify IOS-style configs
 
 
 import sys
-import re
 import os
 
 sys.path.insert(0, "..")
@@ -37,12 +36,8 @@ from ciscoconfparse.ccp_util import dns_lookup, reverse_dns_lookup
 from ciscoconfparse.ccp_util import collapse_addresses
 import pytest
 
-if sys.version_info[0] < 3:
-    from ipaddr import IPv4Network, IPv6Network, IPv4Address, IPv6Address
-    import ipaddr
-else:
-    from ipaddress import IPv4Network, IPv6Network, IPv4Address, IPv6Address
-    import ipaddress
+from ipaddress import IPv4Network, IPv6Network, IPv4Address, IPv6Address
+import ipaddress
 
 from dns.resolver import Timeout
 
