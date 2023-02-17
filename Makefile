@@ -222,6 +222,8 @@ clean:
 	-find ./* -path '*__pycache__' -exec rm -rf {} \;
 	@# remove all the MockSSH keys
 	-find ./* -name '*.key' -exec rm {} \;
+	-rm .pip_dependency
+	-rm -rf .mypy_cache/
 	-rm -rf poetry.lock
 	-rm -rf .pytest_cache/
 	-rm -rf .eggs/
