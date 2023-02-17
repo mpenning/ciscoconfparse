@@ -2634,8 +2634,19 @@ interface Ethernet109/1/4
 
 """.splitlines()
 
+    # parse the baseline config with the nxos parser... keep blank lines...
     parse = CiscoConfParse(BASELINE, syntax="nxos", ignore_blank_lines=False)
 
+    # Demonstrate that nxos config blank lines exist at these baseline and
+    # test_result indexes...
+    for idx in [5, 11, 16, 21,]:
+
+        correct_result = BASELINE[idx]
+        test_result = parse.objs[idx].text
+        assert correct_result == ""
+        assert correct_result == test_result
+
+    # Walk the configuration and validate the test results match expected results
     for idx in range(0, len(BASELINE) - 1):
 
         correct_result = BASELINE[idx]
