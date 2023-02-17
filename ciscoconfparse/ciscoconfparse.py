@@ -572,7 +572,7 @@ class CiscoConfParse(object):
         else:
             raise ValueError
 
-        assert self._check_ccp_input_good(config=tmp_lines) is True
+        assert self._check_ccp_input_good(config=tmp_lines, logger=logger) is True
 
         # conditionally strip off junos-config braces and other syntax
         #     parsing  issues...
@@ -3408,7 +3408,7 @@ class CiscoConfParse(object):
         debug=0,
     ):
         r"""
-        ``sync_diff()`` accepts a list of required configuration elements,
+        `sync_diff()` accepts a list of required configuration elements,
         a linespec, and an unconfig spec.  This method return a list of
         Cisco IOS-style configuration diffs to make the configuration comply
         with cfgspec.
@@ -3481,7 +3481,7 @@ class CiscoConfParse(object):
         """
 
         if cfgspec is None:
-            cfgspec = self._list
+            cfgspec = self.ConfigObjs
 
         if linespec is None:
             raise ValueError("linespec is a required parameter")
@@ -3534,8 +3534,9 @@ class CiscoConfParse(object):
                     # required...
                     #
                     # Append parent remove_cmd command entries (if any...)
-                    for pcmd in parents:
-                        retval.append(pcmd)
+                    if False:
+                        for pcmd in parents:
+                            retval.append(pcmd)
 
                     retval.append(remove_cmd)
                 else:
@@ -3664,6 +3665,7 @@ class HDiff(object):
         syntax="ios",
         ordered_diff=False,
         allow_duplicates=False,
+        ignore_blank_lines=True,
         output_format="unified",
         debug=0,
     ):
@@ -3682,8 +3684,10 @@ class HDiff(object):
             A boolean for whether the returned-diff lines must be ordered.  Default value: `False`
         allow_duplicates : bool
             A boolean for whether the returned-diff lines may be duplicated.  Default value: `False`
+        ignore_blank_lines : bool
+            A boolean for whether blank lines in the configuration are ignored / removed.
         debug : int
-            ``debug`` defaults to 0, and should be kept that way unless you're working on a tricky config diff problem.  Debug range goes from 0 (no debugging) to 5 (max debugging).  Debug output is not particularly friendly.
+            `debug` defaults to 0, and should be kept that way unless you're working on a tricky config diff problem.  Debug range goes from 0 (no debugging) to 5 (max debugging).  Debug output is not particularly friendly.
 
 
         Returns
@@ -3776,12 +3780,17 @@ class HDiff(object):
         enforce_valid_types(
             allow_duplicates, (bool,), "allow_duplicates parameter must be a bool."
         )
+        enforce_valid_types(
+            ignore_blank_lines, (bool,), "ignore_blank_lines parameter must be a bool."
+        )
         enforce_valid_types(debug, (int,), "debug parameter must be an int.")
         assert syntax in set(ALL_VALID_SYNTAX)
 
         # Initialize attributes...
         self.syntax = syntax
         self.ordered_diff = ordered_diff
+        self.allow_duplicates = allow_duplicates
+        self.ignore_blank_lines = ignore_blank_lines
         self.before_config = before_config
         self.after_config = after_config
         self.before_obj = None
@@ -3834,12 +3843,14 @@ class HDiff(object):
 
         if not isinstance(self.before_config, CiscoConfParse):
             self.parse_before = CiscoConfParse(
-                self.before_config, syntax=self.syntax, ignore_blank_lines=blank_lines_ignore
+                self.before_config, syntax=self.syntax,
+                ignore_blank_lines=self.ignore_blank_lines,
             )
 
         if not isinstance(self.after_config, CiscoConfParse):
             self.parse_after = CiscoConfParse(
-                self.after_config, syntax=self.syntax, ignore_blank_lines=blank_lines_ignore
+                self.after_config, syntax=self.syntax,
+                ignore_blank_lines=self.ignore_blank_lines,
             )
 
     def build_diff_obj_lists(self):
@@ -3867,16 +3878,19 @@ class HDiff(object):
 
     # This method is on HDiff()
     @logger.catch(reraise=True)
-    def build_diff_obj_list(self, parse=None, default_diff_word=None):
+    def build_diff_obj_list(
+        self, parse=None, default_diff_word=None,
+    ):
         """
         Return a list of *CfgLine() objects which are relevant to the diff...
         """
         assert isinstance(parse, CiscoConfParse)
         if not isinstance(default_diff_word, str):
             raise ValueError
-
         retval = []
         for obj in parse.objs:
+            # Rewrite obj.text to remove multiple spaces between terms...
+            obj.text = " " * obj.indent + " ".join(obj.text.strip().split())
 
             # Track whether this term was rendered in the output yet...
             obj.diff_rendered = False
@@ -4271,13 +4285,13 @@ class HDiff(object):
             logger.info(
                 "compress_dict_diffs() will iterate over the `all_lines` variable."
             )
-        for line in all_lines:
-            assert isinstance(line, dict)
+        for line_dict in all_lines:
+            assert isinstance(line_dict, dict)
 
-            # Unwrap keywords and values from the line...
-            diff_side = line["diff_side"]
-            diff_word = line["diff_word"]
-            diff_id_list = tuple(line["diff_id_list"])
+            # Unwrap keywords and values from the line_dict...
+            diff_side = line_dict["diff_side"]
+            diff_word = line_dict["diff_word"]
+            diff_id_list = tuple(line_dict["diff_id_list"])
 
             # Remove some lines from consideration...
             if lines.get(diff_id_list, None) is not None:
@@ -4287,10 +4301,10 @@ class HDiff(object):
                 if debug > 0:
                     logger.info(
                         "compress_dict_diffs() {0},{1} APPEND-00 {2}".format(
-                            diff_side, diff_word, line
+                            diff_side, diff_word, line_dict
                         )
                     )
-                retval.append(line)
+                retval.append(line_dict)
                 lines[diff_id_list] = len(retval) - 1
 
             # We can remove pretty easily... don't do anything...
@@ -4298,10 +4312,10 @@ class HDiff(object):
                 if debug > 0:
                     logger.info(
                         "compress_dict_diffs() {0},{1} APPEND-01 {2}".format(
-                            diff_side, diff_word, line
+                            diff_side, diff_word, line_dict
                         )
                     )
-                retval.append(line)
+                retval.append(line_dict)
                 lines[diff_id_list] = len(retval) - 1
 
             elif diff_side == "after" and diff_word == "unchanged":
@@ -4310,16 +4324,16 @@ class HDiff(object):
                     if debug > 0:
                         logger.info(
                             "compress_dict_diffs() {0},{1} APPEND-02 {2}".format(
-                                diff_side, diff_word, line
+                                diff_side, diff_word, line_dict
                             )
                         )
-                    retval.append(line)
+                    retval.append(line_dict)
                     lines[diff_id_list] = len(retval) - 1
                 else:
                     if debug > 0:
                         logger.info(
                             "compress_dict_diffs() {0},{1} SKIP-02 {2}".format(
-                                diff_side, diff_word, line
+                                diff_side, diff_word, line_dict
                             )
                         )
 
@@ -4328,19 +4342,19 @@ class HDiff(object):
                 if debug > 0:
                     logger.info(
                         "compress_dict_diffs() {0},{1} APPEND-03 {2}".format(
-                            diff_side, diff_word, line
+                            diff_side, diff_word, line_dict
                         )
                     )
 
                 # Calculate values associated with lines...
-                line_id_len = len(line["diff_id_list"])
-                line_id_csv = ",".join([str(ii) for ii in line["diff_id_list"]])
+                line_id_len = len(line_dict["diff_id_list"])
+                line_id_csv = ",".join([str(ii) for ii in line_dict["diff_id_list"]])
 
                 # check retval and find where we should "add" the
-                # line...
+                # line_dict...
                 if debug > 1:
                     logger.info(
-                        "compress_dict_diffs() looping through retval to find the correct place to ADD {0}".format(line)
+                        "compress_dict_diffs() looping through retval to find the correct place to ADD {0}".format(line_dict)
                     )
                 for loop_idx, this_dict in enumerate(retval):
 
@@ -4361,8 +4375,8 @@ class HDiff(object):
                     if this_id_csv in line_id_csv:
 
                         # If the length of this_dict["diff_id_list"] is one element
-                        # longer than line["diff_id_list"], it's a pretty
-                        # safe assumption that this_dict is line's parent...
+                        # longer than line_dict["diff_id_list"], it's a pretty
+                        # safe assumption that this_dict is line_dict's parent...
                         if (this_id_len + 1) == line_id_len:
                             if debug > 1:
                                 logger.info(
@@ -4370,33 +4384,33 @@ class HDiff(object):
                                         loop_idx+1, this_dict
                                     )
                                 )
-                            retval.insert(loop_idx + 1, line)
+                            retval.insert(loop_idx+1, line_dict)
                             lines[diff_id_list] = len(retval) - 1
                             break
                 else:
-                    # If there's no match above, assume we add line as a
+                    # If there's no match above, assume we add line_dict as a
                     # completely new element at the bottom of retval
                     if debug > 0:
                         logger.info(
                             "compress_dict_diffs() {0},{1} APPEND-04 {2}".format(
-                                diff_side, diff_word, line
+                                diff_side, diff_word, line_dict
                             )
                         )
-                    retval.append(line)
+                    retval.append(line_dict)
                     lines[diff_id_list] = len(retval) - 1
 
             else:
-                raise ValueError(line)
+                raise ValueError(line_dict)
 
-            if line["diff_word"] != "remove":
+            if line_dict["diff_word"] != "remove":
                 try:
-                    assert tuple(line["diff_id_list"]) in lines.keys()
+                    assert tuple(line_dict["diff_id_list"]) in lines.keys()
                 except Exception:
-                    raise ValueError(line)
+                    raise ValueError(line_dict)
 
         # FIXME - undo this after I work out all bugs
-        for line in retval:
-            del line["diff_id_list"]
+        for line_dict in retval:
+            del line_dict["diff_id_list"]
 
         return retval
 
