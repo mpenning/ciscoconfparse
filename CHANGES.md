@@ -4,6 +4,28 @@
 - Summary:
     - Insert something here
 
+## Version: 1.7.17
+
+- Released: 2023-02-17
+- Summary:
+    - Simplify `find_object_branches()`
+    - Remove unused test fixtures and imports
+    - As part of Github issue #264 (Remove duplicated obj init code from `CiscoConfParse()._bootstrap_obj_init_foo()`), we removed a duplicated method: `ConfigList()._build_cfgobj_from_text()`
+    - As part of Github issue #265, we fixed a broken `loguru` parameter: changed it from `allow_enqueue` to `enqueue`
+    - Closed Github issue #266 as wont-fix: make `BaseCfgLine().calculate_line_id()` hash comments / whitespace
+    - Reformat `ciscoconfparse/ciscoconfparse.py` and `ciscoconfparse/ccp_abc.py` with black
+    - Add new `as_dict_diff` attribute (used by `HDiff()`) on `BaseCfgLine()`.
+    - Add more debugs in `HDiff().compress_dict_diffs()`.
+    - Raise an explicit `NotImplementedError` in `HDiff().sort_lines()`
+    - Remove manual prepends from `HDiff()` and `CiscoConfParse().sync_diff()`
+    - Remove hard-coded blank-line handling which was based on the value of the `HDiff()` `syntax` parameter
+    - Add `ignore_blank_lines` parameter to `HDiff()` (to mirror the same parameter in `CiscoConfParse()`)
+    - Remove the `consider_whitespace` parameter from `HDiff().build_diff_obj_list()`
+    - Change `CiscoConfParse()._list` to `CiscoConfParse().ConfigObjs`
+    - Expand test coverage to test parsing with and without blank lines in the input config.
+    - Add more test cases to check blank line parsing while using any valid ccp syntax
+    - Update documentation
+
 ## Version: 1.7.16
 
 - Released: 2023-02-13
@@ -14,6 +36,7 @@
     - Improve `BaseCfgLine()` initialization
     - Improve `BaseCfgLine()` attribute handling: `.text`, `.indent`
     - Remove loop in `testValues_find_children()` to simplify test flow.
+    - Ensured that all comments are their own parents - comments can NOT be children of a parent
     - Add `ccp_util.fix_repeated_words()`
     - Change `allow_enqueue` parameter to `enqueue` in `ccp_logger_control()`.  `allow_enqueue` is not a valid `loguru` parameter name.
 
@@ -27,6 +50,8 @@
     - Extract common object init code from `CiscoConfParse()._bootstrap_obj_init_foo()` (where foo = asa, ios, nxos and junos) into `_build_cfgobj_from_text()`.
     - Remove the unused `output_format` parameter from `HDiff()`
     - Add `HDiff()` docstrings
+    - Resolved Github issue #262: bad function argument + infinite recursion problem
+    - Resolved Github issue #263: Remove duplicated code from `CiscoConfParse()._bootstrap_from_text()`
 
 ## Version: 1.7.14
 
