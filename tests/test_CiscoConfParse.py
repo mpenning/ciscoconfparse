@@ -2653,6 +2653,99 @@ interface Ethernet109/1/4
         test_result = parse.objs[idx].text
         assert correct_result == test_result
 
+def test_nxos_blank_line_04():
+    """Test that blank lines are ignored with `ignore_blank_lines=True`"""
+
+    BASELINE = """interface Ethernet109/1/1
+  switchport mode trunk
+  switchport trunk native vlan 201
+  spanning-tree port type edge
+  channel-group 1208
+
+interface Ethernet109/1/2
+  switchport mode trunk
+  switchport trunk native vlan 800
+  spanning-tree port type edge
+  channel-group 2208
+
+interface Ethernet109/1/3
+  switchport mode trunk
+  switchport trunk native vlan 201
+  spanning-tree port type edge
+
+interface Ethernet109/1/4
+  switchport mode trunk
+  switchport trunk native vlan 800
+  spanning-tree port type edge
+
+""".splitlines()
+
+    # parse the baseline config with all parsers... **ignore** all blank
+    #     lines...
+    for syntax in ["ios", "nxos", "asa", "junos",]:
+        parse = CiscoConfParse(
+            BASELINE,
+            syntax=syntax,
+            ignore_blank_lines=True,
+        )
+
+        # Demonstrate that the syntax with ignored blank lines never returns
+        # a blank line... note that we have to reduce the BASELINE config
+        # length by four because of four blank lines in the BASELINE
+        # configuration.
+        for idx in range(0, len(BASELINE) - 4):
+
+            # Ensure that NO line in the config has blank lines
+            assert parse.objs[idx].text.strip() != ""
+
+
+def test_nxos_blank_line_05():
+    """Test that blank lines are kept with `ignore_blank_lines=False`"""
+
+    BASELINE = """interface Ethernet109/1/1
+  switchport mode trunk
+  switchport trunk native vlan 201
+  spanning-tree port type edge
+  channel-group 1208
+
+interface Ethernet109/1/2
+  switchport mode trunk
+  switchport trunk native vlan 800
+  spanning-tree port type edge
+  channel-group 2208
+
+interface Ethernet109/1/3
+  switchport mode trunk
+  switchport trunk native vlan 201
+  spanning-tree port type edge
+
+interface Ethernet109/1/4
+  switchport mode trunk
+  switchport trunk native vlan 800
+  spanning-tree port type edge
+
+""".splitlines()
+
+    # parse the baseline config with all parsers... **keep** all
+    #     four blank lines...
+    for syntax in ["ios", "nxos", "asa", "junos",]:
+        parse = CiscoConfParse(
+            BASELINE,
+            syntax=syntax,
+            ignore_blank_lines=False,
+        )
+
+        # Demonstrate that the syntax including blank lines counts
+        #     four blank lines in the configuration above...
+        blank_count = 0
+        for idx in range(0, len(BASELINE) - 0):
+
+            if parse.objs[idx].text.strip() == "":
+                blank_count += 1
+
+        assert blank_count == 4
+
+
 def test_has_line_with_all_syntax():
     config = """
 interface GigabitEthernet0/1
