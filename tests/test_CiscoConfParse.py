@@ -131,7 +131,7 @@ def testParse_f5_as_ios_02(parse_f02_ios_01):
     """
     assert len(parse_f02_ios_01.objs)==67
 
-    result_correct = [
+    correct_result = [
         "ltm profile udp DNS-UDP {",
         "    app-service none",
         "    datagram-load-balancing disabled",
@@ -201,7 +201,7 @@ def testParse_f5_as_ios_02(parse_f02_ios_01):
         "sys url-db download-schedule urldb { }",
     ]
     # Close curly-braces should be assigned as children of the open curly-brace
-    result_correct_linenum_dict = {
+    correct_result_linenum_dict = {
         0: {'linenum': 1, 'parent_linenum': 1,},
         1: {'linenum': 2, 'parent_linenum': 1,},
         2: {'linenum': 3, 'parent_linenum': 1,},
@@ -275,13 +275,13 @@ def testParse_f5_as_ios_02(parse_f02_ios_01):
         assert idx + 1 == obj.linenum
 
         # Be sure to strip off any double-spacing before comparing to obj.text
-        tmp = result_correct[idx]
+        tmp = correct_result[idx]
         indent = len(tmp.rstrip()) - len(tmp.strip())
         assert indent == obj.indent
-        assert result_correct[idx] == obj.text
+        assert correct_result[idx] == obj.text
 
-        assert result_correct_linenum_dict[idx]['linenum'] == obj.linenum
-        assert result_correct_linenum_dict[idx]['parent_linenum'] == obj.parent.linenum
+        assert correct_result_linenum_dict[idx]['linenum'] == obj.linenum
+        assert correct_result_linenum_dict[idx]['parent_linenum'] == obj.parent.linenum
 
 def testParse_f5_as_junos(parse_f01_junos_01):
     """Test parsing f5 config as junos syntax"""
@@ -637,7 +637,7 @@ end""".splitlines()
 
 def testValues_banner_child_parsing_01(parse_c01):
     """Associate banner lines as parent / child"""
-    result_correct = {
+    correct_result = {
         59: 58,
         60: 58,
         61: 58,
@@ -650,7 +650,7 @@ def testValues_banner_child_parsing_01(parse_c01):
     assert banner_obj.parent.linenum == 58
     for child in banner_obj.all_children:
         test_result = child.parent.linenum
-        assert result_correct[child.linenum] == test_result
+        assert correct_result[child.linenum] == test_result
 
 
 def testValues_banner_child_parsing_02():
@@ -682,11 +682,11 @@ This router is protected by a hungry admin
     }
     for obj in parse.find_objects(""):
 
-        result_correct = parent_intf_dict.get(obj.linenum, -1)
-        if result_correct:
+        correct_result = parent_intf_dict.get(obj.linenum, -1)
+        if correct_result:
             test_result = obj.parent.linenum
             ## Does this object parent's line number match?
-            assert result_correct == test_result
+            assert correct_result == test_result
 
 
 def testValues_parent_child_parsing_01(parse_c01):
@@ -703,11 +703,11 @@ def testValues_parent_child_parsing_01(parse_c01):
         25: 21,
     }
     for obj in parse_c01.find_objects(""):
-        result_correct = parent_intf.get(obj.linenum, False)
-        if result_correct:
+        correct_result = parent_intf.get(obj.linenum, False)
+        if correct_result:
             test_result = obj.parent.linenum
             ## Does this object parent's line number match?
-            assert result_correct == test_result
+            assert correct_result == test_result
 
 
 def testValues_parent_child_parsing_02(parse_c01):
@@ -748,11 +748,11 @@ def testValues_parent_child_parsing_02(parse_c01):
 
     # Validate line numbers *before* inserting
     for obj in cfg.find_objects("^interface"):
-        result_correct = parent_intf_before_dict.get(obj.linenum, -1)
-        if result_correct:
+        correct_result = parent_intf_before_dict.get(obj.linenum, -1)
+        if correct_result:
             test_result = obj.parent.linenum
             ## Does this object parent's line number match?
-            assert result_correct == test_result
+            assert correct_result == test_result
 
 
     # Dictionary of parent linenumber assignments below...
@@ -821,12 +821,12 @@ def testValues_parent_child_parsing_02(parse_c01):
     # Validate line numbers *after* inserting
     for parent_obj in cfg.find_objects("^interface"):
         for child_obj in parent_obj.all_children:
-            # result_correct is the **correct parent line number** after insert...
-            result_correct = parent_linenum_after_dict.get(child_obj.linenum, -1)
+            # correct_result is the **correct parent line number** after insert...
+            correct_result = parent_linenum_after_dict.get(child_obj.linenum, -1)
 
             test_result = child_obj.parent.linenum
             ## Does this object parent's line number match?
-            assert result_correct == test_result
+            assert correct_result == test_result
 
 
 def testValues_find_lines(parse_c01):
@@ -868,9 +868,9 @@ def testValues_find_lines(parse_c01):
         ),
     )
 
-    for args, result_correct in find_lines_Values:
+    for args, correct_result in find_lines_Values:
         test_result = parse_c01.find_lines(**args)
-        assert result_correct == test_result
+        assert correct_result == test_result
 
 
 def testValues_find_children(parse_c01):
@@ -913,9 +913,9 @@ def testValues_find_all_children01(parse_c01):
         ({"linespec": "policy-map", "exactmatch": True}, []),
     )
 
-    for args, result_correct in find_all_children_Values:
+    for args, correct_result in find_all_children_Values:
         test_result = parse_c01.find_all_children(**args)
-        assert result_correct == test_result
+        assert correct_result == test_result
 
 
 def testValues_find_all_chidren02():
@@ -931,7 +931,7 @@ def testValues_find_all_chidren02():
         "   400",
         "thing2",
     ]
-    RESULT_CORRECT = [
+    correct_result = [
         "thing1",
         " foo",
         "  bar",
@@ -942,11 +942,11 @@ def testValues_find_all_chidren02():
     ]
     cfg = CiscoConfParse(CONFIG)
     test_result = cfg.find_all_children("^thing1")
-    assert RESULT_CORRECT == test_result
+    assert correct_result == test_result
 
 
 def testValues_find_blocks(parse_c01):
-    result_correct = [
+    correct_result = [
         "banner login ^C",
         "This is a router, and you cannot have it.",
         "Log off now while you still can type. I break the fingers",
@@ -955,7 +955,7 @@ def testValues_find_blocks(parse_c01):
     ]
 
     test_result = parse_c01.find_blocks("tresspasser")
-    assert result_correct == test_result
+    assert correct_result == test_result
 
 
 def testValues_list_before_01():
@@ -1102,9 +1102,9 @@ def testValues_find_parents_w_child(parse_c01):
     )
 
     ## test find_parents_w_child
-    for args, result_correct in find_parents_w_child_Values:
+    for args, correct_result in find_parents_w_child_Values:
         test_result = parse_c01.find_parents_w_child(**args)
-        assert result_correct == test_result
+        assert correct_result == test_result
 
 
 def testValues_find_parents_wo_child(parse_c01):
@@ -1124,9 +1124,9 @@ def testValues_find_parents_wo_child(parse_c01):
     )
 
     ## test find_parents_wo_child
-    for args, result_correct in find_parents_wo_child_Values:
+    for args, correct_result in find_parents_wo_child_Values:
         test_result = parse_c01.find_parents_wo_child(**args)
-        assert result_correct == test_result
+        assert correct_result == test_result
 
 
 def testValues_find_children_w_parents(parse_c01):
@@ -1142,9 +1142,9 @@ def testValues_find_children_w_parents(parse_c01):
         ),
     )
     ## test find_children_w_parents
-    for args, result_correct in find_children_w_parents_Values:
+    for args, correct_result in find_children_w_parents_Values:
         test_result = parse_c01.find_children_w_parents(**args)
-        assert result_correct == test_result
+        assert correct_result == test_result
 
 
 def testValues_find_object_branches_01():
@@ -1329,8 +1329,8 @@ def testValues_find_object_branches_04(parse_c01):
     # matches...
     branchspec = (r"this", r"dont", "match", "at", "all")
     test_result = parse_c01.find_object_branches(branchspec=branchspec)
-    result_correct = [[None, None, None, None, None]]
-    assert test_result == result_correct
+    correct_result = [[None, None, None, None, None]]
+    assert test_result == correct_result
 
 def testValues_find_object_branches_05():
     """Basic test: find_object_branches() - Test that non-existent regex child levels are returned if allow_none=True (see Github Issue #178)"""
@@ -1368,17 +1368,17 @@ def testValues_find_objects_w_parents(parse_c01):
         ),
     )
     ## test find_children_w_parents
-    for args, result_correct in find_objects_w_parents_Values:
+    for args, correct_result in find_objects_w_parents_Values:
         test_result = [ii.text for ii in parse_c01.find_objects_w_parents(**args)]
-        assert result_correct == test_result
+        assert correct_result == test_result
 
 
 def testValues_find_objects_w_all_children(parse_c01):
-    result_correct = parse_c01.find_objects(r"^interface GigabitEthernet4/[12]")
+    correct_result = parse_c01.find_objects(r"^interface GigabitEthernet4/[12]")
     test_result = parse_c01.find_objects_w_all_children(
         "^interface", ["switchport voice", "power inline"]
     )
-    assert test_result == result_correct
+    assert test_result == correct_result
 
 def testValues_delete_children_matching():
     config = [
@@ -1392,7 +1392,7 @@ def testValues_delete_children_matching():
         ' ip address 1.1.1.5 255.255.255.252',
         '!',
     ]
-    result_correct = [
+    correct_result = [
         '!',
         'interface Serial1/0',
         ' ip address 1.1.1.1 255.255.255.252',
@@ -1404,7 +1404,7 @@ def testValues_delete_children_matching():
     parse = CiscoConfParse(config, syntax="ios")
     for obj in parse.find_objects(r'^interface'):
         obj.delete_children_matching('description')
-    assert parse.ioscfg == result_correct
+    assert parse.ioscfg == correct_result
 
 def testValues_delete_lines_01():
     """Catch bugs similar to those fixed by https://github.com/mpenning/ciscoconfparse/pull/140"""
@@ -1420,7 +1420,7 @@ def testValues_delete_lines_01():
         "end",
     ]
 
-    result_correct = [
+    correct_result = [
         "interface FastEthernet0/2",
         " switchport mode trunk",
         " switchport trunk allowed 300,532",
@@ -1431,7 +1431,7 @@ def testValues_delete_lines_01():
 
     parse = CiscoConfParse(config, syntax="ios")
     parse.delete_lines("port-security")  # Delete lines from config
-    assert parse.ioscfg == result_correct
+    assert parse.ioscfg == correct_result
 
 
 def testValues_delete_lines_02():
@@ -1448,7 +1448,7 @@ def testValues_delete_lines_02():
         "end",
     ]
 
-    result_correct = [
+    correct_result = [
         "interface FastEthernet0/2",
         " switchport mode trunk",
         " switchport trunk allowed 300,532",
@@ -1459,7 +1459,7 @@ def testValues_delete_lines_02():
 
     parse = CiscoConfParse(config, syntax="ios")
     parse.delete_lines("port-security")  # Delete lines from config
-    assert parse.ioscfg == result_correct
+    assert parse.ioscfg == correct_result
 
 
 def testValues_delete_lines_03():
@@ -1485,7 +1485,7 @@ def testValues_delete_lines_03():
         "end",
     ]
 
-    result_correct = [
+    correct_result = [
         "interface FastEthernet0/2",
         " switchport mode trunk",
         " switchport trunk allowed 300,532",
@@ -1501,7 +1501,7 @@ def testValues_delete_lines_03():
 
     parse = CiscoConfParse(config, syntax="ios")
     parse.delete_lines("port-security")  # Delete lines from config
-    assert parse.ioscfg == result_correct
+    assert parse.ioscfg == correct_result
 
 
 def testValues_replace_lines_01(parse_c01):
@@ -1532,9 +1532,9 @@ def testValues_replace_lines_01(parse_c01):
         ),
     )
     # We have to parse multiple times because of replacements
-    for args, result_correct in replace_lines_Values01:
+    for args, correct_result in replace_lines_Values01:
         test_result = parse_c01.replace_lines(**args)
-        assert result_correct == test_result
+        assert correct_result == test_result
 
 
 def testValues_replace_lines_02(parse_c01):
@@ -1566,9 +1566,9 @@ def testValues_replace_lines_02(parse_c01):
             c01_replace_gige_exclude,
         ),
     )
-    for args, result_correct in replace_lines_Values02:
+    for args, correct_result in replace_lines_Values02:
         test_result = parse_c01.replace_lines(**args)
-        assert result_correct == test_result
+        assert correct_result == test_result
 
 
 def testValues_replace_lines_03(parse_c01):
@@ -1592,9 +1592,9 @@ def testValues_replace_lines_03(parse_c01):
             c01_replace_gige_exclude,
         ),
     )
-    for args, result_correct in replace_lines_Values03:
+    for args, correct_result in replace_lines_Values03:
         test_result = parse_c01.replace_lines(**args)
-        assert result_correct == test_result
+        assert correct_result == test_result
 
 
 def testValues_replace_children_01(parse_c01):
@@ -1616,16 +1616,16 @@ def testValues_replace_children_01(parse_c01):
         ),
     )
     # We have to parse multiple times because of replacements
-    for args, result_correct in replace_children_Values:
+    for args, correct_result in replace_children_Values:
         test_result = parse_c01.replace_children(**args)
-        assert result_correct == test_result
+        assert correct_result == test_result
 
 
 def testValues_ios_sync_diff_01(parse_c01):
     """Test whether sync_diff() returns the correct diff when modifying logging in parse_c01."""
     ## test sync_diff as a drop-in replacement for req_cfgspec_excl_diff()
     ##   This test mirrors testValues_req_cfgspec_excl_diff()
-    result_correct = [
+    correct_result = [
         "no logging 1.1.3.17",
         "logging 1.1.3.4",
         "logging 1.1.3.6",
@@ -1635,7 +1635,7 @@ def testValues_ios_sync_diff_01(parse_c01):
         r"^logging\s+",
         r"logging\s+\d+\.\d+\.\d+\.\d+",
     )
-    assert result_correct == test_result
+    assert correct_result == test_result
 
 
 @pytest.mark.xfail(
@@ -1668,7 +1668,7 @@ def testValues_ios_sync_diff_03():
         "!",
     ]
 
-    result_correct = [
+    correct_result = [
         "interface GigabitEthernet 1/5",
         " no ip address 1.1.1.2 255.255.255.0",
         " no standby 5 ip 1.1.1.1",
@@ -1688,7 +1688,7 @@ def testValues_ios_sync_diff_03():
     linespec = r""
     parse = CiscoConfParse(config_01)
     test_result = parse.sync_diff(required_config, linespec, linespec)
-    assert result_correct == test_result
+    assert correct_result == test_result
 
 
 @pytest.mark.xfail(
@@ -1722,7 +1722,7 @@ def testValues_sync_diff_04():
         "!",
     ]
 
-    result_correct = [
+    correct_result = [
         "interface GigabitEthernet 1/5",
         "  no ip address 1.1.1.2 255.255.255.0",
         "  no standby 5 ip 1.1.1.1",
@@ -1745,7 +1745,7 @@ def testValues_sync_diff_04():
         ignore_blank_lines=False,
         )
     test_result = parse.sync_diff(required_config, linespec, linespec)
-    assert result_correct == test_result
+    assert correct_result == test_result
 
 
 @pytest.mark.xfail(
@@ -1766,7 +1766,7 @@ def testValues_sync_diff_05():
         "!",
     ]
 
-    result_correct = [
+    correct_result = [
         "no vlan 53",
         "vlan 51",
         " name SOME-VLAN",
@@ -1778,7 +1778,7 @@ def testValues_sync_diff_05():
     linespec = r"vlan\s+\S+|name\s+\S+|state.+"
     parse = CiscoConfParse(config_01)
     test_result = parse.sync_diff(required_config, linespec, linespec)
-    assert result_correct == test_result
+    assert correct_result == test_result
 
 
 @pytest.mark.xfail(
@@ -1806,7 +1806,7 @@ def testValues_sync_diff_06():
         "!",
     ]
 
-    result_correct = [
+    correct_result = [
         "no vlan 53",
         "vlan 51",
         "  name SOME-VLAN",
@@ -1818,7 +1818,7 @@ def testValues_sync_diff_06():
     linespec = r"vlan\s+\S+|name\s+\S+|state.+"
     parse = CiscoConfParse(config_01, syntax="nxos", ignore_blank_lines=False)
     test_result = parse.sync_diff(required_config, linespec, linespec)
-    assert result_correct == test_result
+    assert correct_result == test_result
 
 
 @pytest.mark.xfail(
@@ -1847,7 +1847,7 @@ def testValues_sync_diff_07():
         "!",
     ]
 
-    result_correct = [
+    correct_result = [
         "vlan 51",
         " name SOME-VLAN",
         "vlan 52",
@@ -1860,7 +1860,7 @@ def testValues_sync_diff_07():
     test_result = parse.sync_diff(
         required_config, linespec, linespec, remove_lines=False
     )
-    assert result_correct == test_result
+    assert correct_result == test_result
 
 
 @pytest.mark.xfail(
@@ -1890,7 +1890,7 @@ def testValues_sync_diff_08():
         "!",
     ]
 
-    result_correct = [
+    correct_result = [
         "no vlan 53",
         "vlan 52",
         " name BLAH",
@@ -1904,7 +1904,7 @@ def testValues_sync_diff_08():
     test_result = parse.sync_diff(
         required_config, linespec, linespec, ignore_order=False
     )
-    assert result_correct == test_result
+    assert correct_result == test_result
 
 
 @pytest.mark.xfail(
@@ -1934,7 +1934,7 @@ def testValues_sync_diff_09():
         "!",
     ]
 
-    result_correct = [
+    correct_result = [
         "no vlan 53",
         "vlan 51",
         " name SOME-VLAN",
@@ -1948,7 +1948,7 @@ def testValues_sync_diff_09():
     test_result = parse.sync_diff(
         required_config, linespec, linespec, ignore_order=True
     )
-    assert result_correct == test_result
+    assert correct_result == test_result
 
 def testValues_HDiff_01():
     """Test HDiff(header=False) output for matching input configurations"""
@@ -1956,12 +1956,12 @@ def testValues_HDiff_01():
     after_config = ["logging 1.1.3.4", "logging 1.1.3.5", "logging 1.1.3.6",]
     diff_obj = HDiff(before_config=before_config, after_config=after_config)
     test_result = diff_obj.unified_diffs(header=False)
-    result_correct = [
+    correct_result = [
         " logging 1.1.3.4",
         " logging 1.1.3.5",
         " logging 1.1.3.6",
     ]
-    assert test_result == result_correct
+    assert test_result == correct_result
 
 @pytest.mark.xfail(
     sys.version_info[0] == 3, reason="HDiff() does not order diffs at the parent or child level."
@@ -1972,13 +1972,13 @@ def testValues_HDiff_02():
     after_config = ["logging 1.1.3.255", "logging 1.1.3.5", "logging 1.1.3.6",]
     diff_obj = HDiff(before_config=before_config, after_config=after_config)
     test_result = diff_obj.unified_diffs(header=False)
-    result_correct = [
+    correct_result = [
         "-logging 1.1.3.4",
         "+logging 1.1.3.255",
         " logging 1.1.3.5",
         " logging 1.1.3.6",
     ]
-    assert test_result == result_correct
+    assert test_result == correct_result
 
 @pytest.mark.xfail(
     sys.version_info[0] == 3, reason="HDiff() does not order diffs at the parent or child level."
@@ -2130,7 +2130,7 @@ def testValues_HDiff_10():
         "sys url-db download-schedule urldb { }",
     ]
 
-    result_correct_unified_diff = [
+    correct_result_unified_diff = [
         " ltm profile udp DNS-UDP {",
         "     app-service none",
         "     datagram-load-balancing disabled",
@@ -2202,11 +2202,11 @@ def testValues_HDiff_10():
 
     test_diff = HDiff(before_config=test_before, after_config=test_after)
     test_result = test_diff.unified_diffs(header=False)
-    for idx, result_correct_line in enumerate(result_correct_unified_diff):
+    for idx, correct_result_line in enumerate(correct_result_unified_diff):
         test_result_line = test_result[idx]
         print("TEST_RESULT" + test_result_line, file=sys.stderr)
-        print("RESULT_CORR" + result_correct_line, file=sys.stderr)
-        assert test_result_line == result_correct_line
+        print("RESULT_CORR" + correct_result_line, file=sys.stderr)
+        assert test_result_line == correct_result_line
 
 
 def testValues_HDiff_ios_unified_diffs_contents_01():
@@ -2261,7 +2261,7 @@ interface Ethernet109/1/4
 """.splitlines()
 
 # This is the body of the diff, generated by _unified_diffs_contents()
-    result_correct = """ interface Ethernet109/1/1
+    correct_result = """ interface Ethernet109/1/1
    switchport mode trunk
    switchport trunk native vlan 201
    spanning-tree port type edge
@@ -2284,12 +2284,12 @@ interface Ethernet109/1/4
 
     test_result = HDiff(BEFORE, AFTER, syntax="ios").unified_diffs_contents()
 
-    assert test_result == result_correct
+    assert test_result == correct_result
 
 
 def testValues_req_cfgspec_excl_diff(parse_c01):
     ## test req_cfgspec_excl_diff
-    result_correct = [
+    correct_result = [
         "no logging 1.1.3.17",
         "logging 1.1.3.4",
         "logging 1.1.3.6",
@@ -2299,58 +2299,58 @@ def testValues_req_cfgspec_excl_diff(parse_c01):
         r"logging\s+\d+\.\d+\.\d+\.\d+",
         ["logging 1.1.3.4", "logging 1.1.3.5", "logging 1.1.3.6",],
     )
-    assert result_correct == test_result
+    assert correct_result == test_result
 
 
 def testValues_req_cfgspec_all_diff_01(parse_c01):
     ## test req_cfgspec_all_diff
-    result_correct = [
+    correct_result = [
         "logging 1.1.3.4",
         "logging 1.1.3.6",
     ]
     test_result = parse_c01.req_cfgspec_all_diff(
         ["logging 1.1.3.4", "logging 1.1.3.5", "logging 1.1.3.6",]
     )
-    assert result_correct == test_result
+    assert correct_result == test_result
 
 
 def testValues_req_cfgspec_all_diff_02(parse_c01):
     ## test req_cfgspec_all_diff
-    result_correct = [
+    correct_result = [
         "logging 1.1.3.4",
         "logging 1.1.3.6",
     ]
     test_result = parse_c01.req_cfgspec_all_diff(
         ["logging 1.1.3.4", "logging 1.1.3.5", "logging 1.1.3.6",], ignore_ws=True
     )
-    assert result_correct == test_result
+    assert correct_result == test_result
 
 
 def testValues_ignore_ws():
     ## test find_lines with ignore_ws flag
     config = ["set snmp community read-only     myreadonlystring"]
-    result_correct = config
+    correct_result = config
     cfg = CiscoConfParse(config)
     test_result = cfg.find_lines(
         "set snmp community read-only myreadonlystring", ignore_ws=True
     )
-    assert result_correct == test_result
+    assert correct_result == test_result
 
 
 def testValues_negative_ignore_ws():
     """test find_lines WITHOUT ignore_ws"""
     config = ["set snmp community read-only     myreadonlystring"]
-    result_correct = list()
+    correct_result = list()
     cfg = CiscoConfParse(config)
     test_result = cfg.find_lines(
         "set snmp community read-only myreadonlystring", ignore_ws=False
     )
-    assert result_correct == test_result
+    assert correct_result == test_result
 
 
 def testValues_IOSCfgLine_all_parents(parse_c01):
     """Ensure IOSCfgLine.all_parents finds all parents, recursively"""
-    result_correct = list()
+    correct_result = list()
     # mockobj pretends to be the IOSCfgLine object
     with patch(__name__ + "." + "IOSCfgLine") as mockobj:
         vals = [("policy-map QOS_1", 0), (" class SILVER", 4)]
@@ -2360,7 +2360,7 @@ def testValues_IOSCfgLine_all_parents(parse_c01):
             fakeobj.linenum = vals[idx][1]
             fakeobj.classname = "IOSCfgLine"
 
-            result_correct.append(fakeobj)
+            correct_result.append(fakeobj)
 
     cfg = parse_c01
     obj = cfg.find_objects("bandwidth 30")[0]
@@ -2368,9 +2368,9 @@ def testValues_IOSCfgLine_all_parents(parse_c01):
     # test_result = cfg._find_parent_OBJ(obj)
     test_result = obj.all_parents
     for idx, testobj in enumerate(test_result):
-        assert result_correct[idx].text == test_result[idx].text
-        assert result_correct[idx].linenum == test_result[idx].linenum
-        assert result_correct[idx].classname == test_result[idx].classname
+        assert correct_result[idx].text == test_result[idx].text
+        assert correct_result[idx].linenum == test_result[idx].linenum
+        assert correct_result[idx].classname == test_result[idx].classname
 
 def testValues_IOSCfgLine_geneology_junos():
     config = """
@@ -2399,14 +2399,14 @@ base_hello {
     assert isinstance(geneology[2], JunosCfgLine)
 
     # test individual geneology .text fields
-    result_correct = 'base_hello'
-    assert(geneology[0].text.lstrip()==result_correct)
+    correct_result = 'base_hello'
+    assert(geneology[0].text.lstrip()==correct_result)
 
-    result_correct = 'that_thing'
-    assert(geneology[1].text.lstrip()==result_correct)
+    correct_result = 'that_thing'
+    assert(geneology[1].text.lstrip()==correct_result)
 
-    result_correct = 'parameter_03'
-    assert(geneology[2].text.lstrip()==result_correct)
+    correct_result = 'parameter_03'
+    assert(geneology[2].text.lstrip()==correct_result)
 
 
 def testValues_IOSCfgLine_geneology_text_junos():
@@ -2431,20 +2431,20 @@ base_hello {
 
     # FIXME - one day build JunosCfgLine()...
     # For now, we are abusing IOSCfgLine() by using it in the **junos** parser
-    result_correct = str
-    assert isinstance(geneology_text[0], result_correct)
-    assert isinstance(geneology_text[1], result_correct)
-    assert isinstance(geneology_text[2], result_correct)
+    correct_result = str
+    assert isinstance(geneology_text[0], correct_result)
+    assert isinstance(geneology_text[1], correct_result)
+    assert isinstance(geneology_text[2], correct_result)
 
     # test individual geneology .text fields
-    result_correct = 'base_hello'
-    assert(geneology_text[0].lstrip()==result_correct)
+    correct_result = 'base_hello'
+    assert(geneology_text[0].lstrip()==correct_result)
 
-    result_correct = 'that_thing'
-    assert(geneology_text[1].lstrip()==result_correct)
+    correct_result = 'that_thing'
+    assert(geneology_text[1].lstrip()==correct_result)
 
-    result_correct = 'parameter_03'
-    assert(geneology_text[2].lstrip()==result_correct)
+    correct_result = 'parameter_03'
+    assert(geneology_text[2].lstrip()==correct_result)
 
 
 def testValues_IOSCfgLine_geneology_ios():
@@ -2473,14 +2473,14 @@ base_hello
     assert isinstance(geneology[2], result_kindof_correct)
 
     # test individual geneology .text fields
-    result_correct = 'base_hello'
-    assert(geneology[0].text.lstrip()==result_correct)
+    correct_result = 'base_hello'
+    assert(geneology[0].text.lstrip()==correct_result)
 
-    result_correct = 'that_thing'
-    assert(geneology[1].text.lstrip()==result_correct)
+    correct_result = 'that_thing'
+    assert(geneology[1].text.lstrip()==correct_result)
 
-    result_correct = 'parameter_03'
-    assert(geneology[2].text.lstrip()==result_correct)
+    correct_result = 'parameter_03'
+    assert(geneology[2].text.lstrip()==correct_result)
 
 
 def testValues_IOSCfgLine_geneology_text_ios():
@@ -2501,20 +2501,20 @@ base_hello
     # test overall geneology_text list length
     assert(len(geneology_text)==3)
 
-    result_correct = str
-    assert isinstance(geneology_text[0], result_correct)
-    assert isinstance(geneology_text[1], result_correct)
-    assert isinstance(geneology_text[2], result_correct)
+    correct_result = str
+    assert isinstance(geneology_text[0], correct_result)
+    assert isinstance(geneology_text[1], correct_result)
+    assert isinstance(geneology_text[2], correct_result)
 
     # test individual geneology .text fields
-    result_correct = 'base_hello'
-    assert(geneology_text[0].lstrip()==result_correct)
+    correct_result = 'base_hello'
+    assert(geneology_text[0].lstrip()==correct_result)
 
-    result_correct = 'that_thing'
-    assert(geneology_text[1].lstrip()==result_correct)
+    correct_result = 'that_thing'
+    assert(geneology_text[1].lstrip()==correct_result)
 
-    result_correct = 'parameter_03'
-    assert(geneology_text[2].lstrip()==result_correct)
+    correct_result = 'parameter_03'
+    assert(geneology_text[2].lstrip()==correct_result)
 
 def testValues_find_objects(parse_c01):
     lines = [
@@ -2536,11 +2536,11 @@ def testValues_find_objects(parse_c01):
         c01_find_objects.append(obj)
 
     ## test whether find_objects returns correct IOSCfgLine objects
-    result_correct = c01_find_objects
+    correct_result = c01_find_objects
     test_result = parse_c01.find_objects("^interface")
-    assert result_correct == test_result
+    assert correct_result == test_result
 
-def test_blank_line_01():
+def test_nxos_blank_line_01():
     """
     Test blank line in NXOS parser. See github issue #248
     """
@@ -2563,7 +2563,7 @@ feature lldp"""
         ####################################################################
         assert len(parse.ioscfg) == 3
 
-def test_blank_line_02():
+def test_nxos_blank_line_02():
     """
     Test blank line in NXOS parser. See github issue #248
     """
@@ -2608,6 +2608,40 @@ time start 2017:06:01:17:42 repeat 0:8:0"""
            ignore_blank_lines=ignore_blank_lines,
            )
 
+def test_nxos_blank_line_03():
+
+    BASELINE = """interface Ethernet109/1/1
+  switchport mode trunk
+  switchport trunk native vlan 201
+  spanning-tree port type edge
+  channel-group 1208
+
+interface Ethernet109/1/2
+  switchport mode trunk
+  switchport trunk native vlan 800
+  spanning-tree port type edge
+  channel-group 2208
+
+interface Ethernet109/1/3
+  switchport mode trunk
+  switchport trunk native vlan 201
+  spanning-tree port type edge
+
+interface Ethernet109/1/4
+  switchport mode trunk
+  switchport trunk native vlan 800
+  spanning-tree port type edge
+
+""".splitlines()
+
+    parse = CiscoConfParse(BASELINE, syntax="nxos", ignore_blank_lines=False)
+
+    for idx in range(0, len(BASELINE) - 1):
+
+        correct_result = BASELINE[idx]
+        test_result = parse.objs[idx].text
+        assert correct_result == test_result
+
 def test_has_line_with_all_syntax():
     config = """
 interface GigabitEthernet0/1
@@ -2647,7 +2681,7 @@ def testValues_find_objects_replace_01():
         "!",
         "end",
     ]
-    result_correct = [
+    correct_result = [
         "!",
         "! old boot image flash slot0:c2600-adventerprisek9-mz.124-21a.bin",
         "! old boot image flash bootflash:c2600-adventerprisek9-mz.124-21a.bin",
@@ -2663,7 +2697,7 @@ def testValues_find_objects_replace_01():
     for obj in cfg.find_objects("boot system"):
         obj.replace("boot system", "! old boot image")
     test_result = cfg.ioscfg
-    assert result_correct == test_result
+    assert correct_result == test_result
 
 
 def testValues_find_objects_delete_01():
@@ -2680,19 +2714,19 @@ def testValues_find_objects_delete_01():
         " ip address 1.1.1.5 255.255.255.252",
         "!",
     ]
-    result_correct = ["!", "!", "!"]
+    correct_result = ["!", "!", "!"]
     cfg = CiscoConfParse(config)
     for intf in cfg.find_objects(r"^interface"):
         # Delete all the interface objects
         intf.delete(recurse=True)  # recurse=True is the default
     test_result = cfg.ioscfg
-    assert result_correct == test_result
+    assert correct_result == test_result
 
 
 def testValues_insert_after_atomic_02(parse_c01):
     """We expect insert_after(atomic=True) to correctly parse children"""
     ## See also -> testValues_insert_after_nonatomic_02()
-    result_correct = [
+    correct_result = [
         "interface GigabitEthernet4/1",
         " shutdown",
         " switchport",
@@ -2704,30 +2738,30 @@ def testValues_insert_after_atomic_02(parse_c01):
     parse_c01.insert_after(linespec, " shutdown", exactmatch=True, atomic=True)
     test_result = parse_c01.find_children(linespec)
 
-    assert result_correct == test_result
+    assert correct_result == test_result
 
 
 def testValues_insert_after_atomic_factory_01(parse_c01_factory):
     """Ensure that comments which are added, assert is_comment"""
     # mockobj pretends to be the IOSCfgLine object
     with patch(__name__ + "." + "IOSCfgLine") as mockobj:
-        result_correct01 = mockobj
-        result_correct01.linenum = 16
-        result_correct01.text = " ! TODO: some note to self"
-        result_correct01.classname = "IOSCfgLine"
-        result_correct01.is_comment = True
+        correct_result01 = mockobj
+        correct_result01.linenum = 16
+        correct_result01.text = " ! TODO: some note to self"
+        correct_result01.classname = "IOSCfgLine"
+        correct_result01.is_comment = True
 
     linespec = "interface GigabitEthernet4/1"
     parse_c01_factory.insert_after(
         linespec, " ! TODO: some note to self", exactmatch=True, atomic=True
     )
     test_result01 = parse_c01_factory.find_objects("TODO")[0]
-    assert result_correct01.linenum == test_result01.linenum
-    assert result_correct01.text == test_result01.text
-    assert result_correct01.classname == test_result01.classname
-    assert result_correct01.is_comment == test_result01.is_comment
+    assert correct_result01.linenum == test_result01.linenum
+    assert correct_result01.text == test_result01.text
+    assert correct_result01.classname == test_result01.classname
+    assert correct_result01.is_comment == test_result01.is_comment
 
-    result_correct02 = [
+    correct_result02 = [
         "interface GigabitEthernet4/1",
         " ! TODO: some note to self",
         " switchport",
@@ -2736,7 +2770,7 @@ def testValues_insert_after_atomic_factory_01(parse_c01_factory):
         " power inline static max 7000",
     ]
     test_result02 = parse_c01_factory.find_children(linespec)
-    assert result_correct02 == test_result02
+    assert correct_result02 == test_result02
 
 
 def testValues_insert_after_atomic_01(parse_c01):
@@ -2754,13 +2788,13 @@ def testValues_insert_after_atomic_01(parse_c01):
         test_result = parse_c01.insert_after(
             linespec, " shutdown", exactmatch=True, atomic=False
         )
-        result_correct = [inputs[idx]]
-        assert result_correct == test_result
+        correct_result = [inputs[idx]]
+        assert correct_result == test_result
     parse_c01.commit()
 
     ## Ensure we inserted the text at the right line number
     ##   i.e. it should be immediately below the interface line
-    result_correct_dict = {
+    correct_result_dict = {
         23: " shutdown",
         30: " shutdown",
         36: " shutdown",
@@ -2769,8 +2803,8 @@ def testValues_insert_after_atomic_01(parse_c01):
         50: " shutdown",
         55: " shutdown",
     }
-    for idx, result_correct in result_correct_dict.items():
-        assert parse_c01.ConfigObjs[idx].text == result_correct
+    for idx, correct_result in correct_result_dict.items():
+        assert parse_c01.ConfigObjs[idx].text == correct_result
 
         # The parent line should be immediately above it
         correct_parent = parse_c01.ConfigObjs[idx - 1]
@@ -2792,13 +2826,13 @@ def testValues_insert_after_nonatomic_01(parse_c01):
         test_result = parse_c01.insert_after(
             linespec, " shutdown", exactmatch=True, atomic=False
         )
-        result_correct = [inputs[idx]]
-        assert result_correct == test_result
+        correct_result = [inputs[idx]]
+        assert correct_result == test_result
     ## NOTE: We DO NOT commit here to test as a non-atomic change
 
     ## Ensure we inserted the text at the right line number
     ##   i.e. it should be immediately below the interface line
-    result_correct_dict = {
+    correct_result_dict = {
         23: " shutdown",
         30: " shutdown",
         36: " shutdown",
@@ -2807,13 +2841,13 @@ def testValues_insert_after_nonatomic_01(parse_c01):
         50: " shutdown",
         55: " shutdown",
     }
-    for idx, result_correct in result_correct_dict.items():
-        assert parse_c01.ConfigObjs[idx].text == result_correct
+    for idx, correct_result in correct_result_dict.items():
+        assert parse_c01.ConfigObjs[idx].text == correct_result
 
 
 def testValues_insert_after_nonatomic_02(parse_c01):
     """Negative test.  We expect insert_after(atomic=False) to miss any children added like this at some point in the future I might fix insert_after so it knows how to correctly parse children"""
-    result_correct = [
+    correct_result = [
         "interface GigabitEthernet4/1",
         #' shutdown',   <--- Intentionally commented out
         " switchport",
@@ -2827,13 +2861,13 @@ def testValues_insert_after_nonatomic_02(parse_c01):
     ## NOTE: We DO NOT commit here to test as a non-atomic change
 
     # the interface should *not* be shutdown, because I made a non-atomic change
-    assert result_correct == test_result
+    assert correct_result == test_result
 
 
 def testValues_insert_after_child_atomic_01(parse_c01):
     # FIXME
     """We expect insert_after_child(atomic=True) to correctly parse children"""
-    result_correct = [
+    correct_result = [
         "interface GigabitEthernet4/1",
         " switchport",
         " switchport access vlan 100",
@@ -2847,7 +2881,7 @@ def testValues_insert_after_child_atomic_01(parse_c01):
     )
     test_result = parse_c01.find_children(linespec)
 
-    assert result_correct == test_result
+    assert correct_result == test_result
 
 
 def testValues_insert_before_nonatomic_01(parse_c01):
@@ -2865,8 +2899,8 @@ def testValues_insert_before_nonatomic_01(parse_c01):
         test_result = parse_c01.insert_before(
             linespec, "default " + linespec, exactmatch=True, atomic=False
         )
-        result_correct = [inputs[idx]]
-        assert result_correct == test_result
+        correct_result = [inputs[idx]]
+        assert correct_result == test_result
 
 
 def testValues_insert_before_atomic_01(parse_c01):
@@ -2884,8 +2918,8 @@ def testValues_insert_before_atomic_01(parse_c01):
         test_result = parse_c01.insert_before(
             linespec, "default " + linespec, exactmatch=True, atomic=True
         )
-        result_correct = [inputs[idx]]
-        assert result_correct == test_result
+        correct_result = [inputs[idx]]
+        assert correct_result == test_result
 
 
 c01_default_gigabitethernets = """policy-map QOS_1
@@ -2981,8 +3015,8 @@ def testValues_renumbering_insert_before_nonatomic_01(
             linespec, "default " + linespec, exactmatch=True, atomic=False
         )
     test_result = parse_c01.ioscfg
-    result_correct = c01_default_gigabitethernets
-    assert result_correct == test_result
+    correct_result = c01_default_gigabitethernets
+    assert correct_result == test_result
 
 
 def testValues_renumbering_insert_before_nonatomic_02(
@@ -3004,8 +3038,8 @@ def testValues_renumbering_insert_before_nonatomic_02(
             linespec, "default " + linespec, exactmatch=True, atomic=True
         )
     test_result = parse_c01.ioscfg
-    result_correct = c01_default_gigabitethernets
-    assert result_correct == test_result
+    correct_result = c01_default_gigabitethernets
+    assert correct_result == test_result
 
 
 def testValues_find_objects_factory_01(parse_c01_factory):
@@ -3024,7 +3058,7 @@ def testValues_find_objects_factory_01(parse_c01_factory):
             ("interface GigabitEthernet4/8", 47),
         ]
         ## Simulate correct IOSIntfLine objects...
-        result_correct = list()
+        correct_result = list()
 
         # deepcopy a unique mock for every val with itertools.repeat()
         mockobjs = [deepcopy(ii) for ii in repeat(mockobj, len(vals))]
@@ -3033,14 +3067,14 @@ def testValues_find_objects_factory_01(parse_c01_factory):
         for idx in range(0, len(vals)):
             correct_intf = BaseCfgLine(text=vals[idx][0])
             correct_intf.linenum = vals[idx][1]  # correct line numbers
-            # append all to result_correct
-            result_correct.append(correct_intf)
+            # append all to correct_result
+            correct_result.append(correct_intf)
 
         test_intfs = parse_c01_factory.find_objects("^interface GigabitEther")
-        assert len(test_intfs) == len(result_correct)
+        assert len(test_intfs) == len(correct_result)
 
         for idx, test_intf in enumerate(test_intfs):
-            correct_intf = result_correct[idx]
+            correct_intf = correct_result[idx]
             # Check text
             assert correct_intf.text == test_intf.text
             # Check line numbers
@@ -3051,19 +3085,19 @@ def testValues_IOSIntfLine_find_objects_factory_01(parse_c01_factory):
     # mockobj pretends to be the IOSIntfLine object
     with patch(__name__ + "." + "IOSIntfLine") as mockobj:
         # the mock pretends to be an IOSCfgLine so we can test against it
-        result_correct = mockobj
-        result_correct.linenum = 11
-        result_correct.text = "interface Serial 1/0"
-        result_correct.classname = "IOSIntfLine"
-        result_correct.ipv4_addr_object = IPv4Obj("1.1.1.1/30", strict=False)
+        correct_result = mockobj
+        correct_result.linenum = 11
+        correct_result.text = "interface Serial 1/0"
+        correct_result.classname = "IOSIntfLine"
+        correct_result.ipv4_addr_object = IPv4Obj("1.1.1.1/30", strict=False)
 
         # this test finds the IOSIntfLine instance for 'Serial 1/0'
         test_result = parse_c01_factory.find_objects("^interface Serial 1/0")[0]
 
-        assert result_correct.linenum == test_result.linenum
-        assert result_correct.text == test_result.text
-        assert result_correct.classname == test_result.classname
-        assert result_correct.ipv4_addr_object == test_result.ipv4_addr_object
+        assert correct_result.linenum == test_result.linenum
+        assert correct_result.text == test_result.text
+        assert correct_result.classname == test_result.classname
+        assert correct_result.ipv4_addr_object == test_result.ipv4_addr_object
 
 
 def testValues_IOSIntfLine_find_objects_factory_02(
@@ -3072,13 +3106,13 @@ def testValues_IOSIntfLine_find_objects_factory_02(
     """test whether find_objects() returns correct IOSIntfLine objects and tests IOSIntfLine methods"""
     with patch(__name__ + "." + "IOSIntfLine") as mockobj:
         # the mock pretends to be an IOSCfgLine so we can test against it
-        result_correct01 = mockobj
-        result_correct01.linenum = 12
-        result_correct01.text = "interface Serial 2/0"
-        result_correct01.classname = "IOSIntfLine"
-        result_correct01.ipv4_addr_object = IPv4Obj("1.1.1.1/30", strict=False)
+        correct_result01 = mockobj
+        correct_result01.linenum = 12
+        correct_result01.text = "interface Serial 2/0"
+        correct_result01.classname = "IOSIntfLine"
+        correct_result01.ipv4_addr_object = IPv4Obj("1.1.1.1/30", strict=False)
 
-        result_correct02 = c01_insert_serial_replace
+        correct_result02 = c01_insert_serial_replace
 
         # Insert a line above the IOSIntfLine object
         parse_c01_factory.insert_before(
@@ -3093,17 +3127,17 @@ def testValues_IOSIntfLine_find_objects_factory_02(
         test_result02 = parse_c01_factory.ioscfg
 
         # Check attributes of the IOSIntfLine object
-        assert result_correct01.linenum == test_result01.linenum
-        assert result_correct01.text == test_result01.text
-        assert result_correct01.classname == test_result01.classname
-        assert result_correct01.ipv4_addr_object == test_result01.ipv4_addr_object
+        assert correct_result01.linenum == test_result01.linenum
+        assert correct_result01.text == test_result01.text
+        assert correct_result01.classname == test_result01.classname
+        assert correct_result01.ipv4_addr_object == test_result01.ipv4_addr_object
 
         # Ensure the text configs are exactly what we wanted
-        assert result_correct02 == test_result02
+        assert correct_result02 == test_result02
 
 
 def testValues_ConfigList_insert01(parse_c02):
-    result_correct = [
+    correct_result = [
         "hostname LabRouter",
         "policy-map QOS_1",
         " class GOLD",
@@ -3129,11 +3163,11 @@ def testValues_ConfigList_insert01(parse_c02):
     iosconfiglist.insert(0, "hostname LabRouter")
     test_result = list(map(attrgetter("text"), iosconfiglist))
 
-    assert test_result == result_correct
+    assert test_result == correct_result
 
 
 def testValues_ConfigList_insert02(parse_c02):
-    result_correct = [
+    correct_result = [
         "policy-map QOS_1",
         " class GOLD",
         "  priority percent 10",
@@ -3159,10 +3193,10 @@ def testValues_ConfigList_insert02(parse_c02):
     configlist.insert(-1, "hostname LabRouter")
     test_result = list(map(attrgetter("text"), configlist))
 
-    assert test_result == result_correct
+    assert test_result == correct_result
 
 def test_BaseCfgLine_has_child_with(parse_c03):
-    result_correct = [
+    correct_result = [
         'interface GigabitEthernet4/1',
         'interface GigabitEthernet4/2',
         'interface GigabitEthernet4/3',
@@ -3174,10 +3208,10 @@ def test_BaseCfgLine_has_child_with(parse_c03):
         if intf.has_child_with("switchport access vlan"):
             test_output.append(intf.text)
 
-    assert test_output == result_correct
+    assert test_output == correct_result
 
 def testValues_IOSCfgLine_ioscfg01(parse_c02):
-    result_correct = [
+    correct_result = [
         "interface GigabitEthernet4/1",
         " switchport",
         " switchport access vlan 100",
@@ -3187,7 +3221,7 @@ def testValues_IOSCfgLine_ioscfg01(parse_c02):
     test_result = parse_c02.find_objects(
         r"^interface\sGigabitEthernet4/1", exactmatch=True
     )[0].ioscfg
-    assert test_result == result_correct
+    assert test_result == correct_result
 
 
 def testValues_CiscoPassword():
@@ -3195,6 +3229,6 @@ def testValues_CiscoPassword():
     test_result_01 = CiscoPassword(ep).decrypt()
     test_result_02 = CiscoPassword().decrypt(ep)
 
-    result_correct = cisco_type7(0).decode(ep)
-    assert result_correct == test_result_01
-    assert result_correct == test_result_02
+    correct_result = cisco_type7(0).decode(ep)
+    assert correct_result == test_result_01
+    assert correct_result == test_result_02
