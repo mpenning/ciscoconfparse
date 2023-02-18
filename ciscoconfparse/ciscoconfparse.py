@@ -5402,11 +5402,11 @@ class ConfigList(MutableSequence):
             raise ValueError
 
         # Append text lines as IOSCfgLine objects...
-        retval = list()
+        retval = []
         idx = 0
 
         max_indent = 0
-        parents = dict()
+        parents = {}
         for txt in text_list:
             # Reject empty lines if ignore_blank_lines...
             if self.ignore_blank_lines and txt.strip() == "":
@@ -5495,11 +5495,11 @@ class ConfigList(MutableSequence):
         #    and nxos share the same method...
         banner_re = self._build_banner_re_ios()
 
-        retval = list()
+        retval = []
         idx = 0
 
         max_indent = 0
-        parents = dict()
+        parents = {}
         for txt in text_list:
             # Reject empty lines if ignore_blank_lines...
             if not isinstance(txt, str):
@@ -5523,7 +5523,7 @@ class ConfigList(MutableSequence):
                 obj = ConfigLineFactory(
                     txt,
                     self.comment_delimiter,
-                    syntax="nxos",
+                    syntax=self.syntax,
                 )
             else:
                 error = "Unexpected line in the config: '%s'" % txt
