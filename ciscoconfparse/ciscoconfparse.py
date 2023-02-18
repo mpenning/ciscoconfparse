@@ -89,6 +89,59 @@ from deprecat import deprecat
 from loguru import logger
 import toml
 
+ALL_IOS_FACTORY_CLASSES = [
+    IOSIntfLine,
+    IOSRouteLine,
+    IOSAccessLine,
+    IOSAaaLoginAuthenticationLine,
+    IOSAaaEnableAuthenticationLine,
+    IOSAaaCommandsAuthorizationLine,
+    IOSAaaCommandsAccountingLine,
+    IOSAaaExecAccountingLine,
+    IOSAaaGroupServerLine,
+    IOSHostnameLine,
+    IOSIntfGlobal,
+    IOSCfgLine,        # IOSCfgLine MUST be last
+]
+ALL_NXOS_FACTORY_CLASSES = [
+    NXOSIntfLine,
+    NXOSRouteLine,
+    NXOSAccessLine,
+    NXOSAaaLoginAuthenticationLine,
+    NXOSAaaEnableAuthenticationLine,
+    NXOSAaaCommandsAuthorizationLine,
+    NXOSAaaCommandsAccountingLine,
+    NXOSAaaExecAccountingLine,
+    NXOSAaaGroupServerLine,
+    NXOSvPCLine,
+    NXOSHostnameLine,
+    NXOSIntfGlobal,
+    NXOSCfgLine,        # NXOSCfgLine MUST be last
+]
+ALL_ASA_FACTORY_CLASSES = [
+    ASAIntfLine,
+    ASAName,
+    ASAObjNetwork,
+    ASAObjService,
+    ASAObjGroupNetwork,
+    ASAObjGroupService,
+    ASAIntfGlobal,
+    ASAHostnameLine,
+    ASAAclLine,
+    ASACfgLine,        # ASACfgLine MUST be last
+]
+ALL_JUNOS_FACTORY_CLASSES = [
+    JunosCfgLine,      # JunosCfgLine MUST be last
+]
+
+# Indexing into CFGLINE is normally faster than serial if-statements...
+CFGLINE = {
+    "ios": IOSCfgLine,
+    "nxos": NXOSCfgLine,
+    "asa": ASACfgLine,
+    "junos": JunosCfgLine,
+}
+
 
 @logger.catch(reraise=True)
 def get_version_number():
@@ -104,7 +157,7 @@ def get_version_number():
     )
     if os.path.isfile(pyproject_toml_path):
         # Retrieve the version number from pyproject.toml...
-        toml_values = dict()
+        toml_values = {}
         with open(pyproject_toml_path, encoding=ENCODING) as fh:
             toml_values = toml.loads(fh.read())
             version = toml_values["tool"]["poetry"].get("version", -1.0)
@@ -323,25 +376,12 @@ def _build_cfgobj_from_text(
 ):
     """Build cfgobj from configuration text syntax, and factory inputs."""
     if factory is False:
-        if syntax == "ios":
-            obj = IOSCfgLine(txt, comment_delimiter)
+        obj = CFGLINE[syntax](
+            text=txt,
+            comment_delimiter=comment_delimiter,
+        )
 
-        elif syntax == "nxos":
-            obj = NXOSCfgLine(txt, comment_delimiter)
-
-        elif syntax == "junos":
-            obj = JunosCfgLine(txt, comment_delimiter)
-
-        elif syntax == "asa":
-            obj = ASACfgLine(
-                text=txt,
-                comment_delimiter=comment_delimiter,
-            )
-
-        else:
-            raise ValueError
-
-    elif syntax in ALL_VALID_SYNTAX:
+    elif (factory is True):
         obj = ConfigLineFactory(
             txt,
             comment_delimiter,
@@ -557,13 +597,7 @@ class CiscoConfParse(object):
 
         # Read the configuration lines and detect invalid inputs...
         # tmp_lines = self._get_ccp_lines(config=config, logger=logger)
-        if isinstance(
-            config,
-            (
-                str,
-                pathlib.Path,
-            ),
-        ):
+        if isinstance(config, (str, pathlib.Path,),):
             tmp_lines = self.read_config_file(filepath=config, logger=logger)
 
         elif isinstance(config, Sequence):
@@ -804,26 +838,7 @@ class CiscoConfParse(object):
 
         assert self.finished_config_parse is False
 
-        enforce_valid_types(
-            config,
-            (
-                str,
-                pathlib.Path,
-                Sequence,
-            ),
-            "config parameter must be a string, pathlib.Path() or an instance of collections.abc.Sequence().",
-        )
-
-        if False:
-            if isinstance(config, Sequence) and len(config) == 0:
-                # IMPORTANT - explicitly handle an empty config list...
-                raise ValueError(
-                    "FATAL - the 'config' parameter got an empty {0}".format(
-                        type(config)
-                    )
-                )
-
-        if isinstance(config, Sequence) and len(config) >= 0:
+        if isinstance(config, Sequence):
             # Here we assume that `config` is a list of text config lines...
             #
             # config list of text lines...
@@ -3641,8 +3656,8 @@ class CiscoConfParse(object):
     @logger.catch(reraise=True)
     def _objects_to_uncfg(self, objectlist, unconflist):
         # Used by req_cfgspec_excl_diff()
-        retval = list()
-        unconfdict = dict()
+        retval = []
+        unconfdict = {}
         for unconf in unconflist:
             unconfdict[unconf] = "DEFINED"
         for obj in self._unique_OBJ(objectlist):
@@ -3836,11 +3851,6 @@ class HDiff(object):
 
         # TODO - incorporate difflib.get_close_matches() to reorder the
         #     diff (in unified format)
-        if self.syntax == "nxos":
-            blank_lines_ignore = False
-        else:
-            blank_lines_ignore = True
-
         if not isinstance(self.before_config, CiscoConfParse):
             self.parse_before = CiscoConfParse(
                 self.before_config, syntax=self.syntax,
@@ -4488,7 +4498,7 @@ class ConfigList(MutableSequence):
             )
         ccp_value = ccp_ref_kwarg_val or ciscoconfparse_kwarg_val
 
-        self._list = list()
+        self._list = []
         if initlist is not None:
             # XXX should this accept an arbitrary sequence?
             if type(initlist) == type(self._list):
@@ -4509,11 +4519,7 @@ class ConfigList(MutableSequence):
         self.dna = "ConfigList"
         self.debug = debug
 
-        is_valid_syntax = False
-        for valid_syntax in ALL_VALID_SYNTAX:
-            if self.syntax == valid_syntax:
-                is_valid_syntax = True
-        assert is_valid_syntax is True
+        assert syntax in ALL_VALID_SYNTAX
 
         # Support input configuration as either a list or a generator instance
         #
@@ -4538,7 +4544,7 @@ class ConfigList(MutableSequence):
                 raise NotImplementedError(error)
 
         else:
-            self._list = list()
+            self._list = []
 
         if self.debug > 0:
             message = "Create ConfigList() with %i elements" % len(self._list)
@@ -4553,7 +4559,7 @@ class ConfigList(MutableSequence):
             self._RE_OBJNET = re.compile(r"^\s*object-group\s+network\s+(\S+)")
             self._RE_OBJSVC = re.compile(r"^\s*object-group\s+service\s+(\S+)")
             self._RE_OBJACL = re.compile(r"^\s*access-list\s+(\S+)")
-            self._network_cache = dict()
+            self._network_cache = {}
 
     # This method is on ConfigList()
     def __repr__(self):
@@ -4878,34 +4884,17 @@ class ConfigList(MutableSequence):
             logger.error(error)
             raise ValueError(error)
 
-        if self.factory:
+        if self.factory is False:
+            new_obj = CFGLINE[self.syntax](
+                text=new_val,
+                comment_delimiter=self.comment_delimiter,
+            )
+
+        elif self.factory is True:
             new_obj = ConfigLineFactory(
                 text=new_val,
                 comment_delimiter=self.comment_delimiter,
                 syntax=self.syntax,
-            )
-        elif self.syntax == "ios":
-            new_obj = IOSCfgLine(
-                text=new_val,
-                comment_delimiter=self.comment_delimiter,
-            )
-
-        elif self.syntax == "nxos":
-            new_obj = NXOSCfgLine(
-                text=new_val,
-                comment_delimiter=self.comment_delimiter,
-            )
-
-        elif self.syntax == "asa":
-            new_obj = ASACfgLine(
-                text=new_val,
-                comment_delimiter=self.comment_delimiter,
-            )
-
-        elif self.syntax == "junos":
-            new_obj = JunosCfgLine(
-                text=new_val,
-                comment_delimiter=self.comment_delimiter,
             )
 
         else:
@@ -4996,7 +4985,7 @@ class ConfigList(MutableSequence):
             logger.error(err_txt)
             raise ValueError(err_txt)
 
-        # new_val MUST be a string
+        # new_val MUST be a string or BaseCfgLine
         if isinstance(new_val, str) is True:
             pass
 
@@ -5007,35 +4996,19 @@ class ConfigList(MutableSequence):
             logger.error(err_txt)
             raise ValueError(err_txt)
 
-        if self.factory is True:
+        if self.factory is False:
+            new_obj = CFGLINE[self.syntax](
+                text=new_val,
+                comment_delimiter=self.comment_delimiter,
+            )
+
+        elif self.factory is True:
             new_obj = ConfigLineFactory(
                 text=new_val,
                 comment_delimiter=self.comment_delimiter,
                 syntax=self.syntax,
             )
-        elif self.syntax == "ios":
-            new_obj = IOSCfgLine(
-                text=new_val,
-                comment_delimiter=self.comment_delimiter,
-            )
 
-        elif self.syntax == "nxos":
-            new_obj = NXOSCfgLine(
-                text=new_val,
-                comment_delimiter=self.comment_delimiter,
-            )
-
-        elif self.syntax == "asa":
-            new_obj = ASACfgLine(
-                text=new_val,
-                comment_delimiter=self.comment_delimiter,
-            )
-
-        elif self.syntax == "junos":
-            new_obj = JunosCfgLine(
-                text=new_val,
-                comment_delimiter=self.comment_delimiter,
-            )
 
         else:
             logger.error(error)
@@ -5072,20 +5045,9 @@ class ConfigList(MutableSequence):
                     comment_delimiter=self.comment_delimiter,
                     syntax=self.syntax,
                 )
-            elif self.syntax == "ios":
-                obj = IOSCfgLine(
-                    text=val,
-                    comment_delimiter=self.comment_delimiter,
-                )
 
-            elif self.syntax == "nxos":
-                obj = NXOSCfgLine(
-                    text=val,
-                    comment_delimiter=self.comment_delimiter,
-                )
-
-            elif self.syntax == "asa":
-                obj = ASACfgLine(
+            elif self.factory is False:
+                obj = CFGLINE[self.syntax](
                     text=val,
                     comment_delimiter=self.comment_delimiter,
                 )
@@ -5296,6 +5258,7 @@ class ConfigList(MutableSequence):
             if not isinstance(txt, str):
                 raise ValueError
 
+            # Assign a custom *CfgLine() based on factory...
             obj = _build_cfgobj_from_text(
                 txt,
                 idx,
@@ -5516,19 +5479,20 @@ class ConfigList(MutableSequence):
             indent = obj.indent
             is_config_line = obj.is_config_line
 
-            #
-            if not self.factory:
-                obj = NXOSCfgLine(txt, self.comment_delimiter)
-            elif self.syntax == "nxos":
-                obj = ConfigLineFactory(
-                    txt,
-                    self.comment_delimiter,
-                    syntax=self.syntax,
-                )
-            else:
-                error = "Unexpected line in the config: '%s'" % txt
-                logger.error(error)
-                raise ValueError(error)
+            # FIXME FIXME FIXME
+            if False:
+                if not self.factory:
+                    obj = NXOSCfgLine(txt, self.comment_delimiter)
+                elif self.syntax == "nxos":
+                    obj = ConfigLineFactory(
+                        txt,
+                        self.comment_delimiter,
+                        syntax=self.syntax,
+                    )
+                else:
+                    error = "Unexpected line in the config: '%s'" % txt
+                    logger.error(error)
+                    raise ValueError(error)
 
             obj.confobj = self
             obj.linenum = idx
@@ -5624,7 +5588,7 @@ class ConfigList(MutableSequence):
 
         max_indent = 0
         macro_parent_idx_list = list()
-        parents = dict()
+        parents = {}
         for txt in text_list:
             # Reject empty lines if ignore_blank_lines...
             if not isinstance(txt, str):
@@ -5787,7 +5751,7 @@ class ConfigList(MutableSequence):
         """Return a dictionary of name to address mappings"""
         assert self.syntax == "asa"
 
-        retval = dict()
+        retval = {}
         name_rgx = self._RE_NAMES
         for obj in self.ccp_ref.find_objects(name_rgx):
             addr = obj.re_match_typed(name_rgx, group=1, result_type=str)
@@ -5801,7 +5765,7 @@ class ConfigList(MutableSequence):
         """Return a dictionary of name to object-group network mappings"""
         assert self.syntax == "asa"
 
-        retval = dict()
+        retval = {}
         obj_rgx = self._RE_OBJNET
         for obj in self.ccp_ref.find_objects(obj_rgx):
             name = obj.re_match_typed(obj_rgx, group=1, result_type=str)
@@ -5814,7 +5778,7 @@ class ConfigList(MutableSequence):
         """Return a dictionary of ACL name to ACE (list) mappings"""
         assert self.syntax == "asa"
 
-        retval = dict()
+        retval = {}
         for obj in self.ccp_ref.find_objects(self._RE_OBJACL):
             name = obj.re_match_typed(
                 self._RE_OBJACL,
@@ -5945,62 +5909,27 @@ if False:
 
 
 def ConfigLineFactory(text="", comment_delimiter="!", syntax="ios"):
+    """A factory method to assign a custom *CfgLine() object based on the contents of the input text parameter and input syntax parameter."""
     # Complicted & Buggy
     # classes = [j for (i,j) in globals().iteritems() if isinstance(j, TypeType) and issubclass(j, BaseCfgLine)]
 
     ## Manual and simple
     if syntax == "ios":
-        classes = [
-            IOSIntfLine,
-            IOSRouteLine,
-            IOSAccessLine,
-            IOSAaaLoginAuthenticationLine,
-            IOSAaaEnableAuthenticationLine,
-            IOSAaaCommandsAuthorizationLine,
-            IOSAaaCommandsAccountingLine,
-            IOSAaaExecAccountingLine,
-            IOSAaaGroupServerLine,
-            IOSHostnameLine,
-            IOSIntfGlobal,
-            IOSCfgLine,
-        ]  # This is simple
+        classes = ALL_IOS_FACTORY_CLASSES
     elif syntax == "nxos":
-        classes = [
-            NXOSIntfLine,
-            NXOSRouteLine,
-            NXOSAccessLine,
-            NXOSAaaLoginAuthenticationLine,
-            NXOSAaaEnableAuthenticationLine,
-            NXOSAaaCommandsAuthorizationLine,
-            NXOSAaaCommandsAccountingLine,
-            NXOSAaaExecAccountingLine,
-            NXOSAaaGroupServerLine,
-            NXOSvPCLine,
-            NXOSHostnameLine,
-            NXOSIntfGlobal,
-            NXOSCfgLine,
-        ]  # This is simple
+        classes = ALL_NXOS_FACTORY_CLASSES
     elif syntax == "asa":
-        classes = [
-            ASAName,
-            ASAObjNetwork,
-            ASAObjService,
-            ASAObjGroupNetwork,
-            ASAObjGroupService,
-            ASAIntfLine,
-            ASAIntfGlobal,
-            ASAHostnameLine,
-            ASAAclLine,
-            ASACfgLine,
-        ]
+        classes = ALL_ASA_FACTORY_CLASSES
     elif syntax == "junos":
-        classes = [JunosCfgLine]
+        classes = ALL_JUNOS_FACTORY_CLASSES
 
     else:
         err_txt = "'{}' is an unknown syntax".format(syntax)
         logger.error(err_txt)
         raise ValueError(err_txt)
 
+    # Walk all the classes and return the first class that
+    # matches `.is_object_for(text)`.
     try:
         for cls in classes:
             if cls.is_object_for(text):
@@ -6013,7 +5942,6 @@ def ConfigLineFactory(text="", comment_delimiter="!", syntax="ios"):
         err_txt = "Could not find an object for '%s'" % text
         logger.error(err_txt)
         raise ValueError(err_txt)
-
 
 ### TODO: Add unit tests below
 if __name__ == "__main__":
