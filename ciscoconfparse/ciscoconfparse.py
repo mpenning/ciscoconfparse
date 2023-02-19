@@ -5151,12 +5151,10 @@ class ConfigList(MutableSequence):
         if self.debug >= 1:
             logger.debug("    ConfigList()._bootstrap_obj_init_ng() was called.")
 
-        # Build the banner_re regexp... at this point ios
-        #    and nxos share the same method...
-        banner_re = self._build_banner_re_ios()
 
         retval = []
         idx = None
+        syntax = self.syntax
 
         max_indent = 0
         macro_parent_idx_list = []
@@ -5170,7 +5168,7 @@ class ConfigList(MutableSequence):
             obj = _cfgobj_from_text(
                 txt=txt,
                 idx=idx,
-                syntax=self.syntax,
+                syntax=syntax,
                 comment_delimiter=self.comment_delimiter,
                 factory=self.factory,
             )
@@ -5179,7 +5177,7 @@ class ConfigList(MutableSequence):
             is_config_line = obj.is_config_line
 
             # list out macro parent line numbers...
-            if txt[0:11] == "macro name " and self.syntax=="ios":
+            if txt[0:11] == "macro name " and syntax=="ios":
                 macro_parent_idx_list.append(obj.linenum)
 
             ## Parent cache:
@@ -5234,19 +5232,23 @@ class ConfigList(MutableSequence):
 
             retval.append(obj)
 
-        self._list = retval
-
         # Manually assign a parent on all closing braces
-        self._list = assign_parent_to_closing_braces(input_list=self._list)
+        self._list = assign_parent_to_closing_braces(input_list=retval)
 
         # Call _banner_mark_regex() to process banners in the returned obj
         # list.
         # Mark IOS banner begin and end config line objects...
-        self._banner_mark_regex(banner_re)
-        # We need to use a different method for macros than banners because
-        #   macros don't specify a delimiter on their parent line, but
-        #   banners call out a delimiter.
-        self._macro_mark_children(macro_parent_idx_list)  # Process macros
+        #
+        # Build the banner_re regexp... at this point ios
+        #    and nxos share the same method...
+        if syntax=="ios" or syntax=="nxos":
+            banner_re = self._build_banner_re_ios()
+            self._banner_mark_regex(banner_re)
+
+            # We need to use a different method for macros than banners because
+            #   macros don't specify a delimiter on their parent line, but
+            #   banners call out a delimiter.
+            self._macro_mark_children(macro_parent_idx_list)  # Process macros
 
         # change ignore_blank_lines behavior for Github Issue #229...
         #    Always allow a blank line if it's in a banner or macro...
