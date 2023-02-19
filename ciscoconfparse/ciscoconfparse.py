@@ -5139,6 +5139,70 @@ class ConfigList(MutableSequence):
                     finished = True
 
     # This method is on ConfigList()
+    def _maintain_bootstrap_parent_cache(
+            self, parents_cache, parent, indent, max_indent, is_config_line
+        ):
+        ## Parent cache:
+        ## Maintain indent vs max_indent in a family and
+        ##     cache the parent until indent<max_indent
+        if (indent < max_indent) and is_config_line:
+            parent = None
+            # walk parents and intelligently prune stale parents
+            stale_parent_idxs = filter(
+                lambda ii: ii >= indent,
+                sorted(parents_cache.keys(), reverse=True),
+            )
+
+            # `del some_dict[key]` is the fastest way to delete keys
+            #     See https://stackoverflow.com/a/3077179/667301
+            for parent_idx in stale_parent_idxs:
+                del parents_cache[parent_idx]
+        else:
+            ## As long as the child indent hasn't gone backwards,
+            ##    we can use a cached parent
+            parent = parents_cache.get(indent, None)
+
+        return parents_cache, parent
+
+    def _build_bootstrap_parent_child(
+            self, retval, parents_cache, parent, idx, indent, obj, debug,
+        ):
+        candidate_parent = None
+        candidate_parent_idx = None
+        ## If indented, walk backwards and find the parent...
+        ## 1.  Assign parent to the child
+        ## 2.  Assign child to the parent
+        ## 3.  Assign parent's child_indent
+        ## 4.  Maintain oldest_ancestor
+        if (indent > 0) and (parent is not None):
+            ## Add the line as a child (parent was cached)
+            self._add_child_to_parent(retval, idx, indent, parent, obj)
+        elif (indent > 0) and (parent is None):
+            ## Walk backwards to find parent, and add the line as a child
+            candidate_parent_idx = idx - 1
+            while candidate_parent_idx >= 0:
+                candidate_parent = retval[candidate_parent_idx]
+                if (
+                    candidate_parent.indent < indent
+                ) and candidate_parent.is_config_line:
+                    # We found the parent
+                    parent = candidate_parent
+                    parents_cache[indent] = parent  # Cache the parent
+                    break
+                else:
+                    candidate_parent_idx -= 1
+
+            ## Add the line as a child...
+            self._add_child_to_parent(retval, idx, indent, parent, obj)
+
+        else:
+            if debug:
+                logger.debug("    root obj assign: %s" % obj)
+
+        return retval, parents_cache, parent
+
+
+    # This method is on ConfigList()
     def _bootstrap_obj_init_ng(self, text_list=None, debug=0):
         """
         Accept a text list, and format into a list of *CfgLine() objects.
@@ -5159,6 +5223,7 @@ class ConfigList(MutableSequence):
         max_indent = 0
         macro_parent_idx_list = []
         # a dict of parents, indexed by int() child-indent...
+        parent = None
         parents_cache = {}
         for idx, txt in enumerate(text_list):
             if self.debug >= 1:
@@ -5182,56 +5247,18 @@ class ConfigList(MutableSequence):
             if txt[0:11] == "macro name " and syntax=="ios":
                 macro_parent_idx_list.append(obj.linenum)
 
-            ## Parent cache:
-            ## Maintain indent vs max_indent in a family and
-            ##     cache the parent until indent<max_indent
-            if (indent < max_indent) and is_config_line:
-                parent = None
-                # walk parents and intelligently prune stale parents
-                stale_parent_idxs = filter(
-                    lambda ii: ii >= indent,
-                    sorted(parents_cache.keys(), reverse=True),
-                )
-
-                # `del some_dict[key]` is the fastest way to delete keys
-                #     See https://stackoverflow.com/a/3077179/667301
-                for parent_idx in stale_parent_idxs:
-                    del parents_cache[parent_idx]
-            else:
-                ## As long as the child indent hasn't gone backwards,
-                ##    we can use a cached parent
-                parent = parents_cache.get(indent, None)
+            parents_cache, parent = self._maintain_bootstrap_parent_cache(
+                parents_cache, parent, indent, max_indent, is_config_line
+            )
 
             ## If indented, walk backwards and find the parent...
             ## 1.  Assign parent to the child
             ## 2.  Assign child to the parent
             ## 3.  Assign parent's child_indent
             ## 4.  Maintain oldest_ancestor
-            if (indent > 0) and (parent is not None):
-                ## Add the line as a child (parent was cached)
-                self._add_child_to_parent(retval, idx, indent, parent, obj)
-            elif (indent > 0) and (parent is None):
-                ## Walk backwards to find parent, and add the line as a child
-                candidate_parent_idx = idx - 1
-                while candidate_parent_idx >= 0:
-                    candidate_parent = retval[candidate_parent_idx]
-                    if (
-                        candidate_parent.indent < indent
-                    ) and candidate_parent.is_config_line:
-                        # We found the parent
-                        parent = candidate_parent
-                        parents_cache[indent] = parent  # Cache the parent
-                        break
-                    else:
-                        candidate_parent_idx -= 1
-
-                ## Add the line as a child...
-                self._add_child_to_parent(retval, idx, indent, parent, obj)
-
-            else:
-                if debug:
-                    logger.debug("    root obj assign: %s" % obj)
-
+            retval, parents_cache, parent = self._build_bootstrap_parent_child(
+                retval, parents_cache, parent, idx, indent, obj, debug,
+            )
 
             ## Handle max_indent
             if (indent == 0) and is_config_line:
