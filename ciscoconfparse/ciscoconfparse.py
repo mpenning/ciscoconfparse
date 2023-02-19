@@ -5159,7 +5159,7 @@ class ConfigList(MutableSequence):
         max_indent = 0
         macro_parent_idx_list = []
         # a dict of parents, indexed by integer child-indent level
-        parents = {}
+        parents_cache = {}
         for idx, txt in enumerate(text_list):
             if not isinstance(txt, str):
                 raise ValueError
@@ -5188,14 +5188,14 @@ class ConfigList(MutableSequence):
                 # walk parents and intelligently prune stale parents
                 stale_parent_idxs = filter(
                     lambda ii: ii >= indent,
-                    sorted(parents.keys(), reverse=True),
+                    sorted(parents_cache.keys(), reverse=True),
                 )
                 for parent_idx in stale_parent_idxs:
-                    del parents[parent_idx]
+                    del parents_cache[parent_idx]
             else:
                 ## As long as the child indent hasn't gone backwards,
                 ##    we can use a cached parent
-                parent = parents.get(indent, None)
+                parent = parents_cache.get(indent, None)
 
             ## If indented, walk backwards and find the parent...
             ## 1.  Assign parent to the child
@@ -5215,7 +5215,7 @@ class ConfigList(MutableSequence):
                     ) and candidate_parent.is_config_line:
                         # We found the parent
                         parent = candidate_parent
-                        parents[indent] = parent  # Cache the parent
+                        parents_cache[indent] = parent  # Cache the parent
                         break
                     else:
                         candidate_parent_index -= 1
