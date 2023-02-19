@@ -1,7 +1,9 @@
 ciscoconfparse
 ==============
 
-[![Github unittest workflow][4]][5] [![Snyk Code Health][37]][38] [![CodeFactor Code Health][43]][44] [![Codacy Code Health][37]][38] [![git commits][41]][42] [![Repo Code Grade][43]][44]  [![Version][2]][3] [![Downloads][6]][7] [![License][8]][9]
+[![Github unittest workflow][4]][5] [![Snyk Code Health][37]][38] [![CodeFactor Code Health][43]][44] [![Codacy Code Health][46]][47] [![git commits][41]][42] [![Version][2]][3] [![Downloads][6]][7] [![License][8]][9]
+
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/4774ebb0292d4e1d9dc30bf263d9df14)](https://www.codacy.com/gh/mpenning/ciscoconfparse/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=mpenning/ciscoconfparse&amp;utm_campaign=Badge_Grade)
 
 
 Introduction: What is ciscoconfparse?
@@ -252,3 +254,5 @@ Author
   [43]: https://www.codefactor.io/Content/badges/B.svg
   [44]: https://www.codefactor.io/repository/github/mpenning/ciscoconfparse/
   [45]: https://fossa.com/blog/open-source-software-licenses-101-gpl-v3/
+  [46]: https://app.codacy.com/project/badge/Grade/4774ebb0292d4e1d9dc30bf263d9df14
+  [47]: https://app.codacy.com/gh/mpenning/ciscoconfparse/dashboard
