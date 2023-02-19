@@ -5158,7 +5158,7 @@ class ConfigList(MutableSequence):
 
         max_indent = 0
         macro_parent_idx_list = []
-        # a dict of parents, indexed by integer child-indent level
+        # a dict of parents, indexed by int() child-indent...
         parents_cache = {}
         for idx, txt in enumerate(text_list):
             if not isinstance(txt, str):
@@ -5190,6 +5190,9 @@ class ConfigList(MutableSequence):
                     lambda ii: ii >= indent,
                     sorted(parents_cache.keys(), reverse=True),
                 )
+
+                # `del some_dict[key]` is the fastest way to delete keys
+                #     See https://stackoverflow.com/a/3077179/667301
                 for parent_idx in stale_parent_idxs:
                     del parents_cache[parent_idx]
             else:
