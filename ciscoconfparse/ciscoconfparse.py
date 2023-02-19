@@ -371,17 +371,19 @@ def _parse_line_braces(line_txt=None, comment_delimiter=None) -> tuple:
 
 # This method was on ConfigList()
 @logger.catch(reraise=True)
-def _build_cfgobj_from_text(
+def _cfgobj_from_text(
     txt, idx, syntax=None, comment_delimiter=None, factory=None
 ):
     """Build cfgobj from configuration text syntax, and factory inputs."""
-    if factory is False:
+    # if not factory is **faster** than factory is False
+    if not factory:
         obj = CFGLINE[syntax](
             text=txt,
             comment_delimiter=comment_delimiter,
         )
 
-    elif (factory is True):
+    # if factory is **faster** than if factory is True
+    elif factory:
         obj = ConfigLineFactory(
             txt,
             comment_delimiter,
@@ -875,6 +877,14 @@ class CiscoConfParse(object):
     def ioscfg(self):
         """Return a list containing all text configuration statements."""
         ## I keep ioscfg to emulate legacy ciscoconfparse behavior
+        #
+        # FYI: map / methodcaller is not significantly faster than a list
+        #     comprehension, below...
+        # See https://stackoverflow.com/a/51519942/667301
+        # from operator import methodcaller
+        # get_text_attr = methodcaller('text')
+        # return list(map(get_text_attr, self.ConfigObjs))
+        #
         return [ii.text for ii in self.ConfigObjs]
 
     # This method is on CiscoConfParse()
@@ -903,7 +913,8 @@ class CiscoConfParse(object):
         --------
         :func:`~ciscoconfparse.CiscoConfParse.commit`.
         """
-        self.ConfigObjs._bootstrap_from_text()
+        #self.ConfigObjs._bootstrap_from_text()
+        self.ConfigObjs._list = self.ConfigObjs._bootstrap_obj_init_ng(self.ioscfg)
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
@@ -918,7 +929,7 @@ class CiscoConfParse(object):
         --------
         :func:`~ciscoconfparse.CiscoConfParse.atomic`.
         """
-        self.atomic()  # atomic() calls self.ConfigObjs._bootstrap_from_text()
+        self.atomic()  # atomic() calls self.ConfigObjs._bootstrap_obj_init_ng
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
@@ -2886,7 +2897,8 @@ class CiscoConfParse(object):
 
         if self.factory and atomic:
             # self.ConfigObjs._reassign_linenums()
-            self.ConfigObjs._bootstrap_from_text()
+            #self.ConfigObjs._bootstrap_from_text()
+            self.ConfigObjs._list = self.ConfigObjs._bootstrap_obj_init_ng(self.ioscfg)
 
         return retval
 
@@ -2975,7 +2987,8 @@ class CiscoConfParse(object):
 
         if self.factory and atomic:
             # self.ConfigObjs._reassign_linenums()
-            self.ConfigObjs._bootstrap_from_text()
+            #self.ConfigObjs._bootstrap_from_text()
+            self.ConfigObjs._list = self.ConfigObjs._bootstrap_obj_init_ng(self.ioscfg)
         return retval
 
     # This method is on CiscoConfParse()
@@ -3010,7 +3023,8 @@ class CiscoConfParse(object):
 
         if self.factory and atomic:
             # self.ConfigObjs._reassign_linenums()
-            self.ConfigObjs._bootstrap_from_text()
+            #self.ConfigObjs._bootstrap_from_text()
+            self.ConfigObjs._list = self.ConfigObjs._bootstrap_obj_init_ng(self.ioscfg)
 
         return retval
 
@@ -4483,12 +4497,14 @@ class ConfigList(MutableSequence):
         #
         # This check will explicitly catch some problems like that...
 
+        # NOTE a string is a valid sequence... this guards against bad inputs
         if isinstance(initlist, str):
-            # IMPORTANT This check MUST come first in ConfigList()
             raise OSError
 
+        # IMPORTANT This check MUST come near the top of ConfigList()...
         if not isinstance(initlist, Sequence):
             raise ValueError
+        assert syntax in ALL_VALID_SYNTAX
 
         ciscoconfparse_kwarg_val = kwargs.get("CiscoConfParse", None)
         ccp_ref_kwarg_val = kwargs.get("ccp_ref", None)
@@ -4498,13 +4514,14 @@ class ConfigList(MutableSequence):
             )
         ccp_value = ccp_ref_kwarg_val or ciscoconfparse_kwarg_val
 
-        self._list = []
-        if initlist is not None:
-            # XXX should this accept an arbitrary sequence?
-            if type(initlist) == type(self._list):
-                self._list[:] = initlist
-            elif isinstance(initlist, ConfigList):
+
+        # Removed this portion of __init__() in 1.7.16...
+        if False:
+            self._list = []
+            if isinstance(initlist, ConfigList):
                 self._list[:] = initlist._list[:]
+            elif isinstance(initlist, list):
+                self._list[:] = initlist
             else:
                 self._list = list(initlist)
 
@@ -4519,32 +4536,20 @@ class ConfigList(MutableSequence):
         self.dna = "ConfigList"
         self.debug = debug
 
-        assert syntax in ALL_VALID_SYNTAX
 
         # Support input configuration as either a list or a generator instance
         #
         # as of python 3.9, getattr() below is slightly faster than
         #     isinstance(initlist, Sequence)
-        if getattr(initlist, "__iter__", False):
-            if self.syntax == "ios":
-                self._list = self._bootstrap_obj_init_ios(initlist)
+        self._list = self._bootstrap_obj_init_ng(initlist)
 
-            elif self.syntax == "asa":
-                self._list = self._bootstrap_obj_init_asa(initlist)
-
-            elif self.syntax == "nxos":
-                self._list = self._bootstrap_obj_init_nxos(initlist)
-
-            elif self.syntax == "junos":
-                self._list = self._bootstrap_obj_init_junos(initlist)
+        # Removed this portion of __init__() in 1.7.16...
+        if False:
+            if getattr(initlist, "__iter__", False) is not False:
+                self._list = self._bootstrap_obj_init_ng(initlist)
 
             else:
-                error = "No bootstrap method for syntax='%s'" % self.syntax
-                logger.critical(error)
-                raise NotImplementedError(error)
-
-        else:
-            self._list = []
+                self._list = []
 
         if self.debug > 0:
             message = "Create ConfigList() with %i elements" % len(self._list)
@@ -4552,7 +4557,7 @@ class ConfigList(MutableSequence):
 
         ###
         ### Internal structures
-        if self.syntax == "asa":
+        if syntax == "asa":
             self._RE_NAMES = re.compile(
                 r"^\s*name\s+(\d+\.\d+\.\d+\.\d+)\s+(\S+)",
             )
@@ -4614,7 +4619,8 @@ class ConfigList(MutableSequence):
     # This method is on ConfigList()
     def __delitem__(self, ii):
         del self._list[ii]
-        self._bootstrap_from_text()
+        #self._bootstrap_from_text()
+        self._list = self._bootstrap_obj_init_ng(self.ioscfg)
 
     # This method is on ConfigList()
     def __add__(self, other):
@@ -4745,33 +4751,6 @@ class ConfigList(MutableSequence):
             self._list.extend(other._list)
         else:
             self._list.extend(other)
-
-    # This method is on ConfigList()
-    def _bootstrap_from_text(self):
-        if self.debug >= 1:
-            logger.debug("    ConfigList()._bootstrap_from_text() was called.")
-
-        ## reparse all objects from their text attributes... this is *very* slow
-        ## Ultimate goal: get rid of all reparsing from text...
-
-        if self.syntax == "ios":
-            self._list = self._bootstrap_obj_init_ios(self.ioscfg)
-
-        elif self.syntax == "nxos":
-            self._list = self._bootstrap_obj_init_nxos(self.ioscfg)
-
-        elif self.syntax == "asa":
-            self._list = self._bootstrap_obj_init_asa(self.ioscfg)
-
-        elif self.syntax == "junos":
-            self._list = self._bootstrap_obj_init_junos(self.ioscfg)
-
-        else:
-            error = "no defined bootstrap method for syntax='%s'" % self.syntax
-            raise NotImplementedError(error)
-
-        if self.debug >= 3:
-            logger.debug("self._list = {}".format(self._list))
 
     # This method is on ConfigList()
     def has_line_with(self, linespec):
@@ -4914,7 +4893,8 @@ class ConfigList(MutableSequence):
 
         if atomic:
             # Reparse the whole config as a text list
-            self._bootstrap_from_text()
+            #self._bootstrap_from_text()
+            self._list = self._bootstrap_obj_init_ng(self.ioscfg)
 
         else:
             ## Just renumber lines...
@@ -5026,7 +5006,8 @@ class ConfigList(MutableSequence):
 
         if atomic is True:
             # Reparse the whole config as a text list
-            self._bootstrap_from_text()
+            #self._bootstrap_from_text()
+            self._list = self._bootstrap_obj_init_ng(self.ioscfg)
         else:
             ## Just renumber lines...
             self._reassign_linenums()
@@ -5215,53 +5196,37 @@ class ConfigList(MutableSequence):
                     finished = True
 
     # This method is on ConfigList()
-    def _build_banner_re_ios(self):
-        """Return a banner regexp for IOS (and at this point, NXOS)."""
-        banner_str = {
-            "login",
-            "motd",
-            "incoming",
-            "exec",
-            "telnet",
-            "lcd",
-        }
-        banner_all = [r"^(set\s+)*banner\s+{}".format(ii) for ii in banner_str]
-        banner_all.append(
-            "aaa authentication fail-message",
-        )  # Github issue #76
-        banner_re = re.compile("|".join(banner_all))
-
-        return banner_re
-
-    # This method is on ConfigList()
-    def _bootstrap_obj_init_ios(self, text_list):
+    def _bootstrap_obj_init_ng(self, text_list=None, debug=0):
         """
-        Accept a text list, and format into a list of proper
-        IOSCfgLine() objects or JunosCfgLine() objects.
+        Accept a text list, and format into a list of *CfgLine() objects.
 
-        This method returns a list of IOSCfgLine() objects.
+        This method returns a list of *CfgLine() objects.
         """
         if not isinstance(text_list, Sequence):
             raise ValueError
+
+        if self.debug >= 1:
+            logger.debug("    ConfigList()._bootstrap_obj_init_ng() was called.")
 
         # Build the banner_re regexp... at this point ios
         #    and nxos share the same method...
         banner_re = self._build_banner_re_ios()
 
         retval = []
-        idx = 0
+        idx = None
 
         max_indent = 0
         macro_parent_idx_list = []
+        # a dict of parents, indexed by integer child-indent level
         parents = {}
-        for txt in text_list:
+        for idx, txt in enumerate(text_list):
             if not isinstance(txt, str):
                 raise ValueError
 
             # Assign a custom *CfgLine() based on factory...
-            obj = _build_cfgobj_from_text(
-                txt,
-                idx,
+            obj = _cfgobj_from_text(
+                txt=txt,
+                idx=idx,
                 syntax=self.syntax,
                 comment_delimiter=self.comment_delimiter,
                 factory=self.factory,
@@ -5271,7 +5236,7 @@ class ConfigList(MutableSequence):
             is_config_line = obj.is_config_line
 
             # list out macro parent line numbers...
-            if obj.text[0:11] == "macro name ":
+            if txt[0:11] == "macro name " and self.syntax=="ios":
                 macro_parent_idx_list.append(obj.linenum)
 
             ## Parent cache:
@@ -5325,7 +5290,6 @@ class ConfigList(MutableSequence):
                 max_indent = indent
 
             retval.append(obj)
-            idx += 1
 
         self._list = retval
 
@@ -5354,326 +5318,23 @@ class ConfigList(MutableSequence):
         return retval
 
     # This method is on ConfigList()
-    def _bootstrap_obj_init_asa(self, text_list):
-        """
-        Accept a text list, and format into a list of proper
-        ASACfgLine() objects
+    def _build_banner_re_ios(self):
+        """Return a banner regexp for IOS (and at this point, NXOS)."""
+        banner_str = {
+            "login",
+            "motd",
+            "incoming",
+            "exec",
+            "telnet",
+            "lcd",
+        }
+        banner_all = [r"^(set\s+)*banner\s+{}".format(ii) for ii in banner_str]
+        banner_all.append(
+            "aaa authentication fail-message",
+        )  # Github issue #76
+        banner_re = re.compile("|".join(banner_all))
 
-        This method returns a list of ASACfgLine() objects.
-        """
-        if not isinstance(text_list, Sequence):
-            raise ValueError
-
-        # Append text lines as IOSCfgLine objects...
-        retval = []
-        idx = 0
-
-        max_indent = 0
-        parents = {}
-        for txt in text_list:
-            # Reject empty lines if ignore_blank_lines...
-            if self.ignore_blank_lines and txt.strip() == "":
-                continue
-
-            obj = _build_cfgobj_from_text(
-                txt,
-                idx,
-                syntax=self.syntax,
-                comment_delimiter=self.comment_delimiter,
-                factory=self.factory,
-            )
-            obj.confobj = self
-            indent = obj.indent
-            is_config_line = obj.is_config_line
-
-            ## Parent cache:
-            ## Maintain indent vs max_indent in a family and
-            ##     cache the parent until indent<max_indent
-            if (indent < max_indent) and is_config_line:
-                parent = None
-                # walk parents and intelligently prune stale parents
-                stale_parent_idxs = filter(
-                    lambda ii: ii >= indent,
-                    sorted(parents.keys(), reverse=True),
-                )
-                for parent_idx in stale_parent_idxs:
-                    del parents[parent_idx]
-            else:
-                ## As long as the child indent hasn't gone backwards,
-                ##    we can use a cached parent
-                parent = parents.get(indent, None)
-
-            ## If indented, walk backwards and find the parent...
-            ## 1.  Assign parent to the child
-            ## 2.  Assign child to the parent
-            ## 3.  Assign parent's child_indent
-            ## 4.  Maintain oldest_ancestor
-            if (indent > 0) and (parent is not None):
-                ## Add the line as a child (parent was cached)
-                self._add_child_to_parent(retval, idx, indent, parent, obj)
-            elif (indent > 0) and (parent is None):
-                ## Walk backwards to find parent, and add the line as a child
-                candidate_parent_index = idx - 1
-                while candidate_parent_index >= 0:
-                    candidate_parent = retval[candidate_parent_index]
-                    if (
-                        candidate_parent.indent < indent
-                    ) and candidate_parent.is_config_line:
-                        # We found the parent
-                        parent = candidate_parent
-                        parents[indent] = parent  # Cache the parent
-                        break
-                    else:
-                        candidate_parent_index -= 1
-
-                ## Add the line as a child...
-                self._add_child_to_parent(retval, idx, indent, parent, obj)
-
-            ## Handle max_indent
-            if (indent == 0) and is_config_line:
-                # only do this if it's a config line...
-                max_indent = 0
-            elif indent > max_indent:
-                max_indent = indent
-
-            retval.append(obj)
-            idx += 1
-
-        self._list = retval
-        ## Insert ASA-specific banner processing here, if required
-        return retval
-
-    # This method is on ConfigList()
-    def _bootstrap_obj_init_nxos(self, text_list):
-        """
-        Accept a text list, and format into a list of proper
-        NXOSCfgLine() objects
-
-        This method returns a list of NXOSCfgLine() objects.
-        """
-        if not isinstance(text_list, Sequence):
-            raise ValueError
-
-        # Build the banner_re regexp... at this point ios
-        #    and nxos share the same method...
-        banner_re = self._build_banner_re_ios()
-
-        retval = []
-        idx = 0
-
-        max_indent = 0
-        parents = {}
-        for txt in text_list:
-            # Reject empty lines if ignore_blank_lines...
-            if not isinstance(txt, str):
-                raise ValueError
-
-            obj = _build_cfgobj_from_text(
-                txt,
-                idx,
-                syntax=self.syntax,
-                comment_delimiter=self.comment_delimiter,
-                factory=self.factory,
-            )
-            obj.confobj = self
-            indent = obj.indent
-            is_config_line = obj.is_config_line
-
-            # FIXME FIXME FIXME
-            if False:
-                if not self.factory:
-                    obj = NXOSCfgLine(txt, self.comment_delimiter)
-                elif self.syntax == "nxos":
-                    obj = ConfigLineFactory(
-                        txt,
-                        self.comment_delimiter,
-                        syntax=self.syntax,
-                    )
-                else:
-                    error = "Unexpected line in the config: '%s'" % txt
-                    logger.error(error)
-                    raise ValueError(error)
-
-            obj.confobj = self
-            obj.linenum = idx
-            indent = len(txt) - len(txt.lstrip())
-            obj.indent = indent
-
-            is_config_line = obj.is_config_line
-
-            ## Parent cache:
-            ## Maintain indent vs max_indent in a family and
-            ##     cache the parent until indent<max_indent
-            if (indent < max_indent) and is_config_line:
-                parent = None
-                # walk parents and intelligently prune stale parents
-                stale_parent_idxs = filter(
-                    lambda ii: ii >= indent,
-                    sorted(parents.keys(), reverse=True),
-                )
-                for parent_idx in stale_parent_idxs:
-                    del parents[parent_idx]
-            else:
-                ## As long as the child indent hasn't gone backwards,
-                ##    we can use a cached parent
-                parent = parents.get(indent, None)
-
-            ## If indented, walk backwards and find the parent...
-            ## 1.  Assign parent to the child
-            ## 2.  Assign child to the parent
-            ## 3.  Assign parent's child_indent
-            ## 4.  Maintain oldest_ancestor
-            if (indent > 0) and (parent is not None):
-                ## Add the line as a child (parent was cached)
-                self._add_child_to_parent(retval, idx, indent, parent, obj)
-            elif (indent > 0) and (parent is None):
-                ## Walk backwards to find parent, and add the line as a child
-                candidate_parent_index = idx - 1
-                while candidate_parent_index >= 0:
-                    candidate_parent = retval[candidate_parent_index]
-                    if (
-                        candidate_parent.indent < indent
-                    ) and candidate_parent.is_config_line:
-                        # We found the parent
-                        parent = candidate_parent
-                        parents[indent] = parent  # Cache the parent
-                        break
-                    else:
-                        candidate_parent_index -= 1
-
-                ## Add the line as a child...
-                self._add_child_to_parent(retval, idx, indent, parent, obj)
-
-            ## Handle max_indent
-            if (indent == 0) and is_config_line:
-                # only do this if it's a config line...
-                max_indent = 0
-            elif indent > max_indent:
-                max_indent = indent
-
-            retval.append(obj)
-            idx += 1
-
-        self._list = retval
-        # Call _banner_mark_regex() to process banners in the returned obj
-        # list.
-        # Mark NXOS banner begin and end config line objects...
-        self._banner_mark_regex(banner_re)  # Process NXOS banners
-
-        # change ignore_blank_lines behavior for Github Issue #229...
-        #    Always allow a blank line if it's in a banner or macro...
-        if self.ignore_blank_lines is True:
-            retval = [
-                obj
-                for obj in self._list
-                if obj.text.strip() != "" or obj.blank_line_keep is True
-            ]
-            self._list = retval
-
-        return retval
-
-    # This method is on ConfigList()
-    def _bootstrap_obj_init_junos(self, text_list):
-        """
-        Accept a text list, and format into a list of proper
-        JunosCfgLine() objects.
-
-        This method returns a list of JunosCfgLine() objects.
-        """
-        if not isinstance(text_list, Sequence):
-            raise ValueError
-
-        retval = list()
-        idx = 0
-
-        max_indent = 0
-        macro_parent_idx_list = list()
-        parents = {}
-        for txt in text_list:
-            # Reject empty lines if ignore_blank_lines...
-            if not isinstance(txt, str):
-                raise ValueError
-
-            if self.ignore_blank_lines and txt.strip() == "":
-                continue
-            obj = _build_cfgobj_from_text(
-                txt,
-                idx,
-                syntax=self.syntax,
-                comment_delimiter=self.comment_delimiter,
-                factory=self.factory,
-            )
-            obj.confobj = self
-            indent = obj.indent
-            is_config_line = obj.is_config_line
-
-            # list out macro parent line numbers...
-            if obj.text[0:11] == "macro name ":
-                macro_parent_idx_list.append(obj.linenum)
-
-            ## Parent cache:
-            ## Maintain indent vs max_indent in a family and
-            ##     cache the parent until indent<max_indent
-            if (indent < max_indent) and is_config_line:
-                parent = None
-                # walk parents and intelligently prune stale parents
-                stale_parent_idxs = filter(
-                    lambda ii: ii >= indent,
-                    sorted(parents.keys(), reverse=True),
-                )
-                for parent_idx in stale_parent_idxs:
-                    del parents[parent_idx]
-            else:
-                ## As long as the child indent hasn't gone backwards,
-                ##    we can use a cached parent
-                parent = parents.get(indent, None)
-
-            ## If indented, walk backwards and find the parent...
-            ## 1.  Assign parent to the child
-            ## 2.  Assign child to the parent
-            ## 3.  Assign parent's child_indent
-            ## 4.  Maintain oldest_ancestor
-            if (indent > 0) and (parent is not None):
-                ## Add the line as a child (parent was cached)
-                self._add_child_to_parent(retval, idx, indent, parent, obj)
-            elif (indent > 0) and (parent is None):
-                ## Walk backwards to find parent, and add the line as a child
-                candidate_parent_index = idx - 1
-                while candidate_parent_index >= 0:
-                    candidate_parent = retval[candidate_parent_index]
-                    if (
-                        candidate_parent.indent < indent
-                    ) and candidate_parent.is_config_line:
-                        # We found the parent
-                        parent = candidate_parent
-                        parents[indent] = parent  # Cache the parent
-                        break
-                    else:
-                        candidate_parent_index -= 1
-
-                ## Add the line as a child...
-                self._add_child_to_parent(retval, idx, indent, parent, obj)
-
-            ## Handle max_indent
-            if (indent == 0) and is_config_line:
-                # only do this if it's a config line...
-                max_indent = 0
-            elif indent > max_indent:
-                max_indent = indent
-
-            retval.append(obj)
-            idx += 1
-
-        self._list = retval
-
-        # Manually assign a parent on all closing braces
-        self._list = assign_parent_to_closing_braces(input_list=self._list)
-
-        # We need to use a different method for macros than banners because
-        #   macros don't specify a delimiter on their parent line, but
-        #   banners call out a delimiter.
-        self._macro_mark_children(macro_parent_idx_list)  # Process macros
-        return retval
+        return banner_re
 
     # This method is on ConfigList()
     def _add_child_to_parent(self, _list, idx, indent, parentobj, childobj):
