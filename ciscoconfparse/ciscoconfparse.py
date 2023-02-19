@@ -781,58 +781,6 @@ class CiscoConfParse(object):
             logger.critical(error)
             raise OSError(error) from eee
 
-    @logger.catch(reraise=True)
-    def _DEPRECATED_read_config_file(
-        self, filename=None, logger=None, linesplit_rgx=r"\r*\n+"
-    ):
-        """Read the configuration from a filename."""
-        # config string - assume a filename... open file return lines...
-
-        if not isinstance(
-            filename,
-            (
-                str,
-                pathlib.Path,
-            ),
-        ):
-            raise ValueError(
-                "FATAL - filepath must be a string or pathlib.Path() instance"
-            )
-
-        if os.path.isfile(filename) is False:
-            raise OSError(
-                "FATAL - could not open() the config filepath named '{}'".format(
-                    filename
-                )
-            )
-
-        if self.debug > 0:
-            logger.debug(
-                "CiscoConfParse().read_config_file() is parsing config from the filepath named '%s'"
-                % filename
-            )
-
-        try:
-            with open(file=filename, **self.openargs) as fh:
-                text = fh.read()
-            rgx = re.compile(linesplit_rgx)
-            config_lines = rgx.split(text)
-            return config_lines
-
-        except OSError:
-            error = "CiscoConfParse could not open() the filepath named '%s'" % filename
-            logger.critical(error)
-            raise OSError(
-                "FATAL - could not open() the config filepath named '{}'".format(
-                    filename
-                )
-            )
-
-        except Exception as eee:
-            error = "FATAL - {}".format(str(eee))
-            logger.critical(error)
-            raise OSError(error) from eee
-
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
     def _check_ccp_input_good(self, config=None, logger=None, linesplit_rgx=r"\r*\n+"):
@@ -3963,11 +3911,6 @@ class HDiff(object):
             #
             # There is no support for special sorting behavior at this point...
             self.sort_lines()
-
-    # This method is on HDiff()
-    @logger.catch(reraise=True)
-    def DEPRECATED_raw_diff_dicts(self):
-        return self.all_output_dicts
 
     # This method is on HDiff()
     @logger.catch(reraise=True)
