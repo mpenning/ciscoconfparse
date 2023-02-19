@@ -20,7 +20,7 @@ requires-python = ">=3.7.0"
 
 [tool.poetry]
 name = "ciscoconfparse"
-version = "1.7.17"
+version = "1.7.18"
 description = "Parse, Audit, Query, Build, and Modify Cisco IOS-style and JunOS-style configs"
 license = "GPL-3.0-only"
 authors = ["Mike Pennington <mike@pennington.net>"]

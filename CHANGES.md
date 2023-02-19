@@ -4,15 +4,26 @@
 - Summary:
     - Insert something here
 
+## Version: 1.7.18
+
+- Released: 2023-02-XX
+- Summary:
+    - Streamline the `ConfigLineFactory()` function
+    - Replace four `_bootstrap_obj_init_FOO()` methods where FOO is {ios, nxos, asa, junos}.  The repalcement is `_bootstrap_obj_init_ng()`, which handles initial parse from text into `*CfgLine()` object instances for *all* syntax.
+    - Rename `_build_cfgobj_from_text()` to `_cfgobj_from_text()`
+    - Deprecate `ConfigList()._bootstrap_from_text()` and replace it with `ConfigList()._bootstrap_obj_init_ng()`
+    - Remove `foo_DEPRECATED()` code in `ciscoconfparse/ciscoconfparse.py`
+    - Modify `CiscoConfParse()` to parse `syntax='ios'` roughly 25% faster.
+
 ## Version: 1.7.17
 
 - Released: 2023-02-17
 - Summary:
     - Simplify `find_object_branches()`
     - Remove unused test fixtures and imports
-    - As part of Github issue #264 (Remove duplicated obj init code from `CiscoConfParse()._bootstrap_obj_init_foo()`), we removed a duplicated method: `ConfigList()._build_cfgobj_from_text()`
-    - As part of Github issue #265, we fixed a broken `loguru` parameter: changed it from `allow_enqueue` to `enqueue`
-    - Closed Github issue #266 as wont-fix: make `BaseCfgLine().calculate_line_id()` hash comments / whitespace
+    - As part of Github issue #264 (Remove duplicated obj init code from `CiscoConfParse()._bootstrap_obj_init_foo()`), also remove a duplicate method: `ConfigList()._build_cfgobj_from_text()`
+    - As part of Github issue #265, fix a broken `loguru` parameter: change it from `allow_enqueue` to `enqueue`
+    - Close Github issue #266 as wont-fix: make `BaseCfgLine().calculate_line_id()` hash comments / whitespace
     - Reformat `ciscoconfparse/ciscoconfparse.py` and `ciscoconfparse/ccp_abc.py` with black
     - Add new `as_dict_diff` attribute (used by `HDiff()`) on `BaseCfgLine()`.
     - Add more debugs in `HDiff().compress_dict_diffs()`.
