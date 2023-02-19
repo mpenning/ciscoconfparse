@@ -862,7 +862,7 @@ class CiscoConfParse(object):
         :func:`~ciscoconfparse.CiscoConfParse.commit`.
         """
         #self.ConfigObjs._bootstrap_from_text()
-        self.ConfigObjs._list = self.ConfigObjs._bootstrap_obj_init_ng(self.ioscfg)
+        self.ConfigObjs._list = self.ConfigObjs._bootstrap_obj_init_ng(self.ioscfg, debug=self.debug)
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
@@ -4484,7 +4484,7 @@ class ConfigList(MutableSequence):
         #
         # as of python 3.9, getattr() below is slightly faster than
         #     isinstance(initlist, Sequence)
-        self._list = self._bootstrap_obj_init_ng(initlist)
+        self._list = self._bootstrap_obj_init_ng(initlist, debug=debug)
 
         # Removed this portion of __init__() in 1.7.16...
         if False:
@@ -4563,7 +4563,7 @@ class ConfigList(MutableSequence):
     def __delitem__(self, ii):
         del self._list[ii]
         #self._bootstrap_from_text()
-        self._list = self._bootstrap_obj_init_ng(self.ioscfg)
+        self._list = self._bootstrap_obj_init_ng(self.ioscfg, debug=self.debug)
 
     # This method is on ConfigList()
     def __add__(self, other):
@@ -5148,8 +5148,8 @@ class ConfigList(MutableSequence):
         if not isinstance(text_list, Sequence):
             raise ValueError
 
-        if self.debug >= 1:
-            logger.debug("    ConfigList()._bootstrap_obj_init_ng() was called.")
+        if self.debug >= 0:
+            logger.info("    ConfigList()._bootstrap_obj_init_ng() was called.")
 
 
         retval = []
@@ -5161,6 +5161,8 @@ class ConfigList(MutableSequence):
         # a dict of parents, indexed by int() child-indent...
         parents_cache = {}
         for idx, txt in enumerate(text_list):
+            if self.debug >= 0:
+                logger.debug("    _bootstrap_obj_init_ng() adding text cmd: '%s' at idx %s" % (txt, idx,))
             if not isinstance(txt, str):
                 raise ValueError
 
@@ -5207,12 +5209,16 @@ class ConfigList(MutableSequence):
             ## 4.  Maintain oldest_ancestor
             if (indent > 0) and (parent is not None):
                 ## Add the line as a child (parent was cached)
+                if debug:
+                    logger.debug("        Using cached parent for child: %s" % obj)
                 self._add_child_to_parent(retval, idx, indent, parent, obj)
             elif (indent > 0) and (parent is None):
                 ## Walk backwards to find parent, and add the line as a child
-                candidate_parent_index = idx - 1
-                while candidate_parent_index >= 0:
-                    candidate_parent = retval[candidate_parent_index]
+                if debug:
+                    logger.debug("        Parent NOT cached. Walk back to find parent, and add %s as a child" % obj)
+                candidate_parent_idx = idx - 1
+                while candidate_parent_idx >= 0:
+                    candidate_parent = retval[candidate_parent_idx]
                     if (
                         candidate_parent.indent < indent
                     ) and candidate_parent.is_config_line:
@@ -5221,10 +5227,15 @@ class ConfigList(MutableSequence):
                         parents_cache[indent] = parent  # Cache the parent
                         break
                     else:
-                        candidate_parent_index -= 1
+                        candidate_parent_idx -= 1
 
                 ## Add the line as a child...
                 self._add_child_to_parent(retval, idx, indent, parent, obj)
+
+            else:
+                if debug:
+                    logger.debug("    root obj assign: %s" % obj)
+
 
             ## Handle max_indent
             if (indent == 0) and is_config_line:
