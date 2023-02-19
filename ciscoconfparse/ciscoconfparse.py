@@ -5148,7 +5148,7 @@ class ConfigList(MutableSequence):
         if not isinstance(text_list, Sequence):
             raise ValueError
 
-        if self.debug >= 0:
+        if self.debug >= 1:
             logger.info("    ConfigList()._bootstrap_obj_init_ng() was called.")
 
 
@@ -5161,7 +5161,7 @@ class ConfigList(MutableSequence):
         # a dict of parents, indexed by int() child-indent...
         parents_cache = {}
         for idx, txt in enumerate(text_list):
-            if self.debug >= 0:
+            if self.debug >= 1:
                 logger.debug("    _bootstrap_obj_init_ng() adding text cmd: '%s' at idx %s" % (txt, idx,))
             if not isinstance(txt, str):
                 raise ValueError
@@ -5209,13 +5209,9 @@ class ConfigList(MutableSequence):
             ## 4.  Maintain oldest_ancestor
             if (indent > 0) and (parent is not None):
                 ## Add the line as a child (parent was cached)
-                if debug:
-                    logger.debug("        Using cached parent for child: %s" % obj)
                 self._add_child_to_parent(retval, idx, indent, parent, obj)
             elif (indent > 0) and (parent is None):
                 ## Walk backwards to find parent, and add the line as a child
-                if debug:
-                    logger.debug("        Parent NOT cached. Walk back to find parent, and add %s as a child" % obj)
                 candidate_parent_idx = idx - 1
                 while candidate_parent_idx >= 0:
                     candidate_parent = retval[candidate_parent_idx]
@@ -5300,7 +5296,7 @@ class ConfigList(MutableSequence):
         ## parentobj could be None when trying to add a child that should not
         ##    have a parent
         if parentobj is None:
-            if self.debug > 0:
+            if self.debug >= 1:
                 logger.debug("parentobj is None")
             return
 
