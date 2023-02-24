@@ -170,10 +170,15 @@ Bug Tracker and Support
   - [reddit/r/networking][36]
   - [NetworkEngineering.se][23]
 
-Unit-Tests
-----------
+Unit-Tests and Development
+--------------------------
 
 The project\'s [test workflow][1] checks ciscoconfparse on Python versions 3.7 and higher, as well as a [pypy JIT][22] executable.
+
+Caveats:
+
+- At this point, [CiscoConfParse][3] does NOT adhere to [Semantic Versioning][49]
+- Although we added [commitizen][48] as a dev dependency, we are NOT using [Conventional Commits][50] yet
 
 Click the image below for details; the current build status is: [![Github unittest status][4]][5]
 
@@ -255,3 +260,6 @@ Author
   [45]: https://fossa.com/blog/open-source-software-licenses-101-gpl-v3/
   [46]: https://app.codacy.com/project/badge/Grade/4774ebb0292d4e1d9dc30bf263d9df14
   [47]: https://app.codacy.com/gh/mpenning/ciscoconfparse/dashboard
+  [48]: https://commitizen-tools.github.io/commitizen/
+  [49]: https://semver.org/
+  [50]: https://www.conventionalcommits.org/en/v1.0.0/
