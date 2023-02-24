@@ -3,10 +3,12 @@ ciscoconfparse.py - Parse, Query, Build, and Modify IOS-style configs.
 
 Copyright (C) 2022-2023 David Michael Pennington
 Copyright (C) 2022 David Michael Pennington at WellSky
+Copyright (C) 2022 David Michael Pennington
 Copyright (C) 2019-2021 David Michael Pennington at Cisco Systems / ThousandEyes
 Copyright (C) 2012-2019 David Michael Pennington at Samsung Data Services
 Copyright (C) 2011-2012 David Michael Pennington at Dell Computer Corp
 Copyright (C) 2007-2011 David Michael Pennington
+
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
