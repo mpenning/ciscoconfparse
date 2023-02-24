@@ -163,7 +163,7 @@ The project\'s [test workflow][1] checks ciscoconfparse on Python versions 3.7 a
 Caveats:
 
 - At this point, [CiscoConfParse][3] does NOT adhere to [Semantic Versioning][49]
-- Although we added [commitizen][48] as a dev dependency, we are NOT using [Conventional Commits][50] yet
+- Although we added [commitizen][48] as a dev dependency, we are NOT enforcing commit rules (such as [Conventional Commits][50]) yet.
 
 Click the image below for details; the current build status is: [![Github unittest status][4]][5]
 
@@ -176,11 +176,11 @@ Editing the Package
 -   Add / modify / delete on the `develop` branch
 -   `make test`
 -   If tests run clean, `git commit` all the pending changes on the `develop` branch
--   (as required) Edit the version number in [pyproject.toml][12]
+-   If you plan to publish this as an official version rev, edit the version number in [pyproject.toml][12].  In the future, we want to integrate `commitizen` to manage versioning.
 -   `git checkout main`
 -   `git merge develop`
 -   `make test`
--   `make repo-push`
+-   `git push origin main`
 -   `make pypi`
 
 Sphinx Documentation
