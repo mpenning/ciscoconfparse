@@ -110,21 +110,6 @@ Docs
 - The latest copy of the docs are [archived on the web][15]
 - There is also a [CiscoConfParse Tutorial][16]
 
-Editing the Package
--------------------
-
--   `git clone https://github.com/mpenning/ciscoconfparse`
--   `cd ciscoconfparse`
--   `git checkout -b develop`
--   Add / modify / delete on the `develop` branch
--   `make test`
--   If tests run clean, `git commit` all the pending changes on the `develop` branch
--   (as required) Edit the version number in [pyproject.toml][12]
--   `git checkout main`
--   `git merge develop`
--   `make test`
--   `make repo-push`
--   `make pypi`
 
 Pre-requisites
 --------------
@@ -181,6 +166,22 @@ Caveats:
 - Although we added [commitizen][48] as a dev dependency, we are NOT using [Conventional Commits][50] yet
 
 Click the image below for details; the current build status is: [![Github unittest status][4]][5]
+
+Editing the Package
+-------------------
+
+-   `git clone https://github.com/mpenning/ciscoconfparse`
+-   `cd ciscoconfparse`
+-   `git checkout -b develop`
+-   Add / modify / delete on the `develop` branch
+-   `make test`
+-   If tests run clean, `git commit` all the pending changes on the `develop` branch
+-   (as required) Edit the version number in [pyproject.toml][12]
+-   `git checkout main`
+-   `git merge develop`
+-   `make test`
+-   `make repo-push`
+-   `make pypi`
 
 Sphinx Documentation
 --------------------
