@@ -732,7 +732,7 @@ class BaseIOSIntfLine(IOSCfgLine):
 
         """
         retval = self.re_match_iter_typed(
-            r"^\s*description\s+(\S.+)$", result_type=str, default=""
+            r"^\s*description\s+(.+)$", result_type=str, default=""
         )
         return retval
 
