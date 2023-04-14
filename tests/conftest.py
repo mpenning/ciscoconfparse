@@ -296,6 +296,7 @@ interface GigabitEthernet4/1
  power inline static max 7000
 !
 interface GigabitEthernet4/2
+ description A
  switchport
  switchport access vlan 100
  switchport voice vlan 150

@@ -866,7 +866,7 @@ def testVal_IOSIntfLine_description(parse_c03_factory):
         "interface Serial 1/0": "Uplink to SBC F923X2K425",
         "interface Serial 1/1": "Uplink to AT&T",
         "interface GigabitEthernet4/1": "",
-        "interface GigabitEthernet4/2": "",
+        "interface GigabitEthernet4/2": "A",
         "interface GigabitEthernet4/3": "",
         "interface GigabitEthernet4/4": "",
         "interface GigabitEthernet4/5": "",
