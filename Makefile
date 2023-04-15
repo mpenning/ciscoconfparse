@@ -24,6 +24,7 @@ COL_END=\033[0;0m
 .PHONY: pypi-package-infra
 pypi-package-infra:
 	@echo "$(COL_GREEN)>> building ciscoconfparse pypi artifacts (wheel and tar.gz)$(COL_END)"
+	pip install -U pip
 	pip install -r requirements.txt
 	pip install -r requirements-dev.txt
 	# Delete bogus files... see https://stackoverflow.com/a/73992288/667301
@@ -145,46 +146,6 @@ doctest:
 	# Run the doc tests
 	cd sphinx-doc; make doctest
 
-.PHONY: pip
-pip:
-	@echo "$(COL_GREEN)>> Upgrading pip to the latest version$(COL_END)"
-	make ping
-	pip install -U pip>=22.2.0
-
-.PHONY: dep
-dep:
-	@echo "$(COL_GREEN)>> installing all ciscoconfparse prod dependencies$(COL_END)"
-	pip install -U dnspython==1.15.0 # Previously version 1.14.0
-	pip install -U passlib==1.7.4
-	pip install -U loguru==0.6.0
-	pip install -U toml>=0.10.2
-	pip install -U deprecat==2.1.1
-
-.PHONY: dev
-dev:
-	@echo "$(COL_GREEN)>> installing all prod and development ciscoconfparse dependencies$(COL_END)"
-	make pip
-	make dep
-	pip install -U virtualenv
-	pip install -U virtualenvwrapper>=4.8.0
-	pip install -U pss
-	pip install -U mock
-	pip install -U highlights>=0.1.1
-	pip install -U diff_highlight>=1.2.0
-	pip install -U alabaster==0.7.12
-	pip install -U sphinx>=5.2.0
-	pip install -U sphinx-bootstrap-theme>=0.8.1
-	pip install -U rst2html5>=2.0
-	pip install -U rst2html5-tools>=0.5.3
-	pip install -U pytest>=7.1.0
-	pip install -U mccabe
-	pip install -U flake8
-	pip install -U black>=22.8.0
-	pip install -U yapf
-	pip install -U fabric>=2.7.0
-	pip install -U invoke>=1.7.0
-	pip install -U ipaddr>=2.2.0
-
 .PHONY: rm-timestamp
 rm-timestamp:
 	@echo "$(COL_GREEN)>> delete .pip_dependency if older than a day$(COL_END)"
@@ -193,7 +154,7 @@ rm-timestamp:
 
 .PHONY: timestamp
 timestamp:
-	@echo "$(COL_GREEN)>> delete .pip_dependency if older than a day$(COL_END)"
+	@echo "$(COL_GREEN)>> Create .pip_dependency$(COL_END)"
 	$(shell touch .pip_dependency)
 
 .PHONY: ping
