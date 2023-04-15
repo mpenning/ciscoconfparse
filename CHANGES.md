@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 1.7.20
+
+- Released: 2023-04-15
+- Summary:
+    - Cosmetic release after attempts to fix CI/CD problems documented in Github issue #271
+
 ## Version: 1.7.19
 
 - Released: 2023-04-15
