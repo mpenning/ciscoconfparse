@@ -37,7 +37,7 @@ maintainers = [
 readme = "README.md"
 packages = [
     # Syntax -> https://python-poetry.org/docs/pyproject/#packages
-    { include = "ciscoconfparse/" },
+    { include = "ciscoconfparse/*" },
 ]
 # See -> https://python-poetry.org/docs/pyproject/#include-and-exclude
 include = [
