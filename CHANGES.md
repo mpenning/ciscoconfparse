@@ -4,9 +4,17 @@
 - Summary:
     - Insert something here
 
+## Version: 1.7.19
+
+- Released: 2023-04-15
+- Summary:
+    - Update build tooling and packaging info in pyproject.toml
+    - Fix Makefile target description
+    - Remove some extra Makefile targets
+
 ## Version: 1.7.18
 
-- Released: 2023-02-XX
+- Released: 2023-02-19
 - Summary:
     - Streamline the `ConfigLineFactory()` function
     - Replace four `_bootstrap_obj_init_FOO()` methods where FOO is {ios, nxos, asa, junos}.  The repalcement is `_bootstrap_obj_init_ng()`, which handles initial parse from text into `*CfgLine()` object instances for *all* syntax.
