@@ -168,8 +168,6 @@ test:
 	#make ping
 	make clean
 	# Attempt to fix strange github unit test import failures
-	pip uninstall -y dnspython loguru
-	pip install dnspython loguru==0.7.0
 	cd tests && ./runtests.sh
 
 .PHONY: clean
