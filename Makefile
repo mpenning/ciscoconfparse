@@ -21,8 +21,8 @@ COL_END=\033[0;0m
 
 # Ref -> https://stackoverflow.com/a/26737258/667301
 # Ref -> https://packaging.python.org/en/latest/guides/making-a-pypi-friendly-readme/
-.PHONY: pypi-package-infra
-pypi-package-infra:
+.PHONY: packages
+packages:
 	@echo "$(COL_GREEN)>> building ciscoconfparse pypi artifacts (wheel and tar.gz)$(COL_END)"
 	pip install -U pip
 	pip install --upgrade --force-reinstall -r requirements.txt
@@ -35,7 +35,7 @@ pypi:
 	@echo "$(COL_CYAN)>> uploading ciscoconfparse pypi artifacts to pypi$(COL_END)"
 	make clean
 	# upgrade packaging infra and ciscoconfparse dependencies...
-	make pypi-package-infra
+	make packages
 	# tag the repo with $$VERSION and push to origin
 	git tag $$VERSION
 	git push origin $$VERSION
