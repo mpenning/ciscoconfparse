@@ -167,6 +167,9 @@ test:
 	make timestamp
 	#make ping
 	make clean
+	# Attempt to fix strange github unit test import failures
+	pip uninstall -y dnspython
+	pip install dnspython
 	cd tests && ./runtests.sh
 
 .PHONY: clean
