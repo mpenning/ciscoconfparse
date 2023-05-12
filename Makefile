@@ -1,8 +1,12 @@
 DOCHOST ?= $(shell bash -c 'read -p "documentation host: " dochost; echo $$dochost')
 
 # dynamic ciscoconfparse VERSION detection (via version str in pyproject.toml)
-#    Ref -> https://stackoverflow.com/a/71592061/667301
-export VERSION := $(shell grep version pyproject.toml | tr -s ' ' | tr -d "'" | tr -d '"' | cut -d' ' -f3)
+#
+# - at this point, I prefer printing in perl to set shell variables...
+#   - open './pyproject.toml' as $pyproject
+#   - loop over each line, assigned to $line
+#   - If we see the version string in a line, print it and end
+export VERSION := $(shell perl -e 'open my $$pyproject, "pyproject.toml"; while (my $$line = <$$pyproject>) { if ( $$line =~ s/version.+?(\d+.\d+.\d+)\D\s*/$$1/g ) { print "$$line"; exit 0; } }' )
 
 # We must escape Makefile dollar signs as $$foo...
 export PING_STATUS := $(shell perl -e '@output = qx/ping -q -W0.5 -c1 4.2.2.2/; $$alloutput = join "", @output; if ( $$alloutput =~ /\s0\sreceived/ ) { print "failure"; } else { print "success"; }')
