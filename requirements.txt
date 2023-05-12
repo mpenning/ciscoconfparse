@@ -3,5 +3,5 @@
 loguru == 0.7.0
 passlib == 1.7.4
 toml > 0.10.1
-dnspython >= 2.3.0
+dnspython == 2.2.1
 deprecat
