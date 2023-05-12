@@ -8,7 +8,7 @@
 
 - Released: 2023-05-12
 - Summary:
-    - Add new import to `tests/conftest.py`
+    - Add new imports to `tests/conftest.py`.  All tests under 1.7.21 and earlier pass (from py3.7 to py3.11) except for py3.10.  The error is failing dnspython imports.
 
 ## Version: 1.7.21
 
