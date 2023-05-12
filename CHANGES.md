@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 1.7.21
+
+- Released: 2023-05-12
+- Summary:
+    - Fix Github Issue #272 / Github Issue #269 (the Pull Request for #272), which was an interface description parsing anomaly in `ciscoconfparse/models_cisco.py`.  It is only triggered with `factory=True`.
+
 ## Version: 1.7.20
 
 - Released: 2023-04-15
