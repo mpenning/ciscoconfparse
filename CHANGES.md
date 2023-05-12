@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 1.7.22
+
+- Released: 2023-05-12
+- Summary:
+    - Add new import to `tests/conftest.py`
+
 ## Version: 1.7.21
 
 - Released: 2023-05-12
