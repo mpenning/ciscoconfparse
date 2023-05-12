@@ -860,7 +860,7 @@ def testVal_IOSIntfLine_port_type():
         assert obj.port_type == result_correct
 
 
-def testVal_IOSIntfLine_description(parse_c03_factory):
+def testVal_IOSIntfLine_description_01(parse_c03_factory):
     cfg = parse_c03_factory
     result_correct = {
         "interface Serial 1/0": "Uplink to SBC F923X2K425",
@@ -879,6 +879,30 @@ def testVal_IOSIntfLine_description(parse_c03_factory):
     }
     test_result = dict()
     ## Parse all interface objects in self.c01 and check description
+    for intf_obj in cfg.find_objects("^interface"):
+        test_result[intf_obj.text] = intf_obj.description
+    assert result_correct == test_result
+
+def testVal_IOSIntfLine_description_02():
+    gh269_conf = [
+        "!",
+        "interface GigabitEthernet1/1",
+        " description A",
+        " ip address dhcp",
+        "!",
+        "interface GigabitEthernet1/2",
+        " description Z",
+        " ip address dhcp",
+        "!",
+        "!",
+    ]
+    result_correct = {
+        "interface GigabitEthernet1/1": "A",
+        "interface GigabitEthernet1/2": "Z",
+    }
+    cfg = CiscoConfParse(gh269_conf, factory=True)
+    test_result = dict()
+    ## Parse all interface objects in cfg and check description
     for intf_obj in cfg.find_objects("^interface"):
         test_result[intf_obj.text] = intf_obj.description
     assert result_correct == test_result
