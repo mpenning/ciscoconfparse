@@ -50,18 +50,15 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - {name: '3.11-dev', python: '3.11-dev', os: ubuntu-latest, pytest: py311}
-          - {name: Linux, python: '3.10', os: ubuntu-latest, pytest: py310}
-          - {name: Windows, python: '3.10', os: windows-latest, pytest: py310}
-          - {name: Mac, python: '3.10', os: macos-latest, pytest: py310}
-          - {name: '3.9', python: '3.9', os: ubuntu-latest, pytest: py39}
-          - {name: '3.8', python: '3.8', os: ubuntu-latest, pytest: py38}
-          - {name: '3.7', python: '3.7', os: ubuntu-latest, pytest: py37}
-          - {name: 'PyPy-3.9', python: 'pypy-3.9', os: ubuntu-latest, pytest: pypy39}
-          - {name: 'PyPy-3.8', python: 'pypy-3.8', os: ubuntu-latest, pytest: pypy38}
-          - {name: 'PyPy-3.7', python: 'pypy-3.7', os: ubuntu-latest, pytest: pypy37}
-          - {name: 'ciscoconfparse Minimum Versions', python: '3.10', os: ubuntu-latest}
-          - {name: 'ciscoconfparse Development Versions', python: '3.7', os: ubuntu-latest}
+          - {name: '3.11', python: '3.11', os: 'ubuntu-latest', pytest: 'py311'}
+          - {name: 'Mac_py310', python: '3.10', os: 'macos-latest', pytest: 'py310'}
+          - {name: 'Linux_py310', python: '3.10', os: 'ubuntu-latest', pytest: 'py310'}
+          - {name: '3.9', python: '3.9', os: 'ubuntu-latest', pytest: 'py39'}
+          - {name: '3.8', python: '3.8', os: 'ubuntu-latest', pytest: 'py38'}
+          - {name: '3.7', python: '3.7', os: 'ubuntu-latest', pytest: 'py37'}
+          - {name: 'PyPy-3.9', python: 'pypy-3.9', os: 'ubuntu-latest', pytest: 'pypy39'}
+          - {name: 'PyPy-3.8', python: 'pypy-3.8', os: 'ubuntu-latest', pytest: 'pypy38'}
+          - {name: 'PyPy-3.7', python: 'pypy-3.7', os: 'ubuntu-latest', pytest: 'pypy37'}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
