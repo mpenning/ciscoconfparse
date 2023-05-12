@@ -27,6 +27,9 @@ import os
 sys.path.insert(0, "..")
 
 from ciscoconfparse.ciscoconfparse import CiscoConfParse
+from ciscoconfparse.ccp_util import PythonOptimizeCheck
+import dns.exception
+import dns.resolver
 import pytest
 
 THIS_DIR = os.path.dirname(__file__)
