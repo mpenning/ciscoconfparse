@@ -23,7 +23,7 @@ requires-python = ">=3.7.0"
 
 [tool.poetry]
 name = "ciscoconfparse"
-version = "1.7.23"
+version = "1.7.24"
 description = "Parse, Audit, Query, Build, and Modify Cisco IOS-style and JunOS-style configs"
 license = "GPL-3.0-only"
 authors = [
@@ -41,16 +41,16 @@ packages = [
 ]
 # See -> https://python-poetry.org/docs/pyproject/#include-and-exclude
 include = [
-    "configs/",
-    "tests/",
-    "dev_tools/",
-    "CHANGES.md",
-    "CONTRIBUTING.md",
-    "LICENSE",
-    "Makefile",
-    "requirements.txt",
-    "requirements-dev.txt",
-    "README_git_workflow.md"
+    #"configs/",
+    #"tests/",
+    #"dev_tools/",
+    #"CHANGES.md",
+    #"CONTRIBUTING.md",
+    #"LICENSE",
+    #"Makefile",
+    #"requirements.txt",
+    #"requirements-dev.txt",
+    #"README_git_workflow.md"
 ]
 exclude = [
     "coverage.json"
@@ -73,6 +73,15 @@ classifiers=[
     "Topic :: System :: Networking",
     "Topic :: System :: Networking :: Monitoring",
 ]
+
+# Do NOT remove this... requirements.txt is not sufficient for dependencies
+[tool.poetry.dependencies]
+python = ">=3.7.2,<4.0.0"
+passlib = "^1.7.4"
+dnspython = "^2.2.0"
+loguru = "0.6.0"
+toml = ">=0.10.2"
+deprecat = ">=2.1.1"
 
 [tool.poetry.urls]
 source = "https://github.com/mpenning/ciscoconfparse"

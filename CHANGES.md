@@ -4,6 +4,15 @@
 - Summary:
     - Insert something here
 
+## Version: 1.7.24
+
+- Released: 2023-05-13
+- Summary:
+    - Prefer explicit perl Makefile version detection
+    - Attempt to reduce packaging clutter in pyproject.toml [include]
+    - Fix Github Issue #275: Roll back to hard-coded dependencies in pyproject.toml
+
+
 ## Version: 1.7.22
 
 - Released: 2023-05-12
