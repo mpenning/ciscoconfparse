@@ -41,16 +41,16 @@ packages = [
 ]
 # See -> https://python-poetry.org/docs/pyproject/#include-and-exclude
 include = [
-    "configs/",
-    "tests/",
-    "dev_tools/",
-    "CHANGES.md",
-    "CONTRIBUTING.md",
-    "LICENSE",
-    "Makefile",
-    "requirements.txt",
-    "requirements-dev.txt",
-    "README_git_workflow.md"
+    #"configs/",
+    #"tests/",
+    #"dev_tools/",
+    #"CHANGES.md",
+    #"CONTRIBUTING.md",
+    #"LICENSE",
+    #"Makefile",
+    #"requirements.txt",
+    #"requirements-dev.txt",
+    #"README_git_workflow.md"
 ]
 exclude = [
     "coverage.json"
