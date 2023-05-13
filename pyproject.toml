@@ -74,6 +74,15 @@ classifiers=[
     "Topic :: System :: Networking :: Monitoring",
 ]
 
+# Do NOT remove this... requirements.txt is not sufficient for dependencies
+[tool.poetry.dependencies]
+python = ">=3.7.2,<4.0.0"
+passlib = "^1.7.4"
+dnspython = "^2.2.0"
+loguru = "0.6.0"
+toml = ">=0.10.2"
+deprecat = ">=2.1.1"
+
 [tool.poetry.urls]
 source = "https://github.com/mpenning/ciscoconfparse"
 homepage = "http://www.pennington.net/py/ciscoconfparse/"
