@@ -12,5 +12,6 @@ jobs:
       - name: Run tests as a workflow job demo
         run: |
           make test
+          pwd
           # ${{ github.workspace }}
       - run: echo "🍏 This demo job's status is ${{ job.status }}."
