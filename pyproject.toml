@@ -38,6 +38,7 @@ readme = "README.md"
 packages = [
     # Syntax -> https://python-poetry.org/docs/pyproject/#packages
     { include = "ciscoconfparse/*" },
+    { include = "tests/*" },
 ]
 # See -> https://python-poetry.org/docs/pyproject/#include-and-exclude
 include = [
