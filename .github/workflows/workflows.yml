@@ -1,6 +1,6 @@
 ---
 name: GitHub Actions
-run-name: ${{ github.actor }} is running GitHub Actions 🚀
+run-name: ${{ github.actor }} is running a demo of GitHub Actions 🚀
 on: [push]
 jobs:
   CodeAnalysis-GitHub-Actions:
@@ -9,8 +9,8 @@ jobs:
       - name: Embold.io Github CodeAnalysis Actions
         uses: embold/github-action-docker@v0.2
       - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
-      - run: echo "🖥️ foo"
-      - name: List files in the repository
+      - name: Run tests as a workflow job demo
         run: |
-          ls ${{ github.workspace }}
-      - run: echo "🍏 This job's status is ${{ job.status }}."
+          make test
+          # ${{ github.workspace }}
+      - run: echo "🍏 This demo job's status is ${{ job.status }}."
