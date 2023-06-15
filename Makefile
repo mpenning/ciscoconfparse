@@ -183,6 +183,7 @@ clean:
 	find ./* -name '*.pyc' -exec rm {} \;
 	find ./* -name '*.so' -exec rm {} \;
 	find ./* -name '*.coverage' -exec rm {} \;
+	find ./* -name '*.cover' -exec rm {} \;
 	@# A minus sign prefixing the line means it ignores the return value
 	-find ./* -path '*__pycache__' -exec rm -rf {} \;
 	@# remove all the MockSSH keys
