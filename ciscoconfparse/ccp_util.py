@@ -800,7 +800,7 @@ def collapse_addresses(network_list):
 class IPv4Obj(object):
 
     # This method is on IPv4Obj().  @logger.catch() breaks the __init__() method.
-    def __init__(self, arg=f"127.0.0.1/{IPV4_MAX_PREFIXLEN}", strict=False, debug=0):
+    def __init__(self, arg=f"0.0.0.1/{IPV4_MAX_PREFIXLEN}", strict=False, debug=0):
         """An object to represent IPv4 addresses and IPv4 networks.
 
         When :class:`~ccp_util.IPv4Obj` objects are compared or sorted, network numbers are sorted lower to higher.  If network numbers are the same, shorter masks are lower than longer masks. After comparing mask length, numerically higher IP addresses are greater than numerically lower IP addresses..  Comparisons between :class:`~ccp_util.IPv4Obj` instances was chosen so it's easy to find the longest-match for a given prefix (see examples below).
@@ -960,7 +960,7 @@ class IPv4Obj(object):
             if v4_str_rgx is not None:
                 pp = v4_str_rgx.groupdict()
                 try:
-                    ipv4 = pp.get("addr0", None) or pp.get("addr1", None) or pp.get("addr2", None) or "127.0.0.1"
+                    ipv4 = pp.get("addr0", None) or pp.get("addr1", None) or pp.get("addr2", None) or "0.0.0.1"
                 except DynamicAddressException as eee:
                     raise ValueError(str(eee))
 
@@ -1028,7 +1028,7 @@ class IPv4Obj(object):
             mm_result = mm.groupdict()
             addr = (
                 mm_result["addr0"] or mm_result["addr1"]
-                or mm_result["addr2"] or "127.0.0.1"
+                or mm_result["addr2"] or "0.0.0.1"
             )
             ## Normalize if we get zero-padded strings, i.e. 172.001.001.001
             assert re.search(r"^\d+\.\d+.\d+\.\d+", addr)

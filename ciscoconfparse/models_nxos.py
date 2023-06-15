@@ -303,7 +303,7 @@ class BaseNXOSIntfLine(NXOSCfgLine):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.ifindex = None  # Optional, for user use
-        self.default_ipv4_addr_object = IPv4Obj("127.0.0.1/32", strict=False)
+        self.default_ipv4_addr_object = IPv4Obj("0.0.0.1/32", strict=False)
 
     def __repr__(self):
         if not self.is_switchport:
@@ -725,7 +725,7 @@ class BaseNXOSIntfLine(NXOSCfgLine):
 
     @property
     def ipv4_addr_object(self):
-        """Return a ccp_util.IPv4Obj object representing the address on this interface; if there is no address, return IPv4Obj('127.0.0.1/32')"""
+        """Return a ccp_util.IPv4Obj object representing the address on this interface; if there is no address, return IPv4Obj('0.0.0.1/32')"""
         try:
             return IPv4Obj("{}/{}".format(self.ipv4_addr, self.ipv4_masklength))
         except DynamicAddressException as e:
@@ -735,7 +735,7 @@ class BaseNXOSIntfLine(NXOSCfgLine):
 
     @property
     def ipv4_network_object(self):
-        """Return an ccp_util.IPv4Obj object representing the subnet on this interface; if there is no address, return ccp_util.IPv4Obj('127.0.0.1/32')"""
+        """Return an ccp_util.IPv4Obj object representing the subnet on this interface; if there is no address, return ccp_util.IPv4Obj('0.0.0.1/32')"""
         return self.ip_network_object
 
     @property
@@ -990,7 +990,7 @@ class BaseNXOSIntfLine(NXOSCfgLine):
            False
            >>>
         """
-        if not (str(self.ipv4_addr_object.ip) == "127.0.0.1"):
+        if not (str(self.ipv4_addr_object.ip) == "0.0.0.1"):
             try:
                 # Return a boolean for whether the interface is in that
                 #    network and mask

@@ -288,7 +288,7 @@ class BaseJunosIntfLine(JunosCfgLine):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.ifindex = None  # Optional, for user use
-        self.default_ipv4_addr_object = IPv4Obj("127.0.0.1/32", strict=False)
+        self.default_ipv4_addr_object = IPv4Obj("0.0.0.1/32", strict=False)
 
     def __repr__(self):
         if not self.is_switchport:
