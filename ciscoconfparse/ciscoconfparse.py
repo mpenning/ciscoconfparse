@@ -41,6 +41,12 @@ import sys
 import re
 import os
 
+import better_exceptions
+import pretty_errors
+better_exceptions.MAX_LENGTH = None
+better_exceptions.SUPPORTS_COLOR = True
+better_exceptions.hook()
+pretty_errors.activate()
 
 from ciscoconfparse.models_cisco import IOSHostnameLine, IOSRouteLine
 from ciscoconfparse.models_cisco import IOSIntfLine
@@ -208,7 +214,7 @@ def initialize_globals():
         __status__ = "Production"
         __version__ = get_version_number()
 
-    except Exception as eee:
+    except BaseException as eee:
         raise ValueError(str(eee))
 
     finally:
@@ -744,22 +750,24 @@ class CiscoConfParse(object):
                 error = """FATAL - Attempted to open(file='{0}', mode='r', encoding='{1}'); the filepath named:"{0}" does not exist.""".format(
                     filepath, self.openargs["encoding"]
                 )
+                logger.critical(error)
                 raise FileNotFoundError(error)
 
             except OSError:
                 error = """FATAL - Attempted to open(file='{0}', mode='r', encoding='{1}'); OSError opening "{0}".""".format(
                     filepath, self.openargs["encoding"]
                 )
+                logger.critical(error)
                 raise OSError(error)
 
-            except Exception:
-                raise RuntimeError
+            except BaseException:
+                logger.critical(f"Cannot open {filepath}")
+                raise BaseException
 
         else:
-            raise ValueError(
-                'filepath="""%s""" is an unexpected type().  `filepath` must be a python string or patlib.Path.'
-                % filepath
-            )
+            error = 'filepath="""%s""" is an unexpected type().  `filepath` must be a python string or patlib.Path.' % filepath
+            logger.critical(f"Cannot open {filepath}")
+            raise BaseException(error)
 
         # Read the file from disk and return the list of config statements...
         try:
@@ -778,7 +786,7 @@ class CiscoConfParse(object):
                 )
             )
 
-        except Exception as eee:
+        except BaseException as eee:
             error = "FATAL - {}".format(str(eee))
             logger.critical(error)
             raise OSError(error) from eee
@@ -3547,7 +3555,7 @@ class CiscoConfParse(object):
                 for line in self.ioscfg:
                     newconf.write(line + "\n")
             return True
-        except Exception as ee:
+        except BaseException as ee:
             logger.error(str(ee))
             raise ee
 
@@ -4374,7 +4382,7 @@ class HDiff(object):
             if line_dict["diff_word"] != "remove":
                 try:
                     assert tuple(line_dict["diff_id_list"]) in lines.keys()
-                except Exception:
+                except BaseException:
                     raise ValueError(line_dict)
 
         # FIXME - undo this after I work out all bugs
@@ -4637,7 +4645,7 @@ class ConfigList(MutableSequence):
 
         try:
             return object.__getattribute__(self, arg)
-        except Exception:
+        except BaseException:
             calling_function = inspect.stack()[1].function
             caller = inspect.getframeinfo(inspect.stack()[1][0])
 

@@ -5,3 +5,5 @@ passlib == 1.7.4
 toml > 0.10.1
 dnspython == 2.2.1
 deprecat
+better_exceptions
+pretty_errors
