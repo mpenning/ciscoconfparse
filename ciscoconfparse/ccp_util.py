@@ -916,7 +916,6 @@ class IPv4Obj(object):
         version : int
             Returns an integer representing the IP version of this object.  Only 4 or 6 are valid results
         """
-        logger.debug(arg)
         if debug > 0:
             logger.info(f"IPv4Obj(arg='{arg}', strict={strict}, debug={debug}) was called")
 
@@ -1486,6 +1485,7 @@ class IPv4Obj(object):
         """Returns the IP version of the object as an integer.  i.e. 4"""
         return 4
 
+
     # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     @property
@@ -1495,34 +1495,33 @@ class IPv4Obj(object):
         assert offset <= self.numhosts
         return offset
 
+    # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     @network_offset.setter
-    @logger.catch(reraise=True)
     def network_offset(self, arg):
-        """Accept an integer network_offset and modify this IPv4Obj() to be 'arg' integer offset from the subnet."""
-        assert isinstance(int(arg), int)
+        """
+        Accept an integer network_offset and modify this IPv4Obj() to be 'arg' integer offset from the subnet.
 
-        # Before
-        before = self
-        # get the integer value of this subnet...
-        subnet_int = int(IPv4Obj(before.as_cidr_net))
+        Throw an error if the network_offset would exceed the existing subnet boundary.
 
-        # After
-        after = IPv4Obj(subnet_int + int(arg))
-        after.prefixlen = before.prefixlen
-        self = after
-
-        try:
-            assert after.network_object == before.network_object
-        except AssertionError as eee:
-            self = before
-            self.prefixlen = before.prefixlen
-            raise AddressValueError("{} {}.network_offset('{}') exceeds the boundaries of '{}''" % (str(eee), self, arg, self.network_object))
-        except BaseException as eee:
-            self = before
-            self.prefixlen = before.prefixlen
-            raise AddressValueError("{} {}.network_offset('{}') exceeds the boundaries of '{}''" % (str(eee), self, arg, self.network_object))
-
+        Example
+        -------
+        >>> addr = IPv6Obj("192.0.2.1/24")
+        >>> addr.network_offset = 20
+        >>> addr
+        <IPv6Obj 192.0.2.20/24>
+        >>>
+        """
+        if isinstance(arg, (int, str)):
+            arg = int(arg)
+            # get the max offset for this subnet...
+            max_offset = self.as_decimal_broadcast - self.as_decimal_network
+            if arg <= max_offset:
+                self.ip_object = IPv4Address(self.as_decimal_network + arg)
+            else:
+                raise AddressValueError(f"{self}.network_offset({arg=}) exceeds the boundaries of '{self.as_cidr_net}'")
+        else:
+            raise NotImplementedError
 
     # On IPv4Obj()
     @property
@@ -2227,7 +2226,7 @@ class IPv6Obj(object):
     # On IPv6Obj()
     @property
     def as_decimal_network(self):
-        """Returns the integer value of the IP network as a decimal integer; explicitly, if this object represents 1.1.1.5/24, 'as_decimal_network' returns the integer value of 1.1.1.0/24"""
+        """Returns the integer value of the IP network as a decimal integer; explicitly, if this object represents 2b00:cd80:14:10::1/64, 'as_decimal_network' returns the integer value of 2b00:cd80:14:10::0/64"""
         num_strings = str(self.network.exploded).split("/")[0].split(":")
         num_strings.reverse()  # reverse the order
         return sum(
@@ -2238,7 +2237,7 @@ class IPv6Obj(object):
     # On IPv6Obj()
     @property
     def as_decimal_broadcast(self):
-        """Returns the integer value of the IP broadcast as a decimal integer; explicitly, if this object represents 1.1.1.5/24, 'as_decimal_broadcast' returns the integer value of 1.1.1.255"""
+        """Returns the integer value of the IP broadcast as a decimal integer; explicitly, if this object represents 2b00:cd80:14:10::0/64, 'as_decimal_broadcast' returns the integer value of 2b00:cd80:14:10:ffff:ffff:ffff:ffff"""
         broadcast_offset = 2 ** (IPV6_MAX_PREFIXLEN - self.network_object.prefixlen) - 1
         return self.as_decimal_network + broadcast_offset
 
@@ -2275,33 +2274,34 @@ class IPv6Obj(object):
         assert offset <= self.numhosts
         return offset
 
+    # do NOT wrap with @logger.catch(...)
     # On IPv6Obj()
     @network_offset.setter
-    @logger.catch(reraise=True)
     def network_offset(self, arg):
-        """Accept an integer network_offset and modify this IPv6Obj() to be 'arg' integer offset from the subnet."""
-        assert isinstance(int(arg), int)
+        """
+        Accept an integer network_offset and modify this IPv6Obj() to be 'arg' integer offset from the subnet.
 
-        # Before
-        before = self
-        # get the integer value of this subnet...
-        subnet_int = int(IPv4Obj(before.as_cidr_net))
+        Throw an error if the network_offset would exceed the existing subnet boundary.
 
-        # After
-        after = IPv4Obj(subnet_int + int(arg))
-        after.prefixlen = before.prefixlen
-        self = after
+        Example
+        -------
+        >>> addr = IPv6Obj("2b00:cd80:14:10::1/64")
+        >>> addr.network_offset = 20
+        >>> addr
+        <IPv6Obj 2b00:cd80:14:10::20/64>
+        >>>
+        """
+        if isinstance(arg, (int, str)):
+            arg = int(arg)
+            # get the max offset for this subnet...
+            max_offset = self.as_decimal_broadcast - self.as_decimal_network
+            if arg <= max_offset:
+                self.ip_object = IPv6Address(self.as_decimal_network + arg)
+            else:
+                raise AddressValueError(f"{self}.network_offset({arg=}) exceeds the boundaries of '{self.as_cidr_net}'")
+        else:
+            raise NotImplementedError
 
-        try:
-            assert after.network_object == before.network_object
-        except AssertionError as eee:
-            self = before
-            self.prefixlen = before.prefixlen
-            raise AddressValueError("{} {}.network_offset('{}') exceeds the boundaries of '{}''" % (str(eee), self, arg, self.network_object))
-        except BaseException as eee:
-            self = before
-            self.prefixlen = before.prefixlen
-            raise AddressValueError("{} {}.network_offset('{}') exceeds the boundaries of '{}''" % (str(eee), self, arg, self.network_object))
 
     # On IPv6Obj()
     @property
