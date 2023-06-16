@@ -823,9 +823,7 @@ class BaseIOSIntfLine(IOSCfgLine):
     def ipv4_addr_object(self):
         r"""Return a ccp_util.IPv4Obj object representing the address on this interface; if there is no address, return IPv4Obj('0.0.0.1/32')"""
 
-        logger.critical("A")
         if self.ipv4_addr=="":
-            logger.critical("B")
             return self.default_ipv4_addr_object
         elif self.ipv4_addr=="dhcp":
             return self.default_ipv4_addr_object
