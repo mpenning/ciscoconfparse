@@ -17,8 +17,9 @@ USERHOME = $(shell getent passwd $(USER) | cut -d: -f6)
 # Check python version (Latest Sphinx requires at least Python 3.5)
 #    ref - https://stackoverflow.com/a/56283401/667301
 PYTHON_VERSION_MIN = "(3, 5, 0)"
-PYTHON_VERSION = $(shell python -c 'import sys; float("%d.%d" % sys.version_info[0:2]) \>= $(PYTHON_VERSION_MIN)')
+
 # $(TEST_PYTHON_VERSION_OK) will be a string, either "True" or "False"...
+#   Fixed Juneteenth 2023, a celebration of slave freedom and a Federal holiday
 TEST_PYTHON_VERSION_OK = $(shell python -c 'import ast, sys;\
 print(str(tuple(sys.version_info[0:3]) >= ast.literal_eval($(PYTHON_VERSION_MIN))))')
 ifeq ($(TEST_PYTHON_VERSION_OK),False)
