@@ -2,14 +2,18 @@
 wheel >= 0.38.4
 
 # Other development resources...
+poetry == 1.5.1
+poetry-core == 1.6.1
 packaging >= 23.0
-pytest >= 7.2.1
-poetry
-poetry-core
+pytest >= 7.3.2
 gitpython
 pyroma
-invoke >= 2.0.0
+invoke == 2.1.3
 fabric == 3.0.0
 commitizen >= 2.40.0
-better_exceptions
-pretty_errors
+better_exceptions==0.3.3
+Sphinx == 6.1.3
+sphinx-bootstrap-theme == 0.8.1
+numpydoc==1.5.0
+pydocstyle==6.3.0
+
