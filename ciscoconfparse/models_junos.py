@@ -31,6 +31,11 @@ r""" models_junos.py - Parse, Query, Build, and Modify Junos-style configuration
 
 import re
 
+import better_exceptions
+better_exceptions.MAX_LENGTH = None
+better_exceptions.SUPPORTS_COLOR = True
+better_exceptions.hook()
+
 from ciscoconfparse.ccp_abc import BaseCfgLine
 from ciscoconfparse.ccp_util import IPv4Obj
 
@@ -288,7 +293,7 @@ class BaseJunosIntfLine(JunosCfgLine):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.ifindex = None  # Optional, for user use
-        self.default_ipv4_addr_object = IPv4Obj("127.0.0.1/32", strict=False)
+        self.default_ipv4_addr_object = IPv4Obj("0.0.0.1/32", strict=False)
 
     def __repr__(self):
         if not self.is_switchport:

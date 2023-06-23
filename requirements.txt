@@ -1,7 +1,10 @@
 # Ensure wheel is upgraded to fix CVE-2022-40898
 #     Also ref Github Issue #257
+poetry == 1.5.1
+poetry-core == 1.6.1
 loguru == 0.7.0
 passlib == 1.7.4
 toml > 0.10.1
 dnspython == 2.2.1
-deprecat
+better_exceptions == 0.3.3
+deprecat == 2.1.1

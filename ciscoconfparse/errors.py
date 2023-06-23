@@ -22,6 +22,11 @@ r""" errors.py - Parse, Query, Build, and Modify IOS-style configs
      mike [~at~] pennington [/dot\] net
 """
 
+import better_exceptions
+better_exceptions.MAX_LENGTH = None
+better_exceptions.SUPPORTS_COLOR = True
+better_exceptions.hook()
+
 class BaseError(Exception):
     def __init__(self, msg=""):
         super().__init__(msg)

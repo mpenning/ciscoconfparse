@@ -35,6 +35,10 @@ from ipaddress import IPv4Network, IPv6Network, IPv4Address, IPv6Address
 from ipaddress import collapse_addresses as ipaddr_collapse_addresses
 from ipaddress import AddressValueError
 
+import better_exceptions
+better_exceptions.MAX_LENGTH = None
+better_exceptions.SUPPORTS_COLOR = True
+better_exceptions.hook()
 
 from dns.exception import DNSException
 from dns.resolver import Resolver
@@ -46,6 +50,7 @@ from loguru import logger
 
 from ciscoconfparse.protocol_values import ASA_TCP_PORTS, ASA_UDP_PORTS
 from ciscoconfparse.errors import PythonOptimizeException
+from ciscoconfparse.errors import DynamicAddressException
 import ciscoconfparse
 
 
@@ -76,9 +81,9 @@ _IPV6_REGEX_STR = r"""(?!:::\S+?$)       # Negative Lookahead for 3 colons
 |(?P<opt5>(?:{0}:){{4}}(?::{0}){{1,3}})  # match fe80:a:b:c::1
 |(?P<opt6>(?:{0}:){{5}}(?::{0}){{1,2}})  # match fe80:a:b:c:d::1
 |(?P<opt7>(?:{0}:){{6}}(?::{0}){{1,1}})  # match fe80:a:b:c:d:e::1
-|(?P<opt8>:(?::{0}){{1,7}})              # leading double colons
-|(?P<opt9>(?:{0}:){{1,7}}:)              # trailing double colons
-|(?P<opt10>(?:::))                       # bare double colons (default route)
+|(?P<opt8>:(?::{0}){{1,7}})              # ipv6 with leading double colons
+|(?P<opt9>(?:{0}:){{1,7}}:)              # ipv6 with trailing double colons
+|(?P<opt10>(?:::))                       # ipv6 bare double colons (default route)
 )([/\s](?P<masklen>\d+))*                # match 'masklen' and end 'addr' group
 """.format(
     r"[0-9a-fA-F]{1,4}"
@@ -102,12 +107,12 @@ _RGX_IPV6ADDR = re.compile(_IPV6_REGEX_STR, re.VERBOSE)
 ####################### Begin IPv4 #############################
 _IPV4_REGEX_STR = r"^(?P<addr>\d+\.\d+\.\d+\.\d+)"
 _RGX_IPV4ADDR = re.compile(_IPV4_REGEX_STR)
-_RGX_IPV4ADDR_NETMASK = re.compile(
+_RGX_IPV4ADDR_WITH_MASK = re.compile(
     r"""
      (?:
        ^(?P<addr0>\d+\.\d+\.\d+\.\d+)$
       |(?:^
-         (?:(?P<addr1>\d+\.\d+\.\d+\.\d+))(?:\s+|\/)(?:(?P<netmask>\d+\.\d+\.\d+\.\d+))
+         (?:(?P<addr1>\d+\.\d+\.\d+\.\d+))(\s+|\/)(?:(?P<netmask>\d+\.\d+\.\d+\.\d+))
        $)
       |^(?:\s*(?P<addr2>\d+\.\d+\.\d+\.\d+)(?:\/(?P<masklen>\d+))\s*)$
     )
@@ -648,7 +653,7 @@ def _get_ipv4(val="", strict=False, stdlib=False, debug=0):
                     raise ValueError
 
                 return obj.network
-    except Exception:
+    except BaseException:
         raise AddressValueError("_get_ipv4(val='%s')" % (val))
 
 
@@ -690,7 +695,7 @@ def _get_ipv6(val="", strict=False, stdlib=False, debug=0):
 
                 return obj.network
 
-    except Exception:
+    except BaseException:
         raise AddressValueError("_get_ipv6(val='%s')" % (val))
 
 
@@ -739,7 +744,7 @@ def ip_factory(val="", stdlib=False, mode="auto_detect", debug=0):
         try:
             obj = _get_ipv4(val=val, stdlib=stdlib, debug=debug)
             return obj
-        except Exception:
+        except BaseException:
             error_str = "Cannot parse '%s' as ipv4" % val
             raise AddressValueError(error_str)
 
@@ -747,7 +752,7 @@ def ip_factory(val="", stdlib=False, mode="auto_detect", debug=0):
         try:
             obj = _get_ipv6(val=val, stdlib=stdlib, debug=debug)
             return obj
-        except Exception:
+        except BaseException:
             error_str = "Cannot parse '%s' as ipv6" % val
             raise AddressValueError(error_str)
 
@@ -792,9 +797,8 @@ def collapse_addresses(network_list):
 # add custom @properties
 class IPv4Obj(object):
 
-    # This method is on IPv4Obj().  Do NOT add @logger.catch to __init__()...
-    # that breaks it.
-    def __init__(self, arg=f"127.0.0.1/{IPV4_MAX_PREFIXLEN}", strict=False, debug=0):
+    # This method is on IPv4Obj().  @logger.catch() breaks the __init__() method.
+    def __init__(self, arg=f"0.0.0.1/{IPV4_MAX_PREFIXLEN}", strict=False, debug=0):
         """An object to represent IPv4 addresses and IPv4 networks.
 
         When :class:`~ccp_util.IPv4Obj` objects are compared or sorted, network numbers are sorted lower to higher.  If network numbers are the same, shorter masks are lower than longer masks. After comparing mask length, numerically higher IP addresses are greater than numerically lower IP addresses..  Comparisons between :class:`~ccp_util.IPv4Obj` instances was chosen so it's easy to find the longest-match for a given prefix (see examples below).
@@ -895,10 +899,12 @@ class IPv4Obj(object):
             An :class:`ipaddress.IPv4Address` object containing the netmask
         network : :class:`ipaddress.IPv4Network`
             Returns an :class:`ipaddress.IPv4Network` with the network of this object
+        network_offset : int
+            Returns the integer difference between host number and network number.  This must be less than `numhosts`
         network_object : :class:`ipaddress.IPv4Network`
             Returns an :class:`ipaddress.IPv4Network` with the network of this object
         numhosts : int
-            An integer representing the number of hosts contained in the network
+            An integer representing the number of host addresses contained in the network
         packed : str
             Returns the IPv4 object as packed hex bytes
         prefixlen : int
@@ -913,6 +919,21 @@ class IPv4Obj(object):
         if debug > 0:
             logger.info(f"IPv4Obj(arg='{arg}', strict={strict}, debug={debug}) was called")
 
+        try:
+            assert isinstance(arg, (str, int, IPv4Obj))
+        except AssertionError as eee:
+            raise AddressValueError(
+                "Could not parse '{}' (type: {}) into an IPv4 Address. {}".format(
+                    arg, type(arg), str(eee)
+                )
+            )
+        except BaseException as eee:
+            raise AddressValueError(
+                "Could not parse '{}' (type: {}) into an IPv4 Address. {}".format(
+                    arg, type(arg), str(eee)
+                )
+            )
+
         self.arg = arg
         self.dna = "IPv4Obj"
         self.ip_object = None
@@ -921,58 +942,52 @@ class IPv4Obj(object):
         self.debug = debug
         self.params_dict = {}
 
-        # Build params_dict... this needs to work with any supported input...
         if isinstance(arg, str):
-            params_dict = self._ipv4_params_dict(arg)
-            self.params_dict = params_dict
 
-        elif isinstance(arg, int):
-            params_dict = self._ipv4_params_dict(arg)
-            self.params_dict = params_dict
+            tmp = re.split(r"\s+", arg.strip())
+            if len(tmp)==2:
+                arg=="/".join(tmp)
+            elif len(tmp)==1:
+                arg==tmp[0]
+            else:
+                # anything else should be handled by the following regex...
+                pass
 
-        elif isinstance(arg, IPv4Obj):
-            params_dict = {
-                'ipv4_addr': str(arg.ip),
-                'ip_version': 4,
-                'ip_arg_str': str(arg.ip) + "/" + str(arg.masklen),
-                'netmask': str(arg.netmask),
-                'masklen': str(arg.masklen),
-            }
-            self.params_dict = params_dict
+            v4_str_rgx = _RGX_IPV4ADDR_WITH_MASK.search(arg.strip())
+            if v4_str_rgx is not None:
+                pp = v4_str_rgx.groupdict()
+                try:
+                    ipv4 = pp.get("addr0", None) or pp.get("addr1", None) or pp.get("addr2", None) or "0.0.0.1"
+                except DynamicAddressException as eee:
+                    raise ValueError(str(eee))
 
-        else:
-            raise ValueError("type(%s) is not supported" % arg)
+            elif "dhcp" in arg.strip().lower():
+                raise DynamicAddressException("Cannot parse address from a DHCP string.")
 
+            else:
+                raise AddressValueError(
+                    "Could not parse '{}' (type: {}) into an IPv4 Address".format(
+                        arg, type(arg)
+                    )
+                )
 
-        if isinstance(arg, str):
-            # Removing string length checks in 1.6.29... there are too many
-            #    options such as IPv4Obj("111.111.111.111      255.255.255.255")
-            # RECURSION
-            self.network_object = IPv4Network(params_dict['ip_arg_str'], strict=strict)
-            self.ip_object = IPv4Address(params_dict['ipv4_addr'])
-            return None
+            self.ip_object = IPv4Address(ipv4)
+            if isinstance(pp["masklen"], str):
+                netstr = ipv4 + "/" + pp["masklen"]
+            elif isinstance(pp["netmask"], str):
+                netstr = ipv4 + "/" + pp["netmask"]
+            else:
+                netstr = ipv4+"/32"
+            self.network_object = IPv4Network(netstr, strict=False)
 
         elif isinstance(arg, int):
             assert 0 <= arg <= IPV4_MAXINT
-            self.network_object = IPv4Network(arg, strict=strict)
             self.ip_object = IPv4Address(arg)
-            return None
+            self.network_object = IPv4Network(arg, strict=False)
 
         elif isinstance(arg, IPv4Obj):
-            ip_str = f"{str(arg.ip_object)}/{arg.prefixlen}"
-            self.network_object = IPv4Network(ip_str, strict=False)
-            self.ip_object = IPv4Address(str(arg.ip_object))
-            return None
-
-        elif isinstance(arg, IPv4Network):
-            self.network_object = arg
-            self.ip_object = IPv4Address(str(arg).split("/")[0])
-            return None
-
-        elif isinstance(arg, IPv4Address):
-            self.network_object = IPv4Network(str(arg) + "/" + str(IPV4_MAX_PREFIXLEN))
-            self.ip_object = IPv4Address(str(arg).split("/")[0])
-            return None
+            self.ip_object = IPv4Address(arg.ip)
+            self.network_object = IPv4Network(arg.as_cidr_net, strict=False)
 
         else:
             raise AddressValueError(
@@ -981,9 +996,10 @@ class IPv4Obj(object):
                 )
             )
 
+
     # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
-    def _ipv4_params_dict(self, arg, debug=0):
+    def _ipv4_params_dict_DEPERCATED(self, arg, debug=0):
         """
         Parse out important IPv4 parameters from arg.  This method must run to
         completion for IPv4 address parsing to work correctly.
@@ -993,8 +1009,12 @@ class IPv4Obj(object):
 
         if isinstance(arg, str):
             try:
-                mm = _RGX_IPV4ADDR_NETMASK.search(arg)
+                mm = _RGX_IPV4ADDR_WITH_MASK.search(arg)
             except TypeError:
+                raise AddressValueError(
+                    f"_ipv4_params_dict() doesn't understand how to parse {arg}"
+                )
+            except BaseException as eee:
                 raise AddressValueError(
                     f"_ipv4_params_dict() doesn't understand how to parse {arg}"
                 )
@@ -1005,7 +1025,7 @@ class IPv4Obj(object):
             mm_result = mm.groupdict()
             addr = (
                 mm_result["addr0"] or mm_result["addr1"]
-                or mm_result["addr2"] or "127.0.0.1"
+                or mm_result["addr2"] or "0.0.0.1"
             )
             ## Normalize if we get zero-padded strings, i.e. 172.001.001.001
             assert re.search(r"^\d+\.\d+.\d+\.\d+", addr)
@@ -1077,6 +1097,11 @@ class IPv4Obj(object):
                 self.__repr__(), val, e
             )
             raise AttributeError(errmsg)
+        except BaseException as e:
+            errmsg = "'{}' cannot compare itself to '{}': {}".format(
+                self.__repr__(), val, e
+            )
+            raise AttributeError(errmsg)
 
     # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
@@ -1114,7 +1139,7 @@ class IPv4Obj(object):
             else:
                 return self_ndec > val_ndec
 
-        except Exception:
+        except BaseException:
             errmsg = f"{self.__repr__()} cannot compare itself to '{val}'"
             raise ValueError(errmsg)
 
@@ -1127,6 +1152,11 @@ class IPv4Obj(object):
                     try:
                         assert getattr(obj, attr_name, None) is not None
                     except (AssertionError):
+                        error_str = "Cannot compare {} with '{}'".format(
+                            self, type(obj)
+                        )
+                        raise AssertionError(error_str)
+                    except BaseException:
                         error_str = "Cannot compare {} with '{}'".format(
                             self, type(obj)
                         )
@@ -1220,15 +1250,25 @@ class IPv4Obj(object):
                 # return (self.network <= val.network) and (
                 #    self.broadcast >= val.broadcast
                 # )
-                return (self.as_decimal_network <= val.as_decimal_network) and (
-                    (self.as_decimal_network + self.numhosts - 1)
-                    >= (val.as_decimal_network + val.numhosts - 1)
-                )
+                logger.debug(self.__repr__())
+                logger.debug(self.as_decimal_network)
+                logger.debug(self.numhosts)
+                logger.debug("---------------------------------")
+                logger.debug(val.__repr__())
+                logger.debug(val.as_decimal_network)
+                logger.debug(val.numhosts)
+                return (self.as_decimal_network <= val.as_decimal_network) and (self.as_decimal_broadcast >= val.as_decimal_broadcast) and (self.prefixlen <= val.prefixlen)
 
-        except ValueError as e:
+        except ValueError as eee:
             raise ValueError(
                 "Could not check whether '{}' is contained in '{}': {}".format(
-                    val, self, e
+                    val, self, str(eee)
+                )
+            )
+        except BaseException as eee:
+            raise ValueError(
+                "Could not check whether '{}' is contained in '{}': {}".format(
+                    val, self, str(eee)
                 )
             )
 
@@ -1445,15 +1485,58 @@ class IPv4Obj(object):
         """Returns the IP version of the object as an integer.  i.e. 4"""
         return 4
 
+
     # do NOT wrap with @logger.catch(...)
+    # On IPv4Obj()
+    @property
+    def network_offset(self):
+        """Returns the integer difference between host number and network number.  This must be less than `numhosts`"""
+        offset = self.as_decimal - self.as_decimal_network
+        assert offset <= self.numhosts
+        return offset
+
+    # do NOT wrap with @logger.catch(...)
+    # On IPv4Obj()
+    @network_offset.setter
+    def network_offset(self, arg):
+        """
+        Accept an integer network_offset and modify this IPv4Obj() to be 'arg' integer offset from the subnet.
+
+        Throw an error if the network_offset would exceed the existing subnet boundary.
+
+        Example
+        -------
+        >>> addr = IPv6Obj("192.0.2.1/24")
+        >>> addr.network_offset = 20
+        >>> addr
+        <IPv6Obj 192.0.2.20/24>
+        >>>
+        """
+        if isinstance(arg, (int, str)):
+            arg = int(arg)
+            # get the max offset for this subnet...
+            max_offset = self.as_decimal_broadcast - self.as_decimal_network
+            if arg <= max_offset:
+                self.ip_object = IPv4Address(self.as_decimal_network + arg)
+            else:
+                raise AddressValueError(f"{self}.network_offset({arg=}) exceeds the boundaries of '{self.as_cidr_net}'")
+        else:
+            raise NotImplementedError
+
     # On IPv4Obj()
     @property
     def numhosts(self):
         """Returns the total number of IP addresses in this network, including broadcast and the "subnet zero" address"""
-        if sys.version_info[0] < 3:
-            return self.network_object.numhosts
+        if self.prefixlength <= 30:
+            return 2 ** (IPV4_MAX_PREFIXLEN - self.network_object.prefixlen) - 2
+        elif self.prefixlength == 31:
+            # special case... /31 subnet has no broadcast address
+            return 2
+        elif self.prefixlength == 32:
+            return 1
         else:
-            return 2 ** (IPV4_MAX_PREFIXLEN - self.network_object.prefixlen)
+            # We (obviously) should never hit this...
+            raise NotImplementedError
 
     # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
@@ -1468,10 +1551,18 @@ class IPv4Obj(object):
     # On IPv4Obj()
     @property
     def as_decimal_network(self):
-        """Returns the IP address as a decimal integer"""
+        """Returns the integer value of the IP network as a decimal integer; explicitly, if this object represents 1.1.1.5/24, 'as_decimal_network' returns the integer value of 1.1.1.0/24"""
         num_strings = str(self.network).split("/")[0].split(".")
         num_strings.reverse()  # reverse the order
         return sum(int(num) * (256**idx) for idx, num in enumerate(num_strings))
+
+    # do NOT wrap with @logger.catch(...)
+    # On IPv4Obj()
+    @property
+    def as_decimal_broadcast(self):
+        """Returns the integer value of the IP broadcast as a decimal integer; explicitly, if this object represents 1.1.1.5/24, 'as_decimal_broadcast' returns the integer value of 1.1.1.255"""
+        broadcast_offset = 2 ** (IPV4_MAX_PREFIXLEN - self.network_object.prefixlen) - 1
+        return self.as_decimal_network + broadcast_offset
 
     # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
@@ -1564,8 +1655,7 @@ class IPv4Obj(object):
 # add custom @properties
 class IPv6Obj(object):
 
-    # This method is on IPv6Obj().  Do NOT add @logger.catch to __init__()...
-    # that breaks it.
+    # This method is on IPv6Obj().  @logger.catch() breaks the __init__() method.
     def __init__(self, arg=f"::1/{IPV6_MAX_PREFIXLEN}", strict=False, debug=0):
         """An object to represent IPv6 addresses and IPv6 networks.
 
@@ -1614,6 +1704,10 @@ class IPv6Obj(object):
             Returns the regex string used for an IPv6 Address
         netmask : :class:`ipaddress.IPv6Address`
             An :class:`ipaddress.IPv6Address` object containing the netmask
+        network_offset : int
+            Returns the integer difference between host number and network number.  This must be less than `numhosts`
+        numhosts : int
+            An integer representing the number of host addresses contained in the network
         prefixlen : int
             An integer representing the length of the netmask
         broadcast: raises `NotImplementedError`; IPv6 doesn't use broadcast addresses
@@ -1633,46 +1727,91 @@ class IPv6Obj(object):
         self.network_object = None
         self.strict = strict
         self.debug = debug
-        self.params_dict = {}
 
-        # Build params_dict... this needs to work with any supported input...
-        if isinstance(arg, str) or isinstance(arg, int) or isinstance(arg, IPv6Obj):
-            params_dict = self._ipv6_params_dict(arg)
-            self.params_dict = params_dict
 
         if isinstance(arg, str):
             assert len(arg) <= IPV6_MAXSTR_LEN
-            self.network_object = IPv6Network(params_dict['ip_arg_str'], strict=strict)
-            self.ip_object = IPv6Address(params_dict['ipv6_addr'])
-            return None
+
+            tmp = re.split(r"\s+", arg.strip())
+            if len(tmp)==2:
+                arg=="/".join(tmp)
+            elif len(tmp)==1:
+                arg==tmp[0]
+            else:
+                raise NotImplementedError(arg.strip())
+
+            v6_str_rgx = _RGX_IPV6ADDR.search(arg.strip())
+            # Example 'pp'
+            #     pp = {'addr': '2b00:cd80:14:10::1', 'opt1': None, 'opt2': None, 'opt3': None, 'opt4': None, 'opt5': '2b00:cd80:14:10::1', 'opt6': None, 'opt7': None, 'opt8': None, 'opt9': None, 'opt10': None, 'masklen': '64'}
+            pp = v6_str_rgx.groupdict()
+            for key in ["addr", "opt1", "opt2", "opt3", "opt4", "opt5", "opt6", "opt7", "opt8", "opt9", "opt10",]:
+                ipv6 = pp[key]
+                if ipv6 is not None:
+                    break
+            else:
+                ipv6 = "::1"
+            assert ipv6 is not None
+
+            self.ip_object = IPv6Address(ipv6)
+            if isinstance(pp["masklen"], str):
+                netstr = ipv6 + "/" + pp["masklen"]
+            # FIXME - this probably should be removed...
+            #elif isinstance(pp["netmask"], str):
+            #    netstr = ipv6 + "/" + pp["netmask"]
+            else:
+                netstr = ipv6+"/128"
+            self.network_object = IPv6Network(netstr, strict=False)
 
         elif isinstance(arg, int):
             assert 0 <= arg <= IPV6_MAXINT
-            self.network_object = IPv6Network(arg, strict=strict)
             self.ip_object = IPv6Address(arg)
-            return None
+            self.network_object = IPv6Network(arg, strict=False)
 
         elif isinstance(arg, IPv6Obj):
-            ip_str = f"{str(arg.ip_object)}/{arg.prefixlen}"
-            self.network_object = IPv6Network(ip_str, strict=False)
-            self.ip_object = IPv6Address(str(arg.ip_object))
-            return None
-
-        elif isinstance(arg, IPv6Network):
-            self.network_object = arg
-            self.ip_object = IPv6Address(str(arg).split("/")[0])
-            return None
-
-        elif isinstance(arg, IPv6Address):
-            self.network_object = IPv6Network(str(arg) + "/" + str(IPV6_MAX_PREFIXLEN))
-            self.ip_object = IPv6Address(str(arg).split("/")[0])
-            return None
+            self.ip_object = IPv6Address(arg.ip)
+            self.network_object = IPv6Network(arg.as_cidr_net, strict=False)
 
         else:
-            raise AddressValueError("IPv6Obj(arg='%s') is an unknown argument type" % (arg))
+            raise AddressValueError(
+                "Could not parse '{}' (type: {}) into an IPv6 Address".format(
+                    arg, type(arg)
+                )
+            )
+
+        if False:
+            if isinstance(arg, str):
+                assert len(arg) <= IPV6_MAXSTR_LEN
+                self.network_object = IPv6Network(params_dict['ip_arg_str'], strict=strict)
+                self.ip_object = IPv6Address(params_dict['ipv6_addr'])
+                return None
+
+            elif isinstance(arg, int):
+                assert 0 <= arg <= IPV6_MAXINT
+                self.network_object = IPv6Network(arg, strict=strict)
+                self.ip_object = IPv6Address(arg)
+                return None
+
+            elif isinstance(arg, IPv6Obj):
+                ip_str = f"{str(arg.ip_object)}/{arg.prefixlen}"
+                self.network_object = IPv6Network(ip_str, strict=False)
+                self.ip_object = IPv6Address(str(arg.ip_object))
+                return None
+
+            elif isinstance(arg, IPv6Network):
+                self.network_object = arg
+                self.ip_object = IPv6Address(str(arg).split("/")[0])
+                return None
+
+            elif isinstance(arg, IPv6Address):
+                self.network_object = IPv6Network(str(arg) + "/" + str(IPV6_MAX_PREFIXLEN))
+                self.ip_object = IPv6Address(str(arg).split("/")[0])
+                return None
+
+            else:
+                raise AddressValueError("IPv6Obj(arg='%s') is an unknown argument type" % (arg))
 
     # On IPv6Obj()
-    def _ipv6_params_dict(self, arg, debug=0):
+    def _ipv6_params_dict_DEPRECATED(self, arg, debug=0):
         """
         Parse out important IPv6 parameters from arg.  This method must run to
         completion for IPv6 address parsing to work correctly.
@@ -1688,6 +1827,10 @@ class IPv6Obj(object):
                 raise AddressValueError(
                     f"_ipv6_params_dict() doesn't know how to parse {arg}"
                 )
+            except BaseException:
+                raise AddressValueError(
+                    f"_ipv6_params_dict() doesn't know how to parse {arg}"
+                )
 
 
             ERROR = f"_ipv6_params_dict() couldn't parse '{arg}'"
@@ -1697,12 +1840,12 @@ class IPv6Obj(object):
             try:
                 addr = mm_result["addr"]
 
-            except Exception:
+            except BaseException:
                 addr = "::1"
 
             try:
                 masklen = int(mm_result['masklen'])
-            except Exception:
+            except BaseException:
                 masklen = IPV6_MAX_PREFIXLEN
 
             if not (isinstance(masklen, int) and masklen <= 128):
@@ -1769,7 +1912,7 @@ class IPv6Obj(object):
             if self.as_decimal == val.as_decimal and self.prefixlen == val.prefixlen:
                 return True
             return False
-        except (Exception) as e:
+        except BaseException as e:
             errmsg = "'{}' cannot compare itself to '{}': {}".format(
                 self.__repr__(), val, e
             )
@@ -1809,7 +1952,7 @@ class IPv6Obj(object):
             else:
                 return self_ndec > val_ndec
 
-        except Exception:
+        except BaseException:
             errmsg = f"{self.__repr__()} cannot compare itself to '{val}'"
             raise ValueError(errmsg)
 
@@ -1843,7 +1986,7 @@ class IPv6Obj(object):
             else:
                 return self_ndec < val_ndec
 
-        except Exception:
+        except BaseException:
             errmsg = f"{self.__repr__()} cannot compare itself to '{val}'"
             raise ValueError(errmsg)
 
@@ -1915,7 +2058,7 @@ class IPv6Obj(object):
                     >= (val.as_decimal_network + val.numhosts - 1)
                 )
 
-        except (Exception) as e:
+        except (BaseException) as e:
             raise ValueError(
                 "Could not check whether '{}' is contained in '{}': {}".format(
                     val, self, e
@@ -2083,12 +2226,27 @@ class IPv6Obj(object):
     # On IPv6Obj()
     @property
     def as_decimal_network(self):
-        """Returns the IP network as a decimal integer"""
+        """Returns the integer value of the IP network as a decimal integer; explicitly, if this object represents 2b00:cd80:14:10::1/64, 'as_decimal_network' returns the integer value of 2b00:cd80:14:10::0/64"""
         num_strings = str(self.network.exploded).split("/")[0].split(":")
         num_strings.reverse()  # reverse the order
         return sum(
             int(num, 16) * (65536**idx) for idx, num in enumerate(num_strings)
         )
+
+    # do NOT wrap with @logger.catch(...)
+    # On IPv6Obj()
+    @property
+    def as_decimal_broadcast(self):
+        """IPv6 does not support broadcast addresses.  Use 'as_decimal_network_maxint' if you want the integer value that would otherwise be an IPv6 broadcast."""
+        raise NotImplementedError("IPv6 does not support broadcast addresses.  Use 'as_decimal_network_maxint' if you want the integer value that would otherwise be an IPv6 broadcast.")
+
+    # do NOT wrap with @logger.catch(...)
+    # On IPv6Obj()
+    @property
+    def as_decimal_network_maxint(self):
+        """Returns the integer value of the maximum value of an IPv6 subnet as a decimal integer; explicitly, if this object represents 2b00:cd80:14:10::0/64, 'as_decimal_network_maxint' returns the integer value of 2b00:cd80:14:10:ffff:ffff:ffff:ffff"""
+        network_maxint_offset = 2 ** (IPV6_MAX_PREFIXLEN - self.network_object.prefixlen) - 1
+        return self.as_decimal_network + network_maxint_offset
 
     # On IPv6Obj()
     @property
@@ -2114,14 +2272,58 @@ class IPv6Obj(object):
         """Returns the IP version of the object as an integer.  i.e. 6"""
         return 6
 
+    # do NOT wrap with @logger.catch(...)
+    # On IPv6Obj()
+    @property
+    def network_offset(self):
+        """Returns the integer difference between host number and network number.  This must be less than `numhosts`"""
+        offset = self.as_decimal - self.as_decimal_network
+        assert offset <= self.numhosts
+        return offset
+
+    # do NOT wrap with @logger.catch(...)
+    # On IPv6Obj()
+    @network_offset.setter
+    def network_offset(self, arg):
+        """
+        Accept an integer network_offset and modify this IPv6Obj() to be 'arg' integer offset from the subnet.
+
+        Throw an error if the network_offset would exceed the existing subnet boundary.
+
+        Example
+        -------
+        >>> addr = IPv6Obj("2b00:cd80:14:10::1/64")
+        >>> addr.network_offset = 20
+        >>> addr
+        <IPv6Obj 2b00:cd80:14:10::20/64>
+        >>>
+        """
+        if isinstance(arg, (int, str)):
+            arg = int(arg)
+            # get the max offset for this subnet...
+            max_offset = self.as_decimal_network_maxint - self.as_decimal_network
+            if arg <= max_offset:
+                self.ip_object = IPv6Address(self.as_decimal_network + arg)
+            else:
+                raise AddressValueError(f"{self}.network_offset({arg=}) exceeds the boundaries of '{self.as_cidr_net}'")
+        else:
+            raise NotImplementedError
+
+
     # On IPv6Obj()
     @property
     def numhosts(self):
         """Returns the total number of IP addresses in this network, including broadcast and the "subnet zero" address"""
-        if sys.version_info[0] < 3:
-            return self.network_object.numhosts
+        if self.prefixlength <= 126:
+            return 2 ** (IPV6_MAX_PREFIXLEN - self.network_object.prefixlen) - 2
+        elif self.prefixlength == 127:
+            # special case... /127 subnet has no broadcast address
+            return 2
+        elif self.prefixlength == 128:
+            return 1
         else:
-            return 2 ** (IPV6_MAX_PREFIXLEN - self.network_object.prefixlen)
+            # We (obviously) should never hit this...
+            raise NotImplementedError
 
     # On IPv6Obj()
     @property
@@ -2244,7 +2446,7 @@ class L4Object(object):
 
         try:
             port_spec = port_spec.strip()
-        except Exception:
+        except BaseException:
             port_spec = port_spec
 
         if syntax == "asa":
@@ -2431,6 +2633,15 @@ def dns_query(input_str="", query_type="", server="", timeout=2.0):
             response.has_error = True
             response.error_str = e
             retval.add(response)
+        except BaseException as eee:
+            duration = time.time() - start
+            response = DNSResponse(
+                input_str=input_str, duration=duration, query_type=query_type
+            )
+            response.has_error = True
+            response.error_str = eee
+            retval.add(response)
+
     elif query_type == "AXFR":
         """This is a hack: return text of zone transfer, instead of axfr objs"""
         _zone = zone.from_xfr(query.xfr(server, input_str, lifetime=timeout))
@@ -2448,6 +2659,14 @@ def dns_query(input_str="", query_type="", server="", timeout=2.0):
                 )
                 retval.add(response)
         except DNSException as e:
+            duration = time.time() - start
+            response = DNSResponse(
+                input_str=input_str, duration=duration, query_type=query_type
+            )
+            response.has_error = True
+            response.error_str = e
+            retval.add(response)
+        except BaseException as e:
             duration = time.time() - start
             response = DNSResponse(
                 input_str=input_str, duration=duration, query_type=query_type
@@ -2475,6 +2694,14 @@ def dns_query(input_str="", query_type="", server="", timeout=2.0):
             response.has_error = True
             response.error_str = e
             retval.add(response)
+        except BaseException as e:
+            duration = time.time() - start
+            response = DNSResponse(
+                input_str=input_str, duration=duration, query_type=query_type
+            )
+            response.has_error = True
+            response.error_str = e
+            retval.add(response)
     elif query_type == "NS":
         try:
             answer = rr.query(input_str, query_type)
@@ -2495,18 +2722,26 @@ def dns_query(input_str="", query_type="", server="", timeout=2.0):
             response.has_error = True
             response.error_str = e
             retval.add(response)
+        except BaseException as e:
+            duration = time.time() - start
+            response = DNSResponse(
+                input_str=input_str, duration=duration, query_type=query_type
+            )
+            response.has_error = True
+            response.error_str = e
+            retval.add(response)
     elif query_type == "PTR":
 
         try:
             IPv4Address(input_str)
             is_valid_v4 = True
-        except Exception:
+        except BaseException:
             is_valid_v4 = False
 
         try:
             IPv6Address(input_str)
             is_valid_v6 = True
-        except Exception:
+        except BaseException:
             is_valid_v6 = False
 
         if (is_valid_v4 is True) or (is_valid_v6 is True):
@@ -2656,15 +2891,15 @@ def check_valid_ipaddress(input_addr=None):
     try:
         IPv4Obj(input_addr)
         ipaddr_family = 4
-    except Exception:
-        pass
+    except BaseException:
+        raise ValueError(input_addr)
 
     if ipaddr_family == 0:
         try:
             IPv6Obj(input_addr)
             ipaddr_family = 6
-        except Exception:
-            pass
+        except BaseException:
+            raise ValueError(input_addr)
 
     error = "FATAL: '{0}' is not a valid IPv4 or IPv6 address.".format(input_addr)
     assert (ipaddr_family == 4 or ipaddr_family == 6), error

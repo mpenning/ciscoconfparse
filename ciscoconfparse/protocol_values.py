@@ -1,5 +1,10 @@
 from __future__ import absolute_import
 
+import better_exceptions
+better_exceptions.MAX_LENGTH = None
+better_exceptions.SUPPORTS_COLOR = True
+better_exceptions.hook()
+
 r""" protocol_values.py - Parse, Query, Build, and Modify IOS-style configurations
 
      Copyright (C) 2021      David Michael Pennington
@@ -24,6 +29,7 @@ r""" protocol_values.py - Parse, Query, Build, and Modify IOS-style configuratio
      If you need to contact the author, you can do so by emailing:
      mike [~at~] pennington [/dot\] net
 """
+
 
 ## Ref: http://www.cisco.com/c/en/us/td/docs/security/asa/asa84/configuration/guide/asa_84_cli_config/ref_ports.html
 ASA_IP_PROTOCOLS = {
