@@ -2237,9 +2237,16 @@ class IPv6Obj(object):
     # On IPv6Obj()
     @property
     def as_decimal_broadcast(self):
-        """Returns the integer value of the IP broadcast as a decimal integer; explicitly, if this object represents 2b00:cd80:14:10::0/64, 'as_decimal_broadcast' returns the integer value of 2b00:cd80:14:10:ffff:ffff:ffff:ffff"""
-        broadcast_offset = 2 ** (IPV6_MAX_PREFIXLEN - self.network_object.prefixlen) - 1
-        return self.as_decimal_network + broadcast_offset
+        """IPv6 does not support broadcast addresses.  Use 'as_decimal_network_maxint' if you want the integer value that would otherwise be an IPv6 broadcast."""
+        raise NotImplementedError("IPv6 does not support broadcast addresses.  Use 'as_decimal_network_maxint' if you want the integer value that would otherwise be an IPv6 broadcast.")
+
+    # do NOT wrap with @logger.catch(...)
+    # On IPv6Obj()
+    @property
+    def as_decimal_network_maxint(self):
+        """Returns the integer value of the maximum value of an IPv6 subnet as a decimal integer; explicitly, if this object represents 2b00:cd80:14:10::0/64, 'as_decimal_network_maxint' returns the integer value of 2b00:cd80:14:10:ffff:ffff:ffff:ffff"""
+        network_maxint_offset = 2 ** (IPV6_MAX_PREFIXLEN - self.network_object.prefixlen) - 1
+        return self.as_decimal_network + network_maxint_offset
 
     # On IPv6Obj()
     @property
@@ -2294,7 +2301,7 @@ class IPv6Obj(object):
         if isinstance(arg, (int, str)):
             arg = int(arg)
             # get the max offset for this subnet...
-            max_offset = self.as_decimal_broadcast - self.as_decimal_network
+            max_offset = self.as_decimal_network_maxint - self.as_decimal_network
             if arg <= max_offset:
                 self.ip_object = IPv6Address(self.as_decimal_network + arg)
             else:
