@@ -11,19 +11,34 @@ COL_END=\033[0;0m
 # Good primer on Makefile variables...
 #    https://earthly.dev/blog/makefile-variables/
 GO_SOURCE_FILE=deploy_docs.go
+GO_BINARY_FILE=deploy_docs
+GO_BIN_DIR=bin/
+# Find the platform (Linux or Darwin) from 'uname -a'...
+PLATFORM := $(shell perl -e '`uname -a` =~ /^(\w+).*?$$/;print("$$1");')
 
+# .SILENT suppresses bash if-elif-else noise on the listed targets...
+.SILENT: build
 .DEFAULT_GOAL := build
 
 # Ref -> https://stackoverflow.com/a/26737258/667301
 build:
 	@echo "$(COL_GREEN)>> compiling the project.$(COL_END)"
 	# Very Important... do not skip the backup step here...
+	mkdir -p $(GO_BIN_DIR)
 	make backup
-	make fmt
+	#make fmt
 	make dep
-	make lint
-	go build $(GO_SOURCE_FILE)
-	strip deploy_docs
+	#make lint
+	# See this link for -ldflags and reducing binary size...
+	#     https://stackoverflow.com/a/21135705/667301
+	if [ "$(PLATFORM)" = "Linux" ]; then \
+		GOARCH=amd64 GOOS=linux go build -ldflags "-s -w" -o $(GO_BIN_DIR)/$(GO_BINARY_FILE) $(GO_SOURCE_FILE); \
+	elif [ "$(PLATFORM)" = "Darwin" ]; then \
+		GOARCH=amd64 GOOS=darwin go build -ldflags "-s -w" -o $(GO_BIN_DIR)/$(GO_BINARY_FILE) $(GO_SOURCE_FILE); \
+	else \
+		echo "$(COL_RED)Unknown PLATFORM -> $(PLATFORM)$(COL_END)"; \
+	fi
+	#strip $(GO_BIN_DIR)/$(GO_BINARY_FILE)
 .PHONY: build
 
 fmt:
@@ -74,6 +89,6 @@ backup:
 	# Delete backups older than 30 days... dont crash if directory is empty
 	-find ./_bak/*tgz -maxdepth 1 -type f -mtime +30 -delete
 	# Create a timestamped backup tarball... exclude the _bak directory
-	tar --exclude=_bak -zcv -f _bak/$(shell date "+%Y%m%d_%H.%M.%S").tgz .
+	tar --exclude=$(GO_BIN_DIR) --exclude=_bak -zcv -f _bak/$(shell date "+%Y%m%d_%H.%M.%S").tgz .
 .PHONY: backup
 
