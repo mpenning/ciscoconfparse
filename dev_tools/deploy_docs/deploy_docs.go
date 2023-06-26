@@ -1,11 +1,54 @@
 package main
 
 import (
+	"os"
+	"time"
+
 	"github.com/melbahja/goph"
+	"github.com/urfave/cli/v2"
+
 	// zap provides useful logging...
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
+
+func buildAppInstance(logger *zap.Logger) (appInst *cli.App) {
+
+	var dochost string = ""
+
+	appInst = &cli.App{
+		Name:     "deploy_docs",
+		Version:  "0.0.2",
+		Compiled: time.Now(),
+		Authors: []*cli.Author{
+			&cli.Author{
+				Name:  "Mike Pennington",
+				Email: "mike@pennington.net",
+			},
+		},
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:        "dochost",
+				Value:       "127.0.0.1",
+				Usage:       "FQDN or IPv4 of the documentation host",
+				Destination: &dochost,
+			},
+		},
+		Action: func(cCtx *cli.Context) (err error) {
+			logger.Info("Starting cli.Context action")
+			if cCtx.NArg() == 0 {
+				logger.Fatal("No CLI arguments detected!")
+			}
+			return nil
+		},
+	}
+	if dochost == "" {
+		logger.Debug("'dochost' is an empty string!")
+		os.Exit(1)
+	}
+	return appInst
+
+}
 
 func main() {
 
@@ -14,6 +57,8 @@ func main() {
 	logger, _ := logconfig.Build()
 
 	logger.Info("Starting CiscoConfParse new documentation upload")
+	app := buildAppInstance(logger)
+	app = app
 
 	logger.Info("    Initialize ssh key-auth")
 	// Start new ssh connection with private key.
