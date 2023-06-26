@@ -26,7 +26,7 @@ build:
 	# Very Important... do not skip the backup step here...
 	mkdir -p $(GO_BIN_DIR)
 	make backup
-	#make fmt
+	make fmt
 	make dep
 	#make lint
 	# See this link for -ldflags and reducing binary size...
@@ -43,8 +43,7 @@ build:
 
 fmt:
 	@echo "$(COL_GREEN)>> reformatting with 'go fmt'$(COL_END)"
-	go fmt $(GO_SOURCE_FILE) > $(GO_SOURCE_FILE).fmt
-	mv $(GO_SOURCE_FILE).fmt $(GO_SOURCE_FILE)
+	go fmt $(GO_SOURCE_FILE)
 .PHONY: fmt
 
 install_linters:
@@ -79,6 +78,7 @@ dep:
 	go get github.com/melbahja/goph@latest
 	go get go.uber.org/zap
 	go get go.uber.org/zap/zapcore
+	go get github.com/urfave/cli/v2
 .PHONY: dep
 
 backup:
