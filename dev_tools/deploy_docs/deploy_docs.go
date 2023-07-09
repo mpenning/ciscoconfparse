@@ -1,54 +1,20 @@
 package main
 
 import (
-	"os"
-	"time"
+	"flag"
 
+	// goph is an ssh client...
 	"github.com/melbahja/goph"
-	"github.com/urfave/cli/v2"
 
 	// zap provides useful logging...
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
-func buildAppInstance(logger *zap.Logger) (appInst *cli.App) {
-
-	var dochost string = ""
-
-	appInst = &cli.App{
-		Name:     "deploy_docs",
-		Version:  "0.0.2",
-		Compiled: time.Now(),
-		Authors: []*cli.Author{
-			&cli.Author{
-				Name:  "Mike Pennington",
-				Email: "mike@pennington.net",
-			},
-		},
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:        "dochost",
-				Value:       "127.0.0.1",
-				Usage:       "FQDN or IPv4 of the documentation host",
-				Destination: &dochost,
-			},
-		},
-		Action: func(cCtx *cli.Context) (err error) {
-			logger.Info("Starting cli.Context action")
-			if cCtx.NArg() == 0 {
-				logger.Fatal("No CLI arguments detected!")
-			}
-			return nil
-		},
-	}
-	if dochost == "" {
-		logger.Debug("'dochost' is an empty string!")
-		os.Exit(1)
-	}
-	return appInst
-
-}
+// Declare all variables here...
+var (
+	dochost string = ""
+)
 
 func main() {
 
@@ -56,29 +22,35 @@ func main() {
 	logconfig.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 	logger, _ := logconfig.Build()
 
-	logger.Info("Starting CiscoConfParse new documentation upload")
-	app := buildAppInstance(logger)
-	app = app
+	// define CLI flags here... '--dochost' is saved as string variable -> dochost
+	flag.StringVar(&dochost, "dochost", "127.0.0.1", "host to upload docs to.")
+	flag.Parse()
 
+	//logger.Info("Starting CiscoConfParse new documentation upload to " + fmt.Sprintf("%s", dochost) + ".")
+	logger.Info("Starting CiscoConfParse new documentation upload to " + dochost + ".")
+
+	// Start a new goph ssh connection with private key auth...
 	logger.Info("    Initialize ssh key-auth")
-	// Start new ssh connection with private key.
 	auth, err := goph.Key("/home/mpenning/.ssh/id_ed25519", "")
 	if err != nil {
 		logger.Fatal(err.Error())
 	}
 
-	logger.Info("    ssh into remote webhost")
-	client, err := goph.New("mpenning", "chestnut.he.net", auth)
+	// Get an ssh client instance with private-key / public-key auth...
+	logger.Info("    ssh into remote webhost " + dochost + ".")
+	client, err := goph.New("mpenning", dochost, auth)
 	if err != nil {
 		logger.Fatal(err.Error())
 	}
 
+	// Run a shell command via the 'client' ssh connection to dochost...
 	logger.Info("    Remove old documentation files")
 	_, err = client.Run("bash -c 'cd public_html/py/ciscoconfparse/ && rm -rf *'")
 	if err != nil {
 		logger.Fatal(err.Error())
 	}
 
+	// Upload a file to the remote server...
 	logger.Info("    Start copying doc tarball to remote ssh server")
 	err = client.Upload("/home/mpenning/ccp.tar.gz", "public_html/py/ciscoconfparse/ccp.tar.gz")
 	if err != nil {

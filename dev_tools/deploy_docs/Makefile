@@ -75,10 +75,12 @@ lint:
 
 dep:
 	@echo "$(COL_GREEN)>> getting deploy_docs dependencies$(COL_END)"
+	# Remove unused dependencies that may be lingering in go.mod...
+	go mod tidy
+	# Get required dependencies...
 	go get github.com/melbahja/goph@latest
 	go get go.uber.org/zap
 	go get go.uber.org/zap/zapcore
-	go get github.com/urfave/cli/v2
 .PHONY: dep
 
 backup:
