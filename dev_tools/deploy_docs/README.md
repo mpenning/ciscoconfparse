@@ -10,7 +10,7 @@ Run with `./deploy_docs`
 By default, you should see output like this...
 
 ```shell
-$ ./deploy_docs
+$ ./deploy_docs --dochost chestnut.he.net
 2023-06-23T09:13:24.844-0500    INFO    deploy_docs/deploy_docs.go:16   Starting CiscoConfParse new documentation upload
 2023-06-23T09:13:24.844-0500    INFO    deploy_docs/deploy_docs.go:18       Initialize ssh key-auth
 2023-06-23T09:13:24.844-0500    INFO    deploy_docs/deploy_docs.go:25       ssh into remote webhost
