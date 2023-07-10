@@ -74,6 +74,6 @@ backup:
 	# Delete backups older than 30 days... dont crash if directory is empty
 	-find ./_bak/*tgz -maxdepth 1 -type f -mtime +30 -delete
 	# Create a timestamped backup tarball... exclude the _bak directory
-	tar --exclude=_bak -zcv -f _bak/$(shell date "+%Y%m%d_%H.%M.%S").tgz .
+	tar -zcv -f _bak/$(shell date "+%Y%m%d_%H.%M.%S").tgz --exclude='_bak/*' --exclude='bin/*' .
 .PHONY: backup
 
