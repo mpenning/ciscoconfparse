@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 
 	// goph is an ssh client...
 	"github.com/melbahja/goph"
@@ -26,8 +27,9 @@ func main() {
 	flag.StringVar(&dochost, "dochost", "127.0.0.1", "host to upload docs to.")
 	flag.Parse()
 
-	//logger.Info("Starting CiscoConfParse new documentation upload to " + fmt.Sprintf("%s", dochost) + ".")
-	logger.Info("Starting CiscoConfParse new documentation upload to " + dochost + ".")
+	fmt.Printf("A script to upload CiscoConfParse docs to %s.\n", dochost)
+
+	logger.Info("Starting new CiscoConfParse documentation upload to " + dochost + ".")
 
 	// Start a new goph ssh connection with private key auth...
 	logger.Info("    Initialize ssh key-auth")
