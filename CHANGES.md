@@ -12,11 +12,17 @@
     - Attempt to reduce packaging clutter in pyproject.toml [include]
     - Fix Github Issue #275: Roll back to hard-coded dependencies in pyproject.toml
 
+## Version: 1.7.23
+
+- Released: 2023-05-12
+- Summary:
+    - This release was yanked from pypi.  See Github Issue #277 for details.
 
 ## Version: 1.7.22
 
 - Released: 2023-05-12
 - Summary:
+    - This release was yanked from pypi.  See Github Issue #277 for details.
     - Add new imports to `tests/conftest.py`.  All tests under 1.7.21 and earlier pass (from py3.7 to py3.11) except for py3.10.  The error is failing dnspython imports.  See Github Issue #274.
 
 ## Version: 1.7.21
