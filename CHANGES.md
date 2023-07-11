@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 1.7.25
+
+- Released: 2023-07-10
+- Summary:
+    - Rewrite `dev_tools/deploy_docs.py` in go to avoid hassles with python's `fabric.api`.
+
 ## Version: 1.7.24
 
 - Released: 2023-05-13
