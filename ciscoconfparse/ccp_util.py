@@ -249,21 +249,37 @@ def ccp_logger_control(
         return True
 
     elif action == "add":
-
-        logger.add(
-            sink=sink,
-            diagnose=True,
-            backtrace=True,
-            # https://github.com/mpenning/ciscoconfparse/issues/215
-            enqueue=enqueue,
-            serialize=False,
-            catch=True,
-            # rotation="00:00",
-            # retention="1 day",
-            # compression="zip",
-            colorize=True,
-            level="DEBUG",
-        )
+        try:
+             logger.add(
+                 sink=sink,
+                 diagnose=True,
+                 backtrace=True,
+                 # https://github.com/mpenning/ciscoconfparse/issues/215
+                 enqueue=enqueue,
+                 serialize=False,
+                 catch=True,
+                 # rotation="00:00",
+                 # retention="1 day",
+                 # compression="zip",
+                 colorize=True,
+                 level="DEBUG",
+             )
+        except OSError:
+             # Attempt not enqueue in case multiprocessing queue is unavailable
+             logger.add(
+                 sink=sink,
+                 diagnose=True,
+                 backtrace=True,
+                 # https://github.com/mpenning/ciscoconfparse/issues/215
+                 enqueue=not enqueue,
+                 serialize=False,
+                 catch=True,
+                 # rotation="00:00",
+                 # retention="1 day",
+                 # compression="zip",
+                 colorize=True,
+                 level="DEBUG",
+             )
         logger.enable(package_name)
         return True
 
