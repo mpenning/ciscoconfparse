@@ -8,11 +8,20 @@ COL_YELLOW=\033[0;33m
 COL_RED=\033[0;31m
 COL_END=\033[0;0m
 
+GOOS=linux
+
 # Good primer on Makefile variables...
 #    https://earthly.dev/blog/makefile-variables/
-GO_SOURCE_FILE=deploy_docs.go
+GO_SOURCE_FILE=src/deploy_docs.go
 
 .DEFAULT_GOAL := build
+
+# 'make release' will perform the ultimate binary packing (sometimes
+#     resulting in a 70% smaller binary!!!); however, 'upx' is really slow
+release:
+	make build
+	upx --ultra-brute bin/deploy_docs
+.PHONY: release
 
 # Ref -> https://stackoverflow.com/a/26737258/667301
 build:
@@ -21,15 +30,13 @@ build:
 	make backup
 	make fmt
 	make dep
-	make lint
-	go build $(GO_SOURCE_FILE)
-	strip deploy_docs
+	-make lint
+	go build -o bin/deploy_docs -ldflags="-s -w" $(GO_SOURCE_FILE)
 .PHONY: build
 
 fmt:
 	@echo "$(COL_GREEN)>> reformatting with 'go fmt'$(COL_END)"
-	go fmt $(GO_SOURCE_FILE) > $(GO_SOURCE_FILE).fmt
-	mv $(GO_SOURCE_FILE).fmt $(GO_SOURCE_FILE)
+	go fmt $(GO_SOURCE_FILE)
 .PHONY: fmt
 
 install_linters:
@@ -54,16 +61,16 @@ lint:
 	@echo "$(COL_CYAN)>>     running gocritic$(COL_END)"
 	gocritic check -enableAll $(GO_SOURCE_FILE)
 	@echo "$(COL_CYAN)>>     running staticcheck$(COL_END)"
-	staticcheck .
+	staticcheck src/*go
 	@echo "$(COL_CYAN)>>     running errcheck$(COL_END)"
 	errcheck -verbose $(GO_SOURCE_FILE)
 .PHONY: lint
 
 dep:
 	@echo "$(COL_GREEN)>> getting deploy_docs dependencies$(COL_END)"
+	go mod tidy
 	go get github.com/melbahja/goph@latest
-	go get go.uber.org/zap
-	go get go.uber.org/zap/zapcore
+	go get github.com/gleich/logoru@latest
 .PHONY: dep
 
 backup:
@@ -74,6 +81,11 @@ backup:
 	# Delete backups older than 30 days... dont crash if directory is empty
 	-find ./_bak/*tgz -maxdepth 1 -type f -mtime +30 -delete
 	# Create a timestamped backup tarball... exclude the _bak directory
-	tar -zcv -f _bak/$(shell date "+%Y%m%d_%H.%M.%S").tgz --exclude='_bak/*' --exclude='bin/*' .
+	tar --exclude=bin --exclude=_bak -zcv -f _bak/$(shell date "+%Y%m%d_%H.%M.%S").tgz .
 .PHONY: backup
 
+clean:
+	@echo "$(COL_GREEN)>> cleaning up bin/deploy_docs and other build artifacts.$(COL_END)"
+	# Delete this binary because it's just huge and we can rebuild from src...
+	-rm -rf bin/
+.PHONY: clean
