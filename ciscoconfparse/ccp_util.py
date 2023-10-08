@@ -1250,13 +1250,6 @@ class IPv4Obj(object):
                 # return (self.network <= val.network) and (
                 #    self.broadcast >= val.broadcast
                 # )
-                logger.debug(self.__repr__())
-                logger.debug(self.as_decimal_network)
-                logger.debug(self.numhosts)
-                logger.debug("---------------------------------")
-                logger.debug(val.__repr__())
-                logger.debug(val.as_decimal_network)
-                logger.debug(val.numhosts)
                 return (self.as_decimal_network <= val.as_decimal_network) and (self.as_decimal_broadcast >= val.as_decimal_broadcast) and (self.prefixlen <= val.prefixlen)
 
         except ValueError as eee:
