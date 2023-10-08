@@ -44,7 +44,7 @@ from dns.exception import DNSException
 from dns.resolver import Resolver
 from dns import reversename, query, zone
 
-from deprecat import deprecat
+from deprecated import deprecated
 
 from loguru import logger
 
@@ -2794,7 +2794,7 @@ def dns_query(input_str="", query_type="", server="", timeout=2.0):
 
 
 @logger.catch(reraise=True)
-@deprecat(reason="dns_lookup() is obsolete; use dns_query() instead.  dns_lookup() will be removed", version='1.7.0')
+@deprecated(reason="dns_lookup() is obsolete; use dns_query() instead.  dns_lookup() will be removed", version='1.7.0')
 def dns_lookup(input_str, timeout=3, server="", record_type="A"):
     """Perform a simple DNS lookup, return results in a dictionary"""
     if not isinstance(input_str, str):
@@ -2848,7 +2848,7 @@ def dns_lookup(input_str, timeout=3, server="", record_type="A"):
 
 
 @logger.catch(reraise=True)
-@deprecat(reason="dns6_lookup() is obsolete; use dns_query() instead.  dns6_lookup() will be removed", version='1.7.0')
+@deprecated(reason="dns6_lookup() is obsolete; use dns_query() instead.  dns6_lookup() will be removed", version='1.7.0')
 def dns6_lookup(input_str, timeout=3, server=""):
     """Perform a simple DNS lookup, return results in a dictionary"""
     rr = Resolver()
@@ -2907,7 +2907,7 @@ def check_valid_ipaddress(input_addr=None):
 
 
 @logger.catch(reraise=True)
-@deprecat(reason="reverse_dns_lookup() is obsolete; use dns_query() instead.  reverse_dns_lookup() will be removed", version='1.7.0')
+@deprecated(reason="reverse_dns_lookup() is obsolete; use dns_query() instead.  reverse_dns_lookup() will be removed", version='1.7.0')
 def reverse_dns_lookup(input_str, timeout=3.0, server="4.2.2.2", proto="udp"):
     """Perform a simple reverse DNS lookup on an IPv4 or IPv6 address; return results in a python dictionary"""
     if not isinstance(proto, str) and (proto=="udp" or proto=="tcp"):
