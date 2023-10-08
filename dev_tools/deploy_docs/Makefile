@@ -28,11 +28,18 @@ build:
 	@echo "$(COL_GREEN)>> compiling the project.$(COL_END)"
 	# Very Important... do not skip the backup step here...
 	make backup
-	make fmt
+	-make fmt
 	make dep
 	-make lint
+	cd src && go vet .
 	go build -o bin/deploy_docs -ldflags="-s -w" $(GO_SOURCE_FILE)
 .PHONY: build
+
+deploy:
+	make build
+	cd bin && ./deploy_docs
+	make clean
+.PHONY: deploy
 
 fmt:
 	@echo "$(COL_GREEN)>> reformatting with 'go fmt'$(COL_END)"
