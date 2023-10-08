@@ -91,7 +91,7 @@ from ciscoconfparse.ccp_util import configure_loguru
 # Not using ccp_re yet... still a work in progress
 # from ciscoconfparse.ccp_util import ccp_re
 
-from deprecat import deprecat
+from deprecated import deprecated
 from loguru import logger
 import toml
 
@@ -3119,7 +3119,7 @@ class CiscoConfParse(object):
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
-    @deprecat(
+    @deprecated(
         reason="req_cfgspec_all_diff() is obsolete; use HDiff() instead.  req_cfgspec_all_diff() will be removed",
         version="1.7.0",
     )
@@ -3191,7 +3191,7 @@ class CiscoConfParse(object):
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
-    @deprecat(
+    @deprecated(
         reason="req_cfgspec_excl_diff() is obsolete; use HDiff() instead.  req_cfgspec_excl_diff() will be removed",
         version="1.7.0",
     )
