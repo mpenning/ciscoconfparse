@@ -9,6 +9,7 @@
 - Released: 2023-07-10
 - Summary:
     - Rewrite `dev_tools/deploy_docs.py` in go to avoid hassles with python's `fabric.api`.
+    - Rewrite `dev_tools/deploy_docs.py` in go to avoid hassles with python's `fabric.api`.
 
 ## Version: 1.7.24
 
