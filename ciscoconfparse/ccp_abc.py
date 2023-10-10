@@ -455,8 +455,6 @@ class BaseCfgLine(metaclass=ABCMeta):
         #     by confobj.delete()) in favor of a simpler approach
         #     in confobj.delete()
         #
-        # def _list_reassign_linenums(self):
-        #     self.confobj._reassign_linenums()
         raise NotImplementedError()
 
     # On BaseCfgLine()
@@ -614,7 +612,8 @@ class BaseCfgLine(metaclass=ABCMeta):
                 logger.debug("    Deleting <IOSCfgLine(line # {})>.".format(linenum))
             del self.confobj._list[linenum]
 
-        self.confobj._reassign_linenums()
+        # W0212: Access to a protected attribute (i.e. with leading underscore)
+        self.confobj._reassign_linenums()  # noqa: W0212
         return True
 
     # On BaseCfgLine()
