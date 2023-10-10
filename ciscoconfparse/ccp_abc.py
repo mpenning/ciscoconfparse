@@ -197,7 +197,8 @@ class BaseCfgLine(metaclass=ABCMeta):
         len_geneology = len(self.geneology)
 
         for idx, obj in enumerate(self.geneology):
-            obj._line_id = obj.calculate_line_id()
+            # W0212: Access to a protected attribute (i.e. with leading underscore)
+            obj._line_id = obj.calculate_line_id() # noqa: W0212
 
             # idx = 0 is the oldest ancestor
             if idx == 0:
@@ -206,8 +207,6 @@ class BaseCfgLine(metaclass=ABCMeta):
 
             elif idx <= len_geneology - 1:
                 # This object is a child of self.parent
-                if False:
-                    assert obj.indent > 0
                 retval.insert(0, obj._line_id)
 
         # retval usually looks like this (example with a single parent obj):
