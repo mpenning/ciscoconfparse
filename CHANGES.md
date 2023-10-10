@@ -4,6 +4,11 @@
 - Summary:
     - Insert something here
 
+## Version: 1.8.2
+
+- Released: 2023-10-10
+- Summary:
+    - Remove better_exceptions
 
 ## Version: 1.8.1
 

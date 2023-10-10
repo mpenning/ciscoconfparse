@@ -13,7 +13,7 @@ requires-python = ">=3.7.0"
 # however, pip will NOT install unless I base pyproject.toml on the
 # [tool.poetry] section below.
 #
-# Maybe it's my fault, but I have not had success trying to migrate to 
+# Maybe it's my fault, but I have not had success trying to migrate to
 # a [project] section with pip installs.  I have stopped trying because
 # the problem is too complicated to continue throwing cycles at making a
 # [project] section work with 'pip install ciscoconfparse'.
