@@ -13,6 +13,9 @@ GOOS=linux
 # Good primer on Makefile variables...
 #    https://earthly.dev/blog/makefile-variables/
 GO_SOURCE_FILE=src/deploy_docs.go
+GO_BINARY_FILE=deploy_docs
+# Find the platform (Linux or Darwin) from 'uname -a'...
+PLATFORM := $(shell perl -e '`uname -a` =~ /^(\w+).*?$$/;print("$$1");')
 
 .DEFAULT_GOAL := build
 
@@ -32,7 +35,22 @@ build:
 	make dep
 	-make lint
 	cd src && go vet .
-	go build -o bin/deploy_docs -ldflags="-s -w" $(GO_SOURCE_FILE)
+
+	############################################################################
+	#
+	# Replace this line with PLATFORM detection...
+	#
+	#go build -o bin/deploy_docs -ldflags="-s -w" $(GO_SOURCE_FILE)
+	#
+	############################################################################
+	if [ "$(PLATFORM)" = "Linux" ]; then \
+		GOARCH=amd64 GOOS=linux go build -ldflags "-s -w" -o ./$(GO_BINARY_FILE) $(GO_SOURCE_FILE); \
+	elif [ "$(PLATFORM)" = "Darwin" ]; then \
+		GOARCH=amd64 GOOS=darwin go build -ldflags "-s -w" -o ./$(GO_BINARY_FILE) $(GO_SOURCE_FILE); \
+	else \
+		echo "$(COL_RED)Unknown PLATFORM -> $(PLATFORM)$(COL_END)"; \
+	fi
+	make release
 .PHONY: build
 
 deploy:
