@@ -2847,8 +2847,6 @@ class CiscoConfParse(object):
             retval.append(obj.re_sub(linespec, replacestr))
 
         if self.factory and atomic:
-            # self.ConfigObjs._reassign_linenums()
-            #self.ConfigObjs._bootstrap_from_text()
             self.ConfigObjs._list = self.ConfigObjs._bootstrap_obj_init_ng(self.ioscfg)
 
         return retval
@@ -2937,8 +2935,6 @@ class CiscoConfParse(object):
                     pass
 
         if self.factory and atomic:
-            # self.ConfigObjs._reassign_linenums()
-            #self.ConfigObjs._bootstrap_from_text()
             self.ConfigObjs._list = self.ConfigObjs._bootstrap_obj_init_ng(self.ioscfg)
         return retval
 
@@ -2973,8 +2969,6 @@ class CiscoConfParse(object):
                     pass
 
         if self.factory and atomic:
-            # self.ConfigObjs._reassign_linenums()
-            #self.ConfigObjs._bootstrap_from_text()
             self.ConfigObjs._list = self.ConfigObjs._bootstrap_obj_init_ng(self.ioscfg)
 
         return retval
@@ -4844,7 +4838,7 @@ class ConfigList(MutableSequence):
 
         else:
             ## Just renumber lines...
-            self._reassign_linenums()
+            self.reassign_linenums()
 
     # This method is on ConfigList()
     @junos_unsupported
@@ -4956,7 +4950,7 @@ class ConfigList(MutableSequence):
             self._list = self._bootstrap_obj_init_ng(self.ioscfg)
         else:
             ## Just renumber lines...
-            self._reassign_linenums()
+            self.reassign_linenums()
 
     # This method is on ConfigList()
     @junos_unsupported
@@ -4992,7 +4986,7 @@ class ConfigList(MutableSequence):
         self._list.insert(ii, obj)
 
         ## Just renumber lines...
-        self._reassign_linenums()
+        self.reassign_linenums()
 
     # This method is on ConfigList()
     def config_hierarchy(self):
@@ -5372,7 +5366,7 @@ class ConfigList(MutableSequence):
                 yield obj
 
     # This method is on ConfigList()
-    def _reassign_linenums(self):
+    def reassign_linenums(self):
         # Call this after any insertion or deletion
         for idx, obj in enumerate(self._list):
             obj.linenum = idx
