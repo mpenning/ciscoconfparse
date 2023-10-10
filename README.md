@@ -85,12 +85,6 @@ Dependencies
 - [loguru](https://github.com/Delgan/loguru)
 - [deprecated](https://github.com/tantale/deprecated)
 
-Is this a tool, or is it artwork?
----------------------------------
-
-That depends on who you ask.  Many companies use CiscoConfParse as part of their
-network engineering toolbox; others regard it as a form of artwork.
-
 What if we don\'t use Cisco IOS?
 --------------------------------
 
@@ -117,14 +111,11 @@ CiscoConfParse also handles anything that has a Cisco IOS style of configuration
 Docs
 ----
 
+- Blogs
+  - Kirk Byers published a [a ciscoconfparse blog piece](https://pynet.twb-tech.com/blog/parsing-configurations-w-ciscoconfparse.html)
+  - Henry Ölsner published a [a ciscoconfparse blog piece](https://codingnetworker.com/2016/06/parse-cisco-ios-configuration-ciscoconfparse/)
 - The latest copy of the docs are [archived on the web][15]
 - There is also a [CiscoConfParse Tutorial][16]
-
-
-Pre-requisites
---------------
-
-[The ciscoconfparse python package][3] requires Python versions 3.7+ (note: Python version 3.7.0 has a bug - ref [Github issue \#117][18], but version 3.7.1 works); the OS should not matter.
 
 Installation and Downloads
 --------------------------
@@ -145,6 +136,77 @@ Github Star History
 -------------------
 
 [![Github Star History Chart][40]][40]
+
+Interesting Users (and some downstream projects)
+------------------------------------------------
+
+The following are featured [CiscoConfParse](https://github.com/mpenning/ciscoconfparse/) users / projects:
+
+- [salt](https://github.com/saltstack/salt)
+- [suzieq](https://github.com/netenglabs/suzieq):  SuzieQ collects, normalizes, and stores timestamped data that is otherwise only available to engineers by logging into each device, providing a rich data lake that can be queried and leveraged for next generation monitoring and alerting
+- [netwalk](https://github.com/icovada/netwalk): Python library to discover, parse, analyze and change Cisco switched networks
+- [netlint](https://github.com/Kircheneer/netlint)
+- [cisco_switchport_auditor](https://github.com/corvese/cisco_switchport_auditor): Parses Cisco switch configuration into Switch & Interface objects to access configuration details of the aforementioned in a programatic manner. Works with SSH, RESTCONF, or with running/start-up config files.
+- [pynipper-ng](https://github.com/syn-4ck/pynipper-ng): a network security analyzer
+- [build_fabric](https://github.com/sjhloco/build_fabric): Build a declarative Cisco NXOS leaf and spine fabric using Ansible
+- [junos-ansible](https://github.com/yzguy/junos-ansible)
+- [faddr](https://github.com/kido5217/faddr)
+- [NetOpsNornir](https://github.com/wangcongxing/NetOpsNornir/)
+- [adala](https://github.com/blindhog/adala): Extract useful information about your Cisco network
+- [xlina](https://github.com/blindhog/xlina):
+  - organize_acls.py: Extract and organize access-list configurations and organizes associated objects and object-groups.
+  - organize_anyconnect.py: Extract and organize Anyconnect profiles and associated group policies, auth servers, access-lists, etc
+  - organize_static_nats.py: Extract and organize static nat configurations and associated objects and object-groups
+  - organize_auto_nat.py: Extract and organize auto nat configurations with associated objects
+  - organize_crypto_maps.py: Extract and organize crypto map configurations and associated access-lists, transform-sets, tunnel-groups, etc
+- [Catalyst_2_Meraki_Config_Checker](https://github.com/fadysharobeem/Catalyst_2_Meraki_Config_Checker): Check the Cisco Catalyst configuration text file and verify if they are supported by the Meraki MS platform.
+- [parse_nxos_config](https://github.com/ocptech/parse_nxos_config): Generates an Excel file with the information gathered from running-config file from Cisco NXOS
+- [Nornir3_CDP_map](https://github.com/nouse4it/Nornir3_CDP_map): Set interface descriptions by looking at the hostname of its CDP neighbor
+- [devicebanner](https://github.com/labeveryday/devicebanner/): Update the banner message of the day on network devices
+- [iosconfigslicer](https://github.com/imanassypov/iosconfigslicer): Simple script to slice Cisco configuration file, and replicate sections of the config via SSH to another device
+- [ciscocfg](https://github.com/Mareel-io/ciscocfg): a simple RPCd for ciscoconfparse
+- [confParser](https://github.com/yshornikov/confParser/): SSH with paramiko, and dump information about your configs into sqllite3 / Excel
+- [parse_config](https://github.com/Sergey-Link/parse_config/): Dump information about your Vlans / VRFs to excel
+- Finally, _[Cisco Systems](https://cisco.com/) Product Engineering and Advanced Services_
+
+Other Useful Network Management Projects
+----------------------------------------
+
+- [netbox](https://github.com/netbox-community/netbox/): NetBox is the source of truth for everything on your network, from physical components like power systems and cabling to virtual assets like IP addresses and VLANs
+  - [ntc-netbox-plugin-onboarding](https://github.com/networktocode/ntc-netbox-plugin-onboarding): A plugin for NetBox to easily onboard new devices.
+- [nautobot](https://github.com/nautobot/nautobot): Network Source of Truth & Network Automation Platform.
+- [nornir](https://github.com/nornir-automation/nornir): Network Automation via Plugins - A pluggable multi-threaded framework with inventory management to help operate collections of devices
+- [network-importer](https://github.com/networktocode/network-importer/): The network importer is a tool/library to analyze and/or synchronize an existing network with a Network Source of Truth (SOT), it's designed to be idempotent and by default it's only showing the difference between the running network and the remote SOT.
+- [nuts](https://github.com/network-unit-testing-system/nuts): NUTS defines a desired network state and checks it against a real network using pytest and nornir.
+- [jerikan](https://vincent.bernat.ch/en/blog/2021-network-jerikan-ansible):
+- [nettowel](https://github.com/InfrastructureAsCode-ch/nettowel/): Collection of useful network automation functions
+- [napalm-panos](https://github.com/napalm-automation-community/napalm-panos)
+- [assessment-cmds](https://github.com/blindhog/assessment-cmds/): Useful show commands to check your Cisco router's health
+- [learn-to-cloud](https://github.com/labeveryday/learn-to-cloud): Primer for Cloud-computing fundamentals
+
+What is the pythonic way of handling script credentials?
+--------------------------------------------------------
+
+1. Never hard-code credentials
+2. Use [python-dotenv](https://github.com/theskumar/python-dotenv)
+
+Are you releasing licensing besides GPLv3?
+------------------------------------------
+
+It is a [work in progress](https://github.com/mpenning/ciscoconfparse/issues/270)
+
+Is this a tool, or is it artwork?
+---------------------------------
+
+That depends on who you ask.  Many companies use CiscoConfParse as part of their
+network engineering toolbox; others regard it as a form of artwork.
+
+Pre-requisites
+--------------
+
+[The ciscoconfparse python package][3] requires Python versions 3.7+ (note: Python version 3.7.0 has a bug - ref [Github issue \#117][18], but version 3.7.1 works); the OS should not matter.
+
+
 
 Other Resources
 ---------------
