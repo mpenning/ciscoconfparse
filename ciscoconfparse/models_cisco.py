@@ -834,20 +834,6 @@ class BaseIOSIntfLine(IOSCfgLine):
             logger.warning("intf='{}' ipv4_addr='{}' ipv4_netmask='{}'".format(self.name, self.ipv4_addr, self.ipv4_netmask))
             return self.default_ipv4_addr_object
 
-        if False:
-            if self.ipv4_addr == "dhcp":
-                logger.critical("DHCP CONDITION 1")
-                raise DynamicAddressException
-            elif self.ipv4_addr == "" or self.ipv4_netmask == "":
-                logger.critical("DHCP CONDITION 2 -> RETURN")
-                #raise ValueError("Cannot parse ipv4 address from interface {}".format(self.name))
-                return IPv4Obj("0.0.0.1/32", strict=False)
-
-            try:
-                return IPv4Obj("%s/%s" % (self.ipv4_addr, self.ipv4_netmask))
-            except DynamicAddressException as e:
-                raise ValueError(e)
-
     @property
     @logger.catch(reraise=True)
     def ipv4_network_object(self):
