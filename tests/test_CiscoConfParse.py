@@ -35,7 +35,7 @@ import sys
 import re
 import os
 
-sys.path.insert(0, "..")
+THIS_TEST_PATH = os.path.dirname(os.path.abspath(__file__))
 
 from loguru import logger
 from passlib.hash import cisco_type7
@@ -52,37 +52,37 @@ from ciscoconfparse.ccp_abc import BaseCfgLine
 
 def testParse_valid_filepath_01():
     """Test reading a cisco ios config-file on disk (without the config keyword); ref github issue #262."""
-    parse = CiscoConfParse("../configs/sample_01.ios")
+    parse = CiscoConfParse(f"{THIS_TEST_PATH}/fixtures/configs/sample_01.ios")
     assert len(parse.ioscfg) == 450
 
 
 def testParse_valid_filepath_02():
     """Test reading a cisco ios config-file on disk (from filename in the config parameter); ref github issue #262."""
-    parse = CiscoConfParse(config="../configs/sample_01.ios")
+    parse = CiscoConfParse(config=f"{THIS_TEST_PATH}/fixtures/configs/sample_01.ios")
     assert len(parse.ioscfg) == 450
 
 
 def testParse_valid_filepath_03():
     """Test reading an f5 config-file on disk (without the config keyword); ref github issue #262."""
-    parse = CiscoConfParse("../configs/sample_01.f5", comment="#", syntax="junos")
+    parse = CiscoConfParse(f"{THIS_TEST_PATH}/fixtures/configs/sample_01.f5", comment="#", syntax="junos")
     assert len(parse.ioscfg) == 16
 
 
 def testParse_valid_filepath_04():
     """Test reading an f5 config-file on disk (from filename in the config parameter); ref github issue #262."""
-    parse = CiscoConfParse(config="../configs/sample_01.f5", comment="#", syntax="junos")
+    parse = CiscoConfParse(config=f"{THIS_TEST_PATH}/fixtures/configs/sample_01.f5", comment="#", syntax="junos")
     assert len(parse.ioscfg) == 16
 
 
 def testParse_valid_filepath_05():
     """Test reading a junos config-file on disk (without the config keyword); ref github issue #262."""
-    parse = CiscoConfParse("../configs/sample_01.junos", comment="#", syntax="junos")
+    parse = CiscoConfParse(f"{THIS_TEST_PATH}/fixtures/configs/sample_01.junos", comment="#", syntax="junos")
     assert len(parse.ioscfg) == 79
 
 
 def testParse_valid_filepath_06():
     """Test reading a junos config-file on disk (from filename in the config parameter); ref github issue #262."""
-    parse = CiscoConfParse(config="../configs/sample_01.junos", comment="#", syntax="junos")
+    parse = CiscoConfParse(config=f"{THIS_TEST_PATH}/fixtures/configs/sample_01.junos", comment="#", syntax="junos")
     assert len(parse.ioscfg) == 79
 
 
@@ -119,11 +119,11 @@ def testParse_f5_as_ios_00(parse_f01_ios):
 def testParse_f5_as_ios_02(parse_f02_ios_01):
     """
     Test parsing a brace-delimited f5 config with ios syntax.  Use
-    configs/sample_02.f5 as the test config.  That f5 config is pre-parsed in
+    fixtures/configs/sample_02.f5 as the test config.  That f5 config is pre-parsed in
     conftest.py as 'parse_f02_ios'.
 
     This Config Parsing Syntax:
-    parse_f02_ios = CiscoConfParse('configs/sample_02.f5', syntax='ios')
+    parse_f02_ios = CiscoConfParse('fixtures/configs/sample_02.f5', syntax='ios')
 
     Ensure that line numbers, parent line numbers, and config text line up
     correctly... important note... closing curly-braces should be assigned as
@@ -1985,7 +1985,7 @@ def testValues_HDiff_02():
 )
 def testValues_HDiff_10():
     """
-    Test parsing an f5 config with ios syntax.  Use configs/sample_01.f5 as
+    Test parsing an f5 config with ios syntax.  Use fixtures/configs/sample_01.f5 as
     the test config.  That f5 config is pre-parsed in conftest.py as
     'parse_f01_ios'.
     """
