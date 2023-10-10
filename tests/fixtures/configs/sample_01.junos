@@ -1,0 +1,116 @@
+## Last commit: 2015-06-28 13:00:59 CST by mpenning
+system {
+    host-name TEST01_EX;
+    domain-name pennington.net;
+    domain-search [ pennington.net lab.pennington.net ];
+    location {
+        country-code 001;
+        building HQ_005;
+        floor 1;
+    }
+    root-authentication {
+        encrypted-password "$1$y7ArHxKU$zUbdeLfBirgkCsKiOJ5Qa0"; ## SECRET-DATA
+    }
+    name-server {
+        172.16.3.222;
+    }
+    login {
+        announcement "Test Lab Switch";
+        message "Unauthorized access is prohibited";
+        user mpenning {
+            full-name "Mike Pennington";
+            uid 1000;
+            class super-user;
+            authentication {
+                encrypted-password "$1$y7ArHxKU$zUbdeLfBirgkCsKiOJ5Qa0"; ## SECRET-DATA
+            }
+        }
+    }
+    services {
+        ssh {
+            root-login allow;
+        }
+        telnet;
+        web-management {
+            http;
+        }
+    }
+    syslog {
+        user * {
+            any emergency;
+        }
+        file messages {
+            any notice;
+            authorization info;
+        }
+        file interactive-commands {
+            interactive-commands any;
+        }
+    }
+    ntp {
+        boot-server time.apple.com;
+        server 172.16.8.3;
+    }
+}
+vlans {
+    Management {
+        vlan-id 1;
+        interface {
+            ge-0/0/0.0;
+            ge-0/0/1.0;
+            ge-0/0/2.0;
+            ge-0/0/3.0;
+        }
+    }
+    VLAN_FOO {
+        vlan-id 5;
+    }
+    vlan1 {
+        vlan-id 1;
+        l3-interface vlan.1;
+    }
+    vlan800 {
+        vlan-id 800;
+    }
+}
+ethernet-switching-options {
+    storm-control {
+        interface all;
+    }
+}
+interfaces {
+    ge-0/0/0 {
+        unit 0 {
+            family ethernet-switching {
+                port-mode access;
+                vlan {
+                    members VLAN_FOO;
+                }
+            }
+        }
+    }
+    ge-0/0/1 {
+        unit 0 {
+            family ethernet-switching {
+                port-mode trunk;
+                vlan {
+                    members all;
+                }
+                native-vlan-id 1;
+            }
+        }
+    }
+    vlan {
+        unit 0 {
+            family inet {
+                address 172.16.15.5/22;
+            }
+        }
+    }
+}
+routing-options {
+    static {
+        route 0.0.0.0/0 next-hop 172.16.12.1;
+        route 192.168.36.0/25 next-hop 172.16.12.1;
+    }
+}

@@ -1,0 +1,20 @@
+ltm virtual ACME {
+    destination 192.168.1.191:http
+    ip-protocol tcp
+    mask 255.255.255.255
+    pool pool1
+    profiles {
+        http { }
+        tcp { }
+    }
+    rules {
+        MOBILE
+    }
+    source 0.0.0.0/0
+    source-address-translation {
+        type automap
+    }
+    translate-address enabled
+    translate-port enabled
+    vs-index 17
+}

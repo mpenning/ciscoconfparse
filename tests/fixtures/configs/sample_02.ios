@@ -1,0 +1,246 @@
+version 12.0
+no service pad
+service timestamps debug datetime localtime show-timezone
+service timestamps log datetime localtime show-timezone
+service password-encryption
+!
+hostname Foo
+!
+enable secret 5 $1$G1T6q4FE27/vKE46WINpy.
+!
+username root password 7 075C727A6E0A180B03
+!
+!
+!
+!
+clock timezone UTC -6
+clock summer-time CDT recurring 2 Sun Mar 2:00 1 Sun Nov 2:00
+!
+ip subnet-zero
+!
+!
+!
+interface FastEthernet0/1
+ description
+ duplex full
+ speed 100
+ switchport access vlan 532
+ spanning-tree vlan 532 cost 3
+!
+interface FastEthernet0/2
+ description
+ duplex full
+ speed 100
+ switchport access vlan 300
+ spanning-tree portfast
+!
+interface FastEthernet0/3
+ description
+ duplex full
+ speed 100
+ switchport access vlan 300
+ spanning-tree portfast
+!
+interface FastEthernet0/4
+ description
+ duplex full
+ speed 100
+ port monitor FastEthernet0/2
+ switchport access vlan 300
+ spanning-tree portfast
+!
+interface FastEthernet0/5
+ description
+ duplex full
+ speed 100
+ port monitor FastEthernet0/2
+ switchport access vlan 300
+ spanning-tree portfast
+!
+ interface FastEthernet0/6
+ description
+ switchport access vlan 24
+ spanning-tree portfast
+!
+interface FastEthernet0/7
+ description
+ shutdown
+ duplex full
+ speed 100
+ spanning-tree portfast
+!
+interface FastEthernet0/8
+ description
+ shutdown
+ duplex full
+ speed 100
+ spanning-tree portfast
+!
+interface FastEthernet0/9
+ description
+ shutdown
+ duplex full
+ speed 100
+ spanning-tree portfast
+!
+ interface FastEthernet0/10
+ shutdown
+ duplex full
+ speed 100
+ switchport access vlan 532
+ spanning-tree portfast
+!
+interface FastEthernet0/11
+ description
+ shutdown
+ duplex full
+ speed 100
+ spanning-tree portfast
+ !
+interface FastEthernet0/12
+ description
+ duplex full
+ speed 100
+ switchport access vlan 532
+ spanning-tree portfast
+!
+interface FastEthernet0/13
+ description
+ shutdown
+ duplex full
+ speed 100
+ switchport access vlan 532
+ spanning-tree portfast
+!
+interface FastEthernet0/14
+ description
+ duplex full
+ speed 100
+ switchport access vlan 532
+ spanning-tree portfast
+!
+interface FastEthernet0/15
+ description
+ shutdown
+ duplex full
+ speed 100
+ spanning-tree portfast
+!
+interface FastEthernet0/16
+ description
+ duplex full
+ speed 100
+ switchport access vlan 532
+ spanning-tree portfast
+!
+interface FastEthernet0/17
+ description
+ shutdown
+ duplex full
+ speed 100
+ spanning-tree portfast
+!
+interface FastEthernet0/18
+ description
+ duplex full
+ speed 100
+ switchport access vlan 532
+ spanning-tree portfast
+!
+interface FastEthernet0/19
+ description
+ shutdown
+ duplex full
+ speed 100
+ spanning-tree portfast
+!
+interface FastEthernet0/20
+ description
+ duplex full
+ speed 100
+ switchport access vlan 532
+ spanning-tree portfast
+!
+! IOS config indentation bug below...
+ interface FastEthernet0/21
+ description
+ shutdown
+ duplex full
+ speed 100
+ spanning-tree portfast
+!
+interface FastEthernet0/22
+ description
+ shutdown
+ duplex full
+ speed 100
+ spanning-tree portfast
+ !
+interface FastEthernet0/23
+ description
+ duplex full
+ speed 100
+ switchport access vlan 300
+!
+interface FastEthernet0/24
+ description
+ duplex full
+ speed 100
+ switchport access vlan 24
+!
+! IOS config indentation bug below...
+ interface GigabitEthernet0/1
+ description
+ switchport mode trunk
+ spanning-tree vlan 532 cost 30
+!
+interface GigabitEthernet0/2
+ description
+ switchport mode trunk
+!
+interface VLAN1
+ no ip address
+ no ip directed-broadcast
+ no ip route-cache
+ shutdown
+!
+interface VLAN24
+ description
+ ip address 172.24.24.101 255.255.254.0
+ no ip directed-broadcast
+ no ip route-cache
+!
+ip default-gateway 172.24.24.254
+logging trap debugging
+logging 172.24.24.142
+logging 172.28.26.15
+snmp-server engineID local 000000090200000532A6C0C0
+snmp-server community publicstrang RO
+snmp-server community privatestrang RW
+snmp-server host 172.28.26.15 inform version 2c publicstrang
+snmp-server host 172.28.26.15 trap publicstrang
+banner login ^CC
+This is a private computer system, owned by Foo Companies, Inc.
+containing confidential information. Any unauthorized attempt to access
+or use this computer system or any information on it by employees or
+other persons may result in termination of employment, civil fines and
+criminal penalties. This system must be used for authorized business
+purposes only.
+^C
+!
+line con 0
+ password 7 123A0D05431818090A38
+ login
+ transport input none
+ stopbits 1
+line vty 0 4
+ password 7 05280E1D705F5A043916
+ login
+line vty 5 15
+ password 7 05280E1D705F5A043916
+ login
+!
+ntp clock-period 11259542
+ntp server 172.24.0.106 prefer
+ntp server 172.24.0.107
+end

@@ -1,0 +1,998 @@
+version 6.2(12)
+power redundancy-mode ps-redundant
+hostname sample_nxos_01
+no system admin-vdc
+install feature-set fex
+vdc DCE-200-N7010-01 id 1
+  limit-resource module-type m1 f1 m1xl m2xl
+  allow feature-set fex
+  allocate interface Ethernet1/1-48
+  allocate interface Ethernet2/1-32
+  allocate interface Ethernet3/1-32
+  allocate interface Ethernet4/1-32
+  allocate interface Ethernet7/1-24
+  limit-resource vlan minimum 16 maximum 4094
+  limit-resource monitor-session minimum 0 maximum 2
+  limit-resource monitor-session-erspan-dst minimum 0 maximum 23
+  limit-resource vrf minimum 2 maximum 1000
+  limit-resource port-channel minimum 0 maximum 768
+  limit-resource u4route-mem minimum 96 maximum 96
+  limit-resource u6route-mem minimum 24 maximum 24
+  limit-resource m4route-mem minimum 58 maximum 58
+  limit-resource m6route-mem minimum 8 maximum 8
+  limit-resource monitor-session-inband-src minimum 0 maximum 1
+  limit-resource anycast_bundleid minimum 0 maximum 16
+  limit-resource monitor-session-mx-exception-src minimum 0 maximum 1
+  limit-resource monitor-session-extended minimum 0 maximum 12
+feature-set fex
+feature telnet
+feature tacacs+
+cfs eth distribute
+feature bgp
+feature udld
+feature interface-vlan
+feature netflow
+feature hsrp
+feature lacp
+feature vpc
+feature vtp
+feature bfd
+feature sla sender
+feature sla responder
+logging level pixm 2
+logging level vtp 2
+logging level xmlma 7
+username admin password 5 $1$.vTq$m3rHbbqITE.sxlHB0K5ca/ role network-admin
+no password strength-check
+ip domain-lookup
+tacacs-server key 7 02050D4808095E731F
+ip tacacs source-interface loopback1
+tacacs-server host 10.10.6.165
+tacacs-server host 10.10.2.130
+aaa group server tacacs+ tacacs
+    server 10.10.6.165
+    server 10.10.2.130
+    use-vrf management
+errdisable recovery interval 120
+errdisable recovery cause all
+control-plane
+  service-policy input copp-system-policy
+vtp mode transparent
+vtp domain 4
+fex 104
+  pinning max-links 1
+  description
+fex 105
+  pinning max-links 1
+  description
+bfd interval 250 min_rx 250 multiplier 3
+bfd echo-interface loopback1
+snmp-server location Colo4 Dallas
+snmp-server user admin network-admin auth md5 $1$.vTq$m3rHbbqITE.sxlHB0K5ca/ priv $1$.vTq$m3rHbbqITE.sxlHB0K5ca/ localizedkey
+rmon event 1 log trap public description
+rmon event 2 log trap public description
+rmon event 3 log trap public description
+rmon event 4 log trap public description
+rmon event 5 log trap public description
+snmp-server community read-write group network-admin
+snmp-server community read group network-operator
+ntp server 10.10.2.10
+ntp server 10.10.2.10 prefer
+aaa authentication login default group tacacs
+aaa authorization config-commands default group tacacs
+ip route 0.0.0.0/0 10.1.1.1
+vlan 1
+vlan 8
+vlan 249
+vlan 400
+vlan 403
+vlan 404
+vlan 405
+vlan 550
+vlan 551
+vlan 552
+vlan 600
+vlan 700
+vlan 900
+vlan 997
+vlan 3237
+vlan 3238
+vlan 3239
+vlan 3305
+vlan 3308
+vlan 3336
+vlan 3339
+vlan 3405
+vlan 3505
+flow timeout active 60
+flow exporter EXPORTER-1
+  description
+  destination 10.10.3.206 use-vrf TESTVRF
+  transport udp 9991
+  source Vlan3059
+  version 9
+track 2 interface Ethernet3/31 line-protocol
+flow record FLOW-RECORD-1
+  match ipv4 source address
+  match ipv4 destination address
+  match transport source-port
+  match transport destination-port
+  collect counter bytes long
+  collect counter packets long
+flow monitor MONITOR-1
+  record netflow-original
+  exporter EXPORTER-1
+route-map internal permit 10
+  match ip address permit-any
+vrf context VRF
+vrf context BRAVO
+vrf context CHARLIE
+  ip route 192.0.2.0/24 port-channel80.1 10.10.200.134
+vrf context DELTA
+vrf context ECHO
+vrf context FOX
+vrf context GOLF
+vrf context HOTEL
+vrf context INDIA
+vrf context JULIET
+  address-family ipv4 unicast
+vrf context KILO
+vrf context management
+  ip route 0.0.0.0/0 10.10.248.1
+vrf context vpc-keepalive
+vpc domain 4
+  role priority 1000
+  peer-keepalive destination 10.255.255.2 source 10.255.255.1 vrf vpc-keepalive
+  peer-gateway
+  ip arp synchronize
+port-profile type ethernet VmWare
+  switchport
+  switchport mode trunk
+  switchport trunk allowed vlan 11,14-15,192,301,550,700,2001-2003,2032-2034
+  switchport trunk allowed vlan add 2064,2128,2140,2150,2180,2240-2241
+  switchport trunk allowed vlan add 2243,2254,3100-3103,3108,3130,3236
+  switchport trunk allowed vlan add 3239
+  spanning-tree port type edge trunk
+  no shutdown
+  description
+  state enabled
+port-profile type ethernet XenApp
+  switchport
+  switchport mode trunk
+  spanning-tree port type edge trunk
+  switchport trunk allowed vlan 2064,2248,3101-3105,3340
+  no shutdown
+  description
+  state enabled
+interface mgmt0
+  vrf member management
+  ip address 10.10.248.50/24
+interface Vlan1
+interface Vlan8
+  no shutdown
+  vrf member vpc-keepalive
+  no ip redirects
+  ip address 192.168.254.1/30
+interface Vlan249
+  description
+  no shutdown
+  no ip redirects
+  ip address 10.249.255.253/16
+  hsrp 2
+    authentication text HSRPAUTH
+    preempt
+    priority 105 forwarding-threshold lower 1 upper 105
+    ip 10.249.0.1
+    track 2
+interface Vlan400
+  description
+  no shutdown
+  no ip redirects
+  ip address 10.5.129.3/24
+  hsrp 2
+    authentication text HSRPAUTH
+    preempt
+    priority 105 forwarding-threshold lower 1 upper 105
+    ip 10.5.129.1
+    track 2
+interface Vlan403
+  description
+  no shutdown
+  vrf member ALPHA
+  no ip redirects
+  ip address 10.5.131.3/25
+  hsrp 2
+    authentication text HSRPAUTH
+    preempt
+    priority 105 forwarding-threshold lower 1 upper 105
+    ip 10.5.131.1
+    track 2
+interface Vlan404
+  description
+  no shutdown
+  vrf member BRAVO
+  no ip redirects
+  ip address 10.5.131.131/25
+  hsrp 2
+    authentication text HSRPAUTH
+    preempt
+    priority 105 forwarding-threshold lower 1 upper 105
+    ip 10.5.131.129
+    track 2
+interface Vlan405
+  description
+  no shutdown
+  vrf member CHARLIE
+  no ip redirects
+  ip address 10.5.132.3/22
+  hsrp 2
+    authentication text HSRPAUTH
+    preempt
+    priority 105 forwarding-threshold lower 1 upper 105
+    ip 10.5.132.1
+    track 2
+interface Vlan550
+  description
+  no shutdown
+  vrf member DELTA
+  no ip redirects
+  ip address 10.111.50.3/24
+  hsrp 2
+    authentication text HSRPAUTH
+    preempt
+    priority 105 forwarding-threshold lower 1 upper 105
+    ip 10.111.50.1
+    track 2
+interface Vlan551
+  description
+  no shutdown
+  vrf member ECHO
+  no ip redirects
+  ip address 10.111.51.3/24
+  hsrp 2
+    authentication text HSRPAUTH
+    preempt
+    priority 105 forwarding-threshold lower 1 upper 105
+    ip 10.111.51.1
+    track 2
+interface Vlan552
+  description
+  no shutdown
+  vrf member FOX
+  no ip redirects
+  ip address 10.111.52.3/24
+  hsrp 2
+    authentication text HSRPAUTH
+    preempt
+    priority 105 forwarding-threshold lower 1 upper 105
+    ip 10.111.52.1
+    track 2
+interface Vlan600
+  description
+  no shutdown
+  vrf member GOLF
+  no ip redirects
+  ip address 10.237.128.253/24
+  hsrp 7
+    authentication text HSRPAUTH
+    preempt
+    priority 105 forwarding-threshold lower 1 upper 105
+    ip 10.237.128.1
+interface Vlan700
+  description
+  no shutdown
+  vrf member HOTEL
+  no ip redirects
+  ip address 10.237.0.253/24
+  hsrp 7
+    authentication text HSRPAUTH
+    preempt
+    priority 105 forwarding-threshold lower 1 upper 105
+    ip 10.237.0.1
+interface Vlan900
+  description
+  no shutdown
+  vrf member INDIA
+  no ip redirects
+  ip address 10.152.200.194/28
+  hsrp 0
+    preempt delay reload 180
+    priority 105 forwarding-threshold lower 1 upper 105
+    timers msec 250 msec 750
+    ip 10.152.200.193
+    track 2
+interface Vlan997
+  description
+  no shutdown
+  vrf member JULIET
+  no ip redirects
+  ip address 10.166.182.253/24
+  hsrp 0
+    authentication text HSRPAUTH
+    preempt
+    priority 105 forwarding-threshold lower 1 upper 105
+    ip 10.166.182.1
+    track 2
+interface Vlan3237
+  description
+  no shutdown
+  vrf member KILO
+  no ip redirects
+  ip address 10.223.137.3/24
+  hsrp 2
+    authentication text HSRPAUTH
+    preempt delay reload 180
+    priority 105 forwarding-threshold lower 1 upper 105
+    timers msec 250 msec 750
+    ip 10.223.137.1
+    track 2
+interface Vlan3238
+  description
+  no shutdown
+  vrf member LIMA
+  no ip redirects
+  ip address 10.223.138.3/24
+  hsrp 2
+    authentication text HSRPAUTH
+    preempt delay reload 180
+    priority 105 forwarding-threshold lower 1 upper 105
+    timers msec 250 msec 750
+    ip 10.223.138.1
+    track 2
+interface Vlan3239
+  description
+  no shutdown
+  vrf member ALPHA
+  no ip redirects
+  ip address 10.223.139.3/24
+  hsrp 2
+    authentication text HSRPAUTH
+    preempt delay reload 180
+    priority 105 forwarding-threshold lower 1 upper 105
+    timers msec 250 msec 750
+    ip 10.223.139.1
+    track 2
+interface Vlan3305
+  description
+  no shutdown
+  vrf member BRAVO
+  no ip redirects
+  ip address 10.223.55.253/24
+  hsrp 0
+    authentication text HSRPAUTH
+    preempt
+    priority 105 forwarding-threshold lower 1 upper 105
+    ip 10.223.55.1
+    track 2
+interface Vlan3308
+  description
+  no shutdown
+  vrf member CHARLIE
+  no ip redirects
+  ip address 10.223.208.253/24
+  hsrp 2
+    authentication text HSRPAUTH
+    preempt
+    priority 105 forwarding-threshold lower 1 upper 105
+    ip 10.223.208.1
+    track 2
+interface Vlan3336
+  description
+  no shutdown
+  vrf member DELTA
+  no ip redirects
+  ip address 10.223.236.3/24
+  hsrp 2
+    authentication text HSRPAUTH
+    preempt delay reload 180
+    priority 105 forwarding-threshold lower 1 upper 105
+    timers msec 250 msec 750
+    ip 10.223.236.1
+    track 2
+interface Vlan3339
+  description
+  no shutdown
+  vrf member ECHO
+  no ip redirects
+  ip address 10.223.239.3/24
+  hsrp 2
+    authentication text HSRPAUTH
+    preempt delay reload 180
+    priority 105 forwarding-threshold lower 1 upper 105
+    timers msec 250 msec 750
+    ip 10.223.239.1
+    track 2
+interface Vlan3405
+  description
+  no shutdown
+  vrf member FOX
+  no ip redirects
+  ip address 10.223.56.253/24
+  hsrp 0
+    authentication text HSRPAUTH
+    preempt
+    priority 105 forwarding-threshold lower 1 upper 105
+    ip 10.223.56.1
+    track 2
+interface Vlan3505
+  description
+  no shutdown
+  vrf member GOLF
+  no ip redirects
+  ip address 10.223.57.253/24
+  hsrp 0
+    authentication text HSRPAUTH
+    preempt
+    priority 105 forwarding-threshold lower 1 upper 105
+    ip 10.223.57.1
+    track 2
+interface port-channel50
+  description
+  switchport
+  switchport mode trunk
+  vpc 50
+interface port-channel80
+  description
+interface port-channel80.1
+  description
+  encapsulation dot1q 3051
+  ip address 10.10.200.133/30
+  no shutdown
+interface port-channel80.2
+  description
+  encapsulation dot1q 3052
+  vrf member NOVEMBER
+  ip address 10.138.200.133/30
+  no shutdown
+interface port-channel80.3
+  description
+  encapsulation dot1q 3053
+  vrf member MIKE
+  ip address 10.140.200.133/30
+  no shutdown
+interface port-channel80.4
+  description
+  encapsulation dot1q 3054
+  vrf member LIMA
+  ip address 10.142.200.133/30
+  no shutdown
+interface port-channel80.5
+  description
+  encapsulation dot1q 3055
+  vrf member KILO
+  ip address 10.144.200.133/30
+  no shutdown
+interface port-channel80.6
+  description
+  encapsulation dot1q 3056
+  vrf member JULIET
+  ip address 10.146.200.133/30
+  no shutdown
+interface port-channel80.7
+  description
+  encapsulation dot1q 3057
+  vrf member INDIA
+  ip address 10.148.200.133/30
+  no shutdown
+interface port-channel80.8
+  description
+  encapsulation dot1q 3058
+  vrf member HOTEL
+  ip address 10.150.200.133/30
+  no shutdown
+interface port-channel80.9
+  description
+  encapsulation dot1q 3059
+  vrf member GOLF
+  ip address 10.152.200.133/30
+  no shutdown
+interface port-channel101
+  description
+  switchport
+  switchport mode trunk
+  spanning-tree port type network
+  vpc peer-link
+interface port-channel104
+  description
+  switchport
+  switchport mode fex-fabric
+  fex associate 104
+  mtu 9216
+interface port-channel3291
+  description
+  shutdown
+  switchport
+  switchport access vlan 2002
+  vpc 3291
+interface port-channel3991
+  description
+  switchport
+  switchport mode trunk
+  switchport trunk allowed vlan 11
+  vpc 3991
+interface Ethernet1/48
+  description
+  vrf member vpc-keepalive
+  ip address 10.255.255.1/30
+  no shutdown
+interface Ethernet2/1
+  description
+  switchport
+  switchport mode fex-fabric
+  fex associate 112
+  mtu 9216
+  channel-group 112
+  no shutdown
+interface Ethernet2/2
+  description
+  switchport
+  switchport mode fex-fabric
+  fex associate 111
+  mtu 9216
+  channel-group 111
+  no shutdown
+interface Ethernet2/3
+  description
+  switchport
+  switchport mode fex-fabric
+  fex associate 124
+  channel-group 124
+  no shutdown
+interface Ethernet2/4
+  description
+  switchport
+  switchport mode fex-fabric
+  fex associate 117
+  mtu 9216
+  channel-group 117
+  no shutdown
+interface Ethernet2/5
+  description
+  switchport
+  switchport mode fex-fabric
+  fex associate 105
+  channel-group 105
+  no shutdown
+interface Ethernet2/6
+  description
+  switchport
+  switchport mode fex-fabric
+  fex associate 132
+  channel-group 132
+  no shutdown
+interface Ethernet2/7
+  description
+  switchport
+  switchport mode fex-fabric
+  fex associate 132
+  channel-group 132
+  no shutdown
+interface Ethernet2/8
+  description
+  switchport
+  switchport mode fex-fabric
+  fex associate 131
+  channel-group 131
+  no shutdown
+interface Ethernet2/9
+  description
+  switchport
+  switchport mode fex-fabric
+  fex associate 108
+  mtu 9216
+  channel-group 108
+  no shutdown
+interface Ethernet2/10
+  description
+  switchport
+  switchport mode fex-fabric
+  fex associate 104
+  mtu 9216
+  channel-group 104
+  no shutdown
+interface Ethernet2/11
+  description
+  switchport
+  switchport mode fex-fabric
+  fex associate 120
+  mtu 9216
+  channel-group 120
+  no shutdown
+interface Ethernet2/12
+  description
+  switchport
+  switchport mode fex-fabric
+  fex associate 121
+  mtu 9216
+  channel-group 121
+  no shutdown
+interface Ethernet2/13
+  description
+  switchport
+  switchport mode fex-fabric
+  fex associate 132
+  channel-group 132
+  no shutdown
+interface Ethernet2/14
+  description
+  switchport
+interface Ethernet2/15
+  description
+  switchport
+  switchport mode fex-fabric
+  fex associate 131
+  channel-group 131
+  no shutdown
+interface Ethernet2/16
+  description
+  switchport
+  switchport mode fex-fabric
+  fex associate 130
+  channel-group 130
+interface Ethernet2/17
+  description
+  switchport
+  switchport mode fex-fabric
+  fex associate 107
+  mtu 9216
+  channel-group 107
+  no shutdown
+interface Ethernet2/18
+  description
+  switchport
+  switchport mode fex-fabric
+  fex associate 115
+  channel-group 115
+  no shutdown
+interface Ethernet2/19
+  description
+  switchport
+  switchport mode fex-fabric
+  fex associate 130
+  channel-group 130
+  no shutdown
+interface Ethernet2/20
+  description
+  switchport
+  switchport mode fex-fabric
+  fex associate 129
+  channel-group 129
+  no shutdown
+interface Ethernet2/21
+  description
+  switchport
+  switchport mode fex-fabric
+  fex associate 129
+  channel-group 129
+  no shutdown
+interface Ethernet2/22
+  description
+  switchport
+  switchport mode fex-fabric
+  fex associate 123
+  channel-group 123
+  no shutdown
+interface Ethernet2/23
+  description
+  switchport
+  switchport mode fex-fabric
+  fex associate 124
+interface Ethernet2/24
+  description
+  switchport
+  switchport mode fex-fabric
+  fex associate 137
+  channel-group 137
+  no shutdown
+interface Ethernet2/25
+  description
+  switchport
+  switchport mode fex-fabric
+  fex associate 116
+  channel-group 116
+  no shutdown
+interface Ethernet2/26
+  description
+  switchport
+  switchport mode fex-fabric
+  fex associate 113
+  channel-group 113
+  no shutdown
+interface Ethernet2/27
+  description
+  switchport
+  switchport mode fex-fabric
+  fex associate 137
+  channel-group 137
+  no shutdown
+interface Ethernet2/28
+  description
+  switchport
+  switchport mode fex-fabric
+  fex associate 138
+  channel-group 138
+  no shutdown
+interface Ethernet2/29
+  description
+  switchport
+  switchport mode fex-fabric
+  fex associate 138
+  channel-group 138
+  no shutdown
+interface Ethernet2/30
+  description
+  switchport
+  switchport mode fex-fabric
+  fex associate 132
+  channel-group 132
+  no shutdown
+interface Ethernet2/31
+  description
+  switchport
+  switchport mode fex-fabric
+  fex associate 130
+  channel-group 130
+  no shutdown
+interface Ethernet2/32
+  description
+interface Ethernet7/3
+  description
+  switchport
+  switchport mode fex-fabric
+  fex associate 135
+  mtu 9216
+  channel-group 135
+  no shutdown
+interface Ethernet7/4
+  description
+  switchport
+  switchport mode fex-fabric
+  fex associate 135
+  mtu 9216
+  channel-group 135
+  no shutdown
+interface Ethernet7/5
+  description
+  switchport
+  switchport mode fex-fabric
+  fex associate 199
+  mtu 9216
+  channel-group 199
+  no shutdown
+interface Ethernet7/6
+  description
+  switchport
+  switchport mode fex-fabric
+  fex associate 126
+  mtu 9216
+  channel-group 126
+  no shutdown
+interface Ethernet7/7
+  description
+  switchport
+  switchport mode fex-fabric
+  fex associate 126
+  mtu 9216
+  channel-group 126
+  no shutdown
+interface Ethernet7/8
+  description
+  switchport
+  switchport mode fex-fabric
+  fex associate 140
+  mtu 9216
+  channel-group 140
+  no shutdown
+interface Ethernet7/9
+  description
+  switchport
+  switchport mode fex-fabric
+  fex associate 140
+  mtu 9216
+  channel-group 140
+  no shutdown
+interface Ethernet7/23
+  description
+  channel-group 80 mode active
+  no shutdown
+interface Ethernet7/24
+  description
+  channel-group 80 mode active
+  no shutdown
+interface loopback1
+  description
+  ip address 10.10.200.253/32
+clock timezone europe 1 0
+clock summer-time CEST 5 Sun Mar 02:00 5 Sun Oct 03:00 60
+line console
+line vty
+boot kickstart bootflash:/n7000-s1-kickstart.6.2.16.bin sup-1
+boot system bootflash:/n7000-s1-dk9.6.2.16.bin sup-1
+boot kickstart bootflash:/n7000-s1-kickstart.6.2.16.bin sup-2
+boot system bootflash:/n7000-s1-dk9.6.2.16.bin sup-2
+router bgp 65001
+  router-id loopback1
+  log-neighbor-changes
+  address-family ipv4 unicast
+    redistribute direct route-map internal
+    redistribute static route-map internal
+  neighbor 10.10.200.134 remote-as 65001
+    password 3 a667d47acc18ea6b
+    address-family ipv4 unicast
+      soft-reconfiguration inbound
+  neighbor 10.10.200.242 remote-as 65001
+    password 3 a667d47acc18ea6b
+    shutdown
+    address-family ipv4 unicast
+      soft-reconfiguration inbound
+  neighbor 10.137.200.1 remote-as 65001
+    password 3 a667d47acc18ea6b
+    address-family ipv4 unicast
+      soft-reconfiguration inbound
+  neighbor 10.138.200.242 remote-as 65001
+    shutdown
+  vrf NOVEMBER
+    address-family ipv4 unicast
+      redistribute direct route-map internal
+      redistribute static route-map internal
+    neighbor 10.138.200.134 remote-as 65001
+      password 3 a667d47acc18ea6b
+      address-family ipv4 unicast
+        soft-reconfiguration inbound
+    neighbor 10.138.200.242 remote-as 65001
+      password 3 a667d47acc18ea6b
+      shutdown
+      address-family ipv4 unicast
+        soft-reconfiguration inbound
+    neighbor 10.138.201.130 remote-as 65001
+      bfd
+      password 3 a667d47acc18ea6b
+      address-family ipv4 unicast
+        soft-reconfiguration inbound
+    neighbor 10.139.200.1 remote-as 65001
+      password 3 a667d47acc18ea6b
+      address-family ipv4 unicast
+        soft-reconfiguration inbound
+  vrf MIKE
+    address-family ipv4 unicast
+      redistribute direct route-map internal
+      redistribute static route-map internal
+    neighbor 10.140.200.134 remote-as 65001
+      password 3 a667d47acc18ea6b
+      address-family ipv4 unicast
+        soft-reconfiguration inbound
+    neighbor 10.140.200.242 remote-as 65001
+      password 3 a667d47acc18ea6b
+      shutdown
+      address-family ipv4 unicast
+        soft-reconfiguration inbound
+    neighbor 10.141.200.1 remote-as 65001
+      password 3 a667d47acc18ea6b
+      address-family ipv4 unicast
+        soft-reconfiguration inbound
+  vrf LIMA
+    address-family ipv4 unicast
+      redistribute direct route-map internal
+      redistribute static route-map internal
+    neighbor 10.142.200.134 remote-as 65001
+      password 3 a667d47acc18ea6b
+      address-family ipv4 unicast
+        soft-reconfiguration inbound
+    neighbor 10.142.200.242 remote-as 65001
+      password 3 a667d47acc18ea6b
+      shutdown
+      address-family ipv4 unicast
+        soft-reconfiguration inbound
+    neighbor 10.143.200.1 remote-as 65001
+      password 3 a667d47acc18ea6b
+      address-family ipv4 unicast
+        soft-reconfiguration inbound
+  vrf KILO
+    address-family ipv4 unicast
+      redistribute direct route-map internal
+      redistribute static route-map internal
+    neighbor 10.144.200.134 remote-as 65001
+      password 3 a667d47acc18ea6b
+      address-family ipv4 unicast
+        soft-reconfiguration inbound
+    neighbor 10.144.200.242 remote-as 65001
+      password 3 a667d47acc18ea6b
+      shutdown
+      address-family ipv4 unicast
+        soft-reconfiguration inbound
+    neighbor 10.145.200.1 remote-as 65001
+      password 3 a667d47acc18ea6b
+      address-family ipv4 unicast
+        soft-reconfiguration inbound
+  vrf JULIET
+    address-family ipv4 unicast
+      redistribute direct route-map internal
+      redistribute static route-map internal
+    neighbor 10.146.200.134 remote-as 65001
+      password 3 a667d47acc18ea6b
+      address-family ipv4 unicast
+        soft-reconfiguration inbound
+    neighbor 10.146.200.242 remote-as 65001
+      password 3 a667d47acc18ea6b
+      shutdown
+      address-family ipv4 unicast
+        soft-reconfiguration inbound
+    neighbor 10.147.200.1 remote-as 65001
+      password 3 a667d47acc18ea6b
+      address-family ipv4 unicast
+        soft-reconfiguration inbound
+  vrf INDIA
+    address-family ipv4 unicast
+      redistribute direct route-map internal
+      redistribute static route-map internal
+    neighbor 10.148.200.134 remote-as 65001
+      password 3 a667d47acc18ea6b
+      address-family ipv4 unicast
+        soft-reconfiguration inbound
+    neighbor 10.148.200.242 remote-as 65001
+      password 3 a667d47acc18ea6b
+      shutdown
+      address-family ipv4 unicast
+        soft-reconfiguration inbound
+    neighbor 10.149.200.1 remote-as 65001
+      password 3 a667d47acc18ea6b
+      address-family ipv4 unicast
+        soft-reconfiguration inbound
+  vrf HOTEL
+    address-family ipv4 unicast
+      redistribute direct route-map internal
+      redistribute static route-map internal
+    neighbor 10.150.200.134 remote-as 65001
+      password 3 a667d47acc18ea6b
+      address-family ipv4 unicast
+        soft-reconfiguration inbound
+    neighbor 10.150.200.242 remote-as 65001
+      password 3 a667d47acc18ea6b
+      shutdown
+      address-family ipv4 unicast
+        soft-reconfiguration inbound
+    neighbor 10.151.200.1 remote-as 65001
+      password 3 a667d47acc18ea6b
+      address-family ipv4 unicast
+        soft-reconfiguration inbound
+  vrf GOLF
+    address-family ipv4 unicast
+      redistribute direct route-map internal
+      redistribute static route-map internal
+    neighbor 10.152.200.134 remote-as 65001
+      password 3 a667d47acc18ea6b
+      address-family ipv4 unicast
+        soft-reconfiguration inbound
+    neighbor 10.152.200.242 remote-as 65001
+      password 3 a667d47acc18ea6b
+      shutdown
+      address-family ipv4 unicast
+        next-hop-self
+        soft-reconfiguration inbound
+    neighbor 10.152.201.130 remote-as 65301
+      bfd
+      password 3 a667d47acc18ea6b
+      address-family ipv4 unicast
+        soft-reconfiguration inbound
+    neighbor 10.152.201.134 remote-as 65301
+    neighbor 10.153.200.1 remote-as 65001
+      password 3 a667d47acc18ea6b
+      address-family ipv4 unicast
+        soft-reconfiguration inbound
+monitor session 1
+  source interface Ethernet3/30 both
+  destination interface Ethernet3/2
+  no shut
+monitor session 45 type erspan-source
+  description
+  erspan-id 45
+  vrf default
+  destination ip 10.136.21.253
+  source interface Ethernet111/1/2 both
+  source interface Ethernet111/1/3 both
+  no shut
+monitor erspan origin ip-address 10.10.200.253 global
+no system auto-upgrade epld
+logging server 10.10.10.67
+logging server 10.10.10.68
+logging source-interface loopback 1

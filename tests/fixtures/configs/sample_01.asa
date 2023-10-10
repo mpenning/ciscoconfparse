@@ -1,0 +1,423 @@
+: Saved
+: Written by mpenning at 05:37:43.184 CDT Sun Jun 29 2015
+!
+ASA Version 9.0(3)
+!
+command-alias exec slog show log | i Deny|denied
+command-alias exec sacl sh access-list INSIDE_out | e hitcnt=0 |remark|elements
+hostname fw
+domain-name pennington.net
+enable password 2KFQnbNIdI.2KYOU encrypted
+xlate per-session deny tcp any4 any4
+xlate per-session deny tcp any4 any6
+xlate per-session deny tcp any6 any4
+xlate per-session deny tcp any6 any6
+xlate per-session deny udp any4 any4 eq domain
+xlate per-session deny udp any4 any6 eq domain
+xlate per-session deny udp any6 any4 eq domain
+xlate per-session deny udp any6 any6 eq domain
+passwd 2KFQnbNIdI.2KYOU encrypted
+names
+name 192.0.2.13 Machine01 description machine01
+name 192.0.2.17 Machine02_Windows
+name 10.0.0.6 Machine03
+name 74.125.130.125 GTalk01 description Google talk server
+name 74.125.134.125 GTalk02 description Google talk server
+name 74.125.139.125 GTalk03 description Google Talk server
+name 74.125.142.125 GTalk04 description Google Talk server
+name 74.125.192.125 GTalk05 description Google Talk server
+name 74.125.140.125 GTalk06 description Google Talk server
+name 74.125.137.125 GTalk07
+name 74.125.138.125 GTalk08
+name 74.125.141.125 GTalk09
+name 74.125.136.125 GTalk10
+name 74.125.135.125 GTalk11
+name 108.160.160.0 AS19679_Dropbox__108-160-160-0__20
+name 199.47.216.0 AS19679_Dropbox__199.47.216.0__22
+name 173.194.64.109 GmailSMTP01
+name 173.194.64.108 GmailSMTP02
+name 128.223.51.103 route-views.oregon-ix.net description Route-Views route server
+ip local pool SSL_VPN_ADDRS 10.1.1.240-10.1.1.241 mask 255.255.255.0
+!
+interface Ethernet0/0
+ description Internet ISP
+ switchport access vlan 100
+!
+interface Ethernet0/1
+ switchport access vlan 200
+!
+interface Ethernet0/2
+ switchport access vlan 200
+ shutdown
+!
+interface Ethernet0/3
+ switchport access vlan 200
+!
+interface Ethernet0/4
+ switchport access vlan 200
+!
+interface Ethernet0/5
+ switchport access vlan 200
+!
+interface Ethernet0/6
+ switchport access vlan 200
+!
+interface Ethernet0/7
+ shutdown
+!
+interface Vlan1
+ no nameif
+ no security-level
+ no ip address
+!
+interface Vlan100
+ mac-address 0030.dead.beef
+ nameif OUTSIDE
+ security-level 0
+ ip address dhcp setroute
+!
+interface Vlan200
+ nameif INSIDE
+ security-level 100
+ ip address 192.0.2.1 255.255.255.0
+!
+banner motd
+banner motd Test banner for $(hostname)
+banner motd
+banner motd *******************************
+boot system disk0:/asa903-k8.bin
+ftp mode passive
+clock timezone CST -6
+clock summer-time CDT recurring
+dns domain-lookup INSIDE
+dns server-group DefaultDNS
+ name-server Machine01
+ domain-name pennington.net
+object network GTalk01
+ host 74.125.130.125
+ description Created during name migration
+object network GTalk02
+ host 74.125.134.125
+ description Created during name migration
+object network GTalk03
+ host 74.125.139.125
+ description Created during name migration
+object network GTalk04
+ host 74.125.142.125
+ description Created during name migration
+object network GTalk05
+ host 74.125.192.125
+ description Created during name migration
+object network GTalk06
+ host 74.125.140.125
+ description Created during name migration
+object network GTalk07
+ host 74.125.137.125
+ description Created during name migration
+object network GTalk08
+ host 74.125.138.125
+ description Created during name migration
+object network GTalk09
+ host 74.125.141.125
+ description Created during name migration
+object network GTalk10
+ host 74.125.136.125
+ description Created during name migration
+object network GTalk11
+ host 74.125.135.125
+ description Created during name migration
+object network AS19679_Dropbox__108-160-160-0__20
+ subnet 108.160.160.0 255.255.240.0
+ description Created during name migration
+object network AS19679_Dropbox__199.47.216.0__22
+ subnet 199.47.216.0 255.255.252.0
+ description Created during name migration
+object network Machine01
+ host 192.0.2.5
+ description Created during name migration
+object network obj_any
+ subnet 0.0.0.0 0.0.0.0
+object network Machine02_Windows
+ host 192.0.2.17
+ description Created during name migration
+object-group network GoogleTalk
+ network-object object GTalk01
+ network-object object GTalk02
+ network-object object GTalk03
+ network-object object GTalk04
+ network-object object GTalk05
+ network-object object GTalk06
+ network-object object GTalk07
+ network-object object GTalk08
+ network-object object GTalk09
+ network-object object GTalk10
+ network-object object GTalk11
+object-group service GoogleTalkPorts
+ service-object tcp destination eq 5222
+ service-object tcp destination eq https
+ service-object udp destination range 19302 19309
+object-group network Inside
+ network-object 192.0.2.0 255.255.255.0
+ network-object 192.0.22.0 255.255.255.0
+ network-object 192.0.23.0 255.255.255.0
+object-group network DROPBOX_AS19679
+ network-object object AS19679_Dropbox__108-160-160-0__20
+ network-object object AS19679_Dropbox__199.47.216.0__22
+object-group network GOOGLE_addrs
+ description dig -t TXT _netblocks.google.com 8.8.8.8
+ network-object 216.239.32.0 255.255.224.0
+ network-object 64.233.160.0 255.255.224.0
+ network-object 66.249.80.0 255.255.240.0
+ network-object 72.14.192.0 255.255.192.0
+ network-object 209.85.128.0 255.255.128.0
+ network-object 66.102.0.0 255.255.240.0
+ network-object 74.125.0.0 255.255.0.0
+ network-object 64.18.0.0 255.255.240.0
+ network-object 207.126.144.0 255.255.240.0
+ network-object 173.194.0.0 255.255.0.0
+object-group network SSH_addrs
+ network-object 192.168.1.0 255.255.255.0
+object-group network ANY_addrs
+ network-object 0.0.0.0 0.0.0.0
+object-group network INSIDE_addrs
+ network-object 192.0.2.0 255.255.255.0
+ network-object 10.0.0.0 255.0.0.0
+object-group service GOOGLE_svc
+ description Google's push service for Android
+ service-object tcp destination eq www
+ service-object tcp destination eq https
+ service-object tcp destination eq 5228
+ service-object tcp destination eq 5222
+ service-object tcp destination eq 587
+object-group service TELNET_svc
+ service-object tcp destination eq telnet
+object-group service WHOIS_svc
+ service-object tcp destination eq whois
+object-group service SSH_svc
+ service-object tcp destination eq ssh
+object-group service WEB_svc
+ description Standard web services - http, https, ftp
+ service-object tcp destination eq ftp
+ service-object tcp destination eq www
+ service-object tcp destination eq https
+ service-object icmp
+object-group service DNS_svc
+ service-object udp destination eq domain
+ service-object tcp destination eq domain
+object-group network MACHINE01_addrs
+ network-object object Machine01
+object-group service ANDROID_svc
+ description Google's push service for Android
+ service-object tcp destination eq 5228
+object-group service GMAILSMTP_svc
+ service-object tcp destination eq 2525
+object-group service NTP_svc
+ service-object udp destination eq ntp
+object-group service SKYPE_svc
+ service-object udp destination eq 5555
+object-group service XBOX_svc
+ service-object tcp destination eq domain
+ service-object udp destination eq domain
+ service-object udp destination eq 88
+ service-object tcp destination eq 3074
+ service-object udp destination eq 3074
+object-group network ANY
+object-group service NaverLine_svc
+ service-object udp destination eq 11000
+ service-object udp destination range 9401 9405
+object-group network NaverLine_addrs
+ network-object 174.35.127.0 255.255.255.0
+object-group network Facebook_addrs
+ network-object 66.220.144.0 255.255.240.0
+ network-object 69.63.176.0 255.255.248.0
+ network-object 69.63.184.0 255.255.248.0
+ network-object 69.171.224.0 255.255.240.0
+ network-object 69.171.239.0 255.255.255.0
+ network-object 69.171.240.0 255.255.240.0
+ network-object 69.171.253.0 255.255.255.0
+ network-object 69.171.255.0 255.255.255.0
+ network-object 74.119.76.0 255.255.252.0
+ network-object 103.4.96.0 255.255.252.0
+ network-object 173.252.64.0 255.255.192.0
+ network-object 204.15.20.0 255.255.252.0
+ network-object 31.13.24.0 255.255.248.0
+ network-object 31.13.64.0 255.255.192.0
+ network-object 31.13.96.0 255.255.224.0
+object-group service IP_SLA_PathTrace_svc
+ service-object udp destination range 33400 33499
+object-group service FTP_svc
+ service-object tcp destination eq ftp
+object-group service TeamViewerPorts
+ service-object tcp destination eq 5938
+object-group service SSLVPN_svc
+ service-object udp destination eq 443
+object-group service TEST_PORTS tcp
+ port-object eq domain
+ port-object eq smtp
+access-list SPLIT_TUNNEL_NETS remark [[ destinations available via the VPN ]]
+access-list SPLIT_TUNNEL_NETS standard permit 192.0.2.0 255.255.255.0
+access-list NO_SSLVPN_NAT remark [[ prevent inadvertent nat of sslvpn traffic ]]
+access-list NO_SSLVPN_NAT extended permit ip 192.0.2.0 255.255.255.0 192.0.2.0 255.255.255.0
+access-list INSIDE_in extended deny object-group SKYPE_svc object-group INSIDE_addrs object-group ANY_addrs log disable
+access-list INSIDE_in extended permit object-group GOOGLE_svc object-group INSIDE_addrs object-group GOOGLE_addrs log
+access-list INSIDE_in extended permit object-group ANDROID_svc object-group INSIDE_addrs object-group GOOGLE_addrs log
+access-list INSIDE_in extended permit object-group IP_SLA_PathTrace_svc any host 4.2.2.2 log
+access-list INSIDE_in extended permit object-group DNS_svc object-group INSIDE_addrs object-group ANY_addrs log
+access-list INSIDE_in extended permit object-group NTP_svc object-group INSIDE_addrs object-group ANY_addrs log
+access-list INSIDE_in extended permit object-group TELNET_svc object-group INSIDE_addrs host 128.223.51.103 log
+access-list INSIDE_in extended permit object-group FTP_svc object-group INSIDE_addrs object-group ANY_addrs log
+access-list INSIDE_in extended permit object-group WEB_svc object-group INSIDE_addrs object-group ANY_addrs log
+access-list INSIDE_in extended permit object-group SSH_svc object-group INSIDE_addrs object-group SSH_addrs log
+access-list INSIDE_in extended permit object-group GMAILSMTP_svc object-group TSUNAMI_addrs object-group ANY_addrs log
+access-list INSIDE_in extended permit object-group WHOIS_svc object-group TSUNAMI_addrs object-group ANY_addrs log
+access-list INSIDE_in extended deny ip any4 any4 log
+access-list ANY extended permit ip object-group Inside any4
+access-list ANY extended permit ip any4 object-group Inside
+access-list VOIP extended permit object-group GoogleTalkPorts object-group Inside object-group GoogleTalk
+access-list VOIP extended permit object-group GoogleTalkPorts object-group GoogleTalk object-group Inside
+access-list MAINTENANCE extended deny ip any4 any4 log
+access-list OUTSIDE_in extended deny ip host 4.2.2.2 any4 log
+access-list OUTSIDE_in extended permit icmp any4 0.0.0.0 0.0.0.0 unreachable log interval 1
+access-list OUTSIDE_in extended permit icmp any4 0.0.0.0 0.0.0.0 time-exceeded log interval 1
+access-list OUTSIDE_in extended deny ip any4 any4 log
+pager lines 23
+logging enable
+logging timestamp
+logging buffer-size 1048576
+logging buffered informational
+logging trap informational
+logging asdm informational
+logging facility 22
+logging host INSIDE Machine01
+logging class sys buffered informational
+no logging message 302021
+no logging message 302020
+mtu OUTSIDE 1500
+mtu INSIDE 1500
+ip verify reverse-path interface INSIDE
+icmp unreachable rate-limit 1 burst-size 1
+asdm image disk0:/asdm-645.bin
+no asdm history enable
+arp timeout 14400
+no arp permit-nonconnected
+!
+object network obj_any
+ nat (INSIDE,OUTSIDE) dynamic interface
+access-group OUTSIDE_in in interface OUTSIDE
+access-group INSIDE_in in interface INSIDE
+route INSIDE 10.0.0.0 255.0.0.0 192.0.2.2 1
+timeout xlate 3:00:00
+timeout pat-xlate 0:00:30
+timeout conn 1:00:00 half-closed 0:59:00 udp 0:02:00 icmp 0:00:02
+timeout sunrpc 0:10:00 h323 0:05:00 h225 1:00:00 mgcp 0:05:00 mgcp-pat 0:05:00
+timeout sip 0:30:00 sip_media 0:02:00 sip-invite 0:03:00 sip-disconnect 0:02:00
+timeout sip-provisional-media 0:02:00 uauth 0:05:00 absolute
+timeout tcp-proxy-reassembly 0:01:00
+timeout floating-conn 0:00:00
+dynamic-access-policy-record DfltAccessPolicy
+user-identity default-domain LOCAL
+aaa authentication ssh console LOCAL
+aaa authentication enable console LOCAL
+aaa authentication http console LOCAL
+aaa authorization command LOCAL
+aaa local authentication attempts max-fail 16
+filter java 1-65535 192.0.2.0 255.255.255.0 0.0.0.0 0.0.0.0
+http server enable
+http 192.0.2.0 255.255.255.0 INSIDE
+snmp-server host INSIDE Machine01 poll community public
+snmp-server location ServerRoom
+snmp-server contact mike@pennington.net
+snmp-server community public
+snmp-server enable traps snmp authentication linkup linkdown coldstart
+crypto ipsec security-association pmtu-aging infinite
+crypto ca trustpoint LOCAL_CERT_fw
+ enrollment self
+ fqdn fw.pennington.net
+ subject-name CN=fw.pennington.net
+ crl configure
+crypto ca trustpool policy
+telnet timeout 5
+ssh scopy enable
+ssh 192.0.2.0 255.255.255.0 INSIDE
+ssh 10.0.0.0 255.0.0.0 INSIDE
+ssh timeout 60
+ssh version 2
+console timeout 5
+no vpn-addr-assign aaa
+no vpn-addr-assign dhcp
+
+dhcpd dns 68.94.156.1 Machine01
+dhcpd lease 604800
+dhcpd domain pennington.net
+dhcpd auto_config OUTSIDE
+!
+threat-detection basic-threat
+threat-detection scanning-threat shun duration 30
+threat-detection statistics host
+threat-detection statistics port
+threat-detection statistics protocol
+threat-detection statistics access-list
+no threat-detection statistics tcp-intercept
+ntp server 17.151.16.20
+ntp server 17.151.16.21
+ntp server 17.151.16.22
+ntp server 17.151.16.23
+group-policy SSL_VPN_Policy01 internal
+group-policy SSL_VPN_Policy01 attributes
+ dns-server value 192.0.2.13
+ vpn-idle-timeout none
+ vpn-filter none
+ vpn-tunnel-protocol ssl-client ssl-clientless
+ split-tunnel-policy tunnelspecified
+ split-tunnel-network-list value SPLIT_TUNNEL_NETS
+ default-domain value pennington.net
+ webvpn
+  anyconnect keep-installer installed
+  anyconnect ssl rekey time 30
+  anyconnect ssl rekey method ssl
+  anyconnect ask none default anyconnect
+username mpenning password dXRTaA5wrZ3OL8gz encrypted privilege 15
+tunnel-group DefaultWEBVPNGroup general-attributes
+ address-pool SSL_VPN_ADDRS
+ default-group-policy SSL_VPN_Policy01
+!
+!
+policy-map type inspect dns preset_dns_map
+ parameters
+  message-length maximum client auto
+  message-length maximum 512
+policy-map global_policy
+ class inspection_default
+  inspect dns preset_dns_map
+  inspect h323 h225
+  inspect h323 ras
+  inspect rsh
+  inspect rtsp
+  inspect esmtp
+  inspect sqlnet
+  inspect skinny
+  inspect sunrpc
+  inspect xdmcp
+  inspect sip
+  inspect netbios
+  inspect tftp
+  inspect ip-options
+  inspect icmp
+  inspect http
+!
+service-policy global_policy global
+prompt hostname context
+no call-home reporting anonymous
+call-home
+ profile CiscoTAC-1
+  no active
+  destination address http https://tools.cisco.com/its/service/oddce/services/DDCEService
+  destination address email callhome@cisco.com
+  destination transport-method http
+  subscribe-to-alert-group diagnostic
+  subscribe-to-alert-group environment
+  subscribe-to-alert-group inventory periodic monthly
+  subscribe-to-alert-group configuration periodic monthly
+  subscribe-to-alert-group telemetry periodic daily
+Cryptochecksum:571d01b7b08342e35db838e9acec00f6
+: end

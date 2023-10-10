@@ -1,0 +1,174 @@
+!
+version 12.2
+no service pad
+service timestamps debug datetime msec
+service timestamps log datetime msec localtime show-timezone
+service password-encryption
+!
+hostname Foo
+!
+logging queue-limit 100
+logging buffered 8192 debugging
+enable secret 5 $1$U44$.4y79sCiRQLOSrt5S.
+!
+username admin privilege 15 password 7 013D5513420E261D
+clock timezone CST -6
+clock summer-time CDT recurring 2 Sun Mar 2:00 1 Sun Nov 2:00
+ip subnet-zero
+ip domain name foo.com
+ip name-server 10.32.8.151
+ip name-server 10.32.8.152
+ip name-server 172.25.128.128
+!
+aaa new-model
+!
+!
+aaa group server radius rad_eap
+ server 172.28.0.194 auth-port 1812 acct-port 1813
+ server 172.28.16.194 auth-port 1812 acct-port 1813
+!
+aaa group server radius rad_mac
+!
+aaa group server radius rad_acct
+!
+aaa group server radius rad_admin
+ server 172.28.0.194 auth-port 1812 acct-port 1813
+ server 172.28.16.194 auth-port 1812 acct-port 1813
+!
+aaa group server tacacs+ tac_admin
+!
+aaa group server radius rad_pmip
+!
+aaa group server radius dummy
+!
+aaa group server radius rad_eap1
+ server 172.28.16.194 auth-port 1812 acct-port 1813
+ server 172.28.0.194 auth-port 1812 acct-port 1813
+!
+aaa group server radius rad_eap2
+ server 10.32.200.26 auth-port 1645 acct-port 1646
+!
+aaa group server radius Clients
+ server 172.28.0.194 auth-port 1812 acct-port 1813
+ server 172.28.16.194 auth-port 1812 acct-port 1813
+!
+aaa group server radius WLSE
+ server 10.16.6.79 auth-port 1812 acct-port 1813
+!
+aaa authentication login default local group tac_admin group rad_admin
+aaa authentication login eap_methods group rad_eap
+aaa authentication login mac_methods local
+aaa authentication login method_WLSE group WLSE
+aaa authentication login eap_methods1 group rad_eap1
+aaa authentication login eap_methods2 group rad_eap2
+aaa authentication login method_Clients group Clients
+aaa authorization exec default local group tac_admin group rad_admin
+aaa authorization ipmobile default group rad_pmip
+aaa accounting network acct_methods start-stop group rad_acct
+aaa session-id common
+dot11 activity-timeout unknown default 300
+dot11 network-map
+dot11 arp-cache optional
+!
+!
+bridge irb
+!
+!
+interface Dot11Radio0
+ no ip address
+ no ip route-cache
+ !
+ encryption mode wep mandatory
+ !
+ broadcast-key change 1800
+ !
+ !
+ ssid RADIOSHOUT
+    authentication open eap eap_methods1
+ !
+ ssid RADIOSCREAM
+    authentication network-eap eap_methods2
+ !
+ speed 1.0 2.0 5.5 6.0 9.0 basic-11.0 12.0 18.0 24.0 36.0 48.0 54.0
+ rts threshold 2312
+ power local cck 100
+ power local ofdm 30
+ channel 2437
+ station-role root
+ no cdp enable
+ dot1x reauth-period server
+ bridge-group 1
+ bridge-group 1 subscriber-loop-control
+ bridge-group 1 block-unknown-source
+ no bridge-group 1 source-learning
+ no bridge-group 1 unicast-flooding
+ bridge-group 1 spanning-disabled
+!
+interface FastEthernet0
+ no ip address
+ no ip route-cache
+ duplex auto
+ speed auto
+ ntp broadcast client
+ bridge-group 1
+ no bridge-group 1 source-learning
+ bridge-group 1 spanning-disabled
+!
+interface BVI1
+ ip address 10.32.200.12 255.255.255.0
+ no ip route-cache
+!
+ip default-gateway 10.32.200.254
+ip http server
+ip http help-path http://www.cisco.com/warp/public/779/smbiz/prodconfig/help/eag/122-15.JA/1100
+ip http authentication aaa
+ip radius source-interface BVI1
+logging history size 500
+logging history informational
+logging facility local4
+logging 10.32.3.48
+access-list 111 permit tcp any any neq telnet
+snmp-server view iso iso included
+snmp-server community public1 view iso RO
+snmp-server community private1 view iso RW
+snmp-server community public2 RO
+snmp-server community private2 RW
+snmp-server community public3 RO
+snmp-server community private3 RW
+snmp-server chassis-id Foo
+snmp-server enable traps snmp authentication linkdown linkup coldstart warmstart
+snmp-server enable traps tty
+snmp-server enable traps authenticate-fail
+snmp-server enable traps config
+snmp-server enable traps syslog
+snmp-server enable traps aaa_server
+snmp-server enable traps switch-over
+snmp-server enable traps rogue-ap
+snmp-server host 172.28.26.15 public1
+snmp-server host 172.28.26.15 public2
+snmp-server host 10.32.3.48 public3
+radius-server attribute 32 include-in-access-req format %h
+radius-server host 172.28.0.194 auth-port 1812 acct-port 1813 key 7 12115605111E005739
+radius-server host 172.28.16.194 auth-port 1812 acct-port 1813 key 7 060E5C334F5B054A16
+radius-server host 10.32.200.26 auth-port 1645 acct-port 1646 key 7 020E5749081303725F
+radius-server deadtime 15
+radius-server authorization permit missing Service-Type
+radius-server vsa send accounting
+bridge 1 route ip
+!
+wlccp authentication-server infrastructure method_WLSE
+wlccp authentication-server client eap method_Clients
+wlccp authentication-server client leap method_Clients
+wlccp authentication-server client any method_Clients
+!
+!
+line con 0
+ access-class 111 in
+line vty 0 4
+ access-class 111 in
+line vty 5 15
+ access-class 111 in
+!
+ntp clock-period 2860626
+ntp server 10.32.255.251
+end

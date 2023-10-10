@@ -1,0 +1,476 @@
+!! Source https://github.com/muir/Cisco-Reconfig/blob/master/t/datadir/bannertest
+!
+snmp-server traps fabric plane
+snmp-server traps fabric bundle link
+snmp-server traps fabric bundle state
+! VARIOUS GLOBAL COMMANDS
+hostname FOOS-DKS
+line template SSH
+ login authentication VTY
+ session-timeout 30
+ transport input ssh
+!
+line template SSH-TELNET
+ login authentication VTY
+ access-class ingress 4
+ session-timeout 30
+ transport input ssh telnet
+!
+clock timezone AFRICA 2
+banner login #
+
+_____________________________________________________________________
+
+                      -= FROG PARK SERVICES =-
+
+
+               ||        ||
+               ||        ||
+              ||||      ||||
+          ..:||||||:..:||||||:..
+
+         C I S C O  S Y S T E M S
+
+
+                   ! UNAUTHORISED ACCESS PROHIBITED !
+
+     *************************************************************
+     * This system is the property of Frog Park Services.    *
+     * Disconnect IMMEDIATELY as you are not an authorized user! *
+     *************************************************************
+______________________________________________________________________
+#
+! LOGGING
+logging trap debugging
+logging console critical
+logging buffered 32786
+logging buffered debugging
+logging snmp-authfail
+logging 100.2.3.4
+logging 100.2.3.5
+logging 100.2.3.6
+logging 100.2.3.7
+logging source-interface Loopback0
+service timestamps log datetime localtime msec show-timezone
+! SERVICE
+service timestamps debug datetime localtime msec show-timezone
+telnet vrf default ipv4 server max-servers 4
+domain name frogpark.net
+domain lookup disable
+tacacs-server host 100.2.3.8 port 149
+!
+tacacs-server key 7 012F0DEADBEEFC00D15003A4
+tacacs source-interface Loopback0
+aaa accounting exec default start-stop group tacacs+
+aaa accounting system default start-stop group tacacs+
+aaa accounting network default start-stop group tacacs+
+aaa accounting commands default start-stop group tacacs+
+aaa authorization exec VTY group tacacs+ none
+aaa authorization commands VTY group tacacs+ none
+aaa authentication login VTY group tacacs+ local
+aaa authentication login NO_TACACS local
+cdp
+tcp path-mtu-discovery
+tcp synwait-time 10
+vty-pool default 0 15 line-template SSH-TELNET
+telnet ipv4 client source-interface Loopback0
+snmp-server host 100.2.3.10 traps version 2c @th@k-ro
+snmp-server host 100.2.3.11 traps version 2c @th@k-rw
+snmp-server view notable at excluded
+snmp-server view notable ip.21 excluded
+snmp-server view notable ip.22 excluded
+snmp-server view notable internet included
+snmp-server community frogRO RO 3
+snmp-server community frogRW RW 3
+snmp-server traps ntp
+snmp-server traps snmp
+snmp-server traps flash removal
+snmp-server traps flash insertion
+snmp-server traps sonet
+snmp-server traps config
+snmp-server traps entity
+snmp-server traps syslog
+snmp-server traps copy-complete
+snmp-server contact N/A
+snmp-server location TheFrogPark
+snmp-server trap-source Loopback0
+ipv4 conflict-policy static
+ipv6 conflict-policy static
+ftp client source-interface Loopback0
+tftp client source-interface Loopback0
+ntp
+ server 100.2.3.12
+ source Loopback0
+ access-group peer 4
+ update-calendar
+!
+ipv4 access-list 3
+ 10 permit ipv4 100.2.3.0 0.0.0.31 any
+ 20 permit ipv4 110.2.3.0 0.0.0.31 any
+ 30 permit ipv4 120.2.3.0 0.0.0.255 any
+ 40 permit ipv4 130.2.3.0 0.0.0.3 any
+ 50 permit ipv4 140.2.3.0 0.0.0.7 any
+!
+ipv4 access-list 4
+ 10 permit ipv4 100.2.3.0 0.0.0.31 any
+ 20 permit ipv4 110.2.3.0 0.0.0.31 any
+!
+ipv4 access-list ALL-LOOPBACKS
+ 10 permit ipv4 120.2.3.0 0.0.1.255 any
+!
+interface Loopback0
+ description Frog-Park-2001
+ ipv4 address 100.2.3.20 255.255.255.255
+!
+interface MgmtEth0/RP0/CPU0/0
+ description Frog-Park-2002
+ ipv4 address 100.2.3.30 255.255.255.254
+!
+interface MgmtEth0/RP1/CPU0/0
+ shutdown
+!
+interface GigabitEthernet0/2/0/0
+ shutdown
+!
+interface GigabitEthernet0/2/0/1
+ cdp
+ mtu 9014
+ negotiation auto
+ carrier-delay up 10 down 0
+ shutdown
+ dampening
+!
+interface GigabitEthernet0/2/0/2
+ shutdown
+!
+interface GigabitEthernet0/2/0/3
+ shutdown
+!
+interface GigabitEthernet0/2/0/4
+ shutdown
+!
+interface GigabitEthernet0/2/0/5
+ shutdown
+!
+interface GigabitEthernet0/2/0/6
+ shutdown
+!
+interface GigabitEthernet0/2/0/7
+ shutdown
+!
+interface GigabitEthernet0/2/0/8
+ shutdown
+!
+interface GigabitEthernet0/2/0/9
+ shutdown
+!
+interface TenGigE0/0/0/0
+ description Frog-Park-2004
+ cdp
+ mtu 9014
+ ipv4 address 100.2.3.40 255.255.255.254
+ carrier-delay up 10 down 0
+ dampening
+!
+interface TenGigE0/0/0/1
+ description Frog-Park-2005
+ cdp
+ mtu 9014
+ ipv4 address 100.2.3.60 255.255.255.254
+ carrier-delay up 10 down 0
+ dampening
+!
+interface TenGigE0/0/0/2
+ description Frog-Park-2006
+ cdp
+ mtu 9014
+ ipv4 address 100.2.3.70 255.255.255.254
+ carrier-delay up 10 down 0
+ dampening
+!
+interface TenGigE0/0/0/3
+ description Frog-Park-2007
+ cdp
+ mtu 9014
+ ipv4 address 100.2.3.80 255.255.255.254
+ carrier-delay up 10 down 0
+ dampening
+!
+interface TenGigE0/1/0/0
+ description Frog-Park-2008
+ cdp
+ mtu 9014
+ ipv4 address 100.2.3.90 255.255.255.254
+ carrier-delay up 10 down 0
+ dampening
+!
+interface TenGigE0/1/0/1
+ shutdown
+!
+interface TenGigE0/1/0/2
+ description Frog-Park-2009
+ cdp
+ mtu 9014
+ ipv4 address 100.2.3.100 255.255.255.254
+ carrier-delay up 10 down 0
+ dampening
+!
+interface TenGigE0/1/0/3
+ description Frog-Park-2010
+ cdp
+ mtu 9014
+ ipv4 address 100.2.3.110 255.255.255.254
+ carrier-delay up 10 down 0
+ dampening
+!
+interface TenGigE0/1/0/4
+ shutdown
+!
+interface TenGigE0/1/0/5
+ description Frog-Park-2011
+ cdp
+ mtu 9014
+ ipv4 address 100.2.3.120 255.255.255.254
+ carrier-delay up 10 down 0
+ dampening
+!
+interface TenGigE0/1/0/6
+ shutdown
+!
+interface TenGigE0/1/0/7
+ description Frog-Park-2012
+ cdp
+ mtu 9014
+ ipv4 address 100.2.3.130 255.255.255.254
+ carrier-delay up 10 down 0
+ dampening
+!
+controller dwdm0/0/0/0
+ wavelength 9
+!
+controller dwdm0/0/0/1
+ wavelength 17
+!
+controller dwdm0/0/0/2
+ wavelength 17
+!
+controller dwdm0/0/0/3
+ wavelength 11
+!
+router isis FrogPark
+ set-overload-bit on-startup 180
+ is-type level-2-only
+ net 49.0001.1000.0101.3003.00
+ nsf cisco
+ log adjacency changes
+ lsp-gen-interval maximum-wait 5000 initial-wait 1 secondary-wait 50
+ lsp-refresh-interval 65000
+ max-lsp-lifetime 65535
+ lsp-password hmac-md5 encrypted 0DEADBEEFDEADBEEFDEADBEEF0
+ address-family ipv4 unicast
+  metric-style wide
+  ispf level 2
+  spf-interval maximum-wait 5000 initial-wait 1 secondary-wait 50
+  spf prefix-priority critical tag 10
+ !
+ interface Loopback0
+  passive
+  circuit-type level-2-only
+  hello-password hmac-md5 encrypted 0DEADBEEFDEADBEEFDEADBEEF0
+  address-family ipv4 unicast
+   tag 10
+  !
+ !
+ interface GigabitEthernet0/2/0/0
+  circuit-type level-2-only
+  point-to-point
+  hello-password hmac-md5 encrypted 0DEADBEEFDEADBEEFDEADBEEF0
+  address-family ipv4 unicast
+   metric 100
+  !
+ !
+ interface GigabitEthernet0/2/0/1
+  circuit-type level-2-only
+  point-to-point
+  hello-password hmac-md5 encrypted 0DEADBEEFDEADBEEFDEADBEEF0
+  address-family ipv4 unicast
+   metric 100
+  !
+ !
+ interface TenGigE0/0/0/0
+  circuit-type level-2-only
+  point-to-point
+  hello-password hmac-md5 encrypted 0DEADBEEFDEADBEEFDEADBEEF0
+  address-family ipv4 unicast
+   metric 10
+  !
+ !
+ interface TenGigE0/0/0/1
+  circuit-type level-2-only
+  point-to-point
+  hello-password hmac-md5 encrypted 0DEADBEEFDEADBEEFDEADBEEF0
+  address-family ipv4 unicast
+   metric 10
+  !
+ !
+ interface TenGigE0/0/0/2
+  circuit-type level-2-only
+  point-to-point
+  hello-password hmac-md5 encrypted 0DEADBEEFDEADBEEFDEADBEEF0
+  address-family ipv4 unicast
+   metric 10
+  !
+ !
+ interface TenGigE0/0/0/3
+  circuit-type level-2-only
+  point-to-point
+  hello-password hmac-md5 encrypted 0DEADBEEFDEADBEEFDEADBEEF0
+  address-family ipv4 unicast
+   metric 10
+  !
+ !
+ interface TenGigE0/1/0/0
+  circuit-type level-2-only
+  point-to-point
+  hello-password hmac-md5 encrypted 0DEADBEEFDEADBEEFDEADBEEF0
+  address-family ipv4 unicast
+   metric 10
+  !
+ !
+ interface TenGigE0/1/0/2
+  circuit-type level-2-only
+  point-to-point
+  hello-password hmac-md5 encrypted 0DEADBEEFDEADBEEFDEADBEEF0
+  address-family ipv4 unicast
+   metric 10
+  !
+ !
+ interface TenGigE0/1/0/3
+  circuit-type level-2-only
+  point-to-point
+  hello-password hmac-md5 encrypted 0DEADBEEFDEADBEEFDEADBEEF0
+  address-family ipv4 unicast
+   metric 10
+  !
+ !
+ interface TenGigE0/1/0/5
+  circuit-type level-2-only
+  point-to-point
+  hello-password hmac-md5 encrypted 0DEADBEEFDEADBEEFDEADBEEF0
+  address-family ipv4 unicast
+   metric 10
+  !
+ !
+ interface TenGigE0/1/0/7
+  circuit-type level-2-only
+  point-to-point
+  hello-password hmac-md5 encrypted 0DEADBEEFDEADBEEFDEADBEEF0
+  address-family ipv4 unicast
+   metric 10
+  !
+ !
+!
+snmp-server traps ospf lsa lsa-maxage
+snmp-server traps ospf lsa lsa-originate
+snmp-server traps ospf errors bad-packet
+snmp-server traps ospf errors authentication-failure
+snmp-server traps ospf errors config-error
+snmp-server traps ospf errors virt-bad-packet
+snmp-server traps ospf errors virt-authentication-failure
+snmp-server traps ospf errors virt-config-error
+snmp-server traps ospf retransmit packets
+snmp-server traps ospf retransmit virt-packets
+snmp-server traps ospf state-change if-state-change
+snmp-server traps ospf state-change neighbor-state-change
+snmp-server traps ospf state-change virtif-state-change
+snmp-server traps ospf state-change virtneighbor-state-change
+snmp-server traps bgp
+snmp-server traps hsrp
+snmp-server traps l2vpn all
+snmp-server traps l2vpn vc-up
+snmp-server traps l2vpn vc-down
+snmp-server traps mpls traffic-eng up
+snmp-server traps mpls traffic-eng down
+snmp-server traps mpls traffic-eng reroute
+snmp-server traps mpls traffic-eng reoptimize
+snmp-server enable traps mpls frr all
+snmp-server enable traps mpls frr protected
+snmp-server traps mpls ldp up
+snmp-server traps mpls ldp down
+snmp-server traps mpls ldp threshold
+snmp-server enable traps mpls l3vpn all
+snmp-server enable traps mpls l3vpn vrf-up
+snmp-server enable traps mpls l3vpn vrf-down
+snmp-server enable traps mpls l3vpn max-threshold-cleared
+snmp-server enable traps mpls l3vpn max-threshold-exceeded
+snmp-server enable traps mpls l3vpn mid-threshold-exceeded
+snmp-server enable traps mpls l3vpn max-threshold-reissue-notif-time 1
+mpls ldp
+ router-id Loopback0
+ log
+  neighbor
+  graceful-restart
+  session-protection
+ !
+ discovery targeted-hello accept from ALL-LOOPBACKS
+ graceful-restart
+ session protection
+ neighbor 100.2.4.1 password encrypted 0DEADBEEFDEADBEEFDEADBEEF0
+ neighbor 100.2.4.2 password encrypted 0DEADBEEFDEADBEEFDEADBEEF0
+ neighbor 100.2.4.3 password encrypted 0DEADBEEFDEADBEEFDEADBEEF0
+ neighbor 100.2.4.4 password encrypted 0DEADBEEFDEADBEEFDEADBEEF0
+ neighbor 100.2.4.5 password encrypted 0DEADBEEFDEADBEEFDEADBEEF0
+ neighbor 100.2.4.7 password encrypted 0DEADBEEFDEADBEEFDEADBEEF0
+ neighbor 100.2.4.8 password encrypted 0DEADBEEFDEADBEEFDEADBEEF0
+ neighbor 100.2.4.9 password encrypted 0DEADBEEFDEADBEEFDEADBEEF0
+ neighbor 100.2.5.1 password encrypted 0DEADBEEFDEADBEEFDEADBEEF0
+ neighbor 100.2.5.2 password encrypted 0DEADBEEFDEADBEEFDEADBEEF0
+ neighbor 100.2.5.3 password encrypted 0DEADBEEFDEADBEEFDEADBEEF0
+ neighbor 100.2.5.4 password encrypted 0DEADBEEFDEADBEEFDEADBEEF0
+ neighbor 100.2.5.5 password encrypted 0DEADBEEFDEADBEEFDEADBEEF0
+ neighbor 100.2.5.6 password encrypted 0DEADBEEFDEADBEEFDEADBEEF0
+ neighbor 100.2.5.7 password encrypted 0DEADBEEFDEADBEEFDEADBEEF0
+ neighbor 100.2.5.8 password encrypted 0DEADBEEFDEADBEEFDEADBEEF0
+ interface GigabitEthernet0/2/0/0
+ !
+ interface GigabitEthernet0/2/0/1
+ !
+ interface TenGigE0/0/0/0
+ !
+ interface TenGigE0/0/0/1
+ !
+ interface TenGigE0/0/0/2
+ !
+ interface TenGigE0/0/0/3
+ !
+ interface TenGigE0/1/0/0
+ !
+ interface TenGigE0/1/0/2
+ !
+ interface TenGigE0/1/0/3
+ !
+ interface TenGigE0/1/0/5
+ !
+ interface TenGigE0/1/0/7
+ !
+!
+snmp-server traps pim neighbor-change
+snmp-server traps pim invalid-message-received
+snmp-server traps pim rp-mapping-change
+snmp-server traps pim interface-state-change
+snmp-server traps msdp peer-state-change
+multicast-routing
+ address-family ipv4
+ !
+!
+snmp-server traps ipsec tunnel stop
+snmp-server traps ipsec tunnel start
+snmp-server traps isakmp tunnel stop
+snmp-server traps isakmp tunnel start
+ssh client source-interface Loopback0
+ssh server
+xml agent corba
+snmp-server traps sensor
+snmp-server traps fru-ctrl
+http server
+end

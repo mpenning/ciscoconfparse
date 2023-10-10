@@ -1,0 +1,268 @@
+version 12.1
+service timestamps debug datetime localtime
+service timestamps log datetime localtime
+service password-encryption
+!
+hostname Foo
+!
+boot system flash sup-bootflash:c6sup22-jsv-mz.121-11b.EX1
+aaa new-model
+aaa authentication login default local group radius
+aaa authentication login console local
+aaa authorization exec default local group radius none
+aaa accounting exec default start-stop group radius
+enable secret 5 $1$Pz80u.C2cxVUWWS2J5v0
+!
+username root password 7 0357083D260C20425A
+clock timezone CST -6
+clock summer-time CDT recurring 2 Sun Mar 2:00 1 Sun Nov 2:00
+ip subnet-zero
+!
+!
+ip domain-name foo.com
+ip name-server 172.25.128.128
+ip name-server 172.26.128.128
+!
+no mls ip multicast aggregate
+no mls ip multicast non-rpf cef
+mls qos statistics-export interval 300
+mls qos statistics-export delimiter |
+!
+redundancy
+ mode rpr-plus
+ main-cpu
+  auto-sync running-config
+  auto-sync standard
+!
+!
+!
+interface Loopback0
+ no ip address
+!
+interface GigabitEthernet1/1
+ no ip address
+ switchport
+!
+interface GigabitEthernet1/2
+ no ip address
+ shutdown
+!
+interface GigabitEthernet2/1
+ no ip address
+ switchport
+!
+interface GigabitEthernet2/2
+ no ip address
+ shutdown
+!
+interface GigabitEthernet3/1
+ no ip address
+ switchport
+ switchport access vlan 100
+!
+interface GigabitEthernet3/2
+ no ip address
+ switchport
+ switchport access vlan 100
+!
+interface GigabitEthernet3/3
+ no ip address
+ shutdown
+ switchport
+ switchport access vlan 100
+!
+interface GigabitEthernet3/4
+ no ip address
+ switchport
+ switchport access vlan 100
+!
+interface GigabitEthernet3/5
+ no ip address
+ switchport
+ switchport access vlan 101
+!
+interface GigabitEthernet3/6
+ no ip address
+ switchport
+ switchport access vlan 101
+!
+interface GigabitEthernet3/7
+ no ip address
+ shutdown
+ switchport
+ switchport access vlan 101
+!
+interface GigabitEthernet3/8
+ no ip address
+ switchport
+ switchport access vlan 101
+!
+interface GigabitEthernet3/9
+ no ip address
+ switchport
+ switchport access vlan 102
+!
+interface GigabitEthernet3/10
+ no ip address
+ switchport
+ switchport access vlan 102
+!
+interface GigabitEthernet3/11
+ no ip address
+ shutdown
+ switchport
+ switchport access vlan 102
+!
+interface GigabitEthernet3/12
+ no ip address
+ switchport
+ switchport access vlan 102
+!
+interface GigabitEthernet3/13
+ no ip address
+ switchport
+ switchport access vlan 103
+!
+interface GigabitEthernet3/14
+ no ip address
+ switchport
+ switchport access vlan 103
+!
+interface GigabitEthernet3/15
+ no ip address
+ shutdown
+ switchport
+ switchport access vlan 103
+!
+interface GigabitEthernet3/16
+ no ip address
+ switchport
+ switchport access vlan 103
+!
+interface GigabitEthernet4/1
+ no ip address
+ switchport
+ switchport access vlan 100
+!
+interface GigabitEthernet4/2
+ no ip address
+ switchport
+ switchport access vlan 100
+!
+interface GigabitEthernet4/3
+ no ip address
+ switchport
+ switchport access vlan 101
+!
+interface GigabitEthernet4/4
+ no ip address
+ switchport
+ switchport access vlan 102
+!
+interface GigabitEthernet4/5
+ no ip address
+ switchport
+ switchport access vlan 101
+!
+interface GigabitEthernet4/6
+ no ip address
+ shutdown
+ switchport
+ switchport access vlan 105
+!
+interface GigabitEthernet4/7
+ no ip address
+ shutdown
+ switchport
+ switchport access vlan 101
+!
+interface GigabitEthernet4/8
+ no ip address
+ shutdown
+ switchport
+ switchport access vlan 105
+!
+interface GigabitEthernet4/9
+ no ip address
+ switchport
+ switchport access vlan 102
+!
+interface GigabitEthernet4/10
+ no ip address
+ switchport
+ switchport access vlan 103
+!
+interface GigabitEthernet4/11
+ no ip address
+ shutdown
+ switchport
+ switchport access vlan 102
+!
+interface GigabitEthernet4/12
+ no ip address
+ switchport
+ switchport access vlan 100
+!
+interface GigabitEthernet4/13
+ no ip address
+ switchport
+ switchport access vlan 103
+!
+interface GigabitEthernet4/14
+ no ip address
+ switchport
+ switchport access vlan 102
+!
+interface GigabitEthernet4/15
+ no ip address
+ switchport
+ switchport access vlan 101
+!
+interface GigabitEthernet4/16
+ no ip address
+ shutdown
+ switchport
+!
+interface Vlan1
+ ip address 172.24.8.2 255.255.255.0
+!
+ip classless
+ip route 0.0.0.0 0.0.0.0 172.24.8.1
+no ip http server
+!
+ip radius source-interface Loopback0
+logging trap debugging
+logging 172.28.26.15
+snmp-server community public1 RO
+snmp-server community private1 RW
+snmp-server community public2 RO
+snmp-server community private2 RW
+snmp-server enable traps slb
+snmp-server enable traps rf
+snmp-server host 172.28.26.15 public1
+snmp-server host 172.28.26.15 public2
+!
+radius-server host 172.28.16.194 auth-port 1812 acct-port 1813
+radius-server host 172.28.0.194 auth-port 1812 acct-port 1813
+radius-server retransmit 3
+radius-server key RADiUs
+banner login ^C
+This is a private computer system, owned by Foo Companies, Inc.
+containing confidential information. Any unauthorized attempt to access
+or use this computer system or any information on it by employees or
+other persons may result in termination of employment, civil fines and
+criminal penalties. This system must be used for authorized business
+purposes only.
+^C
+!
+line con 0
+ password 7 14341A195D173E26043B
+line vty 0 4
+ password 7 062507331D5D1D142504
+line vty 5 15
+ password 7 062507331D5D1D142504
+!
+ntp clock-period 17180086
+ntp server 172.24.0.106 prefer
+ntp server 172.24.0.107
+end

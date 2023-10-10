@@ -1,0 +1,312 @@
+
+!
+version 12.4
+service nagle
+no service pad
+service tcp-keepalives-in
+service tcp-keepalives-out
+service timestamps debug datetime msec localtime show-timezone
+service timestamps log datetime msec localtime show-timezone
+service password-encryption
+service internal
+!
+hostname Foo
+!
+boot-start-marker
+boot-end-marker
+!
+security authentication failure rate 4 log
+security passwords min-length 6
+logging snmp-authfail
+logging buffered 65535 debugging
+logging rate-limit 50
+no logging console guaranteed
+enable secret 5 $1$Q0Zl$LN7ONybETL5LJZF1
+!
+spd headroom 65535
+aaa new-model
+!
+!
+aaa authentication login default local
+aaa authentication login CONSOLE none
+aaa authorization console
+aaa authorization exec default local none
+aaa authorization exec CONSOLE none
+!
+aaa session-id common
+clock timezone MST -7
+clock summer-time MDT recurring
+no network-clock-participate slot 1
+no network-clock-participate wic 0
+no ip source-route
+no ip gratuitous-arps
+ip wccp version 1
+ip wccp web-cache redirect-list INTERNAL_NETWORKS
+ip cef
+ip cef accounting per-prefix load-balance-hash
+!
+!
+no ip dhcp use vrf connected
+ip dhcp excluded-address 172.16.1.1 172.16.1.50
+!
+ip dhcp pool HOME_LAN
+   network 172.16.1.0 255.255.255.0
+   default-router 172.16.1.1
+   domain-name foo.com
+   dns-server 172.16.1.5
+   lease 2
+!
+!
+no ip bootp server
+ip domain name foo.com
+ip name-server 172.16.1.5
+ip inspect alert-off
+ip inspect max-incomplete low 400
+ip inspect max-incomplete high 400
+ip inspect dns-timeout 8
+ip inspect tcp idle-time 7200
+ip inspect tcp finwait-time 8
+ip inspect tcp max-incomplete host 100 block-time 1
+ip inspect name EXT_OUT fragment maximum 256 timeout 15
+ip inspect name EXT_OUT http java-list 11 alert on audit-trail off
+ip inspect name EXT_OUT ftp alert on audit-trail off
+ip inspect name EXT_OUT tcp alert on audit-trail off
+ip inspect name EXT_OUT udp alert on audit-trail off
+ip inspect name EXT_OUT icmp alert on audit-trail off
+ip inspect name EXT_OUT rtsp alert on audit-trail off
+ip inspect name EXT_OUT sip alert on audit-trail off
+ip inspect name EXT_OUT realaudio alert on audit-trail off
+ip inspect name EXT_OUT aol alert on audit-trail off
+ip inspect name EXT_OUT cddbp alert on audit-trail off
+ip inspect name EXT_OUT ddns-v3 alert on audit-trail off
+ip inspect name EXT_OUT dns alert on audit-trail off
+ip inspect name EXT_OUT esmtp alert on audit-trail off
+ip inspect name EXT_OUT ftps alert on audit-trail off
+ip inspect name EXT_OUT https alert on audit-trail off
+ip inspect name EXT_OUT ipass alert on audit-trail off
+ip inspect name EXT_OUT isakmp alert on audit-trail off
+ip inspect name EXT_OUT ntp alert on audit-trail off
+ip inspect name EXT_OUT pop3 alert on audit-trail off
+ip inspect name EXT_OUT pop3s alert on audit-trail off
+ip inspect name EXT_OUT realsecure alert on audit-trail off
+ip inspect name EXT_OUT snmp alert on audit-trail on
+ip inspect name EXT_OUT ssh alert on audit-trail on
+ip inspect name EXT_OUT ipsec-msft alert on audit-trail off
+ip inspect name EXT_OUT_AUDIT fragment maximum 250 timeout 15
+ip inspect name EXT_OUT_AUDIT http java-list 11 alert on audit-trail on
+ip inspect name EXT_OUT_AUDIT smtp alert on audit-trail on
+ip inspect name EXT_OUT_AUDIT ftp alert on audit-trail on
+ip inspect name EXT_OUT_AUDIT tcp alert on audit-trail on
+ip inspect name EXT_OUT_AUDIT udp alert on audit-trail on
+ip inspect name EXT_OUT_AUDIT icmp alert on audit-trail on
+ip ips name Internet
+!
+ip sla monitor 8
+ type echo protocol ipIcmpEcho 172.16.2.254
+ timeout 500
+ frequency 2
+login block-for 30 attempts 5 within 15
+!
+!
+no ipv6 source-route
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+memory statistics history table 12
+username ddclient password 7 107D3D232342041E3A
+archive
+ log config
+  logging enable
+  hidekeys
+ path ftp://ns.foo.com//tftpboot/Foo-archive
+!
+!
+ip tcp selective-ack
+ip tcp timestamp
+ip tcp window-size 65535
+ip tcp queuemax 50
+ip tcp synwait-time 10
+ip tcp path-mtu-discovery
+ip telnet tos E0
+ip ftp username ftp
+ip ftp password 7 107D3D232342041E3A
+ip ssh time-out 30
+!
+interface FastEthernet0/0
+ ip address 172.16.2.1 255.255.255.0
+ ip access-group ETH0_0_IN in
+ no ip unreachables
+ no ip proxy-arp
+ ip virtual-reassembly
+ ip tcp adjust-mss 1452
+ load-interval 30
+ speed 100
+ full-duplex
+ no keepalive
+ no cdp log mismatch duplex
+ hold-queue 100 in
+ hold-queue 100 out
+!
+interface FastEthernet1/0
+ ip address 172.16.4.1 255.255.255.0
+ no ip unreachables
+!
+interface FastEthernet1/1
+ ip address 172.16.6.1 255.255.255.0
+ no ip unreachables
+!
+interface FastEthernet2/0
+ shutdown
+!
+interface FastEthernet2/1
+ shutdown
+!
+interface FastEthernet2/2
+ ip address 172.16.5.1 255.255.255.0
+ no ip unreachables
+!
+interface Loopback0
+ ip address 172.16.0.1
+!
+router ospf 1
+ router-id 172.16.0.1
+ log-adjacency-changes
+ timers throttle spf 50 150 5000
+ network 172.16.0.1 0.0.0.0 area 0.0.0.0
+ network 172.16.2.0 0.0.0.255 area 0.0.0.0
+ network 172.16.3.0 0.0.0.255 area 0.0.0.0
+ network 172.16.4.0 0.0.0.255 area 0.0.0.0
+ network 172.16.5.0 0.0.0.255 area 0.0.0.0
+ default-information originate metric 1 metric-type 1
+!
+ip route 0.0.0.0 0.0.0.0 172.16.5.254 254
+ip route 172.16.255.254 255.255.255.255 Null0
+!
+ip bgp-community new-format
+!
+ip http server
+ip http access-class 99
+ip http authentication local
+no ip http secure-server
+ip ospf name-lookup
+!
+ip access-list extended BLACKHOLE
+ deny   ip host 81.7.148.87 any
+ deny   ip host 217.97.133.107 any
+ deny   ip host 66.52.63.90 any
+ deny   ip host 69.110.157.96 any
+ deny   ip host 68.227.20.195 any
+ deny   ip host 134.126.197.218 any
+ deny   ip host 195.56.106.87 any
+ deny   ip host 217.208.142.19 any
+ deny   ip host 84.174.67.168 any
+ deny   ip host 24.100.157.247 any
+ deny   ip host 209.161.226.199 any
+ deny   ip host 134.84.126.10 any
+ deny   ip host 81.88.12.218 any
+ deny   ip host 69.53.6.6 any
+ deny   ip host 80.165.224.86 any
+ deny   ip host 68.100.212.80 any
+ deny   ip host 82.125.145.213 any
+ deny   ip host 69.228.40.195 any
+ deny   ip host 70.32.51.228 any
+ deny   ip host 82.82.121.36 any
+ deny   ip host 200.28.134.89 any
+ deny   ip host 80.221.218.185 any
+ deny   ip host 69.204.216.32 any
+ deny   ip host 82.225.200.168 any
+ deny   ip host 213.114.249.51 any
+ deny   ip host 140.211.166.205 any log
+ permit ip any any
+ip access-list extended ETH0_0_IN
+ remark deny Windows Media Player Updates
+ deny   tcp any 207.46.248.0 0.0.0.255 eq www
+ remark permit anything else
+ permit ip any any
+ remark log all IPSEC (temporarily)
+ permit esp any any log
+!
+logging facility local6
+logging source-interface Loopback0
+logging 172.16.1.5
+logging 172.16.1.7
+access-list 11 remark JAVA access-list
+access-list 11 permit any
+access-list 12 permit 172.16.1.5
+access-list 99 permit 172.16.1.0 0.0.0.255
+snmp-server community SoMeThaNGwIErd RW 99
+snmp-server ifindex persist
+snmp-server trap link ietf
+snmp-server trap-source Loopback0
+snmp-server enable traps snmp authentication linkdown linkup coldstart warmstart
+snmp-server enable traps tty
+snmp-server enable traps envmon
+snmp-server enable traps atm subif
+snmp-server enable traps bgp
+snmp-server enable traps entity
+snmp-server enable traps pppoe
+snmp-server enable traps rtr
+snmp-server enable traps syslog
+snmp-server host 172.16.1.5 version 2c SoMeThaNGwIErd
+no cdp log mismatch duplex
+!
+control-plane
+!
+!
+!
+!
+!
+!
+banner login ^C
+Router Foo. Access to this device or the attached
+networks is prohibited without express written permission from the
+legal owner of this device.  Violators will be prosecuted to the
+fullest extent of both civil and criminal law.
+
+We don't like you. Go away.
+^C
+!
+line con 0
+ authorization exec CONSOLE
+ login authentication CONSOLE
+ exec prompt timestamp
+ history size 200
+ transport preferred none
+line 33 48
+ login authentication CONSOLE
+ no exec
+ transport preferred none
+ transport input telnet
+line aux 0
+ login authentication CONSOLE
+ no exec
+ transport preferred none
+ transport input telnet
+ stopbits 1
+ flowcontrol hardware
+line vty 0 4
+ exec-timeout 15 0
+ logout-warning 30
+ exec prompt timestamp
+ history size 200
+ transport preferred none
+ transport input telnet ssh
+!
+ntp clock-period 17208943
+ntp master
+ntp server 1.1.1.1
+!
+end
