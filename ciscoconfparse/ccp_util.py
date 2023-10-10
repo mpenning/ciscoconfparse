@@ -1765,38 +1765,6 @@ class IPv6Obj(object):
                 )
             )
 
-        if False:
-            if isinstance(arg, str):
-                assert len(arg) <= IPV6_MAXSTR_LEN
-                self.network_object = IPv6Network(params_dict['ip_arg_str'], strict=strict)
-                self.ip_object = IPv6Address(params_dict['ipv6_addr'])
-                return None
-
-            elif isinstance(arg, int):
-                assert 0 <= arg <= IPV6_MAXINT
-                self.network_object = IPv6Network(arg, strict=strict)
-                self.ip_object = IPv6Address(arg)
-                return None
-
-            elif isinstance(arg, IPv6Obj):
-                ip_str = f"{str(arg.ip_object)}/{arg.prefixlen}"
-                self.network_object = IPv6Network(ip_str, strict=False)
-                self.ip_object = IPv6Address(str(arg.ip_object))
-                return None
-
-            elif isinstance(arg, IPv6Network):
-                self.network_object = arg
-                self.ip_object = IPv6Address(str(arg).split("/")[0])
-                return None
-
-            elif isinstance(arg, IPv6Address):
-                self.network_object = IPv6Network(str(arg) + "/" + str(IPV6_MAX_PREFIXLEN))
-                self.ip_object = IPv6Address(str(arg).split("/")[0])
-                return None
-
-            else:
-                raise AddressValueError("IPv6Obj(arg='%s') is an unknown argument type" % (arg))
-
     # On IPv6Obj()
     def _ipv6_params_dict_DEPRECATED(self, arg, debug=0):
         """
