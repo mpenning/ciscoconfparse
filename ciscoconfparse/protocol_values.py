@@ -1,14 +1,8 @@
 from __future__ import absolute_import
 
-if False:
-    import better_exceptions
-    better_exceptions.MAX_LENGTH = None
-    better_exceptions.SUPPORTS_COLOR = True
-    better_exceptions.hook()
-
 r""" protocol_values.py - Parse, Query, Build, and Modify IOS-style configurations
 
-     Copyright (C) 2021      David Michael Pennington
+     Copyright (C) 2021,2023 David Michael Pennington
      Copyright (C) 2020-2021 David Michael Pennington at Cisco Systems
      Copyright (C) 2019      David Michael Pennington at ThousandEyes
      Copyright (C) 2014-2019 David Michael Pennington at Samsung Data Services
