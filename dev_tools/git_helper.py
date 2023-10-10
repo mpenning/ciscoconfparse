@@ -379,8 +379,9 @@ def run_cmd(
         loguru_logger.log("DEBUG", "|" + "Popen() started")
 
     process = Popen(
-        cmd,
-        shell=True,
+        shlex.split(cmd),
+        # nosec - Ignore security warnings
+        shell=False,  # nosec
         universal_newlines=True,
         cwd=cwd,
         stderr=PIPE,
