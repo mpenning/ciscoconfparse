@@ -4,7 +4,7 @@
 # See -> PEP 517
 requires = ["poetry>=1.5.1", "poetry-core>=1.6.1", "wheel>=0.38.4", "packaging>=23.0"]
 build-backend = "poetry.core.masonry.api"
-requires-python = ">=3.7.0"
+requires-python = ">=3.8.0"
 
 ##############################################################################
 #
