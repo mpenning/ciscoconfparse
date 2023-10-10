@@ -16,6 +16,7 @@ engines:
     excluded_paths:
       - tests/**
 exclude_paths:
+  - ".flake8"
   - "**.md"
   - "**.rst"
   - "**.pdf"
