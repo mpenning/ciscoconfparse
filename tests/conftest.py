@@ -24,16 +24,12 @@ r""" conftest.py - Parse, Query, Build, and Modify IOS-style configs
 import platform
 import sys
 import os
-sys.path.insert(0, "..")
 
 from ciscoconfparse.ciscoconfparse import CiscoConfParse
 from ciscoconfparse.ccp_util import PythonOptimizeCheck
 import dns.exception
 import dns.resolver
 import pytest
-
-THIS_DIR = os.path.dirname(__file__)
-
 
 c01 = """policy-map QOS_1
  class GOLD
