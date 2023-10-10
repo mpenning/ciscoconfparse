@@ -26,11 +26,6 @@ r""" __init__.py - Parse, Query, Build, and Modify IOS-style configurations
 
 import sys
 
-if False:
-    better_exceptions.MAX_LENGTH = None
-    better_exceptions.SUPPORTS_COLOR = True
-    better_exceptions.hook()
-
 from ciscoconfparse.ccp_util import PythonOptimizeCheck
 from ciscoconfparse.ciscoconfparse import *
 from ciscoconfparse.ccp_util import *

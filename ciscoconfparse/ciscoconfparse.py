@@ -41,12 +41,6 @@ import sys
 import re
 import os
 
-if False:
-    import better_exceptions
-    better_exceptions.MAX_LENGTH = None
-    better_exceptions.SUPPORTS_COLOR = True
-    better_exceptions.hook()
-
 from ciscoconfparse.models_cisco import IOSHostnameLine, IOSRouteLine
 from ciscoconfparse.models_cisco import IOSIntfLine
 from ciscoconfparse.models_cisco import IOSAccessLine, IOSIntfGlobal

@@ -31,12 +31,6 @@ r""" models_junos.py - Parse, Query, Build, and Modify Junos-style configuration
 
 import re
 
-if False:
-    import better_exceptions
-    better_exceptions.MAX_LENGTH = None
-    better_exceptions.SUPPORTS_COLOR = True
-    better_exceptions.hook()
-
 from ciscoconfparse.ccp_abc import BaseCfgLine
 from ciscoconfparse.ccp_util import IPv4Obj
 

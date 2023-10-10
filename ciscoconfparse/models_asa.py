@@ -32,12 +32,6 @@ r""" models_asa.py - Parse, Query, Build, and Modify IOS-style configurations
 
 import re
 
-if False:
-    import better_exceptions
-    better_exceptions.MAX_LENGTH = None
-    better_exceptions.SUPPORTS_COLOR = True
-    better_exceptions.hook()
-
 from ciscoconfparse.protocol_values import (
     ASA_TCP_PORTS,
     ASA_UDP_PORTS,
