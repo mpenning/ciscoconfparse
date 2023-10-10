@@ -1,7 +1,7 @@
 ciscoconfparse
 ==============
 
-[![Github unittest workflow][4]][5] [![Snyk Package Health][37]][38] [![CodeFactor Code Health][43]][44] [![Codacy Code Health][46]][47] [![git commits][41]][42] [![Version][2]][3] [![Downloads][6]][7] [![License][8]][9]
+[![Github unittest workflow][4]][5] [![SonarCloud][51]][52] [![Snyk Package Health][37]][38] [![CodeFactor Code Health][43]][44] [![Codacy Code Health][46]][47] [![git commits][41]][42] [![Version][2]][3] [![Downloads][6]][7] [![License][8]][9]
 
 
 Introduction: What is ciscoconfparse?
@@ -337,3 +337,5 @@ Author
   [48]: https://commitizen-tools.github.io/commitizen/
   [49]: https://semver.org/
   [50]: https://www.conventionalcommits.org/en/v1.0.0/
+  [51]: https://sonarcloud.io/images/project_badges/sonarcloud-black.svg
+  [52]:https://sonarcloud.io/summary/new_code?id=mpenning_ciscoconfparse
