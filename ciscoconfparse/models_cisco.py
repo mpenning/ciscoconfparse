@@ -1062,9 +1062,6 @@ class BaseIOSIntfLine(IOSCfgLine):
         )
         if condition1.lower() == "dhcp":
             return ""
-            if False:
-                error = "Cannot parse address from a dhcp interface: {0}".format(self.name)
-                raise DynamicAddressException(error)
         else:
             return retval
 
