@@ -6,3 +6,5 @@ build
 tags
 .tox
 .undodir
+
+go.sum
