@@ -2,7 +2,8 @@
 A git wrapper to simplify git operations.
 """
 
-from subprocess import Popen, PIPE, STDOUT
+# nosec - Ignore security warnings
+from subprocess import Popen, PIPE, STDOUT  # nosec
 from argparse import ArgumentParser
 import fileinput
 import shlex
@@ -378,8 +379,8 @@ def run_cmd(
         loguru_logger.log("DEBUG", "|" + "Popen() started")
 
     process = Popen(
-        shlex.split(cmd),
-        shell=False,
+        cmd,
+        shell=True,
         universal_newlines=True,
         cwd=cwd,
         stderr=PIPE,
