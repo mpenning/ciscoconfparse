@@ -84,7 +84,6 @@ Dependencies
 - [dnspython](https://github.com/rthalley/dnspython)
 - [loguru](https://github.com/Delgan/loguru)
 - [deprecated](https://github.com/tantale/deprecated)
-- [better-exceptions](https://github.com/Qix-/better-exceptions)
 
 Is this a tool, or is it artwork?
 ---------------------------------
