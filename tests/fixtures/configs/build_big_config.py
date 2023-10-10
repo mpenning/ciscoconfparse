@@ -12,7 +12,8 @@ if sys.argv[1]=="1":
     for slot in range(1, 14):
         for port in range(1, 49):
             print("interface GigabitEthernet {}/{}".format(slot, port))
-            mode = choice(['trunk', 'access'])
+            # nosec will silence warnings about python random cryptographic inadequacy
+            mode = choice(['trunk', 'access'])    # nosec
             if mode=='trunk':
                 print(" switchport")
                 print(" switchport trunk encapsulation dot1q")
@@ -33,7 +34,8 @@ if sys.argv[1]=="1":
     for vlan in range(1, 4095):
         print("interface Vlan {}".format(vlan))
         print(" no shutdown")
-        mode = choice(['global', 'vrf'])
+        # nosec will silence warnings about python random cryptographic inadequacy
+        mode = choice(['global', 'vrf'])    # nosec
         if mode=='vrf':
             print("ip vrf forwarding VRF_{}".format(vlan))
         print(" description Layer3 SVI: vlan {}".format(vlan))
