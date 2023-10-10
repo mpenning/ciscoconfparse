@@ -11,21 +11,45 @@ on:
     branches:
       - main
     paths-ignore:
-      - 'sphinx-doc/**'
+      - 'docs/**'
       - '*.md'
       - '*.rst'
   pull_request:
     branches:
       - main
+      - '*.x'
     paths-ignore:
-      - 'sphinx-doc/**'
+      - 'docs/**'
       - '*.md'
       - '*.rst'
   schedule:
     # Schedule test runs at 3:42 UTC every Saturday
     - cron: "42 3 * * 6"
-  workflow_dispatch:
-    workflow: "*"
+jobs:
+  tests:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {name: Linux, python: '3.11', os: ubuntu-latest, tox: py311}
+          - {name: Windows, python: '3.11', os: windows-latest, tox: py311}
+          - {name: Mac, python: '3.11', os: macos-latest, tox: py311}
+          - {name: '3.12-dev', python: '3.12-dev', os: ubuntu-latest, tox: py312}
+          - {name: '3.10', python: '3.10', os: ubuntu-latest, tox: py310}
+          - {name: '3.9', python: '3.9', os: ubuntu-latest, tox: py39}
+          - {name: '3.8', python: '3.8', os: ubuntu-latest, tox: py38}
+          - {name: 'PyPy', python: 'pypy-3.10', os: ubuntu-latest, tox: pypy310}
+          - {name: 'Minimum Versions', python: '3.11', os: ubuntu-latest, tox: py311-min}
+          - {name: 'Development Versions', python: '3.8', os: ubuntu-latest, tox: py38-dev}
+    steps:
+      - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744
+      - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1
+        with:
+          python-version: ${{ matrix.python }}
+      - run: pip install tox
+      - run: tox run -e ${{ matrix.tox }}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.number }}-${{ github.event.ref }}
@@ -38,63 +62,3 @@ env:
     PY_COLORS: 1
     FORCE_COLOR: 1
 
-# Basic reference:
-#     https://github.com/pallets/flask/blob/main/.github/workflows/tests.yaml
-# Advanced reference:
-#     https://github.com/matplotlib/matplotlib/blob/main/.github/workflows/tests.yml
-jobs:
-  tests:
-    name: "Test ccp with Py ${{ matrix.python }} on ${{ matrix.os }}"
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - {name: '3.11', python: '3.11', os: 'ubuntu-latest', pytest: 'py311'}
-          - {name: 'Mac_py310', python: '3.10', os: 'macos-latest', pytest: 'py310'}
-          - {name: 'Linux_py310', python: '3.10', os: 'ubuntu-latest', pytest: 'py310'}
-          - {name: '3.9', python: '3.9', os: 'ubuntu-latest', pytest: 'py39'}
-          - {name: '3.8', python: '3.8', os: 'ubuntu-latest', pytest: 'py38'}
-          - {name: 'PyPy-3.9', python: 'pypy-3.9', os: 'ubuntu-latest', pytest: 'pypy39'}
-          - {name: 'PyPy-3.8', python: 'pypy-3.8', os: 'ubuntu-latest', pytest: 'pypy38'}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Set required github workflow python version (version:3.10)
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
-
-      - name: Update setuptools / wheel / pip versions
-        run: |
-          python -m pip install -U setuptools wheel pip
-
-      - name: Update poetry package versions
-        run: |
-          pip install -U poetry
-          pip install -U poetry-core
-
-      - name: Install pytest for ciscoconfparse
-        run: |
-          pip install -U pytest
-
-      - name: Install all ciscoconfparse package requirements
-        run: |
-          pip install -U black
-          pip install -U -r requirements.txt
-
-      - name: Set up ciscoconfparse Python dependencies
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python }}
-          #cache: pip
-          #cache-dependency-path: 'requirements*.txt'
-
-      - name: Catch install problems such as pyproject.toml doesn't require auto-dependency installs (ref https://github.com/mpenning/ciscoconfparse/issues/254)
-        run: |
-          pip uninstall -y passlib dnspython loguru
-          pip install .
-
-      - name: Run unit-tests
-        run: make test
