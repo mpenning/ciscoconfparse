@@ -4,6 +4,13 @@
 - Summary:
     - Insert something here
 
+## Version: 1.8.0
+
+- Released: 2023-10-09
+- Summary:
+    - Rewrite 'dev_tools/deploy_docs.py' as 'dev_tools/deploy_docs' in go
+    - Disable better_exceptions
+
 ## Version: 1.7.25
 
 - Released: 2023-07-10
