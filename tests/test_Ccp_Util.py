@@ -226,20 +226,17 @@ def testIPv4Obj_set_masklen01():
         assert test_object.prefixlen == result_correct_masklen
         assert test_object.prefixlength == result_correct_masklen
 
-@pytest.mark.skip("IPv4Obj().network_offset fails for some reason. Python cannot find the method")
 def testIPv4Obj_network_offset():
     test_object = IPv4Obj("192.0.2.28/24")
     assert test_object.masklength == 24
     assert test_object.network_offset == 28
 
-@pytest.mark.skip("IPv4Obj().network_offset fails for some reason. Python cannot find the method")
 def testIPv4Obj_set_network_offset():
     test_object = IPv4Obj("192.0.2.28/24")
     # Change the last octet to be 200...
     test_object.network_offset = 200
     assert test_object == IPv4Obj("192.0.2.200/24")
 
-@pytest.mark.skip("IPv4Obj().network_offset fails for some reason. Python cannot find the method")
 def testIPv4Obj_attributes_01():
     ## Ensure that attributes are accessible and pass the smell test
     test_object = IPv4Obj("1.0.0.1 255.255.255.0")
@@ -347,7 +344,6 @@ def test_ip_factory_inputs_02():
     with pytest.raises(ipaddress.AddressValueError):
         ip_factory("FE80:AAAA::DEAD:BEEEEEEEEEEF", stdlib=False, mode="auto_detect")
 
-@pytest.mark.skip("IPv6Obj().network_offset fails for some reason. Python cannot find the method")
 def testIPv6Obj_attributes_01():
     ## Ensure that attributes are accessible and pass the smell test
     test_object = IPv6Obj("2001::dead:beef/64")
@@ -393,12 +389,10 @@ def testIPv6Obj_attributes_01():
 
         assert getattr(test_object, attribute) == result_correct
  
-@pytest.mark.skip("IPv6Obj().network_offset fails for some reason. Python cannot find the method")
 def testIPv6Obj_network_offset_01():
     test_object = IPv6Obj("2001::dead:beef/64")
     assert test_object.network_offset == 3735928559
 
-@pytest.mark.skip("IPv6Obj().network_offset fails for some reason. Python cannot find the method")
 def testIPv6Obj_set_network_offset_01():
     test_object = IPv6Obj("2001::dead:beef/64")
     test_object.network_offset = 200
