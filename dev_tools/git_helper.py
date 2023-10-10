@@ -380,7 +380,8 @@ def run_cmd(
 
     process = Popen(
         shlex.split(cmd),
-        shell=False,
+        # nosec - Ignore security warnings
+        shell=False,  # nosec
         universal_newlines=True,
         cwd=cwd,
         stderr=PIPE,
