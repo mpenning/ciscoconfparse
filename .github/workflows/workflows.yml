@@ -11,6 +11,6 @@ jobs:
       - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
       - name: Run tests as a workflow job demo
         run: |
-          cd tests && pytest -v -x -s
+          make test
           # ${{ github.workspace }}
       - run: echo "🍏 This demo job's status is ${{ job.status }}."
