@@ -147,6 +147,7 @@ The following are featured [CiscoConfParse](https://github.com/mpenning/ciscocon
 - [netwalk](https://github.com/icovada/netwalk): Python library to discover, parse, analyze and change Cisco switched networks
 - [netlint](https://github.com/Kircheneer/netlint)
 - [cisco_switchport_auditor](https://github.com/corvese/cisco_switchport_auditor): Parses Cisco switch configuration into Switch & Interface objects to access configuration details of the aforementioned in a programatic manner. Works with SSH, RESTCONF, or with running/start-up config files.
+- [nipper-ng](https://github.com/arpitn30/nipper-ng): a network security analyzer
 - [pynipper-ng](https://github.com/syn-4ck/pynipper-ng): a network security analyzer
 - [build_fabric](https://github.com/sjhloco/build_fabric): Build a declarative Cisco NXOS leaf and spine fabric using Ansible
 - [junos-ansible](https://github.com/yzguy/junos-ansible)
