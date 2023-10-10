@@ -29,7 +29,7 @@ import sys
 from ciscoconfparse.ccp_util import PythonOptimizeCheck
 from ciscoconfparse.ciscoconfparse import *
 from ciscoconfparse.ccp_util import *
-from dns.resolver import Timeout, Resolver
+from dns.resolver import Resolver
 from dns.exception import DNSException
 
 assert sys.version_info >= (3, 7)
