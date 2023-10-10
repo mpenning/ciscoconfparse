@@ -42,7 +42,7 @@ pypi:
 	# upgrade packaging infra and ciscoconfparse dependencies...
 	make pypi-package-infra
 	# tag the repo with $$VERSION and push to origin
-	-git tag $$VERSION
+	git tag $$VERSION
 	git push origin $$VERSION
 	poetry lock --no-update
 	poetry build
