@@ -4,6 +4,5 @@ poetry == 1.6.1
 loguru == 0.7.2
 passlib == 1.7.4
 toml > 0.10.1
-dnspython == 2.3.0
+dnspython == 2.4.2
 deprecated == 1.2.14
-better_exceptions == 0.2.1
