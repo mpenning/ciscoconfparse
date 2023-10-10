@@ -1,6 +1,0 @@
-#
-if { something } {
-do X
-} else {
-do Y
-}
