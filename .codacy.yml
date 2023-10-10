@@ -1,0 +1,24 @@
+---
+engines:
+  duplication:
+    enabled: true
+    config:
+      languages:
+      - python
+  bandit:
+    enabled: true
+  fixme:
+    enabled: true
+  radon:
+    enabled: true
+  coverage:
+    enabled: true
+    excluded_paths:
+      - tests/**
+exclude_paths:
+  - "**.md"
+  - "**.rst"
+  - "**.pdf"
+  - "**.jpg"
+  - "**.png"
+  - "**.gif"
