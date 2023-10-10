@@ -173,6 +173,7 @@ def get_version_number():
     return version
 
 
+@logger.catch(reraise=True)
 def enforce_valid_types(var, var_types=None, error_str=None):
     assert isinstance(var_types, tuple)
     if not isinstance(var, var_types):
@@ -812,6 +813,7 @@ class CiscoConfParse(object):
     #      do NOT wrap this method in logger.catch() - github issue #249
     #########################################################################
     @property
+    @logger.catch(reraise=True)
     def openargs(self):
         """Fix Py3.5 deprecation of universal newlines - Ref Github #114; also see https://softwareengineering.stackexchange.com/q/298677/23144."""
         if sys.version_info >= (
@@ -825,6 +827,7 @@ class CiscoConfParse(object):
 
     # This method is on CiscoConfParse()
     @property
+    @logger.catch(reraise=True)
     def ioscfg(self):
         """Return a list containing all text configuration statements."""
         ## I keep ioscfg to emulate legacy ciscoconfparse behavior
@@ -840,6 +843,7 @@ class CiscoConfParse(object):
 
     # This method is on CiscoConfParse()
     @property
+    @logger.catch(reraise=True)
     def objs(self):
         """CiscoConfParse().objs is an alias for the CiscoConfParse().ConfigObjs property; it returns a ConfigList() of config-line objects."""
         if self.ConfigObjs is None:
@@ -3794,6 +3798,7 @@ class HDiff(object):
             # FIXME - I think nxos is not going to work as-expected while using `build_ios_diffs()`
             self.build_ios_diffs()
 
+    @logger.catch(reraise=True)
     def parse_hdiff_configs(self):
 
         if self.debug > 1:
@@ -3822,6 +3827,7 @@ class HDiff(object):
                 ignore_blank_lines=self.ignore_blank_lines,
             )
 
+    @logger.catch(reraise=True)
     def build_diff_obj_lists(self):
         """Assign the `diff_side` attribute to parse_before and parse_after *CfgLine() instances"""
         assert isinstance(self.parse_before, CiscoConfParse)
@@ -4507,6 +4513,7 @@ class ConfigList(MutableSequence):
             self._network_cache = {}
 
     # This method is on ConfigList()
+    @logger.catch(reraise=True)
     def __repr__(self):
         return """<ConfigList, syntax='{}', comment='{}', conf={}>""".format(
             self.syntax,
@@ -4514,38 +4521,47 @@ class ConfigList(MutableSequence):
             self._list,
         )
 
+    @logger.catch(reraise=True)
     def __iter__(self):
         return iter(self._list)
 
     # This method is on ConfigList()
+    @logger.catch(reraise=True)
     def __lt__(self, other):
         return self._list < self.__cast(other)
 
     # This method is on ConfigList()
+    @logger.catch(reraise=True)
     def __le__(self, other):
         return self._list < self.__cast(other)
 
     # This method is on ConfigList()
+    @logger.catch(reraise=True)
     def __eq__(self, other):
         return self._list == self.__cast(other)
 
     # This method is on ConfigList()
+    @logger.catch(reraise=True)
     def __gt__(self, other):
         return self._list > self.__cast(other)
 
     # This method is on ConfigList()
+    @logger.catch(reraise=True)
     def __ge__(self, other):
         return self._list >= self.__cast(other)
 
     # This method is on ConfigList()
+    @logger.catch(reraise=True)
     def __cast(self, other):
         return other._list if isinstance(other, ConfigList) else other
 
     # This method is on ConfigList()
+    @logger.catch(reraise=True)
     def __len__(self):
         return len(self._list)
 
     # This method is on ConfigList()
+    @logger.catch(reraise=True)
     def __getitem__(self, ii):
         if isinstance(ii, slice):
             return self.__class__(self._list[ii])
@@ -4553,16 +4569,19 @@ class ConfigList(MutableSequence):
             return self._list[ii]
 
     # This method is on ConfigList()
+    @logger.catch(reraise=True)
     def __setitem__(self, ii, val):
         self._list[ii] = val
 
     # This method is on ConfigList()
+    @logger.catch(reraise=True)
     def __delitem__(self, ii):
         del self._list[ii]
         #self._bootstrap_from_text()
         self._list = self._bootstrap_obj_init_ng(self.ioscfg, debug=self.debug)
 
     # This method is on ConfigList()
+    @logger.catch(reraise=True)
     def __add__(self, other):
         if isinstance(other, ConfigList):
             return self.__class__(self._list + other._list)
@@ -4571,6 +4590,7 @@ class ConfigList(MutableSequence):
         return self.__class__(self._list + list(other))
 
     # This method is on ConfigList()
+    @logger.catch(reraise=True)
     def __radd__(self, other):
         if isinstance(other, ConfigList):
             return self.__class__(other._list + self._list)
@@ -4579,6 +4599,7 @@ class ConfigList(MutableSequence):
         return self.__class__(list(other) + self._list)
 
     # This method is on ConfigList()
+    @logger.catch(reraise=True)
     def __iadd__(self, other):
         if isinstance(other, ConfigList):
             self._list += other._list
@@ -4589,16 +4610,19 @@ class ConfigList(MutableSequence):
         return self
 
     # This method is on ConfigList()
+    @logger.catch(reraise=True)
     def __mul__(self, val):
         return self.__class__(self._list * val)
 
     __rmul__ = __mul__
 
+    @logger.catch(reraise=True)
     def __imul__(self, val):
         self._list *= val
         return self
 
     # This method is on ConfigList()
+    @logger.catch(reraise=True)
     def __copy__(self):
         inst = self.__class__.__new__(self.__class__)
         inst.__dict__.update(self.__dict__)
@@ -4607,21 +4631,25 @@ class ConfigList(MutableSequence):
         return inst
 
     # This method is on ConfigList()
+    @logger.catch(reraise=True)
     def __str__(self):
         return self.__repr__()
 
     # This method is on ConfigList()
+    @logger.catch(reraise=True)
     def __enter__(self):
         # Add support for with statements...
         # FIXME: *with* statements dont work
         yield from self._list
 
     # This method is on ConfigList()
+    @logger.catch(reraise=True)
     def __exit__(self, *args, **kwargs):
         # FIXME: *with* statements dont work
         self._list[0].confobj.CiscoConfParse.atomic()
 
     # This method is on ConfigList()
+    @logger.catch(reraise=True)
     def __getattribute__(self, arg):
         """Call arg on ConfigList() object, and if that fails, call arg from the ccp_ref attribute"""
         # Try a method call on ASAConfigList()
@@ -4646,6 +4674,7 @@ class ConfigList(MutableSequence):
 
     # This method is on ConfigList()
     @junos_unsupported
+    @logger.catch(reraise=True)
     def append(self, val):
         if self.debug >= 1:
             logger.debug("    ConfigList().append(val={}) was called.".format(val))
@@ -4653,39 +4682,47 @@ class ConfigList(MutableSequence):
         self._list.append(val)
 
     # This method is on ConfigList()
+    @logger.catch(reraise=True)
     def pop(self, ii=-1):
         return self._list.pop(ii)
 
     # This method is on ConfigList()
+    @logger.catch(reraise=True)
     def remove(self, val):
         self._list.remove(val)
 
     # This method is on ConfigList()
+    @logger.catch(reraise=True)
     def clear(self):
         self._list.clear()
 
     # This method is on ConfigList()
+    @logger.catch(reraise=True)
     def copy(self):
         return self.__class__(self)
 
     # This method is on ConfigList()
+    @logger.catch(reraise=True)
     def count(self, val):
         return self._list.count(val)
 
     # This method is on ConfigList()
+    @logger.catch(reraise=True)
     def index(self, val, *args):
         return self._list.index(val, *args)
 
     # This method is on ConfigList()
+    @logger.catch(reraise=True)
     def reverse(self):
         self._list.reverse()
 
     # This method is on ConfigList()
-    # def sort(self, /, *args, **kwds):
+    @logger.catch(reraise=True)
     def sort(self, _unknown_arg, *args, **kwds):
         self._list.sort(*args, **kwds)
 
     # This method is on ConfigList()
+    @logger.catch(reraise=True)
     def extend(self, other):
         if isinstance(other, ConfigList):
             self._list.extend(other._list)
@@ -4693,6 +4730,7 @@ class ConfigList(MutableSequence):
             self._list.extend(other)
 
     # This method is on ConfigList()
+    @logger.catch(reraise=True)
     def has_line_with(self, linespec):
         # https://stackoverflow.com/a/16097112/667301
         matching_conftext = list(
@@ -4705,6 +4743,7 @@ class ConfigList(MutableSequence):
 
     # This method is on ConfigList()
     @junos_unsupported
+    @logger.catch(reraise=True)
     def insert_before_deprecated(self, exist_val, new_val, atomic=False):
         """
         Insert new_val before all occurances of exist_val.
@@ -4739,6 +4778,7 @@ class ConfigList(MutableSequence):
     ##############################################################################
 
     # This method is on ConfigList()
+    @logger.catch(reraise=True)
     def insert_before(self, exist_val, new_val, atomic=False):
         """
         Insert new_val before all occurances of exist_val.
@@ -4842,6 +4882,7 @@ class ConfigList(MutableSequence):
 
     # This method is on ConfigList()
     @junos_unsupported
+    @logger.catch(reraise=True)
     def insert_after(self, exist_val="", new_val="", atomic=False, new_val_indent=-1):
         """
         Insert new_val after all occurances of exist_val.
@@ -4954,6 +4995,7 @@ class ConfigList(MutableSequence):
 
     # This method is on ConfigList()
     @junos_unsupported
+    @logger.catch(reraise=True)
     def insert(self, ii, val):
         if not isinstance(ii, int):
             raise ValueError
@@ -4989,6 +5031,7 @@ class ConfigList(MutableSequence):
         self.reassign_linenums()
 
     # This method is on ConfigList()
+    @logger.catch(reraise=True)
     def config_hierarchy(self):
         """Walk this configuration and return the following tuple
         at each parent 'level': (list_of_parent_sibling_objs, list_of_nonparent_sibling_objs)
@@ -5008,6 +5051,7 @@ class ConfigList(MutableSequence):
         return parent_siblings, nonparent_siblings
 
     # This method is on ConfigList()
+    @logger.catch(reraise=True)
     def _banner_mark_regex(self, regex):
         """
         Use the regex input parameter to identify all banner parent
@@ -5109,6 +5153,7 @@ class ConfigList(MutableSequence):
                     break
 
     # This method is on ConfigList()
+    @logger.catch(reraise=True)
     def _macro_mark_children(self, macro_parent_idx_list):
         """
         Set the blank_line_keep attribute for all banner parent / child objs.
@@ -5136,6 +5181,7 @@ class ConfigList(MutableSequence):
                     finished = True
 
     # This method is on ConfigList()
+    @logger.catch(reraise=True)
     def _maintain_bootstrap_parent_cache(
             self, parents_cache, parent, indent, max_indent, is_config_line
         ):
@@ -5161,6 +5207,7 @@ class ConfigList(MutableSequence):
 
         return parents_cache, parent
 
+    @logger.catch(reraise=True)
     def _build_bootstrap_parent_child(
             self, retval, parents_cache, parent, idx, indent, obj, debug,
         ):
@@ -5200,6 +5247,7 @@ class ConfigList(MutableSequence):
 
 
     # This method is on ConfigList()
+    @logger.catch(reraise=True)
     def _bootstrap_obj_init_ng(self, text_list=None, debug=0):
         """
         Accept a text list, and format into a list of *CfgLine() objects.
@@ -5297,6 +5345,7 @@ class ConfigList(MutableSequence):
         return retval
 
     # This method is on ConfigList()
+    @logger.catch(reraise=True)
     def _build_banner_re_ios(self):
         """Return a banner regexp for IOS (and at this point, NXOS)."""
         banner_str = {
@@ -5316,6 +5365,7 @@ class ConfigList(MutableSequence):
         return banner_re
 
     # This method is on ConfigList()
+    @logger.catch(reraise=True)
     def _add_child_to_parent(self, _list, idx, indent, parentobj, childobj):
         ## parentobj could be None when trying to add a child that should not
         ##    have a parent
@@ -5354,18 +5404,21 @@ class ConfigList(MutableSequence):
             pass
 
     # This method is on ConfigList()
+    @logger.catch(reraise=True)
     def iter_with_comments(self, begin_index=0):
         for idx, obj in enumerate(self._list):
             if idx >= begin_index:
                 yield obj
 
     # This method is on ConfigList()
+    @logger.catch(reraise=True)
     def iter_no_comments(self, begin_index=0):
         for idx, obj in enumerate(self._list):
             if (idx >= begin_index) and (not obj.is_comment):
                 yield obj
 
     # This method is on ConfigList()
+    @logger.catch(reraise=True)
     def reassign_linenums(self):
         # Call this after any insertion or deletion
         for idx, obj in enumerate(self._list):
@@ -5373,11 +5426,13 @@ class ConfigList(MutableSequence):
 
     # This method is on ConfigList()
     @property
+    @logger.catch(reraise=True)
     def all_parents(self):
         return [obj for obj in self._list if obj.has_children]
 
     # This method is on ConfigList()
     @property
+    @logger.catch(reraise=True)
     def last_index(self):
         return self.__len__() - 1
 
@@ -5387,6 +5442,7 @@ class ConfigList(MutableSequence):
 
     # This method was on ASAConfigList(); now tentatively on ConfigList()
     @property
+    @logger.catch(reraise=True)
     def names(self):
         """Return a dictionary of name to address mappings"""
         assert self.syntax == "asa"
@@ -5401,6 +5457,7 @@ class ConfigList(MutableSequence):
 
     # This method was on ASAConfigList(); now tentatively on ConfigList()
     @property
+    @logger.catch(reraise=True)
     def object_group_network(self):
         """Return a dictionary of name to object-group network mappings"""
         assert self.syntax == "asa"
@@ -5414,6 +5471,7 @@ class ConfigList(MutableSequence):
 
     # This method was on ASAConfigList(); now tentatively on ConfigList()
     @property
+    @logger.catch(reraise=True)
     def access_list(self):
         """Return a dictionary of ACL name to ACE (list) mappings"""
         assert self.syntax == "asa"
@@ -5437,19 +5495,23 @@ class ConfigList(MutableSequence):
 class DiffObject(object):
     """This object should be used at every level of hierarchy"""
 
+    @logger.catch(reraise=True)
     def __init__(self, level, nonparents, parents):
         self.level = level
         self.nonparents = nonparents
         self.parents = parents
 
+    @logger.catch(reraise=True)
     def __repr__(self):
         return "<DiffObject level: {}>".format(self.level)
 
 
 class CiscoPassword(object):
+    @logger.catch(reraise=True)
     def __init__(self, ep=""):
         self.ep = ep
 
+    @logger.catch(reraise=True)
     def decrypt(self, ep=""):
         """Cisco Type 7 password decryption.  Converted from perl code that was
         written by jbash [~at~] cisco.com; enhancements suggested by
@@ -5535,6 +5597,7 @@ class CiscoPassword(object):
         return dp
 
 
+@logger.catch(reraise=True)
 def ConfigLineFactory(text="", comment_delimiter="!", syntax="ios"):
     """A factory method to assign a custom *CfgLine() object based on the contents of the input text parameter and input syntax parameter."""
     # Complicted & Buggy

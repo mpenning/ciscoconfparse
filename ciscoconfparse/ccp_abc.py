@@ -29,7 +29,6 @@ from loguru import logger
 
 DEFAULT_TEXT = "__undefined__"
 
-
 #
 # -------------  Config Line ABC
 #

@@ -1,6 +1,6 @@
 r""" models_asa.py - Parse, Query, Build, and Modify IOS-style configurations
 
-     Copyright (C) 2021      David Michael Pennington
+     Copyright (C) 2021,2023 David Michael Pennington
      Copyright (C) 2020-2021 David Michael Pennington at Cisco Systems
      Copyright (C) 2019      David Michael Pennington at ThousandEyes
      Copyright (C) 2014-2019 David Michael Pennington at Samsung Data Services
@@ -40,6 +40,8 @@ from ciscoconfparse.protocol_values import (
 from ciscoconfparse.ccp_abc import BaseCfgLine
 from ciscoconfparse.ccp_util import L4Object
 from ciscoconfparse.ccp_util import IPv4Obj
+
+from loguru import logger
 
 ##
 ##-------------  ASA Configuration line object
@@ -81,6 +83,7 @@ class ASACfgLine(BaseCfgLine):
 
     """
 
+    @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
         """Accept an ASA line number and initialize family relationship
         attributes"""
@@ -90,11 +93,13 @@ class ASACfgLine(BaseCfgLine):
         self._mm_results = None
 
     @classmethod
+    @logger.catch(reraise=True)
     def is_object_for(cls, line="", re=re):
         ## Default object, for now
         return True
 
     @property
+    @logger.catch(reraise=True)
     def is_intf(self):
         # Includes subinterfaces
         intf_regex = r"^interface\s+(\S+.+)"
@@ -103,6 +108,7 @@ class ASACfgLine(BaseCfgLine):
         return False
 
     @property
+    @logger.catch(reraise=True)
     def is_subintf(self):
         intf_regex = r"^interface\s+(\S+?\.\d+)"
         if self.re_match(intf_regex):
@@ -110,6 +116,7 @@ class ASACfgLine(BaseCfgLine):
         return False
 
     @property
+    @logger.catch(reraise=True)
     def is_virtual_intf(self):
         intf_regex = r"^interface\s+(Loopback|Tunnel|Virtual-Template|Port-Channel)"
         if self.re_match(intf_regex):
@@ -117,6 +124,7 @@ class ASACfgLine(BaseCfgLine):
         return False
 
     @property
+    @logger.catch(reraise=True)
     def is_loopback_intf(self):
         intf_regex = r"^interface\s+(\Soopback)"
         if self.re_match(intf_regex):
@@ -124,6 +132,7 @@ class ASACfgLine(BaseCfgLine):
         return False
 
     @property
+    @logger.catch(reraise=True)
     def is_ethernet_intf(self):
         intf_regex = r"^interface\s+(.*?\Sthernet)"
         if self.re_match(intf_regex):
@@ -144,11 +153,13 @@ class ASACfgLine(BaseCfgLine):
 
 
 class BaseASAIntfLine(ASACfgLine):
+    @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.ifindex = None  # Optional, for user use
         self.default_ipv4_addr_object = IPv4Obj("0.0.0.1/32", strict=False)
 
+    @logger.catch(reraise=True)
     def __repr__(self):
         if not self.is_switchport:
             if self.ipv4_addr_object == self.default_ipv4_addr_object:
@@ -168,15 +179,18 @@ class BaseASAIntfLine(ASACfgLine):
                 self.name,
             )
 
+    @logger.catch(reraise=True)
     def reset(self, atomic=True):
         # Insert build_reset_string() before this line...
         self.insert_before(self.build_reset_string(), atomic=atomic)
 
+    @logger.catch(reraise=True)
     def build_reset_string(self):
         # ASA interfaces are defaulted like this...
         raise NotImplementedError
 
     @property
+    @logger.catch(reraise=True)
     def verbose(self):
         if not self.is_switchport:
             return (
@@ -205,12 +219,14 @@ class BaseASAIntfLine(ASACfgLine):
             )
 
     @classmethod
+    @logger.catch(reraise=True)
     def is_object_for(cls, line="", re=re):
         return False
 
     ##-------------  Basic interface properties
 
     @property
+    @logger.catch(reraise=True)
     def name(self):
         """Return a string, such as 'GigabitEthernet0/1'"""
         if not self.is_intf:
@@ -220,17 +236,20 @@ class BaseASAIntfLine(ASACfgLine):
         return name
 
     @property
+    @logger.catch(reraise=True)
     def port(self):
         """Return the interface's port number"""
         return self.ordinal_list[-1]
 
     @property
+    @logger.catch(reraise=True)
     def port_type(self):
         """Return Loopback, GigabitEthernet, etc..."""
         port_type_regex = r"^interface\s+([A-Za-z\-]+)"
         return self.re_match(port_type_regex, group=1, default="")
 
     @property
+    @logger.catch(reraise=True)
     def ordinal_list(self):
         """Return a list of numbers representing card, slot, port for this interface.  If you call ordinal_list on GigabitEthernet2/25.100, you'll get this python list of integers: [2, 25].  If you call ordinal_list on GigabitEthernet2/0/25.100 you'll get this python list of integers: [2, 0, 25].  This method strips all subinterface information in the returned value.
 
@@ -246,6 +265,7 @@ class BaseASAIntfLine(ASACfgLine):
                 return []
 
     @property
+    @logger.catch(reraise=True)
     def description(self):
         retval = self.re_match_iter_typed(
             r"^\s*description\s+(\S.+)$", result_type=str, default=""
@@ -253,6 +273,7 @@ class BaseASAIntfLine(ASACfgLine):
         return retval
 
     @property
+    @logger.catch(reraise=True)
     def manual_delay(self):
         retval = self.re_match_iter_typed(
             r"^\s*delay\s+(\d+)$", result_type=int, default=0
@@ -260,6 +281,7 @@ class BaseASAIntfLine(ASACfgLine):
         return retval
 
     @property
+    @logger.catch(reraise=True)
     def ipv4_addr_object(self):
         """Return a ccp_util.IPv4Obj object representing the address on this interface; if there is no address, return IPv4Obj('0.0.0.1/32')"""
         try:
@@ -268,6 +290,7 @@ class BaseASAIntfLine(ASACfgLine):
             return self.default_ipv4_addr_object
 
     @property
+    @logger.catch(reraise=True)
     def ipv4_standby_addr_object(self):
         """Return a ccp_util.IPv4Obj object representing the standby address on this interface; if there is no address, return IPv4Obj('0.0.0.1/32')"""
         try:
@@ -276,11 +299,13 @@ class BaseASAIntfLine(ASACfgLine):
             return self.default_ipv4_addr_object
 
     @property
+    @logger.catch(reraise=True)
     def ipv4_network_object(self):
         """Return an ccp_util.IPv4Obj object representing the subnet on this interface; if there is no address, return ccp_util.IPv4Obj('0.0.0.1/32')"""
         return self.ip_network_object
 
     @property
+    @logger.catch(reraise=True)
     def ip_network_object(self):
         try:
             return IPv4Obj(
@@ -294,6 +319,7 @@ class BaseASAIntfLine(ASACfgLine):
             raise ValueError(err_text)
 
     @property
+    @logger.catch(reraise=True)
     def has_autonegotiation(self):
         if not self.is_ethernet_intf:
             return False
@@ -307,6 +333,7 @@ class BaseASAIntfLine(ASACfgLine):
             raise ValueError
 
     @property
+    @logger.catch(reraise=True)
     def has_manual_speed(self):
         retval = self.re_match_iter_typed(
             r"^\s*speed\s+(\d+)$", result_type=bool, default=False
@@ -314,6 +341,7 @@ class BaseASAIntfLine(ASACfgLine):
         return retval
 
     @property
+    @logger.catch(reraise=True)
     def has_manual_duplex(self):
         retval = self.re_match_iter_typed(
             r"^\s*duplex\s+(\S.+)$", result_type=bool, default=False
@@ -321,6 +349,7 @@ class BaseASAIntfLine(ASACfgLine):
         return retval
 
     @property
+    @logger.catch(reraise=True)
     def is_shutdown(self):
         retval = self.re_match_iter_typed(
             r"^\s*(shut\S*)\s*$", result_type=bool, default=False
@@ -328,10 +357,12 @@ class BaseASAIntfLine(ASACfgLine):
         return retval
 
     @property
+    @logger.catch(reraise=True)
     def ip_addr(self):
         return self.ipv4_addr
 
     @property
+    @logger.catch(reraise=True)
     def ipv4_addr(self):
         """Return a string with the interface's IPv4 address, or '' if there is none"""
         retval = self.re_match_iter_typed(
@@ -342,6 +373,7 @@ class BaseASAIntfLine(ASACfgLine):
         return retval
 
     @property
+    @logger.catch(reraise=True)
     def ipv4_standby_addr(self):
         """Return a string with the interface's IPv4 address, or '' if there is none"""
         retval = self.re_match_iter_typed(
@@ -352,6 +384,7 @@ class BaseASAIntfLine(ASACfgLine):
         return retval
 
     @property
+    @logger.catch(reraise=True)
     def ipv4_netmask(self):
         """Return a string with the interface's IPv4 netmask, or '' if there is none"""
         retval = self.re_match_iter_typed(
@@ -362,6 +395,7 @@ class BaseASAIntfLine(ASACfgLine):
         return retval
 
     @property
+    @logger.catch(reraise=True)
     def ipv4_masklength(self):
         """Return an integer with the interface's IPv4 mask length, or 0 if there is no IP address on the interace"""
         ipv4_addr_object = self.ipv4_addr_object
@@ -369,6 +403,7 @@ class BaseASAIntfLine(ASACfgLine):
             return ipv4_addr_object.prefixlen
         return 0
 
+    @logger.catch(reraise=True)
     def in_ipv4_subnet(self, ipv4network=IPv4Obj("0.0.0.0/32", strict=False)):
         """Accept two string arguments for network and netmask, and return a boolean for whether this interface is within the requested subnet.  Return None if there is no address on the interface"""
         if not (str(self.ipv4_addr_object.ip) == "0.0.0.1"):
@@ -384,6 +419,7 @@ class BaseASAIntfLine(ASACfgLine):
         else:
             return None
 
+    @logger.catch(reraise=True)
     def in_ipv4_subnets(self, subnets=None):
         """Accept a set or list of ccp_util.IPv4Obj objects, and return a boolean for whether this interface is within the requested subnets."""
         if subnets is None:
@@ -397,6 +433,7 @@ class BaseASAIntfLine(ASACfgLine):
         return tmp
 
     @property
+    @logger.catch(reraise=True)
     def has_ip_pim_sparse_mode(self):
         ## NOTE: I have no intention of checking self.is_shutdown here
         ##     People should be able to check the sanity of interfaces
@@ -412,6 +449,7 @@ class BaseASAIntfLine(ASACfgLine):
         return retval
 
     @property
+    @logger.catch(reraise=True)
     def is_switchport(self):
         retval = self.re_match_iter_typed(
             r"^\s*(switchport)\s*", result_type=bool, default=False
@@ -419,6 +457,7 @@ class BaseASAIntfLine(ASACfgLine):
         return retval
 
     @property
+    @logger.catch(reraise=True)
     def has_manual_switch_access(self):
         retval = self.re_match_iter_typed(
             r"^\s*(switchport\smode\s+access)\s*$", result_type=bool, default=False
@@ -426,10 +465,12 @@ class BaseASAIntfLine(ASACfgLine):
         return retval
 
     @property
+    @logger.catch(reraise=True)
     def has_manual_switch_trunk_encap(self):
         return bool(self.manual_switch_trunk_encap)
 
     @property
+    @logger.catch(reraise=True)
     def has_manual_switch_trunk(self):
         retval = self.re_match_iter_typed(
             r"^\s*(switchport\s+mode\s+trunk)\s*$", result_type=bool, default=False
@@ -437,6 +478,7 @@ class BaseASAIntfLine(ASACfgLine):
         return retval
 
     @property
+    @logger.catch(reraise=True)
     def access_vlan(self):
         """Return an integer with the access vlan number.  Return 0, if the port has no explicit vlan configured."""
         retval = self.re_match_iter_typed(
@@ -454,6 +496,7 @@ _RE_NAMEOBJECT = re.compile(_RE_NAMEOBJECT_STR, re.VERBOSE)
 
 
 class ASAName(ASACfgLine):
+    @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
         """Accept an ASA line number and initialize family relationship
         attributes"""
@@ -468,12 +511,14 @@ class ASAName(ASACfgLine):
         self.addr = self._mm_results["addr"]
 
     @classmethod
+    @logger.catch(reraise=True)
     def is_object_for(cls, line="", re=re):
         if "name " in line[0:5].lower():
             return True
         return False
 
     @property
+    @logger.catch(reraise=True)
     def result_dict(self):
         mm_r = self._mm_results
         retval = dict()
@@ -490,12 +535,14 @@ class ASAName(ASACfgLine):
 
 
 class ASAObjNetwork(ASACfgLine):
+    @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
         """Accept an ASA line number and initialize family relationship
         attributes"""
         super().__init__(*args, **kwargs)
 
     @classmethod
+    @logger.catch(reraise=True)
     def is_object_for(cls, line="", re=re):
         if "object network " in line[0:15].lower():
             return True
@@ -508,12 +555,14 @@ class ASAObjNetwork(ASACfgLine):
 
 
 class ASAObjService(ASACfgLine):
+    @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
         """Accept an ASA line number and initialize family relationship
         attributes"""
         super().__init__(*args, **kwargs)
 
     @classmethod
+    @logger.catch(reraise=True)
     def is_object_for(cls, line="", re=re):
         if "object service " in line[0:15].lower():
             return True
@@ -533,6 +582,7 @@ _RE_NETOBJECT = re.compile(_RE_NETOBJECT_STR, re.VERBOSE)
 
 
 class ASAObjGroupNetwork(ASACfgLine):
+    @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
         """Accept an ASA line number and initialize family relationship
         attributes"""
@@ -543,12 +593,14 @@ class ASAObjGroupNetwork(ASACfgLine):
         )
 
     @classmethod
+    @logger.catch(reraise=True)
     def is_object_for(cls, line="", re=re):
         if "object-group network " in line[0:21].lower():
             return True
         return False
 
     @property
+    @logger.catch(reraise=True)
     def hash_children(self):
         ## Manually override the BaseCfgLine method since this recurses through
         ##    children
@@ -556,12 +608,14 @@ class ASAObjGroupNetwork(ASACfgLine):
         return hash(tuple(self.network_strings))  # network_strings recurses...
 
     @property
+    @logger.catch(reraise=True)
     def network_count(self):
         ## Return the number of discrete network objects covered by this group
         ## FIXME: Implement port_count for ASAObjGroupService
         return len(self.network_strings)
 
     @property
+    @logger.catch(reraise=True)
     def network_strings(self):
         """Return a list of strings which represent the address space allowed by
         this object-group"""
@@ -612,6 +666,7 @@ class ASAObjGroupNetwork(ASACfgLine):
         return retval
 
     @property
+    @logger.catch(reraise=True)
     def networks(self):
         """Return a list of IPv4Obj objects which represent the address space allowed by
         This object-group"""
@@ -647,6 +702,7 @@ _RE_PORTOBJECT = re.compile(_RE_PORTOBJ_STR, re.VERBOSE)
 
 
 class ASAObjGroupService(ASACfgLine):
+    @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
         """Accept an ASA line number and initialize family relationship
             attributes"""
@@ -671,17 +727,20 @@ class ASAObjGroupService(ASACfgLine):
             self.L4Objects_are_directional = False
 
     @classmethod
+    @logger.catch(reraise=True)
     def is_object_for(cls, line="", re=re):
         if "object-group service " in line[0:21].lower():
             return True
         return False
 
+    @logger.catch(reraise=True)
     def __repr__(self):
         return "<ASAObjGroupService {} protocol: {}>".format(
             self.name, self.protocol_type
         )
 
     @property
+    @logger.catch(reraise=True)
     def ports(self):
         """Return a list of objects which represent the protocol and ports allowed by this object-group"""
         retval = list()
@@ -764,12 +823,14 @@ class ASAObjGroupService(ASACfgLine):
 
 
 class ASAIntfLine(BaseASAIntfLine):
+    @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
         """Accept an ASA line number and initialize family relationship
         attributes"""
         super().__init__(*args, **kwargs)
 
     @classmethod
+    @logger.catch(reraise=True)
     def is_object_for(cls, line="", re=re):
         intf_regex = r"^interface\s+(\S+.+)"
         if re.search(intf_regex, line):
@@ -783,14 +844,17 @@ class ASAIntfLine(BaseASAIntfLine):
 
 
 class ASAIntfGlobal(BaseCfgLine):
+    @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.feature = "interface global"
 
+    @logger.catch(reraise=True)
     def __repr__(self):
         return "<{} # {} '{}'>".format(self.classname, self.linenum, self.text)
 
     @classmethod
+    @logger.catch(reraise=True)
     def is_object_for(cls, line="", re=re):
         if re.search("^mtu", line):
             return True
@@ -803,20 +867,24 @@ class ASAIntfGlobal(BaseCfgLine):
 
 
 class ASAHostnameLine(BaseCfgLine):
+    @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.feature = "hostname"
 
+    @logger.catch(reraise=True)
     def __repr__(self):
         return "<{} # {} '{}'>".format(self.classname, self.linenum, self.hostname)
 
     @classmethod
+    @logger.catch(reraise=True)
     def is_object_for(cls, line="", re=re):
         if re.search("^hostname", line):
             return True
         return False
 
     @property
+    @logger.catch(reraise=True)
     def hostname(self):
         retval = self.re_match_typed(r"^hostname\s+(\S+)", result_type=str, default="")
         return retval
@@ -828,9 +896,11 @@ class ASAHostnameLine(BaseCfgLine):
 
 
 class BaseASARouteLine(BaseCfgLine):
+    @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+    @logger.catch(reraise=True)
     def __repr__(self):
         return "<{} # {} '{}' info: '{}'>".format(
             self.classname,
@@ -840,6 +910,7 @@ class BaseASARouteLine(BaseCfgLine):
         )
 
     @property
+    @logger.catch(reraise=True)
     def routeinfo(self):
         ### Route information for the repr string
         if self.tracking_object_name:
@@ -854,31 +925,38 @@ class BaseASARouteLine(BaseCfgLine):
             return self.nexthop_str + " AD: " + str(self.admin_distance)
 
     @classmethod
+    @logger.catch(reraise=True)
     def is_object_for(cls, line="", re=re):
         return False
 
     @property
+    @logger.catch(reraise=True)
     def address_family(self):
         ## ipv4, ipv6, etc
         raise NotImplementedError
 
     @property
+    @logger.catch(reraise=True)
     def network(self):
         raise NotImplementedError
 
     @property
+    @logger.catch(reraise=True)
     def netmask(self):
         raise NotImplementedError
 
     @property
+    @logger.catch(reraise=True)
     def admin_distance(self):
         raise NotImplementedError
 
     @property
+    @logger.catch(reraise=True)
     def nexthop_str(self):
         raise NotImplementedError
 
     @property
+    @logger.catch(reraise=True)
     def tracking_object_name(self):
         raise NotImplementedError
 
@@ -889,6 +967,7 @@ class BaseASARouteLine(BaseCfgLine):
 
 
 class ASARouteLine(BaseASARouteLine):
+    @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if "ipv6" in self.text:
@@ -897,12 +976,14 @@ class ASARouteLine(BaseASARouteLine):
             self.feature = "ip route"
 
     @classmethod
+    @logger.catch(reraise=True)
     def is_object_for(cls, line="", re=re):
         if re.search(r"^(ip|ipv6)\s+route\s+\S", line):
             return True
         return False
 
     @property
+    @logger.catch(reraise=True)
     def address_family(self):
         ## ipv4, ipv6, etc
         retval = self.re_match_typed(
@@ -911,6 +992,7 @@ class ASARouteLine(BaseASARouteLine):
         return retval
 
     @property
+    @logger.catch(reraise=True)
     def network(self):
         if self.address_family == "ip":
             retval = self.re_match_typed(
@@ -923,6 +1005,7 @@ class ASARouteLine(BaseASARouteLine):
         return retval
 
     @property
+    @logger.catch(reraise=True)
     def netmask(self):
         if self.address_family == "ip":
             retval = self.re_match_typed(
@@ -935,6 +1018,7 @@ class ASARouteLine(BaseASARouteLine):
         return retval
 
     @property
+    @logger.catch(reraise=True)
     def network_object(self):
         try:
             if self.address_family == "ip":
@@ -945,6 +1029,7 @@ class ASARouteLine(BaseASARouteLine):
             return None
 
     @property
+    @logger.catch(reraise=True)
     def nexthop_str(self):
         if self.address_family == "ip":
             retval = self.re_match_typed(
@@ -960,11 +1045,13 @@ class ASARouteLine(BaseASARouteLine):
         return retval
 
     @property
+    @logger.catch(reraise=True)
     def admin_distance(self):
         retval = self.re_match_typed(r"(\d+)$", group=1, result_type=int, default=1)
         return retval
 
     @property
+    @logger.catch(reraise=True)
     def tracking_object_name(self):
         retval = self.re_match_typed(
             r"^ip(v6)*\s+route\s+.+?track\s+(\S+)", group=2, result_type=str, default=""
@@ -1117,6 +1204,7 @@ _RE_ACLOBJECT = re.compile(_RE_ACLOBJECT_STR, re.VERBOSE)
 
 
 class ASAAclLine(ASACfgLine):
+    @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
         """Provide attributes on Cisco ASA Access-Lists"""
         super().__init__(*args, **kwargs)
@@ -1136,6 +1224,7 @@ class ASAAclLine(ASACfgLine):
             raise ValueError("[FATAL] ASAAclLine() cannot parse text:'{}'".format(text))
 
     @classmethod
+    @logger.catch(reraise=True)
     def is_object_for(cls, line="", re=re):
         # if _RE_ACLOBJECT.search(line):
         if "access-list " in line[0:12].lower():
@@ -1143,6 +1232,7 @@ class ASAAclLine(ASACfgLine):
         return False
 
     @property
+    @logger.catch(reraise=True)
     def src_addr_method(self):
         mm_r = self._mm_results
         if mm_r["action0"] and (mm_r["action0"] == "remark"):
@@ -1177,6 +1267,7 @@ class ASAAclLine(ASACfgLine):
             )
 
     @property
+    @logger.catch(reraise=True)
     def dst_addr_method(self):
         mm_r = self._mm_results
         if mm_r["action0"] and (mm_r["action0"] == "remark"):
@@ -1210,6 +1301,7 @@ class ASAAclLine(ASACfgLine):
             )
 
     @property
+    @logger.catch(reraise=True)
     def acl_protocol_dict(self):
         mm_r = self._mm_results
         retval = dict()
@@ -1243,6 +1335,7 @@ class ASAAclLine(ASACfgLine):
             )
 
     @property
+    @logger.catch(reraise=True)
     def result_dict(self):
         mm_r = self._mm_results
         retval = dict()
