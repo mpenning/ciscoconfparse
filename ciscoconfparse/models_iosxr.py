@@ -22,8 +22,6 @@ r""" models_iosxr.py - Parse, Query, Build, and Modify IOS-style configurations
      mike [~at~] pennington [/dot\] net
 """
 
-import traceback
-import sys
 import re
 import os
 
@@ -2043,7 +2041,9 @@ class IOSRouteLine(BaseIOSRouteLine):
             return self.route_info["netmask"]
         elif self._address_family == "ipv6":
             return str(self.network_object.netmask)
-        return retval
+        else:
+            error = f"Address-family unknown: {self._address_family}"
+            raise ValueError(error)
 
     @property
     def masklen(self):
