@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 1.9.1
+
+- Released: 2023-10-10
+- Summary:
+    - Use tox.ini for github tests instead of Makefile
+
 ## Version: 1.9.0
 
 - Released: 2023-10-10
