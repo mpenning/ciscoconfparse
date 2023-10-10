@@ -5535,19 +5535,6 @@ class CiscoPassword(object):
         return dp
 
 
-if False:
-
-    def CCP(syntax="ios"):
-        if syntax == "ios":
-            return CiscoConfParse(syntax="ios")
-        elif syntax == "nxos":
-            return CiscoConfParse(syntax="nxos", ignore_blank_lines=False)
-        elif syntax == "asa":
-            return CiscoConfParse(syntax="asa", ignore_blank_lines=True)
-        elif syntax == "junos":
-            return CiscoConfParse(syntax="junos", ignore_blank_lines=True)
-
-
 def ConfigLineFactory(text="", comment_delimiter="!", syntax="ios"):
     """A factory method to assign a custom *CfgLine() object based on the contents of the input text parameter and input syntax parameter."""
     # Complicted & Buggy
