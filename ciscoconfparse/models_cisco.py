@@ -1,12 +1,5 @@
 from __future__ import absolute_import
-import traceback
 import re
-
-if False:
-    import better_exceptions
-    better_exceptions.MAX_LENGTH = None
-    better_exceptions.SUPPORTS_COLOR = True
-    better_exceptions.hook()
 
 from ciscoconfparse.errors import DynamicAddressException
 
