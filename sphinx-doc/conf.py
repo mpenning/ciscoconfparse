@@ -19,11 +19,14 @@ sys.path.insert(0, os.path.join(os.path.abspath(os.path.dirname(__file__)), ".."
 
 from sphinx.ext.autodoc import AttributeDocumenter, ClassLevelDocumenter
 import ciscoconfparse.ciscoconfparse, ciscoconfparse.ccp_abc, ciscoconfparse.ccp_util
+from loguru import logger
 
 try:
     import sphinx_bootstrap_theme
 except:
-    pass
+    error = f"Could not load sphinx_bootstrap_theme"
+    logger.error(error)
+    raise OSError(error)
 
 from ciscoconfparse.ciscoconfparse import __author_email__
 from ciscoconfparse.ciscoconfparse import __author__
