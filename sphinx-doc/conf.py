@@ -24,7 +24,7 @@ from loguru import logger
 try:
     import sphinx_bootstrap_theme
 except:
-    error = f"Could not load sphinx_bootstrap_theme"
+    error = "Could not load sphinx_bootstrap_theme"
     logger.error(error)
     raise OSError(error)
 
