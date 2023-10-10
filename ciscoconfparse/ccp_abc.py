@@ -612,8 +612,7 @@ class BaseCfgLine(metaclass=ABCMeta):
                 logger.debug("    Deleting <IOSCfgLine(line # {})>.".format(linenum))
             del self.confobj._list[linenum]
 
-        # W0212: Access to a protected attribute (i.e. with leading underscore)
-        self.confobj._reassign_linenums()  # noqa: W0212
+        self.confobj.reassign_linenums()
         return True
 
     # On BaseCfgLine()
