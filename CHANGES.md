@@ -4,9 +4,16 @@
 - Summary:
     - Insert something here
 
+
+## Version: 1.8.1
+
+- Released: 2023-10-10
+- Summary:
+    - Use dnspython 2.3.0 instead of 2.4.2 to avoid the min python version of 3.8 in 2.4.2
+
 ## Version: 1.8.0
 
-- Released: 2023-10-09
+- Released: 2023-10-10
 - Summary:
     - Rewrite 'dev_tools/deploy_docs.py' as 'dev_tools/deploy_docs' in go
     - Disable better_exceptions
