@@ -2832,9 +2832,15 @@ end""".splitlines()
       syntax="ios",
       ignore_blank_lines=True,
     )
-    parse.find_parents_w_child(parentspec="interface\s+Giga", childspec=" logging event link-status")
-    parse.find_parents_w_child(parentspec="interface\s+Giga", childspec=" logging event bundle-status")
-    parse.find_parents_w_child(parentspec="interface\s+Giga", childspec=" logging event spanning-tree")
+
+    result_01 = parse.find_parents_w_child(parentspec="interface\s+Giga", childspec=" logging event link-status")
+    assert len(result_01) == 1
+
+    result_02 = parse.find_parents_w_child(parentspec="interface\s+Giga", childspec=" logging event bundle-status")
+    assert len(result_02) == 1
+
+    result_03 = parse.find_parents_w_child(parentspec="interface\s+Giga", childspec=" logging event spanning-tree")
+    assert len(result_03) == 1
 
 
 def test_has_line_with_all_syntax():

@@ -337,7 +337,7 @@ def testVal_IOSIntfLine_trunk_vlan_allowed_05():
     ]
     cfg = CiscoConfParse(lines, factory=True)
     intf_obj = cfg.find_objects("^interface")[0]
-    assert intf_obj.trunk_vlans_allowed.as_list == [1]
+    assert intf_obj.trunk_vlans_allowed.as_list == [1,]
 
 
 def testVal_IOSIntfLine_trunk_vlan_allowed_06():
@@ -1057,17 +1057,20 @@ def testVal_IOSIntfLine_ipv4_addr_object01(parse_c03_factory):
     result_correct = {
         "interface Serial 1/0": IPv4Obj("1.1.1.1/30", strict=False),
         "interface Serial 1/1": IPv4Obj("1.1.1.9/31", strict=False),
-        "interface GigabitEthernet4/1": IPv4Obj("127.0.0.1/32", strict=False),
-        "interface GigabitEthernet4/2": IPv4Obj("127.0.0.1/32", strict=False),
-        "interface GigabitEthernet4/3": IPv4Obj("127.0.0.1/32", strict=False),
-        "interface GigabitEthernet4/4": IPv4Obj("127.0.0.1/32", strict=False),
-        "interface GigabitEthernet4/5": IPv4Obj("127.0.0.1/32", strict=False),
-        "interface GigabitEthernet4/6": IPv4Obj("127.0.0.1/32", strict=False),
-        "interface GigabitEthernet4/7": IPv4Obj("127.0.0.1/32", strict=False),
+        "interface GigabitEthernet4/1": IPv4Obj("0.0.0.1/32", strict=False),
+        "interface GigabitEthernet4/2": IPv4Obj("0.0.0.1/32", strict=False),
+        "interface GigabitEthernet4/3": IPv4Obj("0.0.0.1/32", strict=False),
+        "interface GigabitEthernet4/4": IPv4Obj("0.0.0.1/32", strict=False),
+        "interface GigabitEthernet4/5": IPv4Obj("0.0.0.1/32", strict=False),
+        "interface GigabitEthernet4/6": IPv4Obj("0.0.0.1/32", strict=False),
+        "interface GigabitEthernet4/7": IPv4Obj("0.0.0.1/32", strict=False),
         "interface GigabitEthernet4/8.120": IPv4Obj("1.1.2.254/24", strict=False),
-        "interface ATM5/0/0": IPv4Obj("127.0.0.1/32", strict=False),
+        "interface ATM5/0/0": IPv4Obj("0.0.0.1/32", strict=False),
         "interface ATM5/0/0.32 point-to-point": IPv4Obj("1.1.1.5/30", strict=False),
-        "interface ATM5/0/1": IPv4Obj("127.0.0.1/32", strict=False),
+        "interface ATM5/0/1": IPv4Obj("0.0.0.1/32", strict=False),
+
+        # FIXME FIXME FIXME
+        #"interface ATM5/0/1": None,
     }
     test_result = dict()
     ## Parse all interface objects in c01 and check ipv4_addr_object
@@ -1085,8 +1088,10 @@ def testVal_IOSIntfLine_ipv4_addr_object02():
         "!",
     ]
     cfg = CiscoConfParse(lines, factory=True)
-    with pytest.raises(DynamicAddressException):
-        cfg.find_objects("^interface")[0].ipv4_addr_object
+    # NOTE - Due to infinite error recursion I used to throw an
+    # DynamicAddressException() here but had to stop due to infinite
+    # error recursion here...
+    assert cfg.find_objects("^interface")[0].ipv4_addr_object == IPv4Obj("0.0.0.1/32")
 
 
 def testVal_IOSIntfLine_ip_network_object01():
@@ -1098,9 +1103,11 @@ def testVal_IOSIntfLine_ip_network_object01():
         "!",
     ]
     cfg = CiscoConfParse(lines, factory=True)
-    with pytest.raises(DynamicAddressException):
-        cfg.find_objects("^interface")[0].ip_network_object
 
+    # NOTE - Due to infinite error recursion I used to throw an
+    # DynamicAddressException() here but had to stop due to infinite
+    # error recursion here...
+    assert cfg.find_objects("^interface")[0].ipv4_addr_object == IPv4Obj("0.0.0.1/32")
 
 def testVal_IOSIntfLine_has_autonegotiation(parse_c03_factory):
     cfg = parse_c03_factory

@@ -226,6 +226,14 @@ def testIPv4Obj_set_masklen01():
         assert test_object.prefixlen == result_correct_masklen
         assert test_object.prefixlength == result_correct_masklen
 
+def testIPv4Obj_network_offset():
+    test_object = IPv4Obj("192.0.2.28/24")
+    assert test_object.network_offset == 28
+
+def testIPv4Obj_set_network_offset():
+    test_object = IPv4Obj("192.0.2.28/24")
+    test_object.network_offset = 200
+    assert test_object == IPv4Obj("192.0.2.200/24")
 
 def testIPv4Obj_attributes_01():
     ## Ensure that attributes are accessible and pass the smell test
@@ -251,9 +259,10 @@ def testIPv4Obj_attributes_01():
         ("netmask", IPv4Address("255.255.255.0")),
         ("network", IPv4Network("1.0.0.0/24")),
         ("network_object", IPv4Network("1.0.0.0/24")),
+        ("network_offset", 1),
         ("prefixlen", 24),
         ("prefixlength", 24),
-        ("numhosts", 256),
+        ("numhosts", 254),
         ("version", 4),
     ]
     for attribute, result_correct in results_correct:
@@ -333,32 +342,10 @@ def test_ip_factory_inputs_02():
     with pytest.raises(ipaddress.AddressValueError):
         ip_factory("FE80:AAAA::DEAD:BEEEEEEEEEEF", stdlib=False, mode="auto_detect")
 
-
-def testIPv6Obj_attributes():
+def testIPv6Obj_attributes_01():
     ## Ensure that attributes are accessible and pass the smell test
     test_object = IPv6Obj("2001::dead:beef/64")
     results_correct = [
-        ("ip", IPv6Address("2001::dead:beef")),
-        ("ip_object", IPv6Address("2001::dead:beef")),
-        ("netmask", IPv6Address("ffff:ffff:ffff:ffff::")),
-        ("prefixlen", 64),
-        ("network", IPv6Network("2001::/64")),
-        ("network_object", IPv6Network("2001::/64")),
-        ("hostmask", IPv6Address("::ffff:ffff:ffff:ffff")),
-        ("numhosts", 18446744073709551616),
-        ("version", 6),
-        ("is_reserved", False),
-        ("is_multicast", False),
-        # ("is_private", False),  # FIXME: disabling this for now...
-        # py2.7 and py3.x produce different results
-        ("as_cidr_addr", "2001::dead:beef/64"),
-        ("as_cidr_net", "2001::/64"),
-        ("as_decimal", 42540488161975842760550356429036175087),
-        ("as_decimal_network", 42540488161975842760550356425300246528),
-        (
-            "as_hex_tuple",
-            ("2001", "0000", "0000", "0000", "0000", "0000", "dead", "beef"),
-        ),
         (
             "as_binary_tuple",
             (
@@ -372,10 +359,42 @@ def testIPv6Obj_attributes():
                 "1011111011101111",
             ),
         ),
+        ("as_cidr_addr", "2001::dead:beef/64"),
+        ("as_cidr_net", "2001::/64"),
+        ("as_decimal", 42540488161975842760550356429036175087),
+        ("as_decimal_network", 42540488161975842760550356425300246528),
+        ("ip", IPv6Address("2001::dead:beef")),
+        ("ip_object", IPv6Address("2001::dead:beef")),
+        ("netmask", IPv6Address("ffff:ffff:ffff:ffff::")),
+        ("prefixlen", 64),
+        ("network", IPv6Network("2001::/64")),
+        ("network_object", IPv6Network("2001::/64")),
+        ("network_offset", 3735928559),
+        ("hostmask", IPv6Address("::ffff:ffff:ffff:ffff")),
+        ("numhosts", 18446744073709551614),
+        ("version", 6),
+        ("is_multicast", False),
+        ("is_link_local", False),
+        ("is_private", True),
+        ("is_reserved", False),
+        ("is_site_local", False),
+        (
+            "as_hex_tuple",
+            ("2001", "0000", "0000", "0000", "0000", "0000", "dead", "beef"),
+        ),
     ]
     for attribute, result_correct in results_correct:
 
         assert getattr(test_object, attribute) == result_correct
+ 
+def testIPv6Obj_network_offset_01():
+    test_object = IPv6Obj("2001::dead:beef/64")
+    assert test_object.network_offset == 3735928559
+
+def testIPv6Obj_set_network_offset_01():
+    test_object = IPv6Obj("2001::dead:beef/64")
+    test_object.network_offset = 200
+    assert test_object == IPv6Obj("2001::c8/64")
 
 
 def testIPv4Obj_sort_01():
@@ -587,7 +606,7 @@ def test_collapse_addresses_02():
 
 def test_dns_lookup():
     # Use my hostname to test...
-    test_hostname = "www.pennington.net"
+    test_hostname = "pennington.net"
     result_correct_address = "65.19.187.2"
     result_correct = {"addrs": [result_correct_address], "name": test_hostname, "error": "", "record_type": "A"}
     try:

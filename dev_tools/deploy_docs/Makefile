@@ -8,6 +8,8 @@ COL_YELLOW=\033[0;33m
 COL_RED=\033[0;31m
 COL_END=\033[0;0m
 
+GOOS=linux
+
 # Good primer on Makefile variables...
 #    https://earthly.dev/blog/makefile-variables/
 GO_SOURCE_FILE=deploy_docs.go
@@ -20,26 +22,48 @@ PLATFORM := $(shell perl -e '`uname -a` =~ /^(\w+).*?$$/;print("$$1");')
 .SILENT: build
 .DEFAULT_GOAL := build
 
+# 'make release' will perform the ultimate binary packing (sometimes
+#     resulting in a 70% smaller binary!!!); however, 'upx' is really slow
+release:
+	make build
+	upx --ultra-brute bin/deploy_docs
+.PHONY: release
+
 # Ref -> https://stackoverflow.com/a/26737258/667301
 build:
 	@echo "$(COL_GREEN)>> compiling the project.$(COL_END)"
 	# Very Important... do not skip the backup step here...
 	mkdir -p $(GO_BIN_DIR)
 	make backup
-	make fmt
+	-make fmt
 	make dep
-	#make lint
-	# See this link for -ldflags and reducing binary size...
-	#     https://stackoverflow.com/a/21135705/667301
+	make lint
+	go build $(GO_SOURCE_FILE)
+	strip deploy_docs
+	-make lint
+	cd src && go vet .
+	############################################################################
+	#
+	# Replace this line with PLATFORM detection...
+	#
+	#go build -o bin/deploy_docs -ldflags="-s -w" $(GO_SOURCE_FILE)
+	#
+	############################################################################
 	if [ "$(PLATFORM)" = "Linux" ]; then \
-		GOARCH=amd64 GOOS=linux go build -ldflags "-s -w" -o $(GO_BIN_DIR)/$(GO_BINARY_FILE) $(GO_SOURCE_FILE); \
+		GOARCH=amd64 GOOS=linux go build -ldflags "-s -w" -o ./$(GO_BINARY_FILE) $(GO_SOURCE_FILE); \
 	elif [ "$(PLATFORM)" = "Darwin" ]; then \
-		GOARCH=amd64 GOOS=darwin go build -ldflags "-s -w" -o $(GO_BIN_DIR)/$(GO_BINARY_FILE) $(GO_SOURCE_FILE); \
+		GOARCH=amd64 GOOS=darwin go build -ldflags "-s -w" -o ./$(GO_BINARY_FILE) $(GO_SOURCE_FILE); \
 	else \
 		echo "$(COL_RED)Unknown PLATFORM -> $(PLATFORM)$(COL_END)"; \
 	fi
-	#strip $(GO_BIN_DIR)/$(GO_BINARY_FILE)
+	make release
 .PHONY: build
+
+deploy:
+	make build
+	cd bin && ./deploy_docs
+	make clean
+.PHONY: deploy
 
 fmt:
 	@echo "$(COL_GREEN)>> reformatting with 'go fmt'$(COL_END)"
@@ -68,19 +92,23 @@ lint:
 	@echo "$(COL_CYAN)>>     running gocritic$(COL_END)"
 	gocritic check -enableAll $(GO_SOURCE_FILE)
 	@echo "$(COL_CYAN)>>     running staticcheck$(COL_END)"
-	staticcheck .
+	staticcheck src/*go
 	@echo "$(COL_CYAN)>>     running errcheck$(COL_END)"
 	errcheck -verbose $(GO_SOURCE_FILE)
 .PHONY: lint
 
 dep:
 	@echo "$(COL_GREEN)>> getting deploy_docs dependencies$(COL_END)"
+<<<<<<< HEAD
 	# Remove unused dependencies that may be lingering in go.mod...
 	go mod tidy
 	# Get required dependencies...
+||||||| b4f0f68
+=======
+	go mod tidy
+>>>>>>> develop
 	go get github.com/melbahja/goph@latest
-	go get go.uber.org/zap
-	go get go.uber.org/zap/zapcore
+	go get github.com/gleich/logoru@latest
 .PHONY: dep
 
 backup:
@@ -91,6 +119,17 @@ backup:
 	# Delete backups older than 30 days... dont crash if directory is empty
 	-find ./_bak/*tgz -maxdepth 1 -type f -mtime +30 -delete
 	# Create a timestamped backup tarball... exclude the _bak directory
+<<<<<<< HEAD
 	tar --exclude=$(GO_BIN_DIR) --exclude=_bak -zcv -f _bak/$(shell date "+%Y%m%d_%H.%M.%S").tgz .
+||||||| b4f0f68
+	tar --exclude=_bak -zcv -f _bak/$(shell date "+%Y%m%d_%H.%M.%S").tgz .
+=======
+	tar --exclude=bin --exclude=_bak -zcv -f _bak/$(shell date "+%Y%m%d_%H.%M.%S").tgz .
+>>>>>>> develop
 .PHONY: backup
 
+clean:
+	@echo "$(COL_GREEN)>> cleaning up bin/deploy_docs and other build artifacts.$(COL_END)"
+	# Delete this binary because it's just huge and we can rebuild from src...
+	-rm -rf bin/
+.PHONY: clean

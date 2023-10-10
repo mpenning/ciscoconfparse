@@ -75,6 +75,17 @@ copies of CiscoConfParse source-code must also be licensed as GPLv3][45].
 Dear [Cisco Systems][27]: please consider porting your improvements back into
 the [`github ciscoconfparse repo`](https://github.com/mpenning/ciscoconfparse).
 
+Dependencies
+------------
+
+- [Python 3](https://python.org/)
+- [passlib](https://github.com/glic3rinu/passlib)
+- [toml](https://github.com/uiri/toml)
+- [dnspython](https://github.com/rthalley/dnspython)
+- [loguru](https://github.com/Delgan/loguru)
+- [deprecated](https://github.com/tantale/deprecated)
+- [better-exceptions](https://github.com/Qix-/better-exceptions)
+
 Is this a tool, or is it artwork?
 ---------------------------------
 

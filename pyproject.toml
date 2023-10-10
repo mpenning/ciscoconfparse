@@ -23,7 +23,7 @@ requires-python = ">=3.7.0"
 
 [tool.poetry]
 name = "ciscoconfparse"
-version = "1.7.25"
+version = "1.8.0"
 description = "Parse, Audit, Query, Build, and Modify Cisco IOS-style and JunOS-style configs"
 license = "GPL-3.0-only"
 authors = [
@@ -79,11 +79,11 @@ classifiers=[
 [tool.poetry.dependencies]
 python = ">=3.7.2,<4.0.0"
 passlib = "^1.7.4"
-dnspython = "^2.2.0"
-loguru = "0.7.0"
+dnspython = "^2.4.2"
+loguru = "0.7.2"
 toml = ">=0.10.2"
-deprecat = "2.1.1"
-better_exceptions = "0.3.3"
+deprecated = "1.2.14"
+better_exceptions = "0.2.1"
 
 [tool.poetry.urls]
 source = "https://github.com/mpenning/ciscoconfparse"
