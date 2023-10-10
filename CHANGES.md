@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 1.9.0
+
+- Released: 2023-10-10
+- Summary:
+    - Require minimum 4.0.0 >= python >= 3.8
+
 ## Version: 1.8.2
 
 - Released: 2023-10-10
