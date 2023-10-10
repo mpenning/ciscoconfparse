@@ -4,6 +4,23 @@
 - Summary:
     - Insert something here
 
+## Version: 1.9.3
+
+- Released: 2023-10-10
+- Summary:
+    - Remove dead code
+    - Add loguru.logger.catch() in various places
+    - Rename a method
+
+## Version: 1.9.2
+
+- Released: 2023-10-10
+- Summary:
+    - Modify tox.ini
+    - Add .codacy.yml
+    - Add .github/workflows/lock_issue_pr.yml
+    - Remove .github/workflows/workflows.yml
+
 ## Version: 1.9.1
 
 - Released: 2023-10-10
