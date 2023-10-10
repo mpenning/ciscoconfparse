@@ -1,6 +1,6 @@
 r""" models_junos.py - Parse, Query, Build, and Modify Junos-style configurations
 
-     Copyright (C) 2021-2022 David Michael Pennington
+     Copyright (C) 2021-2023 David Michael Pennington
      Copyright (C) 2020-2021 David Michael Pennington at Cisco Systems
      Copyright (C) 2019      David Michael Pennington at ThousandEyes
      Copyright (C) 2015-2019 David Michael Pennington at Samsung Data Services
@@ -31,16 +31,8 @@ r""" models_junos.py - Parse, Query, Build, and Modify Junos-style configuration
 
 import re
 
-if False:
-    import better_exceptions
-    better_exceptions.MAX_LENGTH = None
-    better_exceptions.SUPPORTS_COLOR = True
-    better_exceptions.hook()
-
 from ciscoconfparse.ccp_abc import BaseCfgLine
 from ciscoconfparse.ccp_util import IPv4Obj
-
-
 
 ##
 ##-------------  Junos Configuration line object
