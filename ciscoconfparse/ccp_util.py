@@ -1473,7 +1473,6 @@ class IPv4Obj(object):
         """Returns the IP version of the object as an integer.  i.e. 4"""
         return 4
 
-
     # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     @property
