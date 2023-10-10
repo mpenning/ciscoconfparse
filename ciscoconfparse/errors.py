@@ -1,6 +1,6 @@
 r""" errors.py - Parse, Query, Build, and Modify IOS-style configs
 
-     Copyright (C) 2021-2022 David Michael Pennington
+     Copyright (C) 2021-2023 David Michael Pennington
      Copyright (C) 2020-2021 David Michael Pennington at Cisco Systems
      Copyright (C) 2019      David Michael Pennington at ThousandEyes
      Copyright (C) 2018-2019 David Michael Pennington at Samsung Data Services
@@ -21,12 +21,6 @@ r""" errors.py - Parse, Query, Build, and Modify IOS-style configs
      If you need to contact the author, you can do so by emailing:
      mike [~at~] pennington [/dot\] net
 """
-
-if False:
-    import better_exceptions
-    better_exceptions.MAX_LENGTH = None
-    better_exceptions.SUPPORTS_COLOR = True
-    better_exceptions.hook()
 
 class BaseError(Exception):
     def __init__(self, msg=""):
