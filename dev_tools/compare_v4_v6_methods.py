@@ -9,11 +9,14 @@ environ = os.environ['VIRTUAL_ENV']
 print("ENV", environ)
 
 from ciscoconfparse import IPv4Obj, IPv6Obj
+from loguru import logger
 
 try:
     print("PYTHONPATH", str(os.environ['PYTHONPATH']))
-except:
-    pass
+except Exception as eee:
+    error = f"{eee}: Could not find PYTHONPATH."
+    logger.error(error)
+    raise OSError(error)
 
 v4_list = dir(IPv4Obj("127.0.0.1"))
 v6_list = dir(IPv6Obj("::1"))
