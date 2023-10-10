@@ -35,10 +35,11 @@ from ipaddress import IPv4Network, IPv6Network, IPv4Address, IPv6Address
 from ipaddress import collapse_addresses as ipaddr_collapse_addresses
 from ipaddress import AddressValueError
 
-import better_exceptions
-better_exceptions.MAX_LENGTH = None
-better_exceptions.SUPPORTS_COLOR = True
-better_exceptions.hook()
+if False:
+    import better_exceptions
+    better_exceptions.MAX_LENGTH = None
+    better_exceptions.SUPPORTS_COLOR = True
+    better_exceptions.hook()
 
 from dns.exception import DNSException
 from dns.resolver import Resolver

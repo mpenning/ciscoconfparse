@@ -1,9 +1,10 @@
 from __future__ import absolute_import
 
-import better_exceptions
-better_exceptions.MAX_LENGTH = None
-better_exceptions.SUPPORTS_COLOR = True
-better_exceptions.hook()
+if False:
+    import better_exceptions
+    better_exceptions.MAX_LENGTH = None
+    better_exceptions.SUPPORTS_COLOR = True
+    better_exceptions.hook()
 
 r""" protocol_values.py - Parse, Query, Build, and Modify IOS-style configurations
 
