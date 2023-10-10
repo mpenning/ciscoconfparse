@@ -112,8 +112,8 @@ Docs
 ----
 
 - Blogs
-  - Kirk Byers published a [a ciscoconfparse blog piece](https://pynet.twb-tech.com/blog/parsing-configurations-w-ciscoconfparse.html)
-  - Henry Ölsner published a [a ciscoconfparse blog piece](https://codingnetworker.com/2016/06/parse-cisco-ios-configuration-ciscoconfparse/)
+  - Kirk Byers published [a ciscoconfparse blog piece](https://pynet.twb-tech.com/blog/parsing-configurations-w-ciscoconfparse.html)
+  - Henry Ölsner published [a ciscoconfparse blog piece](https://codingnetworker.com/2016/06/parse-cisco-ios-configuration-ciscoconfparse/)
 - The latest copy of the docs are [archived on the web][15]
 - There is also a [CiscoConfParse Tutorial][16]
 
