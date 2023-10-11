@@ -2419,8 +2419,10 @@ class L4Object(object):
 
         try:
             port_spec = port_spec.strip()
-        except BaseException:
-            port_spec = port_spec
+        except BaseException as eee:
+            error = f"{eee} while stripping whitespace from `port_spec`."
+            logger.error(error)
+            raise ValueError(error)
 
         if syntax == "asa":
             if protocol == "tcp":
