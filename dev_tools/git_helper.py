@@ -3,6 +3,7 @@ A git wrapper to simplify git operations.
 """
 
 # nosec - Ignore security warnings
+from __future__ import absolute_import
 from subprocess import run, Popen, PIPE, STDOUT  # nosec
 from argparse import ArgumentParser
 import fileinput
@@ -12,7 +13,7 @@ import os
 import re
 
 sys.path.insert(0, "../")
-from ciscoconfparse.ccp_util import run_this_posix_command
+import ciscoconfparse
 from loguru import logger as loguru_logger
 
 # Prevent stddout / stderr buffering issues...
@@ -315,7 +316,7 @@ def check_exists_tag_local(tag_value=None):
     )
 
     cmd = "git tag"
-    return_code, stdout, stderr = run_this_posix_command(cmd)
+    return_code, stdout, stderr = ciscoconfparse.ccp_util.run_this_posix_command(cmd)
 
     for line in stdout.splitlines():
         if tag_value.strip() == line.strip():
