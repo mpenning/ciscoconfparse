@@ -2942,6 +2942,12 @@ class CiscoRange(MutableSequence):
 
     def __init__(self, text="", result_type=str):
         super().__init__()
+
+        if not isinstance(text, str):
+            error = f'text="{text}" must be a string.'
+            loguru.error(error)
+            raise ValueError(error)
+
         self.text = text
         self.result_type = result_type
         if text:
@@ -2949,7 +2955,7 @@ class CiscoRange(MutableSequence):
                 self.line_prefix,
                 self.slot_prefix,
                 self.range_text,
-            ) = self._parse_range_text()
+            ) = self.parse_range_text()
             self._list = self._range()
         else:
             self.line_prefix = ""
@@ -3000,7 +3006,7 @@ class CiscoRange(MutableSequence):
         self.insert(list_idx, val)
         return self
 
-    def _normalize_and_split_text(self):
+    def normalize_and_split_text(self):
         """Split self.text on commas, then remove all common string prefixes in the list (except on the first element).  Return a 'normalized' list of strings with common_prefix removed except on the first element in the list (i.e. "Eth1/1,Eth1/4,Eth1/7" -> ["Eth1/1", "4", "7"])."""
         tmp = self.text.split(",")
 
@@ -3031,8 +3037,8 @@ class CiscoRange(MutableSequence):
             tmp = _tmp
         return tmp
 
-    def _parse_range_text(self):
-        tmp = self._normalize_and_split_text()
+    def parse_range_text(self):
+        tmp = self.normalize_and_split_text()
 
         mm = _RGX_CISCO_RANGE.search(tmp[0])
 
