@@ -187,9 +187,6 @@ def ccp_logger_control(
     action="",
     handler_id=None,
     enqueue=True,
-    # rotation="00:00",
-    # retention="1 month",
-    # compression="zip",
     level="DEBUG",
     colorize=True,
     debug=0,
@@ -202,25 +199,17 @@ def ccp_logger_control(
     -------
     """
 
-    msg = "ccp_logger_control() was called with sink='{}', action='{}', handler_id='{}', enqueue={}, level='{}', colorize={}, debug={}".format(
-        sink,
-        action,
-        handler_id,
-        enqueue,
-        # rotation,
-        # retention,
-        # compression,
-        level,
-        colorize,
-        debug,
-    )
+    msg = f"ccp_logger_control() was called with sink='{sink}', action='{action}', handler_id='{handler_id}', enqueue={enqueue}, level='{level}', colorize={colorize}, debug={debug}"
     if debug > 0:
         logger.info(msg)
 
     if not isinstance(action, str):
         raise ValueError
 
-    assert action in ("remove", "add", "disable", "enable", "",)
+    if not action in set({"remove", "add", "disable", "enable",}):
+        error = f"{action} is invalid."
+        logger.critical(error)
+        raise ValueError(error)
 
     package_name = "ciscoconfparse"
 
@@ -228,8 +217,6 @@ def ccp_logger_control(
         # Require an explicit loguru handler_id to remove...
         if not isinstance(handler_id, int):
             raise ValueError
-
-
         logger.remove(handler_id)
         return True
 
@@ -262,15 +249,8 @@ def ccp_logger_control(
         logger.enable(package_name)
         return True
 
-    elif action == "":
-        raise ValueError(
-            "action='' is not supported.  Please use a valid action keyword"
-        )
-
     else:
-        raise NotImplementedError(
-            "action='%s' is an unsupported logger action" % action
-        )
+        raise NotImplementedError(f"action='{action}' is an unsupported logger action")
 
 
 @logger.catch(reraise=True)
