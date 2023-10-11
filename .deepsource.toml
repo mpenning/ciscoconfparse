@@ -1,12 +1,16 @@
 version = 1
 
-test_patterns = ["tests/**"]
+[[analyzers]]
+name = "test-coverage"
 
-exclude_patterns = ["sphinx-doc/**"]
+[[analyzers]]
+name = "go"
+
+  [analyzers.meta]
+  import_root = "github.com/mpenning/ciscoconfparse"
 
 [[analyzers]]
 name = "python"
-enabled = true
 
   [analyzers.meta]
   runtime_version = "3.x.x"
