@@ -546,7 +546,7 @@ def git_tag_and_push(args):
         # args.tag is a new tag value...
         if args.tag is True:
             # Create a local git tag at git HEAD
-            git_tag_commit_version(args)
+            git_tag_commit_version()
 
     assert args.branch == "main"
     git_checkout_branch(args)
