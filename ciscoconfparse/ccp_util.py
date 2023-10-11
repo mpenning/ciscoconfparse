@@ -3013,35 +3013,52 @@ class CiscoRange(MutableSequence):
             logger.error(error)
             raise ValueError(error)
 
-        individual_intf_components = text.split(",")
+        nondigit_intf_prefix = None
+        individual_intf_component_list = text.split(",")
 
         # Handle case of "Eth1/1,Eth1/5-7"... remove the common_prefix...
-        common_intf_str_prefix = os.path.commonprefix(individual_intf_components)
-
-        # Ensure that we don't capture trailing digits into common_prefix
-        mm = re.search(r"^(?P<intf_name_prefix>\D.*?)\d*$", common_intf_str_prefix.strip())
+        tmp_intf_str_prefix = os.path.commonprefix(individual_intf_component_list)
+        mm = re.search(r"(?P<intf_name>\D+).*?[0-9]*$", tmp_intf_str_prefix)
         if mm is not None:
-            common_intf_name_part = mm.groupdict()["intf_name_prefix"]
-            # Keep the common_prefix on the first element...
-            _component_list = [individual_intf_components[0]]
+            nondigit_intf_prefix = mm.groupdict()["intf_name"].strip()
+        else:
+            error = f"Invalid interface list: {text}"
+            logger.critical(error)
+            raise ValueError(error)
 
-            # Remove the common_prefix from all other list elements...
-            for idx, ii in enumerate(individual_intf_components):
-                if idx > 0:
+        delimiter_len = -1
+        intf_components = list()
+        for idx, ii in enumerate(individual_intf_component_list):
 
-                    # Unicode is the only type with .isnumeric()...
-                    prefix_removed = ii[len(common_intf_name_part):]
+            logger.debug("FOO", ii)
 
-                    if prefix_removed.isnumeric():
-                        _component_list.append(prefix_removed)
-                    elif re.search(r"^\d+\s*-\s*\d+$", prefix_removed.strip()):
-                        _component_list.append(prefix_removed)
-                    else:
-                        ERROR = f"CiscoRange() couldn't parse '{self.text}'"
-                        raise ValueError(ERROR)
+            # Ensure that we don't capture digits and delimiter into common_prefix
+            allm = re.search(rf"^(?P<intf_name_prefix>{nondigit_intf_prefix})*\D*?(?P<intf_delimiter>\d+.*)$", ii, re.I)
+            if allm is not None:
 
-            individual_intf_components = _component_list
-        return individual_intf_components
+                intf_component_delimiter = list()
+                # Split up 0/0/1 into [0, 0, 1]...
+                for jj in "/".split(allm.groupdict()["intf_delimiter"]):
+                    intf_component_delimiter.append(int(jj))
+                intf_components.append(intf_component_delimiter)
+
+                if idx==0:
+                    delimiter_len = len(intf_component_delimiter)
+
+            else:
+                error = f"Invalid interface component: {ii}"
+                logger.critical(error)
+                raise ValueError(error)
+
+        for ii in intf_components:
+            if len(ii) != delimiter_len:
+                error = f"Inconsistent delimiter length: {ii}, expected length={delimiter_len}"
+                logger.critical(error)
+                raise ValueError(error)
+
+        all_components = ["/".join(ii) for ii in sorted(intf_components)]
+        logger.warning(all_components)
+        return nondigit_intf_prefix, all_components
 
     def parse_range_text(self, text=None):
         if not isinstance(text, str):
@@ -3049,7 +3066,7 @@ class CiscoRange(MutableSequence):
             logger.error(error)
             raise ValueError(error)
 
-        tmp = self.normalize_and_split_text(text=text)
+        intf_prefix, intf_lists = self.normalize_and_split_text(text=text)
 
         mm = _RGX_CISCO_RANGE.search(tmp[0])
 
