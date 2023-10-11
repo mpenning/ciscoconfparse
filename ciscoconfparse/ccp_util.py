@@ -206,7 +206,7 @@ def ccp_logger_control(
     if not isinstance(action, str):
         raise ValueError
 
-    if not action in set({"remove", "add", "disable", "enable",}):
+    if action not in set({"remove", "add", "disable", "enable",}):
         error = f"{action} is invalid."
         logger.critical(error)
         raise ValueError(error)
