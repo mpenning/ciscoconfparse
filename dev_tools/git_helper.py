@@ -633,16 +633,20 @@ def main(args):
         assert get_branch_name(args) == "main"
         ## FIXME git merge command below does NOT merge anything...
         raise NotImplementedError("git merge functionality is broken... it cannot merge the develop branch into main")
-        stdout, stderr = run_cmd("git merge {0} -m '{1}'".format(original_branch_name, args.message), debug=args.debug)
-        stdout, stderr = run_cmd("git push origin main", debug=args.debug)
+
+        cmd = f"git merge {original_branch_name} -m '{args.message}'"
+        return_code, stdout, stderr = ciscoconfparse.ccp_util.run_this_posix_command(cmd)
+
+        cmd = "git push origin main"
+        return_code, stdout, stderr = ciscoconfparse.ccp_util.run_this_posix_command(cmd)
 
         if args.tag is True:
-            stdout, stderr = run_cmd("git push origin main --tags", debug=args.debug)
+            cmd = "git push origin main --tags"
+            return_code, stdout, stderr = ciscoconfparse.ccp_util.run_this_posix_command(cmd)
 
         if original_branch_name != "main":
             args.branch = original_branch_name
             git_checkout_branch(args)
-
 
 if __name__ == "__main__":
     args = parse_args()
