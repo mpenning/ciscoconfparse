@@ -4,6 +4,7 @@ import sys
 import os
 
 from ciscoconfparse import CiscoConfParse
+from loguru import logger
 
 """Demo of how to build a lazy Cisco IOS audit for common recommended config"""
 
@@ -75,15 +76,13 @@ for filename in CONFIG_PATH:
     print(os.linesep.join(parse.sync_diff(RECOMMENDED, '', remove_lines=False)))
 
     # Default enable secret config...
-    default_enab_sec = 'enable secret {0}'.format(secret)
+    default_enab_sec = f'enable secret {secret}'
     try:
-        # Build an enable secret string...
-        enab_sec_regex = r'^enable\s+secret\s+(\d+)\s+\S+'
         # Get the encryption level as an int...
-        enab_sec_level = parse.find_objects(enab_sec_regex,
+        enab_sec_encryption_level = parse.find_objects(r'^enable\s+secret\s+(\d+)\s+\S+',
             )[0].re_match_typed(enab_sec_regex, group=1, default=-1,
             result_type=int)
         if enab_sec_level==0:
-            print(default_enab_sec)
+            logger.critical("Enable secret level 0 is not protected.")
     except IndexError:
-        print(default_enab_sec)
+        logger.critical("Enable secret level 0 is not protected.")
