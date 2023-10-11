@@ -603,7 +603,7 @@ def git_tag_and_push(args):
         stdout, stderr = run_cmd("git push --force-with-lease origin +main")
 
     else:
-        ValueError("Found an invalid combination of CLI options")
+        raise ValueError("Found an invalid combination of CLI options")
 
 def main(args):
 
