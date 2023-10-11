@@ -24,6 +24,7 @@ r""" ccp_util.py - Parse, Query, Build, and Modify IOS-style configurations
 
 from operator import attrgetter
 from functools import wraps
+import locale
 import socket
 import time
 import sys
