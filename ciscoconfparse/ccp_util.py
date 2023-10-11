@@ -921,9 +921,9 @@ class IPv4Obj(object):
 
             tmp = re.split(r"\s+", arg.strip())
             if len(tmp)==2:
-                arg=="/".join(tmp)
+                arg="/".join(tmp)
             elif len(tmp)==1:
-                arg==tmp[0]
+                arg=tmp[0]
             else:
                 # anything else should be handled by the following regex...
                 pass
@@ -966,9 +966,7 @@ class IPv4Obj(object):
 
         else:
             raise AddressValueError(
-                "Could not parse '{}' (type: {}) into an IPv4 Address".format(
-                    arg, type(arg)
-                )
+                f"Could not parse '{arg}' ({type(arg)}) into an IPv4 Address"
             )
 
 
