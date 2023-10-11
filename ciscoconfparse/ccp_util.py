@@ -3008,7 +3008,7 @@ class CiscoRange(MutableSequence):
 
     def normalize_and_split_text(self, text=None):
         """Split `text` on commas, then remove all common string prefixes in the list (except on the first element).  Return a 'normalized' list of strings with common_prefix removed except on the first element in the list (i.e. "Eth1/1,Eth1/4,Eth1/7" -> ["Eth1/1", "4", "7"])."""
-        if not isinstance(str, text):
+        if not isinstance(text, str):
             error = f'text={text} {type(text)} must be a string'
             logger.error(error)
             raise ValueError(error)
@@ -3044,7 +3044,7 @@ class CiscoRange(MutableSequence):
         return individual_intf_components
 
     def parse_range_text(self, text=None):
-        if not isinstance(str, text):
+        if not isinstance(text, str):
             error = f'text={text} {type(text)} must be a string'
             logger.error(error)
             raise ValueError(error)
