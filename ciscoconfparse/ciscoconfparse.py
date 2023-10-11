@@ -5156,13 +5156,13 @@ class ConfigList(MutableSequence):
     # This method is on ConfigList()
     @logger.catch(reraise=True)
     def _maintain_bootstrap_parent_cache(
-            self, parents_cache, parent, indent, max_indent, is_config_line
+            self, parents_cache, indent, max_indent, is_config_line
         ):
         ## Parent cache:
         ## Maintain indent vs max_indent in a family and
         ##     cache the parent until indent<max_indent
+        parent = None
         if (indent < max_indent) and is_config_line:
-            parent = None
             # walk parents and intelligently prune stale parents
             stale_parent_idxs = filter(
                 lambda ii: ii >= indent,
@@ -5266,7 +5266,7 @@ class ConfigList(MutableSequence):
                 macro_parent_idx_list.append(obj.linenum)
 
             parents_cache, parent = self._maintain_bootstrap_parent_cache(
-                parents_cache, parent, indent, max_indent, is_config_line
+                parents_cache, indent, max_indent, is_config_line
             )
 
             ## If indented, walk backwards and find the parent...
