@@ -3137,8 +3137,6 @@ class CiscoRange(MutableSequence):
                 ):
                     if range_list[-1] != "-":
                         range_list += ["-"]
-                    else:
-                        range_list = range_list
                 else:
                     range_list += [input_str[ii]]
         if len(input_str) > 1:
