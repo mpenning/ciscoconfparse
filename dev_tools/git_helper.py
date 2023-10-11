@@ -4,7 +4,6 @@ A git wrapper to simplify git operations.
 
 # nosec - Ignore security warnings
 from __future__ import absolute_import
-from subprocess import run, Popen, PIPE, STDOUT  # nosec
 from argparse import ArgumentParser
 import fileinput
 import shlex
@@ -14,7 +13,7 @@ import re
 
 sys.path.insert(0, "../")
 import ciscoconfparse
-from loguru import logger as loguru_logger
+from loguru import logger
 
 # Prevent stddout / stderr buffering issues...
 os.environ["PYTHONUNBUFFERED"] = "1"
@@ -307,12 +306,8 @@ def increment_tag_version(value=None):
 def check_exists_tag_local(tag_value=None):
     """Check 'git tag' for an exact string match for tag_value."""
     assert isinstance(tag_value, str)
-    loguru_logger.log(
-        "DEBUG",
-        "|"
-        + "Checking whether version '{}' is defined in pyproject.toml".format(
-            tag_value
-        ),
+    logger.debug(
+        f"Checking whether version '{tag_value}' is defined in pyproject.toml"
     )
 
     cmd = "git tag"
@@ -320,102 +315,18 @@ def check_exists_tag_local(tag_value=None):
 
     for line in stdout.splitlines():
         if tag_value.strip() == line.strip():
-            loguru_logger.error(f"Tag '{tag_value}' already exists.")
+            logger.error(f"Tag '{tag_value}' already exists.")
             return True
 
-    loguru_logger.info(f"'{tag_value}' is a new git tag")
+    logger.info(f"'{tag_value}' is a new git tag")
     return False
-
-
-def LogItDeprecated(level=None, message=None):
-    """Modest loguru hack to indent the log message based on log level."""
-
-    message_indent = {
-        "TRACE": 6,  # indent TRACE log message by 6 spaces
-        "DEBUG": 5,  # indent DEBUG log message by 5 spaces
-        "INFO": 4,
-        "SUCCESS": 3,
-        "WARNING": 2,
-        "ERROR": 1,
-        "CRITICAL": 0,
-    }
-    assert isinstance(level, str)
-    assert level.upper() in set(message_indent.keys())
-    assert isinstance(message, str)
-    level = level.upper()
-
-    indented_message = message_indent[level] * " " + message
-    return loguru_logger.log(level, "|" + indented_message)
-
-
-def run_cmd(
-    # cmd takes a dictionary with a cmd key, or a string with a command in it
-    cmd=None,
-    cwd=os.getcwd(),
-    colors=False,
-    debug=0,
-):
-    """run a shell command and return stdout / stderr strings
-    To run a shell command, call like this...  a value in cwd is optional...
-    ############
-    # Call with a cmd string...
-    ############
-    cmd = "ls -la"
-    stdout, stderr = run_cmd(cmd)
-    """
-    # ^ is a logical xor...
-    #    -->   https://stackoverflow.com/a/432844/667301
-    assert isinstance(cmd, str)
-    assert sys.version_info >= (3, 6)  # Popen() encoding parameter requires 3.6
-    args = parse_args()
-
-    if debug > 0:
-        loguru_logger.log("INFO", "|" + "Calling run_cmd(cmd='{}')".format(cmd))
-
-    if debug > 1:
-        loguru_logger.log(
-            "DEBUG", "|" + "Processing Popen() string cmd='{}'".format(cmd)
-        )
-    assert cmd != ""
-    assert cwd != ""
-    cwd = os.path.expanduser(cwd)
-
-    if debug > 1:
-        loguru_logger.log("DEBUG", "|" + "Popen() started")
-
-    process = Popen(
-        shlex.split(cmd),
-        # nosec - Ignore security warnings
-        shell=False,  # nosec
-        universal_newlines=True,
-        cwd=cwd,
-        stderr=PIPE,
-        stdout=PIPE,
-        # bufsize = 0  -> unbuffered
-        # bufsize = 1  -> line buffered
-        bufsize=1,
-        # encoding parameter... https://stackoverflow.com/a/57970619/667301
-        encoding="utf-8",
-    )
-    if debug > 1:
-        loguru_logger.log("DEBUG", "|" + "Calling Popen().communicate()")
-
-    if debug >= 1:
-        loguru_logger.log("INFO", "|" + "run_cmd('{}')".format(cmd))
-
-    stdout, stderr = process.communicate()
-    if debug > 1:
-        loguru_logger.log(
-            "DEBUG", "|" + "Popen().communicate() returned stdout=%s" % stdout
-        )
-    return (stdout, stderr)
-
 
 def git_root_directory():
     """
     return a string with the path name of the git root directory.
     """
-    stdout, stderr = run_cmd("git rev-parse --show-toplevel")
+    cmd = "git rev-parse --show-toplevel"
+    return_code, stdout, stderr = ciscoconfparse.ccp_util.run_this_posix_command(cmd)
     retval = None
     for line in stdout.splitlines():
         if line.strip() != "":
@@ -451,7 +362,7 @@ def get_pyproject_version(args=sys.argv):
             rr = re.search(r"\s*version\s*=\s*(\S+)$", line.strip())
             if rr is not None:
                 version = rr.group(1).strip().strip("'").strip('"')
-                loguru_logger.log(
+                logger.log(
                     "DEBUG",
                     "|"
                     + "Found version '{0}' defined in {1}".format(version, filepath),
@@ -500,7 +411,7 @@ def bump_pyproject_version(args):
 
 def git_checkout_branch(args):
     assert isinstance(args.branch, str)
-    loguru_logger.log("DEBUG", "|" + "Checking out git branch: {}".format(args.branch))
+    logger.log("DEBUG", "|" + "Checking out git branch: {}".format(args.branch))
     stdout, stderr = run_cmd("git checkout {}".format(args.branch))
 
 
@@ -516,7 +427,7 @@ def git_tag_commit_version():
 
 def git_tag_and_push(args):
     version = get_pyproject_version()
-    loguru_logger.log(
+    logger.log(
         "DEBUG", "|" + "Using tag '{}' for this git transaction".format(version)
     )
 
@@ -534,7 +445,7 @@ def git_tag_and_push(args):
     assert isinstance(version, str)
 
     if check_exists_tag_local(tag_value=version) is True:
-        loguru_logger.log(
+        logger.log(
             "DEBUG",
             "|"
             + "The -t argument is rejected; the '{0}' tag already exists in this local git repo".format(
@@ -564,7 +475,7 @@ def git_tag_and_push(args):
 
     if args.force is False and args.push is True and args.tag is False:
         # Do NOT force push
-        loguru_logger.log(
+        logger.log(
             "SUCCESS", "|" + "git push (without tags) to the main branch at git origin."
         )
         stdout, stderr = run_cmd(
@@ -573,7 +484,7 @@ def git_tag_and_push(args):
         stdout, stderr = run_cmd("git push origin +{0}".format(args.branch))
 
     elif args.force is False and args.push is True and args.tag is True:
-        loguru_logger.log(
+        logger.log(
             "SUCCESS", "|" + "git push (with tags) to the main branch at git origin."
         )
         stdout, stderr = run_cmd("git push origin +{0}".format(args.branch))
@@ -581,7 +492,7 @@ def git_tag_and_push(args):
 
     elif args.force is True and args.tag is True:
         # Force push and tag
-        loguru_logger.log(
+        logger.log(
             "SUCCESS",
             "|" + "git push FORCED (with tags) to the main branch at git origin.",
         )
@@ -596,7 +507,7 @@ def git_tag_and_push(args):
         )
 
     elif args.force is True and args.tag is False:
-        loguru_logger.log(
+        logger.log(
             "SUCCESS",
             "|" + "git push FORCED (without tags) to the main branch at git origin.",
         )
@@ -615,7 +526,7 @@ def main(args):
         original_branch_name = get_branch_name(args)
         assert original_branch_name != "main"
 
-        loguru_logger.debug(original_branch_name)
+        logger.debug(original_branch_name)
         # This is used for 'git merge <branch_name>' situations...
         assert args.combine != "main", "FATAL merging main with {} is not supported".format(original_branch_name)
 
