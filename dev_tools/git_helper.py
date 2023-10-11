@@ -439,7 +439,7 @@ def get_version_list():
     return sorted(versions)
 
 
-def get_pyproject_version(args):
+def get_pyproject_version(args=sys.argv):
     """Read the version from pyproject.toml"""
     version = None
     filepath = pyproject_filepath()
