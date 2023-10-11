@@ -210,8 +210,8 @@ def run_this_posix_command(cmd, timeout=None, shell=False, cwd=None, encoding=lo
         cmdparts = shlex.split(cmd)
 
     output_namedtuple = run(
-        cmdparts, capture_output=True, shell=shell,
-        cwd=cwd, encoding=encoding
+        cmdparts, timeout=timeout, capture_output=True, shell=shell, cwd=cwd,
+        encoding=encoding
     )
     (return_code, stdout, stderr) = (output_namedtuple.returncode, output_namedtuple.stdout,
         output_namedtuple.stderr)
