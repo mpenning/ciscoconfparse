@@ -1,13 +1,11 @@
 version = 1
 
 [[analyzers]]
-name = "test-coverage"
-
-[[analyzers]]
 name = "go"
 
   [analyzers.meta]
   import_root = "github.com/mpenning/ciscoconfparse"
+  dependencies_vendored = false
 
 [[analyzers]]
 name = "python"
