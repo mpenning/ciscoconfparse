@@ -82,7 +82,7 @@ for filename in CONFIG_PATH:
         enab_sec_encryption_level = parse.find_objects(r'^enable\s+secret\s+(\d+)\s+\S+',
             )[0].re_match_typed(enab_sec_regex, group=1, default=-1,
             result_type=int)
-        if enab_sec_level==0:
-            logger.critical("Enable secret level 0 is not protected.")
+        if enab_sec_encryption_level==0:
+            logger.critical("Do not store enable secret as cleartext.")
     except IndexError:
-        logger.critical("Enable secret level 0 is not protected.")
+        logger.critical("Do not store enable secret as cleartext.")
