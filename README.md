@@ -1,14 +1,13 @@
 ciscoconfparse
 ==============
 
-[![Github unittest workflow][4]][5]
+[![Github unittest workflow][4]][5] [![git commits][41]][42] [![Version][2]][3] [![Downloads][6]][7] [![License][8]][9]
 
 [![SonarCloud][51]][52] [![SonarCloud Maintainability Rating][53]][54] [![SonarCloud Lines of Code][55]][56] [![SonarCloud Code Smells][57]][58]
 
-[![Deepsource.io][59]][60]
-
 [![Snyk Package Health][37]][38] [![CodeFactor Code Health][43]][44] [![Codacy Code Health][46]][47]
-[![git commits][41]][42] [![Version][2]][3] [![Downloads][6]][7] [![License][8]][9]
+
+[![Deepsource.io][59]][60]
 
 
 Introduction: What is ciscoconfparse?
