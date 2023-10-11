@@ -11,8 +11,8 @@ from loguru import logger
 # This is called a lazy audit, because this example skips things that are
 # local to your environment (i.e. SNMP ACLs, SNMP Community, etc...)
 #
-# Also note that the RECOMMENDED config lines below are exact matches (no regex)
-RECOMMENDED = """!
+# Also note that the RECOMMENDED_IOS_CONFIG config lines below are exact matches (no regex)
+RECOMMENDED_IOS_CONFIG = """!
 no service pad
 service tcp-keepalives-in
 service tcp-keepalives-out
@@ -73,7 +73,7 @@ for filename in CONFIG_PATH:
     parse = CiscoConfParse(filename)
 
     # Print out simple diff conditions - i.e. no regexp matching...
-    print(os.linesep.join(parse.sync_diff(RECOMMENDED, '', remove_lines=False)))
+    print(os.linesep.join(parse.sync_diff(RECOMMENDED_IOS_CONFIG, '', remove_lines=False)))
 
     # Default enable secret config...
     default_enab_sec = f'enable secret {secret}'
