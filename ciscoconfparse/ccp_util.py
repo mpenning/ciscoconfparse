@@ -1038,8 +1038,8 @@ class IPv4Obj(object):
 
             mm_result = mm.groupdict()
             addr = (
-                mm_result["v4addr_nomask"] or mm_result["v4addr_netmask"]
-                or mm_result["v4addr_prefixlen"] or "0.0.0.1"
+                # Use 'nosec' to disable default linter security flags about using 0.0.0.1
+                mm_result["v4addr_nomask"] or mm_result["v4addr_netmask"] or mm_result["v4addr_prefixlen"] or "0.0.0.1" # nosec
             )
             ## Normalize if we get zero-padded strings, i.e. 172.001.001.001
             assert re.search(r"^\d+\.\d+.\d+\.\d+", addr)
