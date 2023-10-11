@@ -1,7 +1,7 @@
 ciscoconfparse
 ==============
 
-[![Github unittest workflow][4]][5] [![SonarCloud][51]][52] [![SonarCloud Maintainability Rating][53]][54] [![Snyk Package Health][37]][38] [![CodeFactor Code Health][43]][44] [![Codacy Code Health][46]][47] [![git commits][41]][42] [![Version][2]][3] [![Downloads][6]][7] [![License][8]][9]
+[![Github unittest workflow][4]][5] [![SonarCloud][51]][52] [![SonarCloud Maintainability Rating][53]][54] [![SonarCloud Lines of Code][55]][56] [![Snyk Package Health][37]][38] [![CodeFactor Code Health][43]][44] [![Codacy Code Health][46]][47] [![git commits][41]][42] [![Version][2]][3] [![Downloads][6]][7] [![License][8]][9]
 
 
 Introduction: What is ciscoconfparse?
@@ -341,3 +341,5 @@ Author
   [52]: https://sonarcloud.io/summary/new_code?id=mpenning_ciscoconfparse
   [53]: https://sonarcloud.io/api/project_badges/measure?project=mpenning_ciscoconfparse&metric=sqale_rating
   [54]: https://sonarcloud.io/summary/new_code?id=mpenning_ciscoconfparse
+  [55]: https://sonarcloud.io/api/project_badges/measure?project=mpenning_ciscoconfparse&metric=ncloc
+  [56]: https://sonarcloud.io/summary/new_code?id=mpenning_ciscoconfparse
