@@ -189,12 +189,12 @@ def run_this_posix_command(cmd, timeout=None, shell=False, cwd=None, encoding=lo
     if isinstance(env, dict):
         for key, value in env.items:
             if isinstance(key, str) and isinstance(value, (str, int, float)):
-                pass
+                pass  # noqa
             else:
                 error = f"The ENV {key}: {value} {type(value)} mapping entry is invalid."
                 raise ValueError(error)
     elif env is None:
-        pass
+        pass          # noqa
     else:
         error = f"`env` must be None or a dict of variable names / values."
         logger.critical(error)
