@@ -181,6 +181,48 @@ class PythonOptimizeCheck(object):
         if error != "__no_error__":
             raise PythonOptimizeException(error)
 
+def run_this_posix_command(cmd, timeout=None, shell=False, cwd=None, encoding=locale.getpreferredencoding(), env=None):
+    """
+    Run this POSIX command using subprocess.run().
+    """
+
+    if isinstance(env, dict):
+        for key, value in env.items:
+            if isinstance(key, str) and isinstance(value, (str, int, float)):
+                pass
+            else:
+                error = f"The ENV {key}: {value} {type(value)} mapping entry is invalid."
+                raise ValueError(error)
+    elif env is None:
+        pass
+    else:
+        error = f"`env` must be None or a dict of variable names / values."
+        logger.critical(error)
+        raise InvalidShellVariableMapping(error)
+
+    if not isinstance(cmd, str):
+        error = f"'{cmd}' must be a string"
+        logger.critical(error)
+
+    if shell is True:
+        cmdparts = cmd
+    else:
+        cmdparts = shlex.split(cmd)
+
+    output_namedtuple = run(
+        cmdparts, capture_output=True, shell=shell,
+        cwd=cwd, encoding=encoding
+    )
+    (return_code, stdout, stderr) = (output_namedtuple.returncode, output_namedtuple.stdout,
+        output_namedtuple.stderr)
+
+    if return_code > 0:
+        error = f"'{cmd}' failed: --> {stdout} <-- / --> {stderr} <--"
+        logger.critical(error)
+
+    return return_code, stdout, stderr
+
+
 
 @logger.catch(reraise=True)
 def ccp_logger_control(
@@ -252,47 +294,6 @@ def ccp_logger_control(
 
     else:
         raise NotImplementedError(f"action='{action}' is an unsupported logger action")
-
-def run_this_posix_command(cmd, timeout=None, shell=False, cwd=None, encoding=locale.getpreferredencoding(), env=None):
-    """
-    Run this POSIX command using subprocess.run().
-    """
-
-    if isinstance(env, dict):
-        for key, value in env.items:
-            if isinstance(key, str) and isinstance(value, (str, int, float)):
-                pass
-            else:
-                error = f"The ENV {key}: {value} {type(value)} mapping entry is invalid."
-                raise ValueError(error)
-    elif env is None:
-        pass
-    else:
-        error = f"`env` must be None or a dict of variable names / values."
-        logger.critical(error)
-        raise InvalidShellVariableMapping(error)
-
-    if not isinstance(cmd, str):
-        error = f"'{cmd}' must be a string"
-        logger.critical(error)
-
-    if shell is True:
-        cmdparts = cmd
-    else:
-        cmdparts = shlex.split(cmd)
-
-    output_namedtuple = run(
-        cmdparts, capture_output=True, shell=shell,
-        cwd=cwd, encoding=encoding
-    )
-    (return_code, stdout, stderr) = (output_namedtuple.returncode, output_namedtuple.stdout,
-        output_namedtuple.stderr)
-
-    if return_code > 0:
-        error = f"'{cmd}' failed: --> {stdout} <-- / --> {stderr} <--"
-        logger.critical(error)
-
-    return return_code, stdout, stderr
 
 @logger.catch(reraise=True)
 def configure_loguru(
