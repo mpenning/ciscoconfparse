@@ -766,7 +766,7 @@ def test_CiscoRange_18():
         "Eth1/10",
         "Eth1/12-20",
     ]
-    CiscoRange("Eth1/1,Eth1/12-20,Eth1/16,Eth1/10").as_list == result_correct
+    assert CiscoRange("Eth1/1,Eth1/12-20,Eth1/16,Eth1/10").as_list == result_correct
 
 
 def test_CiscoRange_19():
@@ -776,7 +776,7 @@ def test_CiscoRange_19():
         "interface Eth1/10",
         "interface Eth1/12-20",
     ]
-    CiscoRange("interface Eth1/1,interface Eth1/12-20,interface Eth1/16,interface Eth1/10").as_list == result_correct
+    assert CiscoRange("interface Eth1/1,interface Eth1/12-20,interface Eth1/16,interface Eth1/10").as_list == result_correct
 
 
 def test_CiscoRange_compressed_str_01():
