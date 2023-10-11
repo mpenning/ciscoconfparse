@@ -972,7 +972,8 @@ class IPv4Obj(object):
             if v4_str_rgx is not None:
                 pp = v4_str_rgx.groupdict()
                 try:
-                    ipv4 = pp.get("v4addr_nomask", None) or pp.get("v4addr_netmask", None) or pp.get("v4addr_prefixlen", None) or "0.0.0.1"
+                    # Use 'nosec' to disable default linter security flags about using 0.0.0.1
+                    ipv4 = pp.get("v4addr_nomask", None) or pp.get("v4addr_netmask", None) or pp.get("v4addr_prefixlen", None) or "0.0.0.1" # nosec
                 except DynamicAddressException as eee:
                     raise ValueError(str(eee))
 
