@@ -3,7 +3,7 @@ ciscoconfparse
 
 [![Github unittest workflow][4]][5] [![git commits][41]][42] [![Version][2]][3] [![Downloads][6]][7] [![License][8]][9]
 
-[![SonarCloud][51]][52] [![SonarCloud Maintainability Rating][53]][54] [![SonarCloud Lines of Code][55]][56] [![SonarCloud Bugs][59]][60] [![SonarCloud Code Smells][57]][58]
+[![SonarCloud][51]][52] [![SonarCloud Maintainability Rating][53]][54] [![SonarCloud Lines of Code][55]][56] [![SonarCloud Bugs][61]][62] [![SonarCloud Code Smells][57]][58]
 
 [![Snyk Package Health][37]][38] [![CodeFactor Code Health][43]][44] [![Codacy Code Health][46]][47]
 
@@ -353,6 +353,5 @@ Author
   [58]: https://sonarcloud.io/summary/new_code?id=mpenning_ciscoconfparse
   [59]: https://app.deepsource.com/gh/mpenning/ciscoconfparse.svg/?label=active+issues&show_trend=true&token=x36MVZRBr0jhT1izPow379Gr
   [60]: https://app.deepsource.com/gh/mpenning/ciscoconfparse/
-  [61]: 
-  [62]: 
-  [![Bugs](https://sonarcloud.io/api/project_badges/measure?project=mpenning_ciscoconfparse&metric=bugs)](https://sonarcloud.io/summary/new_code?id=mpenning_ciscoconfparse)
+  [61]: https://sonarcloud.io/api/project_badges/measure?project=mpenning_ciscoconfparse&metric=bugs
+  [62]: https://sonarcloud.io/summary/new_code?id=mpenning_ciscoconfparse
