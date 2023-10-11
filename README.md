@@ -337,5 +337,6 @@ Author
   [48]: https://commitizen-tools.github.io/commitizen/
   [49]: https://semver.org/
   [50]: https://www.conventionalcommits.org/en/v1.0.0/
-  [51]: https://sonarcloud.io/images/project_badges/sonarcloud-black.svg
-  [52]:https://sonarcloud.io/summary/new_code?id=mpenning_ciscoconfparse
+  [51]: https://sonarcloud.io/api/project_badges/measure?project=mpenning_ciscoconfparse&metric=alert_status
+  [52]: https://sonarcloud.io/summary/new_code?id=mpenning_ciscoconfparse
+
