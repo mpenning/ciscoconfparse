@@ -31,10 +31,17 @@ class PythonOptimizeException(BaseError):
 
     def __init__(self, msg=""):
         super().__init__(msg)
+        self.msg = msg
 
 
 class DynamicAddressException(Exception):
     """Throw this if you try to get an address object from a dhcp interface"""
+
+    def __init__(self, msg=""):
+        super().__init__(msg)
+        self.msg = msg
+
+class InvalidShellVariableMapping(BaseError):
 
     def __init__(self, msg=""):
         super().__init__(msg)
