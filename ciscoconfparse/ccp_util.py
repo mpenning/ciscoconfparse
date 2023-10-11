@@ -1741,9 +1741,9 @@ class IPv6Obj(object):
 
             tmp = re.split(r"\s+", arg.strip())
             if len(tmp)==2:
-                arg=="/".join(tmp)
+                arg="/".join(tmp)
             elif len(tmp)==1:
-                arg==tmp[0]
+                arg=tmp[0]
             else:
                 raise NotImplementedError(arg.strip())
 
