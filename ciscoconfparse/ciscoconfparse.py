@@ -182,7 +182,7 @@ def enforce_valid_types(var, var_types=None, error_str=None):
 
 @logger.catch(reraise=True)
 def initialize_globals():
-    """Initialize ciscoconfparse global dunder variables and a couple others."""
+    """Initialize ciscoconfparse global dunder-variables and a couple others."""
     global ALL_VALID_SYNTAX
     global ENCODING
     global __author_email__
@@ -200,28 +200,29 @@ def initialize_globals():
         "junos",
     )
 
+    __author_email__ = r"mike /at\ pennington [dot] net"
+    __author__ = "David Michael Pennington <{__author_email__}>"
+    __copyright__ = f'2007-{time.strftime("%Y")}, {author}'
+    __license__ = "GPLv3"
+    __status__ = "Production"
     try:
-        __author_email__ = r"mike /at\ pennington [dot] net"
-        __author__ = "David Michael Pennington <{}>".format(__author_email__)
-        __copyright__ = "2007-{}, {}".format(time.strftime("%Y"), __author__)
-        __license__ = "GPLv3"
-        __status__ = "Production"
         __version__ = get_version_number()
-
     except BaseException as eee:
-        raise ValueError(str(eee))
+        __version__ = "0.0.0"
+        error = f"{eee}: could not determine the ciscoconfparse version via get_version_number()."
+        logger.critical(error)
+        ValueError(error)
 
-    finally:
-        # These are all the 'dunder variables' required...
-        globals_dict = {
-            "__author_email__": __author_email__,
-            "__author__": __author__,
-            "__copyright__": __copyright__,
-            "__license__": __license__,
-            "__status__": __status__,
-            "__version__": __version__,
-        }
-        return globals_dict
+    # These are all the 'dunder variables' required...
+    globals_dict = {
+        "__author_email__": __author_email__,
+        "__author__": __author__,
+        "__copyright__": __copyright__,
+        "__license__": __license__,
+        "__status__": __status__,
+        "__version__": __version__,
+    }
+    return globals_dict
 
 
 @logger.catch(reraise=True)
