@@ -3,7 +3,7 @@ A git wrapper to simplify git operations.
 """
 
 # nosec - Ignore security warnings
-from subprocess import Popen, PIPE, STDOUT  # nosec
+from subprocess import run, Popen, PIPE, STDOUT  # nosec
 from argparse import ArgumentParser
 import fileinput
 import shlex
@@ -11,6 +11,7 @@ import sys
 import os
 import re
 
+from ciscoconfparse.ccp_util import run_this_posix_command
 from loguru import logger as loguru_logger
 
 # Prevent stddout / stderr buffering issues...
@@ -311,14 +312,16 @@ def check_exists_tag_local(tag_value=None):
             tag_value
         ),
     )
-    stdout, stderr = run_cmd("git tag")
+
+    cmd = "git tag"
+    return_code, stdout, stderr = run_this_posix_command(cmd)
+
     for line in stdout.splitlines():
         if tag_value.strip() == line.strip():
-            loguru_logger.log(
-                "DEBUG", "|" + "Tag '{}' already exists.".format(tag_value)
-            )
+            loguru_logger.error(f"Tag '{tag_value}' already exists.")
             return True
-    loguru_logger.log("DEBUG", "|" + "'{}' is a new git tag".format(tag_value))
+
+    loguru_logger.info(f"'{tag_value}' is a new git tag")
     return False
 
 
@@ -503,8 +506,9 @@ def git_tag_commit_version():
     """
     Tag the latest git commit with the version listed in pyproject.toml
     """
+    project_version_tag = get_pyproject_version()
     stdout, stderr = run_cmd(
-        'git tag -a {0} -m "Tag with {0}"'.format(get_pyproject_version())
+        f'git tag -a {project_version_tag} -m "Tag with {project_version_tag}"'
     )
 
 
