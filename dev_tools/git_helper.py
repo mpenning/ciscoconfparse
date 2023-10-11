@@ -11,6 +11,7 @@ import sys
 import os
 import re
 
+sys.path.insert(0, "../")
 from ciscoconfparse.ccp_util import run_this_posix_command
 from loguru import logger as loguru_logger
 
