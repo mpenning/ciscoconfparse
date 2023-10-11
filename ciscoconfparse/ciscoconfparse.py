@@ -670,34 +670,6 @@ class CiscoConfParse(object):
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
-    def _validate_ConfigObjs(self):
-        """ConfigObjs should be None or an instance of collections.abc.Sequence."""
-        raise RuntimeError
-
-        # Important: Ensure we have a sane copy of self and self.ConfigObjs...
-        if not isinstance(self, CiscoConfParse):
-            err = "CiscoConfParse() did not populate self.ConfigObjs"
-            raise ValueError(err)
-
-        if self.debug > 0:
-            log_msg = (
-                "assigning self.ConfigObjs = ConfigList(syntax='%s')" % self.syntax
-            )
-            logger.info(log_msg)
-
-        if self.ConfigObjs is not None:
-            if not isinstance(self.ConfigObjs, Sequence):
-                err = "self.ConfigObjs must be an instance of collections.abc.Sequence."
-                raise ValueError(err)
-            else:
-                # self.ConfigObjs is an instance of Sequence...
-                return True
-        else:
-            # self.ConfigObjs is None
-            return True
-
-    # This method is on CiscoConfParse()
-    @logger.catch(reraise=True)
     def read_config_file(self, filepath=None, logger=None, linesplit_rgx=r"\r*\n+"):
         """Read the config lines from the filepath.  Return the list of text configuration commands or raise an error."""
 
