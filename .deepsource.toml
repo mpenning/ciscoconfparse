@@ -1,9 +1,6 @@
 version = 1
 
 [[analyzers]]
-name = "test-coverage"
-
-[[analyzers]]
 name = "go"
 
   [analyzers.meta]
