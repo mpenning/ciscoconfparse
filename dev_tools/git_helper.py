@@ -480,7 +480,7 @@ def bump_pyproject_version(args):
     Bump the version up, as required; write the version tag into pyproject.toml.
     """
     if args.increment_version is None:
-        tag = ".".join([str(ii) for ii in get_version_list[-1]])
+        tag = ".".join([str(ii) for ii in get_version_list()[-1]])
     else:
         tag = ".".join(
             [str(ii) for ii in increment_tag_version(args.increment_version)]
