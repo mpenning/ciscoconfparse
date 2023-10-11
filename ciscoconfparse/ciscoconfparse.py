@@ -211,7 +211,7 @@ def initialize_globals():
         __version__ = "0.0.0"
         error = f"{eee}: could not determine the ciscoconfparse version via get_version_number()."
         logger.critical(error)
-        ValueError(error)
+        raise ValueError(error)
 
     # These are all the 'dunder variables' required...
     globals_dict = {
