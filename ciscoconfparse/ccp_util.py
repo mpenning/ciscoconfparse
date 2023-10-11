@@ -196,7 +196,7 @@ def run_this_posix_command(cmd, timeout=None, shell=False, cwd=None, encoding=lo
     elif env is None:
         pass          # noqa
     else:
-        error = f"`env` must be None or a dict of variable names / values."
+        error = "`env` must be None or a dict of variable names / values."
         logger.critical(error)
         raise InvalidShellVariableMapping(error)
 
