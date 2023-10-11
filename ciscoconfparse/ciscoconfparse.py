@@ -202,7 +202,7 @@ def initialize_globals():
 
     __author_email__ = r"mike /at\ pennington [dot] net"
     __author__ = "David Michael Pennington <{__author_email__}>"
-    __copyright__ = f'2007-{time.strftime("%Y")}, {author}'
+    __copyright__ = f'2007-{time.strftime("%Y")}, {__author__}'
     __license__ = "GPLv3"
     __status__ = "Production"
     try:
