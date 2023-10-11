@@ -542,9 +542,8 @@ def main(args):
                 raise ValueError("FATAL tag {} already exists".format(tag_value))
 
         assert get_branch_name(args) == "main"
-        ## FIXME git merge command below does NOT merge anything...
-        raise NotImplementedError("git merge functionality is broken... it cannot merge the develop branch into main")
 
+        ## FIXME git merge command below does NOT merge anything...
         cmd = f"git merge {original_branch_name} -m '{args.message}'"
         return_code, stdout, stderr = ciscoconfparse.ccp_util.run_this_posix_command(cmd)
 
