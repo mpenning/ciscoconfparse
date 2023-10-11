@@ -2955,7 +2955,7 @@ class CiscoRange(MutableSequence):
                 self.line_prefix,
                 self.slot_prefix,
                 self.range_text,
-            ) = self.parse_range_text()
+            ) = self.parse_range_text(text=text)
             self._list = self._range()
         else:
             self.line_prefix = ""
@@ -3006,43 +3006,54 @@ class CiscoRange(MutableSequence):
         self.insert(list_idx, val)
         return self
 
-    def normalize_and_split_text(self):
-        """Split self.text on commas, then remove all common string prefixes in the list (except on the first element).  Return a 'normalized' list of strings with common_prefix removed except on the first element in the list (i.e. "Eth1/1,Eth1/4,Eth1/7" -> ["Eth1/1", "4", "7"])."""
-        tmp = self.text.split(",")
+    def normalize_and_split_text(self, text=None):
+        """Split `text` on commas, then remove all common string prefixes in the list (except on the first element).  Return a 'normalized' list of strings with common_prefix removed except on the first element in the list (i.e. "Eth1/1,Eth1/4,Eth1/7" -> ["Eth1/1", "4", "7"])."""
+        if not isinstance(str, text):
+            error = f'text={text} {type(text)} must be a string'
+            logger.error(error)
+            raise ValueError(error)
+
+        individual_intf_components = text.split(",")
 
         # Handle case of "Eth1/1,Eth1/5-7"... remove the common_prefix...
-        common_prefix = os.path.commonprefix(tmp)
+        common_intf_str_prefix = os.path.commonprefix(individual_intf_components)
 
         # Ensure that we don't capture trailing digits into common_prefix
-        mm = re.search(r"^(\D.*?)\d*$", common_prefix.strip())
+        mm = re.search(r"^(?P<intf_name_prefix>\D.*?)\d*$", common_intf_str_prefix.strip())
         if mm is not None:
-            common_prefix = mm.group(1)
+            common_intf_name_part = mm.groupdict()["intf_name_prefix"]
             # Keep the common_prefix on the first element...
-            _tmp = [tmp[0]]
+            _component_list = [individual_intf_components[0]]
 
             # Remove the common_prefix from all other list elements...
-            for idx, ii in enumerate(tmp):
+            for idx, ii in enumerate(individual_intf_components):
                 if idx > 0:
 
                     # Unicode is the only type with .isnumeric()...
-                    prefix_removed = ii[len(common_prefix):]
+                    prefix_removed = ii[len(common_intf_name_part):]
 
                     if prefix_removed.isnumeric():
-                        _tmp.append(prefix_removed)
+                        _component_list.append(prefix_removed)
                     elif re.search(r"^\d+\s*-\s*\d+$", prefix_removed.strip()):
-                        _tmp.append(prefix_removed)
+                        _component_list.append(prefix_removed)
                     else:
                         ERROR = f"CiscoRange() couldn't parse '{self.text}'"
                         raise ValueError(ERROR)
-            tmp = _tmp
-        return tmp
 
-    def parse_range_text(self):
-        tmp = self.normalize_and_split_text()
+            individual_intf_components = _component_list
+        return individual_intf_components
+
+    def parse_range_text(self, text=None):
+        if not isinstance(str, text):
+            error = f'text={text} {type(text)} must be a string'
+            logger.error(error)
+            raise ValueError(error)
+
+        tmp = self.normalize_and_split_text(text=text)
 
         mm = _RGX_CISCO_RANGE.search(tmp[0])
 
-        ERROR = f"CiscoRange() couldn't parse '{self.text}'"
+        ERROR = f"CiscoRange() couldn't parse '{text}'"
         assert mm is not None, ERROR
 
         mm_result = mm.groupdict()
@@ -3054,6 +3065,7 @@ class CiscoRange(MutableSequence):
             range_text = mm_result["range_text"] + "," + tmp[1]
         elif len(tmp[1:]) == 0:
             range_text = mm_result["range_text"]
+
         return line_prefix, slot_prefix, range_text
 
     def _parse_dash_range(self, text):
