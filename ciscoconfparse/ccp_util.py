@@ -106,11 +106,11 @@ _RGX_IPV4ADDR = re.compile(_IPV4_REGEX_STR)
 _RGX_IPV4ADDR_WITH_MASK = re.compile(
     r"""
      (?:
-       ^(?P<addr0>\d+\.\d+\.\d+\.\d+)$
+       ^(?P<v4addr_nomask>\d+\.\d+\.\d+\.\d+)$
       |(?:^
-         (?:(?P<addr1>\d+\.\d+\.\d+\.\d+))(\s+|\/)(?:(?P<netmask>\d+\.\d+\.\d+\.\d+))
+         (?:(?P<v4addr_netmask>\d+\.\d+\.\d+\.\d+))(\s+|\/)(?:(?P<netmask>\d+\.\d+\.\d+\.\d+))
        $)
-      |^(?:\s*(?P<addr2>\d+\.\d+\.\d+\.\d+)(?:\/(?P<masklen>\d+))\s*)$
+      |^(?:\s*(?P<v4addr_prefixlen>\d+\.\d+\.\d+\.\d+)(?:\/(?P<masklen>\d+))\s*)$
     )
     """,
     re.VERBOSE,
@@ -815,7 +815,7 @@ def collapse_addresses(network_list):
 class IPv4Obj(object):
 
     # This method is on IPv4Obj().  @logger.catch() breaks the __init__() method.
-    def __init__(self, arg=f"0.0.0.1/{IPV4_MAX_PREFIXLEN}", strict=False, debug=0):
+    def __init__(self, v4addr_prefixlen=f"0.0.0.1/{IPV4_MAX_PREFIXLEN}", strict=False, debug=0):
         """An object to represent IPv4 addresses and IPv4 networks.
 
         When :class:`~ccp_util.IPv4Obj` objects are compared or sorted, network numbers are sorted lower to higher.  If network numbers are the same, shorter masks are lower than longer masks. After comparing mask length, numerically higher IP addresses are greater than numerically lower IP addresses..  Comparisons between :class:`~ccp_util.IPv4Obj` instances was chosen so it's easy to find the longest-match for a given prefix (see examples below).
@@ -824,10 +824,10 @@ class IPv4Obj(object):
 
         Parameters
         ----------
-        arg : str or int
-            A string (or integer) containing an IPv4 address, and optionally a netmask or masklength.  Integers are also accepted.  The following address/netmask formats are supported: "10.1.1.1/24", "10.1.1.1 255.255.255.0", "10.1.1.1/255.255.255.0"
+        v4addr_prefixlen : str or int
+            A string (or integer) containing an IPv4 address, and optionally a netmask or masklength.  Integers are also accepted and the masklength of the integer is assumed to be 32-bits.  The following address/netmask formats are supported: "10.1.1.1/24", "10.1.1.1 255.255.255.0", "10.1.1.1/255.255.255.0"
         strict: bool
-            When `strict` is True, the value of `arg` must not have host-bits set.  The default value is False.
+            When `strict` is True, the value of `v4addr_prefixlen` must not have host-bits set.  The default value is False.
 
 
         Examples
@@ -934,24 +934,24 @@ class IPv4Obj(object):
             Returns an integer representing the IP version of this object.  Only 4 or 6 are valid results
         """
         if debug > 0:
-            logger.info(f"IPv4Obj(arg='{arg}', strict={strict}, debug={debug}) was called")
+            logger.info(f"IPv4Obj(v4addr_prefixlen='{v4addr_prefixlen}', strict={strict}, debug={debug}) was called")
 
         try:
-            assert isinstance(arg, (str, int, IPv4Obj))
+            assert isinstance(v4addr_prefixlen, (str, int, IPv4Obj))
         except AssertionError as eee:
             raise AddressValueError(
                 "Could not parse '{}' (type: {}) into an IPv4 Address. {}".format(
-                    arg, type(arg), str(eee)
+                    v4addr_prefixlen, type(v4addr_prefixlen), str(eee)
                 )
             )
         except BaseException as eee:
             raise AddressValueError(
                 "Could not parse '{}' (type: {}) into an IPv4 Address. {}".format(
-                    arg, type(arg), str(eee)
+                    v4addr_prefixlen, type(v4addr_prefixlen), str(eee)
                 )
             )
 
-        self.arg = arg
+        self.v4addr_prefixlen = v4addr_prefixlen
         self.dna = "IPv4Obj"
         self.ip_object = None
         self.network_object = None
@@ -959,32 +959,30 @@ class IPv4Obj(object):
         self.debug = debug
         self.params_dict = {}
 
-        if isinstance(arg, str):
+        if isinstance(v4addr_prefixlen, str):
 
-            tmp = re.split(r"\s+", arg.strip())
+            tmp = re.split(r"\s+", v4addr_prefixlen.strip())
             if len(tmp)==2:
-                arg="/".join(tmp)
+                v4addr_prefixlen = "/".join(tmp)
             elif len(tmp)==1:
-                arg=tmp[0]
-            else:
-                # anything else should be handled by the following regex...
-                pass
+                v4addr_prefixlen = tmp[0]
+            # anything else should be handled by the following regex...
 
-            v4_str_rgx = _RGX_IPV4ADDR_WITH_MASK.search(arg.strip())
+            v4_str_rgx = _RGX_IPV4ADDR_WITH_MASK.search(v4addr_prefixlen.strip())
             if v4_str_rgx is not None:
                 pp = v4_str_rgx.groupdict()
                 try:
-                    ipv4 = pp.get("addr0", None) or pp.get("addr1", None) or pp.get("addr2", None) or "0.0.0.1"
+                    ipv4 = pp.get("v4addr_nomask", None) or pp.get("v4addr_netmask", None) or pp.get("v4addr_prefixlen", None) or "0.0.0.1"
                 except DynamicAddressException as eee:
                     raise ValueError(str(eee))
 
-            elif "dhcp" in arg.strip().lower():
+            elif "dhcp" in v4addr_prefixlen.strip().lower():
                 raise DynamicAddressException("Cannot parse address from a DHCP string.")
 
             else:
                 raise AddressValueError(
                     "Could not parse '{}' (type: {}) into an IPv4 Address".format(
-                        arg, type(arg)
+                        v4addr_prefixlen, type(v4addr_prefixlen)
                     )
                 )
 
@@ -997,18 +995,18 @@ class IPv4Obj(object):
                 netstr = ipv4+"/32"
             self.network_object = IPv4Network(netstr, strict=False)
 
-        elif isinstance(arg, int):
-            assert 0 <= arg <= IPV4_MAXINT
-            self.ip_object = IPv4Address(arg)
-            self.network_object = IPv4Network(arg, strict=False)
+        elif isinstance(v4addr_prefixlen, int):
+            assert 0 <= v4addr_prefixlen <= IPV4_MAXINT
+            self.ip_object = IPv4Address(v4addr_prefixlen)
+            self.network_object = IPv4Network(v4addr_prefixlen, strict=False)
 
-        elif isinstance(arg, IPv4Obj):
-            self.ip_object = IPv4Address(arg.ip)
-            self.network_object = IPv4Network(arg.as_cidr_net, strict=False)
+        elif isinstance(v4addr_prefixlen, IPv4Obj):
+            self.ip_object = IPv4Address(v4addr_prefixlen.ip)
+            self.network_object = IPv4Network(v4addr_prefixlen.as_cidr_net, strict=False)
 
         else:
             raise AddressValueError(
-                f"Could not parse '{arg}' ({type(arg)}) into an IPv4 Address"
+                f"Could not parse '{v4addr_prefixlen}' ({type(v4addr_prefixlen)}) into an IPv4 Address"
             )
 
 
@@ -1039,8 +1037,8 @@ class IPv4Obj(object):
 
             mm_result = mm.groupdict()
             addr = (
-                mm_result["addr0"] or mm_result["addr1"]
-                or mm_result["addr2"] or "0.0.0.1"
+                mm_result["v4addr_nomask"] or mm_result["v4addr_netmask"]
+                or mm_result["v4addr_prefixlen"] or "0.0.0.1"
             )
             ## Normalize if we get zero-padded strings, i.e. 172.001.001.001
             assert re.search(r"^\d+\.\d+.\d+\.\d+", addr)
@@ -1663,7 +1661,7 @@ class IPv4Obj(object):
 class IPv6Obj(object):
 
     # This method is on IPv6Obj().  @logger.catch() breaks the __init__() method.
-    def __init__(self, arg=f"::1/{IPV6_MAX_PREFIXLEN}", strict=False, debug=0):
+    def __init__(self, v6addr_prefixlen=f"::1/{IPV6_MAX_PREFIXLEN}", strict=False, debug=0):
         """An object to represent IPv6 addresses and IPv6 networks.
 
         When :class:`~ccp_util.IPv6Obj` objects are compared or sorted, network numbers are sorted lower to higher.  If network numbers are the same, shorter masks are lower than longer masks. After comparing mask length, numerically higher IP addresses are greater than numerically lower IP addresses.  Comparisons between :class:`~ccp_util.IPv6Obj` instances was chosen so it's easy to find the longest-match for a given prefix.
@@ -1672,10 +1670,10 @@ class IPv6Obj(object):
 
         Parameters
         ----------
-        arg : str or int
-            A string containing an IPv6 address, and optionally a netmask or masklength.  Integers are also accepted. The following address/netmask formats are supported: "2001::dead:beef", "2001::dead:beef/64",
+        v6addr_prefixlen : str or int
+            A string containing an IPv6 address, and optionally a netmask or masklength.  Integers are also accepted; the mask is assumed to be 128 bits if an integer is provided. The following address/netmask formats are supported: "2001::dead:beef", "2001::dead:beef/64",
         strict : bool
-            When `strict` is True, the value of `arg` must not have host-bits set.  The default value is False.
+            When `strict` is True, the value of `v6addr_prefixlen` must not have host-bits set.  The default value is False.
 
         Examples
         --------
@@ -1726,9 +1724,9 @@ class IPv6Obj(object):
         """
 
         if debug > 0:
-            logger.info(f"IPv6Obj(arg='{arg}', strict={strict}, debug={debug}) was called")
+            logger.info(f"IPv6Obj(v6addr_prefixlen='{v6addr_prefixlen}', strict={strict}, debug={debug}) was called")
 
-        self.arg = arg
+        self.v6addr_prefixlen = v6addr_prefixlen
         self.dna = "IPv6Obj"
         self.ip_object = None
         self.network_object = None
@@ -1736,18 +1734,18 @@ class IPv6Obj(object):
         self.debug = debug
 
 
-        if isinstance(arg, str):
-            assert len(arg) <= IPV6_MAXSTR_LEN
+        if isinstance(v6addr_prefixlen, str):
+            assert len(v6addr_prefixlen) <= IPV6_MAXSTR_LEN
 
-            tmp = re.split(r"\s+", arg.strip())
+            tmp = re.split(r"\s+", v6addr_prefixlen.strip())
             if len(tmp)==2:
-                arg="/".join(tmp)
+                v6addr_prefixlen = "/".join(tmp)
             elif len(tmp)==1:
-                arg=tmp[0]
+                v6addr_prefixlen = tmp[0]
             else:
-                raise NotImplementedError(arg.strip())
+                raise NotImplementedError(v6addr_prefixlen.strip())
 
-            v6_str_rgx = _RGX_IPV6ADDR.search(arg.strip())
+            v6_str_rgx = _RGX_IPV6ADDR.search(v6addr_prefixlen.strip())
             # Example 'pp'
             #     pp = {'addr': '2b00:cd80:14:10::1', 'opt1': None, 'opt2': None, 'opt3': None, 'opt4': None, 'opt5': '2b00:cd80:14:10::1', 'opt6': None, 'opt7': None, 'opt8': None, 'opt9': None, 'opt10': None, 'masklen': '64'}
             pp = v6_str_rgx.groupdict()
@@ -1769,19 +1767,19 @@ class IPv6Obj(object):
                 netstr = ipv6+"/128"
             self.network_object = IPv6Network(netstr, strict=False)
 
-        elif isinstance(arg, int):
-            assert 0 <= arg <= IPV6_MAXINT
-            self.ip_object = IPv6Address(arg)
-            self.network_object = IPv6Network(arg, strict=False)
+        elif isinstance(v6addr_prefixlen, int):
+            assert 0 <= v6addr_prefixlen <= IPV6_MAXINT
+            self.ip_object = IPv6Address(v6addr_prefixlen)
+            self.network_object = IPv6Network(v6addr_prefixlen, strict=False)
 
-        elif isinstance(arg, IPv6Obj):
-            self.ip_object = IPv6Address(arg.ip)
-            self.network_object = IPv6Network(arg.as_cidr_net, strict=False)
+        elif isinstance(v6addr_prefixlen, IPv6Obj):
+            self.ip_object = IPv6Address(v6addr_prefixlen.ip)
+            self.network_object = IPv6Network(v6addr_prefixlen.as_cidr_net, strict=False)
 
         else:
             raise AddressValueError(
                 "Could not parse '{}' (type: {}) into an IPv6 Address".format(
-                    arg, type(arg)
+                    v6addr_prefixlen, type(v6addr_prefixlen)
                 )
             )
 
