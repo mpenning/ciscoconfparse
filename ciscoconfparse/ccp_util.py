@@ -27,6 +27,7 @@ from functools import wraps
 import locale
 import socket
 import time
+import copy
 import sys
 import re
 import os
@@ -62,7 +63,7 @@ IPV6_MAX_PREFIXLEN = 128
 
 
 _CISCO_RANGE_ATOM_STR = r"""\d+\s*\-*\s*\d*"""
-_CISCO_RANGE_STR = r"""^(?P<line_prefix>[a-zA-Z\s]*)(?P<slot_prefix>[\d\/]*\d+\/)*(?P<range_text>(\s*{})*)$""".format(
+_CISCO_RANGE_STR = r"""^(?P<intf_prefix>[a-zA-Z\s]*)(?P<slot_prefix>[\d\/]*\d+\/)*(?P<range_text>(\s*{})*)$""".format(
     _CISCO_RANGE_ATOM_STR
 )
 _RGX_CISCO_RANGE = re.compile(_CISCO_RANGE_STR)
@@ -2916,7 +2917,462 @@ def reverse_dns_lookup(input_str, timeout=3.0, server="4.2.2.2", proto="udp"):
     return retval
 
 
+class CiscoInterface(object):
+
+    @logger.catch(reraise=True)
+    def __init__(self, interface_name=None):
+        """
+        Parse a string `interface_name` like "Ethernet4/1/25.9" into its typical Cisco IOS components.
+        """
+        if isinstance(interface_name, str):
+            self.interface_name = interface_name
+            if "," in interface_name:
+                error = f"interface_name: {interface_name} must not contain a comma"
+                logger.critical(error)
+                raise ValueError(error)
+        else:
+            error = f"interface_name: {interface_name} must be a string."
+            logger.critical(error)
+            raise ValueError(error)
+
+        self._prefix = None
+        self._number = None
+        self._number_list = []
+        self._digit_seperator = None
+        self._slot = None
+        self._card = None
+        self._port = None
+        self._subinterface = None
+        self._channel = None
+
+        #mm = re.search(r"^(?P<prefix>[a-zA-Z]+)(?P<number>[^\-^\.^\:^\,]+)(?P<subinterface>\.\d+)*(?P<channel>\:\d+)*$", interface_name.strip())
+        mm = re.search(r"^(?P<prefix>[a-zA-Z]+\s*)(?P<all>\d\S+)$", interface_name.strip())
+        if mm is not None:
+            groupdict = mm.groupdict()
+            self._prefix = groupdict.get("prefix", '').strip()
+            _intf_all = groupdict["all"].strip()
+            if "." in _intf_all:
+                mm = re.search(r"^(?P<number>\d+\S+?)(?P<subinterface>\.\d+)", _intf_all)
+                if mm is not None:
+                    groupdict = mm.groupdict()
+                    self._number = groupdict["number"]
+                    self._subinterface = groupdict["subinterface"]
+
+            if ":" in _intf_all:
+                mm = re.search(r"(?P<channel>\:\d+)$", _intf_all)
+                if mm is not None:
+                    groupdict = mm.groupdict()
+                    self._channel = groupdict["channel"]
+
+            if self._subinterface is None and self._channel is None:
+                self._number = _intf_all
+
+        else:
+            error = f"interface_name: {interface_name.strip()} could not be parsed."
+            logger.critical(error)
+            raise ValueError(error)
+
+        ######################################################################
+        # Detect the digit seperator
+        ######################################################################
+        if isinstance(self._number, str):
+            nn = re.search(r"^\d+(?P<digit_seperator>[^\d\-\:\.])*\d*", self._number)
+            if nn is not None:
+                groupdict = nn.groupdict()
+                self._digit_seperator = groupdict.get("digit_seperator", None)
+                self._number_list = [int(ii) for ii in self._number.split(self._digit_seperator)]
+                if len(self._number_list) == 1:
+                    self._port = self._number_list[-1]
+                elif len(self._number_list) == 2:
+                    self._slot = self._number_list[0]
+                    self._port = self._number_list[1]
+                elif len(self._number_list) == 3:
+                    self._slot = self._number_list[0]
+                    self._card = self._number_list[1]
+                    self._port = self._number_list[2]
+                else:
+                    error = f"Could not parse _number_list: {self._number_list}"
+                    logger.critical(error)
+                    raise ValueError(error)
+            else:
+                error = f"Could not parse _number: {self._number}"
+                logger.critical(error)
+                raise ValueError(error)
+        else:
+            self._digit_seperator = None
+            self._port = int(self._number)
+
+    @logger.catch(reraise=True)
+    def render_as_string(self):
+        if self.subinterface is None and self.channel is None:
+            return f"""{self.prefix}{self.number}"""
+        elif self.subinterface is not None and self.channel is None:
+            return f"""{self.prefix}{self.number}.{self.subinterface}"""
+        elif self.subinterface is None and self.channel is not None:
+            return f"""{self.prefix}{self.number}:{self.channel}"""
+        else:
+            return f"""{self.prefix}{self.number}.{self.subinterface}:{self.channel}"""
+
+    @logger.catch(reraise=True)
+    def __repr__(self):
+        return f"""<CiscoInterface {self.render_as_string()}>"""
+
+    @property
+    @logger.catch(reraise=True)
+    def prefix(self):
+        "Return 'Serial' if self.interface_name is 'Serial 2/1/8.3:6' and return '' if there is no interface prefix"
+        return self._prefix
+
+    @prefix.setter
+    @logger.catch(reraise=True)
+    def prefix(self, value):
+        if isinstance(value, str):
+            self._prefix = value
+        else:
+            error = f"CiscoInterface().prefix must be a string, not {value} ({type(value)})"
+            logger.error(error)
+            raise ValueError(error)
+
+    @property
+    @logger.catch(reraise=True)
+    def number(self):
+        "Return '2/1/8' if self.interface_name is 'Serial 2/1/8.3:6' and return None if there is no interface number"
+        return self.digit_seperator.join([str(ii) for ii in [self.slot, self.card, self.port] if isinstance(ii, int)])
+
+    @property
+    @logger.catch(reraise=True)
+    def number_list(self):
+        "Return [2, 1, 8] if self.interface_name is 'Serial 2/1/8.3:6'."
+        self._number_list = [ii for ii in (self.slot, self.card, self.port,) if isinstance(ii, int)]
+        return self._number_list
+
+    @number_list.setter
+    @logger.catch(reraise=True)
+    def number_list(self, value):
+        self._number_list = value
+
+    @property
+    @logger.catch(reraise=True)
+    def digit_seperator(self):
+        "Return '/' if self.interface_name is 'Serial 2/1/8.3:6' and return None if there is no seperator"
+        return self._digit_seperator
+
+    @digit_seperator.setter
+    @logger.catch(reraise=True)
+    def digit_seperator(self, value):
+        self._digit_seperator = int(value)
+
+    @property
+    @logger.catch(reraise=True)
+    def slot(self):
+        "Return 2 if self.interface_name is 'Serial 2/1/8.3:6' and return None if there is no slot"
+        return self._slot
+
+    @slot.setter
+    @logger.catch(reraise=True)
+    def slot(self, value):
+        if isinstance(value, int):
+            self._slot = int(value)
+        else:
+            error = f"Could not set _slot: {value} {type(value)}"
+            logger.critical(error)
+            raise ValueError(error)
+
+    @property
+    @logger.catch(reraise=True)
+    def card(self):
+        "Return 1 if self.interface_name is 'Serial 2/1/8.3:6' and return None if there is no card"
+        return self._card
+
+    @card.setter
+    @logger.catch(reraise=True)
+    def card(self, value):
+        if isinstance(value, int):
+            self._card = int(value)
+        else:
+            error = f"Could not set _card: {value} {type(value)}"
+            logger.critical(error)
+            raise ValueError(error)
+
+    @property
+    @logger.catch(reraise=True)
+    def port(self):
+        "Return 8 if self.interface_name is 'Serial 2/1/8.3:6' and raise a ValueError if there is no port"
+        return self._port
+
+    @port.setter
+    @logger.catch(reraise=True)
+    def port(self, value):
+        if isinstance(value, int):
+            self._port = int(value)
+        else:
+            error = f"Could not set _card: {value} {type(value)}"
+            logger.critical(error)
+            raise ValueError(error)
+
+    @property
+    @logger.catch(reraise=True)
+    def subinterface(self):
+        "Return 3 if self.interface_name is 'Serial 2/1/8.3:6' and return None if there is no subinterface"
+        if isinstance(self._subinterface, str):
+            return int(self._subinterface.strip("."))
+        else:
+            return None
+
+    @subinterface.setter
+    @logger.catch(reraise=True)
+    def subinterface(self, value):
+        if isinstance(value, int):
+            self._subinterface = int(value)
+        else:
+            error = f"Could not set _subinterface: {value} {type(value)}"
+            logger.critical(error)
+            raise ValueError(error)
+
+    @property
+    @logger.catch(reraise=True)
+    def channel(self):
+        "Return 6 if self.interface_name is 'Serial 2/1/8.3:6 and return None if there is no channel'"
+        if isinstance(self._channel, str):
+            return int(self._channel.strip(":"))
+        else:
+            return None
+
+    @channel.setter
+    @logger.catch(reraise=True)
+    def channel(self, value):
+        if isinstance(value, int):
+            self._channel = int(value)
+        else:
+            error = f"Could not set _channel: {value} {type(value)}"
+            logger.critical(error)
+            raise ValueError(error)
+
+    @property
+    @logger.catch(reraise=True)
+    def sort_list(self):
+        "Return a sortable-list in the form of [2, 1, 8, 3, 6] if self.interface_name is 'Serial 2/1/8.3:6.'"
+        # Assign the initial sort_list
+        self._sort_list = self.number_list
+        self._sort_list.append(self.subinterface)
+        self._sort_list.append(self.channel)
+        return self._sort_list
+
 class CiscoRange(MutableSequence):
+    """Explode Cisco ranges into a list of explicit items... examples below...
+
+    Examples
+    --------
+
+    >>> from ciscoconfparse.ccp_util import CiscoRange
+    >>> CiscoRange('1-3,5,9-11,13')
+    <CiscoRange 1-3,5,9-11,13>
+    >>> for ii in CiscoRange('Eth2/1-3,5,9-10'):
+    ...     print(ii)
+    ...
+    Eth2/1
+    Eth2/2
+    Eth2/3
+    Eth2/5
+    Eth2/9
+    Eth2/10
+    >>> CiscoRange('Eth2/1-3,7')
+    <CiscoRange Eth2/1-3,7>
+    >>> CiscoRange()
+    <CiscoRange []>
+    """
+
+    @logger.catch(reraise=True)
+    def __init__(self, text="", result_type=str):
+        super().__init__()
+
+        if not isinstance(text, str):
+            error = f'text="{text}" must be a string.'
+            loguru.error(error)
+            raise ValueError(error)
+
+        self.text = text
+        self._list = self.parse_text_list(text)
+
+        self.parse_text_list(text)
+
+    @logger.catch(reraise=True)
+    def parse_text_list(self, text):
+        expanded_interfaces = []
+        raw_parts = text.split(",")
+        for idx, raw_part in enumerate(raw_parts):
+            if idx == 0:
+                reference_interface = CiscoInterface(raw_part.split("-")[0])
+                template_interface = copy.deepcopy(reference_interface)
+                expanded_interfaces.append(template_interface)
+
+            if len(raw_part.split("-")) == 2:
+                # Append a whole range of interfaces...
+                end_ordinal = int(raw_parts[0].split("-")[1])
+            else:
+                end_ordinal = CiscoInterface(raw_part)
+
+            if reference_interface.channel is not None:
+                ##############################################################
+                # Handle incrementing channel numbers
+                ##############################################################
+                if idx > 0:
+                    for ii in range(reference_interface.channel, end_ordinal+1):
+                        template_interface.channel = ii
+                        logger.debug(template_interface)
+                        expanded_interfaces.append(template_interface)
+                else:
+                    for ii in range(reference_interface.channel+1, end_ordinal+1):
+                        template_interface.channel = ii
+                        logger.debug(template_interface)
+                        expanded_interfaces.append(template_interface)
+            elif reference_interface.subinterface is not None:
+                ##############################################################
+                # Handle incrementing subinterface numbers
+                ##############################################################
+                if idx > 0:
+                    for ii in range(reference_interface.subinterface, end_ordinal+1):
+                        template_interface.subinterface = ii
+                        logger.debug(template_interface)
+                        expanded_interfaces.append(template_interface)
+                else:
+                    for ii in range(reference_interface.subinterface+1, end_ordinal+1):
+                        template_interface.subinterface = ii
+                        logger.debug(template_interface)
+                        expanded_interfaces.append(template_interface)
+            else:
+                ##############################################################
+                # Handle incrementing port numberss
+                ##############################################################
+                if idx > 0:
+                    for ii in range(reference_interface.port, end_ordinal+1):
+                        template_interface.port = ii
+                        logger.debug(template_interface)
+                        expanded_interfaces.append(template_interface)
+                else:
+                    for ii in range(reference_interface.port+1, end_ordinal+1):
+                        template_interface.port = ii
+                        logger.debug(template_interface)
+                        expanded_interfaces.append(template_interface)
+
+        return expanded_interfaces
+
+    @logger.catch(reraise=True)
+    def __len__(self):
+        return len(self._list)
+
+    @logger.catch(reraise=True)
+    def __getitem__(self, ii):
+        return self._list[ii]
+
+    @logger.catch(reraise=True)
+    def __delitem__(self, ii):
+        del self._list[ii]
+
+    @logger.catch(reraise=True)
+    def __setitem__(self, ii, val):
+        return self._list[ii]
+
+    @logger.catch(reraise=True)
+    def insert(self, ii, val):
+        ## Insert something at index ii
+        for idx, obj in enumerate(CiscoRange(val)):
+            self._list.insert(ii + idx, obj)
+
+        # Prune out any duplicate entries, and sort...
+        self._list = sorted(map(self.result_type, set(self._list)))
+        return self
+
+    @logger.catch(reraise=True)
+    def append(self, val):
+        list_idx = len(self._list)
+        self.insert(list_idx, val)
+        return self
+
+    @logger.catch(reraise=True)
+    def __str__(self):
+        return self.__repr__()
+
+    @logger.catch(reraise=True)
+    def remove(self, arg):
+        remove_obj = CiscoRange(arg)
+        for ii in remove_obj:
+            try:
+                ## Remove arg, even if duplicated... Ref Github issue #126
+                while True:
+                    index = self.index(self.result_type(ii))
+                    self.pop(index)
+            except ValueError:
+                pass
+        return self
+
+    @property
+    @logger.catch(reraise=True)
+    def as_list(self):
+        return self._list
+
+    ## Github issue #125
+    @property
+    @logger.catch(reraise=True)
+    def compressed_str(self):
+        """
+        Return a text string with a compressed csv of values
+
+        >>> from ciscoconfparse.ccp_util import CiscoRange
+        >>> range_obj = CiscoRange('1,3,5,6,7')
+        >>> range_obj.compressed_str
+        '1,3,5-7'
+        >>>
+        """
+        retval = list()
+        prefix_str = self.line_prefix.strip() + self.slot_prefix.strip()
+        prefix_str_len = len(prefix_str)
+
+        # Build a list of integers (without prefix_str)
+        input_str = list()
+        for ii in self._list:
+            # Removed try / except which is slower than sys.version_info
+            unicode_ii = str(ii)
+
+            # Removed this in version 1.5.27 because it's so slow...
+            # trailing_digits = re.sub(r"^{0}(\d+)$".format(prefix_str), "\g<1>", unicode_ii)
+
+            complete_len = len(unicode_ii)
+            # Assign ii to the trailing number after prefix_str...
+            #    this is much faster than regexp processing...
+            trailing_digits_len = complete_len - prefix_str_len
+            trailing_digits = unicode_ii[-1 * trailing_digits_len:]
+            input_str.append(int(trailing_digits))
+
+        if len(input_str) == 0:  # Special case, handle empty list
+            return ""
+
+        # source - https://stackoverflow.com/a/51227915/667301
+        input_str = sorted(list(set(input_str)))
+        range_list = [input_str[0]]
+        for ii in range(len(input_str)):
+            if ii + 1 < len(input_str) and ii - 1 > -1:
+                if (input_str[ii] - input_str[ii - 1] == 1) and (
+                    input_str[ii + 1] - input_str[ii] == 1
+                ):
+                    if range_list[-1] != "-":
+                        range_list += ["-"]
+                else:
+                    range_list += [input_str[ii]]
+        if len(input_str) > 1:
+            range_list += [input_str[len(input_str) - 1]]
+
+        # Build the return value from range_list...
+        retval = prefix_str + str(range_list[0])
+        for ii in range(1, len(range_list)):
+            if str(type(range_list[ii])) != str(type(range_list[ii - 1])):
+                retval += str(range_list[ii])
+            else:
+                retval += "," + str(range_list[ii])
+
+        return retval
+
+class CiscoRangeOld(MutableSequence):
     """Explode Cisco ranges into a list of explicit items... examples below...
 
     Examples
@@ -2952,13 +3408,13 @@ class CiscoRange(MutableSequence):
         self.result_type = result_type
         if text:
             (
-                self.line_prefix,
+                self.intf_prefix,
                 self.slot_prefix,
                 self.range_text,
             ) = self.parse_range_text(text=text)
             self._list = self._range()
         else:
-            self.line_prefix = ""
+            self.intf_prefix = ""
             self.slot_prefix = ""
             self._list = list()
 
@@ -2985,9 +3441,9 @@ class CiscoRange(MutableSequence):
 
     # Github issue #124
     def __eq__(self, other):
-        assert hasattr(other, "line_prefix")
-        self_prefix_str = self.line_prefix + self.slot_prefix
-        other_prefix_str = other.line_prefix + other.slot_prefix
+        assert hasattr(other, "intf_prefix")
+        self_prefix_str = self.intf_prefix + self.slot_prefix
+        other_prefix_str = other.intf_prefix + other.slot_prefix
         cmp1 = self_prefix_str.lower() == other_prefix_str.lower()
         cmp2 = sorted(self._list) == sorted(other._list)
         return cmp1 and cmp2
@@ -3013,54 +3469,33 @@ class CiscoRange(MutableSequence):
             logger.error(error)
             raise ValueError(error)
 
-        nondigit_intf_prefix = None
-        individual_intf_component_list = text.split(",")
+        components = list()
+        if "," in text:
+            for part in text.split(","):
+                if "-" in part:
+                    this_range = part.split("-")
+                    if len(this_range) != 2:
+                        error = f"Cannot parse {text} into a proper range"
+                        logger.error(error)
+                        raise ValueError(error)
+                    else:
+                        begin_interface = CiscoInterface(this_range[0])
+                        end_interface = begin_interface.port = int(this_range[1])
 
-        # Handle case of "Eth1/1,Eth1/5-7"... remove the common_prefix...
-        tmp_intf_str_prefix = os.path.commonprefix(individual_intf_component_list)
-        mm = re.search(r"(?P<intf_name>\D+).*?[0-9]*$", tmp_intf_str_prefix)
-        if mm is not None:
-            nondigit_intf_prefix = mm.groupdict()["intf_name"].strip()
-        else:
-            error = f"Invalid interface list: {text}"
-            logger.critical(error)
-            raise ValueError(error)
 
-        delimiter_len = -1
-        intf_components = list()
-        for idx, ii in enumerate(individual_intf_component_list):
-
-            logger.debug("FOO", ii)
-
-            # Ensure that we don't capture digits and delimiter into common_prefix
-            allm = re.search(rf"^(?P<intf_name_prefix>{nondigit_intf_prefix})*\D*?(?P<intf_delimiter>\d+.*)$", ii, re.I)
-            if allm is not None:
-
-                intf_component_delimiter = list()
-                # Split up 0/0/1 into [0, 0, 1]...
-                for jj in "/".split(allm.groupdict()["intf_delimiter"]):
-                    intf_component_delimiter.append(int(jj))
-                intf_components.append(intf_component_delimiter)
-
-                if idx==0:
-                    delimiter_len = len(intf_component_delimiter)
-
-            else:
-                error = f"Invalid interface component: {ii}"
-                logger.critical(error)
-                raise ValueError(error)
-
-        for ii in intf_components:
-            if len(ii) != delimiter_len:
-                error = f"Inconsistent delimiter length: {ii}, expected length={delimiter_len}"
-                logger.critical(error)
-                raise ValueError(error)
-
-        all_components = ["/".join(ii) for ii in sorted(intf_components)]
         logger.warning(all_components)
         return nondigit_intf_prefix, all_components
 
+    def get_interface_dict(self, interface_name=None):
+        for ii in all_components:
+            logger.warning(ii)
+        return all_components
+
     def parse_range_text(self, text=None):
+        """
+        Parse `text` in the form of 'Eth1/1-2,12-18,19' into a proper list.
+        """
+        logger.critical(text)
         if not isinstance(text, str):
             error = f'text={text} {type(text)} must be a string'
             logger.error(error)
@@ -3074,7 +3509,7 @@ class CiscoRange(MutableSequence):
         assert mm is not None, ERROR
 
         mm_result = mm.groupdict()
-        line_prefix = mm_result.get("line_prefix", "") or ""
+        intf_prefix = mm_result.get("intf_prefix", "") or ""
         slot_prefix = mm_result.get("slot_prefix", "") or ""
         if len(tmp[1:]) > 1:
             range_text = mm_result["range_text"] + "," + ",".join(tmp[1:])
@@ -3083,7 +3518,11 @@ class CiscoRange(MutableSequence):
         elif len(tmp[1:]) == 0:
             range_text = mm_result["range_text"]
 
-        return line_prefix, slot_prefix, range_text
+        logger.debug(intf_prefix)
+        logger.info(slot_prefix)
+        logger.warning(range_text)
+
+        return intf_prefix, slot_prefix, range_text
 
     def _parse_dash_range(self, text):
         """Parse a dash Cisco range into a discrete list of items"""
@@ -3186,3 +3625,4 @@ class CiscoRange(MutableSequence):
                 retval += "," + str(range_list[ii])
 
         return retval
+
