@@ -28,12 +28,34 @@ import sys
 
 from ciscoconfparse.ccp_util import PythonOptimizeCheck
 from ciscoconfparse.ciscoconfparse import *
-from ciscoconfparse.ccp_util import *
+from ciscoconfparse.ccp_util import IPv4Obj
+from ciscoconfparse.ccp_util import IPv6Obj
+from ciscoconfparse.ccp_util import CiscoRange, CiscoInterface
+from ciscoconfparse.ccp_util import run_this_posix_command
+from ciscoconfparse.ccp_util import ccp_logger_control
+from ciscoconfparse.ccp_util import configure_loguru
+from ciscoconfparse.ccp_util import as_text_list
+from ciscoconfparse.ccp_util import junos_unsupported
+from ciscoconfparse.ccp_util import log_function_call
+from ciscoconfparse.ccp_util import enforce_valid_types
+from ciscoconfparse.ccp_util import fix_repeated_words
+from ciscoconfparse.ccp_util import __ccp_re__
+from ciscoconfparse.ccp_util import _get_ipv4
+from ciscoconfparse.ccp_util import _get_ipv6
+from ciscoconfparse.ccp_util import ip_factory
+from ciscoconfparse.ccp_util import collapse_addresses
+from ciscoconfparse.ccp_util import L4Object
+from ciscoconfparse.ccp_util import DNSResponse
+from ciscoconfparse.ccp_util import dns_query
+from ciscoconfparse.ccp_util import dns_lookup
+from ciscoconfparse.ccp_util import dns6_lookup
+from ciscoconfparse.ccp_util import check_valid_ipaddress
+from ciscoconfparse.ccp_util import reverse_dns_lookup
+
 from dns.resolver import Resolver
 from dns.exception import DNSException
 
 assert sys.version_info >= (3, 7)
-
 
 # Throw errors for PYTHONOPTIMIZE and `python -O ...` by executing
 #     PythonOptimizeCheck()...
