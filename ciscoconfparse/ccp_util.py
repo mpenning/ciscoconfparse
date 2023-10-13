@@ -26,9 +26,11 @@ r""" ccp_util.py - Parse, Query, Build, and Modify IOS-style configurations
 # Disable SonarCloud warnings in this file
 #   - S1192: Define a constant instead of duplicating this literal
 #   - S1313: Disable alerts on magic IPv4 / IPv6 addresses
+#   - S6395: Unwrap this unnecessarily grouped regex subpattern.
 ##############################################################################
 #pragma warning disable S1192
 #pragma warning disable S1313
+#pragma warning disable S6395
 
 from operator import attrgetter
 from functools import wraps
@@ -3586,3 +3588,4 @@ class CiscoRange(MutableSequence):
 
 #pragma warning restore S1192
 #pragma warning restore S1313
+#pragma warning restore S6395
