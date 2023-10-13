@@ -49,6 +49,7 @@ from ciscoconfparse.protocol_values import ASA_TCP_PORTS, ASA_UDP_PORTS
 from ciscoconfparse.errors import InvalidShellVariableMapping
 from ciscoconfparse.errors import PythonOptimizeException
 from ciscoconfparse.errors import DynamicAddressException
+from ciscoconfparse.errors import  ListItemMissingAttribute
 import ciscoconfparse
 
 # Maximum ipv4 as an integer
@@ -3471,7 +3472,22 @@ class CiscoRange(MutableSequence):
     @property
     @logger.catch(reraise=True)
     def as_list(self):
-        return [str(ii) for ii in sorted(list(set(self._list)), key=lambda x: x.__hash__(), reverse=False)]
+        """Return a list of sorted components; an empty string is automatically rejected.  This method is tricky to test due to the requirement for the `.sort_list` attribute on all elements; avoid using the ordered nature of `as_list` and use `as_set`."""
+        try:
+            [getattr(x, "sort_list") for x in self._list]:
+            return [str(ii) for ii in sorted(list(set(self._list)) if ii != "", key=lambda x: x.sort_list, reverse=False)]
+        except AttributeError as eee:
+            logger.error(eee)
+            raise ListItemMissingAttribute(eee)
+        except Exception as eee:
+            logger.critical(eee)
+            raise ValueError(eee)
+
+    @property
+    @logger.catch(reraise=True)
+    def as_set(self):
+        """Return an unsorted set({}) components.  Use this method instead of `.as_list` whenever possible to avoid the requirement for elements needing a `.sort_list` attribute."""
+        return set(self._list)
 
     ## Github issue #125
     @property
