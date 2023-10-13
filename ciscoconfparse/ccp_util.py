@@ -3355,6 +3355,7 @@ class CiscoRange(MutableSequence):
             logger.info(f"CiscoRange(text='{text}', debug=True) was called.")
 
         self.text = text
+        self.begin_obj = None
         self.iterate_attribute = None
         self.default_iter_attr = default_iter_attr
         self._list = self.parse_text_list(text, debug=debug)
@@ -3375,6 +3376,7 @@ class CiscoRange(MutableSequence):
                 begin_obj = CiscoInterface(raw_part.split("-")[0])
             else:
                 begin_obj = CiscoInterface(raw_part)
+            self.begin_obj = begin_obj
 
             ##############################################################
             # Walk all possible attributes to find which target_attribute
@@ -3660,7 +3662,7 @@ class CiscoRange(MutableSequence):
         >>>
         """
         retval = list()
-        prefix_str = self.line_prefix.strip() + self.slot_prefix.strip()
+        prefix_str = self.begin_obj.prefix.strip()
         prefix_str_len = len(prefix_str)
 
         # Build a list of integers (without prefix_str)
