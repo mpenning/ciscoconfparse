@@ -6,9 +6,11 @@
 
 ## Version: 1.9.3
 
-- Released: 2023-10-10
+- Released: 2023-10-13
 - Summary:
     - Remove dead code
+    - Add new CiscoInterface() object in ciscoconfparse.ccp_util.py
+    - Add many enhancements to CiscoRange() and modify unit-tests accordingly
     - Add loguru.logger.catch() in various places
     - Rename a method
 
