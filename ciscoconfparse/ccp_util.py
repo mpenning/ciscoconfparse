@@ -3362,7 +3362,6 @@ class CiscoRange(MutableSequence):
         expanded_interfaces = []
         raw_parts = text.split(",")
         for idx, raw_part in enumerate(raw_parts):
-            logger.info(str(raw_part))
             if len(raw_part.split("-")) == 2:
                 # Append a whole range of interfaces...
                 end_ordinal = int(raw_part.split("-")[1].strip())
