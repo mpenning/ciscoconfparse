@@ -3484,10 +3484,19 @@ class CiscoRange(MutableSequence):
     @logger.catch(reraise=True)
     def as_list(self):
         """Return a list of sorted components; an empty string is automatically rejected.  This method is tricky to test due to the requirement for the `.sort_list` attribute on all elements; avoid using the ordered nature of `as_list` and use `as_set`."""
+        yy_list = copy.deepcopy(self._list)
+        for ii in self._list:
+            if isinstance(ii, str) and ii == "":
+                # Reject an empty string...
+                continue
+            if getattr(ii, "sort_list", None) is not None:
+                # Require the .sort_list attribute...
+                yy_list.append(ii)
+
+        self._list = yy_list
         try:
-            [getattr(x, "sort_list") for x in self._list]
             # Disable linter qa checks on this embedded list syntax...
-            return [str(ii) for ii in sorted(list(set(self._list)) if ii != "", key=lambda x: x.sort_list, reverse=False)] # noqa
+            return [self._list, key=lambda x: x.sort_list, reverse=False)] # noqa
         except AttributeError as eee:
             logger.error(eee)
             raise ListItemMissingAttribute(eee)
