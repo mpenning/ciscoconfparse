@@ -3366,35 +3366,37 @@ class CiscoRange(MutableSequence):
         raw_parts = text.split(",")
         for idx, raw_part in enumerate(raw_parts):
             if debug is True:
-                logger.info(f"idx: CiscoRange() for --> {raw_part} <--")
+                logger.info(f"  CiscoRange() for --> {raw_part} <--")
             if len(raw_part.split("-")) == 2:
                 # Append a whole range of interfaces...
                 begin_obj = CiscoInterface(raw_part.split("-")[0])
-
-                # Walk backwards in .sort_list to find the most-specific value
-                if debug is True:
-                    logger.info(f"  CiscoRange(text={text}, debug=True) raw_part: {raw_part}")
-                    logger.info(f"  CiscoRange(text={text}, debug=True)     begin_obj: {begin_obj}")
-
-
-                ##############################################################
-                # Walk all possible attributes to find which target_attribute
-                #     we're iterating on...
-                ##############################################################
-                iterate_attribute = None
-                for potential_iter_attr in ['channel', 'subinterface', 'port', 'card', 'slot']:
-                    if isinstance(getattr(begin_obj, potential_iter_attr), int):
-                        if debug is True:
-                            logger.info(f"  CiscoRange(text={text}, debug=True)    ITERATE on --> {potential_iter_attr} <--")
-                        self.iterate_attribute = potential_iter_attr
-                        break
-                if self.iterate_attribute is None:
-                    self.iterate_attribute = self.default_iter_attr
-
                 end_ordinal = int(raw_part.split("-")[1].strip())
             else:
-                begin_ordinal = None
+                begin_obj = CiscoInterface(raw_part)
                 end_ordinal = None
+
+            ##############################################################
+            # Walk all possible attributes to find which target_attribute
+            #     we're iterating on...
+            ##############################################################
+            iterate_attribute = None
+            for potential_iter_attr in ['channel', 'subinterface', 'port', 'card', 'slot']:
+                if isinstance(getattr(begin_obj, potential_iter_attr), int):
+                    if debug is True:
+                        logger.info(f"  CiscoRange(text={text}, debug=True)    ITERATE on --> {potential_iter_attr} <--")
+                    self.iterate_attribute = potential_iter_attr
+                    break
+            if self.iterate_attribute is None:
+                if debug is True:
+                    logger.warning(f"CiscoRange() set iterate_attribute to the default: {self.default_iter_attr}")
+                self.iterate_attribute = self.default_iter_attr
+
+            # Walk backwards in .sort_list to find the most-specific value
+            if debug is True:
+                logger.info(f"    CiscoRange(text={text}, debug=True) raw_part: {raw_part}")
+                logger.info(f"    CiscoRange(text={text}, debug=True)     iterate_attribute: {self.iterate_attribute}")
+                logger.info(f"    CiscoRange(text={text}, debug=True)     begin_obj: {begin_obj}")
+
 
             ##################################################################
             # Reference interface is for the base starting interface instance
@@ -3409,7 +3411,7 @@ class CiscoRange(MutableSequence):
                 template_interface = CiscoInterface(intf_component01)
                 if "-" not in raw_part:
                     if debug is True:
-                        logger.info(f"    idx: {idx} at point01, Appending {reference_interface}")
+                        logger.info(f"    idx: {idx} at point01, Appending {reference_interface}{os.linesep}")
                     expanded_interfaces.append(copy.deepcopy(reference_interface))
                     continue
 
@@ -3449,7 +3451,7 @@ class CiscoRange(MutableSequence):
                         #############################################################
                         reference_interface.slot = int(intf_component01)
                     if debug is True:
-                        logger.info(f"    idx: {idx} at point03, Appending {reference_interface}")
+                        logger.info(f"    idx: {idx} at point03, Appending {reference_interface}{os.linesep}")
                     expanded_interfaces.append(copy.deepcopy(reference_interface))
                     continue
 
@@ -3465,7 +3467,7 @@ class CiscoRange(MutableSequence):
                         # Use deepcopy to avoid problems with the same object
                         #     instance appended multiple times
                         if debug is True:
-                            logger.info(f"    idx: {idx} at point05, Appending {template_interface}")
+                            logger.info(f"    idx: {idx} at point05, Appending {template_interface}{os.linesep}")
                         expanded_interfaces.append(copy.deepcopy(template_interface))
                         continue
             elif self.iterate_attribute == 'subinterface' and isinstance(template_interface.subinterface, int):
@@ -3480,7 +3482,7 @@ class CiscoRange(MutableSequence):
                         # Use deepcopy to avoid problems with the same object
                         #     instance appended multiple times
                         if debug is True:
-                            logger.info(f"    idx: {idx} at point07, Appending {template_interface}")
+                            logger.info(f"    idx: {idx} at point07, Appending {template_interface}{os.linesep}")
                         expanded_interfaces.append(copy.deepcopy(template_interface))
                         continue
             elif self.iterate_attribute == 'port' and isinstance(template_interface.port, int):
@@ -3490,12 +3492,12 @@ class CiscoRange(MutableSequence):
                 if end_ordinal is not None:
                     for ii in range(begin_obj.port, end_ordinal+1):
                         if debug is True:
-                            logger.debug(f"    idx: {idx} at point06,     set subinterface: {ii}")
+                            logger.debug(f"    idx: {idx} at point08,     set subinterface: {ii}")
                         template_interface.port = ii
                         # Use deepcopy to avoid problems with the same object
                         #     instance appended multiple times
                         if debug is True:
-                            logger.info(f"    idx: {idx} at point07, Appending {template_interface}")
+                            logger.info(f"    idx: {idx} at point09, Appending {template_interface}{os.linesep}")
                         expanded_interfaces.append(copy.deepcopy(template_interface))
                         continue
 
@@ -3506,12 +3508,12 @@ class CiscoRange(MutableSequence):
                 if end_ordinal is not None:
                     for ii in range(begin_obj.card, end_ordinal+1):
                         if debug is True:
-                            logger.debug(f"    idx: {idx} at point06,     set subinterface: {ii}")
+                            logger.debug(f"    idx: {idx} at point10,     set subinterface: {ii}")
                         template_interface.card = ii
                         # Use deepcopy to avoid problems with the same object
                         #     instance appended multiple times
                         if debug is True:
-                            logger.info(f"    idx: {idx} at point07, Appending {template_interface}")
+                            logger.info(f"    idx: {idx} at point11, Appending {template_interface}{os.linesep}")
                         expanded_interfaces.append(copy.deepcopy(template_interface))
                         continue
 
@@ -3522,17 +3524,17 @@ class CiscoRange(MutableSequence):
                 if end_ordinal is not None:
                     for ii in range(begin_obj.slot, end_ordinal+1):
                         if debug is True:
-                            logger.debug(f"    idx: {idx} at point06,     set subinterface: {ii}")
+                            logger.debug(f"    idx: {idx} at point12,     set subinterface: {ii}")
                         template_interface.slot = ii
                         # Use deepcopy to avoid problems with the same object
                         #     instance appended multiple times
                         if debug is True:
-                            logger.info(f"    idx: {idx} at point07, Appending {template_interface}")
+                            logger.info(f"    idx: {idx} at point13, Appending {template_interface}{os.linesep}")
                         expanded_interfaces.append(copy.deepcopy(template_interface))
                         continue
 
             else:
-                error = f"Cannot determinte CiscoRange().iterate_attribute.  We thought it was --> {self.iterate_attribute} <--"
+                error = f"Cannot determine CiscoRange().iterate_attribute.  We thought it was --> {self.iterate_attribute} <--"
                 logger.critical(error)
                 raise ValueError(error)
 
