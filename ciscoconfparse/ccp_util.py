@@ -2943,6 +2943,8 @@ class CiscoInterface(object):
         - port: 2
         - subinterface: 9
         - channel: 5
+
+        When comparing two CiscoInterface() instances, the most explicit comparison is with `CiscoInterface().sort_list`
         """
         if isinstance(interface_name, str):
             self.interface_name = interface_name
