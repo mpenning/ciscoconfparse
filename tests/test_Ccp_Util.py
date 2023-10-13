@@ -691,6 +691,16 @@ def test_CiscoInterface_06():
     assert uut.subinterface == 5
     assert uut.channel is None
 
+def test_CiscoInterface_07():
+    """Check that a card, slot, port, subinterface, and channel is parsed correctly"""
+    uut = CiscoInterface("Ethernet1/3/42.5:9")
+    assert uut.prefix == "Ethernet"
+    assert uut.card == 1
+    assert uut.slot == 3
+    assert uut.port == 42
+    assert uut.subinterface == 5
+    assert uut.channel == 9
+
 def test_CiscoRange_01():
     """Basic vlan range test"""
     result_correct = set({"1",})
