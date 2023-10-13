@@ -33,6 +33,12 @@ class PythonOptimizeException(BaseError):
         super().__init__(msg)
         self.msg = msg
 
+class ListItemMissingAttribute(Exception):
+    """Raise this error if a list() item is missing a required attribute."""
+
+    def __init__(self, msg=""):
+        super().__init__(msg)
+        self.msg = msg
 
 class DynamicAddressException(Exception):
     """Throw this if you try to get an address object from a dhcp interface"""
