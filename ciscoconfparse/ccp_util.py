@@ -3365,15 +3365,16 @@ class CiscoRange(MutableSequence):
         expanded_interfaces = []
         raw_parts = text.split(",")
         for idx, raw_part in enumerate(raw_parts):
+
             if debug is True:
                 logger.info(f"  CiscoRange() for --> {raw_part} <--")
+
+            # Set the begin_obj...
             if len(raw_part.split("-")) == 2:
                 # Append a whole range of interfaces...
                 begin_obj = CiscoInterface(raw_part.split("-")[0])
-                end_ordinal = int(raw_part.split("-")[1].strip())
             else:
                 begin_obj = CiscoInterface(raw_part)
-                end_ordinal = None
 
             ##############################################################
             # Walk all possible attributes to find which target_attribute
@@ -3397,6 +3398,17 @@ class CiscoRange(MutableSequence):
                 logger.info(f"    CiscoRange(text={text}, debug=True)     iterate_attribute: {self.iterate_attribute}")
                 logger.info(f"    CiscoRange(text={text}, debug=True)     begin_obj: {begin_obj}")
 
+            # Set the end_ordinal... keep this separate from begin_obj logic...
+            if self.iterate_attribute is None:
+                raise ValueError()
+            if len(raw_part.split("-")) == 2:
+                # Append a whole range of interfaces...
+                end_ordinal = int(raw_part.split("-")[1].strip())
+            else:
+                end_ordinal = getattr(begin_obj, self.iterate_attribute, None)
+
+            if debug is True:
+                logger.info(f"    CiscoRange(text={text}, debug=True)     end_ordinal: {end_ordinal}")
 
             ##################################################################
             # Reference interface is for the base starting interface instance
@@ -3417,7 +3429,7 @@ class CiscoRange(MutableSequence):
 
             if idx > 0:
 
-                if True:
+                if False:
                     if self.iterate_attribute == 'channel' and isinstance(reference_interface.channel, int):
                         #############################################################
                         # Base the new reference_interface off the lowest digit
@@ -3455,6 +3467,7 @@ class CiscoRange(MutableSequence):
                     expanded_interfaces.append(copy.deepcopy(reference_interface))
                     continue
 
+            print("LOOP HERE")
             if self.iterate_attribute == 'channel' and isinstance(template_interface.channel, int):
                 ##############################################################
                 # Handle incrementing channel numbers
