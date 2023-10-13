@@ -3414,6 +3414,7 @@ class CiscoRange(MutableSequence):
                     continue
 
             if idx > 0:
+
                 if False:
                     if self.iterate_attribute == 'channel' and isinstance(reference_interface.channel, int):
                         #############################################################
