@@ -2952,7 +2952,7 @@ class CiscoInterface(object):
         self._subinterface = None
         self._channel = None
 
-        mm = re.search(r"^(?P<prefix>[a-zA-Z]+\s*)(?P<all>\d\S*)$", interface_name.strip())
+        mm = re.search(r"^(?P<prefix>[a-zA-Z]*\s*)(?P<all>\d\S*)$", interface_name.strip())
         if mm is not None:
             groupdict = mm.groupdict()
             self._prefix = groupdict.get("prefix", '').strip()
