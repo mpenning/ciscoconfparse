@@ -2957,7 +2957,6 @@ class CiscoInterface(object):
             groupdict = mm.groupdict()
             self._prefix = groupdict.get("prefix", '').strip()
             _intf_all = groupdict["all"].strip()
-            logger.info(f"Parsing {_intf_all}")
 
             # Handle non-subinterface / non-channel interfaces...
             mm = re.search(r"^(?P<all>(?P<slot>\d+)(?P<sep1>[^\:^\.])?(?P<card>\d+)?(?P<sep2>[^\:^\.])?(?P<port>\d+)?)", _intf_all)
@@ -3045,37 +3044,6 @@ class CiscoInterface(object):
             error = f"interface_name: {interface_name.strip()} could not be parsed."
             logger.critical(error)
             raise ValueError(error)
-
-        ######################################################################
-        # Detect the digit separator
-        ######################################################################
-        if False:
-            if isinstance(self._number, str):
-                nn = re.search(r"^\d+(?P<digit_separator>[^\d\-\:\.])*\d*", self._number)
-                if nn is not None:
-                    groupdict = nn.groupdict()
-                    self._digit_separator = groupdict.get("digit_separator", None)
-                    self._number_list = [int(ii) for ii in self._number.split(self._digit_separator)]
-                    if len(self._number_list) == 1:
-                        self._port = self._number_list[-1]
-                    elif len(self._number_list) == 2:
-                        self._slot = self._number_list[0]
-                        self._port = self._number_list[1]
-                    elif len(self._number_list) == 3:
-                        self._slot = self._number_list[0]
-                        self._card = self._number_list[1]
-                        self._port = self._number_list[2]
-                    else:
-                        error = f"Could not parse _number_list: {self._number_list}"
-                        logger.critical(error)
-                        raise ValueError(error)
-                else:
-                    error = f"Could not parse _number: {self._number}"
-                    logger.critical(error)
-                    raise ValueError(error)
-            else:
-                self._digit_separator = None
-                self._port = int(self._number)
 
     def __eq__(self, other):
         try:
@@ -3383,8 +3351,6 @@ class CiscoRange(MutableSequence):
                 end_ordinal = int(raw_part.split("-")[1].strip())
             else:
                 end_ordinal = None
-                if False:
-                    end_ordinal = CiscoInterface(raw_part.strip())
 
             ##################################################################
             # Reference interface is for the base starting interface instance
@@ -3393,23 +3359,6 @@ class CiscoRange(MutableSequence):
                 reference_interface = CiscoInterface(raw_part.split("-")[0].strip())
                 template_interface = CiscoInterface(raw_part.split("-")[0].strip())
                 if "-" not in raw_part:
-                    expanded_interfaces.append(copy.deepcopy(reference_interface))
-                    continue
-
-            if False and "-" not in raw_part:
-                ############################################################
-                # Handle non-interface-range appends here...
-                ############################################################
-                if isinstance(reference_interface.channel, int):
-                    reference_interface.channel = raw_part
-                    expanded_interfaces.append(copy.deepcopy(reference_interface))
-                    continue
-                elif isinstance(reference_interface.subinterface, int):
-                    reference_interface.subinterface = raw_part
-                    expanded_interfaces.append(copy.deepcopy(reference_interface))
-                    continue
-                else:
-                    reference_interface.port = raw_part
                     expanded_interfaces.append(copy.deepcopy(reference_interface))
                     continue
 
