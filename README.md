@@ -238,6 +238,8 @@ Bug Tracker and Support
 Unit-Tests and Development
 --------------------------
 
+We are manually disabling some [SonarCloud](https://sonarcloud.io/) alerts with `#pragma warning disable S1313`, where `S1313` is a False-positive that [SonarCloud](https://sonarcloud.io) flags in [CiscoConfParse](https://github.com/mpenning/ciscoconfparse/)
+
 The project\'s [test workflow][1] checks ciscoconfparse on Python versions 3.7 and higher, as well as a [pypy JIT][22] executable.
 
 Caveats:
