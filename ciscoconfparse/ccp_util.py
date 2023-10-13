@@ -3496,7 +3496,7 @@ class CiscoRange(MutableSequence):
         self._list = yy_list
         try:
             # Disable linter qa checks on this embedded list syntax...
-            return [self._list, key=lambda x: x.sort_list, reverse=False] # noqa
+            return sorted(self._list, key=lambda x: x.sort_list, reverse=False) # noqa
         except AttributeError as eee:
             logger.error(eee)
             raise ListItemMissingAttribute(eee)
