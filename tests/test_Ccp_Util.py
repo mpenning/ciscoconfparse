@@ -645,7 +645,7 @@ def test_CiscoInterface_02():
     """Check that a card and port is parsed correctly"""
     uut = CiscoInterface("Ethernet1/42")
     assert uut.prefix == "Ethernet"
-    assert uut.card is 1
+    assert uut.card == 1
     assert uut.slot is None
     assert uut.port == 42
     assert uut.subinterface is None
@@ -655,7 +655,7 @@ def test_CiscoInterface_03():
     """Check that a card and large port-number is parsed correctly"""
     uut = CiscoInterface("Ethernet1/4242")
     assert uut.prefix == "Ethernet"
-    assert uut.card is 1
+    assert uut.card == 1
     assert uut.slot is None
     assert uut.port == 4242
     assert uut.subinterface is None
@@ -665,8 +665,28 @@ def test_CiscoInterface_04():
     """Check that a card, port and subinterface is parsed correctly"""
     uut = CiscoInterface("Ethernet1/42.5")
     assert uut.prefix == "Ethernet"
-    assert uut.card is 1
+    assert uut.card == 1
     assert uut.slot is None
+    assert uut.port == 42
+    assert uut.subinterface == 5
+    assert uut.channel is None
+
+def test_CiscoInterface_05():
+    """Check that a card, slot, port  is parsed correctly"""
+    uut = CiscoInterface("Ethernet1/3/42")
+    assert uut.prefix == "Ethernet"
+    assert uut.card == 1
+    assert uut.slot == 3
+    assert uut.port == 42
+    assert uut.subinterface is None
+    assert uut.channel is None
+
+def test_CiscoInterface_06():
+    """Check that a card, slot, port and subinterface  is parsed correctly"""
+    uut = CiscoInterface("Ethernet1/3/42.5")
+    assert uut.prefix == "Ethernet"
+    assert uut.card == 1
+    assert uut.slot == 3
     assert uut.port == 42
     assert uut.subinterface == 5
     assert uut.channel is None
