@@ -52,3 +52,9 @@ class InvalidShellVariableMapping(BaseError):
     def __init__(self, msg=""):
         super().__init__(msg)
         self.msg = msg
+
+class InvalidCiscoInterface(BaseError):
+
+    def __init__(self, msg=""):
+        super().__init__(msg)
+        self.msg = msg
