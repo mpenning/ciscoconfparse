@@ -3150,7 +3150,7 @@ class CiscoInterface(object):
         logger.critical(f"{value}")
         self._number = value
 
-    def update_state(self, debug=True):
+    def update_state(self, debug=False):
         "Rewrite the state of this object; call this when any digit changes."
         if (self.slot is None) and (self.card is None) and isinstance(self.port, (int, str)):
             self._number_list[-1] = int(self._port)
