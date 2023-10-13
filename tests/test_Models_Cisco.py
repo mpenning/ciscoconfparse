@@ -10,6 +10,8 @@ from ciscoconfparse.ciscoconfparse import CiscoConfParse
 from ciscoconfparse.ccp_util import IPv4Obj, CiscoRange
 import pytest
 
+from loguru import logger
+
 r""" test_Models_Cisco.py - Parse, Query, Build, and Modify IOS-style configs
 
      Copyright (C) 2020-2021 David Michael Pennington at Cisco Systems
@@ -278,6 +280,8 @@ def testVal_IOSIntfLine_trunk_vlan_allowed_01():
     ]
     cfg = CiscoConfParse(lines, factory=True)
     intf_obj = cfg.find_objects("^interface")[0]
+    logger.critical(f"""{len(intf_obj.trunk_vlans_allowed.as_list) == len(range(1, 4095))}""")
+    assert len(intf_obj.trunk_vlans_allowed.as_list) == len(range(1, 4095))
     assert intf_obj.trunk_vlans_allowed.as_list == list(range(1, 4095))
 
 
@@ -1057,17 +1061,17 @@ def testVal_IOSIntfLine_ipv4_addr_object01(parse_c03_factory):
     result_correct = {
         "interface Serial 1/0": IPv4Obj("1.1.1.1/30", strict=False),
         "interface Serial 1/1": IPv4Obj("1.1.1.9/31", strict=False),
-        "interface GigabitEthernet4/1": IPv4Obj("0.0.0.1/32", strict=False),
-        "interface GigabitEthernet4/2": IPv4Obj("0.0.0.1/32", strict=False),
-        "interface GigabitEthernet4/3": IPv4Obj("0.0.0.1/32", strict=False),
-        "interface GigabitEthernet4/4": IPv4Obj("0.0.0.1/32", strict=False),
-        "interface GigabitEthernet4/5": IPv4Obj("0.0.0.1/32", strict=False),
-        "interface GigabitEthernet4/6": IPv4Obj("0.0.0.1/32", strict=False),
-        "interface GigabitEthernet4/7": IPv4Obj("0.0.0.1/32", strict=False),
+        "interface GigabitEthernet4/1": IPv4Obj("127.0.0.1/32", strict=False),
+        "interface GigabitEthernet4/2": IPv4Obj("127.0.0.1/32", strict=False),
+        "interface GigabitEthernet4/3": IPv4Obj("127.0.0.1/32", strict=False),
+        "interface GigabitEthernet4/4": IPv4Obj("127.0.0.1/32", strict=False),
+        "interface GigabitEthernet4/5": IPv4Obj("127.0.0.1/32", strict=False),
+        "interface GigabitEthernet4/6": IPv4Obj("127.0.0.1/32", strict=False),
+        "interface GigabitEthernet4/7": IPv4Obj("127.0.0.1/32", strict=False),
         "interface GigabitEthernet4/8.120": IPv4Obj("1.1.2.254/24", strict=False),
         "interface ATM5/0/0": IPv4Obj("0.0.0.1/32", strict=False),
         "interface ATM5/0/0.32 point-to-point": IPv4Obj("1.1.1.5/30", strict=False),
-        "interface ATM5/0/1": IPv4Obj("0.0.0.1/32", strict=False),
+        "interface ATM5/0/1": IPv4Obj("127.0.0.1/32", strict=False),
 
         # FIXME FIXME FIXME
         #"interface ATM5/0/1": None,
