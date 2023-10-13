@@ -3474,7 +3474,7 @@ class CiscoRange(MutableSequence):
     def as_list(self):
         """Return a list of sorted components; an empty string is automatically rejected.  This method is tricky to test due to the requirement for the `.sort_list` attribute on all elements; avoid using the ordered nature of `as_list` and use `as_set`."""
         try:
-            [getattr(x, "sort_list") for x in self._list]:
+            [getattr(x, "sort_list") for x in self._list]
             return [str(ii) for ii in sorted(list(set(self._list)) if ii != "", key=lambda x: x.sort_list, reverse=False)]
         except AttributeError as eee:
             logger.error(eee)
