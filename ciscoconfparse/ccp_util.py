@@ -3364,7 +3364,7 @@ class CiscoRange(MutableSequence):
 
         if not isinstance(text, str):
             error = f'text="{text}" must be a string.'
-            loguru.error(error)
+            logger.error(error)
             raise ValueError(error)
 
         self.text = text
@@ -3524,7 +3524,7 @@ class CiscoRange(MutableSequence):
     @property
     @logger.catch(reraise=True)
     def as_list(self):
-        return sorted(list(set(self._list)), key=lambda x: x.__hash__(), reverse=False)
+        return [str(ii) for ii in sorted(list(set(self._list)), key=lambda x: x.__hash__(), reverse=False)]
 
     ## Github issue #125
     @property
@@ -3616,7 +3616,7 @@ class CiscoRangeOld(MutableSequence):
 
         if not isinstance(text, str):
             error = f'text="{text}" must be a string.'
-            loguru.error(error)
+            logger.error(error)
             raise ValueError(error)
 
         self.text = text
