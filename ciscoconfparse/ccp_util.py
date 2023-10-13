@@ -1843,7 +1843,9 @@ class IPv6Obj(object):
         elif isinstance(arg, int):
             # Assume this arg int() represents an IPv6 host-address
             addr = str(IPv6Address(arg))
+            #pragma warning disable S1313
             netmask = 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff'
+            #pragma warning restore S1313
             masklen = 128
 
         elif isinstance(arg, IPv6Obj):
@@ -2892,9 +2894,11 @@ def check_valid_ipaddress(input_addr=None):
     return (input_addr, ipaddr_family)
 
 
+#pragma warning disable S1313
 @logger.catch(reraise=True)
 @deprecated(reason="reverse_dns_lookup() is obsolete; use dns_query() instead.  reverse_dns_lookup() will be removed", version='1.7.0')
 def reverse_dns_lookup(input_str, timeout=3.0, server="4.2.2.2", proto="udp"):
+    #pragma warning restore S1313
     """Perform a simple reverse DNS lookup on an IPv4 or IPv6 address; return results in a python dictionary"""
     if not isinstance(proto, str) and (proto=="udp" or proto=="tcp"):
         raise ValueError
