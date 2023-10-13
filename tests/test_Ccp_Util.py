@@ -640,7 +640,6 @@ def test_CiscoInterface_01():
     assert uut.port == 1
     assert uut.subinterface is None
     assert uut.channel is None
-    assert uut.iterate_attribute == "port"
 
 def test_CiscoInterface_02():
     """Check that a card and port is parsed correctly"""
@@ -651,7 +650,6 @@ def test_CiscoInterface_02():
     assert uut.port == 42
     assert uut.subinterface is None
     assert uut.channel is None
-    assert uut.iterate_attribute == "port"
 
 def test_CiscoInterface_03():
     """Check that a card and large port-number is parsed correctly"""
@@ -662,7 +660,6 @@ def test_CiscoInterface_03():
     assert uut.port == 4242
     assert uut.subinterface is None
     assert uut.channel is None
-    assert uut.iterate_attribute == "port"
 
 def test_CiscoInterface_04():
     """Check that a card, port and subinterface is parsed correctly"""
@@ -673,7 +670,6 @@ def test_CiscoInterface_04():
     assert uut.port == 42
     assert uut.subinterface == 5
     assert uut.channel is None
-    assert uut.iterate_attribute == "subinterface"
 
 def test_CiscoInterface_05():
     """Check that a card, slot, port  is parsed correctly"""
@@ -684,7 +680,6 @@ def test_CiscoInterface_05():
     assert uut.port == 42
     assert uut.subinterface is None
     assert uut.channel is None
-    assert uut.iterate_attribute == "port"
 
 def test_CiscoInterface_06():
     """Check that a card, slot, port and subinterface  is parsed correctly"""
@@ -695,7 +690,6 @@ def test_CiscoInterface_06():
     assert uut.port == 42
     assert uut.subinterface == 5
     assert uut.channel is None
-    assert uut.iterate_attribute == "subinterface"
 
 def test_CiscoInterface_07():
     """Check that a card, slot, port, subinterface, and channel is parsed correctly"""
@@ -706,18 +700,21 @@ def test_CiscoInterface_07():
     assert uut.port == 42
     assert uut.subinterface == 5
     assert uut.channel == 9
-    assert uut.iterate_attribute == "channel"
 
 def test_CiscoRange_01():
     """Basic vlan range test"""
     result_correct = {CiscoInterface("1")}
-    assert CiscoRange("1").as_set == result_correct
+    uut_str = "1"
+    assert CiscoRange(uut_str).as_set == result_correct
+    assert CiscoRange(uut_str).iterate_attribute == "port"
 
 
 def test_CiscoRange_02():
     """Basic vlan range test"""
     result_correct = {CiscoInterface("1"), CiscoInterface("3")}
-    assert CiscoRange("1,3").as_set == result_correct
+    uut_str = "1,3"
+    assert CiscoRange(uut_str).as_set == result_correct
+    assert CiscoRange(uut_str).iterate_attribute == "port"
 
 
 def test_CiscoRange_03():
@@ -729,7 +726,9 @@ def test_CiscoRange_03():
         CiscoInterface("4"),
         CiscoInterface("5"),
     }
-    assert CiscoRange("1,2-4,5").as_set == result_correct
+    uut_str = "1,2-4,5"
+    assert CiscoRange(uut_str).as_set == result_correct
+    assert CiscoRange(uut_str).iterate_attribute == "port"
 
 
 def test_CiscoRange_04():
@@ -741,7 +740,9 @@ def test_CiscoRange_04():
         CiscoInterface("4"),
         CiscoInterface("5"),
     }
-    assert CiscoRange("1-3,4,5").as_set == result_correct
+    uut_str = "1-3,4,5"
+    assert CiscoRange(uut_str).as_set == result_correct
+    assert CiscoRange(uut_str).iterate_attribute == "port"
 
 
 def test_CiscoRange_05():
@@ -753,7 +754,9 @@ def test_CiscoRange_05():
         CiscoInterface("4"),
         CiscoInterface("5"),
     }
-    assert CiscoRange("1,2,3-5").as_set == result_correct
+    uut_str = "1,2,3-5"
+    assert CiscoRange(uut_str).as_set == result_correct
+    assert CiscoRange(uut_str).iterate_attribute == "port"
 
 
 def test_CiscoRange_06():
@@ -765,7 +768,9 @@ def test_CiscoRange_06():
         CiscoInterface("1/4"),
         CiscoInterface("1/5"),
     }
-    assert CiscoRange("1/1-3,4,5").as_set == result_correct
+    uut_str = "1/1-3,4,5"
+    assert CiscoRange(uut_str).as_set == result_correct
+    assert CiscoRange(uut_str).iterate_attribute == "port"
 
 
 def test_CiscoRange_07():
@@ -777,7 +782,8 @@ def test_CiscoRange_07():
         CiscoInterface("1/4"),
         CiscoInterface("1/5"),
     }
-    assert CiscoRange("1/1,2-4,5").as_set == result_correct
+    uut_str = "1/1,2-4,5"
+    assert CiscoRange(uut_str).as_set == result_correct
 
 
 def test_CiscoRange_08():
@@ -789,7 +795,8 @@ def test_CiscoRange_08():
         CiscoInterface("1/4"),
         CiscoInterface("1/5"),
     }
-    assert CiscoRange("1/1,2,3-5").as_set == result_correct
+    uut_str = "1/1,2,3-5"
+    assert CiscoRange(uut_str).as_set == result_correct
 
 
 def test_CiscoRange_09():
@@ -801,7 +808,8 @@ def test_CiscoRange_09():
         CiscoInterface("2/1/4"),
         CiscoInterface("2/1/5"),
     }
-    assert CiscoRange("2/1/1-3,4,5").as_set == result_correct
+    uut_str = "2/1/1-3,4,5"
+    assert CiscoRange(uut_str).as_set == result_correct
 
 
 def test_CiscoRange_10():
@@ -813,7 +821,8 @@ def test_CiscoRange_10():
         CiscoInterface("2/1/4"),
         CiscoInterface("2/1/5"),
     }
-    assert CiscoRange("2/1/1,2-4,5").as_set == result_correct
+    uut_str = "2/1/1,2-4,5"
+    assert CiscoRange(uut_str).as_set == result_correct
 
 
 def test_CiscoRange_11():
@@ -825,7 +834,8 @@ def test_CiscoRange_11():
         CiscoInterface("2/1/4"),
         CiscoInterface("2/1/5"),
     }
-    assert CiscoRange("2/1/1,2,3-5").as_set == result_correct
+    uut_str = "2/1/1,2,3-5"
+    assert CiscoRange(uut_str).as_set == result_correct
 
 
 if False:
@@ -838,7 +848,8 @@ if False:
             CiscoInterface("interface Eth2/1/4"),
             CiscoInterface("interface Eth2/1/5"),
         }
-        assert CiscoRange("interface Eth2/1/1-3,4,5").as_set == result_correct
+        uut_str = "interface Eth2/1/1-3,4,5"
+        assert CiscoRange(uut_str).as_set == result_correct
 
 
     def test_CiscoRange_13():
@@ -850,7 +861,8 @@ if False:
             CiscoInterface("interface Eth2/1/4"),
             CiscoInterface("interface Eth2/1/5"),
         }
-        assert CiscoRange("interface Eth2/1/1,2-4,5").as_set == result_correct
+        uut_str = "interface Eth2/1/1,2-4,5"
+        assert CiscoRange(uut_str).as_set == result_correct
 
 
     def test_CiscoRange_14():
@@ -862,7 +874,8 @@ if False:
             CiscoInterface("interface Eth2/1/4"),
             CiscoInterface("interface Eth2/1/5"),
         }
-        assert CiscoRange("interface Eth2/1/1,2,3-5").as_set == result_correct
+        uut_str = "interface Eth2/1/1,2,3-5"
+        assert CiscoRange(uut_str).as_set == result_correct
 
 
     def test_CiscoRange_15():
@@ -874,7 +887,8 @@ if False:
             CiscoInterface("interface Eth2/1/4"),
             CiscoInterface("interface Eth2/1/5"),
         }
-        assert CiscoRange("interface Eth 2/1/1,2,3-5").as_set == result_correct
+        uut_str = "interface Eth 2/1/1,2,3-5"
+        assert CiscoRange(uut_str).as_set == result_correct
 
 
 def test_CiscoRange_18():
@@ -892,7 +906,8 @@ def test_CiscoRange_18():
         CiscoInterface("Eth1/19"),
         CiscoInterface("Eth1/20"),
     }
-    assert CiscoRange("Eth1/1,Eth1/12-20,Eth1/16,Eth1/10").as_set == result_correct
+    uut_str = "Eth1/1,Eth1/12-20,Eth1/16,Eth1/10"
+    assert CiscoRange(uut_str).as_set == result_correct
 
 
 if False:
@@ -911,13 +926,16 @@ if False:
             CiscoInterface("interface Eth1/19"),
             CiscoInterface("interface Eth1/20"),
         }
-        assert CiscoRange("interface Eth1/1,interface Eth1/12-20,interface Eth1/16,interface Eth1/10").as_set == result_correct
+        uut_str = "interface Eth1/1,interface Eth1/12-20,interface Eth1/16,interface Eth1/10"
+        assert CiscoRange(uut_str).as_set == result_correct
 
 
 def test_CiscoRange_compressed_str_01():
     """compressed_str test"""
-    assert CiscoRange("1,2, 3, 6, 7,  8 , 9, 911").compressed_str == "1-3,6-9,911"
+    uut_str = "1,2, 3, 6, 7,  8 , 9, 911"
+    assert CiscoRange(uut_str).compressed_str == "1-3,6-9,911"
 
 
 def test_CiscoRange_contains():
-    assert CiscoInterface("Ethernet1/2") in CiscoRange("Ethernet1/1-20")
+    uut_str = "Ethernet1/1-20"
+    assert CiscoInterface("Ethernet1/2") in CiscoRange(uut_str)
