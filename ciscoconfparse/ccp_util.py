@@ -678,7 +678,7 @@ def _get_ipv4(val="", strict=False, stdlib=False, debug=0):
 # do NOT wrap with @logger.catch(...)
 def _get_ipv6(val="", strict=False, stdlib=False, debug=0):
     """Return the requested IPv6 object to the caller.  This method heavily depends on IPv6Obj()"""
-    if not (isinstance(val, (str, int)):
+    if not isinstance(val, (str, int)):
         raise ValueError
 
     if not isinstance(strict, bool):
@@ -1019,7 +1019,7 @@ class IPv4Obj(object):
         Parse out important IPv4 parameters from arg.  This method must run to
         completion for IPv4 address parsing to work correctly.
         """
-        if not (isinstance(arg, (str, int, IPv4Obj)):
+        if not isinstance(arg, (str, int, IPv4Obj)):
             raise ValueError
 
         if isinstance(arg, str):
