@@ -703,127 +703,185 @@ def test_CiscoInterface_07():
 
 def test_CiscoRange_01():
     """Basic vlan range test"""
-    result_correct = set({"1",})
+    result_correct = set({CiscoInterface("1")})
     assert CiscoRange("1").as_set == result_correct
 
 
 def test_CiscoRange_02():
     """Basic vlan range test"""
-    result_correct = set({"1", "3",})
+    result_correct = set({CiscoInterface("1"), CiscoInterface("3")})
     assert CiscoRange("1,3").as_set == result_correct
 
 
 def test_CiscoRange_03():
     """Basic vlan range test"""
-    result_correct = set({"1", "2", "3", "4", "5",})
+    result_correct = set({
+        CiscoInterface("1"),
+        CiscoInterface("2"),
+        CiscoInterface("3"),
+        CiscoInterface("4"),
+        CiscoInterface("5"),
+    })
     assert CiscoRange("1,2-4,5").as_set == result_correct
 
 
 def test_CiscoRange_04():
     """Basic vlan range test"""
-    result_correct = set({"1", "2", "3", "4", "5",})
+    result_correct = set({
+        CiscoInterface("1"),
+        CiscoInterface("2"),
+        CiscoInterface("3"),
+        CiscoInterface("4"),
+        CiscoInterface("5"),
+    })
     assert CiscoRange("1-3,4,5").as_set == result_correct
 
 
 def test_CiscoRange_05():
     """Basic vlan range test"""
-    result_correct = set({"1", "2", "3", "4", "5",})
+    result_correct = set({
+        CiscoInterface("1"),
+        CiscoInterface("2"),
+        CiscoInterface("3"),
+        CiscoInterface("4"),
+        CiscoInterface("5"),
+    })
     assert CiscoRange("1,2,3-5").as_set == result_correct
 
 
 def test_CiscoRange_06():
     """Basic slot range test"""
-    result_correct = set({"1/1", "1/2", "1/3", "1/4", "1/5",})
+    result_correct = set({
+        CiscoInterface("1/1"),
+        CiscoInterface("1/2"),
+        CiscoInterface("1/3"),
+        CiscoInterface("1/4"),
+        CiscoInterface("1/5"),
+    })
     assert CiscoRange("1/1-3,4,5").as_set == result_correct
 
 
 def test_CiscoRange_07():
     """Basic slot range test"""
-    result_correct = {"1/1", "1/2", "1/3", "1/4", "1/5"}
+    result_correct = set({
+        CiscoInterface("1/1"),
+        CiscoInterface("1/2"),
+        CiscoInterface("1/3"),
+        CiscoInterface("1/4"),
+        CiscoInterface("1/5"),
+    })
     assert CiscoRange("1/1,2-4,5").as_set == result_correct
 
 
 def test_CiscoRange_08():
     """Basic slot range test"""
-    result_correct = {"1/1", "1/2", "1/3", "1/4", "1/5"}
+    result_correct = set({
+        CiscoInterface("1/1"),
+        CiscoInterface("1/2"),
+        CiscoInterface("1/3"),
+        CiscoInterface("1/4"),
+        CiscoInterface("1/5"),
+    })
     assert CiscoRange("1/1,2,3-5").as_set == result_correct
 
 
 def test_CiscoRange_09():
     """Basic slot range test"""
-    result_correct = {"2/1/1", "2/1/2", "2/1/3", "2/1/4", "2/1/5"}
+    result_correct = set({
+        CiscoInterface("2/1/1"),
+        CiscoInterface("2/1/2"),
+        CiscoInterface("2/1/3"),
+        CiscoInterface("2/1/4"),
+        CiscoInterface("2/1/5"),
+    })
     assert CiscoRange("2/1/1-3,4,5").as_set == result_correct
 
 
 def test_CiscoRange_10():
     """Basic slot range test"""
-    result_correct = {"2/1/1", "2/1/2", "2/1/3", "2/1/4", "2/1/5"}
+    result_correct = set({
+        CiscoInterface("2/1/1"),
+        CiscoInterface("2/1/2"),
+        CiscoInterface("2/1/3"),
+        CiscoInterface("2/1/4"),
+        CiscoInterface("2/1/5"),
+    })
     assert CiscoRange("2/1/1,2-4,5").as_set == result_correct
 
 
 def test_CiscoRange_11():
     """Basic slot range test"""
-    result_correct = {"2/1/1", "2/1/2", "2/1/3", "2/1/4", "2/1/5"}
+    result_correct = set({
+        CiscoInterface("2/1/1"),
+        CiscoInterface("2/1/2"),
+        CiscoInterface("2/1/3"),
+        CiscoInterface("2/1/4"),
+        CiscoInterface("2/1/5"),
+    })
     assert CiscoRange("2/1/1,2,3-5").as_set == result_correct
 
 
 def test_CiscoRange_12():
     """Basic interface slot range test"""
-    result_correct = {
-        "interface Eth2/1/1",
-        "interface Eth2/1/2",
-        "interface Eth2/1/3",
-        "interface Eth2/1/4",
-        "interface Eth2/1/5",
-    }
+    result_correct = set({
+        CiscoInterface("interface Eth2/1/1"),
+        CiscoInterface("interface Eth2/1/2"),
+        CiscoInterface("interface Eth2/1/3"),
+        CiscoInterface("interface Eth2/1/4"),
+        CiscoInterface("interface Eth2/1/5"),
+    })
     assert CiscoRange("interface Eth2/1/1-3,4,5").as_set == result_correct
 
 
 def test_CiscoRange_13():
     """Basic interface slot range test"""
-    result_correct = {
-        "interface Eth2/1/1",
-        "interface Eth2/1/2",
-        "interface Eth2/1/3",
-        "interface Eth2/1/4",
-        "interface Eth2/1/5",
-    }
+    result_correct = set({
+        CiscoInterface("interface Eth2/1/1"),
+        CiscoInterface("interface Eth2/1/2"),
+        CiscoInterface("interface Eth2/1/3"),
+        CiscoInterface("interface Eth2/1/4"),
+        CiscoInterface("interface Eth2/1/5"),
+    })
     assert CiscoRange("interface Eth2/1/1,2-4,5").as_set == result_correct
 
 
 def test_CiscoRange_14():
     """Basic interface slot range test"""
-    result_correct = {
-        "interface Eth2/1/1",
-        "interface Eth2/1/2",
-        "interface Eth2/1/3",
-        "interface Eth2/1/4",
-        "interface Eth2/1/5",
-    }
+    result_correct = set({
+        CiscoInterface("interface Eth2/1/1"),
+        CiscoInterface("interface Eth2/1/2"),
+        CiscoInterface("interface Eth2/1/3"),
+        CiscoInterface("interface Eth2/1/4"),
+        CiscoInterface("interface Eth2/1/5"),
+    })
     assert CiscoRange("interface Eth2/1/1,2,3-5").as_set == result_correct
 
 
 def test_CiscoRange_15():
     """Basic interface slot range test"""
-    result_correct = {
-        "interface Eth 2/1/1",
-        "interface Eth 2/1/2",
-        "interface Eth 2/1/3",
-        "interface Eth 2/1/4",
-        "interface Eth 2/1/5",
-    }
+    result_correct = set({
+        CiscoInterface("interface Eth2/1/1"),
+        CiscoInterface("interface Eth2/1/2"),
+        CiscoInterface("interface Eth2/1/3"),
+        CiscoInterface("interface Eth2/1/4"),
+        CiscoInterface("interface Eth2/1/5"),
+    })
     assert CiscoRange("interface Eth 2/1/1,2,3-5").as_set == result_correct
 
 
 def test_CiscoRange_16():
     """Empty range test"""
-    result_correct = {""}
+    result_correct = {}
     assert CiscoRange("").as_set == result_correct
 
 
 def test_CiscoRange_17():
     """Append range test"""
-    result_correct = {1, 2, 3}
+    result_correct = set({
+        CiscoInterface("1"),
+        CiscoInterface("2"),
+        CiscoInterface("3"),
+    })
     assert CiscoRange("", result_type=int).append("1-3").as_set == result_correct
 
 
@@ -834,15 +892,36 @@ def test_CiscoRange_18():
         "Eth1/10",
         "Eth1/12-20",
     }
+    result_correct = set({
+        CiscoInterface("Eth1/1"),
+        CiscoInterface("Eth1/10"),
+        CiscoInterface("Eth1/12"),
+        CiscoInterface("Eth1/13"),
+        CiscoInterface("Eth1/14"),
+        CiscoInterface("Eth1/15"),
+        CiscoInterface("Eth1/16"),
+        CiscoInterface("Eth1/17"),
+        CiscoInterface("Eth1/18"),
+        CiscoInterface("Eth1/19"),
+        CiscoInterface("Eth1/20"),
+    })
     assert CiscoRange("Eth1/1,Eth1/12-20,Eth1/16,Eth1/10").as_set == result_correct
 
 
 def test_CiscoRange_19():
     """Parse a string with a common prefix on all of the CiscoRange() inputs"""
     result_correct = {
-        "interface Eth1/1",
-        "interface Eth1/10",
-        "interface Eth1/12-20",
+        CiscoInterface("interface Eth1/1"),
+        CiscoInterface("interface Eth1/10"),
+        CiscoInterface("interface Eth1/12"),
+        CiscoInterface("interface Eth1/13"),
+        CiscoInterface("interface Eth1/14"),
+        CiscoInterface("interface Eth1/15"),
+        CiscoInterface("interface Eth1/16"),
+        CiscoInterface("interface Eth1/17"),
+        CiscoInterface("interface Eth1/18"),
+        CiscoInterface("interface Eth1/19"),
+        CiscoInterface("interface Eth1/20"),
     }
     assert CiscoRange("interface Eth1/1,interface Eth1/12-20,interface Eth1/16,interface Eth1/10").as_set == result_correct
 
@@ -853,4 +932,4 @@ def test_CiscoRange_compressed_str_01():
 
 
 def test_CiscoRange_contains():
-    assert "Ethernet1/2" in CiscoRange("Ethernet1/1-20")
+    assert CiscoInterface("Ethernet1/2") in CiscoRange("Ethernet1/1-20")
