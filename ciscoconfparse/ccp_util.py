@@ -3393,7 +3393,6 @@ class CiscoRange(MutableSequence):
                 reference_interface = CiscoInterface(raw_part.split("-")[0].strip())
                 template_interface = CiscoInterface(raw_part.split("-")[0].strip())
                 if "-" not in raw_part:
-                    print("HERE1", raw_part)
                     expanded_interfaces.append(copy.deepcopy(reference_interface))
                     continue
 
@@ -3415,7 +3414,6 @@ class CiscoRange(MutableSequence):
                     continue
 
             if idx > 0:
-                print("HERE2", raw_part)
                 if isinstance(reference_interface.channel, int):
                     #############################################################
                     # Base the new reference_interface off the lowest digit
