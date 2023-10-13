@@ -637,7 +637,7 @@ class __ccp_re__(object):
 # do NOT wrap with @logger.catch(...)
 def _get_ipv4(val="", strict=False, stdlib=False, debug=0):
     """Return the requested IPv4 object to the caller.  This method heavily depends on IPv4Obj()"""
-    if not (isinstance(val, (str, int)):
+    if not isinstance(val, (str, int)):
         raise ValueError
 
     if not isinstance(strict, bool):
