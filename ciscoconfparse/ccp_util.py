@@ -3469,7 +3469,6 @@ class CiscoRange(MutableSequence):
                     expanded_interfaces.append(copy.deepcopy(reference_interface))
                     continue
 
-            print("LOOP HERE")
             if self.iterate_attribute == 'channel' and isinstance(template_interface.channel, int):
                 ##############################################################
                 # Handle incrementing channel numbers
