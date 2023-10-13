@@ -50,6 +50,7 @@ from ciscoconfparse.errors import InvalidShellVariableMapping
 from ciscoconfparse.errors import PythonOptimizeException
 from ciscoconfparse.errors import DynamicAddressException
 from ciscoconfparse.errors import  ListItemMissingAttribute
+from ciscoconfparse.errors import  InvalidCiscoInterface
 import ciscoconfparse
 
 # Maximum ipv4 as an integer
@@ -2937,11 +2938,11 @@ class CiscoInterface(object):
             if "," in interface_name:
                 error = f"interface_name: {interface_name} must not contain a comma"
                 logger.critical(error)
-                raise ValueError(error)
+                raise InvalidCiscoInterface(error)
         else:
             error = f"interface_name: {interface_name} must be a string."
             logger.critical(error)
-            raise ValueError(error)
+            raise InvalidCiscoInterface(error)
 
         self._prefix = None
         self._number = None
@@ -2981,7 +2982,7 @@ class CiscoInterface(object):
                     else:
                         error = f"sep1={sep1} and sep2={sep2} must match"
                         logger.critical(error)
-                        raise ValueError(error)
+                        raise InvalidCiscoInterface(error)
 
                 self.number_list = groupdict["all"].split(sep1)
                 if len(self._number_list) == 1:
@@ -2999,7 +3000,7 @@ class CiscoInterface(object):
                 else:
                     error = f"Could not parse _number_list: {self._number_list}"
                     logger.critical(error)
-                    raise ValueError(error)
+                    raise InvalidCiscoInterface(error)
                 self.update_state()
 
             elif nn is not None:
@@ -3014,7 +3015,7 @@ class CiscoInterface(object):
             else:
                 error = """The interface number regex failed to match"""
                 logger.critical(error)
-                raise ValueError(error)
+                raise InvalidCiscoInterface(error)
 
 
             # Detect whether there is a subinterface...
@@ -3027,7 +3028,7 @@ class CiscoInterface(object):
                 else:
                     error = """Subinterface regex failed to match"""
                     logger.critical(error)
-                    raise ValueError(error)
+                    raise InvalidCiscoInterface(error)
 
             # Detect whether there is a channel...
             if ":" in _intf_all:
@@ -3038,13 +3039,13 @@ class CiscoInterface(object):
                 else:
                     error = """Channel regex failed to match"""
                     logger.critical(error)
-                    raise ValueError(error)
+                    raise InvalidCiscoInterface(error)
 
 
         else:
             error = f"interface_name: {interface_name.strip()} could not be parsed."
             logger.critical(error)
-            raise ValueError(error)
+            raise InvalidCiscoInterface(error)
 
     def __eq__(self, other):
         try:
