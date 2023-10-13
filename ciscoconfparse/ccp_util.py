@@ -2922,7 +2922,14 @@ class CiscoInterface(object):
     @logger.catch(reraise=True)
     def __init__(self, interface_name=None):
         """
-        Parse a string `interface_name` like "Ethernet4/1/25.9" into its typical Cisco IOS components.
+        Parse a string `interface_name` like "Serial4/1/2.9:5" into its typical Cisco IOS components:
+        - prefix: 'Serial'
+        - number: '4/1/2'
+        - slot: 4
+        - card: 1
+        - port: 2
+        - subinterface: 9
+        - channel: 5
         """
         if isinstance(interface_name, str):
             self.interface_name = interface_name
@@ -2938,34 +2945,101 @@ class CiscoInterface(object):
         self._prefix = None
         self._number = None
         self._number_list = []
-        self._digit_seperator = None
+        self._digit_separator = None
         self._slot = None
         self._card = None
         self._port = None
         self._subinterface = None
         self._channel = None
 
-        #mm = re.search(r"^(?P<prefix>[a-zA-Z]+)(?P<number>[^\-^\.^\:^\,]+)(?P<subinterface>\.\d+)*(?P<channel>\:\d+)*$", interface_name.strip())
-        mm = re.search(r"^(?P<prefix>[a-zA-Z]+\s*)(?P<all>\d\S+)$", interface_name.strip())
+        mm = re.search(r"^(?P<prefix>[a-zA-Z]+\s*)(?P<all>\d\S*)$", interface_name.strip())
         if mm is not None:
             groupdict = mm.groupdict()
             self._prefix = groupdict.get("prefix", '').strip()
             _intf_all = groupdict["all"].strip()
+            logger.info(f"Parsing {_intf_all}")
+
+            # Handle non-subinterface / non-channel interfaces...
+            mm = re.search(r"^(?P<all>(?P<slot>\d+)(?P<sep1>\D)?(?P<card>\d+)?(?P<sep2>\D)?(?P<port>\d+)?)", _intf_all)
+            nn = re.search(r"^(?P<all>(?P<port>\d+))", _intf_all)
+            if mm is not None:
+
+                ##############################################################
+                # Define the groupdict variable to parse the regex...
+                ##############################################################
+                groupdict = mm.groupdict()
+
+                ##############################################################
+                # Update the digit separator...
+                ##############################################################
+                sep1 = groupdict["sep1"]
+                self._digit_separator = sep1
+                sep2 = groupdict["sep2"]
+                if isinstance(sep1, str) and isinstance(sep2, str):
+                    if sep1 == sep2:
+                        self._digit_separator = sep1
+                    else:
+                        error = f"sep1={sep1} and sep2={sep2} must match"
+                        logger.critical(error)
+                        raise ValueError(error)
+
+                self.number_list = groupdict["all"].split(sep1)
+                if len(self._number_list) == 1:
+                    self._port = self._number_list[-1]
+                    self._number = f"{self.port}"
+                elif len(self._number_list) == 2:
+                    self._slot = self._number_list[0]
+                    self._port = self._number_list[1]
+                    self._number = f"{self.slot}{sep1}{self.port}"
+                elif len(self._number_list) == 3:
+                    self._slot = self._number_list[0]
+                    self._card = self._number_list[1]
+                    self._port = self._number_list[2]
+                    self._number = f"{self.slot}{sep1}{self.card}{sep1}{self.port}"
+                else:
+                    error = f"Could not parse _number_list: {self._number_list}"
+                    logger.critical(error)
+                    raise ValueError(error)
+                self.update_state()
+
+            elif nn is not None:
+
+                ##############################################################
+                # Define the groupdict variable to parse the regex...
+                ##############################################################
+                groupdict = nn.groupdict()
+                self._port = groupdict["port"]
+                self.update_state()
+
+            else:
+                error = f"""The interface number regex failed to match"""
+                logger.critical(error)
+                raise ValueError(error)
+
+
+            # Detect whether there is a subinterface...
             if "." in _intf_all:
                 mm = re.search(r"^(?P<number>\d+\S+?)(?P<subinterface>\.\d+)", _intf_all)
                 if mm is not None:
                     groupdict = mm.groupdict()
                     self._number = groupdict["number"]
                     self._subinterface = groupdict["subinterface"]
+                else:
+                    error = f"""Subinterface regex failed to match"""
+                    logger.critical(error)
+                    raise ValueError(error)
 
+            # Detect whether there is a channel...
             if ":" in _intf_all:
                 mm = re.search(r"(?P<channel>\:\d+)$", _intf_all)
                 if mm is not None:
                     groupdict = mm.groupdict()
                     self._channel = groupdict["channel"]
+                else:
+                    error = f"""Channel regex failed to match"""
+                    logger.critical(error)
+                    raise ValueError(error)
 
-            if self._subinterface is None and self._channel is None:
-                self._number = _intf_all
 
         else:
             error = f"interface_name: {interface_name.strip()} could not be parsed."
@@ -2973,45 +3047,75 @@ class CiscoInterface(object):
             raise ValueError(error)
 
         ######################################################################
-        # Detect the digit seperator
+        # Detect the digit separator
         ######################################################################
-        if isinstance(self._number, str):
-            nn = re.search(r"^\d+(?P<digit_seperator>[^\d\-\:\.])*\d*", self._number)
-            if nn is not None:
-                groupdict = nn.groupdict()
-                self._digit_seperator = groupdict.get("digit_seperator", None)
-                self._number_list = [int(ii) for ii in self._number.split(self._digit_seperator)]
-                if len(self._number_list) == 1:
-                    self._port = self._number_list[-1]
-                elif len(self._number_list) == 2:
-                    self._slot = self._number_list[0]
-                    self._port = self._number_list[1]
-                elif len(self._number_list) == 3:
-                    self._slot = self._number_list[0]
-                    self._card = self._number_list[1]
-                    self._port = self._number_list[2]
+        if False:
+            if isinstance(self._number, str):
+                nn = re.search(r"^\d+(?P<digit_separator>[^\d\-\:\.])*\d*", self._number)
+                if nn is not None:
+                    groupdict = nn.groupdict()
+                    self._digit_separator = groupdict.get("digit_separator", None)
+                    self._number_list = [int(ii) for ii in self._number.split(self._digit_separator)]
+                    if len(self._number_list) == 1:
+                        self._port = self._number_list[-1]
+                    elif len(self._number_list) == 2:
+                        self._slot = self._number_list[0]
+                        self._port = self._number_list[1]
+                    elif len(self._number_list) == 3:
+                        self._slot = self._number_list[0]
+                        self._card = self._number_list[1]
+                        self._port = self._number_list[2]
+                    else:
+                        error = f"Could not parse _number_list: {self._number_list}"
+                        logger.critical(error)
+                        raise ValueError(error)
                 else:
-                    error = f"Could not parse _number_list: {self._number_list}"
+                    error = f"Could not parse _number: {self._number}"
                     logger.critical(error)
                     raise ValueError(error)
             else:
-                error = f"Could not parse _number: {self._number}"
-                logger.critical(error)
-                raise ValueError(error)
-        else:
-            self._digit_seperator = None
-            self._port = int(self._number)
+                self._digit_separator = None
+                self._port = int(self._number)
+
+    def __eq__(self, other):
+        try:
+            ##   try / except is usually faster than isinstance();
+            ##   whenever I change self.__hash__(), I *must* change this...
+            # FIXME
+            return self.prefix == other.prefix and self.sort_list == other.sort_list
+        except Exception:
+            return False
+
+    def __gt__(self, other):
+        # Ref: http://stackoverflow.com/a/7152796/667301
+        if self.__hash__() > other.__hash__():
+            return True
+        return False
+
+    def __lt__(self, other):
+        # Ref: http://stackoverflow.com/a/7152796/667301
+        if self.__hash__() < other.__hash__():
+            return True
+        return False
+
+    def __hash__(self):
+        """Build a unique (and sortable) identifier based solely on slot / card / port / subinterface / channel numbers for the object instance"""
+        # I am using __hash__() in __gt__() and __lt__()
+        return sum([(idx + 1)**ii for idx, ii in enumerate(self.sort_list) if isinstance(ii, int)])
 
     @logger.catch(reraise=True)
     def render_as_string(self):
         if self.subinterface is None and self.channel is None:
             return f"""{self.prefix}{self.number}"""
-        elif self.subinterface is not None and self.channel is None:
+        elif isinstance(self.subinterface, int) and self.channel is None:
             return f"""{self.prefix}{self.number}.{self.subinterface}"""
-        elif self.subinterface is None and self.channel is not None:
+        elif self.subinterface is None and isinstance(self.channel, int):
             return f"""{self.prefix}{self.number}:{self.channel}"""
         else:
             return f"""{self.prefix}{self.number}.{self.subinterface}:{self.channel}"""
+
+    def __str__(self):
+        return f"""{self.render_as_string()}"""
 
     @logger.catch(reraise=True)
     def __repr__(self):
@@ -3036,14 +3140,69 @@ class CiscoInterface(object):
     @property
     @logger.catch(reraise=True)
     def number(self):
-        "Return '2/1/8' if self.interface_name is 'Serial 2/1/8.3:6' and return None if there is no interface number"
-        return self.digit_seperator.join([str(ii) for ii in [self.slot, self.card, self.port] if isinstance(ii, int)])
+        "Return '2/1/8' if self.interface_name is 'Serial 2/1/8.3:6'"
+        #return self.digit_separator.join([str(ii) for ii in [self.slot, self.card, self.port] if isinstance(ii, int)])
+        return self._number
+
+    @number.setter
+    @logger.catch(reraise=True)
+    def number(self, value):
+        logger.critical(f"{value}")
+        self._number = value
+
+    def update_state(self, debug=True):
+        "Rewrite the state of this object; call this when any digit changes."
+        if (self.slot is None) and (self.card is None) and isinstance(self.port, (int, str)):
+            self._number_list[-1] = int(self._port)
+            self._number = f"{self.port}"
+            self._number_list = [int(ii) for ii in self._number.split(self.digit_separator)]
+            if debug:
+                logger.debug(self.number)
+        elif isinstance(self.slot, (int, str)) and (self.card is None) and isinstance(self.port, (int, str)):
+            self._number_list[0] = int(self._slot)
+            self._number_list[1] = int(self._port)
+            self._number = f"{self.slot}{self.digit_separator}{self.port}"
+            self._number_list = [int(ii) for ii in self._number.split(self.digit_separator)]
+            if debug:
+                logger.debug(self.number)
+        elif isinstance(self.slot, (int, str)) and isinstance(self.card, (int, str)) and isinstance(self.port, (int, str)):
+            self._number_list[0] = int(self._slot)
+            self._number_list[1] = int(self._card)
+            self._number_list[2] = int(self._port)
+            self._number = f"{self.slot}{self.digit_separator}{self.card}{self.digit_separator}{self.port}"
+            self._number_list = [int(ii) for ii in self._number.split(self.digit_separator)]
+            if debug:
+                logger.debug(self.number)
+        else:
+            error = f"Could not parse slot: {self.slot} {type(self.slot)}, card: {self.card} {type(self.card)}, port: {self.port} {type(self.port)}"
+            logger.critical(error)
+            raise ValueError(error)
+
+        if debug:
+            logger.debug(str(self._number_list))
 
     @property
     @logger.catch(reraise=True)
     def number_list(self):
         "Return [2, 1, 8] if self.interface_name is 'Serial 2/1/8.3:6'."
-        self._number_list = [ii for ii in (self.slot, self.card, self.port,) if isinstance(ii, int)]
+        self._number_list = [int(ii) for ii in (self.slot, self.card, self.port,) if isinstance(ii, (int, str))]
+        sep = self.digit_separator
+        if len(self._number_list) == 1:
+            self._port = int(self._number_list[-1])
+            self._number = f"{self.port}"
+        elif len(self._number_list) == 2:
+            self._slot = int(self._number_list[0])
+            self._port = int(self._number_list[1])
+            self._number = f"{self.slot}{sep}{self.port}"
+        elif len(self._number_list) == 3:
+            self._slot = int(self._number_list[0])
+            self._card = int(self._number_list[1])
+            self._port = int(self._number_list[2])
+            self._number = f"{self.slot}{sep}{self.card}{sep}{self.port}"
+        else:
+            error = f"Could not parse _number_list: {self._number_list}"
+            logger.critical(error)
+            raise ValueError(error)
         return self._number_list
 
     @number_list.setter
@@ -3053,26 +3212,35 @@ class CiscoInterface(object):
 
     @property
     @logger.catch(reraise=True)
-    def digit_seperator(self):
-        "Return '/' if self.interface_name is 'Serial 2/1/8.3:6' and return None if there is no seperator"
-        return self._digit_seperator
+    def digit_separator(self):
+        "Return '/' if self.interface_name is 'Serial 2/1/8.3:6' and return None if there is no separator"
+        return self._digit_separator
 
-    @digit_seperator.setter
+    @digit_separator.setter
     @logger.catch(reraise=True)
-    def digit_seperator(self, value):
-        self._digit_seperator = int(value)
+    def digit_separator(self, value):
+        if isinstance(value, str):
+            self._digit_separator = value
+        else:
+            error = f"Could not set _digit_separator: {value} {type(value)}"
+            logger.critical(error)
+            raise ValueError(error)
 
     @property
     @logger.catch(reraise=True)
     def slot(self):
         "Return 2 if self.interface_name is 'Serial 2/1/8.3:6' and return None if there is no slot"
-        return self._slot
+        if self._slot is None:
+            return None
+        else:
+            return int(self._slot)
 
     @slot.setter
     @logger.catch(reraise=True)
     def slot(self, value):
-        if isinstance(value, int):
+        if isinstance(value, (int, str)):
             self._slot = int(value)
+            self.update_state()
         else:
             error = f"Could not set _slot: {value} {type(value)}"
             logger.critical(error)
@@ -3082,13 +3250,17 @@ class CiscoInterface(object):
     @logger.catch(reraise=True)
     def card(self):
         "Return 1 if self.interface_name is 'Serial 2/1/8.3:6' and return None if there is no card"
-        return self._card
+        if self._card is None:
+            return self._card
+        else:
+            return int(self._card)
 
     @card.setter
     @logger.catch(reraise=True)
     def card(self, value):
-        if isinstance(value, int):
+        if isinstance(value, (int, str)):
             self._card = int(value)
+            self.update_state()
         else:
             error = f"Could not set _card: {value} {type(value)}"
             logger.critical(error)
@@ -3098,13 +3270,17 @@ class CiscoInterface(object):
     @logger.catch(reraise=True)
     def port(self):
         "Return 8 if self.interface_name is 'Serial 2/1/8.3:6' and raise a ValueError if there is no port"
-        return self._port
+        if self._port is None:
+            return None
+        else:
+            return int(self._port)
 
     @port.setter
     @logger.catch(reraise=True)
     def port(self, value):
-        if isinstance(value, int):
+        if isinstance(value, (int, str)):
             self._port = int(value)
+            self.update_state()
         else:
             error = f"Could not set _card: {value} {type(value)}"
             logger.critical(error)
@@ -3122,7 +3298,7 @@ class CiscoInterface(object):
     @subinterface.setter
     @logger.catch(reraise=True)
     def subinterface(self, value):
-        if isinstance(value, int):
+        if isinstance(value, (int, str)):
             self._subinterface = int(value)
         else:
             error = f"Could not set _subinterface: {value} {type(value)}"
@@ -3141,7 +3317,7 @@ class CiscoInterface(object):
     @channel.setter
     @logger.catch(reraise=True)
     def channel(self, value):
-        if isinstance(value, int):
+        if isinstance(value, (int, str)):
             self._channel = int(value)
         else:
             error = f"Could not set _channel: {value} {type(value)}"
@@ -3201,61 +3377,100 @@ class CiscoRange(MutableSequence):
         expanded_interfaces = []
         raw_parts = text.split(",")
         for idx, raw_part in enumerate(raw_parts):
-            if idx == 0:
-                reference_interface = CiscoInterface(raw_part.split("-")[0])
-                template_interface = copy.deepcopy(reference_interface)
-                expanded_interfaces.append(template_interface)
-
+            logger.info(str(raw_part))
             if len(raw_part.split("-")) == 2:
                 # Append a whole range of interfaces...
-                end_ordinal = int(raw_parts[0].split("-")[1])
+                end_ordinal = int(raw_part.split("-")[1].strip())
             else:
-                end_ordinal = CiscoInterface(raw_part)
+                end_ordinal = None
+                if False:
+                    end_ordinal = CiscoInterface(raw_part.strip())
 
-            if reference_interface.channel is not None:
+            ##################################################################
+            # Reference interface is for the base starting interface instance
+            ##################################################################
+            if idx == 0:
+                reference_interface = CiscoInterface(raw_part.split("-")[0].strip())
+                template_interface = CiscoInterface(raw_part.split("-")[0].strip())
+                if "-" not in raw_part:
+                    print("HERE1", raw_part)
+                    expanded_interfaces.append(copy.deepcopy(reference_interface))
+                    continue
+
+            if False and "-" not in raw_part:
+                ############################################################
+                # Handle non-interface-range appends here...
+                ############################################################
+                if isinstance(reference_interface.channel, int):
+                    reference_interface.channel = raw_part
+                    expanded_interfaces.append(copy.deepcopy(reference_interface))
+                    continue
+                elif isinstance(reference_interface.subinterface, int):
+                    reference_interface.subinterface = raw_part
+                    expanded_interfaces.append(copy.deepcopy(reference_interface))
+                    continue
+                else:
+                    reference_interface.port = raw_part
+                    expanded_interfaces.append(copy.deepcopy(reference_interface))
+                    continue
+
+            if idx > 0:
+                print("HERE2", raw_part)
+                if isinstance(reference_interface.channel, int):
+                    #############################################################
+                    # Base the new reference_interface off the lowest digit
+                    #     in the range
+                    #############################################################
+                    reference_interface.channel = raw_part.split("-")[0].strip()
+                elif isinstance(reference_interface.subinterface, int):
+                    #############################################################
+                    # Base the new reference_interface off the lowest digit
+                    #     in the range
+                    #############################################################
+                    reference_interface.subinterface = raw_part.split("-")[0].strip()
+                else:
+                    #############################################################
+                    # Base the new reference_interface off the lowest digit
+                    #     in the range
+                    #############################################################
+                    reference_interface.port = int(raw_part.split("-")[0].strip())
+                expanded_interfaces.append(copy.deepcopy(reference_interface))
+
+            if isinstance(template_interface.channel, int):
                 ##############################################################
                 # Handle incrementing channel numbers
                 ##############################################################
-                if idx > 0:
+                if end_ordinal is not None:
                     for ii in range(reference_interface.channel, end_ordinal+1):
                         template_interface.channel = ii
                         logger.debug(template_interface)
-                        expanded_interfaces.append(template_interface)
-                else:
-                    for ii in range(reference_interface.channel+1, end_ordinal+1):
-                        template_interface.channel = ii
-                        logger.debug(template_interface)
-                        expanded_interfaces.append(template_interface)
-            elif reference_interface.subinterface is not None:
+                        # Use deepcopy to avoid problems with the same object
+                        #     instance appended multiple times
+                        expanded_interfaces.append(copy.deepcopy(template_interface))
+            elif isinstance(template_interface.subinterface, int):
                 ##############################################################
                 # Handle incrementing subinterface numbers
                 ##############################################################
-                if idx > 0:
+                if end_ordinal is not None:
                     for ii in range(reference_interface.subinterface, end_ordinal+1):
                         template_interface.subinterface = ii
                         logger.debug(template_interface)
-                        expanded_interfaces.append(template_interface)
-                else:
-                    for ii in range(reference_interface.subinterface+1, end_ordinal+1):
-                        template_interface.subinterface = ii
-                        logger.debug(template_interface)
-                        expanded_interfaces.append(template_interface)
+                        # Use deepcopy to avoid problems with the same object
+                        #     instance appended multiple times
+                        expanded_interfaces.append(copy.deepcopy(template_interface))
             else:
                 ##############################################################
                 # Handle incrementing port numberss
                 ##############################################################
-                if idx > 0:
+                if end_ordinal is not None:
                     for ii in range(reference_interface.port, end_ordinal+1):
                         template_interface.port = ii
                         logger.debug(template_interface)
-                        expanded_interfaces.append(template_interface)
-                else:
-                    for ii in range(reference_interface.port+1, end_ordinal+1):
-                        template_interface.port = ii
-                        logger.debug(template_interface)
-                        expanded_interfaces.append(template_interface)
+                        # Use deepcopy to avoid problems with the same object
+                        #     instance appended multiple times
+                        expanded_interfaces.append(copy.deepcopy(template_interface))
 
-        return expanded_interfaces
+        return sorted(set(expanded_interfaces), key=lambda x: x.sort_list, reverse=True)
 
     @logger.catch(reraise=True)
     def __len__(self):
@@ -3309,7 +3524,7 @@ class CiscoRange(MutableSequence):
     @property
     @logger.catch(reraise=True)
     def as_list(self):
-        return self._list
+        return sorted(list(set(self._list)), key=lambda x: x.__hash__(), reverse=False)
 
     ## Github issue #125
     @property
