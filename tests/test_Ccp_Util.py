@@ -640,6 +640,7 @@ def test_CiscoInterface_01():
     assert uut.port == 1
     assert uut.subinterface is None
     assert uut.channel is None
+    assert uut.iterate_attribute == "port"
 
 def test_CiscoInterface_02():
     """Check that a card and port is parsed correctly"""
@@ -650,6 +651,7 @@ def test_CiscoInterface_02():
     assert uut.port == 42
     assert uut.subinterface is None
     assert uut.channel is None
+    assert uut.iterate_attribute == "port"
 
 def test_CiscoInterface_03():
     """Check that a card and large port-number is parsed correctly"""
@@ -660,6 +662,7 @@ def test_CiscoInterface_03():
     assert uut.port == 4242
     assert uut.subinterface is None
     assert uut.channel is None
+    assert uut.iterate_attribute == "port"
 
 def test_CiscoInterface_04():
     """Check that a card, port and subinterface is parsed correctly"""
@@ -670,6 +673,7 @@ def test_CiscoInterface_04():
     assert uut.port == 42
     assert uut.subinterface == 5
     assert uut.channel is None
+    assert uut.iterate_attribute == "subinterface"
 
 def test_CiscoInterface_05():
     """Check that a card, slot, port  is parsed correctly"""
@@ -680,6 +684,7 @@ def test_CiscoInterface_05():
     assert uut.port == 42
     assert uut.subinterface is None
     assert uut.channel is None
+    assert uut.iterate_attribute == "port"
 
 def test_CiscoInterface_06():
     """Check that a card, slot, port and subinterface  is parsed correctly"""
@@ -690,6 +695,7 @@ def test_CiscoInterface_06():
     assert uut.port == 42
     assert uut.subinterface == 5
     assert uut.channel is None
+    assert uut.iterate_attribute == "subinterface"
 
 def test_CiscoInterface_07():
     """Check that a card, slot, port, subinterface, and channel is parsed correctly"""
@@ -700,16 +706,17 @@ def test_CiscoInterface_07():
     assert uut.port == 42
     assert uut.subinterface == 5
     assert uut.channel == 9
+    assert uut.iterate_attribute == "channel"
 
 def test_CiscoRange_01():
     """Basic vlan range test"""
-    result_correct = set({CiscoInterface("1")})
+    result_correct = {CiscoInterface("1")}
     assert CiscoRange("1").as_set == result_correct
 
 
 def test_CiscoRange_02():
     """Basic vlan range test"""
-    result_correct = set({CiscoInterface("1"), CiscoInterface("3")})
+    result_correct = {CiscoInterface("1"), CiscoInterface("3")}
     assert CiscoRange("1,3").as_set == result_correct
 
 
