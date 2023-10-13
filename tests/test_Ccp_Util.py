@@ -638,6 +638,38 @@ def test_CiscoInterface_01():
     assert uut.card is None
     assert uut.slot is None
     assert uut.port == 1
+    assert uut.subinterface is None
+    assert uut.channel is None
+
+def test_CiscoInterface_02():
+    """Check that a card and port is parsed correctly"""
+    uut = CiscoInterface("Ethernet1/42")
+    assert uut.prefix == "Ethernet"
+    assert uut.card is 1
+    assert uut.slot is None
+    assert uut.port == 42
+    assert uut.subinterface is None
+    assert uut.channel is None
+
+def test_CiscoInterface_03():
+    """Check that a card and large port-number is parsed correctly"""
+    uut = CiscoInterface("Ethernet1/4242")
+    assert uut.prefix == "Ethernet"
+    assert uut.card is 1
+    assert uut.slot is None
+    assert uut.port == 4242
+    assert uut.subinterface is None
+    assert uut.channel is None
+
+def test_CiscoInterface_04():
+    """Check that a card, port and subinterface is parsed correctly"""
+    uut = CiscoInterface("Ethernet1/42.5")
+    assert uut.prefix == "Ethernet"
+    assert uut.card is 1
+    assert uut.slot is None
+    assert uut.port == 42
+    assert uut.subinterface == 5
+    assert uut.channel is None
 
 def test_CiscoRange_01():
     """Basic vlan range test"""
