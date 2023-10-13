@@ -22,6 +22,14 @@ r""" ccp_util.py - Parse, Query, Build, and Modify IOS-style configurations
      mike [~at~] pennington [/dot\] net
 """
 
+##############################################################################
+# Disable SonarCloud warnings in this file
+#   - S1192: Define a constant instead of duplicating this literal
+#   - S1313: Disable alerts on magic IPv4 / IPv6 addresses
+##############################################################################
+#pragma warning disable S1192
+#pragma warning disable S1313
+
 from operator import attrgetter
 from functools import wraps
 import locale
@@ -819,9 +827,7 @@ class IPv4Obj(object):
 
     # This method is on IPv4Obj().  @logger.catch() breaks the __init__() method.
     # Use 'nosec' to disable default linter security flags about using 0.0.0.1
-    #pragma warning disable S1313
     def __init__(self, v4addr_prefixlen=f"0.0.0.1/{IPV4_MAX_PREFIXLEN}", strict=False, debug=0): # nosec
-        #pragma warning restore S1313
         """An object to represent IPv4 addresses and IPv4 networks.
 
         When :class:`~ccp_util.IPv4Obj` objects are compared or sorted, network numbers are sorted lower to higher.  If network numbers are the same, shorter masks are lower than longer masks. After comparing mask length, numerically higher IP addresses are greater than numerically lower IP addresses..  Comparisons between :class:`~ccp_util.IPv4Obj` instances was chosen so it's easy to find the longest-match for a given prefix (see examples below).
@@ -978,10 +984,8 @@ class IPv4Obj(object):
             if v4_str_rgx is not None:
                 pp = v4_str_rgx.groupdict()
                 try:
-                    #pragma warning disable S1313
                     # Use 'nosec' to disable default linter security flags about using 0.0.0.1
                     ipv4 = pp.get("v4addr_nomask", None) or pp.get("v4addr_netmask", None) or pp.get("v4addr_prefixlen", None) or "0.0.0.1" # nosec
-                    #pragma warning restore S1313
                 except DynamicAddressException as eee:
                     raise ValueError(str(eee))
 
@@ -1046,10 +1050,8 @@ class IPv4Obj(object):
 
             mm_result = mm.groupdict()
             addr = (
-                #pragma warning disable S1313
                 # Use 'nosec' to disable default linter security flags about using 0.0.0.1
                 mm_result["v4addr_nomask"] or mm_result["v4addr_netmask"] or mm_result["v4addr_prefixlen"] or "0.0.0.1" # nosec
-                #pragma warning restore S1313
             )
             ## Normalize if we get zero-padded strings, i.e. 172.001.001.001
             assert re.search(r"^\d+\.\d+.\d+\.\d+", addr)
@@ -1843,9 +1845,7 @@ class IPv6Obj(object):
         elif isinstance(arg, int):
             # Assume this arg int() represents an IPv6 host-address
             addr = str(IPv6Address(arg))
-            #pragma warning disable S1313
             netmask = 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff'
-            #pragma warning restore S1313
             masklen = 128
 
         elif isinstance(arg, IPv6Obj):
@@ -2894,11 +2894,9 @@ def check_valid_ipaddress(input_addr=None):
     return (input_addr, ipaddr_family)
 
 
-#pragma warning disable S1313
 @logger.catch(reraise=True)
 @deprecated(reason="reverse_dns_lookup() is obsolete; use dns_query() instead.  reverse_dns_lookup() will be removed", version='1.7.0')
 def reverse_dns_lookup(input_str, timeout=3.0, server="4.2.2.2", proto="udp"):
-    #pragma warning restore S1313
     """Perform a simple reverse DNS lookup on an IPv4 or IPv6 address; return results in a python dictionary"""
     if not isinstance(proto, str) and (proto=="udp" or proto=="tcp"):
         raise ValueError
@@ -3586,3 +3584,5 @@ class CiscoRange(MutableSequence):
 
         return retval
 
+#pragma warning restore S1192
+#pragma warning restore S1313
