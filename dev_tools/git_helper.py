@@ -311,7 +311,9 @@ def check_exists_tag_local(tag_value=None):
     )
 
     cmd = "git tag"
-    return_code, stdout, stderr = ciscoconfparse.ccp_util.run_this_posix_command(cmd)
+    return_code, stdout, _ = ciscoconfparse.ccp_util.run_this_posix_command(cmd)
+    if return_code > 0:
+        raise OSError()
 
     for line in stdout.splitlines():
         if tag_value.strip() == line.strip():
@@ -326,7 +328,9 @@ def git_root_directory():
     return a string with the path name of the git root directory.
     """
     cmd = "git rev-parse --show-toplevel"
-    return_code, stdout, stderr = ciscoconfparse.ccp_util.run_this_posix_command(cmd)
+    return_code, stdout, _ = ciscoconfparse.ccp_util.run_this_posix_command(cmd)
+    if return_code > 0:
+        raise OSError()
     retval = None
     for line in stdout.splitlines():
         if line.strip() != "":
@@ -545,14 +549,21 @@ def main(args):
 
         ## FIXME git merge command below does NOT merge anything...
         cmd = f"git merge {original_branch_name} -m '{args.message}'"
-        return_code, stdout, stderr = ciscoconfparse.ccp_util.run_this_posix_command(cmd)
+        return_code, _, _ = ciscoconfparse.ccp_util.run_this_posix_command(cmd)
+        if return_code > 0:
+            raise OSError()
+
 
         cmd = "git push origin main"
-        return_code, stdout, stderr = ciscoconfparse.ccp_util.run_this_posix_command(cmd)
+        return_code, _, _ = ciscoconfparse.ccp_util.run_this_posix_command(cmd)
+        if return_code > 0:
+            raise OSError()
 
         if args.tag is True:
             cmd = "git push origin main --tags"
-            return_code, stdout, stderr = ciscoconfparse.ccp_util.run_this_posix_command(cmd)
+            return_code, _, _ = ciscoconfparse.ccp_util.run_this_posix_command(cmd)
+            if return_code > 0:
+                raise OSError()
 
         if original_branch_name != "main":
             args.branch = original_branch_name
