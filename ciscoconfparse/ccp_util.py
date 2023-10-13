@@ -3343,7 +3343,7 @@ class CiscoRange(MutableSequence):
 
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
-    def __init__(self, text="", result_type=str):
+    def __init__(self, text="", result_type=str, debug=False):
         super().__init__()
 
         if not isinstance(text, str):
@@ -3351,89 +3351,191 @@ class CiscoRange(MutableSequence):
             logger.error(error)
             raise ValueError(error)
 
-        self.text = text
-        self._list = self.parse_text_list(text)
+        if debug is True:
+            logger.info(f"CiscoRange(text='{text}', debug=True) was called.")
 
-        self.parse_text_list(text)
+        self.text = text
+        self.iterate_attribute = None
+        self._list = self.parse_text_list(text, debug=debug)
 
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
-    def parse_text_list(self, text):
+    def parse_text_list(self, text, debug=False):
         expanded_interfaces = []
         raw_parts = text.split(",")
         for idx, raw_part in enumerate(raw_parts):
+            if debug is True:
+                logger.info(f"idx: CiscoRange() for --> {raw_part} <--")
             if len(raw_part.split("-")) == 2:
                 # Append a whole range of interfaces...
+                begin_obj = CiscoInterface(raw_part.split("-")[0])
+
+                # Walk backwards in .sort_list to find the most-specific value
+                if debug is True:
+                    logger.info(f"  CiscoRange(text={text}, debug=True) raw_part: {raw_part}")
+                    logger.info(f"  CiscoRange(text={text}, debug=True)     begin_obj: {begin_obj}")
+
+
+                ##############################################################
+                # Walk all possible attributes to find which target_attribute
+                #     we're iterating on...
+                ##############################################################
+                iterate_attribute = None
+                for potential_iter_attr in ['channel', 'subinterface', 'port', 'card', 'slot']:
+                    if isinstance(getattr(begin_obj, potential_iter_attr), int):
+                        if debug is True:
+                            logger.info(f"  CiscoRange(text={text}, debug=True)    ITERATE on --> {potential_iter_attr} <--")
+                        self.iterate_attribute = potential_iter_attr
+                        break
+
                 end_ordinal = int(raw_part.split("-")[1].strip())
             else:
+                begin_ordinal = None
                 end_ordinal = None
 
             ##################################################################
             # Reference interface is for the base starting interface instance
             ##################################################################
+
+            intf_component01 = raw_part.split("-")[0].strip()
             if idx == 0:
-                reference_interface = CiscoInterface(raw_part.split("-")[0].strip())
-                template_interface = CiscoInterface(raw_part.split("-")[0].strip())
+                if debug is True:
+                    logger.info(f"idx: CiscoRange().parse_text_list(text='{text}')")
+                    logger.debug(f"  idx: {idx}, define constant CiscoInterface() instances for {intf_component01}")
+                reference_interface = CiscoInterface(intf_component01)
+                template_interface = CiscoInterface(intf_component01)
                 if "-" not in raw_part:
+                    if debug is True:
+                        logger.info(f"    idx: {idx} at point01, Appending {reference_interface}")
                     expanded_interfaces.append(copy.deepcopy(reference_interface))
                     continue
 
             if idx > 0:
-                if isinstance(reference_interface.channel, int):
-                    #############################################################
-                    # Base the new reference_interface off the lowest digit
-                    #     in the range
-                    #############################################################
-                    reference_interface.channel = raw_part.split("-")[0].strip()
-                elif isinstance(reference_interface.subinterface, int):
-                    #############################################################
-                    # Base the new reference_interface off the lowest digit
-                    #     in the range
-                    #############################################################
-                    reference_interface.subinterface = raw_part.split("-")[0].strip()
-                else:
-                    #############################################################
-                    # Base the new reference_interface off the lowest digit
-                    #     in the range
-                    #############################################################
-                    reference_interface.port = int(raw_part.split("-")[0].strip())
-                expanded_interfaces.append(copy.deepcopy(reference_interface))
+                if False:
+                    if self.iterate_attribute == 'channel' and isinstance(reference_interface.channel, int):
+                        #############################################################
+                        # Base the new reference_interface off the lowest digit
+                        #     in the range
+                        #############################################################
+                        if debug is True:
+                            logger.debug(f"    idx: {idx} at point02,     set channel: {intf_component01}")
+                        reference_interface.channel = intf_component01
+                    elif self.iterate_attribute == 'subinterface' and isinstance(reference_interface.subinterface, int):
+                        #############################################################
+                        # Base the new reference_interface off the lowest digit
+                        #     in the range
+                        #############################################################
+                        reference_interface.subinterface = intf_component01
+                    elif self.iterate_attribute == 'port' and isinstance(reference_interface.port, int):
+                        #############################################################
+                        # Base the new reference_interface off the lowest digit
+                        #     in the range
+                        #############################################################
+                        reference_interface.port = int(intf_component01)
+                    elif self.iterate_attribute == 'card' and isinstance(reference_interface.card, int):
+                        #############################################################
+                        # Base the new reference_interface off the lowest digit
+                        #     in the range
+                        #############################################################
+                        reference_interface.card = int(intf_component01)
+                    else:
+                        #############################################################
+                        # Base the new reference_interface off the lowest digit
+                        #     in the range
+                        #############################################################
+                        reference_interface.slot = int(intf_component01)
+                    if debug is True:
+                        logger.info(f"    idx: {idx} at point03, Appending {reference_interface}")
+                    expanded_interfaces.append(copy.deepcopy(reference_interface))
+                    continue
 
-            if isinstance(template_interface.channel, int):
+            if self.iterate_attribute == 'channel' and isinstance(template_interface.channel, int):
                 ##############################################################
                 # Handle incrementing channel numbers
                 ##############################################################
                 if end_ordinal is not None:
-                    for ii in range(reference_interface.channel, end_ordinal+1):
+                    for ii in range(begin_obj.channel, end_ordinal+1):
+                        if debug is True:
+                            logger.debug(f"    idx: {idx} at point04,     set channel: {ii}")
                         template_interface.channel = ii
-                        logger.debug(template_interface)
                         # Use deepcopy to avoid problems with the same object
                         #     instance appended multiple times
+                        if debug is True:
+                            logger.info(f"    idx: {idx} at point05, Appending {template_interface}")
                         expanded_interfaces.append(copy.deepcopy(template_interface))
-            elif isinstance(template_interface.subinterface, int):
+                        continue
+            elif self.iterate_attribute == 'subinterface' and isinstance(template_interface.subinterface, int):
                 ##############################################################
                 # Handle incrementing subinterface numbers
                 ##############################################################
                 if end_ordinal is not None:
-                    for ii in range(reference_interface.subinterface, end_ordinal+1):
+                    for ii in range(begin_obj.subinterface, end_ordinal+1):
+                        if debug is True:
+                            logger.debug(f"    idx: {idx} at point06,     set subinterface: {ii}")
                         template_interface.subinterface = ii
-                        logger.debug(template_interface)
                         # Use deepcopy to avoid problems with the same object
                         #     instance appended multiple times
+                        if debug is True:
+                            logger.info(f"    idx: {idx} at point07, Appending {template_interface}")
                         expanded_interfaces.append(copy.deepcopy(template_interface))
-            else:
+                        continue
+            elif self.iterate_attribute == 'port' and isinstance(template_interface.port, int):
                 ##############################################################
-                # Handle incrementing port numberss
+                # Handle incrementing port numbers
                 ##############################################################
                 if end_ordinal is not None:
-                    for ii in range(reference_interface.port, end_ordinal+1):
+                    for ii in range(begin_obj.port, end_ordinal+1):
+                        if debug is True:
+                            logger.debug(f"    idx: {idx} at point06,     set subinterface: {ii}")
                         template_interface.port = ii
-                        logger.debug(template_interface)
                         # Use deepcopy to avoid problems with the same object
                         #     instance appended multiple times
+                        if debug is True:
+                            logger.info(f"    idx: {idx} at point07, Appending {template_interface}")
                         expanded_interfaces.append(copy.deepcopy(template_interface))
+                        continue
 
-        return sorted(set(expanded_interfaces), key=lambda x: x.sort_list, reverse=True)
+            elif self.iterate_attribute == 'card' and isinstance(template_interface.card, int):
+                ##############################################################
+                # Handle incrementing port numbers
+                ##############################################################
+                if end_ordinal is not None:
+                    for ii in range(begin_obj.card, end_ordinal+1):
+                        if debug is True:
+                            logger.debug(f"    idx: {idx} at point06,     set subinterface: {ii}")
+                        template_interface.card = ii
+                        # Use deepcopy to avoid problems with the same object
+                        #     instance appended multiple times
+                        if debug is True:
+                            logger.info(f"    idx: {idx} at point07, Appending {template_interface}")
+                        expanded_interfaces.append(copy.deepcopy(template_interface))
+                        continue
+
+            elif self.iterate_attribute == 'slot' and isinstance(template_interface.slot, int):
+                ##############################################################
+                # Handle incrementing port numbers
+                ##############################################################
+                if end_ordinal is not None:
+                    for ii in range(begin_obj.slot, end_ordinal+1):
+                        if debug is True:
+                            logger.debug(f"    idx: {idx} at point06,     set subinterface: {ii}")
+                        template_interface.slot = ii
+                        # Use deepcopy to avoid problems with the same object
+                        #     instance appended multiple times
+                        if debug is True:
+                            logger.info(f"    idx: {idx} at point07, Appending {template_interface}")
+                        expanded_interfaces.append(copy.deepcopy(template_interface))
+                        continue
+
+            else:
+                error = f"Cannot determinte CiscoRange().iterate_attribute.  We thought it was --> {self.iterate_attribute} <--"
+                logger.critical(error)
+                raise ValueError(error)
+
+        retval = sorted(set(expanded_interfaces), key=lambda x: x.sort_list, reverse=False)
+        if debug is True:
+            logger.info(f"CiscoRange(text='{self.text}', debug=True) returning: {retval}")
+        return retval
 
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
