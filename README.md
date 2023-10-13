@@ -188,6 +188,7 @@ Other Useful Network Management Projects
 - [jerikan](https://vincent.bernat.ch/en/blog/2021-network-jerikan-ansible):
 - [nettowel](https://github.com/InfrastructureAsCode-ch/nettowel/): Collection of useful network automation functions
 - [napalm-panos](https://github.com/napalm-automation-community/napalm-panos)
+- [Tacquito](https://github.com/facebookincubator/tacquito/): A go TACACS+ implementation
 - [assessment-cmds](https://github.com/blindhog/assessment-cmds/): Useful show commands to check your Cisco router's health
 - [learn-to-cloud](https://github.com/labeveryday/learn-to-cloud): Primer for Cloud-computing fundamentals
 
