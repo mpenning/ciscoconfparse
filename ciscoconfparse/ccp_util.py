@@ -3327,6 +3327,7 @@ class CiscoRange(MutableSequence):
     <CiscoRange []>
     """
 
+    # This method is on CiscoRange()
     @logger.catch(reraise=True)
     def __init__(self, text="", result_type=str):
         super().__init__()
@@ -3341,6 +3342,7 @@ class CiscoRange(MutableSequence):
 
         self.parse_text_list(text)
 
+    # This method is on CiscoRange()
     @logger.catch(reraise=True)
     def parse_text_list(self, text):
         expanded_interfaces = []
@@ -3420,22 +3422,27 @@ class CiscoRange(MutableSequence):
 
         return sorted(set(expanded_interfaces), key=lambda x: x.sort_list, reverse=True)
 
+    # This method is on CiscoRange()
     @logger.catch(reraise=True)
     def __len__(self):
         return len(self._list)
 
+    # This method is on CiscoRange()
     @logger.catch(reraise=True)
     def __getitem__(self, ii):
         return self._list[ii]
 
+    # This method is on CiscoRange()
     @logger.catch(reraise=True)
     def __delitem__(self, ii):
         del self._list[ii]
 
+    # This method is on CiscoRange()
     @logger.catch(reraise=True)
     def __setitem__(self, ii, val):
         return self._list[ii]
 
+    # This method is on CiscoRange()
     @logger.catch(reraise=True)
     def insert(self, ii, val):
         ## Insert something at index ii
@@ -3446,16 +3453,19 @@ class CiscoRange(MutableSequence):
         self._list = sorted(map(self.result_type, set(self._list)))
         return self
 
+    # This method is on CiscoRange()
     @logger.catch(reraise=True)
     def append(self, val):
         list_idx = len(self._list)
         self.insert(list_idx, val)
         return self
 
+    # This method is on CiscoRange()
     @logger.catch(reraise=True)
     def __str__(self):
         return self.__repr__()
 
+    # This method is on CiscoRange()
     @logger.catch(reraise=True)
     def remove(self, arg):
         remove_obj = CiscoRange(arg)
@@ -3469,6 +3479,7 @@ class CiscoRange(MutableSequence):
                 pass
         return self
 
+    # This method is on CiscoRange()
     @property
     @logger.catch(reraise=True)
     def as_list(self):
@@ -3484,269 +3495,17 @@ class CiscoRange(MutableSequence):
             logger.critical(eee)
             raise ValueError(eee)
 
+    # This method is on CiscoRange()
     @property
     @logger.catch(reraise=True)
     def as_set(self):
         """Return an unsorted set({}) components.  Use this method instead of `.as_list` whenever possible to avoid the requirement for elements needing a `.sort_list` attribute."""
         return set(self._list)
 
+    # This method is on CiscoRange()
     ## Github issue #125
     @property
     @logger.catch(reraise=True)
-    def compressed_str(self):
-        """
-        Return a text string with a compressed csv of values
-
-        >>> from ciscoconfparse.ccp_util import CiscoRange
-        >>> range_obj = CiscoRange('1,3,5,6,7')
-        >>> range_obj.compressed_str
-        '1,3,5-7'
-        >>>
-        """
-        retval = list()
-        prefix_str = self.line_prefix.strip() + self.slot_prefix.strip()
-        prefix_str_len = len(prefix_str)
-
-        # Build a list of integers (without prefix_str)
-        input_str = list()
-        for ii in self._list:
-            # Removed try / except which is slower than sys.version_info
-            unicode_ii = str(ii)
-
-            # Removed this in version 1.5.27 because it's so slow...
-            # trailing_digits = re.sub(r"^{0}(\d+)$".format(prefix_str), "\g<1>", unicode_ii)
-
-            complete_len = len(unicode_ii)
-            # Assign ii to the trailing number after prefix_str...
-            #    this is much faster than regexp processing...
-            trailing_digits_len = complete_len - prefix_str_len
-            trailing_digits = unicode_ii[-1 * trailing_digits_len:]
-            input_str.append(int(trailing_digits))
-
-        if len(input_str) == 0:  # Special case, handle empty list
-            return ""
-
-        # source - https://stackoverflow.com/a/51227915/667301
-        input_str = sorted(list(set(input_str)))
-        range_list = [input_str[0]]
-        for ii in range(len(input_str)):
-            if ii + 1 < len(input_str) and ii - 1 > -1:
-                if (input_str[ii] - input_str[ii - 1] == 1) and (
-                    input_str[ii + 1] - input_str[ii] == 1
-                ):
-                    if range_list[-1] != "-":
-                        range_list += ["-"]
-                else:
-                    range_list += [input_str[ii]]
-        if len(input_str) > 1:
-            range_list += [input_str[len(input_str) - 1]]
-
-        # Build the return value from range_list...
-        retval = prefix_str + str(range_list[0])
-        for ii in range(1, len(range_list)):
-            if str(type(range_list[ii])) != str(type(range_list[ii - 1])):
-                retval += str(range_list[ii])
-            else:
-                retval += "," + str(range_list[ii])
-
-        return retval
-
-class CiscoRangeOld(MutableSequence):
-    """Explode Cisco ranges into a list of explicit items... examples below...
-
-    Examples
-    --------
-
-    >>> from ciscoconfparse.ccp_util import CiscoRange
-    >>> CiscoRange('1-3,5,9-11,13')
-    <CiscoRange 1-3,5,9-11,13>
-    >>> for ii in CiscoRange('Eth2/1-3,5,9-10'):
-    ...     print(ii)
-    ...
-    Eth2/1
-    Eth2/2
-    Eth2/3
-    Eth2/5
-    Eth2/9
-    Eth2/10
-    >>> CiscoRange('Eth2/1-3,7')
-    <CiscoRange Eth2/1-3,7>
-    >>> CiscoRange()
-    <CiscoRange []>
-    """
-
-    def __init__(self, text="", result_type=str):
-        super().__init__()
-
-        if not isinstance(text, str):
-            error = f'text="{text}" must be a string.'
-            logger.error(error)
-            raise ValueError(error)
-
-        self.text = text
-        self.result_type = result_type
-        if text:
-            (
-                self.intf_prefix,
-                self.slot_prefix,
-                self.range_text,
-            ) = self.parse_range_text(text=text)
-            self._list = self._range()
-        else:
-            self.intf_prefix = ""
-            self.slot_prefix = ""
-            self._list = list()
-
-    def __repr__(self):
-        if len(self._list) == 0:
-            return """<CiscoRange []>"""
-        else:
-            return f"""<CiscoRange {self.compressed_str}>"""
-
-    def __len__(self):
-        return len(self._list)
-
-    def __getitem__(self, ii):
-        return self._list[ii]
-
-    def __delitem__(self, ii):
-        del self._list[ii]
-
-    def __setitem__(self, ii, val):
-        return self._list[ii]
-
-    def __str__(self):
-        return self.__repr__()
-
-    # Github issue #124
-    def __eq__(self, other):
-        assert hasattr(other, "intf_prefix")
-        self_prefix_str = self.intf_prefix + self.slot_prefix
-        other_prefix_str = other.intf_prefix + other.slot_prefix
-        cmp1 = self_prefix_str.lower() == other_prefix_str.lower()
-        cmp2 = sorted(self._list) == sorted(other._list)
-        return cmp1 and cmp2
-
-    def insert(self, ii, val):
-        ## Insert something at index ii
-        for idx, obj in enumerate(CiscoRange(val, result_type=self.result_type)):
-            self._list.insert(ii + idx, obj)
-
-        # Prune out any duplicate entries, and sort...
-        self._list = sorted(map(self.result_type, set(self._list)))
-        return self
-
-    def append(self, val):
-        list_idx = len(self._list)
-        self.insert(list_idx, val)
-        return self
-
-    def normalize_and_split_text(self, text=None):
-        """Split `text` on commas, then remove all common string prefixes in the list (except on the first element).  Return a 'normalized' list of strings with common_prefix removed except on the first element in the list (i.e. "Eth1/1,Eth1/4,Eth1/7" -> ["Eth1/1", "4", "7"])."""
-        if not isinstance(text, str):
-            error = f'text={text} {type(text)} must be a string'
-            logger.error(error)
-            raise ValueError(error)
-
-        components = list()
-        if "," in text:
-            for part in text.split(","):
-                if "-" in part:
-                    this_range = part.split("-")
-                    if len(this_range) != 2:
-                        error = f"Cannot parse {text} into a proper range"
-                        logger.error(error)
-                        raise ValueError(error)
-                    else:
-                        begin_interface = CiscoInterface(this_range[0])
-                        end_interface = begin_interface.port = int(this_range[1])
-
-
-        logger.warning(all_components)
-        return nondigit_intf_prefix, all_components
-
-    def get_interface_dict(self, interface_name=None):
-        for ii in all_components:
-            logger.warning(ii)
-        return all_components
-
-    def parse_range_text(self, text=None):
-        """
-        Parse `text` in the form of 'Eth1/1-2,12-18,19' into a proper list.
-        """
-        logger.critical(text)
-        if not isinstance(text, str):
-            error = f'text={text} {type(text)} must be a string'
-            logger.error(error)
-            raise ValueError(error)
-
-        intf_prefix, intf_lists = self.normalize_and_split_text(text=text)
-
-        mm = _RGX_CISCO_RANGE.search(tmp[0])
-
-        ERROR = f"CiscoRange() couldn't parse '{text}'"
-        assert mm is not None, ERROR
-
-        mm_result = mm.groupdict()
-        intf_prefix = mm_result.get("intf_prefix", "") or ""
-        slot_prefix = mm_result.get("slot_prefix", "") or ""
-        if len(tmp[1:]) > 1:
-            range_text = mm_result["range_text"] + "," + ",".join(tmp[1:])
-        elif len(tmp[1:]) == 1:
-            range_text = mm_result["range_text"] + "," + tmp[1]
-        elif len(tmp[1:]) == 0:
-            range_text = mm_result["range_text"]
-
-        logger.debug(intf_prefix)
-        logger.info(slot_prefix)
-        logger.warning(range_text)
-
-        return intf_prefix, slot_prefix, range_text
-
-    def _parse_dash_range(self, text):
-        """Parse a dash Cisco range into a discrete list of items"""
-        retval = set({})
-        for range_atom in text.split(","):
-            try:
-                begin, end = range_atom.split("-")
-            except ValueError:
-                ## begin and end are the same number
-                begin, end = range_atom, range_atom
-            begin, end = int(begin.strip()), int(end.strip()) + 1
-            assert begin > -1
-            assert end > begin
-            retval.update(range(begin, end))
-        return sorted(list(retval))
-
-    def _range(self):
-        """Enumerate all values in the CiscoRange()"""
-
-        def combine(arg):
-            return self.line_prefix + self.slot_prefix + str(arg)
-
-        return [
-            self.result_type(ii)
-            for ii in map(combine, self._parse_dash_range(self.range_text))
-        ]
-
-    def remove(self, arg):
-        remove_obj = CiscoRange(arg)
-        for ii in remove_obj:
-            try:
-                ## Remove arg, even if duplicated... Ref Github issue #126
-                while True:
-                    index = self.index(self.result_type(ii))
-                    self.pop(index)
-            except ValueError:
-                pass
-        return self
-
-    @property
-    def as_list(self):
-        return self._list
-
-    ## Github issue #125
-    @property
     def compressed_str(self):
         """
         Return a text string with a compressed csv of values
