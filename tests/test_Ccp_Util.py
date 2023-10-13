@@ -31,8 +31,8 @@ sys.path.insert(0, "..")
 from ciscoconfparse.ccp_util import _RGX_IPV4ADDR, _RGX_IPV6ADDR
 from ciscoconfparse.ccp_util import IPv4Obj, L4Object, ip_factory
 from ciscoconfparse.ccp_util import IPv6Obj
-from ciscoconfparse.ccp_util import CiscoRange
 from ciscoconfparse.ccp_util import dns_lookup, reverse_dns_lookup
+from ciscoconfparse.ccp_util import CiscoRange, CiscoInterface
 from ciscoconfparse.ccp_util import collapse_addresses
 import pytest
 
@@ -631,7 +631,13 @@ def test_reverse_dns_lookup():
     except Exception:
         pytest.skip(test_result["error"])
 
-
+def test_CiscoInterface_01():
+    """Check that a single number is parsed correctly"""
+    uut = CiscoInterface("Ethernet1")
+    assert uut.prefix == "Ethernet"
+    assert uut.card is None
+    assert uut.slot is None
+    assert uut.port == 1
 
 def test_CiscoRange_01():
     """Basic vlan range test"""
