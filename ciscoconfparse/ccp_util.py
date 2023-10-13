@@ -3586,6 +3586,9 @@ class CiscoRange(MutableSequence):
 
         return retval
 
+##############################################################################
+# Restore SonarCloud warnings in this file
+##############################################################################
 #pragma warning restore S1192
 #pragma warning restore S1313
 #pragma warning restore S6395
