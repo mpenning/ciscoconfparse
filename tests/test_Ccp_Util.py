@@ -28,11 +28,11 @@ import os
 
 sys.path.insert(0, "..")
 
+from ciscoconfparse import CiscoRange, CiscoInterface
 from ciscoconfparse.ccp_util import _RGX_IPV4ADDR, _RGX_IPV6ADDR
 from ciscoconfparse.ccp_util import IPv4Obj, L4Object, ip_factory
 from ciscoconfparse.ccp_util import IPv6Obj
 from ciscoconfparse.ccp_util import dns_lookup, reverse_dns_lookup
-from ciscoconfparse.ccp_util import CiscoRange, CiscoInterface
 from ciscoconfparse.ccp_util import collapse_addresses
 import pytest
 
