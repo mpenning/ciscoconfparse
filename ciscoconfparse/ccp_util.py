@@ -3069,13 +3069,13 @@ class CiscoInterface(object):
 
     def __gt__(self, other):
         # Ref: http://stackoverflow.com/a/7152796/667301
-        if self.__hash__() > other.__hash__():
+        if self.sort_list > other.sort_list:
             return True
         return False
 
     def __lt__(self, other):
         # Ref: http://stackoverflow.com/a/7152796/667301
-        if self.__hash__() < other.__hash__():
+        if self.sort_list < other.sort_list:
             return True
         return False
 
