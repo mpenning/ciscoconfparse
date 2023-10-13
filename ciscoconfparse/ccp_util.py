@@ -818,7 +818,10 @@ def collapse_addresses(network_list):
 class IPv4Obj(object):
 
     # This method is on IPv4Obj().  @logger.catch() breaks the __init__() method.
-    def __init__(self, v4addr_prefixlen=f"0.0.0.1/{IPV4_MAX_PREFIXLEN}", strict=False, debug=0):
+    # Use 'nosec' to disable default linter security flags about using 0.0.0.1
+    #pragma warning disable S1313
+    def __init__(self, v4addr_prefixlen=f"0.0.0.1/{IPV4_MAX_PREFIXLEN}", strict=False, debug=0): # nosec
+        #pragma warning restore S1313
         """An object to represent IPv4 addresses and IPv4 networks.
 
         When :class:`~ccp_util.IPv4Obj` objects are compared or sorted, network numbers are sorted lower to higher.  If network numbers are the same, shorter masks are lower than longer masks. After comparing mask length, numerically higher IP addresses are greater than numerically lower IP addresses..  Comparisons between :class:`~ccp_util.IPv4Obj` instances was chosen so it's easy to find the longest-match for a given prefix (see examples below).
@@ -975,8 +978,10 @@ class IPv4Obj(object):
             if v4_str_rgx is not None:
                 pp = v4_str_rgx.groupdict()
                 try:
+                    #pragma warning disable S1313
                     # Use 'nosec' to disable default linter security flags about using 0.0.0.1
                     ipv4 = pp.get("v4addr_nomask", None) or pp.get("v4addr_netmask", None) or pp.get("v4addr_prefixlen", None) or "0.0.0.1" # nosec
+                    #pragma warning restore S1313
                 except DynamicAddressException as eee:
                     raise ValueError(str(eee))
 
@@ -1041,8 +1046,10 @@ class IPv4Obj(object):
 
             mm_result = mm.groupdict()
             addr = (
+                #pragma warning disable S1313
                 # Use 'nosec' to disable default linter security flags about using 0.0.0.1
                 mm_result["v4addr_nomask"] or mm_result["v4addr_netmask"] or mm_result["v4addr_prefixlen"] or "0.0.0.1" # nosec
+                #pragma warning restore S1313
             )
             ## Normalize if we get zero-padded strings, i.e. 172.001.001.001
             assert re.search(r"^\d+\.\d+.\d+\.\d+", addr)
