@@ -3012,7 +3012,7 @@ class CiscoInterface(object):
                 self.update_state()
 
             else:
-                error = f"""The interface number regex failed to match"""
+                error = """The interface number regex failed to match"""
                 logger.critical(error)
                 raise ValueError(error)
 
@@ -3025,7 +3025,7 @@ class CiscoInterface(object):
                     self._number = groupdict["number"]
                     self._subinterface = groupdict["subinterface"]
                 else:
-                    error = f"""Subinterface regex failed to match"""
+                    error = """Subinterface regex failed to match"""
                     logger.critical(error)
                     raise ValueError(error)
 
@@ -3036,7 +3036,7 @@ class CiscoInterface(object):
                     groupdict = mm.groupdict()
                     self._channel = groupdict["channel"]
                 else:
-                    error = f"""Channel regex failed to match"""
+                    error = """Channel regex failed to match"""
                     logger.critical(error)
                     raise ValueError(error)
 
