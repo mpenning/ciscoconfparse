@@ -3343,7 +3343,7 @@ class CiscoRange(MutableSequence):
 
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
-    def __init__(self, text="", result_type=str, debug=False):
+    def __init__(self, text="", result_type=str, default_iter_attr='port', debug=False):
         super().__init__()
 
         if not isinstance(text, str):
@@ -3356,6 +3356,7 @@ class CiscoRange(MutableSequence):
 
         self.text = text
         self.iterate_attribute = None
+        self.default_iter_attr = default_iter_attr
         self._list = self.parse_text_list(text, debug=debug)
 
     # This method is on CiscoRange()
@@ -3387,6 +3388,8 @@ class CiscoRange(MutableSequence):
                             logger.info(f"  CiscoRange(text={text}, debug=True)    ITERATE on --> {potential_iter_attr} <--")
                         self.iterate_attribute = potential_iter_attr
                         break
+                if self.iterate_attribute is None:
+                    self.iterate_attribute = self.default_iter_attr
 
                 end_ordinal = int(raw_part.split("-")[1].strip())
             else:
