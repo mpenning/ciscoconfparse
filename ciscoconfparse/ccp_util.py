@@ -2960,7 +2960,7 @@ class CiscoInterface(object):
             logger.info(f"Parsing {_intf_all}")
 
             # Handle non-subinterface / non-channel interfaces...
-            mm = re.search(r"^(?P<all>(?P<slot>\d+)(?P<sep1>\D)?(?P<card>\d+)?(?P<sep2>\D)?(?P<port>\d+)?)", _intf_all)
+            mm = re.search(r"^(?P<all>(?P<slot>\d+)(?P<sep1>[^\:^\.])?(?P<card>\d+)?(?P<sep2>[^\:^\.])?(?P<port>\d+)?)", _intf_all)
             nn = re.search(r"^(?P<all>(?P<port>\d+))", _intf_all)
             if mm is not None:
 
