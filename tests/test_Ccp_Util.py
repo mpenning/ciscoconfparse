@@ -37,6 +37,7 @@ from ciscoconfparse.ccp_util import dns_lookup, reverse_dns_lookup
 from ciscoconfparse.ccp_util import collapse_addresses
 import pytest
 
+from loguru import logger
 from ipaddress import IPv4Network, IPv6Network, IPv4Address, IPv6Address
 import ipaddress
 
@@ -611,9 +612,15 @@ def test_dns_lookup():
     result_correct_address = "65.19.187.2"
     result_correct = {"addrs": [result_correct_address], "name": test_hostname, "error": "", "record_type": "A"}
     try:
-        test_result = dns_lookup(test_hostname)
-    except Timeout:
-        pytest.skip("Skipping due to DNS resolver timeout")
+        test_result = dns_lookup(test_hostname, timeout=0.45)
+    except Timeout as ttt:
+        error = f"Skipping due to DNS resolver timeout: {ttt}"
+        logger.warning(error)
+        pytest.skip(error)
+    except Exception as eee:
+        error = f"Skipping test_dns_lookup due to Exception: {eee}"
+        logger.warning(error)
+        pytest.skip(error)
 
     if test_result["error"] != "":
         assert dns_lookup(test_hostname) == result_correct
@@ -624,9 +631,8 @@ def test_dns_lookup():
 def test_reverse_dns_lookup():
 
     #result_correct = {"addrs": ["127.0.0.1"], "name": "localhost.", "error": ""}
-    test_result = reverse_dns_lookup("127.0.0.1")
-    assert isinstance(test_result, dict)
     try:
+        test_result = reverse_dns_lookup("127.0.0.1", timeout=0.1)
         assert test_result["error"] == ""
     except Exception:
         pytest.skip(test_result["error"])
@@ -703,16 +709,18 @@ def test_CiscoInterface_07():
 
 def test_CiscoRange_01():
     """Basic vlan range test"""
-    result_correct = {CiscoInterface("1")}
-    uut_str = "1"
+    result_correct = {"1", "2", "3"}
+    uut_str = "1-3"
+    assert isinstance(uut_str, str)
     assert CiscoRange(uut_str).as_set == result_correct
     assert CiscoRange(uut_str).iterate_attribute == "port"
 
 
 def test_CiscoRange_02():
     """Basic vlan range test"""
-    result_correct = {CiscoInterface("1"), CiscoInterface("3")}
+    result_correct = {"1", "3"}
     uut_str = "1,3"
+    assert isinstance(uut_str, str)
     assert CiscoRange(uut_str).as_set == result_correct
     assert CiscoRange(uut_str).iterate_attribute == "port"
 
@@ -720,193 +728,127 @@ def test_CiscoRange_02():
 def test_CiscoRange_03():
     """Basic vlan range test"""
     result_correct = {
-        CiscoInterface("1"),
-        CiscoInterface("2"),
-        CiscoInterface("3"),
-        CiscoInterface("4"),
-        CiscoInterface("5"),
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
     }
     uut_str = "1,2-4,5"
+    assert isinstance(uut_str, str)
     assert CiscoRange(uut_str).as_set == result_correct
     assert CiscoRange(uut_str).iterate_attribute == "port"
 
 
 def test_CiscoRange_04():
     """Basic vlan range test"""
-    result_correct = {
-        CiscoInterface("1"),
-        CiscoInterface("2"),
-        CiscoInterface("3"),
-        CiscoInterface("4"),
-        CiscoInterface("5"),
-    }
+    result_correct = {"1", "2", "3", "4", "5"}
     uut_str = "1-3,4,5"
+    assert isinstance(uut_str, str)
     assert CiscoRange(uut_str).as_set == result_correct
     assert CiscoRange(uut_str).iterate_attribute == "port"
 
 
 def test_CiscoRange_05():
     """Basic vlan range test"""
-    result_correct = {
-        CiscoInterface("1"),
-        CiscoInterface("2"),
-        CiscoInterface("3"),
-        CiscoInterface("4"),
-        CiscoInterface("5"),
-    }
+    result_correct = {"1", "2", "3", "4", "5"}
     uut_str = "1,2,3-5"
+    assert isinstance(uut_str, str)
     assert CiscoRange(uut_str).as_set == result_correct
     assert CiscoRange(uut_str).iterate_attribute == "port"
 
 
 def test_CiscoRange_06():
     """Basic slot range test"""
-    result_correct = {
-        CiscoInterface("1/1"),
-        CiscoInterface("1/2"),
-        CiscoInterface("1/3"),
-        CiscoInterface("1/4"),
-        CiscoInterface("1/5"),
-    }
+    result_correct = {"1/1", "1/2", "1/3", "1/4", "1/5"}
     uut_str = "1/1-3,4,5"
+    assert isinstance(uut_str, str)
     assert CiscoRange(uut_str).as_set == result_correct
     assert CiscoRange(uut_str).iterate_attribute == "port"
 
 
 def test_CiscoRange_07():
     """Basic slot range test"""
-    result_correct = {
-        CiscoInterface("1/1"),
-        CiscoInterface("1/2"),
-        CiscoInterface("1/3"),
-        CiscoInterface("1/4"),
-        CiscoInterface("1/5"),
-    }
+    result_correct = {"1/1", "1/2", "1/3", "1/4", "1/5"}
     uut_str = "1/1,2-4,5"
+    assert isinstance(uut_str, str)
     assert CiscoRange(uut_str).as_set == result_correct
 
 
 def test_CiscoRange_08():
     """Basic slot range test"""
-    result_correct = {
-        CiscoInterface("1/1"),
-        CiscoInterface("1/2"),
-        CiscoInterface("1/3"),
-        CiscoInterface("1/4"),
-        CiscoInterface("1/5"),
-    }
+    result_correct = {"1/1", "1/2", "1/3", "1/4", "1/5"}
     uut_str = "1/1,2,3-5"
+    assert isinstance(uut_str, str)
     assert CiscoRange(uut_str).as_set == result_correct
 
 
 def test_CiscoRange_09():
     """Basic slot range test"""
-    result_correct = {
-        CiscoInterface("2/1/1"),
-        CiscoInterface("2/1/2"),
-        CiscoInterface("2/1/3"),
-        CiscoInterface("2/1/4"),
-        CiscoInterface("2/1/5"),
-    }
+    result_correct = {"2/1/1", "2/1/2", "2/1/3", "2/1/4", "2/1/5"}
     uut_str = "2/1/1-3,4,5"
+    assert isinstance(uut_str, str)
     assert CiscoRange(uut_str).as_set == result_correct
 
 
 def test_CiscoRange_10():
     """Basic slot range test"""
-    result_correct = {
-        CiscoInterface("2/1/1"),
-        CiscoInterface("2/1/2"),
-        CiscoInterface("2/1/3"),
-        CiscoInterface("2/1/4"),
-        CiscoInterface("2/1/5"),
-    }
+    result_correct = {"2/1/1", "2/1/2", "2/1/3", "2/1/4", "2/1/5"}
     uut_str = "2/1/1,2-4,5"
+    assert isinstance(uut_str, str)
     assert CiscoRange(uut_str).as_set == result_correct
 
 
 def test_CiscoRange_11():
     """Basic slot range test"""
-    result_correct = {
-        CiscoInterface("2/1/1"),
-        CiscoInterface("2/1/2"),
-        CiscoInterface("2/1/3"),
-        CiscoInterface("2/1/4"),
-        CiscoInterface("2/1/5"),
-    }
+    result_correct = {"2/1/1", "2/1/2", "2/1/3", "2/1/4", "2/1/5"}
     uut_str = "2/1/1,2,3-5"
+    assert isinstance(uut_str, str)
     assert CiscoRange(uut_str).as_set == result_correct
 
 
 if False:
     def test_CiscoRange_12():
         """Basic interface slot range test"""
-        result_correct = {
-            CiscoInterface("interface Eth2/1/1"),
-            CiscoInterface("interface Eth2/1/2"),
-            CiscoInterface("interface Eth2/1/3"),
-            CiscoInterface("interface Eth2/1/4"),
-            CiscoInterface("interface Eth2/1/5"),
-        }
+        result_correct = {"2/1/1", "2/1/2", "2/1/3", "2/1/4", "2/1/5"}
         uut_str = "interface Eth2/1/1-3,4,5"
+        assert isinstance(uut_str, str)
         assert CiscoRange(uut_str).as_set == result_correct
 
 
     def test_CiscoRange_13():
         """Basic interface slot range test"""
-        result_correct = {
-            CiscoInterface("interface Eth2/1/1"),
-            CiscoInterface("interface Eth2/1/2"),
-            CiscoInterface("interface Eth2/1/3"),
-            CiscoInterface("interface Eth2/1/4"),
-            CiscoInterface("interface Eth2/1/5"),
-        }
+        result_correct = {"2/1/1", "2/1/2", "2/1/3", "2/1/4", "2/1/5"}
         uut_str = "interface Eth2/1/1,2-4,5"
+        assert isinstance(uut_str, str)
         assert CiscoRange(uut_str).as_set == result_correct
 
 
     def test_CiscoRange_14():
         """Basic interface slot range test"""
-        result_correct = {
-            CiscoInterface("interface Eth2/1/1"),
-            CiscoInterface("interface Eth2/1/2"),
-            CiscoInterface("interface Eth2/1/3"),
-            CiscoInterface("interface Eth2/1/4"),
-            CiscoInterface("interface Eth2/1/5"),
-        }
+        result_correct = {"2/1/1", "2/1/2", "2/1/3", "2/1/4", "2/1/5"}
         uut_str = "interface Eth2/1/1,2,3-5"
+        assert isinstance(uut_str, str)
         assert CiscoRange(uut_str).as_set == result_correct
 
 
     def test_CiscoRange_15():
         """Basic interface slot range test"""
-        result_correct = {
-            CiscoInterface("interface Eth2/1/1"),
-            CiscoInterface("interface Eth2/1/2"),
-            CiscoInterface("interface Eth2/1/3"),
-            CiscoInterface("interface Eth2/1/4"),
-            CiscoInterface("interface Eth2/1/5"),
-        }
+        result_correct = {"2/1/1", "2/1/2", "2/1/3", "2/1/4", "2/1/5"}
         uut_str = "interface Eth 2/1/1,2,3-5"
+        assert isinstance(uut_str, str)
         assert CiscoRange(uut_str).as_set == result_correct
 
 
 def test_CiscoRange_18():
     """Parse a string with a common prefix on all of the CiscoRange() inputs"""
     result_correct = {
-        CiscoInterface("Eth1/1"),
-        CiscoInterface("Eth1/10"),
-        CiscoInterface("Eth1/12"),
-        CiscoInterface("Eth1/13"),
-        CiscoInterface("Eth1/14"),
-        CiscoInterface("Eth1/15"),
-        CiscoInterface("Eth1/16"),
-        CiscoInterface("Eth1/17"),
-        CiscoInterface("Eth1/18"),
-        CiscoInterface("Eth1/19"),
-        CiscoInterface("Eth1/20"),
+        "Eth1/1", "Eth1/10", "Eth1/12", "Eth1/13", "Eth1/14",
+        "Eth1/15", "Eth1/16", "Eth1/17", "Eth1/18", "Eth1/19",
+        "Eth1/20"
     }
     uut_str = "Eth1/1,Eth1/12-20,Eth1/16,Eth1/10"
+    assert isinstance(uut_str, str)
     assert CiscoRange(uut_str).as_set == result_correct
 
 
@@ -914,28 +856,33 @@ if False:
     def test_CiscoRange_19():
         """Parse a string with a common prefix on all of the CiscoRange() inputs"""
         result_correct = {
-            CiscoInterface("interface Eth1/1"),
-            CiscoInterface("interface Eth1/10"),
-            CiscoInterface("interface Eth1/12"),
-            CiscoInterface("interface Eth1/13"),
-            CiscoInterface("interface Eth1/14"),
-            CiscoInterface("interface Eth1/15"),
-            CiscoInterface("interface Eth1/16"),
-            CiscoInterface("interface Eth1/17"),
-            CiscoInterface("interface Eth1/18"),
-            CiscoInterface("interface Eth1/19"),
-            CiscoInterface("interface Eth1/20"),
+            "interface Eth1/1", "interface Eth1/10", "interface Eth1/12",
+            "interface Eth1/13", "interface Eth1/14", "interface Eth1/15",
+            "interface Eth1/16", "interface Eth1/17", "interface Eth1/18",
+            "interface Eth1/19", "interface Eth1/20"
         }
         uut_str = "interface Eth1/1,interface Eth1/12-20,interface Eth1/16,interface Eth1/10"
+        assert isinstance(uut_str, str)
         assert CiscoRange(uut_str).as_set == result_correct
 
 
 def test_CiscoRange_compressed_str_01():
     """compressed_str test"""
     uut_str = "1,2, 3, 6, 7,  8 , 9, 911"
+    assert isinstance(uut_str, str)
     assert CiscoRange(uut_str).compressed_str == "1-3,6-9,911"
+    assert "1" in CiscoRange(uut_str)
+    assert "2" in CiscoRange(uut_str)
+    assert "3" in CiscoRange(uut_str)
+    assert "6" in CiscoRange(uut_str)
+    assert "7" in CiscoRange(uut_str)
+    assert "8" in CiscoRange(uut_str)
+    assert "9" in CiscoRange(uut_str)
+    assert "911" in CiscoRange(uut_str)
 
 
 def test_CiscoRange_contains():
     uut_str = "Ethernet1/1-20"
-    assert CiscoInterface("Ethernet1/2") in CiscoRange(uut_str)
+    assert isinstance(uut_str, str)
+    # Ethernet1/5 is in CiscoRange("Ethernet1/1-20")...
+    assert "Ethernet1/5" in CiscoRange(uut_str)

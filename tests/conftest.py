@@ -25,6 +25,8 @@ import platform
 import sys
 import os
 
+sys.path.insert(0, "..")
+
 from ciscoconfparse.ciscoconfparse import CiscoConfParse
 from ciscoconfparse.ccp_util import PythonOptimizeCheck
 import dns.exception
