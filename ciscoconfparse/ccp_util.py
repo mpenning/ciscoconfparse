@@ -3304,7 +3304,7 @@ class CiscoInterface(object):
             return f"""{self.prefix}{self.number}.{self.subinterface}:{self.channel}"""
 
     def __str__(self):
-        return f"""{self.prefix}{self._slot_card_port_subinterface_channel}"""
+        return self.render_as_string()
 
     @logger.catch(reraise=True)
     def __repr__(self):
@@ -3612,14 +3612,13 @@ class CiscoRange(MutableSequence):
                     logger.info(f"idx: CiscoRange().parse_text_list(text='{text}') [begin_obj: {type({self.begin_obj})}]")
                     logger.debug(f"  idx: {idx}, define constant CiscoInterface() instances for {intf_component01}")
                 reference_interface = CiscoInterface(intf_component01)
-                template_interface = CiscoInterface(intf_component01)
                 if "-" not in _csv_part:
                     if debug is True:
                         logger.info(f"    idx: {idx} at point01, Appending {reference_interface}{os.linesep}")
                     expanded_interfaces.append(copy.deepcopy(reference_interface))
                     continue
 
-            if self.iterate_attribute == 'channel' and isinstance(template_interface.channel, int):
+            if self.iterate_attribute == 'channel' and isinstance(reference_interface.channel, int):
                 ##############################################################
                 # Handle incrementing channel numbers
                 ##############################################################
@@ -3627,12 +3626,14 @@ class CiscoRange(MutableSequence):
                     for ii in range(begin_obj.channel, end_ordinal+1):
                         if debug is True:
                             logger.debug(f"    idx: {idx} at point04,     set channel: {ii}")
+                        template_interface = copy.deepcopy(reference_interface)
                         template_interface.channel = ii
                         # Use deepcopy to avoid problems with the same object
                         #     instance appended multiple times
                         if debug is True:
                             logger.info(f"    idx: {idx} at point05, Appending {template_interface}{os.linesep}")
-                        expanded_interfaces.append(copy.deepcopy(template_interface))
+                        expanded_interfaces.append(template_interface)
+                        del template_interface
                         continue
             elif self.iterate_attribute == 'subinterface' and isinstance(template_interface.subinterface, int):
                 ##############################################################
