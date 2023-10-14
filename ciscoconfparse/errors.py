@@ -40,6 +40,13 @@ class ListItemMissingAttribute(Exception):
         super().__init__(msg)
         self.msg = msg
 
+class ListItemTypeError(Exception):
+    """Raise this error if a list() contains more than one object type"""
+
+    def __init__(self, msg=""):
+        super().__init__(msg)
+        self.msg = msg
+
 class DynamicAddressException(Exception):
     """Throw this if you try to get an address object from a dhcp interface"""
 
@@ -47,13 +54,13 @@ class DynamicAddressException(Exception):
         super().__init__(msg)
         self.msg = msg
 
-class InvalidShellVariableMapping(BaseError):
+class InvalidShellVariableMapping(Exception):
 
     def __init__(self, msg=""):
         super().__init__(msg)
         self.msg = msg
 
-class InvalidCiscoInterface(BaseError):
+class InvalidCiscoInterface(Exception):
 
     def __init__(self, msg=""):
         super().__init__(msg)
