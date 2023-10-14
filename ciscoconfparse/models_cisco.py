@@ -8,7 +8,8 @@ from ciscoconfparse.ccp_util import (
     _IPV6_REGEX_STR_COMPRESSED2,
 )
 from ciscoconfparse.ccp_util import _IPV6_REGEX_STR_COMPRESSED3
-from ciscoconfparse.ccp_util import CiscoRange, IPv4Obj, IPv6Obj
+from ciscoconfparse.ccp_util import CiscoRange, CiscoInterface
+from ciscoconfparse.ccp_util import IPv4Obj, IPv6Obj
 from ciscoconfparse.ccp_abc import BaseCfgLine
 
 from loguru import logger
@@ -1460,7 +1461,7 @@ class BaseIOSIntfLine(IOSCfgLine):
 
         # The default values...
         if self.is_switchport and not self.has_manual_switch_access:
-            retval = CiscoRange("1-{0}".format(MAX_VLAN), result_type=int)
+            retval = CiscoRange(f"1-{MAX_VLAN}", result_type=str)
         else:
             return 0
 
@@ -1498,26 +1499,24 @@ class BaseIOSIntfLine(IOSCfgLine):
             }
 
             ## Analyze each vdict in sequence and apply to retval sequentially
-            for key, val in vdict.items():
-                if val != "_nomatch_":
+            for key, _value in vdict.items():
+                if _value != "_nomatch_":
                     ## absolute in the key overrides previous values
                     if "absolute" in key:
-                        if val.lower() == "all":
-                            retval = CiscoRange(
-                                "1-{0}".format(MAX_VLAN), result_type=int
-                            )
-                        elif val.lower() == "none":
-                            retval = CiscoRange(result_type=int)
+                        if _value.lower() == "all":
+                            retval = CiscoRange(text=f"1-{MAX_VLAN}", result_type=str)
+                        elif _value.lower() == "none":
+                            # Vlan 1... the default vlan...
+                            retval = CiscoRange(text="1", result_type=str)
                         else:
-                            retval = CiscoRange(val, result_type=int)
+                            retval = CiscoRange(text=_value, result_type=str)
                     elif "add" in key:
-                        retval.append(val)
+                        retval.append(_value)
                     elif "except" in key:
-                        retval = CiscoRange("1-{0}".format(MAX_VLAN), result_type=int)
-                        retval.remove(val)
+                        retval = CiscoRange(text=f"1-{MAX_VLAN}", result_type=str)
+                        retval.remove(_value)
                     elif "remove" in key:
-                        retval.remove(val)
-
+                        retval.remove(_value)
         return retval
 
     @property
