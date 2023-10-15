@@ -21,6 +21,19 @@ r""" test_Ccp_Util.py - Parse, Query, Build, and Modify IOS-style configs
      If you need to contact the author, you can do so by emailing:
      mike [~at~] pennington [/dot\] net
 """
+##############################################################################
+# Disable SonarCloud warnings in this file
+#   - S1192: Define a constant instead of duplicating this literal
+#   - S1313: Disable alerts on magic IPv4 / IPv6 addresses
+#   - S5843: Avoid regex complexity
+#   - S5852: Slow regex are security-sensitive
+#   - S6395: Unwrap this unnecessarily grouped regex subpattern.
+##############################################################################
+#pragma warning disable S1192
+#pragma warning disable S1313
+#pragma warning disable S5843
+#pragma warning disable S5852
+#pragma warning disable S6395
 
 
 import sys
@@ -886,3 +899,9 @@ def test_CiscoRange_contains():
     assert isinstance(uut_str, str)
     # Ethernet1/5 is in CiscoRange("Ethernet1/1-20")...
     assert "Ethernet1/5" in CiscoRange(uut_str)
+
+#pragma warning restore S1192
+#pragma warning restore S1313
+#pragma warning restore S5843
+#pragma warning restore S5852
+#pragma warning restore S6395
