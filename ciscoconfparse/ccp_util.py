@@ -2969,6 +2969,7 @@ def reverse_dns_lookup(input_str, timeout=3.0, server="4.2.2.2", proto="udp"):
 
 class CiscoInterface(object):
 
+    @logger.catch(reraise=True)
     def __init__(self, interface_name=None, attribute_dict=None, debug=False):
         """
         Parse a string `interface_name` like "Serial4/1/2.9:5", (containing slot, card, port, subinterface, and channel) into its typical Cisco IOS components:
@@ -3011,6 +3012,7 @@ class CiscoInterface(object):
         intf_dict = self.parse_single_interface(interface_name, debug=debug)
         self.update_internal_state(intf_dict=intf_dict)
 
+    @logger.catch(reraise=True)
     def update_internal_state(self, intf_dict=None, debug=False):
         "Rewrite the state of this object; call this when any digit changes."
         _prefix = intf_dict["prefix"]
@@ -3021,15 +3023,16 @@ class CiscoInterface(object):
         _port = intf_dict["port"]
         _subinterface = intf_dict["subinterface"]
         _channel = intf_dict["channel"]
-        self._prefix = _prefix
-        self._digit_separator = _digit_separator
-        self._slot_card_port_subinterface_channel = _slot_card_port_subinterface_channel
-        self._slot = _slot
-        self._card = _card
-        self._port = _port
-        self._subinterface = _subinterface
-        self._channel = _channel
+        self.prefix = _prefix.strip()
+        self.digit_separator = _digit_separator
+        self.slot_card_port_subinterface_channel = _slot_card_port_subinterface_channel
+        self.slot = _slot
+        self.card = _card
+        self.port = _port
+        self.subinterface = _subinterface
+        self.channel = _channel
 
+    @logger.catch(reraise=True)
     def parse_single_interface(self, interface_name=None, debug=False):
         """
         Parse a string `interface_name` like "Serial4/1/2.9:5", (containing slot, card, port, subinterface, and channel) into its typical Cisco IOS components:
@@ -3056,8 +3059,8 @@ class CiscoInterface(object):
             logger.critical(error)
             raise InvalidCiscoInterface(error)
 
-        re_intf_short = re.search(r"^(?P<prefix>[a-zA-Z\s]*)(?P<port_subinterface_channel>[\d\:\.^a-z^A-Z^\s]+)$", interface_name.strip())
-        re_intf_long = re.search(r"^(?P<prefix>[a-zA-Z\s]*)(?P<slot_card_port_subinterface_channel>[\d\:\.\/^a-z^A-Z^\s]+)$", interface_name.strip())
+        re_intf_short = re.search(r"^(?P<prefix>[a-zA-Z\-\s]*)(?P<port_subinterface_channel>[\d\:\.^\-^a-z^A-Z^\s]+)$", interface_name.strip())
+        re_intf_long = re.search(r"^(?P<prefix>[a-zA-Z\-\s]*)(?P<slot_card_port_subinterface_channel>[\d\:\.\/^\-^a-z^A-Z^\s]+)$", interface_name.strip())
         re_any = re.search(r".*", interface_name.strip())
         if isinstance(re_intf_short, re.Match):
 
@@ -3124,6 +3127,7 @@ class CiscoInterface(object):
             logger.success(f"CiscoRange().parse_single_interface() returned {groupdict_intf_long}")
         return retval
 
+    @logger.catch(reraise=True)
     def check_attribute_dict(self, attribute_dict):
         _prefix = intf_short["prefix"]
         _slot_card_port_subinterface_channel = intf_short["slot_card_port_subinterface_channel"]
@@ -3142,6 +3146,7 @@ class CiscoInterface(object):
                 logger.critical(error)
                 raise KeyError(error)
 
+    @logger.catch(reraise=True)
     def parse_intf_short(self, re_intf_short=None, debug=False):
         """Parse the short interface regex match group and return a dict of all the interface components."""
 
@@ -3281,6 +3286,7 @@ class CiscoInterface(object):
             "channel": _channel,
         }
 
+    @logger.catch(reraise=True)
     def __eq__(self, other):
         try:
             ##   try / except is usually faster than isinstance();
@@ -3290,18 +3296,21 @@ class CiscoInterface(object):
         except Exception:
             return False
 
+    @logger.catch(reraise=True)
     def __gt__(self, other):
         # Ref: http://stackoverflow.com/a/7152796/667301
         if self.sort_list > other.sort_list:
             return True
         return False
 
+    @logger.catch(reraise=True)
     def __lt__(self, other):
         # Ref: http://stackoverflow.com/a/7152796/667301
         if self.sort_list < other.sort_list:
             return True
         return False
 
+    @logger.catch(reraise=True)
     def __hash__(self):
         """Build a unique (and sortable) identifier based solely on slot / card / port / subinterface / channel numbers for the object instance"""
         # I am using __hash__() in __gt__() and __lt__()
@@ -3335,7 +3344,7 @@ class CiscoInterface(object):
     @logger.catch(reraise=True)
     def prefix(self, value):
         if isinstance(value, str):
-            self._prefix = value
+            self._prefix = value.strip()
         else:
             error = f"CiscoInterface().prefix must be a string, not {value} ({type(value)})"
             logger.error(error)
@@ -3345,6 +3354,14 @@ class CiscoInterface(object):
     @logger.catch(reraise=True)
     def number(self):
         "Return '2/1/8' if self.interface_name is 'Serial 2/1/8.3:6'"
+
+        # Shortcut invalid interface configurations...
+        if self.slot is None and self.card is None and self.port is None:
+            error = f"Could not parse into _number: _slot: {self._slot} _card: {self._card} _port: {self._port} _digit_separator: {self.digit_separator}"
+            logger.critical(error)
+            # Use sys.exit(1) here to avoid infinite recursion during
+            #     pathological errors such as a dash in an interface range
+            sys.exit(1)
 
         # Fix regex port parsing problems... relocate _slot and _card, as-required
         if self._slot is None and self._card is None and isinstance(self._port, int):
@@ -3404,7 +3421,11 @@ class CiscoInterface(object):
     @logger.catch(reraise=True)
     def slot_card_port_subinterface_channel(self, value):
         if isinstance(value, str):
-            self._slot_card_port_subinterface_channel = int(value)
+            if '-' in value:
+                error = f"Dashes are invalid in `slot_card_port_subinterface_channel`'"
+                raise InvalidCiscoInterface(error)
+            else:
+                self._slot_card_port_subinterface_channel = value
         else:
             error = f"Could not set _slot_card_port_subinterface_channel: {value} {type(value)}"
             logger.critical(error)
