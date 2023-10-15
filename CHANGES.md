@@ -6,7 +6,7 @@
 
 ## Version: 1.9.3
 
-- Released: 2023-10-13
+- Released: Not released
 - Summary:
     - Remove dead code
     - Add new CiscoInterface() object in ciscoconfparse.ccp_util.py
