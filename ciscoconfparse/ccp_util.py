@@ -240,6 +240,7 @@ def ccp_logger_control(
     handler_id=None,
     enqueue=True,
     level="DEBUG",
+    read_only=False,
     colorize=True,
     debug=0,
 ):
@@ -251,7 +252,7 @@ def ccp_logger_control(
     -------
     """
 
-    msg = f"ccp_logger_control() was called with sink='{sink}', action='{action}', handler_id='{handler_id}', enqueue={enqueue}, level='{level}', colorize={colorize}, debug={debug}"
+    msg = f"ccp_logger_control() was called with sink='{sink}', action='{action}', handler_id='{handler_id}', enqueue={enqueue}, level='{level}', read_only={read_only}, colorize={colorize}, debug={debug}"
     if debug > 0:
         logger.info(msg)
 
@@ -284,6 +285,9 @@ def ccp_logger_control(
 
     elif action == "add":
 
+        if read_only is True:
+            enqueue = False
+
         logger.add(
             sink=sink,
             diagnose=True,
@@ -312,6 +316,7 @@ def configure_loguru(
     # retention="1 month",
     # compression="zip",
     level="DEBUG",
+    read_only=False,
     colorize=True,
     debug=0,
 ):
