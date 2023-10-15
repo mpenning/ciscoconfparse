@@ -2966,9 +2966,6 @@ class CiscoInterface(object):
         self.interface_name = interface_name
         self.attribute_dict = attribute_dict
         self._prefix = None
-        self._number = None
-        self._number_list = []
-        self._sort_list = []
         self._digit_separator = None
         self._slot = None
         self._card = None
@@ -2983,9 +2980,6 @@ class CiscoInterface(object):
         "Rewrite the state of this object; call this when any digit changes."
         _prefix = intf_dict["prefix"]
         _digit_separator = intf_dict["digit_separator"]
-        #_number = intf_dict["number"]
-        #_number_list = intf_dict["number_list"]
-        _sort_list = intf_dict["sort_list"]
         _slot_card_port_subinterface_channel = intf_dict["slot_card_port_subinterface_channel"]
         _slot = intf_dict["slot"]
         _card = intf_dict["card"]
@@ -2994,9 +2988,6 @@ class CiscoInterface(object):
         _channel = intf_dict["channel"]
         self._prefix = _prefix
         self._digit_separator = _digit_separator
-        #self._number = _number
-        #self._number_list = _number_list
-        self._sort_list = _sort_list
         self._slot_card_port_subinterface_channel = _slot_card_port_subinterface_channel
         self._slot = _slot
         self._card = _card
@@ -3045,11 +3036,8 @@ class CiscoInterface(object):
             _card = intf_short["card"]
             _port = intf_short["port"]
             _digit_separator = intf_short["digit_separator"]
-            #_number = intf_short["number"]
-            #_number_list = intf_short["number_list"]
             _subinterface = intf_short["subinterface"]
             _channel = intf_short["channel"]
-            _sort_list = intf_short["sort_list"]
 
         elif isinstance(re_intf_long, re.Match):
 
@@ -3063,11 +3051,8 @@ class CiscoInterface(object):
             _card = intf_long["card"]
             _port = intf_long["port"]
             _digit_separator = intf_long["digit_separator"]
-            #_number = intf_long["number"]
-            #_number_list = intf_long["number_list"]
             _subinterface = intf_long["subinterface"]
             _channel = intf_long["channel"]
-            _sort_list = intf_long["sort_list"]
 
         elif re_any is not None:
             error = f"The interface_name: string '{interface_name.strip()}' could not be parsed."
@@ -3084,9 +3069,6 @@ class CiscoInterface(object):
         retval = {}
         retval["prefix"] = _prefix
         retval["slot_card_port_subinterface_channel"] = _slot_card_port_subinterface_channel
-        #retval["number"] = _number
-        #retval["number_list"] = _number_list
-        retval["sort_list"] = _sort_list
         retval["digit_separator"] = _digit_separator
         retval["slot"] = _slot
         retval["card"] = _card
@@ -3096,9 +3078,6 @@ class CiscoInterface(object):
         if debug is True:
             logger.debug(f"    CiscoRange().parse_single_interface(): `_prefix = '{_prefix}'`")
             logger.debug(f"    CiscoRange().parse_single_interface(): `_slot_card_port_subinterface_channel = '{_slot_card_port_subinterface_channel}'`")
-            logger.debug(f"    CiscoRange().parse_single_interface(): `_number = '{_number}'`")
-            logger.debug(f"    CiscoRange().parse_single_interface(): `_number_list = '{_number_list}'`")
-            logger.debug(f"    CiscoRange().parse_single_interface(): `_sort_list = '{_sort_list}'`")
             logger.debug(f"    CiscoRange().parse_single_interface(): `_digit_separator = '{_digit_separator}'`")
             logger.debug(f"    CiscoRange().parse_single_interface(): `_slot = '{_slot}'`")
             logger.debug(f"    CiscoRange().parse_single_interface(): `_card = '{_card}'`")
@@ -3119,12 +3098,11 @@ class CiscoInterface(object):
         _card = intf_short["card"]
         _port = intf_short["port"]
         _digit_separator = intf_short["digit_separator"]
-        _number = intf_short["number"]
         _subinterface = intf_short["subinterface"]
         _channel = intf_short["channel"]
 
         for attr_name in attribute_dict.keys():
-            if not attr_name in {"prefix", "sep1", "sep2", "slot", "card", "port", "digit_separator", "number", "subinterface", "channel"}:
+            if not attr_name in {"prefix", "sep1", "sep2", "slot", "card", "port", "digit_separator", "subinterface", "channel"}:
                 error = f"'{attr_name}' is not a valid `attribute_dict` key"
                 logger.critical(error)
                 raise KeyError(error)
@@ -3175,11 +3153,8 @@ class CiscoInterface(object):
             "slot": _slot,
             "port": _port,
             "digit_separator": _digit_separator,
-            #"number": _number,
-            "number_list": _number_list,
             "subinterface": _subinterface,
             "channel": _channel,
-            "sort_list": _sort_list,
         }
 
     def parse_intf_long(self, re_intf_long=None, debug=False):
@@ -3267,11 +3242,8 @@ class CiscoInterface(object):
             "slot": _slot,
             "port": _port,
             "digit_separator": _digit_separator,
-            #"number": _number,
-            #"number_list": _number_list,
             "subinterface": _subinterface,
             "channel": _channel,
-            "sort_list": _sort_list,
         }
 
     def __eq__(self, other):
@@ -3370,11 +3342,6 @@ class CiscoInterface(object):
             else:
                 raise ValueError(f"{ii}")
         return retval
-
-    @number_list.setter
-    @logger.catch(reraise=True)
-    def number_list(self, value):
-        self._number_list = value
 
     @property
     @logger.catch(reraise=True)
@@ -3497,19 +3464,6 @@ class CiscoInterface(object):
             logger.critical(error)
             raise ValueError(error)
 
-    @property
-    @logger.catch(reraise=True)
-    def sort_list(self):
-        "Return a sortable-list in the form of [2, 1, 8, 3, 6] if self.interface_name is 'Serial 2/1/8.3:6.'"
-        retval = []
-        for ii in self._sort_list:
-            if isinstance(ii, (str, int)):
-                retval.append(int(ii))
-            elif ii is None:
-                retval.append(None)
-            else:
-                raise ValueError(f"{ii}")
-        return retval
     @property
     @logger.catch(reraise=True)
     def sort_list(self):
