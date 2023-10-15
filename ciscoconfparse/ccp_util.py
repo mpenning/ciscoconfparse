@@ -3422,7 +3422,8 @@ class CiscoInterface(object):
     def slot_card_port_subinterface_channel(self, value):
         if isinstance(value, str):
             if '-' in value:
-                error = f"Dashes are invalid in `slot_card_port_subinterface_channel`'"
+                error = f"Dashes are invalid in `slot_card_port_subinterface_channel`: '{value}'"
+                logger.critical(error)
                 raise InvalidCiscoInterface(error)
             else:
                 self._slot_card_port_subinterface_channel = value
