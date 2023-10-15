@@ -2934,7 +2934,7 @@ def reverse_dns_lookup(input_str, timeout=3.0, server="4.2.2.2", proto="udp"):
 
 class CiscoInterface(object):
 
-    def __init__(self, interface_name=None, debug=False):
+    def __init__(self, interface_name=None, attribute_dict=None, debug=False):
         """
         Parse a string `interface_name` like "Serial4/1/2.9:5", (containing slot, card, port, subinterface, and channel) into its typical Cisco IOS components:
         - prefix: 'Serial'
@@ -2948,16 +2948,23 @@ class CiscoInterface(object):
         When comparing two CiscoInterface() instances, the most explicit comparison is with `CiscoInterface().sort_list`
         """
         if isinstance(interface_name, str):
-            self.interface_name = interface_name
             if "," in interface_name:
                 error = f"interface_name: {interface_name} must not contain a comma"
                 logger.critical(error)
                 raise InvalidCiscoInterface(error)
-        else:
+        elif isinstance(attribute_dict, dict):
+            self.check_attribute_dict(attribute_dict=attribute_dict)
+        elif interface_name is not None:
             error = f"interface_name must be a string, not {interface_name}."
             logger.critical(error)
             raise InvalidCiscoInterface(error)
+        else:
+            error = f"Could not create a CiscoInterface() instance"
+            logger.critical(error)
+            raise InvalidCiscoInterface(error)
 
+        self.interface_name = interface_name
+        self.attribute_dict = attribute_dict
         self._prefix = None
         self._number = None
         self._number_list = []
@@ -2976,8 +2983,8 @@ class CiscoInterface(object):
         "Rewrite the state of this object; call this when any digit changes."
         _prefix = intf_dict["prefix"]
         _digit_separator = intf_dict["digit_separator"]
-        _number = intf_dict["number"]
-        _number_list = intf_dict["number_list"]
+        #_number = intf_dict["number"]
+        #_number_list = intf_dict["number_list"]
         _sort_list = intf_dict["sort_list"]
         _slot_card_port_subinterface_channel = intf_dict["slot_card_port_subinterface_channel"]
         _slot = intf_dict["slot"]
@@ -2987,8 +2994,8 @@ class CiscoInterface(object):
         _channel = intf_dict["channel"]
         self._prefix = _prefix
         self._digit_separator = _digit_separator
-        self._number = _number
-        self._number_list = _number_list
+        #self._number = _number
+        #self._number_list = _number_list
         self._sort_list = _sort_list
         self._slot_card_port_subinterface_channel = _slot_card_port_subinterface_channel
         self._slot = _slot
@@ -3038,8 +3045,8 @@ class CiscoInterface(object):
             _card = intf_short["card"]
             _port = intf_short["port"]
             _digit_separator = intf_short["digit_separator"]
-            _number = intf_short["number"]
-            _number_list = intf_short["number_list"]
+            #_number = intf_short["number"]
+            #_number_list = intf_short["number_list"]
             _subinterface = intf_short["subinterface"]
             _channel = intf_short["channel"]
             _sort_list = intf_short["sort_list"]
@@ -3056,8 +3063,8 @@ class CiscoInterface(object):
             _card = intf_long["card"]
             _port = intf_long["port"]
             _digit_separator = intf_long["digit_separator"]
-            _number = intf_long["number"]
-            _number_list = intf_long["number_list"]
+            #_number = intf_long["number"]
+            #_number_list = intf_long["number_list"]
             _subinterface = intf_long["subinterface"]
             _channel = intf_long["channel"]
             _sort_list = intf_long["sort_list"]
@@ -3077,8 +3084,8 @@ class CiscoInterface(object):
         retval = {}
         retval["prefix"] = _prefix
         retval["slot_card_port_subinterface_channel"] = _slot_card_port_subinterface_channel
-        retval["number"] = _number
-        retval["number_list"] = _number_list
+        #retval["number"] = _number
+        #retval["number_list"] = _number_list
         retval["sort_list"] = _sort_list
         retval["digit_separator"] = _digit_separator
         retval["slot"] = _slot
@@ -3102,6 +3109,25 @@ class CiscoInterface(object):
         if debug is True:
             logger.success(f"CiscoRange().parse_single_interface() returned {groupdict_intf_long}")
         return retval
+
+    def check_attribute_dict(self, attribute_dict):
+        _prefix = intf_short["prefix"]
+        _slot_card_port_subinterface_channel = intf_short["slot_card_port_subinterface_channel"]
+        _sep1 = intf_short["sep1"]
+        _sep2 = intf_short["sep1"]
+        _slot = intf_short["slot"]
+        _card = intf_short["card"]
+        _port = intf_short["port"]
+        _digit_separator = intf_short["digit_separator"]
+        _number = intf_short["number"]
+        _subinterface = intf_short["subinterface"]
+        _channel = intf_short["channel"]
+
+        for attr_name in attribute_dict.keys():
+            if not attr_name in {"prefix", "sep1", "sep2", "slot", "card", "port", "digit_separator", "number", "subinterface", "channel"}:
+                error = f"'{attr_name}' is not a valid `attribute_dict` key"
+                logger.critical(error)
+                raise KeyError(error)
 
     def parse_intf_short(self, re_intf_short=None, debug=False):
         """Parse the short interface regex match group and return a dict of all the interface components."""
@@ -3149,7 +3175,7 @@ class CiscoInterface(object):
             "slot": _slot,
             "port": _port,
             "digit_separator": _digit_separator,
-            "number": _number,
+            #"number": _number,
             "number_list": _number_list,
             "subinterface": _subinterface,
             "channel": _channel,
@@ -3204,24 +3230,6 @@ class CiscoInterface(object):
                     logger.critical(error)
                     raise ValueError(error)
 
-                # Fix regex port parsing problems... relocate _slot and _card, as-required
-                if isinstance(_slot, int) and _card is None and _port is None:
-                    _port = _slot
-                    _slot = None
-                    _number = f"{_port}"
-                    _number_list = [None, None, _port]
-                elif isinstance(_slot, int) and isinstance(_card, int) and _port is None:
-                    _port = _card
-                    _card = None
-                    _number = f"{_slot}{_sep1}{_port}"
-                    _number_list = [_slot, None, _port]
-                elif isinstance(_slot, int) and isinstance(_card, int) and isinstance(_port, int):
-                    _number = f"{_slot}{_sep1}{_card}{_sep1}{_port}"
-                    _number_list = [_slot, _card, _port]
-                else:
-                    error = f"Could not parse into _number_list: _slot: {_slot} _card: {_card} _port: {_port} _sep1: {_sep1} _sep2: {_sep2}"
-                    logger.critical(error)
-                    raise InvalidCiscoInterface(error)
 
                 re_subinterface = re.search(rf"\.(?P<subinterface>\d+)", _slot_card_port_subinterface_channel)
                 if isinstance(re_subinterface, re.Match):
@@ -3259,8 +3267,8 @@ class CiscoInterface(object):
             "slot": _slot,
             "port": _port,
             "digit_separator": _digit_separator,
-            "number": _number,
-            "number_list": _number_list,
+            #"number": _number,
+            #"number_list": _number_list,
             "subinterface": _subinterface,
             "channel": _channel,
             "sort_list": _sort_list,
@@ -3330,7 +3338,18 @@ class CiscoInterface(object):
     @logger.catch(reraise=True)
     def number(self):
         "Return '2/1/8' if self.interface_name is 'Serial 2/1/8.3:6'"
-        #return self.digit_separator.join([str(ii) for ii in [self.slot, self.card, self.port] if isinstance(ii, int)])
+
+        # Fix regex port parsing problems... relocate _slot and _card, as-required
+        if self._slot is None and self._card is None and isinstance(self._port, int):
+            self._number = f"{self._port}"
+        elif isinstance(self._slot, int) and self._card is None and isinstance(self._port, int):
+            self._number = f"{self._slot}{self.digit_separator}{self._port}"
+        elif isinstance(self._slot, int) and isinstance(self._card, int) and isinstance(self._port, int):
+            self._number = f"{self._slot}{self.digit_separator}{self._card}{self.digit_separator}{self._port}"
+        else:
+            error = f"Could not parse into _number: _slot: {self._slot} _card: {self._card} _port: {self._port} _digit_separator: {self.digit_separator}"
+            logger.critical(error)
+            raise ValueError(error)
         return self._number
 
     @number.setter
@@ -3343,7 +3362,7 @@ class CiscoInterface(object):
     def number_list(self):
         "Return the number_list"
         retval = []
-        for ii in self._number_list:
+        for ii in [self._slot, self._card, self._port]:
             if isinstance(ii, (str, int)):
                 retval.append(int(ii))
             elif ii is None:
@@ -3491,6 +3510,19 @@ class CiscoInterface(object):
             else:
                 raise ValueError(f"{ii}")
         return retval
+    @property
+    @logger.catch(reraise=True)
+    def sort_list(self):
+        "Return the sort_list"
+        retval = []
+        for ii in [self._slot, self._card, self._port, self._subinterface, self._channel]:
+            if isinstance(ii, (str, int)):
+                retval.append(int(ii))
+            elif ii is None:
+                retval.append(None)
+            else:
+                raise ValueError(f"{ii}")
+        return retval
 
     @sort_list.setter
     @logger.catch(reraise=True)
@@ -3600,7 +3632,7 @@ class CiscoRange(MutableSequence):
                 end_ordinal = getattr(begin_obj, self.iterate_attribute, None)
 
             if debug is True:
-                logger.info(f"    CiscoRange(text={text}, debug=True) [begin_obj: {type({self.begin_obj})}]    end_ordinal: {end_ordinal}")
+                logger.debug(f"    CiscoRange(text={text}, debug=True) [begin_obj: {type({self.begin_obj})}]    end_ordinal: {end_ordinal}")
 
             ##################################################################
             # Reference interface is for the base starting interface instance
@@ -3609,16 +3641,15 @@ class CiscoRange(MutableSequence):
             intf_component01 = _csv_part.split("-")[0].strip()
             if idx == 0:
                 if debug is True:
-                    logger.info(f"idx: CiscoRange().parse_text_list(text='{text}') [begin_obj: {type({self.begin_obj})}]")
+                    logger.info(f"idx: CiscoRange().parse_text_list(text='{text}') [begin_obj: {type({begin_obj})}]")
                     logger.debug(f"  idx: {idx}, define constant CiscoInterface() instances for {intf_component01}")
-                reference_interface = CiscoInterface(intf_component01)
                 if "-" not in _csv_part:
                     if debug is True:
-                        logger.info(f"    idx: {idx} at point01, Appending {reference_interface}{os.linesep}")
-                    expanded_interfaces.append(copy.deepcopy(reference_interface))
+                        logger.info(f"    idx: {idx} at point01, Appending {begin_obj}{os.linesep}")
+                    expanded_interfaces.append(copy.deepcopy(begin_obj))
                     continue
 
-            if self.iterate_attribute == 'channel' and isinstance(reference_interface.channel, int):
+            if self.iterate_attribute == 'channel' and isinstance(begin_obj.channel, int):
                 ##############################################################
                 # Handle incrementing channel numbers
                 ##############################################################
@@ -3626,14 +3657,13 @@ class CiscoRange(MutableSequence):
                     for ii in range(begin_obj.channel, end_ordinal+1):
                         if debug is True:
                             logger.debug(f"    idx: {idx} at point04,     set channel: {ii}")
-                        template_interface = copy.deepcopy(reference_interface)
-                        template_interface.channel = ii
+                        obj = copy.deepcopy(begin_obj)
+                        obj.channel = ii
                         # Use deepcopy to avoid problems with the same object
                         #     instance appended multiple times
                         if debug is True:
-                            logger.info(f"    idx: {idx} at point05, Appending {template_interface}{os.linesep}")
-                        expanded_interfaces.append(template_interface)
-                        del template_interface
+                            logger.info(f"    idx: {idx} at point05, Appending {obj}{os.linesep}")
+                        expanded_interfaces.append(copy.deepcopy(obj))
                         continue
             elif self.iterate_attribute == 'subinterface' and isinstance(template_interface.subinterface, int):
                 ##############################################################
