@@ -13,6 +13,7 @@
     - Add many enhancements to CiscoRange() and modify unit-tests accordingly
     - Add loguru.logger.catch() in various places
     - Rename a method
+    - Add read_only parameter, ref: Github Issue #281
 
 ## Version: 1.9.2
 
