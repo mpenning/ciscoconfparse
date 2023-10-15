@@ -3358,9 +3358,10 @@ class CiscoInterface(object):
         # Shortcut invalid interface configurations...
         if self.slot is None and self.card is None and self.port is None:
             error = f"Could not parse into _number: _slot: {self._slot} _card: {self._card} _port: {self._port} _digit_separator: {self.digit_separator}"
-            logger.critical(error)
+            logger.error(error)
             # Use sys.exit(1) here to avoid infinite recursion during
             #     pathological errors such as a dash in an interface range
+            logger.critical("Exit on `CiscoInterface()` failure to avoid infinite recursion during raise ValueError()")
             sys.exit(1)
 
         # Fix regex port parsing problems... relocate _slot and _card, as-required
@@ -3422,8 +3423,8 @@ class CiscoInterface(object):
     def slot_card_port_subinterface_channel(self, value):
         if isinstance(value, str):
             if '-' in value:
-                error = f"Dashes are invalid in `slot_card_port_subinterface_channel`: '{value}'"
-                logger.critical(error)
+                error = f"Dashes are invalid in `slot_card_port_subinterface_channel`: '{value}'{os.linesep}"
+                logger.error(error)
                 raise InvalidCiscoInterface(error)
             else:
                 self._slot_card_port_subinterface_channel = value
