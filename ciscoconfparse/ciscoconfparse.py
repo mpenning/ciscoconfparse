@@ -185,6 +185,7 @@ def initialize_globals():
     """Initialize ciscoconfparse global dunder-variables and a couple others."""
     global ALL_VALID_SYNTAX
     global ENCODING
+    global ACTIVE_LOGURU_HANDLERS
     global __author_email__
     global __author__
     global __copyright__
@@ -226,9 +227,8 @@ def initialize_globals():
 
 
 @logger.catch(reraise=True)
-def initialize_ciscoconfparse():
+def initialize_ciscoconfparse(read_only=False, debug=0):
     """Initialize ciscoconfparse global variables and configure logging."""
-    configure_loguru()
 
     globals_dict = initialize_globals()
     for key, value in globals_dict.items():
@@ -236,11 +236,24 @@ def initialize_ciscoconfparse():
         #     from -> https://stackoverflow.com/a/3972978/667301
         globals()[key] = value
 
-    return globals_dict
+
+    # Re-configure loguru... not a perfect solution, but this should be good enough
+    #     Ref Github Issue #281
+    if globals_dict.get("ACTIVE_LOGURU_HANDLERS", None) is None:
+        active_loguru_handlers = configure_loguru(read_only=read_only, active_handlers=None, debug=debug)
+    else:
+        active_loguru_handlers = configure_loguru(read_only=read_only, active_handlers=globals_dict["ACTIVE_LOGURU_HANDLERS"], debug=debug)
+
+    globals()["ACTIVE_LOGURU_HANDLERS"] = active_loguru_handlers
+
+    if debug > 0 and read_only is True:
+        logger.info("DISABLED loguru enqueue parameter because read_only=True.")
+
+    return globals_dict, active_loguru_handlers
 
 
 # ALL ciscoconfparse global variables initizalization happens here...
-initialize_ciscoconfparse()
+_, ACTIVE_LOGURU_HANDLERS = initialize_ciscoconfparse()
 
 
 @logger.catch(reraise=True)
@@ -516,6 +529,7 @@ class CiscoConfParse(object):
         ignore_blank_lines=True,
         syntax="ios",
         encoding=locale.getpreferredencoding(),
+        read_only=False,
     ):
         """
         Initialize CiscoConfParse.
@@ -538,6 +552,8 @@ class CiscoConfParse(object):
             A string holding the configuration type.  Default: 'ios'.  Must be one of: 'ios', 'nxos', 'asa', 'junos'.  Use 'junos' for any brace-delimited network configuration (including F5, Palo Alto, etc...).
         encoding : str
             A string holding the coding type.  Default is `locale.getpreferredencoding()`
+        read_only : bool
+            A bool indicating whether CiscoConfParse should execute read-only.
 
 
 
@@ -599,6 +615,14 @@ class CiscoConfParse(object):
         self.ignore_blank_lines = ignore_blank_lines
         self.encoding = encoding or ENCODING
         self.debug = debug
+        self.read_only = read_only
+
+        # Reconfigure loguru if read_only is True
+        if read_only is True:
+            active_loguru_handlers = configure_loguru(read_only=read_only, active_handlers=globals()["ACTIVE_LOGURU_HANDLERS"], debug=debug)
+            globals()["ACTIVE_LOGURU_HANDLERS"] = active_loguru_handlers
+            if debug > 0:
+                logger.warning(f"Disabled loguru enqueue because read_only={read_only}")
 
         # Read the configuration lines and detect invalid inputs...
         # tmp_lines = self._get_ccp_lines(config=config, logger=logger)

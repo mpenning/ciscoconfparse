@@ -237,11 +237,11 @@ def run_this_posix_command(cmd, timeout=None, shell=False, cwd=None, encoding=lo
 def ccp_logger_control(
     sink=sys.stderr,
     action="",
-    handler_id=None,
     enqueue=True,
     level="DEBUG",
     read_only=False,
     colorize=True,
+    active_handlers=None,
     debug=0,
 ):
     """
@@ -252,7 +252,7 @@ def ccp_logger_control(
     -------
     """
 
-    msg = f"ccp_logger_control() was called with sink='{sink}', action='{action}', handler_id='{handler_id}', enqueue={enqueue}, level='{level}', read_only={read_only}, colorize={colorize}, debug={debug}"
+    msg = f"ccp_logger_control() was called with sink='{sink}', action='{action}', enqueue={enqueue}, level='{level}', read_only={read_only}, colorize={colorize}, active_handlers={active_handlers}, debug={debug}"
     if debug > 0:
         logger.info(msg)
 
@@ -264,13 +264,25 @@ def ccp_logger_control(
         logger.critical(error)
         raise ValueError(error)
 
+    if active_handlers is None:
+        active_handlers = []
+
     package_name = "ciscoconfparse"
+
+    if read_only is True:
+        if debug > 0:
+            print(f"    Setting loguru enqueue=False, because read_only={read_only}")
+        enqueue = False
 
     if action == "remove":
         # Require an explicit loguru handler_id to remove...
-        if not isinstance(handler_id, int):
-            raise ValueError
-        logger.remove(handler_id)
+        if isinstance(active_handlers, list):
+            for handler_id in active_handlers:
+                if not isinstance(handler_id, int):
+                    raise ValueError
+                logger.remove(handler_id)
+        else:
+            raise ValueError()
         return True
 
     elif action == "disable":
@@ -285,10 +297,9 @@ def ccp_logger_control(
 
     elif action == "add":
 
-        if read_only is True:
-            enqueue = False
-
-        logger.add(
+        if debug > 0:
+            print(f"    Adding loguru handler with enqueue={enqueue}, because read_only={read_only}")
+        handler_id = logger.add(
             sink=sink,
             diagnose=True,
             backtrace=True,
@@ -303,7 +314,8 @@ def ccp_logger_control(
             level="DEBUG",
         )
         logger.enable(package_name)
-        return True
+        active_handlers.append(handler_id)
+        return active_handlers
 
     else:
         raise NotImplementedError(f"action='{action}' is an unsupported logger action")
@@ -318,6 +330,7 @@ def configure_loguru(
     level="DEBUG",
     read_only=False,
     colorize=True,
+    active_handlers=None,
     debug=0,
 ):
     """
@@ -340,22 +353,44 @@ def configure_loguru(
     if not isinstance(debug, int) or (debug < 0) or (5 < debug):
         raise ValueError
 
+    if active_handlers is None:
+        active_handlers = []
+
+    if not isinstance(active_handlers, list):
+        raise ValueError()
 
     # logger_control() was imported above...
     #    Remove the default loguru logger to stderr (handler_id==0)...
-    ccp_logger_control(action="remove", handler_id=0)
+    for handler_id in active_handlers:
+        if isinstance(handler_id, int):
+            if debug > 0:
+                print(f"Disabling loguru handler: {handler_id}")
+            ccp_logger_control(action="remove", read_only=read_only, active_handlers=[handler_id])
+        else:
+            raise ValueError(f"handler_id must be an integer -->{handler_id}<--")
 
     # Add log to STDOUT
-    ccp_logger_control(
+    if debug > 0:
+        print(f"Calling ccp_logger_control(action='add', read_only={read_only})")
+
+    active_loguru_handlers = ccp_logger_control(
         sink=sys.stdout,
         action="add",
         level="DEBUG",
         # rotation='midnight',   # ALE barks about the rotation keyword...
         # retention="1 month",
         # compression=compression,
+        read_only=read_only,
         colorize=colorize
     )
-    ccp_logger_control(action="enable")
+
+    if debug > 0:
+        print(f"added loguru handler_id -->{active_loguru_handlers}<--")
+    ccp_logger_control(action="enable", read_only=read_only, active_handlers=active_handlers)
+    if debug > 0:
+        print(f"    enabled loguru with handlers -->{active_loguru_handlers}<--")
+    return active_loguru_handlers
+
 
 
 @logger.catch(reraise=True)
