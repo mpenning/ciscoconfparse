@@ -66,6 +66,7 @@ from ciscoconfparse.errors import DynamicAddressException
 from ciscoconfparse.errors import  ListItemMissingAttribute
 from ciscoconfparse.errors import  ListItemTypeError
 from ciscoconfparse.errors import  InvalidCiscoInterface
+from ciscoconfparse.errors import  InvalidParameters
 import ciscoconfparse
 
 # Maximum ipv4 as an integer
@@ -2970,9 +2971,19 @@ def reverse_dns_lookup(input_str, timeout=3.0, server="4.2.2.2", proto="udp"):
 
 
 class CiscoInterface(object):
+    interface_name = None
+    interface_dict = None
+    _prefix = None
+    _digit_separator = None
+    _slot = None
+    _card = None
+    _port = None
+    _subinterface = None
+    _channel = None
+    _slot_card_port_subinterface_channel = None
 
     @logger.catch(reraise=True)
-    def __init__(self, interface_name=None, attribute_dict=None, debug=False):
+    def __init__(self, interface_name=None, interface_dict=None, debug=False):
         """
         Parse a string `interface_name` like "Serial4/1/2.9:5", (containing slot, card, port, subinterface, and channel) into its typical Cisco IOS components:
         - prefix: 'Serial'
@@ -2990,8 +3001,8 @@ class CiscoInterface(object):
                 error = f"interface_name: {interface_name} must not contain a comma"
                 logger.critical(error)
                 raise InvalidCiscoInterface(error)
-        elif isinstance(attribute_dict, dict):
-            self.check_attribute_dict(attribute_dict=attribute_dict)
+        elif isinstance(interface_dict, dict):
+            self.update_internal_state(intf_dict=interfact_dict)
         elif interface_name is not None:
             error = f"interface_name must be a string, not {interface_name}."
             logger.critical(error)
@@ -3002,24 +3013,30 @@ class CiscoInterface(object):
             raise InvalidCiscoInterface(error)
 
         self.interface_name = interface_name
-        self.attribute_dict = attribute_dict
-        self._prefix = None
-        self._digit_separator = None
-        self._slot = None
-        self._card = None
-        self._port = None
-        self._subinterface = None
-        self._channel = None
+        self.interface_dict = interface_dict
 
-        intf_dict = self.parse_single_interface(interface_name, debug=debug)
-        self.update_internal_state(intf_dict=intf_dict)
+        if isinstance(interface_name, str):
+            intf_dict = self.parse_single_interface(interface_name, debug=debug)
+            self.update_internal_state(intf_dict=intf_dict)
+        elif isinstance(interface_dict, dict):
+            if self.check_interface_dict(interface_dict) is True:
+                self.update_internal_state(intf_dict=interface_dict)
+            else:
+                error = "The interface dict check failed"
+                logger.error(error)
+                raise InvalidParameters(error)
+        else:
+            error = f"InvalidParameters: interface_name: {interface_name}, interface_dict: {interface_dict}"
+            logger.critical(error)
+            raise InvalidParameters(error)
 
     @logger.catch(reraise=True)
     def update_internal_state(self, intf_dict=None, debug=False):
         "Rewrite the state of this object; call this when any digit changes."
         _prefix = intf_dict["prefix"]
         _digit_separator = intf_dict["digit_separator"]
-        _slot_card_port_subinterface_channel = intf_dict["slot_card_port_subinterface_channel"]
+        if False:
+            _slot_card_port_subinterface_channel = intf_dict["slot_card_port_subinterface_channel"]
         _slot = intf_dict["slot"]
         _card = intf_dict["card"]
         _port = intf_dict["port"]
@@ -3027,7 +3044,8 @@ class CiscoInterface(object):
         _channel = intf_dict["channel"]
         self.prefix = _prefix.strip()
         self.digit_separator = _digit_separator
-        self.slot_card_port_subinterface_channel = _slot_card_port_subinterface_channel
+        if False:
+            self.slot_card_port_subinterface_channel = _slot_card_port_subinterface_channel
         self.slot = _slot
         self.card = _card
         self.port = _port
@@ -3130,23 +3148,30 @@ class CiscoInterface(object):
         return retval
 
     @logger.catch(reraise=True)
-    def check_attribute_dict(self, attribute_dict):
-        _prefix = intf_short["prefix"]
-        _slot_card_port_subinterface_channel = intf_short["slot_card_port_subinterface_channel"]
-        _sep1 = intf_short["sep1"]
-        _sep2 = intf_short["sep1"]
-        _slot = intf_short["slot"]
-        _card = intf_short["card"]
-        _port = intf_short["port"]
-        _digit_separator = intf_short["digit_separator"]
-        _subinterface = intf_short["subinterface"]
-        _channel = intf_short["channel"]
+    def check_interface_dict(self, interface_dict):
+        _prefix = interface_dict["prefix"]
+        _slot_card_port_subinterface_channel = interface_dict["slot_card_port_subinterface_channel"]
+        _sep1 = interface_dict["sep1"]
+        _sep2 = interface_dict["sep1"]
+        _slot = interface_dict["slot"]
+        _card = interface_dict["card"]
+        _port = interface_dict["port"]
+        _digit_separator = interface_dict["digit_separator"]
+        _subinterface = interface_dict["subinterface"]
+        _channel = interface_dict["channel"]
 
-        for attr_name in attribute_dict.keys():
-            if not attr_name in {"prefix", "sep1", "sep2", "slot", "card", "port", "digit_separator", "subinterface", "channel"}:
+        if len(interface_dict.keys()) != 8:
+            error = f"CiscoInterface() `interface_dict`: must have exactly 8 dictionary keys, but {len({interface_dict}.keys())} were found."
+            logger.error(error)
+            raise ValueError(error)
+
+        for attr_name in set(interface_dict.keys()):
+            if not attr_name in {"prefix", "slot_card_port_subinterface_channel", "slot", "card", "port", "digit_separator", "subinterface", "channel"}:
                 error = f"'{attr_name}' is not a valid `attribute_dict` key"
                 logger.critical(error)
                 raise KeyError(error)
+
+        return True
 
     @logger.catch(reraise=True)
     def parse_intf_short(self, re_intf_short=None, debug=False):
@@ -3289,6 +3314,24 @@ class CiscoInterface(object):
         }
 
     @logger.catch(reraise=True)
+    def from_dict(self, attribute_dict):
+        self.update_internal_state(intf_dict=attribute_dict)
+
+    @property
+    @logger.catch(reraise=True)
+    def as_dict(self):
+        return {
+            "prefix": self.prefix,
+            "slot_card_port_subinterface_channel": self.slot_card_port_subinterface_channel,
+            "card": self.card,
+            "slot": self.slot,
+            "port": self.port,
+            "digit_separator": self.digit_separator,
+            "subinterface": self.subinterface,
+            "channel": self.channel,
+        }
+
+    @logger.catch(reraise=True)
     def __eq__(self, other):
         try:
             ##   try / except is usually faster than isinstance();
@@ -3353,7 +3396,7 @@ class CiscoInterface(object):
             raise ValueError(error)
 
     @property
-    @logger.catch(reraise=True)
+    @logger.catch(reraise=False)
     def number(self):
         "Return '2/1/8' if self.interface_name is 'Serial 2/1/8.3:6'"
 
@@ -3364,7 +3407,7 @@ class CiscoInterface(object):
             # Use sys.exit(1) here to avoid infinite recursion during
             #     pathological errors such as a dash in an interface range
             logger.critical("Exit on `CiscoInterface()` failure to avoid infinite recursion during raise ValueError()")
-            sys.exit(1)
+            sys.exit(99)
 
         # Fix regex port parsing problems... relocate _slot and _card, as-required
         if self._slot is None and self._card is None and isinstance(self._port, int):
@@ -3449,6 +3492,8 @@ class CiscoInterface(object):
     def slot(self, value):
         if isinstance(value, (int, str)):
             self._slot = int(value)
+        elif value is None:
+            self._slot = value
         else:
             error = f"Could not set _slot: {value} {type(value)}"
             logger.critical(error)
@@ -3468,6 +3513,8 @@ class CiscoInterface(object):
     def card(self, value):
         if isinstance(value, (int, str)):
             self._card = int(value)
+        elif value is None:
+            self._card = value
         else:
             error = f"Could not set _card: {value} {type(value)}"
             logger.critical(error)
@@ -3487,6 +3534,8 @@ class CiscoInterface(object):
     def port(self, value):
         if isinstance(value, (int, str)):
             self._port = int(value)
+        elif value is None:
+            self._port = value
         else:
             error = f"Could not set _card: {value} {type(value)}"
             logger.critical(error)
@@ -3503,6 +3552,8 @@ class CiscoInterface(object):
     def subinterface(self, value):
         if isinstance(value, (int, str)):
             self._subinterface = int(value)
+        elif value is None:
+            self._subinterface = value
         else:
             error = f"Could not set _subinterface: {value} {type(value)}"
             logger.critical(error)
@@ -3519,6 +3570,8 @@ class CiscoInterface(object):
     def channel(self, value):
         if isinstance(value, (int, str)):
             self._channel = int(value)
+        elif value is None:
+            self._channel = value
         else:
             error = f"Could not set _channel: {value} {type(value)}"
             logger.critical(error)
@@ -3679,7 +3732,7 @@ class CiscoRange(MutableSequence):
                             logger.info(f"    idx: {idx} at point05, Appending {obj}{os.linesep}")
                         expanded_interfaces.append(copy.deepcopy(obj))
                         continue
-            elif self.iterate_attribute == 'subinterface' and isinstance(template_interface.subinterface, int):
+            elif self.iterate_attribute == 'subinterface' and isinstance(begin_obj.subinterface, int):
                 ##############################################################
                 # Handle incrementing subinterface numbers
                 ##############################################################
@@ -3687,14 +3740,15 @@ class CiscoRange(MutableSequence):
                     for ii in range(begin_obj.subinterface, end_ordinal+1):
                         if debug is True:
                             logger.debug(f"    idx: {idx} at point06,     set subinterface: {ii}")
-                        template_interface.subinterface = ii
+                        obj = copy.deepcopy(begin_obj)
+                        obj.subinterface = ii
                         # Use deepcopy to avoid problems with the same object
                         #     instance appended multiple times
                         if debug is True:
-                            logger.info(f"    idx: {idx} at point07, Appending {template_interface}{os.linesep}")
-                        expanded_interfaces.append(copy.deepcopy(template_interface))
+                            logger.info(f"    idx: {idx} at point07, Appending {obj}{os.linesep}")
+                        expanded_interfaces.append(copy.deepcopy(obj))
                         continue
-            elif self.iterate_attribute == 'port' and isinstance(template_interface.port, int):
+            elif self.iterate_attribute == 'port' and isinstance(begin_obj.port, int):
                 ##############################################################
                 # Handle incrementing port numbers
                 ##############################################################
@@ -3702,15 +3756,16 @@ class CiscoRange(MutableSequence):
                     for ii in range(begin_obj.port, end_ordinal+1):
                         if debug is True:
                             logger.debug(f"    idx: {idx} at point08,     set subinterface: {ii}")
-                        template_interface.port = ii
+                        obj = copy.deepcopy(begin_obj)
+                        obj.port = ii
                         # Use deepcopy to avoid problems with the same object
                         #     instance appended multiple times
                         if debug is True:
-                            logger.info(f"    idx: {idx} at point09, Appending {template_interface}{os.linesep}")
-                        expanded_interfaces.append(copy.deepcopy(template_interface))
+                            logger.info(f"    idx: {idx} at point09, Appending {obj}{os.linesep}")
+                        expanded_interfaces.append(copy.deepcopy(obj))
                         continue
 
-            elif self.iterate_attribute == 'card' and isinstance(template_interface.card, int):
+            elif self.iterate_attribute == 'card' and isinstance(begin_obj.card, int):
                 ##############################################################
                 # Handle incrementing port numbers
                 ##############################################################
@@ -3718,15 +3773,16 @@ class CiscoRange(MutableSequence):
                     for ii in range(begin_obj.card, end_ordinal+1):
                         if debug is True:
                             logger.debug(f"    idx: {idx} at point10,     set subinterface: {ii}")
-                        template_interface.card = ii
+                        obj = copy.deepcopy(begin_obj)
+                        obj.card = ii
                         # Use deepcopy to avoid problems with the same object
                         #     instance appended multiple times
                         if debug is True:
-                            logger.info(f"    idx: {idx} at point11, Appending {template_interface}{os.linesep}")
-                        expanded_interfaces.append(copy.deepcopy(template_interface))
+                            logger.info(f"    idx: {idx} at point11, Appending {obj}{os.linesep}")
+                        expanded_interfaces.append(copy.deepcopy(obj))
                         continue
 
-            elif self.iterate_attribute == 'slot' and isinstance(template_interface.slot, int):
+            elif self.iterate_attribute == 'slot' and isinstance(begin_obj.slot, int):
                 ##############################################################
                 # Handle incrementing port numbers
                 ##############################################################
@@ -3734,12 +3790,13 @@ class CiscoRange(MutableSequence):
                     for ii in range(begin_obj.slot, end_ordinal+1):
                         if debug is True:
                             logger.debug(f"    idx: {idx} at point12,     set subinterface: {ii}")
-                        template_interface.slot = ii
+                        obj = copy.deepcopy(begin_obj)
+                        obj.card = ii
                         # Use deepcopy to avoid problems with the same object
                         #     instance appended multiple times
                         if debug is True:
-                            logger.info(f"    idx: {idx} at point13, Appending {template_interface}{os.linesep}")
-                        expanded_interfaces.append(copy.deepcopy(template_interface))
+                            logger.info(f"    idx: {idx} at point13, Appending {obj}{os.linesep}")
+                        expanded_interfaces.append(copy.deepcopy(obj))
                         continue
 
             else:
@@ -3838,7 +3895,7 @@ class CiscoRange(MutableSequence):
         self._list = yy_list
         try:
             # Disable linter qa checks on this embedded list syntax...
-            return sorted(self._list, reverse=self.reverse) # noqa
+            return sorted(set(self._list), reverse=self.reverse) # noqa
         except AttributeError as eee:
             error = f"`sorted(self._list, reverse={self.reverse})` tried to access an attribute that does not exist on the objects being sorted: {eee}"
             logger.error(error)
