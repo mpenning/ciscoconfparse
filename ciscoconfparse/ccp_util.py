@@ -3808,7 +3808,7 @@ class CiscoRange(MutableSequence):
         # Sort _expanded_interfaces...
         ######################################################################
         if not isinstance(self.text, str):
-            error = f'CiscoRange(text="{text}", result_type={result_type}) [text: {type({text})}] must be a string representation of a CiscoRange(), such as "Ethernet1,4-7,12"'
+            error = f'CiscoRange(text="{self.text}") must be a string representation of a CiscoRange(), such as "Ethernet1,4-7,12"; the received text argument was {type({self.text})} instead of a string'
             logger.error(error)
             raise ValueError(error)
         # De-deplicate _expanded_interfaces...
@@ -3881,7 +3881,7 @@ class CiscoRange(MutableSequence):
     # This method is on CiscoRange()
     @property
     @logger.catch(reraise=True)
-    def as_list(self):
+    def as_list(self, result_type=str):
         """Return a list of sorted components; an empty string is automatically rejected.  This method is tricky to test due to the requirement for the `.sort_list` attribute on all elements; avoid using the ordered nature of `as_list` and use `as_set`."""
         yy_list = copy.deepcopy(self._list)
         for ii in self._list:
@@ -3895,7 +3895,17 @@ class CiscoRange(MutableSequence):
         self._list = yy_list
         try:
             # Disable linter qa checks on this embedded list syntax...
-            return sorted(set(self._list), reverse=self.reverse) # noqa
+            retval = sorted(set(self._list), reverse=self.reverse) # noqa
+            if result_type is None:
+                return retval
+            elif result_type is str:
+                return [str(ii) for ii in retval]
+            elif result_type is int:
+                return [int(ii) for ii in retval]
+            else:
+                error f"CiscoRange().as_list(result_type={result_type}) is not valid.  Choose from {[None, int, str]}.  result_type: None will return CiscoInterface() objects."
+                logger.critical(error)
+                raise ValueError(error)
         except AttributeError as eee:
             error = f"`sorted(self._list, reverse={self.reverse})` tried to access an attribute that does not exist on the objects being sorted: {eee}"
             logger.error(error)
@@ -3907,7 +3917,7 @@ class CiscoRange(MutableSequence):
     # This method is on CiscoRange()
     @property
     @logger.catch(reraise=True)
-    def as_set(self):
+    def as_set(self, result_type=str):
         """Return an unsorted set({}) components.  Use this method instead of `.as_list` whenever possible to avoid the requirement for elements needing a `.sort_list` attribute."""
         return set(self._list)
 
@@ -3971,7 +3981,16 @@ class CiscoRange(MutableSequence):
             else:
                 retval += "," + str(range_list[ii])
 
-        return retval
+            if result_type is None:
+                return retval
+            elif result_type is str:
+                return [str(ii) for ii in retval]
+            elif result_type is int:
+                return [int(ii) for ii in retval]
+            else:
+                error f"CiscoRange().as_set(result_type={result_type}) is not valid.  Choose from {[None, int, str]}.  result_type: None will return CiscoInterface() objects."
+                logger.critical(error)
+                raise ValueError(error)
 
 ##############################################################################
 # Restore SonarCloud warnings in this file
