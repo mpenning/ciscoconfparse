@@ -151,7 +151,7 @@ class BaseCfgLine(metaclass=ABCMeta):
         #     together.
         _line_id = hash(" " * indent + " ".join(self.text.strip().split()))
 
-        if 1 == 2: # Do not execute this code...
+        if bool([]): # Do not execute this code...
             ##################################################################
             # use str.split() below to ensure that whitespace differences
             #     hash the same way... I added this code as a possible
