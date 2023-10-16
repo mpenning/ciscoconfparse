@@ -1,6 +1,6 @@
 r""" ccp_util.py - Parse, Query, Build, and Modify IOS-style configurations
 
-     Copyright (C) 2021-2023 David Michael Pennington
+     Copyright (C) 2023      David Michael Pennington
      Copyright (C) 2020-2021 David Michael Pennington at Cisco Systems
      Copyright (C) 2019-2020 David Michael Pennington at ThousandEyes
      Copyright (C) 2014-2019 David Michael Pennington at Samsung Data Services
@@ -2973,6 +2973,7 @@ def reverse_dns_lookup(input_str, timeout=3.0, server="4.2.2.2", proto="udp"):
 class CiscoInterface(object):
     interface_name = None
     interface_dict = None
+    debug = None
     _prefix = None
     _digit_separator = None
     _slot = None
@@ -3014,6 +3015,7 @@ class CiscoInterface(object):
 
         self.interface_name = interface_name
         self.interface_dict = interface_dict
+        self.debug = debug
 
         if isinstance(interface_name, str):
             intf_dict = self.parse_single_interface(interface_name, debug=debug)
@@ -3242,6 +3244,14 @@ class CiscoInterface(object):
                 _slot = groupdict_slot_card_port["slot"]
                 _card = groupdict_slot_card_port["card"]
                 _port = groupdict_slot_card_port["port"]
+
+                # Handle Ethernet1/48, where 48 is initially assigned to
+                #     _card (should be port)
+                if isinstance(_slot, str) and isinstance(_card, str) and _port is None:
+                    # Swap _card and _port
+                    _port = _card
+                    _card = None
+
                 if isinstance(_slot, str):
                     _slot = int(_slot)
                 if isinstance(_card, str):
@@ -3406,15 +3416,15 @@ class CiscoInterface(object):
             logger.error(error)
             # Use sys.exit(1) here to avoid infinite recursion during
             #     pathological errors such as a dash in an interface range
-            logger.critical("Exit on `CiscoInterface()` failure to avoid infinite recursion during raise ValueError()")
+            logger.critical(f"Exit on `CiscoInterface(interface_name='{self.interface_name}')`.  Manually calling sys.exit(99) on this failure to avoid infinite recursion during raise ValueError().  This might be a bug in a third-party library.")
             sys.exit(99)
 
         # Fix regex port parsing problems... relocate _slot and _card, as-required
-        if self._slot is None and self._card is None and isinstance(self._port, int):
+        if self._slot is None and self._card is None and isinstance(self._port, (int, str)):
             self._number = f"{self._port}"
-        elif isinstance(self._slot, int) and self._card is None and isinstance(self._port, int):
+        elif isinstance(self._slot, (int, str)) and self._card is None and isinstance(self._port, (int, str)):
             self._number = f"{self._slot}{self.digit_separator}{self._port}"
-        elif isinstance(self._slot, int) and isinstance(self._card, int) and isinstance(self._port, int):
+        elif isinstance(self._slot, (int, str)) and isinstance(self._card, (int, str)) and isinstance(self._port, (int, str)):
             self._number = f"{self._slot}{self.digit_separator}{self._card}{self.digit_separator}{self._port}"
         else:
             error = f"Could not parse into _number: _slot: {self._slot} _card: {self._card} _port: {self._port} _digit_separator: {self.digit_separator}"
@@ -3452,9 +3462,16 @@ class CiscoInterface(object):
     def digit_separator(self, value):
         if isinstance(value, str):
             self._digit_separator = value
-        else:
+        elif self.slot is not None or self.card is not None:
             error = f"Could not set _digit_separator: {value} {type(value)}"
             logger.critical(error)
+            raise ValueError(error)
+        elif self.slot is None and self.card is None:
+            if self.debug is True:
+                logger.debug(f"Ignoring _digit_separator when there is no slot or card.")
+        else:
+            error = f"Found an unsupported value for `CiscoInterface().digit_separator`."
+            logger.error(error)
             raise ValueError(error)
 
     @property
@@ -3879,7 +3896,6 @@ class CiscoRange(MutableSequence):
         return self
 
     # This method is on CiscoRange()
-    @property
     @logger.catch(reraise=True)
     def as_list(self, result_type=str):
         """Return a list of sorted components; an empty string is automatically rejected.  This method is tricky to test due to the requirement for the `.sort_list` attribute on all elements; avoid using the ordered nature of `as_list` and use `as_set`."""
@@ -3903,7 +3919,7 @@ class CiscoRange(MutableSequence):
             elif result_type is int:
                 return [int(ii) for ii in retval]
             else:
-                error f"CiscoRange().as_list(result_type={result_type}) is not valid.  Choose from {[None, int, str]}.  result_type: None will return CiscoInterface() objects."
+                error = f"CiscoRange().as_list(result_type={result_type}) is not valid.  Choose from {[None, int, str]}.  result_type: None will return CiscoInterface() objects."
                 logger.critical(error)
                 raise ValueError(error)
         except AttributeError as eee:
@@ -3915,11 +3931,20 @@ class CiscoRange(MutableSequence):
             raise ValueError(eee)
 
     # This method is on CiscoRange()
-    @property
     @logger.catch(reraise=True)
     def as_set(self, result_type=str):
         """Return an unsorted set({}) components.  Use this method instead of `.as_list` whenever possible to avoid the requirement for elements needing a `.sort_list` attribute."""
-        return set(self._list)
+        retval = set(self._list)
+        if result_type is None:
+            return retval
+        elif result_type is str:
+            return set([str(ii) for ii in retval])
+        elif result_type is int:
+            return set([int(ii) for ii in retval])
+        else:
+            error = f"CiscoRange().as_list(result_type={result_type}) is not valid.  Choose from {[None, int, str]}.  result_type: None will return CiscoInterface() objects."
+            logger.critical(error)
+            raise ValueError(error)
 
     # This method is on CiscoRange()
     ## Github issue #125
@@ -3988,7 +4013,7 @@ class CiscoRange(MutableSequence):
             elif result_type is int:
                 return [int(ii) for ii in retval]
             else:
-                error f"CiscoRange().as_set(result_type={result_type}) is not valid.  Choose from {[None, int, str]}.  result_type: None will return CiscoInterface() objects."
+                error = f"CiscoRange().as_set(result_type={result_type}) is not valid.  Choose from {[None, int, str]}.  result_type: None will return CiscoInterface() objects."
                 logger.critical(error)
                 raise ValueError(error)
 

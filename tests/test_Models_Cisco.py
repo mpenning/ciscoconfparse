@@ -14,6 +14,7 @@ from loguru import logger
 
 r""" test_Models_Cisco.py - Parse, Query, Build, and Modify IOS-style configs
 
+     Copyright (C) 2023      David Michael Pennington
      Copyright (C) 2020-2021 David Michael Pennington at Cisco Systems
      Copyright (C) 2019      David Michael Pennington at ThousandEyes
      Copyright (C) 2014-2019 David Michael Pennington at Samsung Data Services
@@ -280,8 +281,8 @@ def testVal_IOSIntfLine_trunk_vlan_allowed_01():
     ]
     cfg = CiscoConfParse(lines, factory=True)
     intf_obj = cfg.find_objects("^interface")[0]
-    assert len(intf_obj.trunk_vlans_allowed.as_set) == len(range(1, 4095))
-    assert intf_obj.trunk_vlans_allowed.as_set == {str(ii) for ii in range(1, 4095)}
+    assert len(intf_obj.trunk_vlans_allowed.as_set(result_type=str)) == len(range(1, 4095))
+    assert intf_obj.trunk_vlans_allowed.as_set(result_type=str) == {str(ii) for ii in range(1, 4095)}
 
 
 def testVal_IOSIntfLine_trunk_vlan_allowed_02():
@@ -295,7 +296,7 @@ def testVal_IOSIntfLine_trunk_vlan_allowed_02():
     ]
     cfg = CiscoConfParse(lines, factory=True)
     intf_obj = cfg.find_objects("^interface")[0]
-    assert intf_obj.trunk_vlans_allowed.as_set == {"2", "4", "6", "911"}
+    assert intf_obj.trunk_vlans_allowed.as_set(result_type=str) == {"2", "4", "6", "911"}
 
 
 def testVal_IOSIntfLine_trunk_vlan_allowed_03():
@@ -310,7 +311,7 @@ def testVal_IOSIntfLine_trunk_vlan_allowed_03():
     ]
     cfg = CiscoConfParse(lines, factory=True)
     intf_obj = cfg.find_objects("^interface")[0]
-    assert intf_obj.trunk_vlans_allowed.as_set == {"4", "6", "911"}
+    assert intf_obj.trunk_vlans_allowed.as_set(result_type=str) == {"4", "6", "911"}
 
 
 def testVal_IOSIntfLine_trunk_vlan_allowed_04():
@@ -325,7 +326,7 @@ def testVal_IOSIntfLine_trunk_vlan_allowed_04():
     ]
     cfg = CiscoConfParse(lines, factory=True)
     intf_obj = cfg.find_objects("^interface")[0]
-    assert intf_obj.trunk_vlans_allowed.as_set == {"1"}
+    assert intf_obj.trunk_vlans_allowed.as_set(result_type=str) == {"1"}
 
 
 def testVal_IOSIntfLine_trunk_vlan_allowed_05():
@@ -340,7 +341,7 @@ def testVal_IOSIntfLine_trunk_vlan_allowed_05():
     ]
     cfg = CiscoConfParse(lines, factory=True)
     intf_obj = cfg.find_objects("^interface")[0]
-    assert intf_obj.trunk_vlans_allowed.as_set == {"1",}
+    assert intf_obj.trunk_vlans_allowed.as_set(result_type=str) == {"1",}
 
 
 def testVal_IOSIntfLine_trunk_vlan_allowed_06():

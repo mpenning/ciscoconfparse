@@ -725,7 +725,7 @@ def test_CiscoRange_01():
     result_correct = {"1", "2", "3"}
     uut_str = "1-3"
     assert isinstance(uut_str, str)
-    assert CiscoRange(uut_str).as_set == result_correct
+    assert CiscoRange(uut_str).as_set(result_type=str) == result_correct
     assert CiscoRange(uut_str).iterate_attribute == "port"
 
 
@@ -734,7 +734,7 @@ def test_CiscoRange_02():
     result_correct = {"1", "3"}
     uut_str = "1,3"
     assert isinstance(uut_str, str)
-    assert CiscoRange(uut_str).as_set == result_correct
+    assert CiscoRange(uut_str).as_set(result_type=str) == result_correct
     assert CiscoRange(uut_str).iterate_attribute == "port"
 
 
@@ -749,7 +749,7 @@ def test_CiscoRange_03():
     }
     uut_str = "1,2-4,5"
     assert isinstance(uut_str, str)
-    assert CiscoRange(uut_str).as_set == result_correct
+    assert CiscoRange(uut_str).as_set(result_type=str) == result_correct
     assert CiscoRange(uut_str).iterate_attribute == "port"
 
 
@@ -758,7 +758,7 @@ def test_CiscoRange_04():
     result_correct = {"1", "2", "3", "4", "5"}
     uut_str = "1-3,4,5"
     assert isinstance(uut_str, str)
-    assert CiscoRange(uut_str).as_set == result_correct
+    assert CiscoRange(uut_str).as_set(result_type=str) == result_correct
     assert CiscoRange(uut_str).iterate_attribute == "port"
 
 
@@ -767,7 +767,7 @@ def test_CiscoRange_05():
     result_correct = {"1", "2", "3", "4", "5"}
     uut_str = "1,2,3-5"
     assert isinstance(uut_str, str)
-    assert CiscoRange(uut_str).as_set == result_correct
+    assert CiscoRange(uut_str).as_set(result_type=str) == result_correct
     assert CiscoRange(uut_str).iterate_attribute == "port"
 
 
@@ -776,7 +776,7 @@ def test_CiscoRange_06():
     result_correct = {"1/1", "1/2", "1/3", "1/4", "1/5"}
     uut_str = "1/1-3,4,5"
     assert isinstance(uut_str, str)
-    assert CiscoRange(uut_str).as_set == result_correct
+    assert CiscoRange(uut_str).as_set(result_type=str) == result_correct
     assert CiscoRange(uut_str).iterate_attribute == "port"
 
 
@@ -785,7 +785,7 @@ def test_CiscoRange_07():
     result_correct = {"1/1", "1/2", "1/3", "1/4", "1/5"}
     uut_str = "1/1,2-4,5"
     assert isinstance(uut_str, str)
-    assert CiscoRange(uut_str).as_set == result_correct
+    assert CiscoRange(uut_str).as_set(result_type=str) == result_correct
 
 
 def test_CiscoRange_08():
@@ -793,7 +793,7 @@ def test_CiscoRange_08():
     result_correct = {"1/1", "1/2", "1/3", "1/4", "1/5"}
     uut_str = "1/1,2,3-5"
     assert isinstance(uut_str, str)
-    assert CiscoRange(uut_str).as_set == result_correct
+    assert CiscoRange(uut_str).as_set(result_type=str) == result_correct
 
 
 def test_CiscoRange_09():
@@ -801,7 +801,7 @@ def test_CiscoRange_09():
     result_correct = {"2/1/1", "2/1/2", "2/1/3", "2/1/4", "2/1/5"}
     uut_str = "2/1/1-3,4,5"
     assert isinstance(uut_str, str)
-    assert CiscoRange(uut_str).as_set == result_correct
+    assert CiscoRange(uut_str).as_set(result_type=str) == result_correct
 
 
 def test_CiscoRange_10():
@@ -809,7 +809,7 @@ def test_CiscoRange_10():
     result_correct = {"2/1/1", "2/1/2", "2/1/3", "2/1/4", "2/1/5"}
     uut_str = "2/1/1,2-4,5"
     assert isinstance(uut_str, str)
-    assert CiscoRange(uut_str).as_set == result_correct
+    assert CiscoRange(uut_str).as_set(result_type=str) == result_correct
 
 
 def test_CiscoRange_11():
@@ -817,7 +817,7 @@ def test_CiscoRange_11():
     result_correct = {"2/1/1", "2/1/2", "2/1/3", "2/1/4", "2/1/5"}
     uut_str = "2/1/1,2,3-5"
     assert isinstance(uut_str, str)
-    assert CiscoRange(uut_str).as_set == result_correct
+    assert CiscoRange(uut_str).as_set(result_type=str) == result_correct
 
 
 if False:
@@ -826,7 +826,7 @@ if False:
         result_correct = {"2/1/1", "2/1/2", "2/1/3", "2/1/4", "2/1/5"}
         uut_str = "interface Eth2/1/1-3,4,5"
         assert isinstance(uut_str, str)
-        assert CiscoRange(uut_str).as_set == result_correct
+        assert CiscoRange(uut_str).as_set(result_type=str) == result_correct
 
 
     def test_CiscoRange_13():
@@ -834,7 +834,7 @@ if False:
         result_correct = {"2/1/1", "2/1/2", "2/1/3", "2/1/4", "2/1/5"}
         uut_str = "interface Eth2/1/1,2-4,5"
         assert isinstance(uut_str, str)
-        assert CiscoRange(uut_str).as_set == result_correct
+        assert CiscoRange(uut_str).as_set(result_type=str) == result_correct
 
 
     def test_CiscoRange_14():
@@ -842,7 +842,7 @@ if False:
         result_correct = {"2/1/1", "2/1/2", "2/1/3", "2/1/4", "2/1/5"}
         uut_str = "interface Eth2/1/1,2,3-5"
         assert isinstance(uut_str, str)
-        assert CiscoRange(uut_str).as_set == result_correct
+        assert CiscoRange(uut_str).as_set(result_type=str) == result_correct
 
 
     def test_CiscoRange_15():
@@ -850,7 +850,7 @@ if False:
         result_correct = {"2/1/1", "2/1/2", "2/1/3", "2/1/4", "2/1/5"}
         uut_str = "interface Eth 2/1/1,2,3-5"
         assert isinstance(uut_str, str)
-        assert CiscoRange(uut_str).as_set == result_correct
+        assert CiscoRange(uut_str).as_set(result_type=str) == result_correct
 
 
 def test_CiscoRange_18():
@@ -862,7 +862,7 @@ def test_CiscoRange_18():
     }
     uut_str = "Eth1/1,Eth1/12-20,Eth1/16,Eth1/10"
     assert isinstance(uut_str, str)
-    assert CiscoRange(uut_str).as_set == result_correct
+    assert CiscoRange(uut_str).as_set(result_type=str) == result_correct
 
 
 if False:
@@ -876,7 +876,7 @@ if False:
         }
         uut_str = "interface Eth1/1,interface Eth1/12-20,interface Eth1/16,interface Eth1/10"
         assert isinstance(uut_str, str)
-        assert CiscoRange(uut_str).as_set == result_correct
+        assert CiscoRange(uut_str).as_set(result_type=str) == result_correct
 
 
 def test_CiscoRange_compressed_str_01():
