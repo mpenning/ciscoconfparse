@@ -162,7 +162,6 @@ class BaseCfgLine(metaclass=ABCMeta):
             # I am keeping this in calculate_line_id() to document the
             #     proposal and why I decided against it.
             ##################################################################
-            raise NotImplementedError()
             indent_str = indent * " "
             if self.is_comment is False:
                 _line_id = hash(indent_str + " ".join(self.text.strip().split()))
