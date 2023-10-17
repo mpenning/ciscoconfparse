@@ -3346,9 +3346,16 @@ class CiscoInterface(object):
 
     @logger.catch(reraise=True)
     def from_dict(self, attribute_dict):
-        self.update_internal_state(intf_dict=attribute_dict)
+        obj = CiscoInterface("Ethernet1")
+        obj.prefix = attribute_dict["prefix"]
+        obj.digit_separator = attribute_dict["digit_separator"]
+        obj.slot = attribute_dict["slot"]
+        obj.card = attribute_dict["card"]
+        obj.port = attribute_dict["port"]
+        obj.subinterface = attribute_dict["subinterface"]
+        obj.channel = attribute_dict["channel"]
+        return obj
 
-    @property
     @logger.catch(reraise=True)
     def as_dict(self):
         return {
@@ -3695,10 +3702,12 @@ class CiscoRange(MutableSequence):
             # Build base instances of begin_obj and this_obj
             ##############################################################
             if idx == 0:
+            #if True:
                 # Set the begin_obj...
                 begin_obj = CiscoInterface(_csv_part.split("-")[0])
                 self.begin_obj = begin_obj
                 self.this_obj = copy.deepcopy(begin_obj)
+                intf_dict = begin_obj.as_dict()
 
 
             ##############################################################
@@ -3724,15 +3733,15 @@ class CiscoRange(MutableSequence):
 
             if idx > 0:
                 if self.iterate_attribute == 'channel' and isinstance(begin_obj.channel, int):
-                    self.this_obj.channel = int(_csv_part.split("-")[0].strip())
+                    self.this_obj.channel = CiscoInterface(_csv_part.split("-")[0].strip()).channel
                 elif self.iterate_attribute == 'subinterface' and isinstance(begin_obj.subinterface, int):
-                    self.this_obj.subinterface = int(_csv_part.split("-")[0].strip())
+                    self.this_obj.subinterface = CiscoInterface(_csv_part.split("-")[0].strip()).subinterface
                 elif self.iterate_attribute == 'port' and isinstance(begin_obj.port, int):
-                    self.this_obj.port = int(_csv_part.split("-")[0].strip())
+                    self.this_obj.port = CiscoInterface(_csv_part.split("-")[0].strip()).port
                 elif self.iterate_attribute == 'card' and isinstance(begin_obj.card, int):
-                    self.this_obj.card = int(_csv_part.split("-")[0].strip())
+                    self.this_obj.card = CiscoInterface(_csv_part.split("-")[0].strip()).card
                 elif self.iterate_attribute == 'slot' and isinstance(begin_obj.card, int):
-                    self.this_obj.slot = int(_csv_part.split("-")[0].strip())
+                    self.this_obj.slot = CiscoInterface(_csv_part.split("-")[0].strip()).slot
                 else:
                     raise NotImplementedError()
 
@@ -3752,11 +3761,18 @@ class CiscoRange(MutableSequence):
             # Set the end_ordinal... keep this separate from begin_obj logic...
             if self.iterate_attribute is None:
                 raise ValueError()
-            if len(_csv_part.split("-")) == 2:
-                # Append a whole range of interfaces...
-                end_ordinal = int(_csv_part.split("-")[1].strip())
-                if debug is True:
-                    logger.info(f"CiscoRange(text={text}, debug=True) : end_ordinal={end_ordinal}")
+            if "-" in _csv_part:
+                if len(_csv_part.split("-")) == 2:
+                    # Append a whole range of interfaces...
+                    obj = CiscoInterface(_csv_part.split("-")[0].strip())
+                    begin_ordinal = getattr(obj, self.iterate_attribute)
+                    end_ordinal = int(_csv_part.split("-")[1].strip())
+                    if debug is True:
+                        logger.info(f"CiscoRange(text={text}, debug=True) : end_ordinal={end_ordinal}")
+                else:
+                    error = f"Could not divide {_csv_part} into interface components"
+                    logger.error(error)
+                    raise ValueError(error)
             else:
                 end_ordinal = None
                 if debug is True:
@@ -3770,15 +3786,16 @@ class CiscoRange(MutableSequence):
                 # Handle incrementing channel numbers
                 ##############################################################
                 if end_ordinal is not None:
-                    for ii in range(begin_obj.channel, end_ordinal+1):
+                    iter_dict = self.this_obj.as_dict()
+                    for ii in range(begin_ordinal, end_ordinal+1):
                         if debug is True:
                             logger.debug(f"    idx: {idx} at point01,     set channel: {ii}")
-                        self.this_obj.channel = ii
+                        iter_dict["channel"] = ii
                         # Use deepcopy to avoid problems with the same object
                         #     instance appended multiple times
                         if debug is True:
                             logger.info(f"    idx: {idx} at point02, Appending {self.this_obj}{os.linesep}")
-                        expanded_interfaces.append(self.this_obj)
+                        expanded_interfaces.append(self.this_obj.from_dict(iter_dict))
                         continue
                 else:
                     # Append a single interface
@@ -3791,15 +3808,16 @@ class CiscoRange(MutableSequence):
                 # Handle incrementing subinterface numbers
                 ##############################################################
                 if end_ordinal is not None:
-                    for ii in range(begin_obj.subinterface, end_ordinal+1):
+                    iter_dict = self.this_obj.as_dict()
+                    for ii in range(begin_ordinal, end_ordinal+1):
                         if debug is True:
                             logger.debug(f"    idx: {idx} at point04,     set subinterface: {ii}")
-                        self.this_obj.subinterface = ii
+                        iter_dict["subinterface"] = ii
                         # Use deepcopy to avoid problems with the same object
                         #     instance appended multiple times
                         if debug is True:
                             logger.info(f"    idx: {idx} at point05, Appending {self.this_obj}{os.linesep}")
-                        expanded_interfaces.append(copy.deepcopy(self.this_obj))
+                        expanded_interfaces.append(self.this_obj.from_dict(iter_dict))
                         continue
                 else:
                     # Append a single interface
@@ -3812,15 +3830,16 @@ class CiscoRange(MutableSequence):
                 # Handle incrementing port numbers
                 ##############################################################
                 if end_ordinal is not None:
-                    for ii in range(begin_obj.port, end_ordinal+1):
+                    iter_dict = self.this_obj.as_dict()
+                    for ii in range(begin_ordinal, end_ordinal+1):
                         if debug is True:
                             logger.debug(f"    idx: {idx} at point07,     set subinterface: {ii}")
-                        self.this_obj.port = ii
+                        iter_dict["port"] = ii
                         # Use deepcopy to avoid problems with the same object
                         #     instance appended multiple times
                         if debug is True:
                             logger.info(f"    idx: {idx} at point08, Appending {self.this_obj}{os.linesep}")
-                        expanded_interfaces.append(copy.deepcopy(self.this_obj))
+                        expanded_interfaces.append(self.this_obj.from_dict(iter_dict))
                         continue
                 else:
                     # Append a single interface
@@ -3834,15 +3853,16 @@ class CiscoRange(MutableSequence):
                 # Handle incrementing port numbers
                 ##############################################################
                 if end_ordinal is not None:
-                    for ii in range(begin_obj.card, end_ordinal+1):
+                    iter_dict = self.this_obj.as_dict()
+                    for ii in range(begin_ordinal, end_ordinal+1):
                         if debug is True:
                             logger.debug(f"    idx: {idx} at point10,     set subinterface: {ii}")
-                        self.this_obj.card = ii
+                        iter_dict["card"] = ii
                         # Use deepcopy to avoid problems with the same object
                         #     instance appended multiple times
                         if debug is True:
                             logger.info(f"    idx: {idx} at point11, Appending {self.this_obj}{os.linesep}")
-                        expanded_interfaces.append(copy.deepcopy(self.this_obj))
+                        expanded_interfaces.append(self.this_obj.from_dict(iter_dict))
                         continue
                 else:
                     # Append a single interface
@@ -3856,15 +3876,16 @@ class CiscoRange(MutableSequence):
                 # Handle incrementing port numbers
                 ##############################################################
                 if end_ordinal is not None:
-                    for ii in range(begin_obj.slot, end_ordinal+1):
+                    iter_dict = self.this_obj.as_dict()
+                    for ii in range(begin_ordinal, end_ordinal+1):
                         if debug is True:
                             logger.debug(f"    idx: {idx} at point13,     set subinterface: {ii}")
-                        self.this_obj.card = ii
+                        iter_dict["slot"] = ii
                         # Use deepcopy to avoid problems with the same object
                         #     instance appended multiple times
                         if debug is True:
                             logger.info(f"    idx: {idx} at point14, Appending {self.this_obj}{os.linesep}")
-                        expanded_interfaces.append(copy.deepcopy(self.this_obj))
+                        expanded_interfaces.append(self.this_obj.from_dict(iter_dict))
                         continue
                 else:
                     # Append a single interface
