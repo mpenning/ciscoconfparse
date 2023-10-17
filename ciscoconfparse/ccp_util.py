@@ -3689,7 +3689,7 @@ class CiscoRange(MutableSequence):
         for idx, _csv_part in enumerate(csv_parts):
 
             if debug is True:
-                logger.info(f"  CiscoRange() for --> {_csv_part} <--")
+                logger.info(f"CiscoRange() for --> {_csv_part} <--")
 
             ##############################################################
             # Build base instances of begin_obj and this_obj
@@ -3700,8 +3700,7 @@ class CiscoRange(MutableSequence):
                 self.begin_obj = begin_obj
 
                 if debug is True:
-                    logger.info(f"idx: CiscoRange().parse_text_list(text='{text}') [begin_obj: {type({begin_obj})}]")
-                    logger.debug(f"  idx: {idx}, define constant CiscoInterface() instances for {begin_obj}")
+                    logger.info(f"idx: CiscoRange().parse_text_list(text='{text}') idx=:{idx}")
 
             ##############################################################
             # this_obj will also be modified in the large per
@@ -3745,8 +3744,12 @@ class CiscoRange(MutableSequence):
             if len(_csv_part.split("-")) == 2:
                 # Append a whole range of interfaces...
                 end_ordinal = int(_csv_part.split("-")[1].strip())
+                if debug is True:
+                    logger.info(f"CiscoRange(text={text}, debug=True) : end_ordinal={end_ordinal}")
             else:
                 end_ordinal = None
+                if debug is True:
+                    logger.info(f"CiscoRange(text={text}, debug=True) : end_ordinal={end_ordinal}")
 
             if debug is True:
                 logger.debug(f"    CiscoRange(text={text}, debug=True) [begin_obj: {type({self.begin_obj})}]    end_ordinal: {end_ordinal}")
