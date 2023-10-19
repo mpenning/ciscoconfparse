@@ -104,8 +104,10 @@ def testParse_invalid_filepath_01():
 def testParse_invalid_filepath_02():
     # FIXME
     bad_filename = "this is not a filename or list"
+    # Ensure the bad filename does not exist...
     assert os.path.isfile(bad_filename) is False
 
+    # Test that we get FileNotFoundError() from CiscoConfParse(bad_filename)
     with pytest.raises(FileNotFoundError, match=""):
         CiscoConfParse(bad_filename)
 

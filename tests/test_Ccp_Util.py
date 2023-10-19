@@ -41,20 +41,15 @@ import os
 
 sys.path.insert(0, "..")
 
-from ciscoconfparse.ccp_util import CiscoInterface
-from ciscoconfparse.ccp_util import CiscoRange
+from ciscoconfparse.ccp_util import dns_lookup, reverse_dns_lookup, collapse_addresses
+from ciscoconfparse.ccp_util import IPv6Obj, IPv4Obj, L4Object, ip_factory
 from ciscoconfparse.ccp_util import _RGX_IPV4ADDR, _RGX_IPV6ADDR
-from ciscoconfparse.ccp_util import IPv4Obj, L4Object, ip_factory
-from ciscoconfparse.ccp_util import IPv6Obj
-from ciscoconfparse.ccp_util import dns_lookup, reverse_dns_lookup
-from ciscoconfparse.ccp_util import collapse_addresses
+from ciscoconfparse.ccp_util import CiscoInterface, CiscoRange
 import pytest
 
 from loguru import logger
 from ipaddress import IPv4Network, IPv6Network, IPv4Address, IPv6Address
 import ipaddress
-
-from dns.resolver import Timeout
 
 @pytest.mark.parametrize(
     "addr", ["192.0.2.1", "4.2.2.2", "10.255.255.255", "127.0.0.1",]
@@ -626,10 +621,6 @@ def test_dns_lookup():
     result_correct = {"addrs": [result_correct_address], "name": test_hostname, "error": "", "record_type": "A"}
     try:
         test_result = dns_lookup(test_hostname, timeout=0.45)
-    except Timeout as ttt:
-        error = f"Skipping due to DNS resolver timeout: {ttt}"
-        logger.warning(error)
-        pytest.skip(error)
     except Exception as eee:
         error = f"Skipping test_dns_lookup due to Exception: {eee}"
         logger.warning(error)
@@ -878,12 +869,20 @@ if False:
         assert isinstance(uut_str, str)
         assert CiscoRange(uut_str).as_set(result_type=str) == result_correct
 
-
 def test_CiscoRange_compressed_str_01():
-    """compressed_str test"""
+    """compressed_str test with a very basic set of vlan numbers"""
+    uut_str = "1,2,911"
+    assert isinstance(uut_str, str)
+    assert CiscoRange(uut_str, result_type=str).as_compressed_str() == "1,2,911"
+    assert "1" in CiscoRange(uut_str)
+    assert "2" in CiscoRange(uut_str)
+    assert "911" in CiscoRange(uut_str)
+
+def test_CiscoRange_compressed_str_02():
+    """compressed_str test with vlan number ranges"""
     uut_str = "1,2, 3, 6, 7,  8 , 9, 911"
     assert isinstance(uut_str, str)
-    assert CiscoRange(uut_str).compressed_str == "1-3,6-9,911"
+    assert CiscoRange(uut_str, result_type=str).as_compressed_str() == "1-3,6-9,911"
     assert "1" in CiscoRange(uut_str)
     assert "2" in CiscoRange(uut_str)
     assert "3" in CiscoRange(uut_str)
