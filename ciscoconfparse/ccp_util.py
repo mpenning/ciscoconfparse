@@ -2997,7 +2997,7 @@ class CiscoInterface(object):
             error = f"interface_name must be a string, not {type(interface_name)}."
             logger.critical(error)
             raise InvalidCiscoInterface(error)
-        elif interface_name is not None:
+        elif interface_dict is not None:
             error = f"interface_dict must be a dict, not {type(interface_dict)}."
             logger.critical(error)
             raise InvalidCiscoInterface(error)
@@ -4177,8 +4177,6 @@ class CiscoRange(MutableSequence):
                 ):
                     if range_list[-1] != "-":
                         range_list += ["-"]
-                    else:
-                        range_list = range_list
                 else:
                     range_list += [input_str[ii]]
         if len(input_str) > 1:
