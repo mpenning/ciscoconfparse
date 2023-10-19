@@ -9,11 +9,13 @@
 - Released: Not released
 - Summary:
     - Remove dead code
-    - Add new CiscoInterface() object in ciscoconfparse.ccp_util.py
-    - Add many enhancements to CiscoRange() and modify unit-tests accordingly
-    - Add loguru.logger.catch() in various places
+    - Rename `CiscoRange().compressed_str` to `CiscoRange().as_compressed_str()`
+    - Add new `CiscoInterface()` object in `ciscoconfparse.ccp_util.py`
+    - Add many enhancements to `CiscoRange()` and modify unit-tests accordingly
+    - Add `loguru.logger.catch()` in various places
     - Rename a method
     - Add read_only parameter, ref: Github Issue #281
+    - Add a new `.pylintrc` file
 
 ## Version: 1.9.2
 
