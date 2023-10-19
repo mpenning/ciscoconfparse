@@ -600,22 +600,6 @@ class CiscoConfParse(object):
             A string holding the configuration type.  Default: 'ios'.  Must be one of: 'ios', 'nxos', 'asa', 'junos'.  Use 'junos' for any brace-delimited network configuration (including F5, Palo Alto, etc...).
 
         """
-        if not (isinstance(syntax, str) and (syntax in ALL_VALID_SYNTAX)):
-            error = "'{}' is an unknown syntax".format(syntax)
-            logger.error(error)
-            raise ValueError(error)
-
-        self.finished_config_parse = False
-
-        # all IOSCfgLine object instances...
-        self.comment_delimiter = comment
-        self.factory = factory
-        self.ConfigObjs = None
-        self.syntax = syntax
-        self.ignore_blank_lines = ignore_blank_lines
-        self.encoding = encoding or ENCODING
-        self.debug = debug
-        self.read_only = read_only
 
         # Reconfigure loguru if read_only is True
         if read_only is True:
@@ -624,22 +608,41 @@ class CiscoConfParse(object):
             if debug > 0:
                 logger.warning(f"Disabled loguru enqueue because read_only={read_only}")
 
+        if not (isinstance(syntax, str) and (syntax in ALL_VALID_SYNTAX)):
+            error = "'{}' is an unknown syntax".format(syntax)
+            logger.error(error)
+            raise ValueError(error)
+
+        # all IOSCfgLine object instances...
+        self.finished_config_parse = False
+        self.debug = debug
+        self.ConfigObjs = None
+        self.syntax = syntax
+        self.comment_delimiter = comment
+        self.factory = factory
+        self.ignore_blank_lines = ignore_blank_lines
+        self.encoding = encoding or ENCODING
+        self.read_only = read_only
+
         # Read the configuration lines and detect invalid inputs...
         # tmp_lines = self._get_ccp_lines(config=config, logger=logger)
-        if isinstance(config, (str, pathlib.Path,),):
+        if isinstance(config, (str, pathlib.Path,)):
             tmp_lines = self.read_config_file(filepath=config, logger=logger)
-
         elif isinstance(config, Sequence):
             tmp_lines = config
-
         else:
-            raise ValueError
-
-        assert self._check_ccp_input_good(config=tmp_lines, logger=logger) is True
+            error = f"Cannot read config from {config}"
+            logger.critical(error)
+            raise ValueError(error)
 
         # conditionally strip off junos-config braces and other syntax
         #     parsing  issues...
         config_lines = self._handle_ccp_syntax(tmp_lines=tmp_lines, syntax=syntax)
+        if self._check_ccp_input_good(config=config_lines, logger=logger) is False:
+            error = f"Cannot parse config=`{tmp_lines}`"
+            logger.critical(error)
+            raise ValueError(error)
+
 
         if self.debug > 0:
             logger.info("assigning self.ConfigObjs = ConfigList()")
@@ -700,43 +703,31 @@ class CiscoConfParse(object):
         assert logger is not None
         assert self.finished_config_parse is False
 
+        valid_path_variable = False
+        if filepath is None:
+            error = "Filepath: None is invalid"
+            logger.critical(error)
+            raise FileNotFoundError(error)
+        elif isinstance(filepath, (str, pathlib.Path,)):
+            valid_path_variable = True
+
+        if valid_path_variable and not os.path.exists(filepath):
+            error = f"Filepath: {filepath} does not exist"
+            logger.critical(error)
+            raise FileNotFoundError(error)
+
         config_lines = None
 
-        enforce_valid_types(
-            filepath,
-            (str, pathlib.Path),
-            "filepath parameter must be a string or pathlib.Path().",
-        )
-
-        if (
-            isinstance(
-                filepath,
-                (
-                    str,
-                    pathlib.Path,
-                ),
-            )
-            and os.path.isfile(filepath) is True
-        ):
+        if valid_path_variable is True and os.path.isfile(filepath) is True:
             # config string - assume a filename...
             if self.debug > 0:
                 logger.debug("reading config from the filepath named '%s'" % filepath)
 
-        elif (
-            isinstance(
-                filepath,
-                (
-                    str,
-                    pathlib.Path,
-                ),
-            )
-            and os.path.isfile(filepath) is False
-        ):
+        elif valid_path_variable is True and os.path.isfile(filepath) is False:
             if self.debug > 0:
                 logger.debug("filepath not found - '%s'" % filepath)
             try:
                 _ = open(file=filepath, **self.openargs)
-
             except FileNotFoundError:
                 error = """FATAL - Attempted to open(file='{0}', mode='r', encoding='{1}'); the filepath named:"{0}" does not exist.""".format(
                     filepath, self.openargs["encoding"]
@@ -756,9 +747,9 @@ class CiscoConfParse(object):
                 raise BaseException
 
         else:
-            error = 'filepath="""%s""" is an unexpected type().  `filepath` must be a python string or patlib.Path.' % filepath
-            logger.critical(f"Cannot open {filepath}")
-            raise BaseException(error)
+            error = f'Unexpected condition processing filepath: {filepath}'
+            logger.critical(error)
+            raise ValueError(error)
 
         # Read the file from disk and return the list of config statements...
         try:
@@ -785,7 +776,7 @@ class CiscoConfParse(object):
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
     def _check_ccp_input_good(self, config=None, logger=None, linesplit_rgx=r"\r*\n+"):
-        """The config parameter is a sequence of text config commands.  Return the list of text configuration commands or raise an error."""
+        """The config parameter is a sequence of text config commands.  Return True or False based on whether the config can be parsed."""
 
         assert self.finished_config_parse is False
 
@@ -795,15 +786,12 @@ class CiscoConfParse(object):
             # config list of text lines...
             if self.debug > 0:
                 logger.debug(
-                    "parsing config stored in the config variable: '%s'" % config
+                    f"parsing config stored in the config variable: `{config}`"
                 )
             return True
 
         else:
-            raise ValueError(
-                'config="""%s""" is an unexpected type().  The `config` instance must be an instance of collecitons.abc.Sequence'
-                % config
-            )
+            return False
 
     #########################################################################
     # This method is on CiscoConfParse()
@@ -4440,14 +4428,17 @@ class ConfigList(MutableSequence):
         #
         # This check will explicitly catch some problems like that...
 
-        # NOTE a string is a valid sequence... this guards against bad inputs
-        if isinstance(initlist, str):
-            raise OSError
-
         # IMPORTANT This check MUST come near the top of ConfigList()...
         if not isinstance(initlist, Sequence):
             raise ValueError
         assert syntax in ALL_VALID_SYNTAX
+
+        # NOTE a string is a invalid sequence... this guards against bad inputs
+        if isinstance(initlist, str):
+            error = f"ConfigList(initlist=f`{initlist}`) {type(initlist)} is not valid; `initlist` must be a valid Sequence."
+            logger.critical(error)
+            raise OSError(error)
+
 
         ciscoconfparse_kwarg_val = kwargs.get("CiscoConfParse", None)
         ccp_ref_kwarg_val = kwargs.get("ccp_ref", None)
@@ -4457,16 +4448,6 @@ class ConfigList(MutableSequence):
             )
         ccp_value = ccp_ref_kwarg_val or ciscoconfparse_kwarg_val
 
-
-        # Removed this portion of __init__() in 1.7.16...
-        if False:
-            self._list = []
-            if isinstance(initlist, ConfigList):
-                self._list[:] = initlist._list[:]
-            elif isinstance(initlist, list):
-                self._list[:] = initlist
-            else:
-                self._list = list(initlist)
 
         self.CiscoConfParse = (
             ccp_value  # FIXME - CiscoConfParse attribute should go away soon
