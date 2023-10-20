@@ -4052,7 +4052,7 @@ class CiscoRange(MutableSequence):
                 raise MismatchedType(arg)
             else:
                 # Otherwise, flag the problem as an invalid member...
-                raise invalidMember(arg)
+                raise InvalidMember(arg)
         return self
 
 
