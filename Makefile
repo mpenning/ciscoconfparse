@@ -173,7 +173,11 @@ test:
 	#make ping
 	make clean
 	# Attempt to fix strange github unit test import failures
-	cd tests && ./runtests.sh
+	cd tests && pytest -vvvvs ./test_CiscoConfParse.py
+	cd tests && pytest -vvvvs ./test_Ccp_Util.py
+	cd tests && pytest -vvvvs ./test_Models_Cisco.py
+	cd tests && pytest -vvvvs ./test_Models_Asa.py
+	cd tests && pytest -vvvvs ./test_Models_Junos.py
 
 .PHONY: clean
 clean:
