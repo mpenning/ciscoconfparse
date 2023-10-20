@@ -60,8 +60,8 @@ from deprecated import deprecated
 from loguru import logger
 
 from ciscoconfparse.protocol_values import ASA_TCP_PORTS, ASA_UDP_PORTS
+from ciscoconfparse.errors import InvalidParameters, InvalidMember, MismatchedType
 from ciscoconfparse.errors import InvalidShellVariableMapping
-from ciscoconfparse.errors import InvalidParameters, InvalidMember
 from ciscoconfparse.errors import PythonOptimizeException
 from ciscoconfparse.errors import DynamicAddressException
 from ciscoconfparse.errors import ListItemMissingAttribute
@@ -4045,8 +4045,14 @@ class CiscoRange(MutableSequence):
             if len(new_list) < length_before:
                 self._list = new_list
                 break
+        arg_type = type(arg)
         if len(new_list) == length_before:
-            raise invalidMember(arg)
+            if arg_type is not type(self._list[0]):
+                # Do a simple type check to see if typing is the problem...
+                raise MismatchedType(arg)
+            else:
+                # Otherwise, flag the problem as an invalid member...
+                raise invalidMember(arg)
         return self
 
 
