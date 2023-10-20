@@ -4116,7 +4116,6 @@ class CiscoRange(MutableSequence):
         # Build a magic attribute dict so we can intelligently prepend slot/card/port/etc...
         magic_string = "3141592653591892234109876543212345678"
         this_obj = CiscoInterface(self.text.split(",")[0])
-        print("THIS", this_obj)
         magic_dict = this_obj.as_dict()
         for attr_name in ("channel", "subinterface", "port", "card", "slot",):
             if magic_dict[attr_name] is not None:
@@ -4128,7 +4127,6 @@ class CiscoRange(MutableSequence):
         obj = CiscoInterface(interface_dict=magic_dict, debug=debug)
         if debug is True:
             logger.success(f"    CiscoRange() call to CiscoInterface().as_compressed_str() with `interface_dict` parameter succeeded")
-        print("OBJ", obj)
         prefix_str = str(obj).replace(magic_string, "")
         prefix_str_len = len(prefix_str)
 
