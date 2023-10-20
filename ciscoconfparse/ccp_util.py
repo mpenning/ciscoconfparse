@@ -3987,10 +3987,6 @@ class CiscoRange(MutableSequence):
             logger.info(f"CiscoRange(text='{self.text}', debug=True) [begin_obj: {type(self.begin_obj)}] returning: {retval}")
         return retval
 
-    def attribute_sort(self, target_list, attribute="sort_list", reverse=False):
-        new_list = sorted(self._list, key=lambda x: getattr(x, attribute), reverse=reverse)
-        return target_list
-
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
     def __repr__(self):
@@ -4033,6 +4029,13 @@ class CiscoRange(MutableSequence):
             raise IndexError(error)
         else:
             return self._list[ii]
+
+    # This method is on CiscoRange()
+    @logger.catch(reraise=True)
+    def attribute_sort(self, target_list, attribute="sort_list", reverse=False):
+        new_list = sorted(self._list, key=lambda x: getattr(x, attribute), reverse=reverse)
+        return target_list
+
 
     # This method is on CiscoRange()
     @property
