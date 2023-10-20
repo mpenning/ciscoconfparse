@@ -4032,9 +4032,22 @@ class CiscoRange(MutableSequence):
 
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
-    def attribute_sort(self, target_list, attribute="sort_list", reverse=False):
-        new_list = sorted(self._list, key=lambda x: getattr(x, attribute), reverse=reverse)
-        return target_list
+    def attribute_sort(self, target_list=None, attribute="sort_list", reverse=False):
+        sort_this_obj = False
+        if target_list is None:
+            sort_this_obj = True
+            target_list = copy.deepcopy(self._list)
+        if sort_this_obj:
+            self._list = target_list
+            return self
+        else:
+            if isinstance(target_list, list):
+                new_list = sorted(target_list, key=lambda x: getattr(x, attribute), reverse=reverse)
+                return new_list
+            else:
+                error = f"`target_list` must be a list; however, we got `target_list`: {target_list} {type(target_list)}"
+                logger.critical(error)
+                raise ValueError(error)
 
 
     # This method is on CiscoRange()
@@ -4073,6 +4086,10 @@ class CiscoRange(MutableSequence):
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
     def insert(self, idx, val, sort=True):
+        error = "CiscoRange().insert() currently generates a stackoverflow."
+        logger.critical(error)
+        raise NotImplementedError("CiscoRange().insert() currently generates a stackoverflow.")
+
         # Insert at the end of the list with new_last_list_idx = len(self._list)
         if val in self._list:
             raise DuplicateMember(val)
