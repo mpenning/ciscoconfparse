@@ -4136,7 +4136,7 @@ class CiscoRange(MutableSequence):
             else:
                 try:
                     new_list = [ii for ii in list_before if result_type(ii) != arg]
-                except TypeError as eee:
+                except TypeError:
                     if debug is True:
                         error = "Found type mismatch: {arg}, {ii}"
                         logger.debug(error)
