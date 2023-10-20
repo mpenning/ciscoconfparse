@@ -3724,8 +3724,8 @@ class CiscoRange(MutableSequence):
     Eth2/10
     >>> CiscoRange('Eth2/1-3,7')
     <CiscoRange Eth2/1-3,7>
-    >>> CiscoRange(text="")
-    <CiscoRange []>
+    >>> CiscoRange(text="1,3,5")
+    <CiscoRange [1, 3, 5]>
     """
 
     # This method is on CiscoRange()
@@ -3758,6 +3758,7 @@ class CiscoRange(MutableSequence):
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
     def parse_text_list(self, text, debug=False):
+        """Parse text input to CiscoRange(), such as CiscoRange('Eth1/1-5,7').  'Eth1/1-5,7 will be parsed.  By default, CiscoInterface() objects are used when CiscoRange() is parsed.'  An error is raised if the CiscoRange() cannot be parsed"""
         range_str = ""
         expanded_interfaces = []
         if ",," in text:
@@ -3995,7 +3996,12 @@ class CiscoRange(MutableSequence):
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
     def __len__(self):
+        """Return the length of this CiscoRange()"""
         return len(self._list)
+
+    def __iter__(self):
+        """Return an iterator for this CiscoRange()"""
+        return iter(self._list)
 
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
