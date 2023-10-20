@@ -3721,7 +3721,6 @@ class CiscoRange(MutableSequence):
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
     def __init__(self, text="", result_type=str, default_iter_attr='port', reverse=False, debug=False):
-        print("HERE01")
         super().__init__()
 
         # Ensure that result_type is in the set of valid_result_types...
@@ -3749,7 +3748,6 @@ class CiscoRange(MutableSequence):
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
     def parse_text_list(self, text, debug=False):
-        print("HERE02")
         range_str = ""
         expanded_interfaces = []
         if ",," in text:
@@ -3980,19 +3978,16 @@ class CiscoRange(MutableSequence):
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
     def __repr__(self):
-        print("HERE03")
         return f"""<CiscoRange {self.__str__()}>"""
 
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
     def __len__(self):
-        print("HERE04")
         return len(self._list)
 
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
     def __getitem__(self, ii):
-        print("HERE05", ii)
         max_list_index = len(self._list) - 1
         if ii > max_list_index:
             error = f"CiscoRange() attempted to access CiscoRange()._list[{ii}], but the max list index is {max_list_index}"
@@ -4004,7 +3999,6 @@ class CiscoRange(MutableSequence):
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
     def __delitem__(self, ii):
-        print("HERE06")
         max_list_index = len(self._list) - 1
         if ii > max_list_index:
             error = f"CiscoRange() attempted to access CiscoRange()._list[{ii}], but the max list index is {max_list_index}"
@@ -4016,7 +4010,6 @@ class CiscoRange(MutableSequence):
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
     def __setitem__(self, ii, val):
-        print("HERE07")
         max_list_index = len(self._list) - 1
         if ii > max_list_index:
             error = f"CiscoRange() attempted to access CiscoRange()._list[{ii}], but the max list index is {max_list_index}"
@@ -4028,20 +4021,6 @@ class CiscoRange(MutableSequence):
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
     def insert(self, ii, val):
-        print("HERE08")
-        max_insert_index = len(self._list)
-        if ii > max_insert_index:
-            error = f"CiscoRange() attempted to insert at CiscoRange()._list[{ii}], but the max list insert index is {max_insert_index}"
-            logger.critical(error)
-            raise IndexError(error)
-        else:
-            self._list.insert(ii, val)
-            return self
-
-    # This method is on CiscoRange()
-    @logger.catch(reraise=True)
-    def append(self, val):
-        print("HERE09")
         # Insert at the end of the list with new_last_list_idx = len(self._list)
         new_last_list_idx = len(self._list)
         self.insert(new_last_list_idx, val)
@@ -4050,13 +4029,11 @@ class CiscoRange(MutableSequence):
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
     def __str__(self):
-        print("HERE10")
         return "[" + str(",".join([ii for ii in self._list])) + "]"
 
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
     def remove(self, arg):
-        print("HERE11")
         logger.warning(str(arg))
         remove_obj = CiscoRange(arg)
         for idx, ii in enumerate(remove_obj):
@@ -4071,7 +4048,6 @@ class CiscoRange(MutableSequence):
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
     def as_list(self, result_type=str):
-        print("HERE12")
         """Return a list of sorted components; an empty string is automatically rejected.  This method is tricky to test due to the requirement for the `.sort_list` attribute on all elements; avoid using the ordered nature of `as_list` and use `as_set`."""
         yy_list = copy.deepcopy(self._list)
         for ii in self._list:
@@ -4107,7 +4083,6 @@ class CiscoRange(MutableSequence):
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
     def as_set(self, result_type=str):
-        print("HERE13")
         """Return an unsorted set({}) components.  Use this method instead of `.as_list` whenever possible to avoid the requirement for elements needing a `.sort_list` attribute."""
         retval = set(self._list)
         if result_type is None:
@@ -4125,7 +4100,6 @@ class CiscoRange(MutableSequence):
     ## Github issue #125
     @logger.catch(reraise=True)
     def as_compressed_str(self, debug=False):
-        print("HERE14")
         """
         Return a text string with a compressed csv of values
 
