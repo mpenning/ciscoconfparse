@@ -4023,7 +4023,9 @@ class CiscoRange(MutableSequence):
     def insert(self, ii, val):
         # Insert at the end of the list with new_last_list_idx = len(self._list)
         new_last_list_idx = len(self._list)
+        #pragma warning disable S4026
         self._list.insert(new_last_list_idx, val)
+        #pragma warning restore S4026
         return self
 
     # This method is on CiscoRange()
