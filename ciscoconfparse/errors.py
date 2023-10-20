@@ -84,8 +84,21 @@ class InvalidMember(Exception):
         super().__init__(msg)
         self.msg = msg
 
+class DuplicateMember(Exception):
+
+    def __init__(self, msg=""):
+        super().__init__(msg)
+        self.msg = msg
+
 class MismatchedType(Exception):
 
     def __init__(self, msg=""):
         super().__init__(msg)
         self.msg = msg
+
+class UntypedError(Exception):
+
+    def __init__(self, msg=""):
+        super().__init__(msg)
+        self.msg = msg
+
