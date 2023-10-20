@@ -40,7 +40,7 @@ jobs:
           - {name: '3.9', python: '3.9', os: ubuntu-latest, tox: py39}
           - {name: '3.8', python: '3.8', os: ubuntu-latest, tox: py38}
           - {name: 'PyPy', python: 'pypy-3.10', os: ubuntu-latest, tox: pypy310}
-          - {name: 'Minimum Versions', python: '3.11', os: ubuntu-latest, tox: py311-min}
+          - {name: 'Minimum Versions', python: '3.11', os: ubuntu-latest, tox: py311}
           - {name: Typing, python: '3.11', os: ubuntu-latest, tox: typing}
     steps:
       - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744
