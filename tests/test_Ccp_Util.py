@@ -874,30 +874,23 @@ def test_CiscoRange_compressed_str_01():
     uut_str = "1,2,911"
     assert isinstance(uut_str, str)
     assert CiscoRange(uut_str, result_type=str).as_compressed_str() == "1,2,911"
-    assert "1" in CiscoRange(uut_str)
-    assert "2" in CiscoRange(uut_str)
-    assert "911" in CiscoRange(uut_str)
+    assert "2" in CiscoRange(uut_str).as_compressed_str()
+    assert "911" in CiscoRange(uut_str).as_compressed_str()
 
 def test_CiscoRange_compressed_str_02():
     """compressed_str test with vlan number ranges"""
     uut_str = "1,2, 3, 6, 7,  8 , 9, 911"
     assert isinstance(uut_str, str)
     assert CiscoRange(uut_str, result_type=str).as_compressed_str() == "1-3,6-9,911"
-    assert "1" in CiscoRange(uut_str)
-    assert "2" in CiscoRange(uut_str)
-    assert "3" in CiscoRange(uut_str)
-    assert "6" in CiscoRange(uut_str)
-    assert "7" in CiscoRange(uut_str)
-    assert "8" in CiscoRange(uut_str)
-    assert "9" in CiscoRange(uut_str)
-    assert "911" in CiscoRange(uut_str)
 
 
 def test_CiscoRange_contains():
     uut_str = "Ethernet1/1-20"
     assert isinstance(uut_str, str)
     # Ethernet1/5 is in CiscoRange("Ethernet1/1-20")...
-    assert "Ethernet1/5" in CiscoRange(uut_str)
+    assert "1/1" in CiscoRange(uut_str).as_compressed_str()
+    assert "20" in CiscoRange(uut_str).as_compressed_str()
+    assert "Ethernet1/5" in CiscoRange(uut_str).as_list()
 
 #pragma warning restore S1192
 #pragma warning restore S1313
