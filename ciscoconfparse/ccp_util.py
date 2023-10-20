@@ -4045,6 +4045,8 @@ class CiscoRange(MutableSequence):
             if len(new_list) < length_before:
                 self._list = new_list
                 break
+        if len(new_list) == length_before:
+            raise invalidMember(arg)
         return self
 
 
