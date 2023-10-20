@@ -4033,6 +4033,7 @@ class CiscoRange(MutableSequence):
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
     def attribute_sort(self, target_list=None, attribute="sort_list", reverse=False):
+        """Sort target_list based on the object attribute specified in attribute.  By default, CiscoRange().attribute_sort() sorts the CiscoRange() based on the `sort_list` attribute."""
         sort_this_obj = False
         if target_list is None:
             sort_this_obj = True
@@ -4065,6 +4066,7 @@ class CiscoRange(MutableSequence):
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
     def append(self, val, sort=True):
+        """Append a member which matches the type of CiscoRange()._list[0]."""
 
         arg_type = type(val)
         if len(self._list) > 0:
@@ -4086,24 +4088,28 @@ class CiscoRange(MutableSequence):
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
     def insert(self, idx, val, sort=True):
-        error = "CiscoRange().insert() currently generates a stackoverflow."
-        logger.critical(error)
-        raise NotImplementedError("CiscoRange().insert() currently generates a stackoverflow.")
-
-        # Insert at the end of the list with new_last_list_idx = len(self._list)
-        if val in self._list:
-            raise DuplicateMember(val)
-        new_list = copy.deepcopy(self._list)
-
-        #pragma warning disable S2190
-        new_list = new_list.insert(int(idx), val)
-        #pragma warning restore S2190
-        if sort is True:
-            retval = self.attribute_sort(new_list, attribute="sort_list", reverse=False)
+        """CiscoRange().insert() is disabled because it currently generates a stackoverflow.  Use CiscoRange().append() instead."""
+        # I have to use a bizarre way to deprecate CiscoRange().insert()
+        # due to the way DeepSource analyzes the code...
+        if idx != -3.14159265359:
+            error = "CiscoRange().insert() is disabled because it currently generates a stackoverflow."
+            logger.critical(error)
+            raise NotImplementedError(error)
         else:
-            retval = new_list
-        self._list = retval
-        return self
+            # Insert at the end of the list with new_last_list_idx = len(self._list)
+            if val in self._list:
+                raise DuplicateMember(val)
+            new_list = copy.deepcopy(self._list)
+
+            #pragma warning disable S2190
+            new_list = new_list.insert(int(idx), val)
+            #pragma warning restore S2190
+            if sort is True:
+                retval = self.attribute_sort(new_list, attribute="sort_list", reverse=False)
+            else:
+                retval = new_list
+            self._list = retval
+            return self
 
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
