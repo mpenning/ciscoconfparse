@@ -60,7 +60,7 @@ from deprecated import deprecated
 from loguru import logger
 
 from ciscoconfparse.protocol_values import ASA_TCP_PORTS, ASA_UDP_PORTS
-from ciscoconfparse.errors import InvalidParameters, InvalidMember, MismatchedType
+from ciscoconfparse.errors import DuplicateMember, InvalidParameters, InvalidMember, MismatchedType, UntypedError
 from ciscoconfparse.errors import InvalidShellVariableMapping
 from ciscoconfparse.errors import PythonOptimizeException
 from ciscoconfparse.errors import DynamicAddressException
@@ -3703,7 +3703,7 @@ class CiscoRange(MutableSequence):
     begin_obj = None
     this_obj = None
     iterate_attribute = None
-    _list = None
+    _list = []
     range_str = None
     """Explode Cisco ranges into a list of explicit items... examples below...
 
@@ -4035,11 +4035,47 @@ class CiscoRange(MutableSequence):
             return self._list[ii]
 
     # This method is on CiscoRange()
+    @property
+    @logger.catch(reraise=True)
+    def member_type(self):
+        """Return the member type of this CiscoRange().  The type is always based off the first member"""
+        if len(self._list) > 0:
+            return type(self._list[0])
+        else:
+            error = "An empty CiscoRange() has no type"
+            logger.critical(error)
+            raise UntypedError(error)
+
+    # This method is on CiscoRange()
+    @logger.catch(reraise=True)
+    def append(self, val, sort=True):
+
+        arg_type = type(val)
+        if len(self._list) > 0:
+            if arg_type is not type(self._list[0]):
+                raise MismatchedType(val)
+
+        if val in self._list:
+            raise DuplicateMember(val)
+
+        new_list = copy.deepcopy(self._list)
+        new_list.append(val)
+        if sort is True:
+            retval = self.attribute_sort(new_list, attribute="sort_list", reverse=False)
+        else:
+            retval = new_list
+        self._list = retval
+        return self
+
+    # This method is on CiscoRange()
     @logger.catch(reraise=True)
     def insert(self, idx, val, sort=True):
         # Insert at the end of the list with new_last_list_idx = len(self._list)
-        #pragma warning disable S2190
+        if val in self._list:
+            raise DuplicateMember(val)
         new_list = copy.deepcopy(self._list)
+
+        #pragma warning disable S2190
         new_list = new_list.insert(int(idx), val)
         #pragma warning restore S2190
         if sort is True:
