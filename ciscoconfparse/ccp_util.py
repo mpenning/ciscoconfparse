@@ -4023,7 +4023,7 @@ class CiscoRange(MutableSequence):
     def insert(self, ii, val):
         # Insert at the end of the list with new_last_list_idx = len(self._list)
         new_last_list_idx = len(self._list)
-        self.insert(new_last_list_idx, val)
+        self._list.insert(new_last_list_idx, val)
         return self
 
     # This method is on CiscoRange()
