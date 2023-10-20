@@ -3695,6 +3695,16 @@ class CiscoInterface(object):
             raise ValueError(error)
 
 class CiscoRange(MutableSequence):
+    # Set up default attributes on the object...
+    text = None
+    result_type = None
+    default_iter_attr = None
+    reverse = None
+    begin_obj = None
+    this_obj = None
+    iterate_attribute = None
+    _list = None
+    range_str = None
     """Explode Cisco ranges into a list of explicit items... examples below...
 
     Examples
@@ -3970,10 +3980,16 @@ class CiscoRange(MutableSequence):
         # De-deplicate _expanded_interfaces...
         _expanded_interfaces = expanded_interfaces
         _expanded_interfaces = list(set(_expanded_interfaces))
-        retval = sorted(_expanded_interfaces, key=lambda x: x.sort_list, reverse=self.reverse)
+        if False:
+            retval = sorted(_expanded_interfaces, key=lambda x: x.sort_list, reverse=self.reverse)
+        retval = self.attribute_sort(_expanded_interfaces, attribute="sort_list", reverse=False)
         if debug is True:
             logger.info(f"CiscoRange(text='{self.text}', debug=True) [begin_obj: {type(self.begin_obj)}] returning: {retval}")
         return retval
+
+    def attribute_sort(self, target_list, attribute="sort_list", reverse=False):
+        new_list = sorted(self._list, key=lambda x: getattr(x, attribute), reverse=reverse)
+        return target_list
 
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
@@ -4020,12 +4036,17 @@ class CiscoRange(MutableSequence):
 
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
-    def insert(self, ii, val):
+    def insert(self, idx, val, sort=True):
         # Insert at the end of the list with new_last_list_idx = len(self._list)
-        new_last_list_idx = len(self._list)
         #pragma warning disable S2190
-        self._list.insert(new_last_list_idx, val)
+        new_list = copy.deepcopy(self._list)
+        new_list = new_list.insert(int(idx), val)
         #pragma warning restore S2190
+        if sort is True:
+            retval = self.attribute_sort(new_list, attribute="sort_list", reverse=False)
+        else:
+            retval = new_list
+        self._list = retval
         return self
 
     # This method is on CiscoRange()
