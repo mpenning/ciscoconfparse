@@ -61,12 +61,12 @@ from loguru import logger
 
 from ciscoconfparse.protocol_values import ASA_TCP_PORTS, ASA_UDP_PORTS
 from ciscoconfparse.errors import InvalidShellVariableMapping
+from ciscoconfparse.errors import InvalidParameters, InvalidMember
 from ciscoconfparse.errors import PythonOptimizeException
 from ciscoconfparse.errors import DynamicAddressException
 from ciscoconfparse.errors import ListItemMissingAttribute
 from ciscoconfparse.errors import ListItemTypeError
 from ciscoconfparse.errors import InvalidCiscoInterface
-from ciscoconfparse.errors import InvalidParameters
 from ciscoconfparse.errors import DNSLookupError
 import ciscoconfparse
 
@@ -4029,21 +4029,24 @@ class CiscoRange(MutableSequence):
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
     def __str__(self):
-        return "[" + str(",".join([ii for ii in self._list])) + "]"
+        return "[" + str(", ".join([str(ii) for ii in self._list])) + "]"
 
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
     def remove(self, arg):
-        logger.warning(str(arg))
-        remove_obj = CiscoRange(arg)
-        for idx, ii in enumerate(remove_obj):
-            try:
-                ## Remove arg, even if duplicated... Ref Github issue #126
-                index = self.index(idx)
-                self.pop(index)
-            except ValueError:
-                pass
+        length_before = len(self._list)
+        list_before = copy.deepcopy(self._list)
+        # Try removing some common result types...
+        for result_type in [None, str, int, float]:
+            if result_type is None:
+                new_list = [ii for ii in list_before if ii != arg]
+            else:
+                new_list = [ii for ii in list_before if result_type(ii) != arg]
+            if len(new_list) < length_before:
+                self._list = new_list
+                break
         return self
+
 
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
