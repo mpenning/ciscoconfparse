@@ -1,7 +1,7 @@
 ciscoconfparse
 ==============
 
-[![Github unittest workflow][4]][5] [![git commits][41]][42] [![Version][2]][3] [![Downloads][6]][7] [![License][8]][9]
+[![git commits][41]][42] [![Version][2]][3] [![Downloads][6]][7] [![License][8]][9]
 
 [![SonarCloud][51]][52] [![SonarCloud Maintainability Rating][53]][54] [![SonarCloud Lines of Code][55]][56] [![SonarCloud Bugs][61]][62] [![SonarCloud Code Smells][57]][58] [![SonarCloud Tech Debt][63]][64]
 
