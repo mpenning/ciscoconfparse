@@ -2467,9 +2467,7 @@ class L4Object(object):
             elif protocol == "udp":
                 ports = ASA_UDP_PORTS
             else:
-                raise NotImplementedError(
-                    "'{0}' is not supported: '{0}'".format(protocol)
-                )
+                raise NotImplementedError(f"'{protocol}' is not supported")
         else:
             raise NotImplementedError(f"This syntax is unknown: '{syntax}'")
 
@@ -2505,9 +2503,7 @@ class L4Object(object):
             tmp.remove(int(port_str))
             self.port_list = sorted(tmp)
         else:
-            raise NotImplementedError(
-                f"This port_spec is unknown: '{port_spec}'"
-            )
+            raise NotImplementedError(f"This port_spec is unknown: '{port_spec}'")
 
     def __eq__(self, val):
         if (self.protocol == val.protocol) and (self.port_list == val.port_list):
@@ -3895,10 +3891,10 @@ class CiscoRange(MutableSequence):
         return list(set(integers))
 
     def parse_floats(self, text, debug=False):
-        raise NotImplementedError()
+        raise NotImplementedError("parse_floats() is not yet supported")
 
     def parse_strings(self, text, debug=False):
-        raise NotImplementedError()
+        raise NotImplementedError("parse_strings() is not yet supported")
 
     # This method is on CiscoRange()
     # Disabling logger.catch() due to slowness in loguru==0.7.2
@@ -4323,7 +4319,9 @@ class CiscoRange(MutableSequence):
         if len(new_list) == length_before:
             if len(self._list) > 0 and arg_type is not type(self._list[0]):
                 # Do a simple type check to see if typing is the problem...
-                raise MismatchedType(arg)
+                error = f"Could not remove {arg} {type(arg)} from this CiscoRange(); expected type {self.member_type}"
+                logger.error(error)
+                raise MismatchedType(error)
             elif len(self._list) == 0 and arg_type is not type(self._list[0]):
                 if ignore_errors is not True:
                     error = "Cannot remove from an empty CiscoRange()"
