@@ -3786,19 +3786,19 @@ class CiscoRange(MutableSequence):
             logger.info(f"CiscoRange() for --> text: {text} <--")
 
         self.text = text
-        self.result_type = result_type
+        self.result_type = None   # self.result_type will be set in parse_foo(), below...
         self.default_iter_attr = default_iter_attr
         self.reverse = reverse
         self.begin_obj = None
         self.this_obj = None
         self.iterate_attribute = None
         self.range_str = ""
-        if empty is False:
+        if isinstance(text, str) or empty is False:
             if result_type is None:
                 self._list = self.parse_cisco_interfaces(text, debug=debug)
             elif result_type is int:
                 self._list = self.parse_integers(text, debug=debug)
-            elif result_type is int:
+            elif result_type is float:
                 self._list = self.parse_floats(text, debug=debug)
             elif result_type is str:
                 self._list = self.parse_strings(text, debug=debug)
@@ -3807,13 +3807,10 @@ class CiscoRange(MutableSequence):
 
     def parse_integers(self, text, debug=False):
         """Parse text input to CiscoRange(), such as CiscoRange('1-5,7', result_type=int).  '1-5,7 will be parsed.  By default, integers are used when CiscoRange(result_type=int) is parsed.'  An error is raised if the CiscoRange() cannot be parsed"""
+        self.result_type = int
         integers = []
         csv_parts = text.split(",")
         for idx, _csv_part in enumerate(csv_parts):
-            if False and idx == 0:
-                begin_obj = int(_csv_part.split("-")[0])
-                integers.append(begin_obj)
-
             if "-" in _csv_part:
                 if len(_csv_part.split("-")) == 2:
                     # Append a whole range of interfaces...
@@ -3843,26 +3840,29 @@ class CiscoRange(MutableSequence):
                     integers.append(int(ii))
                     continue
             else:
-                # Append a single interface
+                # Append a single integer
                 if debug is True:
                     logger.info(f"    idx: {idx} at point02, Appending {self.this_obj}{os.linesep}")
                 # WAS DEEPCOPY
-                integers.append(begin_ordinal)
+                integers.append(int(begin_ordinal))
                 continue
 
         # De-duplicate the list of integers and return it...
-        return list(set(integers))
+        return list(set([int(ii) for ii in integers]))
 
     def parse_floats(self, text, debug=False):
+        self.result_type = float
         raise NotImplementedError("parse_floats() is not yet supported")
 
     def parse_strings(self, text, debug=False):
+        self.result_type = str
         raise NotImplementedError("parse_strings() is not yet supported")
 
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
     def parse_cisco_interfaces(self, text, debug=False):
         """Parse text input to CiscoRange(), such as CiscoRange('Eth1/1-5,7', result_type=None).  'Eth1/1-5,7 will be parsed.  By default, CiscoInterface() objects are used when CiscoRange(result_type=None) is parsed.'  An error is raised if the CiscoRange() cannot be parsed"""
+        self.result_type = None
         range_str = ""
         expanded_interfaces = []
         csv_parts = text.split(",")
@@ -4275,44 +4275,55 @@ class CiscoRange(MutableSequence):
         length_before = len(self._list)
         # WAS DEEPCOPY
         list_before = copy.deepcopy(self._list)
+
         # Try removing some common result types...
-        for result_type in [None, str, int, float]:
-            if result_type is None:
+        for result_type in [None, str, int, float, 0]:
+            if result_type == 0:
+                # Explicitly handle inability to detect type dynamically...
+                error = f"CiscoRange().remove({arg}) arg type: {type(arg)} does not match type: {self.member_type} of this CiscoRange(): {self}"
+                logger.error(error)
+                raise MismatchedType(error)
+            elif result_type is None:
+                # These should be CiscoInterface() types...
                 new_list = [ii for ii in list_before if ii != arg]
             else:
                 try:
-                    new_list = [ii for ii in list_before if result_type(ii) != arg]
+                    new_list = [result_type(ii) for ii in list_before if result_type(ii) != result_type(arg)]
                 except TypeError:
                     if debug is True:
-                        error = "Found type mismatch: {arg}, {ii}"
+                        error = f"CiscoRange().remove() found type mismatch: {arg}, {ii}"
                         logger.debug(error)
+
+            # Break if the remove() was successful, above...
             if len(new_list) < length_before:
                 self._list = new_list
                 break
-        arg_type = type(arg)
+
+        # Throw errors for inability to remove list items...
         if len(new_list) == length_before:
-            if len(self._list) > 0 and arg_type is not type(self._list[0]):
+            if len(self._list) > 0 and result_type is not type(self._list[0]):
                 # Do a simple type check to see if typing is the problem...
-                error = f"Could not remove {arg} {type(arg)} from this CiscoRange(); expected type {self.member_type}"
+                error = f"CiscoRange().remove() could not remove {arg} {type(arg)} from this CiscoRange(); expected type {self.member_type}"
                 logger.error(error)
                 raise MismatchedType(error)
-            elif len(self._list) == 0 and arg_type is not type(self._list[0]):
+            elif len(self._list) == 0:
                 if ignore_errors is not True:
-                    error = "Cannot remove from an empty CiscoRange()"
+                    error = "CiscoRange().remove() cannot remove from an empty CiscoRange()"
                     logger.critical(error)
                     raise InvalidMember(error)
             else:
                 # Otherwise, flag the problem as an invalid member...
                 if ignore_errors is not True:
-                    error = f"Could not find {arg} {type(arg)} in this CiscoRange(); ensure that {arg} is {self.member_type}"
+                    error = f"CiscoRange().remove() could not find {arg} {type(arg)} in this CiscoRange(); ensure that {arg} is {self.member_type}"
                     logger.critical(error)
                     raise InvalidMember(error)
+
         return self
 
 
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
-    def as_list(self, result_type=None):
+    def as_list(self, result_type="auto"):
         """Return a list of sorted components; an empty string is automatically rejected.  This method is tricky to test due to the requirement for the `.sort_list` attribute on all elements; avoid using the ordered nature of `as_list` and use `as_set`."""
         # WAS DEEPCOPY
         yy_list = copy.deepcopy(self._list)
@@ -4328,14 +4339,22 @@ class CiscoRange(MutableSequence):
         try:
             # Disable linter qa checks on this embedded list syntax...
             retval = sorted(set(self._list), reverse=self.reverse) # noqa
-            if result_type is None:
-                return retval
+            if result_type == "auto":
+                if len(self._list) > 0:
+                    result_type = type(self.as_list[0])
+                    return [result_type(ii) for ii in retval]
+                else:
+                    return set()
+            elif result_type is None:
+                return [CiscoInterface(ii) for ii in retval]
             elif result_type is str:
                 return [str(ii) for ii in retval]
             elif result_type is int:
                 return [int(ii) for ii in retval]
+            elif result_type is float:
+                return [float(ii) for ii in retval]
             else:
-                error = f"CiscoRange().as_list(result_type={result_type}) is not valid.  Choose from {[None, int, str]}.  result_type: None will return CiscoInterface() objects."
+                error = f"CiscoRange().as_list(result_type={result_type}) is not valid.  Choose from {['auto', None, int, str, float]}.  result_type: None will return CiscoInterface() objects."
                 logger.critical(error)
                 raise ValueError(error)
         except AttributeError as eee:
@@ -4348,17 +4367,25 @@ class CiscoRange(MutableSequence):
 
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
-    def as_set(self, result_type=None):
+    def as_set(self, result_type="auto"):
         """Return an unsorted set({}) components.  Use this method instead of `.as_list` whenever possible to avoid the requirement for elements needing a `.sort_list` attribute."""
         retval = set(self._list)
-        if result_type is None:
-            return retval
+        if result_type == "auto":
+            if len(self._list) > 0:
+                result_type = type(self.as_list[0])
+                return set([result_type(ii) for ii in retval])
+            else:
+                return list()
+        elif result_type is None:
+            return set([CiscoInterface(ii) for ii in retval])
         elif result_type is str:
             return set([str(ii) for ii in retval])
         elif result_type is int:
             return set([int(ii) for ii in retval])
+        elif result_type is float:
+            return set([float(ii) for ii in retval])
         else:
-            error = f"CiscoRange().as_list(result_type={result_type}) is not valid.  Choose from {[None, int, str]}.  result_type: None will return CiscoInterface() objects."
+            error = f"CiscoRange().as_list(result_type={result_type}) is not valid.  Choose from {['auto', None, int, str, float]}.  result_type: None will return CiscoInterface() objects."
             logger.critical(error)
             raise ValueError(error)
 
