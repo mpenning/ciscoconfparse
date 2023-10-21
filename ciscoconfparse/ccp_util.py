@@ -3809,7 +3809,7 @@ class CiscoRange(MutableSequence):
             empty = True
             text = None
 
-        if ",," in text:
+        if isinstance(text, str) and ",," in text:
             error = f"-->{text}<-- is an invalid range; double-commas are not allowed"
             logger.error(error)
             raise InvalidCiscoRange(error)
