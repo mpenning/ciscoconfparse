@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 import re
+import os
 
 from ciscoconfparse.errors import DynamicAddressException
 
@@ -7,6 +8,9 @@ from ciscoconfparse.ccp_util import (
     _IPV6_REGEX_STR_COMPRESSED1,
     _IPV6_REGEX_STR_COMPRESSED2,
 )
+from ciscoconfparse.errors import InvalidCiscoEthernetTrunkAction
+from ciscoconfparse.errors import InvalidCiscoEthernetVlan
+
 from ciscoconfparse.ccp_util import _IPV6_REGEX_STR_COMPRESSED3
 from ciscoconfparse.ccp_util import CiscoRange, CiscoInterface
 from ciscoconfparse.ccp_util import IPv4Obj, IPv6Obj
@@ -23,7 +27,7 @@ from loguru import logger
 ###   Use models_cisco.py at your own risk.  You have been warned :-)
 r""" models_cisco.py - Parse, Query, Build, and Modify IOS-style configurations
 
-     Copyright (C) 2021      David Michael Pennington
+     Copyright (C) 2021,2023 David Michael Pennington
      Copyright (C) 2020-2021 David Michael Pennington at Cisco Systems
      Copyright (C) 2019      David Michael Pennington at ThousandEyes
      Copyright (C) 2014-2019 David Michael Pennington at Samsung Data Services
@@ -363,6 +367,7 @@ class BaseIOSIntfLine(IOSCfgLine):
         self.ifindex = None  # Optional, for user use
         self.default_ipv4_addr_object = IPv4Obj("0.0.0.1/32", strict=False)
 
+    # This method is on BaseIOSIntfLine()
     @logger.catch(reraise=True)
     def __repr__(self):
         if not self.is_switchport:
@@ -392,6 +397,7 @@ class BaseIOSIntfLine(IOSCfgLine):
                 self.name,
             )
 
+    # This method is on BaseIOSIntfLine()
     @logger.catch(reraise=True)
     def _build_abbvs(self):
         r"""Build a set of valid abbreviations (lowercased) for the interface"""
@@ -405,16 +411,19 @@ class BaseIOSIntfLine(IOSCfgLine):
                 )
         return retval
 
+    # This method is on BaseIOSIntfLine()
     @logger.catch(reraise=True)
     def reset(self, atomic=True):
         # Insert build_reset_string() before this line...
         self.insert_before(self.build_reset_string(), atomic=atomic)
 
+    # This method is on BaseIOSIntfLine()
     @logger.catch(reraise=True)
     def build_reset_string(self):
         # IOS interfaces are defaulted like this...
         return "default " + self.text
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def verbose(self):
@@ -444,6 +453,7 @@ class BaseIOSIntfLine(IOSCfgLine):
                 )
             )
 
+    # This method is on BaseIOSIntfLine()
     @classmethod
     @logger.catch(reraise=True)
     def is_object_for(cls, line="", re=re):
@@ -451,6 +461,7 @@ class BaseIOSIntfLine(IOSCfgLine):
 
     ##-------------  Basic interface properties
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def abbvs(self):
@@ -460,6 +471,7 @@ class BaseIOSIntfLine(IOSCfgLine):
     _INTF_NAME_RE_STR = r"^interface\s+(\S+[0-9\/\.\s]+)\s*"
     _INTF_NAME_REGEX = re.compile(_INTF_NAME_RE_STR)
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def name(self):
@@ -509,6 +521,7 @@ class BaseIOSIntfLine(IOSCfgLine):
         name = self.re_match(self._INTF_NAME_REGEX).strip()
         return name
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def port(self):
@@ -552,6 +565,7 @@ class BaseIOSIntfLine(IOSCfgLine):
         """
         return self.ordinal_list[-1]
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def port_type(self):
@@ -596,6 +610,7 @@ class BaseIOSIntfLine(IOSCfgLine):
         port_type_regex = r"^interface\s+([A-Za-z\-]+)"
         return self.re_match(port_type_regex, group=1, default="")
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def ordinal_list(self):
@@ -650,6 +665,7 @@ class BaseIOSIntfLine(IOSCfgLine):
             else:
                 return ()
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def interface_number(self):
@@ -701,6 +717,7 @@ class BaseIOSIntfLine(IOSCfgLine):
             intf_number = self.re_match(intf_regex, group=1, default="")
             return intf_number
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def subinterface_number(self):
@@ -752,6 +769,7 @@ class BaseIOSIntfLine(IOSCfgLine):
             subintf_number = self.re_match(subintf_regex, group=1, default="")
             return subintf_number
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def description(self):
@@ -763,6 +781,7 @@ class BaseIOSIntfLine(IOSCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def manual_bandwidth(self):
@@ -771,6 +790,7 @@ class BaseIOSIntfLine(IOSCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def manual_delay(self):
@@ -779,6 +799,7 @@ class BaseIOSIntfLine(IOSCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def manual_holdqueue_out(self):
@@ -788,6 +809,7 @@ class BaseIOSIntfLine(IOSCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def manual_holdqueue_in(self):
@@ -797,6 +819,7 @@ class BaseIOSIntfLine(IOSCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def manual_encapsulation(self):
@@ -805,6 +828,7 @@ class BaseIOSIntfLine(IOSCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_mpls(self):
@@ -813,6 +837,7 @@ class BaseIOSIntfLine(IOSCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def ipv4_addr_object(self):
@@ -823,37 +848,38 @@ class BaseIOSIntfLine(IOSCfgLine):
         elif self.ipv4_addr=="dhcp":
             return self.default_ipv4_addr_object
         else:
-            return IPv4Obj("%s/%s" % (self.ipv4_addr, self.ipv4_netmask))
+            return IPv4Obj(f"{self.ipv4_addr}/{self.ipv4_netmask}")
 
         try:
-            logger.info("intf='{}' ipv4_addr='{}' ipv4_netmask='{}'".format(self.name, self.ipv4_addr, self.ipv4_netmask))
-            return IPv4Obj("%s/%s" % (self.ipv4_addr, self.ipv4_netmask))
+            logger.info(f"intf='{self.name}' ipv4_addr='{self.ipv4_addr}' ipv4_netmask='{self.ipv4_netmask}'")
+            return IPv4Obj(f"{self.ipv4_addr}/{self.ipv4_netmask}")
         except DynamicAddressException as e:
-            logger.critical("intf='{}' ipv4_addr='{}' ipv4_netmask='{}'".format(self.name, self.ipv4_addr, self.ipv4_netmask))
+            logger.critical(f"intf='{self.name}' ipv4_addr='{self.ipv4_addr}' ipv4_netmask='{self.ipv4_netmask}'")
             raise DynamicAddressException(e)
         except BaseException:
-            logger.warning("intf='{}' ipv4_addr='{}' ipv4_netmask='{}'".format(self.name, self.ipv4_addr, self.ipv4_netmask))
+            logger.warning(f"intf='{self.name}' ipv4_addr='{self.ipv4_addr}' ipv4_netmask='{self.ipv4_netmask}'")
             return self.default_ipv4_addr_object
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def ipv4_network_object(self):
         r"""Return an ccp_util.IPv4Obj object representing the subnet on this interface; if there is no address, return ccp_util.IPv4Obj('0.0.0.1/32')"""
         return self.ip_network_object
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def ip_network_object(self):
         # Simplified on 2014-12-02
         try:
-            return IPv4Obj(
-                "{0}/{1}".format(self.ipv4_addr, self.ipv4_netmask), strict=False
-            )
+            return IPv4Obj(f"{self.ipv4_addr}/{self.ipv4_mask}", strict=False)
         except DynamicAddressException as e:
             raise DynamicAddressException(e)
         except BaseException as e:
             return self.default_ipv4_addr_object
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_autonegotiation(self):
@@ -868,6 +894,7 @@ class BaseIOSIntfLine(IOSCfgLine):
         else:
             raise ValueError
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_manual_speed(self):
@@ -876,6 +903,7 @@ class BaseIOSIntfLine(IOSCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_manual_duplex(self):
@@ -884,12 +912,14 @@ class BaseIOSIntfLine(IOSCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_manual_carrierdelay(self):
         r"""Return a python boolean for whether carrier delay is manually configured on the interface"""
         return bool(self.manual_carrierdelay)
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def manual_carrierdelay(self):
@@ -908,11 +938,13 @@ class BaseIOSIntfLine(IOSCfgLine):
         else:
             return 0.0
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_manual_clock_rate(self):
         return bool(self.manual_clock_rate)
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def manual_clock_rate(self):
@@ -922,6 +954,7 @@ class BaseIOSIntfLine(IOSCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def manual_mtu(self):
@@ -972,6 +1005,7 @@ class BaseIOSIntfLine(IOSCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def manual_mpls_mtu(self):
@@ -982,6 +1016,7 @@ class BaseIOSIntfLine(IOSCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def manual_ip_mtu(self):
@@ -992,6 +1027,7 @@ class BaseIOSIntfLine(IOSCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def manual_speed(self):
@@ -1000,6 +1036,7 @@ class BaseIOSIntfLine(IOSCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def manual_duplex(self):
@@ -1008,21 +1045,25 @@ class BaseIOSIntfLine(IOSCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_manual_mtu(self):
         return bool(self.manual_mtu)
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_manual_mpls_mtu(self):
         return bool(self.manual_mpls_mtu)
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_manual_ip_mtu(self):
         return bool(self.manual_ip_mtu)
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def is_shutdown(self):
@@ -1031,11 +1072,13 @@ class BaseIOSIntfLine(IOSCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_vrf(self):
         return bool(self.vrf)
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def vrf(self):
@@ -1044,11 +1087,13 @@ class BaseIOSIntfLine(IOSCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def ip_addr(self):
         return self.ipv4_addr
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def ipv4_addr(self):
@@ -1066,6 +1111,7 @@ class BaseIOSIntfLine(IOSCfgLine):
         else:
             return retval
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def ipv4_netmask(self):
@@ -1077,6 +1123,7 @@ class BaseIOSIntfLine(IOSCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def ipv4_masklength(self):
@@ -1086,6 +1133,7 @@ class BaseIOSIntfLine(IOSCfgLine):
             return ipv4_addr_object.prefixlen
         return 0
 
+    # This method is on BaseIOSIntfLine()
     @logger.catch(reraise=True)
     def is_abbreviated_as(self, val):
         r"""Test whether `val` is a good abbreviation for the interface"""
@@ -1093,6 +1141,7 @@ class BaseIOSIntfLine(IOSCfgLine):
             return True
         return False
 
+    # This method is on BaseIOSIntfLine()
     @logger.catch(reraise=True)
     def in_ipv4_subnet(self, ipv4network=IPv4Obj("0.0.0.0/32", strict=False)):
         r"""Accept an argument for the :class:`~ccp_util.IPv4Obj` to be
@@ -1156,6 +1205,7 @@ class BaseIOSIntfLine(IOSCfgLine):
         else:
             return None
 
+    # This method is on BaseIOSIntfLine()
     @logger.catch(reraise=True)
     def in_ipv4_subnets(self, subnets=None):
         r"""Accept a set or list of ccp_util.IPv4Obj objects, and return a boolean for whether this interface is within the requested subnets."""
@@ -1169,6 +1219,7 @@ class BaseIOSIntfLine(IOSCfgLine):
                 return tmp
         return tmp
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_no_icmp_unreachables(self):
@@ -1185,6 +1236,7 @@ class BaseIOSIntfLine(IOSCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_no_icmp_redirects(self):
@@ -1201,6 +1253,7 @@ class BaseIOSIntfLine(IOSCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_no_ip_proxyarp(self):
@@ -1249,6 +1302,7 @@ class BaseIOSIntfLine(IOSCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_ip_pim_dense_mode(self):
@@ -1265,6 +1319,7 @@ class BaseIOSIntfLine(IOSCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_ip_pim_sparse_mode(self):
@@ -1281,6 +1336,7 @@ class BaseIOSIntfLine(IOSCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_ip_pim_sparsedense_mode(self):
@@ -1297,6 +1353,7 @@ class BaseIOSIntfLine(IOSCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def manual_arp_timeout(self):
@@ -1316,6 +1373,7 @@ class BaseIOSIntfLine(IOSCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_ip_helper_addresses(self):
@@ -1324,6 +1382,7 @@ class BaseIOSIntfLine(IOSCfgLine):
             return True
         return False
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def ip_helper_addresses(self):
@@ -1364,6 +1423,7 @@ class BaseIOSIntfLine(IOSCfgLine):
                 retval.append({"addr": addr, "vrf": vrf, "global": bool(global_addr)})
         return retval
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def is_switchport(self):
@@ -1372,6 +1432,7 @@ class BaseIOSIntfLine(IOSCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_manual_switch_access(self):
@@ -1380,11 +1441,13 @@ class BaseIOSIntfLine(IOSCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_manual_switch_trunk_encap(self):
         return bool(self.manual_switch_trunk_encap)
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def manual_switch_trunk_encap(self):
@@ -1393,6 +1456,7 @@ class BaseIOSIntfLine(IOSCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_manual_switch_trunk(self):
@@ -1401,6 +1465,7 @@ class BaseIOSIntfLine(IOSCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_switch_portsecurity(self):
@@ -1414,6 +1479,7 @@ class BaseIOSIntfLine(IOSCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_switch_stormcontrol(self):
@@ -1424,6 +1490,7 @@ class BaseIOSIntfLine(IOSCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_dtp(self):
@@ -1439,6 +1506,7 @@ class BaseIOSIntfLine(IOSCfgLine):
                 return False
         return True
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def access_vlan(self):
@@ -1454,71 +1522,232 @@ class BaseIOSIntfLine(IOSCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSIntfLine()
+    @logger.catch(reraise=True)
+    def check_switchport_trunk_cmd(self, input_cmd=None):
+        """Enforce rules for the ``switchport trunk allowed Vlan`` command instead of using a series of (slow) regex
+
+        Input
+        -----
+        The inputs are:
+
+        - ``input_cmd``, which should be a string like ``switchport trunk allowed vlan add 1,3,6-9,4094``
+
+        Internal Variables
+        ------------------
+        We use some notable internal variables:
+
+        - ``_trunk`` is the trunk allowed vlan command: ``add``, ``except``, or ``remove``.  We add another command, ``absolute`` for the case where there is no explicit trunk allowed command.
+        - ``vlan_spec`` is the input trunk allowed vlan specification: ``all``, ``none``, or a string similar to ``1,3,6-9,4094``
+        - ``vlan_spec_match`` is the ``vlan_spec`` variable if there was a vlan spec match; ``vlan_spec_match`` is ``_nomatch_`` if there was no match
+
+        Returns
+        -------
+        This method returns:
+
+        - ``trunk_command`` which is an alias for the trunk command, ``_trunk``, above.
+        """
+        if isinstance(input_cmd, str):
+            _input_cmd = input_cmd.strip().lower()
+        else:
+            error = "`input_cmd` must be a string like `switchport trunk allowed vlan`."
+            logger.error(error)
+            raise ValueError(error)
+
+        if _input_cmd[0:29]!="switchport trunk allowed vlan":
+            error = f"Invalid `switchport trunk allowed vlan` command: -->{input_cmd}<--"
+            logger.error(error)
+            raise ValueError(error)
+
+        # _trunk is is the command after 'switchport trunk allowed vlan' such
+        #     as: add, except, or remove
+        input_parts = _input_cmd.split()
+        _trunk = input_parts[4]
+        if _trunk == "add" or _trunk == "except" or _trunk == "remove":
+            # vlan_spec should be something like 1,3,5-9,4094
+            #    vlan_spec index is 5 in this if-clause...
+            vlan_spec = "".join([ii for ii in input_parts[5:] if ii!=" "])
+        else:
+            _trunk = "absolute"
+            # vlan_spec should be something like 1,3,5-9,4094
+            #    vlan_spec index is 5 in this else-clause...
+            vlan_spec = "".join([ii for ii in input_parts[4:] if ii!=" "])
+
+        vlan_spec_match = "_nomatch_"
+        if len(vlan_spec) > 0:
+            if vlan_spec[0].isdigit():
+                # Check that only the character class of space, dash, comma and digits are present
+                #     vlan_spec_boolean should be True if we get 1,3,5-9,4094
+                for jj in "".split(vlan_spec):
+                    vlan_spec_term_number = jj if "0" <= jj <= "9" else ""
+                    vlan_spec_term_comma = jj if jj == "," else ""
+                    vlan_spec_term_dash = jj if jj == "-" else ""
+                    vlan_spec_term_space = jj if jj == " " else ""
+                    if any([vlan_spec_term_number, vlan_spec_term_comma, vlan_spec_term_dash, vlan_spec_term_space]):
+                        vlan_spec = "_vlan_spec_match_"
+                if vlan_spec == "_vlan_spec_match_":
+                    vlan_spec_match = vlan_spec
+                elif vlan_spec=="all":
+                    vlan_spec_match = vlan_spec
+                elif vlan_spec=="none":
+                    vlan_spec_match = vlan_spec
+                else:
+                    vlan_spec_match = "_nomatch_"
+        else:
+            vlan_spec_match = "_nomatch_"
+
+        valid_trunk_cmds = {"add", "except", "remove", "absolute",}
+        trunk_command = _trunk
+        if _trunk in valid_trunk_cmds:
+            return trunk_command, vlan_spec_match
+        else:
+            error = f"_trunk is an invalid command; it must be one of {valid_trunk_cmds}"
+            logger.critical(error)
+            raise ValueError(error)
+
+
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def trunk_vlans_allowed(self):
         r"""Return a CiscoRange() with the list of allowed vlan numbers (as int).  Return 0 if the port isn't a switchport in trunk mode"""
 
-        # The default values...
+        # The default value for retval...
         if self.is_switchport and not self.has_manual_switch_access:
-            retval = CiscoRange(f"1-{MAX_VLAN}", result_type=str)
+            # This is a fancy pass statement... SonarCloud doesn't like pass...
+            _ = CiscoRange()
         else:
             return 0
 
+        retval = CiscoRange()
+
+        # Default to allow allow all vlans...
+        vdict = {"absolute": "1-4094"}
+
         ## Iterate over switchport trunk statements
         for obj in self.children:
+            split_line = [ii for ii in obj.text.split() if ii.strip() != ""]
+            length_split_line = len(split_line)
 
-            ## For every child object, check whether the vlan list is modified
-            abs_str = obj.re_match_typed(
-                r"^\s+switchport\s+trunk\s+allowed\s+vlan\s(all|none|\d.*?)$",
-                default="_nomatch_",
-                result_type=str,
-            ).lower()
-            add_str = obj.re_match_typed(
-                r"^\s+switchport\s+trunk\s+allowed\s+vlan\s+add\s+(\d.*?)$",
-                default="_nomatch_",
-                result_type=str,
-            ).lower()
-            exc_str = obj.re_match_typed(
-                r"^\s+switchport\s+trunk\s+allowed\s+vlan\s+except\s+(\d.*?)$",
-                default="_nomatch_",
-                result_type=str,
-            ).lower()
-            rem_str = obj.re_match_typed(
-                r"^\s+switchport\s+trunk\s+allowed\s+vlan\s+remove\s+(\d.*?)$",
-                default="_nomatch_",
-                result_type=str,
-            ).lower()
+            if 'switchport trunk allowed' in obj.text.lower():
+                trunk_command, vlan_spec_match = self.check_switchport_trunk_cmd(input_cmd=obj.text)
+                vdict[trunk_command] = vlan_spec_match
 
-            ## Build a vdict for each vlan modification statement
-            vdict = {
-                "absolute_str": abs_str,
-                "add_str": add_str,
-                "except_str": exc_str,
-                "remove_str": rem_str,
-            }
+            if False:
+                ## For every child object, check whether the vlan list is modified
+                abs_str = obj.re_match_typed(
+                    # switchport trunk allowed vlan
+                    r"^\s+switchport\s+trunk\s+allowed\s+vlan\s+(all|none|\d[\d\-\,\s]*)$",
+                    default="_nomatch_",
+                    result_type=str,
+                ).lower()
+                if abs_str != "_nomatch_":
+                    vdict["absolute"] = abs_str
 
-            ## Analyze each vdict in sequence and apply to retval sequentially
-            for key, _value in vdict.items():
-                if _value != "_nomatch_":
-                    ## absolute in the key overrides previous values
-                    if "absolute" in key:
-                        if _value.lower() == "all":
-                            retval = CiscoRange(text=f"1-{MAX_VLAN}", result_type=str)
-                        elif _value.lower() == "none":
-                            # Vlan 1... the default vlan...
-                            retval = CiscoRange(text="1", result_type=str)
+                allowed_str = obj.re_match_typed(
+                    r"^\s+switchport\s+trunk\s+allowed\s+vlan\s+add\s+(\d[\d\-\,\s]*)$",
+                    default="_nomatch_",
+                    result_type=str,
+                ).lower()
+                if allowed_str != "_nomatch_":
+                    vdict["add"] = allowed_str
+
+                exc_str = obj.re_match_typed(
+                    r"^\s+switchport\s+trunk\s+allowed\s+vlan\s+except\s+(\d[\d\-\,\s]*)$",
+                    default="_nomatch_",
+                    result_type=str,
+                ).lower()
+                if exc_str != "_nomatch_":
+                    vdict["except"] = exc_str
+
+                rem_str = obj.re_match_typed(
+                    r"^\s+switchport\s+trunk\s+allowed\s+vlan\s+remove\s+(\d[\d\-\,\s]*)$",
+                    default="_nomatch_",
+                    result_type=str,
+                ).lower()
+                if rem_str != "_nomatch_":
+                    vdict["remove"] = rem_str
+
+        print(f"{os.linesep}VDICT", vdict)
+
+        ## Analyze each vdict in sequence and apply to retval sequentially
+        if vdict.get("absolute") == "all":
+            if len(retval) != 4094:
+                retval = CiscoRange(f"1-{MAX_VLAN}", result_type=int)
+        elif vdict.get("absolute") == "none":
+            retval = CiscoRange(empty=True, result_type=int)
+        elif vdict.get("absolute") != "_nomatch_":
+            if "-" in vdict.get("absolute"):
+                for ii in vdict.get("absolute").split(","):
+                    retval.append(ii)
+
+        for key, _value in vdict.items():
+            _value = _value.strip()
+            print(f"KEY {key}, VALUE {_value}")
+            if _value == "":
+                continue
+            elif _value != "_nomatch_":
+                ## absolute in the key overrides previous values
+                if key=="absolute":
+                    retval = CiscoRange(result_type=None, empty=True)
+                    if _value.lower() == "none":
+                        continue
+                    elif _value.lower() == "all":
+                        retval = CiscoRange(text=f"1-{MAX_VLAN}", result_type=int)
+                    elif _value == "_nomatch_":
+                        for ii in _value.split(","):
+                            if "-" in _value:
+                                for jj in CiscoRange(_value):
+                                    retval.append(int(jj))
+                            else:
+                                retval.append(ii)
+                    elif isinstance(re.search(r"^\d[\d\-\,]*", _value), re.Match):
+                        print("HERE01", _value)
+                        for ii in _value.split(","):
+                            print("    HERE02", ii)
+                            if "-" in _value:
+                                for jj in CiscoRange(_value):
+                                    retval.append(int(jj))
+                            else:
+                                retval.append(ii)
+                        print("        HERE03 FINAL II", ii)
+                        print("        HERE03 FINAL JJ", jj)
+                    else:
+                        error = f"Could not derive a vlan range for {_value}"
+                        logger.error(error)
+                        raise InvalidCiscoEthernetVlan(error)
+
+                elif key=="add":
+                    for ii in _value.split(","):
+                        if "-" in _value:
+                            for jj in CiscoRange(_value):
+                                retval.append(int(jj))
                         else:
-                            retval = CiscoRange(text=_value, result_type=str)
-                    elif "add" in key:
-                        retval.append(_value)
-                    elif "except" in key:
-                        retval = CiscoRange(text=f"1-{MAX_VLAN}", result_type=str)
-                        retval.remove(_value)
-                    elif "remove" in key:
-                        retval.remove(_value)
+                            retval.append(ii)
+                elif key=="except":
+                    retval = CiscoRange(text=f"1-{MAX_VLAN}", result_type=int)
+                    for ii in _value.split(","):
+                        if "-" in _value:
+                            for jj in CiscoRange(_value):
+                                retval.remove(int(jj), ignore_errors=True)
+                        else:
+                            retval.remove(ii, ignore_errors=True)
+                elif key=="remove":
+                    for ii in _value.split(","):
+                        if "-" in _value:
+                            for jj in CiscoRange(text=_value, result_type=int):
+                                # Use ignore_errors to ignore missing elements...
+                                retval.remove(int(jj), ignore_errors=True)
+                        else:
+                            # Use ignore_errors to ignore missing elements...
+                            retval.remove(int(ii), ignore_errors=True)
+                else:
+                    error = f"{key} is an invalid Cisco switched dot1q ethernet trunk action."
+                    logger.error(error)
+                    raise InvalidCiscoEthernetTrunkAction(error)
         return retval
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def native_vlan(self):
@@ -1536,6 +1765,7 @@ class BaseIOSIntfLine(IOSCfgLine):
 
     ##-------------  CDP
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_manual_disable_cdp(self):
@@ -1546,11 +1776,13 @@ class BaseIOSIntfLine(IOSCfgLine):
 
     ##-------------  EoMPLS
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_xconnect(self):
         return bool(self.xconnect_vc)
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def xconnect_vc(self):
@@ -1561,11 +1793,13 @@ class BaseIOSIntfLine(IOSCfgLine):
 
     ##-------------  HSRP
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_ip_hsrp(self):
         return bool(self.hsrp_ip_addr)
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def hsrp_ip_addr(self):
@@ -1583,6 +1817,7 @@ class BaseIOSIntfLine(IOSCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def hsrp_ip_mask(self):
@@ -1602,6 +1837,7 @@ class BaseIOSIntfLine(IOSCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def hsrp_group(self):
@@ -1612,6 +1848,7 @@ class BaseIOSIntfLine(IOSCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def hsrp_priority(self):
@@ -1627,6 +1864,7 @@ class BaseIOSIntfLine(IOSCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def hsrp_hello_timer(self):
@@ -1642,6 +1880,7 @@ class BaseIOSIntfLine(IOSCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def hsrp_hold_timer(self):
@@ -1657,11 +1896,13 @@ class BaseIOSIntfLine(IOSCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_hsrp_track(self):
         return bool(self.hsrp_track)
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def hsrp_track(self):
@@ -1675,6 +1916,7 @@ class BaseIOSIntfLine(IOSCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_hsrp_usebia(self):
@@ -1688,6 +1930,7 @@ class BaseIOSIntfLine(IOSCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_hsrp_preempt(self):
@@ -1701,6 +1944,7 @@ class BaseIOSIntfLine(IOSCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def hsrp_authentication_md5_keychain(self):
@@ -1714,12 +1958,14 @@ class BaseIOSIntfLine(IOSCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_hsrp_authentication_md5(self):
         keychain = self.hsrp_authentication_md5_keychain
         return bool(keychain)
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def hsrp_authentication_cleartext(self):
@@ -1727,6 +1973,7 @@ class BaseIOSIntfLine(IOSCfgLine):
 
     ##-------------  MAC ACLs
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_mac_accessgroup_in(self):
@@ -1734,6 +1981,7 @@ class BaseIOSIntfLine(IOSCfgLine):
             return False
         return bool(self.mac_accessgroup_in)
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_mac_accessgroup_out(self):
@@ -1741,6 +1989,7 @@ class BaseIOSIntfLine(IOSCfgLine):
             return False
         return bool(self.mac_accessgroup_out)
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def mac_accessgroup_in(self):
@@ -1749,6 +1998,7 @@ class BaseIOSIntfLine(IOSCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def mac_accessgroup_out(self):
@@ -1759,36 +2009,43 @@ class BaseIOSIntfLine(IOSCfgLine):
 
     ##-------------  IPv4 ACLs
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_ip_accessgroup_in(self):
         return bool(self.ipv4_accessgroup_in)
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_ip_accessgroup_out(self):
         return bool(self.ipv4_accessgroup_out)
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_ipv4_accessgroup_in(self):
         return bool(self.ipv4_accessgroup_in)
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_ipv4_accessgroup_out(self):
         return bool(self.ipv4_accessgroup_out)
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def ip_accessgroup_in(self):
         return self.ipv4_accessgroup_in
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def ip_accessgroup_out(self):
         return self.ipv4_accessgroup_out
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def ipv4_accessgroup_in(self):
@@ -1797,6 +2054,7 @@ class BaseIOSIntfLine(IOSCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def ipv4_accessgroup_out(self):
@@ -1812,6 +2070,7 @@ class BaseIOSIntfLine(IOSCfgLine):
 
 
 class IOSIntfLine(BaseIOSIntfLine):
+    # This method is on IOSIntfLine()
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
         r"""Accept an IOS line number and initialize family relationship
@@ -1824,6 +2083,7 @@ class IOSIntfLine(BaseIOSIntfLine):
         super(IOSIntfLine, self).__init__(*args, **kwargs)
         self.feature = "interface"
 
+    # This method is on IOSIntfLine()
     @classmethod
     @logger.catch(reraise=True)
     def is_object_for(cls, line="", re=re):
@@ -1839,11 +2099,13 @@ class IOSIntfLine(BaseIOSIntfLine):
 
 
 class IOSIntfGlobal(BaseCfgLine):
+    # This method is on IOSIntGlobal()
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
         super(IOSIntfGlobal, self).__init__(*args, **kwargs)
         self.feature = "interface global"
 
+    # This method is on IOSIntGlobal()
     @logger.catch(reraise=True)
     def __repr__(self):
         return "<%s # %s '%s'>" % (self.classname, self.linenum, self.text)

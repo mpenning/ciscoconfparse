@@ -47,38 +47,7 @@ class ListItemTypeError(Exception):
         super().__init__(msg)
         self.msg = msg
 
-class DynamicAddressException(Exception):
-    """Throw this if you try to get an address object from a dhcp interface"""
-
-    def __init__(self, msg=""):
-        super().__init__(msg)
-        self.msg = msg
-
-class InvalidShellVariableMapping(Exception):
-
-    def __init__(self, msg=""):
-        super().__init__(msg)
-        self.msg = msg
-
-class InvalidCiscoInterface(Exception):
-
-    def __init__(self, msg=""):
-        super().__init__(msg)
-        self.msg = msg
-
 class DNSLookupError(Exception):
-
-    def __init__(self, msg=""):
-        super().__init__(msg)
-        self.msg = msg
-
-class InvalidParameters(Exception):
-
-    def __init__(self, msg=""):
-        super().__init__(msg)
-        self.msg = msg
-
-class InvalidMember(Exception):
 
     def __init__(self, msg=""):
         super().__init__(msg)
@@ -90,11 +59,74 @@ class DuplicateMember(Exception):
         super().__init__(msg)
         self.msg = msg
 
+class DynamicAddressException(Exception):
+    """Throw this if you try to get an address object from a dhcp interface"""
+
+    def __init__(self, msg=""):
+        super().__init__(msg)
+        self.msg = msg
+
+class InvalidCiscoInterface(Exception):
+
+    def __init__(self, msg=""):
+        super().__init__(msg)
+        self.msg = msg
+
+class InvalidCiscoEthernetTrunkAction(Exception):
+
+    def __init__(self, msg=""):
+        super().__init__(msg)
+        self.msg = msg
+
+class InvalidCiscoEthernetVlan(Exception):
+
+    def __init__(self, msg=""):
+        super().__init__(msg)
+        self.msg = msg
+
+class InvalidMember(Exception):
+
+    def __init__(self, msg=""):
+        super().__init__(msg)
+        self.msg = msg
+
+class InvalidParameters(Exception):
+
+    def __init__(self, msg=""):
+        super().__init__(msg)
+        self.msg = msg
+
+class InvalidCiscoRange(Exception):
+
+    def __init__(self, msg=""):
+        super().__init__(msg)
+        self.msg = msg
+
+class InvalidShellVariableMapping(Exception):
+
+    def __init__(self, msg=""):
+        super().__init__(msg)
+        self.msg = msg
+
+class NoRegexMatch(Exception):
+
+    def __init__(self, msg=""):
+        super().__init__(msg)
+        self.msg = msg
+
+
 class MismatchedType(Exception):
 
     def __init__(self, msg=""):
         super().__init__(msg)
         self.msg = msg
+
+class UnexpectedType(Exception):
+
+    def __init__(self, msg=""):
+        super().__init__(msg)
+        self.msg = msg
+
 
 class UntypedError(Exception):
 
