@@ -94,7 +94,7 @@ Dependencies
 Are you releasing licensing besides GPLv3?
 ------------------------------------------
 
-[I will not](https://github.com/mpenning/ciscoconfparse/issues/270); however, you can take the solution Cisco does above as long as you are not redistributing [CiscoConfParse][17] the project.  If it's truly a problem for your company, there are commercial solutions available (to include purchasing the project, or hiring me).
+[I will not](https://github.com/mpenning/ciscoconfparse/issues/270); however, you can take the solution Cisco does above as long as you comply with the GPLv3 terms.  If it's truly a problem for your company, there are commercial solutions available (to include purchasing the project, or hiring me).
 
 What if we don\'t use Cisco IOS?
 --------------------------------
