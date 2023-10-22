@@ -82,7 +82,7 @@ the [`github ciscoconfparse repo`](https://github.com/mpenning/ciscoconfparse).
 Are you releasing licensing besides GPLv3?
 ------------------------------------------
 
-[I will not](https://github.com/mpenning/ciscoconfparse/issues/270); however, you can take the solution Cisco does above as long as you comply with the GPLv3 terms.  If it's truly a problem for your company, there are commercial solutions available (to include purchasing the project, or hiring me).
+[I will not](https://github.com/mpenning/ciscoconfparse/issues/270#issuecomment-1774035592); however, you can take the solution Cisco does above as long as you comply with the GPLv3 terms.  If it's truly a problem for your company, there are commercial solutions available (to include purchasing the project, or hiring me).
 
 What if we don\'t use Cisco IOS?
 --------------------------------
