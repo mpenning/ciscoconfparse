@@ -5,9 +5,7 @@ ciscoconfparse
 
 [![SonarCloud][51]][52] [![SonarCloud Maintainability Rating][53]][54] [![SonarCloud Lines of Code][55]][56] [![SonarCloud Bugs][61]][62] [![SonarCloud Code Smells][57]][58] [![SonarCloud Tech Debt][63]][64]
 
-[![Snyk Package Health][37]][38] [![CodeFactor Code Health][43]][44] [![Codacy Code Health][46]][47]
-
-[![Deepsource.io][59]][60]
+[![Snyk Package Health][37]][38] [![Deepsource.io][59]][60]
 
 
 Introduction: What is ciscoconfparse?
