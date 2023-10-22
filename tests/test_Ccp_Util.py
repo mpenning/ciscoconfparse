@@ -711,6 +711,46 @@ def test_CiscoInterface_07():
     assert uut.subinterface == 5
     assert uut.channel == 9
 
+def test_CiscoInterface_08():
+    """Check that a card, slot, port, subinterface, and channel is parsed correctly from a dict"""
+    uut = CiscoInterface(
+        interface_dict={
+            'prefix': 'Ethernet',
+            'card': 2,
+            'slot': 1,
+            'port': 3,
+            'digit_separator': '/',
+            'subinterface': 4,
+            'channel': 5
+        })
+    assert uut.prefix == "Ethernet"
+    assert uut.slot == 1
+    assert uut.card == 2
+    assert uut.port == 3
+    assert uut.subinterface == 4
+    assert uut.channel == 5
+    assert uut.digit_separator == "/"
+
+def test_CiscoInterface_09():
+    """Check that a port is parsed correctly from a dict"""
+    uut = CiscoInterface(
+        interface_dict={
+            'prefix': 'Ethernet',
+            'card': None,
+            'slot': None,
+            'port': 1,
+            'digit_separator': None,
+            'subinterface': None,
+            'channel':None,
+        })
+    assert uut.prefix == "Ethernet"
+    assert uut.slot == None
+    assert uut.card is None
+    assert uut.port is 1
+    assert uut.subinterface is None
+    assert uut.channel is None
+    assert uut.digit_separator is None
+
 def test_CiscoRange_01():
     """Basic vlan range test"""
     result_correct = {1, 2, 3}
