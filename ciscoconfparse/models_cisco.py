@@ -1523,90 +1523,6 @@ class BaseIOSIntfLine(IOSCfgLine):
         return retval
 
     # This method is on BaseIOSIntfLine()
-    @logger.catch(reraise=True)
-    def check_switchport_trunk_cmd(self, input_cmd=None):
-        """Enforce rules for the ``switchport trunk allowed Vlan`` command instead of using a series of (slow) regex
-
-        Input
-        -----
-        The inputs are:
-
-        - ``input_cmd``, which should be a string like ``switchport trunk allowed vlan add 1,3,6-9,4094``
-
-        Internal Variables
-        ------------------
-        We use some notable internal variables:
-
-        - ``_trunk`` is the trunk allowed vlan command: ``add``, ``except``, or ``remove``.  We add another command, ``absolute`` for the case where there is no explicit trunk allowed command.
-        - ``vlan_spec`` is the input trunk allowed vlan specification: ``all``, ``none``, or a string similar to ``1,3,6-9,4094``
-        - ``vlan_spec_match`` is the ``vlan_spec`` variable if there was a vlan spec match; ``vlan_spec_match`` is ``_nomatch_`` if there was no match
-
-        Returns
-        -------
-        This method returns:
-
-        - ``trunk_command`` which is an alias for the trunk command, ``_trunk``, above.
-        """
-        if isinstance(input_cmd, str):
-            _input_cmd = input_cmd.strip().lower()
-        else:
-            error = "`input_cmd` must be a string like `switchport trunk allowed vlan`."
-            logger.error(error)
-            raise ValueError(error)
-
-        if _input_cmd[0:29]!="switchport trunk allowed vlan":
-            error = f"Invalid `switchport trunk allowed vlan` command: -->{input_cmd}<--"
-            logger.error(error)
-            raise ValueError(error)
-
-        # _trunk is is the command after 'switchport trunk allowed vlan' such
-        #     as: add, except, or remove
-        input_parts = _input_cmd.split()
-        _trunk = input_parts[4]
-        if _trunk == "add" or _trunk == "except" or _trunk == "remove":
-            # vlan_spec should be something like 1,3,5-9,4094
-            #    vlan_spec index is 5 in this if-clause...
-            vlan_spec = "".join([ii for ii in input_parts[5:] if ii!=" "])
-        else:
-            _trunk = "absolute"
-            # vlan_spec should be something like 1,3,5-9,4094
-            #    vlan_spec index is 5 in this else-clause...
-            vlan_spec = "".join([ii for ii in input_parts[4:] if ii!=" "])
-
-        vlan_spec_match = "_nomatch_"
-        if len(vlan_spec) > 0:
-            if vlan_spec[0].isdigit():
-                # Check that only the character class of space, dash, comma and digits are present
-                #     vlan_spec_boolean should be True if we get 1,3,5-9,4094
-                for jj in "".split(vlan_spec):
-                    vlan_spec_term_number = jj if "0" <= jj <= "9" else ""
-                    vlan_spec_term_comma = jj if jj == "," else ""
-                    vlan_spec_term_dash = jj if jj == "-" else ""
-                    vlan_spec_term_space = jj if jj == " " else ""
-                    if any([vlan_spec_term_number, vlan_spec_term_comma, vlan_spec_term_dash, vlan_spec_term_space]):
-                        vlan_spec = "_vlan_spec_match_"
-                if vlan_spec == "_vlan_spec_match_":
-                    vlan_spec_match = vlan_spec
-                elif vlan_spec=="all":
-                    vlan_spec_match = vlan_spec
-                elif vlan_spec=="none":
-                    vlan_spec_match = vlan_spec
-                else:
-                    vlan_spec_match = "_nomatch_"
-        else:
-            vlan_spec_match = "_nomatch_"
-
-        valid_trunk_cmds = {"add", "except", "remove", "absolute",}
-        trunk_command = _trunk
-        if _trunk in valid_trunk_cmds:
-            return trunk_command, vlan_spec_match
-        else:
-            error = f"_trunk is an invalid command; it must be one of {valid_trunk_cmds}"
-            logger.critical(error)
-            raise ValueError(error)
-
-
-    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def trunk_vlans_allowed(self):
@@ -1614,82 +1530,90 @@ class BaseIOSIntfLine(IOSCfgLine):
 
         # The default value for retval...
         if self.is_switchport and not self.has_manual_switch_access:
-            # This is a fancy pass statement... SonarCloud doesn't like pass...
-            _ = CiscoRange()
+            retval = CiscoRange(result_type=int)
         else:
             return 0
 
-        retval = CiscoRange()
 
         # Default to allow allow all vlans...
-        vdict = {"absolute": "1-4094"}
+        vdict = {"allowed": "1-4094"}
 
         ## Iterate over switchport trunk statements
         for obj in self.children:
             split_line = [ii for ii in obj.text.split() if ii.strip() != ""]
             length_split_line = len(split_line)
 
-            if 'switchport trunk allowed' in obj.text.lower():
-                trunk_command, vlan_spec_match = self.check_switchport_trunk_cmd(input_cmd=obj.text)
-                vdict[trunk_command] = vlan_spec_match
+            ## For every child object, check whether the vlan list is modified
+            allowed_str = obj.re_match_typed(
+                # switchport trunk allowed vlan
+                r"^\s+switchport\s+trunk\s+allowed\s+vlan\s+(all|none|\d[\d\-\,\s]*)$",
+                default="_nomatch_",
+                result_type=str,
+            ).lower()
+            if allowed_str != "_nomatch_":
+                if vdict.get("allowed", "_no_allowed_") != "_no_allowed_":
+                    # Replace the default allow of 1-4094...
+                    vdict["allowed"] = allowed_str
+                elif vdict.get("allowed", None) is None:
+                    # Specify an initial list of vlans...
+                    vdict["allowed"] = allowed_str
+                elif allowed_str != "none" and allowed_str != "all":
+                    # handle **double allowed** statements here...
+                    vdict["allowed"] += f",{allowed_str}"
+                else:
+                    raise NotImplementedError("Unexpected command: `{obj.text}`")
 
-            if False:
-                ## For every child object, check whether the vlan list is modified
-                abs_str = obj.re_match_typed(
-                    # switchport trunk allowed vlan
-                    r"^\s+switchport\s+trunk\s+allowed\s+vlan\s+(all|none|\d[\d\-\,\s]*)$",
-                    default="_nomatch_",
-                    result_type=str,
-                ).lower()
-                if abs_str != "_nomatch_":
-                    vdict["absolute"] = abs_str
+            add_str = obj.re_match_typed(
+                r"^\s+switchport\s+trunk\s+allowed\s+vlan\s+add\s+(\d[\d\-\,\s]*)$",
+                default="_nomatch_",
+                result_type=str,
+            ).lower()
+            if add_str != "_nomatch_":
+                if vdict.get("add", None) is None:
+                    vdict["add"] = add_str
+                else:
+                    vdict["add"] += f",{add_str}"
 
-                allowed_str = obj.re_match_typed(
-                    r"^\s+switchport\s+trunk\s+allowed\s+vlan\s+add\s+(\d[\d\-\,\s]*)$",
-                    default="_nomatch_",
-                    result_type=str,
-                ).lower()
-                if allowed_str != "_nomatch_":
-                    vdict["add"] = allowed_str
-
-                exc_str = obj.re_match_typed(
-                    r"^\s+switchport\s+trunk\s+allowed\s+vlan\s+except\s+(\d[\d\-\,\s]*)$",
-                    default="_nomatch_",
-                    result_type=str,
-                ).lower()
-                if exc_str != "_nomatch_":
+            exc_str = obj.re_match_typed(
+                r"^\s+switchport\s+trunk\s+allowed\s+vlan\s+except\s+(\d[\d\-\,\s]*)$",
+                default="_nomatch_",
+                result_type=str,
+            ).lower()
+            if exc_str != "_nomatch_":
+                if vdict.get("except", None) is None:
                     vdict["except"] = exc_str
+                else:
+                    vdict["except"] += f",{exc_str}"
 
-                rem_str = obj.re_match_typed(
-                    r"^\s+switchport\s+trunk\s+allowed\s+vlan\s+remove\s+(\d[\d\-\,\s]*)$",
-                    default="_nomatch_",
-                    result_type=str,
-                ).lower()
-                if rem_str != "_nomatch_":
+            rem_str = obj.re_match_typed(
+                r"^\s+switchport\s+trunk\s+allowed\s+vlan\s+remove\s+(\d[\d\-\,\s]*)$",
+                default="_nomatch_",
+                result_type=str,
+            ).lower()
+            if rem_str != "_nomatch_":
+                if vdict.get("remove", None) is None:
                     vdict["remove"] = rem_str
-
-        print(f"{os.linesep}VDICT", vdict)
+                else:
+                    vdict["remove"] += f",{rem_str}"
 
         ## Analyze each vdict in sequence and apply to retval sequentially
-        if vdict.get("absolute") == "all":
-            if len(retval) != 4094:
-                retval = CiscoRange(f"1-{MAX_VLAN}", result_type=int)
-        elif vdict.get("absolute") == "none":
-            retval = CiscoRange(empty=True, result_type=int)
-        elif vdict.get("absolute") != "_nomatch_":
-            if "-" in vdict.get("absolute"):
-                for ii in vdict.get("absolute").split(","):
-                    retval.append(ii)
+        if isinstance(vdict.get("allowed", None), str):
+            if vdict.get("allowed") == "all":
+                if len(retval) != 4094:
+                    retval = CiscoRange(f"1-{MAX_VLAN}", result_type=int)
+            elif vdict.get("allowed") == "none":
+                retval = CiscoRange(result_type=int)
+            elif vdict.get("allowed") != "_nomatch_":
+                retval = CiscoRange(vdict["allowed"], result_type=int)
 
         for key, _value in vdict.items():
             _value = _value.strip()
-            print(f"KEY {key}, VALUE {_value}")
             if _value == "":
                 continue
             elif _value != "_nomatch_":
-                ## absolute in the key overrides previous values
-                if key=="absolute":
-                    retval = CiscoRange(result_type=None, empty=True)
+                ## allowed in the key overrides previous values
+                if key=="allowed":
+                    retval = CiscoRange(result_type=int)
                     if _value.lower() == "none":
                         continue
                     elif _value.lower() == "all":
@@ -1697,21 +1621,17 @@ class BaseIOSIntfLine(IOSCfgLine):
                     elif _value == "_nomatch_":
                         for ii in _value.split(","):
                             if "-" in _value:
-                                for jj in CiscoRange(_value):
-                                    retval.append(int(jj))
+                                for jj in CiscoRange(_value, result_type=int):
+                                    retval.append(int(jj), ignore_errors=True)
                             else:
-                                retval.append(ii)
+                                retval.append(int(ii), ignore_errors=True)
                     elif isinstance(re.search(r"^\d[\d\-\,]*", _value), re.Match):
-                        print("HERE01", _value)
                         for ii in _value.split(","):
-                            print("    HERE02", ii)
                             if "-" in _value:
-                                for jj in CiscoRange(_value):
-                                    retval.append(int(jj))
+                                for jj in CiscoRange(_value, result_type=int):
+                                    retval.append(int(jj), ignore_errors=True)
                             else:
-                                retval.append(ii)
-                        print("        HERE03 FINAL II", ii)
-                        print("        HERE03 FINAL JJ", jj)
+                                retval.append(int(ii), ignore_errors=True)
                     else:
                         error = f"Could not derive a vlan range for {_value}"
                         logger.error(error)
@@ -1720,18 +1640,18 @@ class BaseIOSIntfLine(IOSCfgLine):
                 elif key=="add":
                     for ii in _value.split(","):
                         if "-" in _value:
-                            for jj in CiscoRange(_value):
-                                retval.append(int(jj))
+                            for jj in CiscoRange(_value, result_type=int):
+                                retval.append(int(jj), ignore_errors=True)
                         else:
-                            retval.append(ii)
+                            retval.append(int(ii), ignore_errors=True)
                 elif key=="except":
                     retval = CiscoRange(text=f"1-{MAX_VLAN}", result_type=int)
                     for ii in _value.split(","):
                         if "-" in _value:
-                            for jj in CiscoRange(_value):
+                            for jj in CiscoRange(_value, result_type=int):
                                 retval.remove(int(jj), ignore_errors=True)
                         else:
-                            retval.remove(ii, ignore_errors=True)
+                            retval.remove(int(ii), ignore_errors=True)
                 elif key=="remove":
                     for ii in _value.split(","):
                         if "-" in _value:

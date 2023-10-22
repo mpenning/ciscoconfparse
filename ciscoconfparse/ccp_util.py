@@ -3786,7 +3786,7 @@ class CiscoRange(MutableSequence):
             logger.info(f"CiscoRange() for --> text: {text} <--")
 
         self.text = text
-        self.result_type = None   # self.result_type will be set in parse_foo(), below...
+        self.result_type = result_type
         self.default_iter_attr = default_iter_attr
         self.reverse = reverse
         self.begin_obj = None
@@ -4108,7 +4108,10 @@ class CiscoRange(MutableSequence):
     @logger.catch(reraise=True)
     def __repr__(self):
         """Return a formal string representation of this CiscoRange() object."""
-        return f"""<CiscoRange {self.__str__()}>"""
+        if len(self._list) > 0:
+            return f"""<CiscoRange {self.__str__()} members: {self.member_type}>"""
+        else:
+            return f"""<CiscoRange [] result_type: {self.result_type}>"""
 
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
@@ -4203,17 +4206,16 @@ class CiscoRange(MutableSequence):
 
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
-    def append(self, val, sort=True):
+    def append(self, val, sort=True, ignore_errors=False, debug=False):
         """Append a member which matches the type of CiscoRange()._list[0]."""
 
         arg_type = type(val)
-        if len(self._list) > 0:
-            if arg_type is not type(self._list[0]):
-                error = f'Requested to append {val} {type(val)}; however, CiscoRange() expected {self.member_type}'
-                logger.error(error)
-                raise MismatchedType(error)
+        if len(self._list) > 0 and arg_type is not type(self._list[0]) and ignore_errors is False:
+            error = f'Requested to append {val} {type(val)}; however, CiscoRange() expected {self.member_type}'
+            logger.error(error)
+            raise MismatchedType(error)
 
-        if val in self._list:
+        if val in self._list and ignore_errors is False:
             error = f'Requested to append {val} {type(val)}; however, CiscoRange() already contains {val}'
             logger.error(error)
             raise DuplicateMember(error)
@@ -4221,19 +4223,26 @@ class CiscoRange(MutableSequence):
         # WAS DEEPCOPY
         new_list = copy.deepcopy(self._list)
 
-        # Append to the list intelligently (accounting for types...)
-        if len(self._list) > 0 and self.member_type is not None:
-            new_list.append(self.member_type(val))
-        elif len(self._list) == 0 and self.result_type is not None:
-            new_list.append(self.result_type(val))
-        else:
-            new_list.append(val)
+        try:
+            # Append to the list intelligently (accounting for types...)
+            if len(self._list) > 0 and self.member_type is not None:
+                new_list.append(self.member_type(val))
+            elif len(self._list) == 0 and self.result_type is not None:
+                new_list.append(self.result_type(val))
+            else:
+                new_list.append(val)
 
-        if sort is True:
-            retval = self.attribute_sort(new_list, attribute="sort_list", reverse=False)
-        else:
-            retval = new_list
-        self._list = retval
+            if sort is True:
+                retval = self.attribute_sort(new_list, attribute="sort_list", reverse=False)
+            else:
+                retval = new_list
+            self._list = retval
+        except DuplicateMember:
+            if ignore_errors is True:
+                logger.debug(f"CiscoRange().append({val}) was skipped because {val} already exists in this CiscoRange()")
+        except Exception as eee:
+            logger.warning(f"CiscoRange().append({val}) was skipped because of an error: {eee}")
+
         return self
 
     # This method is on CiscoRange()
@@ -4276,34 +4285,47 @@ class CiscoRange(MutableSequence):
         # WAS DEEPCOPY
         list_before = copy.deepcopy(self._list)
 
-        # Try removing some common result types...
-        for result_type in [None, str, int, float, 0]:
-            if result_type == 0:
-                # Explicitly handle inability to detect type dynamically...
-                error = f"CiscoRange().remove({arg}) arg type: {type(arg)} does not match type: {self.member_type} of this CiscoRange(): {self}"
-                logger.error(error)
-                raise MismatchedType(error)
-            elif result_type is None:
-                # These should be CiscoInterface() types...
-                new_list = [ii for ii in list_before if ii != arg]
+        # Ignore absent arg if ignore_errors is True
+        if arg not in self._list and ignore_errors is True:
+            new_list = self._list
+            if len(self._list) > 0:
+                result_type = type(self._list[0])
             else:
-                try:
-                    new_list = [result_type(ii) for ii in list_before if result_type(ii) != result_type(arg)]
-                except TypeError:
-                    if debug is True:
-                        error = f"CiscoRange().remove() found type mismatch: {arg}, {ii}"
-                        logger.debug(error)
+                result_type = self.result_type
 
-            # Break if the remove() was successful, above...
-            if len(new_list) < length_before:
-                self._list = new_list
-                break
+        elif len(self._list) > 0:
+
+            # Try removing some common result types...
+            for result_type in [None, int, str, float, 0]:
+                if len(self._list) > 0 and result_type is not type(self._list[0]):
+                    # Skip this result_type...
+                    continue
+                elif result_type == 0:
+                    # Explicitly handle inability to detect type dynamically...
+                    error = f"CiscoRange().remove({arg}) arg type: {type(arg)} does not match type: {self.member_type} of this CiscoRange(): {self}"
+                    logger.error(error)
+                    raise MismatchedType(error)
+                elif result_type is None:
+                    # These should be CiscoInterface() types...
+                    new_list = [ii for ii in list_before if ii != arg]
+                else:
+                    try:
+                        new_list = [result_type(ii) for ii in list_before if result_type(ii) != result_type(arg)]
+                    except TypeError:
+                        if debug is True:
+                            error = f"CiscoRange().remove() found type mismatch: {arg}, {ii}"
+                            logger.debug(error)
+
+                # Break if the remove() was successful, above...
+                if len(new_list) < length_before:
+                    self._list = new_list
+                    return self
 
         # Throw errors for inability to remove list items...
         if len(new_list) == length_before:
             if len(self._list) > 0 and result_type is not type(self._list[0]):
                 # Do a simple type check to see if typing is the problem...
-                error = f"CiscoRange().remove() could not remove {arg} {type(arg)} from this CiscoRange(); expected type {self.member_type}"
+                error = f"CiscoRange().remove() could not remove {arg} {type(arg)} from this CiscoRange(); existing members are type {type(self._list[0])}"
                 logger.error(error)
                 raise MismatchedType(error)
             elif len(self._list) == 0:
