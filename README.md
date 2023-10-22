@@ -81,16 +81,6 @@ copies of CiscoConfParse source-code must also be licensed as GPLv3][45].
 Dear [Cisco Systems][27]: please consider porting your improvements back into
 the [`github ciscoconfparse repo`](https://github.com/mpenning/ciscoconfparse).
 
-Dependencies
-------------
-
-- [Python 3](https://python.org/)
-- [passlib](https://github.com/glic3rinu/passlib)
-- [toml](https://github.com/uiri/toml)
-- [dnspython](https://github.com/rthalley/dnspython)
-- [loguru](https://github.com/Delgan/loguru)
-- [deprecated](https://github.com/tantale/deprecated)
-
 Are you releasing licensing besides GPLv3?
 ------------------------------------------
 
@@ -187,6 +177,17 @@ Bug Tracker and Support
   - [reddit/r/networking][36]
   - [NetworkEngineering.se][23]
 
+Dependencies
+------------
+
+- [Python 3](https://python.org/)
+- [passlib](https://github.com/glic3rinu/passlib)
+- [toml](https://github.com/uiri/toml)
+- [dnspython](https://github.com/rthalley/dnspython)
+- [loguru](https://github.com/Delgan/loguru)
+- [deprecated](https://github.com/tantale/deprecated)
+
+
 Unit-Tests and Development
 --------------------------
 
@@ -203,7 +204,16 @@ Caveats:
 - At this point, [CiscoConfParse][3] does NOT adhere to [Semantic Versioning][49]
 - Although we added [commitizen][48] as a dev dependency, we are NOT enforcing commit rules (such as [Conventional Commits][50]) yet.
 
-Click the image below for details; the current build status is: [![Github unittest status][4]][5]
+If you already git cloned the repo and want to manually run tests either run with `make test` from the base directory, or manually run with [`pytest`][65] in a unix-like system...
+
+```shell
+$ cd tests
+$ pytest -vvs ./test_CiscoConfParse.py
+...
+$ pytest -vvs ./test_Ccp_Util.py
+etc...
+```
+
 
 Editing the Package
 -------------------
@@ -366,3 +376,4 @@ Other Useful Network Management Projects
   [62]: https://sonarcloud.io/summary/new_code?id=mpenning_ciscoconfparse
   [63]: https://sonarcloud.io/api/project_badges/measure?project=mpenning_ciscoconfparse&metric=sqale_index
   [64]: https://sonarcloud.io/summary/new_code?id=mpenning_ciscoconfparse
+  [65]: https://docs.pytest.org/en/
