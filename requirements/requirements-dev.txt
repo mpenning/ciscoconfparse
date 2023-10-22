@@ -3,8 +3,9 @@ wheel >= 0.38.4
 twine >= 4.0.2
 
 # Other development resources...
-poetry == 1.5.1
-poetry-core == 1.6.1
+poetry >= 1.6.1
+poetry-core >= 1.7.0
+poetry-plugin-export >= 1.5.0
 packaging >= 23.0
 pytest >= 7.3.2
 gitpython

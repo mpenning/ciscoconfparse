@@ -82,7 +82,7 @@ passlib = "^1.7.4"
 dnspython = "^2.4.2"
 loguru = "0.7.2"
 toml = ">=0.10.2"
-deprecated = "1.2.14"
+deprecated = ">=1.2.14"
 
 [tool.poetry.urls]
 source = "https://github.com/mpenning/ciscoconfparse"
