@@ -5,9 +5,9 @@ import os
 
 sys.path.insert(0, "..")
 
+from ciscoconfparse.ccp_util import IPv4Obj, CiscoRange, CiscoInterface
 from ciscoconfparse.errors import DynamicAddressException
 from ciscoconfparse.ciscoconfparse import CiscoConfParse
-from ciscoconfparse.ccp_util import IPv4Obj, CiscoRange
 import pytest
 
 from loguru import logger
@@ -281,8 +281,8 @@ def testVal_IOSIntfLine_trunk_vlan_allowed_01():
     ]
     cfg = CiscoConfParse(lines, factory=True)
     intf_obj = cfg.find_objects("^interface")[0]
-    assert len(intf_obj.trunk_vlans_allowed.as_set(result_type=str)) == len(range(1, 4095))
-    assert intf_obj.trunk_vlans_allowed.as_set(result_type=str) == {str(ii) for ii in range(1, 4095)}
+    assert len(intf_obj.trunk_vlans_allowed.as_set(result_type=int)) == len(range(1, 4095))
+    assert intf_obj.trunk_vlans_allowed.as_list(result_type=int) == list(range(1, 4095))
 
 
 def testVal_IOSIntfLine_trunk_vlan_allowed_02():
@@ -296,7 +296,7 @@ def testVal_IOSIntfLine_trunk_vlan_allowed_02():
     ]
     cfg = CiscoConfParse(lines, factory=True)
     intf_obj = cfg.find_objects("^interface")[0]
-    assert intf_obj.trunk_vlans_allowed.as_set(result_type=str) == {"2", "4", "6", "911"}
+    assert intf_obj.trunk_vlans_allowed.as_set(result_type=int) == {2, 4, 6, 911}
 
 
 def testVal_IOSIntfLine_trunk_vlan_allowed_03():
@@ -311,7 +311,7 @@ def testVal_IOSIntfLine_trunk_vlan_allowed_03():
     ]
     cfg = CiscoConfParse(lines, factory=True)
     intf_obj = cfg.find_objects("^interface")[0]
-    assert intf_obj.trunk_vlans_allowed.as_set(result_type=str) == {"4", "6", "911"}
+    assert intf_obj.trunk_vlans_allowed.as_set(result_type=int) == {4, 6, 911}
 
 
 def testVal_IOSIntfLine_trunk_vlan_allowed_04():
@@ -326,7 +326,7 @@ def testVal_IOSIntfLine_trunk_vlan_allowed_04():
     ]
     cfg = CiscoConfParse(lines, factory=True)
     intf_obj = cfg.find_objects("^interface")[0]
-    assert intf_obj.trunk_vlans_allowed.as_set(result_type=str) == {"1"}
+    assert intf_obj.trunk_vlans_allowed.as_set(result_type=int) == {1}
 
 
 def testVal_IOSIntfLine_trunk_vlan_allowed_05():
@@ -341,7 +341,7 @@ def testVal_IOSIntfLine_trunk_vlan_allowed_05():
     ]
     cfg = CiscoConfParse(lines, factory=True)
     intf_obj = cfg.find_objects("^interface")[0]
-    assert intf_obj.trunk_vlans_allowed.as_set(result_type=str) == {"1",}
+    assert intf_obj.trunk_vlans_allowed.as_set(result_type=int) == {1,}
 
 
 def testVal_IOSIntfLine_trunk_vlan_allowed_06():
@@ -357,7 +357,7 @@ def testVal_IOSIntfLine_trunk_vlan_allowed_06():
     ]
     cfg = CiscoConfParse(lines, factory=True)
     intf_obj = cfg.find_objects("^interface")[0]
-    assert intf_obj.trunk_vlans_allowed == CiscoRange(text="2-5,17-19", result_type=str)
+    assert intf_obj.trunk_vlans_allowed.as_set(result_type=int) == {2,3,4,5,17,18,19}
 
 
 def testVal_IOSIntfLine_trunk_vlan_allowed_07():
@@ -374,7 +374,7 @@ interface GigabitEthernet 1/1
 """
     cfg = CiscoConfParse(config.splitlines(), factory=True)
     intf_obj = cfg.find_objects("^interface")[0]
-    assert intf_obj.trunk_vlans_allowed == CiscoRange("2-19,21-4094", result_type=str)
+    assert intf_obj.trunk_vlans_allowed == CiscoRange("2-19,21-4094", result_type=int)
 
 
 def testVal_IOSIntfLine_trunk_vlan_allowed_08():
@@ -387,7 +387,7 @@ interface GigabitEthernet 1/1
 """
     cfg = CiscoConfParse(config.splitlines(), factory=True)
     intf_obj = cfg.find_objects("^interface")[0]
-    assert intf_obj.trunk_vlans_allowed == CiscoRange(text="", result_type=str)
+    assert intf_obj.trunk_vlans_allowed == CiscoRange(text="", result_type=int)
 
 
 def testVal_IOSIntfLine_abbvs(parse_c03_factory):

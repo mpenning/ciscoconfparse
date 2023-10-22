@@ -856,23 +856,35 @@ def test_CiscoRange_18():
     assert CiscoRange(uut_str).as_set(result_type=str) == result_correct
 
 
-if False:
-    def test_CiscoRange_19():
-        """Parse a string with a common prefix on all of the CiscoRange() inputs"""
-        result_correct = {
-            "interface Eth1/1", "interface Eth1/10", "interface Eth1/12",
-            "interface Eth1/13", "interface Eth1/14", "interface Eth1/15",
-            "interface Eth1/16", "interface Eth1/17", "interface Eth1/18",
-            "interface Eth1/19", "interface Eth1/20"
-        }
-        uut_str = "interface Eth1/1,interface Eth1/12-20,interface Eth1/16,interface Eth1/10"
-        assert isinstance(uut_str, str)
-        assert CiscoRange(uut_str).as_set(result_type=str) == result_correct
+def test_CiscoRange_19():
+    """Check that the exact results are correct for CiscoRange().as_set() with a redundant input ('Eth1/1')"""
+    result_correct = {
+        CiscoInterface("Eth1/1"),
+        CiscoInterface("Eth1/2"),
+        CiscoInterface("Eth1/3"),
+        CiscoInterface("Eth1/4"),
+        CiscoInterface("Eth1/5"),
+        CiscoInterface("Eth1/16"),
+    }
+    uut_str = "Eth1/1,Eth1/1-5,Eth1/16"
+    assert CiscoRange(uut_str).as_set() == result_correct
+
+def test_CiscoRange_20():
+    """Check that the exact results are correct for CiscoRange().as_list() with a redundant input ('Eth1/1')"""
+    result_correct = [
+        CiscoInterface("Eth1/1"),
+        CiscoInterface("Eth1/2"),
+        CiscoInterface("Eth1/3"),
+        CiscoInterface("Eth1/4"),
+        CiscoInterface("Eth1/5"),
+        CiscoInterface("Eth1/16"),
+    ]
+    uut_str = "Eth1/1,Eth1/1-5,Eth1/16"
+    assert CiscoRange(uut_str).as_list() == result_correct
 
 def test_CiscoRange_compressed_str_01():
     """compressed_str test with a very basic set of vlan numbers"""
     uut_str = "1,2,911"
-    assert isinstance(uut_str, str)
     assert CiscoRange(uut_str, result_type=str).as_compressed_str() == "1,2,911"
     assert "2" in CiscoRange(uut_str).as_compressed_str()
     assert "911" in CiscoRange(uut_str).as_compressed_str()
@@ -880,17 +892,20 @@ def test_CiscoRange_compressed_str_01():
 def test_CiscoRange_compressed_str_02():
     """compressed_str test with vlan number ranges"""
     uut_str = "1,2, 3, 6, 7,  8 , 9, 911"
-    assert isinstance(uut_str, str)
     assert CiscoRange(uut_str, result_type=str).as_compressed_str() == "1-3,6-9,911"
 
 
-def test_CiscoRange_contains():
+def test_CiscoRange_contains_01():
+    """Check that the exact results are correct that a CiscoRange() contains an input"""
     uut_str = "Ethernet1/1-20"
-    assert isinstance(uut_str, str)
     # Ethernet1/5 is in CiscoRange("Ethernet1/1-20")...
-    assert "1/1" in CiscoRange(uut_str).as_compressed_str()
-    assert "20" in CiscoRange(uut_str).as_compressed_str()
-    assert "Ethernet1/5" in CiscoRange(uut_str).as_list()
+    assert CiscoInterface("Ethernet1/5") in CiscoRange(uut_str)
+
+def test_CiscoRange_contains_02():
+    """Check that the exact results are correct that a CiscoRange() does not contain an input"""
+    uut_str = "Ethernet1/1-20"
+    # Ethernet1/5 is in CiscoRange("Ethernet1/1-20")...
+    assert (CiscoInterface("Ethernet1/48") in CiscoRange(uut_str)) is False
 
 #pragma warning restore S1192
 #pragma warning restore S1313
