@@ -91,6 +91,11 @@ Dependencies
 - [loguru](https://github.com/Delgan/loguru)
 - [deprecated](https://github.com/tantale/deprecated)
 
+Are you releasing licensing besides GPLv3?
+------------------------------------------
+
+[I will not](https://github.com/mpenning/ciscoconfparse/issues/270); however, you can take the solution Cisco does above as long as you are not redistributing [CiscoConfParse][17] the project.  If it's truly a problem for your company, there are commercial solutions available (to include purchasing the project, or hiring me).
+
 What if we don\'t use Cisco IOS?
 --------------------------------
 
@@ -149,10 +154,6 @@ What is the pythonic way of handling script credentials?
 1. Never hard-code credentials
 2. Use [python-dotenv](https://github.com/theskumar/python-dotenv)
 
-Are you releasing licensing besides GPLv3?
-------------------------------------------
-
-It is a [work in progress](https://github.com/mpenning/ciscoconfparse/issues/270)
 
 Is this a tool, or is it artwork?
 ---------------------------------
