@@ -794,28 +794,28 @@ def test_CiscoRange_11():
 def test_CiscoRange_12():
     """Basic interface slot range test"""
     result_correct = {"2/1/1", "2/1/2", "2/1/3", "2/1/4", "2/1/5"}
-    uut_str = "interface Eth2/1/1-3,4,5"
+    uut_str = "2/1/1-3,4,5"
     assert CiscoRange(uut_str).as_set(result_type=str) == result_correct
 
 
 def test_CiscoRange_13():
     """Basic interface slot range test"""
     result_correct = {"2/1/1", "2/1/2", "2/1/3", "2/1/4", "2/1/5"}
-    uut_str = "interface Eth2/1/1,2-4,5"
+    uut_str = "2/1/1,2-4,5"
     assert CiscoRange(uut_str).as_set(result_type=str) == result_correct
 
 
 def test_CiscoRange_14():
     """Basic interface slot range test"""
     result_correct = {"2/1/1", "2/1/2", "2/1/3", "2/1/4", "2/1/5"}
-    uut_str = "interface Eth2/1/1,2,3-5"
+    uut_str = "2/1/1,2,3-5"
     assert CiscoRange(uut_str).as_set(result_type=str) == result_correct
 
 
 def test_CiscoRange_15():
     """Basic interface slot range test"""
-    result_correct = {"2/1/1", "2/1/2", "2/1/3", "2/1/4", "2/1/5"}
-    uut_str = "interface Eth 2/1/1,2,3-5"
+    result_correct = {"Eth2/1/1", "Eth2/1/2", "Eth2/1/3", "Eth2/1/4", "Eth2/1/5"}
+    uut_str = "Eth 2/1/1,2,3-5"
     assert CiscoRange(uut_str).as_set(result_type=str) == result_correct
 
 
@@ -841,7 +841,8 @@ def test_CiscoRange_19():
         CiscoInterface("Eth1/16"),
     }
     uut_str = "Eth1/1,Eth1/1-5,Eth1/16"
-    assert CiscoRange(uut_str).as_set() == result_correct
+    # CiscoRange(text="foo", result_type=None) returns CiscoInterface() instances...
+    assert CiscoRange(uut_str, result_type=None).as_set(result_type=None) == result_correct
 
 def test_CiscoRange_20():
     """Check that the exact results are correct for CiscoRange().as_list() with a redundant input ('Eth1/1')"""
@@ -854,7 +855,8 @@ def test_CiscoRange_20():
         CiscoInterface("Eth1/16"),
     ]
     uut_str = "Eth1/1,Eth1/1-5,Eth1/16"
-    assert CiscoRange(uut_str).as_list() == result_correct
+    # CiscoRange(text="foo", result_type=None) returns CiscoInterface() instances...
+    assert CiscoRange(uut_str, result_type=None).as_list(result_type=None) == result_correct
 
 def test_CiscoRange_compressed_str_01():
     """compressed_str test with a very basic set of vlan numbers"""

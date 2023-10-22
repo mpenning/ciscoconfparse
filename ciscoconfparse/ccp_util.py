@@ -3850,13 +3850,14 @@ class CiscoRange(MutableSequence):
         # De-duplicate the list of integers and return it...
         return list(set([int(ii) for ii in integers]))
 
+    def parse_strings(self, text, debug=False):
+        """Parse text input to CiscoRange(), such as CiscoRange('1-5,7', result_type=None).  '1-5,7 will be parsed.  By default, CiscoInterface() instances are used when CiscoRange(result_type=None) is parsed.'  An error is raised if the CiscoRange() cannot be parsed"""
+        self.result_type = str
+        return self.parse_cisco_interfaces(text=text, debug=debug)
+
     def parse_floats(self, text, debug=False):
         self.result_type = float
         raise NotImplementedError("parse_floats() is not yet supported")
-
-    def parse_strings(self, text, debug=False):
-        self.result_type = str
-        raise NotImplementedError("parse_strings() is not yet supported")
 
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
@@ -4363,7 +4364,7 @@ class CiscoRange(MutableSequence):
             retval = sorted(set(self._list), reverse=self.reverse) # noqa
             if result_type == "auto":
                 if len(self._list) > 0:
-                    result_type = type(self.as_list[0])
+                    result_type = self.member_type
                     return [result_type(ii) for ii in retval]
                 else:
                     return set()
@@ -4429,6 +4430,7 @@ class CiscoRange(MutableSequence):
         else:
             retval = list()
 
+        # Handle CiscoInterface() instances...
         if self.member_type is CiscoInterface:
             # Build a magic attribute dict so we can intelligently prepend slot/card/port/etc...
             magic_string = "3141592653591892234109876543212345678"
@@ -4451,18 +4453,21 @@ class CiscoRange(MutableSequence):
             input_str = []
             for _, component in enumerate(self.as_list()):
                 input_str.append(getattr(CiscoInterface(component), self.iterate_attribute))
+        # Handle str() instances...
         elif self.member_type is str:
             prefix_str = ""
             # Build a list of the relevant string iteration pieces...
             input_str = []
             for _, component in enumerate(self.as_list()):
                 input_str.append(str(component))
+        # Handle int() instances...
         elif self.member_type is int:
             prefix_str = ""
             # Build a list of the relevant string iteration pieces...
             input_str = []
             for _, component in enumerate(self.as_list()):
                 input_str.append(int(component))
+        # Handle float() instances...
         elif self.member_type is float:
             prefix_str = ""
             # Build a list of the relevant string iteration pieces...
