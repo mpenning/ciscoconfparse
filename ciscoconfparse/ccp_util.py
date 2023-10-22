@@ -3081,10 +3081,17 @@ class CiscoInterface(object):
         ######################################################################
         _prefix = intf_dict["prefix"]
         _digit_separator = intf_dict["digit_separator"]
+        ######################################################################
+        # Handle a slot and port
+        ######################################################################
         if isinstance(intf_dict["slot"], (str, int)) and isinstance(intf_dict["port"], (str, int)):
             _slot = intf_dict["slot"]
             _card = intf_dict["card"]
             _port = intf_dict["port"]
+        ######################################################################
+        # Handle port alone... if we don't rewrite slot as None, it isn't
+        #    handled correctly by default
+        ######################################################################
         elif intf_dict["slot"] is None and isinstance(intf_dict["port"], (str, int)):
             _slot = None
             _card = None
