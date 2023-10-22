@@ -216,9 +216,12 @@ etc...
 Editing the Package
 -------------------
 
+This uses the example of editing the package on a git branch called `develop`...
+
 -   `git clone https://github.com/mpenning/ciscoconfparse`
 -   `cd ciscoconfparse`
--   `git checkout -b develop`
+-   `git branch develop`
+-   `git checkout develop`
 -   Add / modify / delete on the `develop` branch
 -   `make test`
 -   If tests run clean, `git commit` all the pending changes on the `develop` branch
