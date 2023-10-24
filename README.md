@@ -85,7 +85,12 @@ for ccp_obj in parse.find_objects('^interface'):
     # IPv4 address object: ipaddress.IPv4Address()
     intf_v4addr = ccp_obj.ipv4_addr_object.ip
     # IPv4 netmask object: ipaddress.IPv4Address()
-    intf_v4addr = ccp_obj.ipv4_addr_object.netmask
+    intf_v4netmask = ccp_obj.ipv4_addr_object.netmask
+    # IPv4 HSRPv4 Groups
+    intf_v4hsrp_groups = ccp_obj.hsrpv4_groups
+    # List of IPv4 HSRPv4 Addresses
+    intf_v4hsrp_addresses = [hsrp.ip for hsrp in ccp_obj.hsrpv4_groups]
+
 
     intf_cisco_interface = ccp_obj.cisco_interface
     intf_name = ccp_obj.cisco_interface.name
