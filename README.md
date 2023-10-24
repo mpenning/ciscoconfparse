@@ -67,7 +67,7 @@ for ccp_obj in parse.find_objects('^interface'):
 
 ## Cisco IOS Factory Usage
 
-CiscoConfParse has a special feature that abstracts common IOS / NXOS / ASA / IOSXR fields; you will see this in CiscoConfParse code as parsing the configuration with `factory=True`.  A simple example of a fraction of these pre-parsed fields follows; many variables are simply called out for future quick reference.
+CiscoConfParse has a special feature that abstracts common IOS / NXOS / ASA / IOSXR fields; at this time, it is only supported on those configuration types. You will see factory parsing in CiscoConfParse code as parsing the configuration with `factory=True`.  A simple example of some these pre-parsed fields follows; some variables are not used, but simply called out for quick reference.
 
 ```python
 from ciscoconfparse import CiscoConfParse
@@ -90,7 +90,11 @@ for ccp_obj in parse.find_objects('^interface'):
     intf_v4hsrp_groups = ccp_obj.hsrpv4_groups
     # List of IPv4 HSRPv4 Addresses
     intf_v4hsrp_addresses = [hsrp.ip for hsrp in ccp_obj.hsrpv4_groups]
-
+    for hsrp_group in ccp_obj.hsrpv4_groups:
+        for track_dict in hsrp_group.interface_tracking:
+            # do something with the tracking dict here...
+            track_intf = track_dict["interface"]
+            track_decrement = track_dict["decrement"]
 
     intf_cisco_interface = ccp_obj.cisco_interface
     intf_name = ccp_obj.cisco_interface.name
