@@ -6,7 +6,7 @@
 
 ## Version: 1.9.3
 
-- Released: Not released
+- Released: 2023-10-24
 - Summary:
     - Remove dead code
     - Rename `CiscoRange().compressed_str` to `CiscoRange().as_compressed_str()`
