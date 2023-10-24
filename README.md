@@ -1,5 +1,4 @@
-ciscoconfparse
-==============
+# ciscoconfparse
 
 [![git commits][41]][42] [![Version][2]][3] [![Downloads][6]][7] [![License][8]][9]
 
@@ -8,8 +7,7 @@ ciscoconfparse
 [![Snyk Package Health][37]][38] [![Deepsource.io][59]][60]
 
 
-Introduction: What is ciscoconfparse?
--------------------------------------
+## Introduction: What is ciscoconfparse?
 
 Short answer: ciscoconfparse is a [Python][10] library
 that helps you quickly answer questions like these about your
@@ -33,8 +31,7 @@ complex queries about these relationships.
 
 [![Cisco IOS config: Parent / child][11]][11]
 
-Usage
------
+## Generic Usage
 
 The following code will parse a configuration stored in
 \'exampleswitch.conf\' and select interfaces that are shutdown.
@@ -55,21 +52,54 @@ from ciscoconfparse import CiscoConfParse
 
 parse = CiscoConfParse('exampleswitch.conf', syntax='ios')
 
-for intf_obj in parse.find_objects('^interface'):
+for ccp_obj in parse.find_objects('^interface'):
 
-    intf_name = intf_obj.re_match_typed('^interface\s+(\S.+?)$')
+    intf_name = ccp_obj.re_match_typed('^interface\s+(\S.+?)$')
 
     # Search children of all interfaces for a regex match and return
     # the value matched in regex match group 1.  If there is no match,
     # return a default value: ''
-    intf_ip_addr = intf_obj.re_match_iter_typed(
+    intf_ip_addr = ccp_obj.re_match_iter_typed(
         r'ip\saddress\s(\d+\.\d+\.\d+\.\d+)\s', result_type=str,
         group=1, default='')
-    print("{0}: {1}".format(intf_name, intf_ip_addr))
+    print(f"{intf_name}: {intf_ip_addr}")
 ```
 
-Are there private copies of CiscoConfParse()?
----------------------------------------------
+## Cisco IOS Factory Usage
+
+CiscoConfParse has a special feature that abstracts common IOS / NXOS / ASA / IOSXR fields; you will see this in CiscoConfParse code as parsing the configuration with `factory=True`.  A simple example of a fraction of these pre-parsed fields follows; many variables are simply called out for future quick reference.
+
+```python
+from ciscoconfparse import CiscoConfParse
+
+parse = CiscoConfParse('tests/fixtures/configs/sample_01.ios', syntax='ios', factory=True)
+
+for ccp_obj in parse.find_objects('^interface'):
+
+    # Interface name, such as 'Serial1/0'
+    intf_name = ccp_obj.name
+    # IPv4Obj
+    intf_v4obj = ccp_obj.ipv4_addr_object
+    # IPv4 network object: ipaddress.IPv4Network()
+    intf_v4obj = ccp_obj.ipv4_addr_object.network
+    # IPv4 address object: ipaddress.IPv4Address()
+    intf_v4addr = ccp_obj.ipv4_addr_object.ip
+    # IPv4 netmask object: ipaddress.IPv4Address()
+    intf_v4addr = ccp_obj.ipv4_addr_object.netmask
+
+    intf_cisco_interface = ccp_obj.cisco_interface
+    intf_name = ccp_obj.cisco_interface.name
+    intf_slot = ccp_obj.cisco_interface.slot or ""
+    intf_card = ccp_obj.cisco_interface.card or ""
+    intf_port = ccp_obj.cisco_interface.port
+
+    # Search children of all interfaces for a regex match and return
+    # the value matched in regex match group 1.  If there is no match,
+    # return a default value: ''
+    print(f"{intf_name}: {intf_v4addr} {intf_v4netmask}")
+```
+
+## Are there private copies of CiscoConfParse()?
 
 Yes.  [Cisco Systems][27] maintains their own copy of `CiscoConfParse()`. The terms of the GPLv3
 license allow this as long as they don't distribute their modified private copy in
@@ -79,13 +109,11 @@ copies of CiscoConfParse source-code must also be licensed as GPLv3][45].
 Dear [Cisco Systems][27]: please consider porting your improvements back into
 the [`github ciscoconfparse repo`](https://github.com/mpenning/ciscoconfparse).
 
-Are you releasing licensing besides GPLv3?
-------------------------------------------
+## Are you releasing licensing besides GPLv3?
 
 [I will not](https://github.com/mpenning/ciscoconfparse/issues/270#issuecomment-1774035592); however, you can take the solution Cisco does above as long as you comply with the GPLv3 terms.  If it's truly a problem for your company, there are commercial solutions available (to include purchasing the project, or hiring me).
 
-What if we don\'t use Cisco IOS?
---------------------------------
+## What if we don\'t use Cisco IOS?
 
 Don\'t let that stop you.
 
@@ -107,8 +135,8 @@ CiscoConfParse also handles anything that has a Cisco IOS style of configuration
 - Enterasys
 - Screenos
 
-Docs
-----
+## Docs
+
 
 - Blogs
   - Kirk Byers published [a ciscoconfparse blog piece](https://pynet.twb-tech.com/blog/parsing-configurations-w-ciscoconfparse.html)
@@ -116,8 +144,7 @@ Docs
 - The latest copy of the docs are [archived on the web][15]
 - There is also a [CiscoConfParse Tutorial][16]
 
-Installation and Downloads
---------------------------
+## Installation and Downloads
 
 -   Use `poetry` for Python3.x\... :
 
@@ -131,41 +158,34 @@ If you\'re interested in the source, you can always pull from the [github repo][
         cd ciscoconfparse/
         python -m pip install .
 
-Github Star History
--------------------
+## Github Star History
 
 [![Github Star History Chart][40]][40]
 
-What is the pythonic way of handling script credentials?
---------------------------------------------------------
+## What is the pythonic way of handling script credentials?
 
 1. Never hard-code credentials
 2. Use [python-dotenv](https://github.com/theskumar/python-dotenv)
 
 
-Is this a tool, or is it artwork?
----------------------------------
+## Is this a tool, or is it artwork?
 
 That depends on who you ask.  Many companies use CiscoConfParse as part of their
 network engineering toolbox; others regard it as a form of artwork.
 
-Pre-requisites
---------------
+## Pre-requisites
 
 [The ciscoconfparse python package][3] requires Python versions 3.7+ (note: Python version 3.7.0 has a bug - ref [Github issue \#117][18], but version 3.7.1 works); the OS should not matter.
 
 
-
-Other Resources
----------------
+## Other Resources
 
 - [Dive into Python3](http://www.diveintopython3.net/) is a good way to learn Python
 - [Team CYMRU][30] has a [Secure IOS Template][29], which is especially useful for external-facing routers / switches
 - [Cisco\'s Guide to hardening IOS devices][31]
 - [Center for Internet Security Benchmarks][32] (An email address, cookies, and javascript are required)
 
-Bug Tracker and Support
------------------------
+## Bug Tracker and Support
 
 - Please report any suggestions, bug reports, or annoyances with a [github bug report][24].
 - If you\'re having problems with general python issues, consider searching for a solution on [Stack Overflow][33].  If you can\'t find a solution for your problem or need more help, you can [ask on Stack Overflow][34] or [reddit/r/Python][39].
@@ -175,8 +195,7 @@ Bug Tracker and Support
   - [reddit/r/networking][36]
   - [NetworkEngineering.se][23]
 
-Dependencies
-------------
+## Dependencies
 
 - [Python 3](https://python.org/)
 - [passlib](https://github.com/glic3rinu/passlib)
@@ -186,8 +205,7 @@ Dependencies
 - [deprecated](https://github.com/tantale/deprecated)
 
 
-Unit-Tests and Development
---------------------------
+## Unit-Tests and Development
 
 - We are manually disabling some [SonarCloud](https://sonarcloud.io/) alerts with:
   - `#pragma warning disable S1313`
@@ -212,9 +230,7 @@ $ pytest -vvs ./test_Ccp_Util.py
 etc...
 ```
 
-
-Editing the Package
--------------------
+## Editing the Package
 
 This uses the example of editing the package on a git branch called `develop`...
 
@@ -232,8 +248,7 @@ This uses the example of editing the package on a git branch called `develop`...
 -   `git push origin main`
 -   `make pypi`
 
-Sphinx Documentation
---------------------
+## Sphinx Documentation
 
 Building the ciscoconfparse documentation tarball comes down to this one wierd trick:
 
@@ -242,8 +257,7 @@ Building the ciscoconfparse documentation tarball comes down to this one wierd t
 - `pip install -r ../requirements.txt; # install ccp dependencies`
 - `make html`
 
-License and Copyright
----------------------
+## License and Copyright
 
 [ciscoconfparse][3] is licensed [GPLv3][21]
 
@@ -257,13 +271,11 @@ License and Copyright
 
 The word \"Cisco\" is a registered trademark of [Cisco Systems][27].
 
-Author
-------
+## Author
 
 [ciscoconfparse][3] was written by [David Michael Pennington][25] (mike \[\~at\~\] pennington \[.dot.\] net).
 
-Interesting Users (and some downstream projects)
-------------------------------------------------
+## Interesting Users (and some downstream projects)
 
 The following are featured [CiscoConfParse](https://github.com/mpenning/ciscoconfparse/) users / projects:
 
@@ -295,8 +307,7 @@ The following are featured [CiscoConfParse](https://github.com/mpenning/ciscocon
 - [parse_config](https://github.com/Sergey-Link/parse_config/): Dump information about your Vlans / VRFs to excel
 - Finally, _[Cisco Systems](https://cisco.com/) Product Engineering and Advanced Services_
 
-Other Useful Network Management Projects
-----------------------------------------
+## Other Useful Network Management Projects
 
 - [netbox](https://github.com/netbox-community/netbox/): NetBox is the source of truth for everything on your network, from physical components like power systems and cabling to virtual assets like IP addresses and VLANs
   - [ntc-netbox-plugin-onboarding](https://github.com/networktocode/ntc-netbox-plugin-onboarding): A plugin for NetBox to easily onboard new devices.
