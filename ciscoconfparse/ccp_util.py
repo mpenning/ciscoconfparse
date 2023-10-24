@@ -1021,9 +1021,6 @@ class IPv4Obj(object):
         if v4input is None:
             self.empty = True
 
-        elif self.finished_parsing is True:
-            return self
-
         elif isinstance(v4input, str):
             v4_str_rgx = _RGX_IPV4ADDR_WITH_MASK.search(v4input.strip())
             if v4_str_rgx is not None:
