@@ -67,7 +67,7 @@ for ccp_obj in parse.find_objects('^interface'):
 
 ## Cisco IOS Factory Usage
 
-CiscoConfParse has a special feature that abstracts common IOS / NXOS / ASA / IOSXR fields; at this time, it is only supported on those configuration types. You will see factory parsing in CiscoConfParse code as parsing the configuration with `factory=True`.  A simple example of some these pre-parsed fields follows; some variables are not used, but simply called out for quick reference.
+CiscoConfParse has a special feature that abstracts common IOS / NXOS / ASA / IOSXR fields; at this time, it is only supported on those configuration types. You will see factory parsing in CiscoConfParse code as parsing the configuration with `factory=True`.  A simple example of some these pre-parsed Cisco IOS fields follows; some variables are not used, but simply called out for quick reference.
 
 ```python
 from ciscoconfparse import CiscoConfParse
@@ -86,10 +86,12 @@ for ccp_obj in parse.find_objects('^interface'):
     intf_v4addr = ccp_obj.ipv4_addr_object.ip
     # IPv4 netmask object: ipaddress.IPv4Address()
     intf_v4netmask = ccp_obj.ipv4_addr_object.netmask
-    # IPv4 HSRPv4 Groups
+    # IPv4 HSRPv4 Group object instances... ref: models_cisco.py HSRPv4Group()
     intf_v4hsrp_groups = ccp_obj.hsrpv4_groups
     # List of IPv4 HSRPv4 Addresses
     intf_v4hsrp_addresses = [hsrp.ip for hsrp in ccp_obj.hsrpv4_groups]
+    # HSRP use-bia mac-address config...
+    intf_v4hsrp_usebia = any([ii.use_bia for ii in ccp_obj.hsrpv4_groups])
     for hsrp_group in ccp_obj.hsrpv4_groups:
         for track_dict in hsrp_group.interface_tracking:
             # do something with the tracking dict here...
