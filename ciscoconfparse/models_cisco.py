@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+import copy
 import re
 import os
 
@@ -53,9 +54,271 @@ r""" models_cisco.py - Parse, Query, Build, and Modify IOS-style configurations
 MAX_VLAN = 4094
 
 ##
-##-------------  IOS Configuration line object
+##-------------  HSRP
 ##
 
+class HSRPGroup(BaseCfgLine):
+    feature = "hsrp"
+    _group = None
+    _parent = None
+
+    ##-------------  HSRP
+
+    # This method is on HSRPGroup()
+    @logger.catch(reraise=True)
+    def __init__(self, group, parent):
+        super().__init__()
+        self.feature = "hsrp"
+        self._group = int(group)
+        if isinstance(parent, BaseCfgLine):
+            self._parent = parent
+        else:
+            error = f"{parent} is not a valid configuration line"
+            logger.error(error)
+            raise ValueError(error)
+
+    # This method is on HSRPGroup()
+    @logger.catch(reraise=True)
+    def __repr__(self):
+        return f"<HSRPGroup version: {self.version} group: {self.group} ipv4: {self.ipv4} ipv6: {self.has_ipv6} priority: {self.priority} preempt: {self.preempt} preempt_delay: {self.preempt_delay} hello_timer: {self.hello_timer} hold_timer: {self.hold_timer}>"
+
+    def __eq__(self, other):
+        if getattr(self, "group", None)==getattr(other, "group", None):
+            return True
+        return False
+
+    # This method is on HSRPGroup()
+    @property
+    @logger.catch(reraise=True)
+    def group(self):
+        return int(self._group)
+
+    # This method is on HSRPGroup()
+    @property
+    @logger.catch(reraise=True)
+    def ip(self):
+        return self.ipv4
+
+    # This method is on HSRPGroup()
+    @property
+    @logger.catch(reraise=True)
+    def ipv4(self):
+        ## NOTE: I have no intention of checking self.is_shutdown here
+        ##     People should be able to check the sanity of interfaces
+        ##     before they put them into production
+        for obj in self._parent.children:
+            obj_parts = obj.text.lower().strip().split()
+            if obj_parts[0:3] == ["standby", str(self._group), "ip"]:
+                return obj_parts[-1]
+        error = f"{self} does not have an HSRP ip configured"
+        logger.error(error)
+        raise ValueError(error)
+
+    # This method is on HSRPGroup()
+    @property
+    @logger.catch(reraise=True)
+    def has_ipv6(self):
+        ## NOTE: I have no intention of checking self.is_shutdown here
+        ##     People should be able to check the sanity of interfaces
+        ##     before they put them into production
+        return bool(self.ipv6)
+
+    # This method is on HSRPGroup()
+    @property
+    @logger.catch(reraise=True)
+    def ipv6(self):
+        ## NOTE: I have no intention of checking self.is_shutdown here
+        ##     People should be able to check the sanity of interfaces
+        ##     before they put them into production
+        for obj in self._parent.children:
+            obj_parts = obj.text.lower().strip().split()
+            if obj_parts[0:3] == ["standby", str(self._group), "ipv6"]:
+                return obj_parts[-1]
+        # Default to an empty string if there is no IPv6 HSRP addr config'd
+        return ""
+
+    # This method is on HSRPGroup()
+    @property
+    @logger.catch(reraise=True)
+    def interface_tracking(self):
+        retval = list()
+        for obj in self._parent.children:
+            obj_parts = obj.text.lower().strip().split()
+            if obj_parts[0:3] == ["standby", str(self._group), "track"]:
+                intf = obj_parts[3]
+                trackrgx_decrement = re.search(r"standby\s+\d+\s+track\s+(?P<intf>\S.+?)\s+(?P<decrement>\d+)$", obj.text.strip())
+                trackrgx = re.search(r"standby\s+\d+\s+track\s+(?P<intf>\S.+?)$", obj.text.strip())
+                if isinstance(trackrgx_decrement, re.Match):
+                    intf = trackrgx_decrement.groupdict()["intf"]
+                    decrement = int(trackrgx_decrement.groupdict()["decrement"])
+                elif isinstance(trackrgx, re.Match):
+                    intf = trackrgx.groupdict()["intf"]
+                    decrement = 10
+                else:
+                    error = f"Cannot parse `{obj.text}`"
+                    logger.error(error)
+                    raise ValueError(error)
+                retval.append({"interface": intf, "decrement": decrement})
+        return retval
+
+    # This method is on HSRPGroup()
+    @property
+    @logger.catch(reraise=True)
+    def ip_mask(self):
+        raise NotImplementedError()
+        ## NOTE: I have no intention of checking self.is_shutdown here
+        ##     People should be able to check the sanity of interfaces
+        ##     before they put them into production
+
+        ## For API simplicity, I always assume there is only one hsrp
+        ##     group on the interface
+        if self.ipv4_addr == "":
+            return ""
+        retval = self.re_match_iter_typed(
+            r"^\s*standby\s+(\d+\s+)*ip\s+\S+\s+(\S+)\s*$",
+            group=2,
+            result_type=str,
+            default="",
+        )
+        return retval
+
+    # This method is on HSRPGroup()
+    @property
+    @logger.catch(reraise=True)
+    def group(self):
+        ## For API simplicity, I always assume there is only one hsrp
+        ##     group on the interface
+        return self._group
+
+    # This method is on HSRPGroup()
+    @property
+    @logger.catch(reraise=True)
+    def preempt_delay(self):
+        ## NOTE: I have no intention of checking self.is_shutdown here
+        ##     People should be able to check the sanity of interfaces
+        ##     before they put them into production
+        for obj in self._parent.children:
+            obj_parts = obj.text.lower().strip().split()
+            if obj_parts[0:4] == ["standby", str(self._group), "preempt", "delay", "minimum"]:
+                return int(obj_parts[5])
+        # The default hello timer is 3 seconds...
+        return 0
+
+    # This method is on HSRPGroup()
+    @property
+    @logger.catch(reraise=True)
+    def hello_timer(self):
+        ## NOTE: I have no intention of checking self.is_shutdown here
+        ##     People should be able to check the sanity of interfaces
+        ##     before they put them into production
+        for obj in self._parent.children:
+            obj_parts = obj.text.lower().strip().split()
+            if obj_parts[0:4] == ["standby", str(self._group), "timers", "msec"]:
+                return float(obj_parts[4])/1000.0
+            elif obj_parts[0:3] == ["standby", str(self._group), "timers"]:
+                return int(obj_parts[-2])
+        # The default hello timer is 3 seconds...
+        return 3
+
+    # This method is on HSRPGroup()
+    @property
+    @logger.catch(reraise=True)
+    def hold_timer(self):
+        ## NOTE: I have no intention of checking self.is_shutdown here
+        ##     People should be able to check the sanity of interfaces
+        ##     before they put them into production
+        for obj in self._parent.children:
+            obj_parts = obj.text.lower().strip().split()
+            if obj_parts[0:2]==["standby", str(self._group)] and obj_parts[-2] == "msec":
+                return float(obj_parts[-1])/1000.0
+            elif obj_parts[0:3] == ["standby", str(self._group), "timers"]:
+                return int(obj_parts[-1])
+        # The default hold timer is 10 seconds...
+        return 10
+
+    # This method is on HSRPGroup()
+    @property
+    @logger.catch(reraise=True)
+    def priority(self):
+        for obj in self._parent.children:
+            obj_parts = obj.text.lower().strip().split()
+            if obj_parts[0:3] == ["standby", str(self._group), "priority"]:
+                return int(obj_parts[3])
+        # The default priority is 100...
+        return 100
+
+    # This method is on HSRPGroup()
+    @property
+    @logger.catch(reraise=True)
+    def version(self):
+        ## NOTE: I have no intention of checking self.is_shutdown here
+        ##     People should be able to check the sanity of interfaces
+        ##     before they put them into production
+        for obj in self._parent.children:
+            obj_parts = obj.text.lower().strip().split()
+            if obj_parts[0:2] == ["standby", "version"]:
+                return obj_parts[-1]
+        # default to version 1...
+        return 1
+
+    # This method is on HSRPGroup()
+    @property
+    @logger.catch(reraise=True)
+    def has_hsrp_track(self):
+        return any(self.interface_tracking)
+
+    # This method is on HSRPGroup()
+    @property
+    @logger.catch(reraise=True)
+    def use_bia(self):
+        """`standby use-bia` helps avoid instability when introducing new HSRP routers"""
+        for obj in self._parent.children:
+            if "use-bia" in obj.text:
+                return True
+        return False
+
+    # This method is on HSRPGroup()
+    @property
+    @logger.catch(reraise=True)
+    def preempt(self):
+        ## For API simplicity, I always assume there is only one hsrp
+        ##     group on the interface
+        for obj in self._parent.children:
+            obj_parts = obj.text.lower().strip().split()
+            if obj_parts[0:3] == ["standby", str(self._group), "preempt"]:
+                return True
+        return False
+
+    # This method is on HSRPGroup()
+    @property
+    @logger.catch(reraise=True)
+    def authentication_md5_keychain(self):
+        ## For API simplicity, I always assume there is only one hsrp
+        ##     group on the interface
+        retval = self.re_match_iter_typed(
+            r"^\s*standby\s+{self.group}\s+authentication\s+md5\s+key-chain\s+(\S+)",
+            group=1,
+            result_type=str,
+            default="",
+        )
+        return retval
+
+    # This method is on HSRPGroup()
+    @property
+    @logger.catch(reraise=True)
+    def has_authentication_md5(self):
+        keychain = self.authentication_md5_keychain
+        return bool(keychain)
+
+    # This method is on HSRPGroup()
+    @property
+    @logger.catch(reraise=True)
+    def hsrp_authentication_cleartext(self):
+        pass
+
+##
+##-------------  IOS Configuration line object
+##
 
 class IOSCfgLine(BaseCfgLine):
     """An object for a parsed IOS-style configuration line.
@@ -212,6 +475,7 @@ class IOSCfgLine(BaseCfgLine):
         r"""^interface\s+(Loopback|Vlan|Tunnel|Dialer|Virtual-Template|Port-Channel)"""
     )
     _VIRTUAL_INTF_REGEX = re.compile(_VIRTUAL_INTF_REGEX_STR, re.I)
+
 
     @property
     @logger.catch(reraise=True)
@@ -397,6 +661,21 @@ class BaseIOSIntfLine(IOSCfgLine):
         for sep in ["", " "]:
             for ii in range(1, len(port_type) + 1):
                 retval.add(f"{port_type[0:ii]}{sep}{subinterface_number}")
+        return retval
+
+
+    # This method is on BaseIOSIntfLine()
+    @property
+    @logger.catch(reraise=True)
+    def hsrp_groups(self):
+        """Return the list of configured HSRP group instances"""
+        retval = []
+        _parent = self
+        for obj in _parent.children:
+            # Get each HSRP group number...
+            if re.search(r"standby\s+\d+\s+ip", obj.text.strip()):
+                group = int(obj.text.split()[1])
+                retval.append(HSRPGroup(group=group, parent=_parent))
         return retval
 
     # This method is on BaseIOSIntfLine()
@@ -2147,200 +2426,6 @@ class IOSHostnameLine(BaseCfgLine):
         retval = self.re_match_typed(r"^hostname\s+(\S+)", result_type=str, default="")
         return retval
 
-##
-##-------------  HSRP
-##
-
-class HSRP(BaseCfgLine):
-    ##-------------  HSRP
-
-    @logger.catch(reraise=True)
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.feature = "hsrp"
-        self.groups = []
-
-    @logger.catch(reraise=True)
-    def __repr__(self):
-        return "<%s # %s '%s'>" % (self.classname, self.linenum, self.hostname)
-
-    # This method is on BaseIOSIntfLine()
-    @property
-    @logger.catch(reraise=True)
-    def has_ip_hsrp(self):
-        return bool(self.hsrp_ip_addr)
-
-    # This method is on BaseIOSIntfLine()
-    @property
-    @logger.catch(reraise=True)
-    def hsrp_ip_addr(self):
-        ## NOTE: I have no intention of checking self.is_shutdown here
-        ##     People should be able to check the sanity of interfaces
-        ##     before they put them into production
-
-        ## For API simplicity, I always assume there is only one hsrp
-        ##     group on the interface
-        if self.ipv4_addr == "":
-            return ""
-
-        retval = self.re_match_iter_typed(
-            r"^\s*standby\s+(\d+\s+)*ip\s+(\S+)", group=2, result_type=str, default=""
-        )
-        return retval
-
-    # This method is on BaseIOSIntfLine()
-    @property
-    @logger.catch(reraise=True)
-    def hsrp_ip_mask(self):
-        ## NOTE: I have no intention of checking self.is_shutdown here
-        ##     People should be able to check the sanity of interfaces
-        ##     before they put them into production
-
-        ## For API simplicity, I always assume there is only one hsrp
-        ##     group on the interface
-        if self.ipv4_addr == "":
-            return ""
-        retval = self.re_match_iter_typed(
-            r"^\s*standby\s+(\d+\s+)*ip\s+\S+\s+(\S+)\s*$",
-            group=2,
-            result_type=str,
-            default="",
-        )
-        return retval
-
-    # This method is on BaseIOSIntfLine()
-    @property
-    @logger.catch(reraise=True)
-    def hsrp_group(self):
-        ## For API simplicity, I always assume there is only one hsrp
-        ##     group on the interface
-        retval = self.re_match_iter_typed(
-            r"^\s*standby\s+(\d+)\s+ip\s+\S+", result_type=int, default=-1
-        )
-        return retval
-
-    # This method is on BaseIOSIntfLine()
-    @property
-    @logger.catch(reraise=True)
-    def hsrp_priority(self):
-        ## For API simplicity, I always assume there is only one hsrp
-        ##     group on the interface
-        if not self.has_ip_hsrp:
-            return 0  # Return this if there is no hsrp on the interface
-        retval = self.re_match_iter_typed(
-            r"^\s*standby\s+(\d+\s+)*priority\s+(\d+)",
-            group=2,
-            result_type=int,
-            default=100,
-        )
-        return retval
-
-    # This method is on BaseIOSIntfLine()
-    @property
-    @logger.catch(reraise=True)
-    def hsrp_hello_timer(self):
-        ## For API simplicity, I always assume there is only one hsrp
-        ##     group on the interface
-
-        # FIXME: handle msec timers...
-        retval = self.re_match_iter_typed(
-            r"^\s*standby\s+(\d+\s+)*timers\s+(\d+)\s+\d+",
-            group=2,
-            result_type=float,
-            default=0.0,
-        )
-        return retval
-
-    # This method is on BaseIOSIntfLine()
-    @property
-    @logger.catch(reraise=True)
-    def hsrp_hold_timer(self):
-        ## For API simplicity, I always assume there is only one hsrp
-        ##     group on the interface
-
-        # FIXME: this should be a float (in case of msec timers)
-        retval = self.re_match_iter_typed(
-            r"^\s*standby\s+(\d+\s+)*timers\s+\d+\s+(\d+)",
-            group=2,
-            result_type=float,
-            default=0.0,
-        )
-        return retval
-
-    # This method is on BaseIOSIntfLine()
-    @property
-    @logger.catch(reraise=True)
-    def has_hsrp_track(self):
-        return bool(self.hsrp_track)
-
-    # This method is on BaseIOSIntfLine()
-    @property
-    @logger.catch(reraise=True)
-    def hsrp_track(self):
-        ## For API simplicity, I always assume there is only one hsrp
-        ##     group on the interface
-        retval = self.re_match_iter_typed(
-            r"^\s*standby\s+(\d+\s+)*track\s(\S+.+?)\s+\d+\s*",
-            group=2,
-            result_type=str,
-            default="",
-        )
-        return retval
-
-    # This method is on BaseIOSIntfLine()
-    @property
-    @logger.catch(reraise=True)
-    def has_hsrp_usebia(self):
-        ## For API simplicity, I always assume there is only one hsrp
-        ##     group on the interface
-        retval = self.re_match_iter_typed(
-            r"^\s*standby\s+(\d+\s+)*(use-bia)",
-            group=2,
-            result_type=bool,
-            default=False,
-        )
-        return retval
-
-    # This method is on BaseIOSIntfLine()
-    @property
-    @logger.catch(reraise=True)
-    def has_hsrp_preempt(self):
-        ## For API simplicity, I always assume there is only one hsrp
-        ##     group on the interface
-        retval = self.re_match_iter_typed(
-            r"^\s*standby\s+(\d+\s+)*(use-bia)",
-            group=2,
-            result_type=bool,
-            default=False,
-        )
-        return retval
-
-    # This method is on BaseIOSIntfLine()
-    @property
-    @logger.catch(reraise=True)
-    def hsrp_authentication_md5_keychain(self):
-        ## For API simplicity, I always assume there is only one hsrp
-        ##     group on the interface
-        retval = self.re_match_iter_typed(
-            r"^\s*standby\s+(\d+\s+)*authentication\s+md5\s+key-chain\s+(\S+)",
-            group=2,
-            result_type=str,
-            default="",
-        )
-        return retval
-
-    # This method is on BaseIOSIntfLine()
-    @property
-    @logger.catch(reraise=True)
-    def has_hsrp_authentication_md5(self):
-        keychain = self.hsrp_authentication_md5_keychain
-        return bool(keychain)
-
-    # This method is on BaseIOSIntfLine()
-    @property
-    @logger.catch(reraise=True)
-    def hsrp_authentication_cleartext(self):
-        pass
 
 ##
 ##-------------  IOS Access Line
