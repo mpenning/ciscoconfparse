@@ -1,4 +1,4 @@
-r""" ccp_util.py - Parse, Query, Build, and Modify IOS-style configurations
+""" ccp_util.py - Parse, Query, Build, and Modify IOS-style configurations
 
      Copyright (C) 2023      David Michael Pennington
      Copyright (C) 2020-2021 David Michael Pennington at Cisco Systems
@@ -83,7 +83,7 @@ IPV4_MAX_PREFIXLEN = 32
 IPV6_MAX_PREFIXLEN = 128
 
 
-_IPV6_REGEX_ELEMENTS = r"[0-9a-fA-F]{1,4}"
+_IPV6_RGX_CLS = r"[0-9a-fA-F]{1,4}"
 _CISCO_RANGE_ATOM_STR = r"""\d+\s*\-*\s*\d*"""
 _CISCO_RANGE_STR = r"""^(?P<intf_prefix>[a-zA-Z\s]*)(?P<slot_prefix>[\d\/]*\d+\/)*(?P<range_text>(\s*{})*)$""".format(
     _CISCO_RANGE_ATOM_STR
@@ -104,13 +104,13 @@ _IPV6_REGEX_STR = r"""(?!:::\S+?$)       # Negative Lookahead for 3 colons
 |(?P<opt9>(?:{0}:){{1,7}}:)              # ipv6 with trailing double colons
 |(?P<opt10>(?:::))                       # ipv6 bare double colons (default route)
 )([/\s](?P<masklen>\d+))*                # match 'masklen' and end 'addr' group
-""".format(_IPV6_REGEX_ELEMENTS)
+""".format(_IPV6_RGX_CLS)
 
-_IPV6_REGEX_STR_COMPRESSED1 = r"""(?!:::\S+?$)(?P<addr1>(?P<opt1_1>{0}(?::{0}){{7}})|(?P<opt1_2>(?:{0}:){{1}}(?::{0}){{1,6}})|(?P<opt1_3>(?:{0}:){{2}}(?::{0}){{1,5}})|(?P<opt1_4>(?:{0}:){{3}}(?::{0}){{1,4}})|(?P<opt1_5>(?:{0}:){{4}}(?::{0}){{1,3}})|(?P<opt1_6>(?:{0}:){{5}}(?::{0}){{1,2}})|(?P<opt1_7>(?:{0}:){{6}}(?::{0}){{1,1}})|(?P<opt1_8>:(?::{0}){{1,7}})|(?P<opt1_9>(?:{0}:){{1,7}}:)|(?P<opt1_10>(?:::)))""".format(_IPV6_REGEX_ELEMENTS)
+_IPV6_REGEX_STR_COMPRESSED1 = r"""(?!:::\S+?$)(?P<addr1>(?P<opt1_1>{0}(?::{0}){{7}})|(?P<opt1_2>(?:{0}:){{1}}(?::{0}){{1,6}})|(?P<opt1_3>(?:{0}:){{2}}(?::{0}){{1,5}})|(?P<opt1_4>(?:{0}:){{3}}(?::{0}){{1,4}})|(?P<opt1_5>(?:{0}:){{4}}(?::{0}){{1,3}})|(?P<opt1_6>(?:{0}:){{5}}(?::{0}){{1,2}})|(?P<opt1_7>(?:{0}:){{6}}(?::{0}){{1,1}})|(?P<opt1_8>:(?::{0}){{1,7}})|(?P<opt1_9>(?:{0}:){{1,7}}:)|(?P<opt1_10>(?:::)))""".format(_IPV6_RGX_CLS)
 
-_IPV6_REGEX_STR_COMPRESSED2 = r"""(?!:::\S+?$)(?P<addr2>(?P<opt2_1>{0}(?::{0}){{7}})|(?P<opt2_2>(?:{0}:){{1}}(?::{0}){{1,6}})|(?P<opt2_3>(?:{0}:){{2}}(?::{0}){{1,5}})|(?P<opt2_4>(?:{0}:){{3}}(?::{0}){{1,4}})|(?P<opt2_5>(?:{0}:){{4}}(?::{0}){{1,3}})|(?P<opt2_6>(?:{0}:){{5}}(?::{0}){{1,2}})|(?P<opt2_7>(?:{0}:){{6}}(?::{0}){{1,1}})|(?P<opt2_8>:(?::{0}){{1,7}})|(?P<opt2_9>(?:{0}:){{1,7}}:)|(?P<opt2_10>(?:::)))""".format(_IPV6_REGEX_ELEMENTS)
+_IPV6_REGEX_STR_COMPRESSED2 = r"""(?!:::\S+?$)(?P<addr2>(?P<opt2_1>{0}(?::{0}){{7}})|(?P<opt2_2>(?:{0}:){{1}}(?::{0}){{1,6}})|(?P<opt2_3>(?:{0}:){{2}}(?::{0}){{1,5}})|(?P<opt2_4>(?:{0}:){{3}}(?::{0}){{1,4}})|(?P<opt2_5>(?:{0}:){{4}}(?::{0}){{1,3}})|(?P<opt2_6>(?:{0}:){{5}}(?::{0}){{1,2}})|(?P<opt2_7>(?:{0}:){{6}}(?::{0}){{1,1}})|(?P<opt2_8>:(?::{0}){{1,7}})|(?P<opt2_9>(?:{0}:){{1,7}}:)|(?P<opt2_10>(?:::)))""".format(_IPV6_RGX_CLS)
 
-_IPV6_REGEX_STR_COMPRESSED3 = r"""(?!:::\S+?$)(?P<addr3>(?P<opt3_1>{0}(?::{0}){{7}})|(?P<opt3_2>(?:{0}:){{1}}(?::{0}){{1,6}})|(?P<opt3_3>(?:{0}:){{2}}(?::{0}){{1,5}})|(?P<opt3_4>(?:{0}:){{3}}(?::{0}){{1,4}})|(?P<opt3_5>(?:{0}:){{4}}(?::{0}){{1,3}})|(?P<opt3_6>(?:{0}:){{5}}(?::{0}){{1,2}})|(?P<opt3_7>(?:{0}:){{6}}(?::{0}){{1,1}})|(?P<opt3_8>:(?::{0}){{1,7}})|(?P<opt3_9>(?:{0}:){{1,7}}:)|(?P<opt3_10>(?:::)))""".format(_IPV6_REGEX_ELEMENTS)
+_IPV6_REGEX_STR_COMPRESSED3 = r"""(?!:::\S+?$)(?P<addr3>(?P<opt3_1>{0}(?::{0}){{7}})|(?P<opt3_2>(?:{0}:){{1}}(?::{0}){{1,6}})|(?P<opt3_3>(?:{0}:){{2}}(?::{0}){{1,5}})|(?P<opt3_4>(?:{0}:){{3}}(?::{0}){{1,4}})|(?P<opt3_5>(?:{0}:){{4}}(?::{0}){{1,3}})|(?P<opt3_6>(?:{0}:){{5}}(?::{0}){{1,2}})|(?P<opt3_7>(?:{0}:){{6}}(?::{0}){{1,1}})|(?P<opt3_8>:(?::{0}){{1,7}})|(?P<opt3_9>(?:{0}:){{1,7}}:)|(?P<opt3_10>(?:::)))""".format(_IPV6_RGX_CLS)
 
 _RGX_IPV6ADDR = re.compile(_IPV6_REGEX_STR, re.VERBOSE)
 ####################### End IPv6 #############################
@@ -867,7 +867,8 @@ class IPv4Obj(object):
 
     # This method is on IPv4Obj().  @logger.catch() breaks the __init__() method.
     # Use 'nosec' to disable default linter security flags about using 0.0.0.1
-    def __init__(self, v4addr_prefixlen=f"0.0.0.1/{IPV4_MAX_PREFIXLEN}", strict=False, debug=0): # nosec
+    @logger.catch(reraise=True)
+    def __init__(self, v4input=f"0.0.0.1/{IPV4_MAX_PREFIXLEN}", strict=False, debug=0): # nosec
         """An object to represent IPv4 addresses and IPv4 networks.
 
         When :class:`~ccp_util.IPv4Obj` objects are compared or sorted, network numbers are sorted lower to higher.  If network numbers are the same, shorter masks are lower than longer masks. After comparing mask length, numerically higher IP addresses are greater than numerically lower IP addresses..  Comparisons between :class:`~ccp_util.IPv4Obj` instances was chosen so it's easy to find the longest-match for a given prefix (see examples below).
@@ -876,10 +877,10 @@ class IPv4Obj(object):
 
         Parameters
         ----------
-        v4addr_prefixlen : str or int
+        v4input : str or int
             A string (or integer) containing an IPv4 address, and optionally a netmask or masklength.  Integers are also accepted and the masklength of the integer is assumed to be 32-bits.  The following address/netmask formats are supported: "10.1.1.1/24", "10.1.1.1 255.255.255.0", "10.1.1.1/255.255.255.0"
         strict: bool
-            When `strict` is True, the value of `v4addr_prefixlen` must not have host-bits set.  The default value is False.
+            When `strict` is True, the value of `v4input` must not have host-bits set.  The default value is False.
 
 
         Examples
@@ -985,21 +986,29 @@ class IPv4Obj(object):
         version : int
             Returns an integer representing the IP version of this object.  Only 4 or 6 are valid results
         """
-        if debug > 0:
-            logger.info(f"IPv4Obj(v4addr_prefixlen='{v4addr_prefixlen}', strict={strict}, debug={debug}) was called")
+        if isinstance(debug, int):
+            if debug > 0:
+                logger.info(f"IPv4Obj(v4input='{v4input}', strict={strict}, debug={debug}) was called")
+        else:
+            error = f"IPv4Obj() debug must be an int, but `debug`=`{debug}` was called."
+            logger.critical(error)
+            raise ValueError(error)
+
+        print("V4INPUT", v4input)
 
         try:
-            assert isinstance(v4addr_prefixlen, (str, int, IPv4Obj))
-        except AssertionError as eee:
+            if isinstance(v4input, (str, int, IPv4Obj)) is False:
+                raise ValueError()
+        except ValueError as eee:
             raise AddressValueError(
-                f"Could not parse '{v4addr_prefixlen}' (type: {type(v4addr_prefixlen)}) into an IPv4 Address. {eee}"
+                f"Could not parse '{v4input}' (type: {type(v4input)}) into an IPv4 Address. {eee}"
             )
         except BaseException as eee:
             raise AddressValueError(
-                f"Could not parse '{v4addr_prefixlen}' (type: {type(v4addr_prefixlen)}) into an IPv4 Address. {eee}"
+                f"Could not parse '{v4input}' (type: {type(v4input)}) into an IPv4 Address. {eee}"
             )
 
-        self.v4addr_prefixlen = v4addr_prefixlen
+        self.v4addr_prefixlen = v4input
         self.dna = "IPv4Obj"
         self.ip_object = None
         self.network_object = None
@@ -1007,55 +1016,65 @@ class IPv4Obj(object):
         self.debug = debug
         self.params_dict = {}
 
-        if isinstance(v4addr_prefixlen, str):
+        #################################### NEW
 
-            tmp = re.split(r"\s+", v4addr_prefixlen.strip())
-            if len(tmp)==2:
-                v4addr_prefixlen = "/".join(tmp)
-            elif len(tmp)==1:
-                v4addr_prefixlen = tmp[0]
-            # anything else should be handled by the following regex...
-
-            v4_str_rgx = _RGX_IPV4ADDR_WITH_MASK.search(v4addr_prefixlen.strip())
+        if isinstance(v4input, str):
+            v4_str_rgx = _RGX_IPV4ADDR_WITH_MASK.search(v4input.strip())
             if v4_str_rgx is not None:
-                pp = v4_str_rgx.groupdict()
-                try:
-                    # Use 'nosec' to disable default linter security flags about using 0.0.0.1
-                    ipv4 = pp.get("v4addr_nomask", None) or pp.get("v4addr_netmask", None) or pp.get("v4addr_prefixlen", None) or "0.0.0.1" # nosec
-                except DynamicAddressException as eee:
-                    raise ValueError(str(eee))
+                v4_groupdict = v4_str_rgx.groupdict()
+            else:
+                v4_groupdict = {}
 
-            elif "dhcp" in v4addr_prefixlen.strip().lower():
+            v4addr_nomask = v4_groupdict.get("v4addr_nomask", None) or ""
+            v4addr_netmask = v4_groupdict.get("v4addr_netmask", None) or ""
+            v4addr_prefixlen = v4_groupdict.get("v4addr_prefixlen", None) or ""
+            netmask = v4_groupdict.get("netmask", None) or ""
+            prefixlen = v4_groupdict.get("netmask", None) or ""
+            if netmask == "" and prefixlen == "":
+                prefixlen = "32"
+
+            v4addr = f"{v4addr_nomask}{v4addr_netmask}{v4addr_prefixlen}"
+            mask_prefixlen = f"{netmask}{prefixlen}"
+            if re.search(r"\d+\.\d+\.\d+\.\d+", v4addr):
+                self.ip_object = IPv4Address(v4addr)
+                self.network_object = IPv4Network(f"{v4addr}/{mask_prefixlen}")
+                self.prefixlen = self.network_object.prefixlen
+                print("    SELF", self)
+            elif v4addr == "dhcp":
                 raise DynamicAddressException("Cannot parse address from a DHCP string.")
-
             else:
                 raise AddressValueError(
-                    f"Could not parse '{v4addr_prefixlen}' {type(v4addr_prefixlen)} into an IPv4 Address"
+                    f"Could not parse '{v4input}' {type(v4input)} into an IPv4 Address"
                 )
 
-            self.ip_object = IPv4Address(ipv4)
-            if isinstance(pp["masklen"], str):
-                netstr = ipv4 + "/" + pp["masklen"]
-            elif isinstance(pp["netmask"], str):
-                netstr = ipv4 + "/" + pp["netmask"]
-            else:
-                netstr = ipv4+"/32"
-            self.network_object = IPv4Network(netstr, strict=False)
+        elif isinstance(v4input, int):
+            assert 0 <= v4input <= IPV4_MAXINT
+            self.ip_object = IPv4Address(v4input)
+            self.network_object = IPv4Network(v4input, strict=False)
 
-        elif isinstance(v4addr_prefixlen, int):
-            assert 0 <= v4addr_prefixlen <= IPV4_MAXINT
-            self.ip_object = IPv4Address(v4addr_prefixlen)
-            self.network_object = IPv4Network(v4addr_prefixlen, strict=False)
+        elif isinstance(v4input, IPv4Obj):
+            self.ip_object = IPv4Address(v4input.ip)
+            self.network_object = IPv4Network(v4input.as_cidr_net, strict=False)
 
-        elif isinstance(v4addr_prefixlen, IPv4Obj):
-            self.ip_object = IPv4Address(v4addr_prefixlen.ip)
-            self.network_object = IPv4Network(v4addr_prefixlen.as_cidr_net, strict=False)
+            if False:
+                if isinstance(v4_groupdict["v4addr_nomask"], str):
+                    self.ip_object = IPv4Address(v4_groupdict["v4addr_nomask"])
+
+                if isinstance(v4_groupdict["masklen"], str):
+                    netstr = _ipv4 + "/" + v4_groupdict["masklen"]
+                elif isinstance(v4_groupdict["netmask"], str):
+                    netstr = _ipv4 + "/" + v4_groupdict["netmask"]
+                else:
+                    netstr = _ipv4+"/32"
+
+                self.network_object = IPv4Network(netstr, strict=False)
 
         else:
             raise AddressValueError(
-                f"Could not parse '{v4addr_prefixlen}' ({type(v4addr_prefixlen)}) into an IPv4 Address"
+                f"Could not parse '{v4input}' {type(v4input)} into an IPv4 Address"
             )
 
+    #################################### NEW
 
     # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
@@ -1084,8 +1103,7 @@ class IPv4Obj(object):
 
             mm_result = mm.groupdict()
             addr = (
-                # Use 'nosec' to disable default linter security flags about using 0.0.0.1
-                mm_result["v4addr_nomask"] or mm_result["v4addr_netmask"] or mm_result["v4addr_prefixlen"] or "0.0.0.1" # nosec
+                mm_result["v4addr_nomask"] or mm_result["v4addr_netmask"] or mm_result["v4addr_prefixlen"]
             )
             ## Normalize if we get zero-padded strings, i.e. 172.001.001.001
             assert re.search(r"^\d+\.\d+.\d+\.\d+", addr)
@@ -1131,7 +1149,7 @@ class IPv4Obj(object):
     # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     def __repr__(self):
-        if not isinstance(self.prefixlen, int):
+        if False and not isinstance(self.prefixlen, int):
             raise ValueError
 
         return f"""<IPv4Obj {str(self.ip_object)}/{self.prefixlen}>"""
@@ -1143,6 +1161,7 @@ class IPv4Obj(object):
             # Code to fix Github issue #180
             for obj in [self, val]:
                 for attr_name in ["as_decimal", "prefixlen"]:
+                    print(f"    THIS FAILING {obj}", obj)
                     try:
                         assert getattr(obj, attr_name, None) is not None
                     except AssertionError:
@@ -1388,6 +1407,13 @@ class IPv4Obj(object):
     # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     @property
+    def ipv4(self):
+        """Returns the address as an :class:`ipaddress.IPv4Address` object."""
+        return self.ip_object
+
+    # do NOT wrap with @logger.catch(...)
+    # On IPv4Obj()
+    @property
     def netmask(self):
         """Returns the network mask as an :class:`ipaddress.IPv4Address` object."""
         return self.network_object.netmask
@@ -1491,43 +1517,6 @@ class IPv4Obj(object):
             ## The ipaddress module returns an "IPAddress" object in Python3...
             return IPv4Network(f"{self.network_object.compressed}")
 
-    # @property
-    # def as_decimal_network(self):
-    #    """Returns an integer calculated from the network address..."""
-    #    num_strings = str(self.network).split(".")
-    #    num_strings.reverse()  # reverse the order
-    #    return sum(
-    #        [int(num, 16) * (65536 ** idx) for idx, num in enumerate(num_strings)]
-    #    )
-
-    # do NOT wrap with @logger.catch(...)
-    # On IPv4Obj()
-    @property
-    def hostmask(self):
-        """Returns the host mask as an :class:`ipaddress.IPv4Address` object."""
-        return self.network_object.hostmask
-
-    # do NOT wrap with @logger.catch(...)
-    # On IPv4Obj()
-    @property
-    def max_int(self):
-        """Return the maximum size of an IPv4 Address object as an integer"""
-        return IPV4_MAXINT
-
-    # do NOT wrap with @logger.catch(...)
-    # On IPv4Obj()
-    @property
-    def inverse_netmask(self):
-        """Returns the host mask as an :class:`ipaddress.IPv4Address` object."""
-        return self.network_object.hostmask
-
-    # do NOT wrap with @logger.catch(...)
-    # On IPv4Obj()
-    @property
-    def version(self):
-        """Returns the IP version of the object as an integer.  i.e. 4"""
-        return 4
-
     # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     @property
@@ -1565,6 +1554,44 @@ class IPv4Obj(object):
         else:
             raise NotImplementedError
 
+    # @property
+    # def as_decimal_network(self):
+    #    """Returns an integer calculated from the network address..."""
+    #    num_strings = str(self.network).split(".")
+    #    num_strings.reverse()  # reverse the order
+    #    return sum(
+    #        [int(num, 16) * (65536 ** idx) for idx, num in enumerate(num_strings)]
+    #    )
+
+    # do NOT wrap with @logger.catch(...)
+    # On IPv4Obj()
+    @property
+    def hostmask(self):
+        """Returns the host mask as an :class:`ipaddress.IPv4Address` object."""
+        return self.network_object.hostmask
+
+    # do NOT wrap with @logger.catch(...)
+    # On IPv4Obj()
+    @property
+    def max_int(self):
+        """Return the maximum size of an IPv4 Address object as an integer"""
+        return IPV4_MAXINT
+
+    # do NOT wrap with @logger.catch(...)
+    # On IPv4Obj()
+    @property
+    def inverse_netmask(self):
+        """Returns the host mask as an :class:`ipaddress.IPv4Address` object."""
+        return self.network_object.hostmask
+
+    # do NOT wrap with @logger.catch(...)
+    # On IPv4Obj()
+    @property
+    def version(self):
+        """Returns the IP version of the object as an integer.  i.e. 4"""
+        return 4
+
+
     # On IPv4Obj()
     @property
     def numhosts(self):
@@ -1585,6 +1612,7 @@ class IPv4Obj(object):
     @property
     def as_decimal(self):
         """Returns the IP address as a decimal integer"""
+        print("    AS_IP", self.ip_object, self.ip)
         num_strings = str(self.ip).split(".")
         num_strings.reverse()  # reverse the order
         return sum(int(num) * (256**idx) for idx, num in enumerate(num_strings))
@@ -1760,8 +1788,25 @@ class IPv6Obj(object):
 
         """
 
-        if debug > 0:
-            logger.info(f"IPv6Obj(v6addr_prefixlen='{v6addr_prefixlen}', strict={strict}, debug={debug}) was called")
+        if isinstance(debug, int):
+            if debug > 0:
+                logger.info(f"IPv6Obj(v6addr_prefixlen='{v6addr_prefixlen}', strict={strict}, debug={debug}) was called")
+        else:
+            error = f"IPv6Obj() debug must be an int, but `debug`=`{debug}` was called."
+            logger.critical(error)
+            raise ValueError(error)
+
+        try:
+            if isinstance(v6addr_prefixlen, (str, int, IPv6Obj)) is False:
+                raise ValueError()
+        except ValueError as eee:
+            raise AddressValueError(
+                f"Could not parse '{v6addr_prefixlen}' (type: {type(v6addr_prefixlen)}) into an IPv6 Address. {eee}"
+            )
+        except BaseException as eee:
+            raise AddressValueError(
+                f"Could not parse '{v6addr_prefixlen}' (type: {type(v6addr_prefixlen)}) into an IPv6 Address. {eee}"
+            )
 
         self.v6addr_prefixlen = v6addr_prefixlen
         self.dna = "IPv6Obj"
@@ -1783,25 +1828,25 @@ class IPv6Obj(object):
                 raise NotImplementedError(v6addr_prefixlen.strip())
 
             v6_str_rgx = _RGX_IPV6ADDR.search(v6addr_prefixlen.strip())
-            # Example 'pp'
-            #     pp = {'addr': '2b00:cd80:14:10::1', 'opt1': None, 'opt2': None, 'opt3': None, 'opt4': None, 'opt5': '2b00:cd80:14:10::1', 'opt6': None, 'opt7': None, 'opt8': None, 'opt9': None, 'opt10': None, 'masklen': '64'}
-            pp = v6_str_rgx.groupdict()
+            # Example 'v6_groupdict'
+            #     v6_groupdict = {'addr': '2b00:cd80:14:10::1', 'opt1': None, 'opt2': None, 'opt3': None, 'opt4': None, 'opt5': '2b00:cd80:14:10::1', 'opt6': None, 'opt7': None, 'opt8': None, 'opt9': None, 'opt10': None, 'masklen': '64'}
+            v6_groupdict = v6_str_rgx.groupdict()
             for key in ["addr", "opt1", "opt2", "opt3", "opt4", "opt5", "opt6", "opt7", "opt8", "opt9", "opt10",]:
-                ipv6 = pp[key]
-                if ipv6 is not None:
+                _ipv6 = v6_groupdict[key]
+                if _ipv6 is not None:
                     break
             else:
-                ipv6 = "::1"
-            assert ipv6 is not None
+                _ipv6 = "::1"
+            assert _ipv6 is not None
 
-            self.ip_object = IPv6Address(ipv6)
-            if isinstance(pp["masklen"], str):
-                netstr = ipv6 + "/" + pp["masklen"]
+            self.ip_object = IPv6Address(_ipv6)
+            if isinstance(v6_groupdict["masklen"], str):
+                netstr = _ipv6 + "/" + v6_groupdict["masklen"]
             # FIXME - this probably should be removed...
-            #elif isinstance(pp["netmask"], str):
-            #    netstr = ipv6 + "/" + pp["netmask"]
+            #elif isinstance(v6_groupdict["netmask"], str):
+            #    netstr = ipv6 + "/" + v6_groupdict["netmask"]
             else:
-                netstr = ipv6+"/128"
+                netstr = _ipv6+"/128"
             self.network_object = IPv6Network(netstr, strict=False)
 
         elif isinstance(v6addr_prefixlen, int):
@@ -1819,84 +1864,6 @@ class IPv6Obj(object):
                     v6addr_prefixlen, type(v6addr_prefixlen)
                 )
             )
-
-    # On IPv6Obj()
-    def _ipv6_params_dict_DEPRECATED(self, arg, debug=0):
-        """
-        Parse out important IPv6 parameters from arg.  This method must run to
-        completion for IPv6 address parsing to work correctly.
-        """
-        if not isinstance(arg, (str, int, IPv6Obj,)):
-            raise ValueError
-
-        if isinstance(arg, str):
-            try:
-                mm = _RGX_IPV6ADDR.search(arg)
-
-            except TypeError:
-                raise AddressValueError(
-                    f"_ipv6_params_dict() doesn't know how to parse {arg}"
-                )
-            except BaseException:
-                raise AddressValueError(
-                    f"_ipv6_params_dict() doesn't know how to parse {arg}"
-                )
-
-
-            ERROR = f"_ipv6_params_dict() couldn't parse '{arg}'"
-            assert mm is not None, ERROR
-
-            mm_result = mm.groupdict()
-            try:
-                addr = mm_result["addr"]
-
-            except BaseException:
-                addr = "::1"
-
-            try:
-                masklen = int(mm_result['masklen'])
-            except BaseException:
-                masklen = IPV6_MAX_PREFIXLEN
-
-            if not (isinstance(masklen, int) and masklen <= 128):
-                raise ValueError
-
-            # If we have to derive the netmask as a long hex string,
-            # calculate the netmask from the masklen as follows...
-            netmask_int = (2**128 - 1) - (2**(128 - masklen) - 1)
-            netmask = str(IPv6Address(netmask_int))
-
-        elif isinstance(arg, int):
-            # Assume this arg int() represents an IPv6 host-address
-            addr = str(IPv6Address(arg))
-            netmask = 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff'
-            masklen = 128
-
-        elif isinstance(arg, IPv6Obj):
-            addr = str(arg.ip)
-            netmask = str(arg.netmask)
-            masklen = int(arg.masklen)
-
-        else:
-            raise AddressValueError("IPv6Obj(arg='%s')" % (arg))
-
-        assert 0 <= masklen <= IPV6_MAX_PREFIXLEN
-
-        params_dict = {
-            'ipv6_addr': addr,
-            'ip_version': 6,
-            'ip_arg_str': str(addr) + "/" + str(masklen),
-            'netmask': netmask,
-            'masklen': masklen,
-        }
-
-        if params_dict.get('masklen', None) is not None:
-            ip_arg_str = f"{addr}/{masklen}"
-            params_dict['ip_arg_str'] = ip_arg_str
-        else:
-            raise AddressValueError("IPv6Obj(arg='%s')" % (arg))
-
-        return params_dict
 
     # On IPv6Obj()
     def __repr__(self):
@@ -2151,6 +2118,12 @@ class IPv6Obj(object):
 
     # On IPv6Obj()
     @property
+    def ipv6(self):
+        """Returns the address as an :class:`ipaddress.IPv6Address` object."""
+        return self.ip_object
+
+    # On IPv6Obj()
+    @property
     def netmask(self):
         """Returns the network mask as an :class:`ipaddress.IPv6Address` object."""
         return self.network_object.netmask
@@ -2233,6 +2206,43 @@ class IPv6Obj(object):
         ## The ipaddress module returns an "IPAddress" object in Python3...
         return IPv6Network(f"{self.network_object.compressed}")
 
+    # do NOT wrap with @logger.catch(...)
+    # On IPv6Obj()
+    @property
+    def network_offset(self):
+        """Returns the integer difference between host number and network number.  This must be less than `numhosts`"""
+        offset = self.as_decimal - self.as_decimal_network
+        assert offset <= self.numhosts
+        return offset
+
+    # do NOT wrap with @logger.catch(...)
+    # On IPv6Obj()
+    @network_offset.setter
+    def network_offset(self, arg):
+        """
+        Accept an integer network_offset and modify this IPv6Obj() to be 'arg' integer offset from the subnet.
+
+        Throw an error if the network_offset would exceed the existing subnet boundary.
+
+        Example
+        -------
+        >>> addr = IPv6Obj("2b00:cd80:14:10::1/64")
+        >>> addr.network_offset = 20
+        >>> addr
+        <IPv6Obj 2b00:cd80:14:10::20/64>
+        >>>
+        """
+        if isinstance(arg, (int, str)):
+            arg = int(arg)
+            # get the max offset for this subnet...
+            max_offset = self.as_decimal_network_maxint - self.as_decimal_network
+            if arg <= max_offset:
+                self.ip_object = IPv6Address(self.as_decimal_network + arg)
+            else:
+                raise AddressValueError(f"{self}.network_offset({arg=}) exceeds the boundaries of '{self.as_cidr_net}'")
+        else:
+            raise NotImplementedError
+
     # On IPv6Obj()
     @property
     def as_decimal_network(self):
@@ -2281,43 +2291,6 @@ class IPv6Obj(object):
     def version(self):
         """Returns the IP version of the object as an integer.  i.e. 6"""
         return 6
-
-    # do NOT wrap with @logger.catch(...)
-    # On IPv6Obj()
-    @property
-    def network_offset(self):
-        """Returns the integer difference between host number and network number.  This must be less than `numhosts`"""
-        offset = self.as_decimal - self.as_decimal_network
-        assert offset <= self.numhosts
-        return offset
-
-    # do NOT wrap with @logger.catch(...)
-    # On IPv6Obj()
-    @network_offset.setter
-    def network_offset(self, arg):
-        """
-        Accept an integer network_offset and modify this IPv6Obj() to be 'arg' integer offset from the subnet.
-
-        Throw an error if the network_offset would exceed the existing subnet boundary.
-
-        Example
-        -------
-        >>> addr = IPv6Obj("2b00:cd80:14:10::1/64")
-        >>> addr.network_offset = 20
-        >>> addr
-        <IPv6Obj 2b00:cd80:14:10::20/64>
-        >>>
-        """
-        if isinstance(arg, (int, str)):
-            arg = int(arg)
-            # get the max offset for this subnet...
-            max_offset = self.as_decimal_network_maxint - self.as_decimal_network
-            if arg <= max_offset:
-                self.ip_object = IPv6Address(self.as_decimal_network + arg)
-            else:
-                raise AddressValueError(f"{self}.network_offset({arg=}) exceeds the boundaries of '{self.as_cidr_net}'")
-        else:
-            raise NotImplementedError
 
 
     # On IPv6Obj()
@@ -2967,12 +2940,13 @@ class CiscoInterface(object):
     _port = None
     _subinterface = None
     _channel = None
+    _interface_class = None
 
     # This method is on CiscoInterface()
     @logger.catch(reraise=True)
     def __init__(self, interface_name=None, interface_dict=None, debug=False):
         """
-        Parse a string `interface_name` like "Serial4/1/2.9:5", (containing slot, card, port, subinterface, and channel) into its typical Cisco IOS components:
+        Parse a string `interface_name` like "Serial4/1/2.9:5 point-to-point", (containing slot, card, port, subinterface, channel, and interface_class) into its typical Cisco IOS components:
         - prefix: 'Serial'
         - number: '4/1/2'
         - slot: 4
@@ -2980,6 +2954,7 @@ class CiscoInterface(object):
         - port: 2
         - subinterface: 9
         - channel: 5
+        - interface_class: point-to-point
 
         When comparing two CiscoInterface() instances, the most explicit comparison is with `CiscoInterface().sort_list`
         """
@@ -3025,18 +3000,21 @@ class CiscoInterface(object):
             logger.critical(error)
             raise InvalidCiscoInterface(error)
 
+
         self.interface_name = interface_name
         self.interface_dict = interface_dict
         self.debug = debug
 
+        self.dump_internal_state()
+
         if isinstance(interface_name, str):
             intf_dict = self.parse_single_interface(interface_name, debug=debug)
             if debug is True:
-                logger.success(f"    CiscoInterface().check_interface_dict({interface_dict}) succeeded")
-                logger.debug(f"    Calling CiscoInterface().update_internal_state({interface_dict})")
+                logger.success(f"    CiscoInterface().check_interface_dict({intf_dict}) succeeded")
+                logger.debug(f"    Calling CiscoInterface().update_internal_state({intf_dict})")
             self.update_internal_state(intf_dict=intf_dict)
             if debug is True:
-                logger.success(f"    CiscoInterface().update_internal_state({interface_dict}) succeeded")
+                logger.success(f"    CiscoInterface().update_internal_state({intf_dict}) succeeded")
         elif isinstance(interface_dict, dict):
             if debug is True:
                 logger.info(f"CiscoInterface(interface_dict={interface_dict}) was called")
@@ -3056,16 +3034,44 @@ class CiscoInterface(object):
             logger.critical(error)
             raise InvalidParameters(error)
 
+        self.dump_internal_state()
+
         self.initialized = True
+
+    def dump_internal_state(self):
+        if self.debug is True:
+            logger.debug(f"    CiscoRange().dump_internal_state(): prefix = '{self._prefix}'")
+            logger.debug(f"    CiscoRange().dump_internal_state(): digit_separator = '{self._digit_separator}'")
+            logger.debug(f"    CiscoRange().dump_internal_state(): slot = '{self._slot}'")
+            logger.debug(f"    CiscoRange().dump_internal_state(): card = '{self._card}'")
+            logger.debug(f"    CiscoRange().dump_internal_state(): port = '{self._port}'")
+            logger.debug(f"    CiscoRange().dump_internal_state(): subinterface = '{self._subinterface}'")
+            logger.debug(f"    CiscoRange().dump_internal_state(): channel = '{self._channel}'")
+            logger.debug(f"    CiscoRange().dump_internal_state(): interface_class = '{self._interface_class}'")
+            logger.debug(f"    CiscoRange().dump_internal_state():     initialized = '{self.initialized}'")
+            time.sleep(0.05)
+        return True
 
     # This method is on CiscoInterface()
     @logger.catch(reraise=True)
     def update_sort_list(self):
         "Return the sort_list"
         retval = []
-        for ii in [self._slot, self._card, self._port, self._subinterface, self._channel]:
+        params = {
+            "slot": self._slot,
+            "card": self._card,
+            "port": self._port,
+            "subinterface": self._subinterface,
+            "channel": self._channel,
+            "interface_class": self._interface_class,
+        }
+        for param_key in ["slot", "card", "port", "subinterface", "channel", "interface_class"]:
+            ii = params[param_key]
             if isinstance(ii, (str, int)):
-                retval.append(int(ii))
+                if param_key!="interface_class":
+                    retval.append(int(ii))
+                else:
+                    retval.append(str(ii))
             elif ii is None:
                 retval.append(None)
             else:
@@ -3100,6 +3106,7 @@ class CiscoInterface(object):
             raise InvalidCiscoInterface(f"intf_dict={intf_dict}")
         _subinterface = intf_dict["subinterface"]
         _channel = intf_dict["channel"]
+
         self.prefix = _prefix.strip()
         self.digit_separator = _digit_separator
         self.slot = _slot
@@ -3107,6 +3114,7 @@ class CiscoInterface(object):
         self.port = _port
         self.subinterface = _subinterface
         self.channel = _channel
+        self.interface_class = intf_dict["interface_class"]
 
         ######################################################################
         # Always update sort_list
@@ -3119,7 +3127,7 @@ class CiscoInterface(object):
     @logger.catch(reraise=True)
     def parse_single_interface(self, interface_name=None, debug=False):
         """
-        Parse a string `interface_name` like "Serial4/1/2.9:5", (containing slot, card, port, subinterface, and channel) into its typical Cisco IOS components:
+        Parse a string `interface_name` like "Serial4/1/2.9:5 point-to-point", (containing slot, card, port, subinterface, and channel) into its typical Cisco IOS components:
         - prefix: 'Serial'
         - number: '4/1/2'
         - slot: 4
@@ -3127,6 +3135,7 @@ class CiscoInterface(object):
         - port: 2
         - subinterface: 9
         - channel: 5
+        - interface_class: point-to-point
 
         When comparing two CiscoInterface() instances, the most explicit comparison is with `CiscoInterface().sort_list`
         """
@@ -3143,8 +3152,8 @@ class CiscoInterface(object):
             logger.critical(error)
             raise InvalidCiscoInterface(error)
 
-        re_intf_short = re.search(r"^(?P<prefix>[a-zA-Z\-\s]*)(?P<port_subinterface_channel>[\d\:\.^\-^a-z^A-Z^\s]+)$", interface_name.strip())
-        re_intf_long = re.search(r"^(?P<prefix>[a-zA-Z\-\s]*)(?P<slot_card_port_subinterface_channel>[\d\:\.\/^\-^a-z^A-Z^\s]+)$", interface_name.strip())
+        re_intf_short = re.search(r"^(?P<prefix>[a-zA-Z\-\s]*)(?P<port_subinterface_channel>[\d\:\.^\-^a-z^A-Z^\s]+)(?P<interface_class>\s+[a-zA-Z\-]+){0,1}$", interface_name.strip())
+        re_intf_long = re.search(r"^(?P<prefix>[a-zA-Z\-\s]*)(?P<slot_card_port_subinterface_channel>[\d\:\.\/^\-^a-z^A-Z^\s]+)(?P<interface_class>\s+[a-zA-Z\-]+){0,1}$", interface_name.strip())
         re_any = re.search(r".*", interface_name.strip())
         if isinstance(re_intf_short, re.Match):
 
@@ -3161,6 +3170,7 @@ class CiscoInterface(object):
             _digit_separator = intf_short["digit_separator"]
             _subinterface = intf_short["subinterface"]
             _channel = intf_short["channel"]
+            _interface_class = intf_short["interface_class"]
 
         elif isinstance(re_intf_long, re.Match):
 
@@ -3177,6 +3187,7 @@ class CiscoInterface(object):
             _digit_separator = intf_long["digit_separator"]
             _subinterface = intf_long["subinterface"]
             _channel = intf_long["channel"]
+            _interface_class = intf_long["interface_class"]
 
         elif re_any is not None:
             error = f"The interface_name: string '{interface_name.strip()}' could not be parsed."
@@ -3190,22 +3201,25 @@ class CiscoInterface(object):
         if debug is True:
             logger.info(f"    CiscoRange().parse_single_interface() parse completed")
 
-        retval = {}
-        retval["prefix"] = _prefix
-        retval["digit_separator"] = _digit_separator
-        retval["slot"] = _slot
-        retval["card"] = _card
-        retval["port"] = _port
-        retval["subinterface"] = _subinterface
-        retval["channel"] = _channel
+        retval = {
+            "prefix": _prefix,
+            "digit_separator": _digit_separator,
+            "slot": _slot,
+            "card": _card,
+            "port": _port,
+            "subinterface": _subinterface,
+            "channel": _channel,
+            "interface_class": _interface_class,
+        }
         if debug is True:
-            logger.debug(f"    CiscoRange().parse_single_interface(): `_prefix = '{_prefix}'`")
-            logger.debug(f"    CiscoRange().parse_single_interface(): `_digit_separator = '{_digit_separator}'`")
-            logger.debug(f"    CiscoRange().parse_single_interface(): `_slot = '{_slot}'`")
-            logger.debug(f"    CiscoRange().parse_single_interface(): `_card = '{_card}'`")
-            logger.debug(f"    CiscoRange().parse_single_interface(): `_port = '{_port}'`")
-            logger.debug(f"    CiscoRange().parse_single_interface(): `_subinterface = '{_subinterface}'`")
-            logger.debug(f"    CiscoRange().parse_single_interface(): `_channel = '{_channel}'`")
+            logger.debug(f"    CiscoRange().parse_single_interface(): _prefix = '{_prefix}'")
+            logger.debug(f"    CiscoRange().parse_single_interface(): _digit_separator = '{_digit_separator}'")
+            logger.debug(f"    CiscoRange().parse_single_interface(): _slot = '{_slot}'")
+            logger.debug(f"    CiscoRange().parse_single_interface(): _card = '{_card}'")
+            logger.debug(f"    CiscoRange().parse_single_interface(): _port = '{_port}'")
+            logger.debug(f"    CiscoRange().parse_single_interface(): _subinterface = '{_subinterface}'")
+            logger.debug(f"    CiscoRange().parse_single_interface(): _channel = '{_channel}'")
+            logger.debug(f"    CiscoRange().parse_single_interface(): _interface_class = '{_interface_class}'")
 
         if debug is True:
             logger.success(f"CiscoRange().parse_single_interface() returned {retval}")
@@ -3214,6 +3228,11 @@ class CiscoInterface(object):
     # This method is on CiscoInterface()
     @logger.catch(reraise=True)
     def check_interface_dict(self, interface_dict):
+        if not isinstance(interface_dict, dict):
+            error = f"`interface_dict` must be a dict, but we got {type(interface_dict)}"
+            logger.error(error)
+            raise ValueError(error)
+
         _prefix = interface_dict["prefix"]
         _sep1 = interface_dict.get("sep1", None)
         _sep2 = interface_dict.get("sep1", None)
@@ -3223,14 +3242,15 @@ class CiscoInterface(object):
         _digit_separator = interface_dict["digit_separator"]
         _subinterface = interface_dict["subinterface"]
         _channel = interface_dict["channel"]
+        _interface_class = interface_dict["interface_class"]
 
-        if len(interface_dict.keys()) != 7:
-            error = f"CiscoInterface() `interface_dict`: must have exactly 7 dictionary keys, but {len(interface_dict.keys())} were found."
+        if len(interface_dict.keys()) != 8:
+            error = f"CiscoInterface() `interface_dict`: must have exactly 8 dictionary keys, but {len(interface_dict.keys())} were found."
             logger.error(error)
             raise ValueError(error)
 
         for attr_name in set(interface_dict.keys()):
-            if not attr_name in {"prefix", "slot", "card", "port", "digit_separator", "subinterface", "channel"}:
+            if not attr_name in {"prefix", "slot", "card", "port", "digit_separator", "subinterface", "channel", "interface_class"}:
                 error = f"'{attr_name}' is not a valid `attribute_dict` key"
                 logger.critical(error)
                 raise KeyError(error)
@@ -3288,7 +3308,13 @@ class CiscoInterface(object):
         else:
             _channel = None
 
-        _sort_list = [_slot, _card, _port, _subinterface, _channel]
+        re_interface_class = re.search(r"(?P<interface_class>\s+[a-zA-Z\-]+)$", _slot_card_port_subinterface_channel)
+        if isinstance(re_interface_class, re.Match):
+            _interface_class = str(re_interface_class.groupdict()["interface_class"])
+        else:
+            _interface_class = None
+
+        _sort_list = [_slot, _card, _port, _subinterface, _channel, _interface_class]
 
         return {
             "prefix": _prefix,
@@ -3300,6 +3326,7 @@ class CiscoInterface(object):
             "digit_separator": _digit_separator,
             "subinterface": _subinterface,
             "channel": _channel,
+            "interface_class": _interface_class,
         }
 
     # This method is on CiscoInterface()
@@ -3336,6 +3363,7 @@ class CiscoInterface(object):
                 _slot = groupdict_slot_card_port["slot"]
                 _card = groupdict_slot_card_port["card"]
                 _port = groupdict_slot_card_port["port"]
+                _interface_class = self._interface_class
 
                 # Handle Ethernet1/48, where 48 is initially assigned to
                 #     _card (should be port)
@@ -3387,7 +3415,13 @@ class CiscoInterface(object):
                 else:
                     _channel = None
 
-                _sort_list = [_slot, _card, _port, _subinterface, _channel]
+                re_interface_class = re.search(r"(?P<interface_class>\s+[a-zA-Z\-]+)$", _slot_card_port_subinterface_channel)
+                if isinstance(re_interface_class, re.Match):
+                    _interface_class = str(re_interface_class.groupdict()["interface_class"])
+                else:
+                    _interface_class = self._interface_class
+
+                _sort_list = [_slot, _card, _port, _subinterface, _channel, _interface_class]
 
 
             else:
@@ -3412,6 +3446,7 @@ class CiscoInterface(object):
             "port": _port,
             "subinterface": _subinterface,
             "channel": _channel,
+            "interface_class": _interface_class,
         }
 
     # This method is on CiscoInterface()
@@ -3425,6 +3460,7 @@ class CiscoInterface(object):
         obj.port = attribute_dict["port"]
         obj.subinterface = attribute_dict["subinterface"]
         obj.channel = attribute_dict["channel"]
+        obj.interface_class = attribute_dict["interface_class"]
         return obj
 
     # This method is on CiscoInterface()
@@ -3438,6 +3474,7 @@ class CiscoInterface(object):
             "port": self.port,
             "subinterface": self.subinterface,
             "channel": self.channel,
+            "interface_class": self.interface_class,
         }
 
     # This method is on CiscoInterface()
@@ -3477,14 +3514,19 @@ class CiscoInterface(object):
     # This method is on CiscoInterface()
     @logger.catch(reraise=True)
     def render_as_string(self):
-        if self.subinterface is None and self.channel is None:
-            return f"""{self.prefix}{self.number}"""
-        elif isinstance(self.subinterface, int) and self.channel is None:
-            return f"""{self.prefix}{self.number}.{self.subinterface}"""
-        elif self.subinterface is None and isinstance(self.channel, int):
-            return f"""{self.prefix}{self.number}:{self.channel}"""
+        if self.interface_class is None:
+            interface_class = ""
         else:
-            return f"""{self.prefix}{self.number}.{self.subinterface}:{self.channel}"""
+            interface_class = f" {self.interface_class}"
+
+        if self.subinterface is None and self.channel is None:
+            return f"""{self.prefix}{self.number}{interface_class}"""
+        elif isinstance(self.subinterface, int) and self.channel is None:
+            return f"""{self.prefix}{self.number}.{self.subinterface}{interface_class}"""
+        elif self.subinterface is None and isinstance(self.channel, int):
+            return f"""{self.prefix}{self.number}:{self.channel}{interface_class}"""
+        else:
+            return f"""{self.prefix}{self.number}.{self.subinterface}:{self.channel}{interface_class}"""
 
     # This method is on CiscoInterface()
     @logger.catch(reraise=True)
@@ -3596,16 +3638,22 @@ class CiscoInterface(object):
     @logger.catch(reraise=True)
     def slot_card_port_subinterface_channel(self):
         ""
+
+        if self.interface_class is None:
+            _interface_class = ""
+        else:
+            _interface_class = f" {self.interface_class.strip()}"
+
         if isinstance(self.digit_separator, str) and isinstance(self.slot, (int, str)) and isinstance(self.card, (int, str)) and isinstance(self.port, (int, str)) and isinstance(self.subinterface, (int, str)) and isinstance(self.channel, (int, str)):
-            return f"{self.slot}{self.digit_separator}{self.card}{self.digit_separator}{self.port}.{self.subinterface}:{self.channel}"
+            return f"{self.slot}{self.digit_separator}{self.card}{self.digit_separator}{self.port}.{self.subinterface}:{self.channel}{_interface_class}"
         elif isinstance(self.digit_separator, str) and isinstance(self.slot, (int, str)) and isinstance(self.card, (int, str)) and isinstance(self.port, (int, str)) and isinstance(self.subinterface, (int, str)) and self.channel is None:
-            return f"{self.slot}{self.digit_separator}{self.card}{self.digit_separator}{self.port}.{self.subinterface}"
+            return f"{self.slot}{self.digit_separator}{self.card}{self.digit_separator}{self.port}.{self.subinterface}{_interface_class}"
         elif isinstance(self.digit_separator, str) and isinstance(self.slot, (int, str)) and isinstance(self.card, (int, str)) and isinstance(self.port, (int, str)) and self.subinterface is None and self.channel is None:
-            return f"{self.slot}{self.digit_separator}{self.card}{self.digit_separator}{self.port}"
+            return f"{self.slot}{self.digit_separator}{self.card}{self.digit_separator}{self.port}{_interface_class}"
         elif isinstance(self.digit_separator, str) and isinstance(self.slot, (int, str)) and self.card is None and isinstance(self.port, (int, str)) and self.subinterface is None and self.channel is None:
-            return f"{self.slot}{self.digit_separator}{self.port}"
+            return f"{self.slot}{self.digit_separator}{self.port}{_interface_class}"
         elif self.slot is None and self.card is None and isinstance(self.port, (int, str)) and self.subinterface is None and self.channel is None:
-            return f"{self.port}"
+            return f"{self.port}{_interface_class}"
         else:
             error = "Could not construct a return value for CiscoInterface().slot_card_port_subinterface_channel.  digit_separator: {self.digit_separator} sort_list: {self.sort_list}"
             logger.error(error)
@@ -3723,6 +3771,29 @@ class CiscoInterface(object):
     # This method is on CiscoInterface()
     @property
     @logger.catch(reraise=True)
+    def interface_class(self):
+        "Return point-to-point if self.interface_name is 'ATM 2/1/8 point-to-point and return None if there is no interface_class'"
+        if isinstance(self._interface_class, str):
+            return self._interface_class.strip()
+        else:
+            return self._interface_class
+
+    # This method is on CiscoInterface()
+    @interface_class.setter
+    @logger.catch(reraise=True)
+    def interface_class(self, value):
+        if isinstance(value, str):
+            self._interface_class = str(value.strip())
+        elif value is None:
+            self._interface_class = value
+        else:
+            error = f"Could not set _interface_class: {value} {type(value)}"
+            logger.critical(error)
+            raise ValueError(error)
+
+    # This method is on CiscoInterface()
+    @property
+    @logger.catch(reraise=True)
     def sort_list(self):
         "Return the sort_list"
         return self.update_sort_list()
@@ -3819,6 +3890,8 @@ class CiscoRange(MutableSequence):
         else:
             self._list = []
 
+    # This method is on CiscoRange()
+    @logger.catch(reraise=True)
     def parse_integers(self, text, debug=False):
         """Parse text input to CiscoRange(), such as CiscoRange('1-5,7', result_type=int).  '1-5,7 will be parsed.  By default, integers are used when CiscoRange(result_type=int) is parsed.'  An error is raised if the CiscoRange() cannot be parsed"""
         self.result_type = int
@@ -3864,11 +3937,15 @@ class CiscoRange(MutableSequence):
         # De-duplicate the list of integers and return it...
         return list(set([int(ii) for ii in integers]))
 
+    # This method is on CiscoRange()
+    @logger.catch(reraise=True)
     def parse_strings(self, text, debug=False):
         """Parse text input to CiscoRange(), such as CiscoRange('1-5,7', result_type=None).  '1-5,7 will be parsed.  By default, CiscoInterface() instances are used when CiscoRange(result_type=None) is parsed.'  An error is raised if the CiscoRange() cannot be parsed"""
         self.result_type = str
         return self.parse_cisco_interfaces(text=text, debug=debug)
 
+    # This method is on CiscoRange()
+    @logger.catch(reraise=True)
     def parse_floats(self, text, debug=False):
         self.result_type = float
         raise NotImplementedError("parse_floats() is not yet supported")
@@ -4106,6 +4183,8 @@ class CiscoRange(MutableSequence):
             logger.info(f"CiscoRange(text='{self.text}', debug=True) [begin_obj: {type(self.begin_obj)}] returning: {retval}")
         return retval
 
+    # This method is on CiscoRange()
+    @logger.catch(reraise=True)
     def __hash__(self):
         """Return a deterministic identifier for CiscoRange() implementations"""
         if len(self._list) == 0:
@@ -4113,11 +4192,19 @@ class CiscoRange(MutableSequence):
         else:
             return hash(str(self._list)) * hash(self.member_type)
 
+    # This method is on CiscoRange()
+    @logger.catch(reraise=True)
     def __eq__(self, other):
         if isinstance(other, CiscoRange):
             return self._list == other._list
         else:
             return False
+
+    # This method is on CiscoRange()
+    @logger.catch(reraise=True)
+    def __str__(self):
+        """Return a formal string representation of this CiscoRange()"""
+        return "[" + str(", ".join([str(ii) for ii in self._list])) + "]"
 
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
@@ -4134,6 +4221,7 @@ class CiscoRange(MutableSequence):
         """Return the length of this CiscoRange()"""
         return len(self._list)
 
+    # This method is on CiscoRange()
     @logger.catch(reraise=True)
     def __iter__(self):
         """Return an iterator for this CiscoRange().  If CiscoRange().__iter__() is not implemented, many CiscoRnage() index errors are generated by other methods accessing an index that is off by one."""
@@ -4205,7 +4293,6 @@ class CiscoRange(MutableSequence):
                 return new_list
             else:
                 raise ValueError()
-
 
     # This method is on CiscoRange()
     @property
@@ -4287,11 +4374,6 @@ class CiscoRange(MutableSequence):
             self._list = retval
             return self
 
-    # This method is on CiscoRange()
-    @logger.catch(reraise=True)
-    def __str__(self):
-        """Return a formal string representation of this CiscoRange()"""
-        return "[" + str(", ".join([str(ii) for ii in self._list])) + "]"
 
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
