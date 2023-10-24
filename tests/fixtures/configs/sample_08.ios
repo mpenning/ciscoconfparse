@@ -29,6 +29,9 @@ aaa new-model
 ipv6 unicast-routing
 ipv6 cef
 !
+! Limit ipv6 ICMP errors to ten per-second
+ipv6 icmp error-interval 100 10
+!
 aaa authentication login default local
 aaa authentication login CONSOLE none
 aaa authorization console
@@ -186,9 +189,10 @@ bba-group pppoe global
 interface Loopback0
  description SEE http://www.cymru.com/Documents/secure-ios-template.html
  ip address 172.16.0.1 255.255.255.255
- ipv6 address FD01:DEAD:BEEF::1/64
+ ipv6 address fd01:dead:beef::1/128
  ipv6 enable
  ipv6 ospf 11 area 0
+ ospfv3 authentication md5 0 27576134094768132473302031209727
  no ip redirects
  no ip unreachables
 !
@@ -220,9 +224,16 @@ interface ATM0/0.32 point-to-point
  !
 !
 interface FastEthernet0/0
+ description [Dual-stack DHCPv4/v6 hosts on 2nd-floor North]
  ip address 172.16.2.1 255.255.255.0
  ipv6 address fd01:ab00::/64 eui-64
  ipv6 address fe80::1 link-local
+ ipv6 enable
+ ipv6 ospf 11 area 0
+ standby 1 ip 172.16.2.254
+ standby 1 ipv6 autoconfig
+ standby 1 priority 150
+ standby 1 preempt delay minimum 15
  ipv6 nd prefix default no-advertise
  ipv6 nd other-config-flag
  ! set ipv6 router-advertisement lifetime to be 0...
@@ -248,12 +259,15 @@ interface FastEthernet0/0
  hold-queue 100 out
 !
 interface FastEthernet0/1
- ip address 172.16.3.1 255.255.255.0
+ description [Dual-stack OSPF Transit via West side of building]
+ ip address 172.16.3.1 255.255.255.252
  no ip unreachables
  ipv6 address fd01:ab01::/64 eui-64
  ipv6 address fe80::1 link-local
  ipv6 enable
+ ospfv3 network point-to-point
  ipv6 ospf 11 area 0
+ ospfv3 encryption ipsec spi 1001 esp null md5 0 27576134094768132473302031209727
  ipv6 nd prefix default no-advertise
  ipv6 nd other-config-flag
  ! set ipv6 router-advertisement lifetime to be 0...
@@ -262,17 +276,22 @@ interface FastEthernet0/1
  !   are configured with the ipv6 router address
  !   otherwise we *want* RAs to be sent on host LAN interfaces
  ipv6 nd ra suppress all
+ ! Prevent IPv6 SLAAC usage...
+ ipv6 nd prefix fd01:ab01::/64 300 300 no-autoconfig
  no ipv6 redirects
  no ipv6 unreachables
  ipv6 dhcp server 2001:db8:aaaa:0012::0001::
 !
 interface FastEthernet1/0
- ip address 172.16.4.1 255.255.255.0
+ description [Dual-stack OSPF Transit via North side of building]
+ ip address 172.16.4.1 255.255.255.252
  no ip unreachables
  ipv6 address fd01:ab10::/64 eui-64
  ipv6 address fe80::1 link-local
  ipv6 enable
+ ospfv3 network point-to-point
  ipv6 ospf 11 area 0
+ ospfv3 encryption ipsec spi 1001 esp null md5 0 27576134094768132473302031209727
  ipv6 nd prefix default no-advertise
  ipv6 nd other-config-flag
  ! old-IOS: set ipv6 router-advertisement lifetime to be 0...
@@ -281,6 +300,8 @@ interface FastEthernet1/0
  !   are configured with the ipv6 router address
  !   otherwise we *want* RAs to be sent on host LAN interfaces
  ipv6 nd ra suppress all
+ ! Prevent IPv6 SLAAC usage...
+ ipv6 nd prefix fd01:ab10::/64 300 300 no-autoconfig
  no ipv6 redirects
  no ipv6 unreachables
  ipv6 dhcp server 2001:db8:aaaa:0012::0001::
@@ -289,8 +310,10 @@ interface Virtual-Template1
  no ip address
 !
 interface Dialer1
+ description [Dual-stack OSPF Transit via WAN Dialer interface]
  mtu 1492
  bandwidth 800
+ dialer idle-timeout 600
  ip address negotiated
  ip access-group EXT_IN in
  ip access-group EXT_OUT out
@@ -309,6 +332,11 @@ interface Dialer1
  no cdp enable
  ipv6 address autoconfig
  ipv6 enable
+ ipv6 ospf 11 area 0
+ ospfv3 demand-circuit
+ ospfv3 flood-reduction
+ ospfv3 11 cost 1000
+ ospfv3 encryption ipsec spi 1001 esp null md5 0 27576134094768132473302031209727
  ipv6 mtu 1422
  ipv6 nd prefix default no-advertise
  ipv6 nd ra lifetime 0
@@ -329,10 +357,14 @@ router ospf 1
  network 172.16.3.0 0.0.0.255 area 0.0.0.0
  network 172.16.4.0 0.0.0.255 area 0.0.0.0
  default-information originate metric 1 metric-type 1
+ passsive-interface FastEthernet0/0
 !
 ipv6 router ospf 11
  router-id 172.16.0.1
+ timers throttle spf 50 150 5000
  default-metric 25
+ passsive-interface FastEthernet0/0
+ default-information metric 1 originate metric-type 1
 !
 ip route 0.0.0.0 0.0.0.0 Dialer1 250
 ip route 0.0.0.0 0.0.0.0 172.16.2.254 254
@@ -419,6 +451,10 @@ ip access-list extended TEMPORARY
  remark interface while the normal ACL is being updated
  permit ip any any
 !
+ipv6 access-list Deny_IPv6_Traffic
+ remark deny all IPv6 traffic
+ deny ipv6 any any
+!
 logging facility local6
 logging source-interface Loopback0
 logging 172.16.1.5
@@ -494,6 +530,18 @@ line vty 0 4
  exec-timeout 15 0
  logout-warning 30
  exec prompt timestamp
+ ! limit the scope of ipv6 access to the router.  No IPv6 SSH in
+ ipv6 access-class Deny_IPv6_Traffic in
+ history size 200
+ transport preferred none
+ transport input telnet ssh
+!
+line vty 5 15
+ exec-timeout 15 0
+ logout-warning 30
+ exec prompt timestamp
+ ! limit the scope of ipv6 access to the router.  No IPv6 SSH in
+ ipv6 access-class Deny_IPv6_Traffic in
  history size 200
  transport preferred none
  transport input telnet ssh
