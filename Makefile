@@ -30,8 +30,8 @@ COL_END=\033[0;0m
 pypi-package-infra:
 	@echo "$(COL_GREEN)>> building ciscoconfparse pypi artifacts (wheel and tar.gz)$(COL_END)"
 	pip install -U pip
-	pip install -r requirements.txt
-	pip install -r requirements-dev.txt
+	pip install -r requirements/requirements.txt
+	pip install -r requirements/requirements-dev.txt
 	# Delete bogus files... see https://stackoverflow.com/a/73992288/667301
 	perl -e 'unlink( grep { /^\W\d*\.*\d*/ && !-d } glob( "*" ) );'
 
