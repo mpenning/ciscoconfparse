@@ -164,27 +164,6 @@ class HSRPGroup(BaseCfgLine):
     # This method is on HSRPGroup()
     @property
     @logger.catch(reraise=True)
-    def ip_mask(self):
-        raise NotImplementedError()
-        ## NOTE: I have no intention of checking self.is_shutdown here
-        ##     People should be able to check the sanity of interfaces
-        ##     before they put them into production
-
-        ## For API simplicity, I always assume there is only one hsrp
-        ##     group on the interface
-        if self.ipv4_addr == "":
-            return ""
-        retval = self.re_match_iter_typed(
-            r"^\s*standby\s+(\d+\s+)*ip\s+\S+\s+(\S+)\s*$",
-            group=2,
-            result_type=str,
-            default="",
-        )
-        return retval
-
-    # This method is on HSRPGroup()
-    @property
-    @logger.catch(reraise=True)
     def group(self):
         ## For API simplicity, I always assume there is only one hsrp
         ##     group on the interface
