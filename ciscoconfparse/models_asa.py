@@ -280,6 +280,27 @@ class BaseASAIntfLine(ASACfgLine):
         )
         return retval
 
+    # This method is on BaseIOSIntfLine()
+    @property
+    @logger.catch(reraise=True)
+    def has_no_ipv4(self):
+        r"""Return an ccp_util.IPv4Obj object representing the subnet on this interface; if there is no address, return ccp_util.IPv4Obj('0.0.0.1/32')"""
+        return self.ipv4_addr_object == IPv4Obj("0.0.0.1/32")
+
+    # This method is on BaseIOSIntfLine()
+    @property
+    @logger.catch(reraise=True)
+    def ip(self):
+        r"""Return an ccp_util.IPv4Obj object representing the IPv4 address on this interface; if there is no address, return ccp_util.IPv4Obj('0.0.0.1/32')"""
+        return self.ipv4_addr_object
+
+    # This method is on BaseIOSIntfLine()
+    @property
+    @logger.catch(reraise=True)
+    def ipv4(self):
+        r"""Return an ccp_util.IPv4Obj object representing the IPv4 address on this interface; if there is no address, return ccp_util.IPv4Obj('0.0.0.1/32')"""
+        return self.ipv4_addr_object
+
     @property
     @logger.catch(reraise=True)
     def ipv4_addr_object(self):
@@ -297,6 +318,27 @@ class BaseASAIntfLine(ASACfgLine):
             return IPv4Obj("{}/{}".format(self.ipv4_standby_addr, self.ipv4_netmask))
         except Exception as ee:
             return self.default_ipv4_addr_object
+
+    # This method is on BaseIOSIntfLine()
+    @property
+    @logger.catch(reraise=True)
+    def has_no_ipv4(self):
+        r"""Return an ccp_util.IPv4Obj object representing the subnet on this interface; if there is no address, return ccp_util.IPv4Obj('0.0.0.1/32')"""
+        return self.ip_network_object == IPv4Obj("0.0.0.1/32")
+
+    # This method is on BaseIOSIntfLine()
+    @property
+    @logger.catch(reraise=True)
+    def ip(self):
+        r"""Return an ccp_util.IPv4Obj object representing the subnet on this interface; if there is no address, return ccp_util.IPv4Obj('0.0.0.1/32')"""
+        return self.ip_network_object
+
+    # This method is on BaseIOSIntfLine()
+    @property
+    @logger.catch(reraise=True)
+    def ipv4(self):
+        r"""Return an ccp_util.IPv4Obj object representing the subnet on this interface; if there is no address, return ccp_util.IPv4Obj('0.0.0.1/32')"""
+        return self.ip_network_object
 
     @property
     @logger.catch(reraise=True)

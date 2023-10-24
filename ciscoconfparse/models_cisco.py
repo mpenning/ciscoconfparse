@@ -10,6 +10,7 @@ from ciscoconfparse.ccp_util import (
 )
 from ciscoconfparse.errors import InvalidCiscoEthernetTrunkAction
 from ciscoconfparse.errors import InvalidCiscoEthernetVlan
+from ciscoconfparse.errors import InvalidCiscoInterface
 
 from ciscoconfparse.ccp_util import _IPV6_REGEX_STR_COMPRESSED3
 from ciscoconfparse.ccp_util import CiscoRange, CiscoInterface
@@ -365,7 +366,7 @@ class BaseIOSIntfLine(IOSCfgLine):
     def __init__(self, *args, **kwargs):
         super(BaseIOSIntfLine, self).__init__(*args, **kwargs)
         self.ifindex = None  # Optional, for user use
-        self.default_ipv4_addr_object = IPv4Obj("0.0.0.1/32", strict=False)
+        self.default_ipv4_addr_object = IPv4Obj()
 
     # This method is on BaseIOSIntfLine()
     @logger.catch(reraise=True)
@@ -381,34 +382,21 @@ class BaseIOSIntfLine(IOSCfgLine):
             elif ipv4_addr_object == self.default_ipv4_addr_object:
                 addr = "No IPv4"
             else:
-                ip = str(self.ipv4_addr_object.ip)
-                prefixlen = str(self.ipv4_addr_object.prefixlen)
-                addr = "{0}/{1}".format(ip, prefixlen)
-            return "<%s # %s '%s' info: '%s'>" % (
-                self.classname,
-                self.linenum,
-                self.name,
-                addr,
-            )
+                addr = self.ip_network_object
+            return f"<{self.classname} # {self.linenum} '{self.name}' info: '{addr}'>"
         else:
-            return "<%s # %s '%s' info: 'switchport'>" % (
-                self.classname,
-                self.linenum,
-                self.name,
-            )
+            return f"<{self.classname} # {self.linenum} '{self.name}' info: 'switchport'>"
 
     # This method is on BaseIOSIntfLine()
     @logger.catch(reraise=True)
     def _build_abbvs(self):
         r"""Build a set of valid abbreviations (lowercased) for the interface"""
         retval = set([])
-        port_type_chars = self.port_type.lower()
+        port_type = self.port_type.lower()
         subinterface_number = self.subinterface_number
         for sep in ["", " "]:
-            for ii in range(1, len(port_type_chars) + 1):
-                retval.add(
-                    "{0}{1}{2}".format(port_type_chars[0:ii], sep, subinterface_number)
-                )
+            for ii in range(1, len(port_type) + 1):
+                retval.add(f"{port_type[0:ii]}{sep}{subinterface_number}")
         return retval
 
     # This method is on BaseIOSIntfLine()
@@ -421,7 +409,7 @@ class BaseIOSIntfLine(IOSCfgLine):
     @logger.catch(reraise=True)
     def build_reset_string(self):
         # IOS interfaces are defaulted like this...
-        return "default " + self.text
+        return f"default {self.text}"
 
     # This method is on BaseIOSIntfLine()
     @property
@@ -471,6 +459,21 @@ class BaseIOSIntfLine(IOSCfgLine):
     _INTF_NAME_RE_STR = r"^interface\s+(\S+[0-9\/\.\s]+)\s*"
     _INTF_NAME_REGEX = re.compile(_INTF_NAME_RE_STR)
 
+    @property
+    def interface_object(self):
+        """Return a CiscoInterface() instance for this interface
+
+        Returns
+        -------
+        CiscoInterface
+            The interface name as a CiscoInterface() instance, or '' if the object is not an interface.  The CiscoInterface instance can be transparently cast as a string into a typical Cisco IOS name.
+        """
+        if not self.is_intf:
+            error = f"`{self.text}` is not a valid Cisco interface"
+            logger.error(error)
+            raise InvalidCiscoInterface(error)
+        return CiscoInterface("".join(self.text.split()[1:]))
+
     # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
@@ -480,7 +483,7 @@ class BaseIOSIntfLine(IOSCfgLine):
         Returns
         -------
         str
-            The interface name as a string, or '' if the object is not an interface.
+            The interface name as a string instance, or '' if the object is not an interface.
 
         Examples
         --------
@@ -516,10 +519,7 @@ class BaseIOSIntfLine(IOSCfgLine):
            'ATM2/0.100'
            >>>
         """
-        if not self.is_intf:
-            return ""
-        name = self.re_match(self._INTF_NAME_REGEX).strip()
-        return name
+        return str(self.interface_object)
 
     # This method is on BaseIOSIntfLine()
     @property
@@ -563,7 +563,7 @@ class BaseIOSIntfLine(IOSCfgLine):
            0
            >>>
         """
-        return self.ordinal_list[-1]
+        return self.interface_object.port
 
     # This method is on BaseIOSIntfLine()
     @property
@@ -659,9 +659,19 @@ class BaseIOSIntfLine(IOSCfgLine):
         if not self.is_intf:
             return ()
         else:
-            intf_number = self.interface_number
-            if intf_number:
-                return tuple([int(ii) for ii in intf_number.split("/")])
+            ifobj = self.interface_object
+            retval = []
+            static_list = (
+                ifobj.slot, ifobj.card, ifobj.port,
+                ifobj.subinterface, ifobj.channel, ifobj.interface_class
+            )
+            if ifobj:
+                for ii in static_list:
+                    if isinstance(ii, int):
+                        retval.append(ii)
+                    else:
+                        retval.append(-1)
+                return tuple(retval)
             else:
                 return ()
 
@@ -841,7 +851,7 @@ class BaseIOSIntfLine(IOSCfgLine):
     @property
     @logger.catch(reraise=True)
     def ipv4_addr_object(self):
-        r"""Return a ccp_util.IPv4Obj object representing the address on this interface; if there is no address, return IPv4Obj('0.0.0.1/32')"""
+        r"""Return a ccp_util.IPv4Obj object representing the address on this interface; if there is no address, return IPv4Obj()"""
 
         if self.ipv4_addr=="":
             return self.default_ipv4_addr_object
@@ -853,12 +863,33 @@ class BaseIOSIntfLine(IOSCfgLine):
         try:
             logger.info(f"intf='{self.name}' ipv4_addr='{self.ipv4_addr}' ipv4_netmask='{self.ipv4_netmask}'")
             return IPv4Obj(f"{self.ipv4_addr}/{self.ipv4_netmask}")
-        except DynamicAddressException as e:
-            logger.critical(f"intf='{self.name}' ipv4_addr='{self.ipv4_addr}' ipv4_netmask='{self.ipv4_netmask}'")
-            raise DynamicAddressException(e)
+        except DynamicAddressException as eee:
+            logger.critical(f"intf='{self.name}' ipv4_addr='{self.ipv4_addr}' ipv4_netmask='{self.ipv4_netmask}': {eee}")
+            raise DynamicAddressException(eee)
         except BaseException:
             logger.warning(f"intf='{self.name}' ipv4_addr='{self.ipv4_addr}' ipv4_netmask='{self.ipv4_netmask}'")
             return self.default_ipv4_addr_object
+
+    # This method is on BaseIOSIntfLine()
+    @property
+    @logger.catch(reraise=True)
+    def has_no_ipv4(self):
+        r"""Return an ccp_util.IPv4Obj object representing the subnet on this interface; if there is no address, return ccp_util.IPv4Obj('0.0.0.1/32')"""
+        return self.ipv4_addr_object == IPv4Obj()
+
+    # This method is on BaseIOSIntfLine()
+    @property
+    @logger.catch(reraise=True)
+    def ip(self):
+        r"""Return an ccp_util.IPv4Obj object representing the IPv4 address on this interface; if there is no address, return ccp_util.IPv4Obj('0.0.0.1/32')"""
+        return self.ipv4_addr_object
+
+    # This method is on BaseIOSIntfLine()
+    @property
+    @logger.catch(reraise=True)
+    def ipv4(self):
+        r"""Return an ccp_util.IPv4Obj object representing the IPv4 address on this interface; if there is no address, return ccp_util.IPv4Obj('0.0.0.1/32')"""
+        return self.ipv4_addr_object
 
     # This method is on BaseIOSIntfLine()
     @property
@@ -1143,7 +1174,7 @@ class BaseIOSIntfLine(IOSCfgLine):
 
     # This method is on BaseIOSIntfLine()
     @logger.catch(reraise=True)
-    def in_ipv4_subnet(self, ipv4network=IPv4Obj("0.0.0.0/32", strict=False)):
+    def in_ipv4_subnet(self, ipv4network=None, strict=False):
         r"""Accept an argument for the :class:`~ccp_util.IPv4Obj` to be
         considered, and return a boolean for whether this interface is within
         the requested :class:`~ccp_util.IPv4Obj`.
@@ -1191,17 +1222,27 @@ class BaseIOSIntfLine(IOSCfgLine):
            False
            >>>
         """
-        if not (str(self.ipv4_addr_object.ip) == "0.0.0.1"):
-            try:
-                # Return a boolean for whether the interface is in that
-                #    network and mask
-                return self.ipv4_network_object in ipv4network
-            except BaseException as e:
-                raise ValueError(
-                    "FATAL: %s.in_ipv4_subnet(ipv4network={0}) is an invalid arg: {1}".format(
-                        ipv4network, e
-                    )
-                )
+        if self.ipv4_addr_object.empty is True:
+            return False
+        elif ipv4network is None:
+            return False
+        elif isinstance(ipv4network, IPv4Obj) and ipv4network.empty is True:
+            return False
+        elif isinstance(ipv4network, IPv4Obj):
+            intf_ipv4obj = self.ipv4_addr_object
+            if isinstance(intf_ipv4obj, IPv4Obj):
+                try:
+                    # Return a boolean for whether the interface is in that
+                    #    network and mask
+                    return intf_ipv4obj in ipv4network
+                except Exception as eee:
+                    error = f"FATAL: {self}.in_ipv4_subnet(ipv4network={ipv4network}) is invalid: {eee}"
+                    logger.error(error)
+                    raise ValueError(error)
+            else:
+                error = f"{self}.ipv4_addr_object must be an instance of IPv4Obj, but it is {type(intf_ipv4obj)}"
+                logger.error(error)
+                raise ValueError(error)
         else:
             return None
 
@@ -1214,6 +1255,8 @@ class BaseIOSIntfLine(IOSCfgLine):
                 "A python list or set of ccp_util.IPv4Obj objects must be supplied"
             )
         for subnet in subnets:
+            if subnet.empty is True:
+                continue
             tmp = self.in_ipv4_subnet(ipv4network=subnet)
             if self.ipv4_addr_object in subnet:
                 return tmp
@@ -2104,6 +2147,200 @@ class IOSHostnameLine(BaseCfgLine):
         retval = self.re_match_typed(r"^hostname\s+(\S+)", result_type=str, default="")
         return retval
 
+##
+##-------------  HSRP
+##
+
+class HSRP(BaseCfgLine):
+    ##-------------  HSRP
+
+    @logger.catch(reraise=True)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.feature = "hsrp"
+        self.groups = []
+
+    @logger.catch(reraise=True)
+    def __repr__(self):
+        return "<%s # %s '%s'>" % (self.classname, self.linenum, self.hostname)
+
+    # This method is on BaseIOSIntfLine()
+    @property
+    @logger.catch(reraise=True)
+    def has_ip_hsrp(self):
+        return bool(self.hsrp_ip_addr)
+
+    # This method is on BaseIOSIntfLine()
+    @property
+    @logger.catch(reraise=True)
+    def hsrp_ip_addr(self):
+        ## NOTE: I have no intention of checking self.is_shutdown here
+        ##     People should be able to check the sanity of interfaces
+        ##     before they put them into production
+
+        ## For API simplicity, I always assume there is only one hsrp
+        ##     group on the interface
+        if self.ipv4_addr == "":
+            return ""
+
+        retval = self.re_match_iter_typed(
+            r"^\s*standby\s+(\d+\s+)*ip\s+(\S+)", group=2, result_type=str, default=""
+        )
+        return retval
+
+    # This method is on BaseIOSIntfLine()
+    @property
+    @logger.catch(reraise=True)
+    def hsrp_ip_mask(self):
+        ## NOTE: I have no intention of checking self.is_shutdown here
+        ##     People should be able to check the sanity of interfaces
+        ##     before they put them into production
+
+        ## For API simplicity, I always assume there is only one hsrp
+        ##     group on the interface
+        if self.ipv4_addr == "":
+            return ""
+        retval = self.re_match_iter_typed(
+            r"^\s*standby\s+(\d+\s+)*ip\s+\S+\s+(\S+)\s*$",
+            group=2,
+            result_type=str,
+            default="",
+        )
+        return retval
+
+    # This method is on BaseIOSIntfLine()
+    @property
+    @logger.catch(reraise=True)
+    def hsrp_group(self):
+        ## For API simplicity, I always assume there is only one hsrp
+        ##     group on the interface
+        retval = self.re_match_iter_typed(
+            r"^\s*standby\s+(\d+)\s+ip\s+\S+", result_type=int, default=-1
+        )
+        return retval
+
+    # This method is on BaseIOSIntfLine()
+    @property
+    @logger.catch(reraise=True)
+    def hsrp_priority(self):
+        ## For API simplicity, I always assume there is only one hsrp
+        ##     group on the interface
+        if not self.has_ip_hsrp:
+            return 0  # Return this if there is no hsrp on the interface
+        retval = self.re_match_iter_typed(
+            r"^\s*standby\s+(\d+\s+)*priority\s+(\d+)",
+            group=2,
+            result_type=int,
+            default=100,
+        )
+        return retval
+
+    # This method is on BaseIOSIntfLine()
+    @property
+    @logger.catch(reraise=True)
+    def hsrp_hello_timer(self):
+        ## For API simplicity, I always assume there is only one hsrp
+        ##     group on the interface
+
+        # FIXME: handle msec timers...
+        retval = self.re_match_iter_typed(
+            r"^\s*standby\s+(\d+\s+)*timers\s+(\d+)\s+\d+",
+            group=2,
+            result_type=float,
+            default=0.0,
+        )
+        return retval
+
+    # This method is on BaseIOSIntfLine()
+    @property
+    @logger.catch(reraise=True)
+    def hsrp_hold_timer(self):
+        ## For API simplicity, I always assume there is only one hsrp
+        ##     group on the interface
+
+        # FIXME: this should be a float (in case of msec timers)
+        retval = self.re_match_iter_typed(
+            r"^\s*standby\s+(\d+\s+)*timers\s+\d+\s+(\d+)",
+            group=2,
+            result_type=float,
+            default=0.0,
+        )
+        return retval
+
+    # This method is on BaseIOSIntfLine()
+    @property
+    @logger.catch(reraise=True)
+    def has_hsrp_track(self):
+        return bool(self.hsrp_track)
+
+    # This method is on BaseIOSIntfLine()
+    @property
+    @logger.catch(reraise=True)
+    def hsrp_track(self):
+        ## For API simplicity, I always assume there is only one hsrp
+        ##     group on the interface
+        retval = self.re_match_iter_typed(
+            r"^\s*standby\s+(\d+\s+)*track\s(\S+.+?)\s+\d+\s*",
+            group=2,
+            result_type=str,
+            default="",
+        )
+        return retval
+
+    # This method is on BaseIOSIntfLine()
+    @property
+    @logger.catch(reraise=True)
+    def has_hsrp_usebia(self):
+        ## For API simplicity, I always assume there is only one hsrp
+        ##     group on the interface
+        retval = self.re_match_iter_typed(
+            r"^\s*standby\s+(\d+\s+)*(use-bia)",
+            group=2,
+            result_type=bool,
+            default=False,
+        )
+        return retval
+
+    # This method is on BaseIOSIntfLine()
+    @property
+    @logger.catch(reraise=True)
+    def has_hsrp_preempt(self):
+        ## For API simplicity, I always assume there is only one hsrp
+        ##     group on the interface
+        retval = self.re_match_iter_typed(
+            r"^\s*standby\s+(\d+\s+)*(use-bia)",
+            group=2,
+            result_type=bool,
+            default=False,
+        )
+        return retval
+
+    # This method is on BaseIOSIntfLine()
+    @property
+    @logger.catch(reraise=True)
+    def hsrp_authentication_md5_keychain(self):
+        ## For API simplicity, I always assume there is only one hsrp
+        ##     group on the interface
+        retval = self.re_match_iter_typed(
+            r"^\s*standby\s+(\d+\s+)*authentication\s+md5\s+key-chain\s+(\S+)",
+            group=2,
+            result_type=str,
+            default="",
+        )
+        return retval
+
+    # This method is on BaseIOSIntfLine()
+    @property
+    @logger.catch(reraise=True)
+    def has_hsrp_authentication_md5(self):
+        keychain = self.hsrp_authentication_md5_keychain
+        return bool(keychain)
+
+    # This method is on BaseIOSIntfLine()
+    @property
+    @logger.catch(reraise=True)
+    def hsrp_authentication_cleartext(self):
+        pass
 
 ##
 ##-------------  IOS Access Line
@@ -2532,7 +2769,6 @@ class IOSRouteLine(BaseIOSRouteLine):
 ################################ Groups ###############################
 ################################
 
-
 ##
 ##-------------  IOS TACACS+ Group
 ##
@@ -2591,9 +2827,8 @@ class IOSAaaGroupServerLine(BaseCfgLine):
 
 
 ##
-##-------------  IOS AAA Lines
+##-------------  IOS AAA Login Authentication Lines
 ##
-
 
 class IOSAaaLoginAuthenticationLine(BaseCfgLine):
     @logger.catch(reraise=True)
@@ -2616,6 +2851,9 @@ class IOSAaaLoginAuthenticationLine(BaseCfgLine):
             return True
         return False
 
+##
+##-------------  IOS AAA Enable Authentication Lines
+##
 
 class IOSAaaEnableAuthenticationLine(BaseCfgLine):
     @logger.catch(reraise=True)
@@ -2638,6 +2876,9 @@ class IOSAaaEnableAuthenticationLine(BaseCfgLine):
             return True
         return False
 
+##
+##-------------  IOS AAA Commands Authorization Lines
+##
 
 class IOSAaaCommandsAuthorizationLine(BaseCfgLine):
     @logger.catch(reraise=True)
@@ -2661,6 +2902,9 @@ class IOSAaaCommandsAuthorizationLine(BaseCfgLine):
             return True
         return False
 
+##
+##-------------  IOS AAA Commands Accounting Lines
+##
 
 class IOSAaaCommandsAccountingLine(BaseCfgLine):
     @logger.catch(reraise=True)
@@ -2685,6 +2929,9 @@ class IOSAaaCommandsAccountingLine(BaseCfgLine):
             return True
         return False
 
+##
+##-------------  IOS AAA Exec Accounting Lines
+##
 
 class IOSAaaExecAccountingLine(BaseCfgLine):
     @logger.catch(reraise=True)

@@ -1,6 +1,6 @@
 r""" models_iosxr.py - Parse, Query, Build, and Modify IOS-style configurations
 
-     Copyright (C) 2021-2022 David Michael Pennington
+     Copyright (C) 2021-2023 David Michael Pennington
      Copyright (C) 2020-2021 David Michael Pennington at Cisco Systems
      Copyright (C) 2019      David Michael Pennington at ThousandEyes
      Copyright (C) 2014-2019 David Michael Pennington at Samsung Data Services
@@ -31,8 +31,11 @@ from ciscoconfparse.ccp_util import (
     _IPV6_REGEX_STR_COMPRESSED1,
     _IPV6_REGEX_STR_COMPRESSED2,
 )
+
+from ciscoconfparse.errors import InvalidCiscoInterface
 from ciscoconfparse.ccp_util import _IPV6_REGEX_STR_COMPRESSED3
 from ciscoconfparse.ccp_util import CiscoRange, IPv4Obj, IPv6Obj
+from ciscoconfparse.ccp_util import CiscoInterface
 from ciscoconfparse.ccp_abc import BaseCfgLine
 
 ### HUGE UGLY WARNING:
@@ -441,13 +444,28 @@ class BaseIOSIntfLine(IOSCfgLine):
     _INTF_NAME_REGEX = re.compile(_INTF_NAME_RE_STR)
 
     @property
+    def interface_object(self):
+        """Return a CiscoInterface() instance for this interface
+
+        Returns
+        -------
+        CiscoInterface
+            The interface name as a CiscoInterface() instance, or '' if the object is not an interface.  The CiscoInterface instance can be transparently cast as a string into a typical Cisco IOS name.
+        """
+        if not self.is_intf:
+            error = "`{self.text}` is not a valid Cisco interface"
+            logger.error(error)
+            raise InvalidCiscoInterface(error)
+        return CiscoInterface("".join(self.text.split()[1:]))
+
+    @property
     def name(self):
         r"""Return the interface name as a string, such as 'GigabitEthernet0/1'
 
         Returns
         -------
         str
-            The interface name as a string, or '' if the object is not an interface.
+            The interface name as a string instance, or '' if the object is not an interface.
 
         Examples
         --------
@@ -483,10 +501,7 @@ class BaseIOSIntfLine(IOSCfgLine):
            'ATM2/0.100'
            >>>
         """
-        if not self.is_intf:
-            return ""
-        name = self.re_match(self._INTF_NAME_REGEX).strip()
-        return name
+        return str(self.interface_object)
 
     @property
     def port(self):
@@ -528,7 +543,7 @@ class BaseIOSIntfLine(IOSCfgLine):
            0
            >>>
         """
-        return self.ordinal_list[-1]
+        return self.interface_object.port
 
     @property
     def port_type(self):
@@ -789,6 +804,24 @@ class BaseIOSIntfLine(IOSCfgLine):
             raise DynamicAddressException(e)
         except Exception:
             return self.default_ipv4_addr_object
+
+    @property
+    @logger.catch(reraise=True)
+    def has_no_ipv4(self):
+        r"""Return an ccp_util.IPv4Obj object representing the subnet on this interface; if there is no address, return ccp_util.IPv4Obj('0.0.0.1/32')"""
+        return self.ip_network_object == IPv4Obj("0.0.0.1/32")
+
+    @property
+    @logger.catch(reraise=True)
+    def ip(self):
+        r"""Return an ccp_util.IPv4Obj object representing the subnet on this interface; if there is no address, return ccp_util.IPv4Obj('0.0.0.1/32')"""
+        return self.ipv4_addr_object
+
+    @property
+    @logger.catch(reraise=True)
+    def ipv4(self):
+        r"""Return an ccp_util.IPv4Obj object representing the subnet on this interface; if there is no address, return ccp_util.IPv4Obj('0.0.0.1/32')"""
+        return self.ipv4_addr_object
 
     @property
     def ipv4_network_object(self):
@@ -2232,9 +2265,8 @@ class IOSAaaGroupServerLine(BaseCfgLine):
 
 
 ##
-##-------------  IOS AAA Lines
+##-------------  IOS AAA Login Authentication Lines
 ##
-
 
 class IOSAaaLoginAuthenticationLine(BaseCfgLine):
     def __init__(self, *args, **kwargs):
@@ -2256,6 +2288,10 @@ class IOSAaaLoginAuthenticationLine(BaseCfgLine):
         return False
 
 
+##
+##-------------  IOS AAA Enable Authentication Lines
+##
+
 class IOSAaaEnableAuthenticationLine(BaseCfgLine):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -2275,6 +2311,9 @@ class IOSAaaEnableAuthenticationLine(BaseCfgLine):
             return True
         return False
 
+##
+##-------------  IOS AAA Commands Authorization Lines
+##
 
 class IOSAaaCommandsAuthorizationLine(BaseCfgLine):
     def __init__(self, *args, **kwargs):
@@ -2296,6 +2335,9 @@ class IOSAaaCommandsAuthorizationLine(BaseCfgLine):
             return True
         return False
 
+##
+##-------------  IOS AAA Commands Accounting Lines
+##
 
 class IOSAaaCommandsAccountingLine(BaseCfgLine):
     def __init__(self, *args, **kwargs):
@@ -2317,6 +2359,10 @@ class IOSAaaCommandsAccountingLine(BaseCfgLine):
         if re.search(r"^aaa\saccounting\scommands", line):
             return True
         return False
+
+##
+##-------------  IOS AAA Exec Accounting Lines
+##
 
 
 class IOSAaaExecAccountingLine(BaseCfgLine):

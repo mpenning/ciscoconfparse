@@ -38,10 +38,14 @@ from ciscoconfparse.ccp_util import (
     _IPV6_REGEX_STR_COMPRESSED1,
     _IPV6_REGEX_STR_COMPRESSED2,
 )
+
+from ciscoconfparse.errors import InvalidCiscoInterface
 from ciscoconfparse.ccp_util import _IPV6_REGEX_STR_COMPRESSED3
 from ciscoconfparse.ccp_util import CiscoRange, IPv4Obj, IPv6Obj
+from ciscoconfparse.ccp_util import CiscoInterface
 from ciscoconfparse.ccp_abc import BaseCfgLine
 
+from loguru import logger
 
 ##
 ##-------------  IOS Configuration line object
@@ -397,17 +401,37 @@ class BaseNXOSIntfLine(NXOSCfgLine):
     _INTF_NAME_REGEX = re.compile(_INTF_NAME_RE_STR)
 
     @property
+    def interface_object(self):
+        """Return a CiscoInterface() instance for this interface
+
+        Returns
+        -------
+        CiscoInterface
+            The interface name as a CiscoInterface() instance, or '' if the object is not an interface.  The CiscoInterface instance can be transparently cast as a string into a typical Cisco IOS name.
+        """
+        if not self.is_intf:
+            error = "`{self.text}` is not a valid Cisco interface"
+            logger.error(error)
+            raise InvalidCiscoInterface(error)
+        return CiscoInterface("".join(self.text.split()[1:]))
+
+    @property
     def name(self):
         r"""Return the interface name as a string, such as 'GigabitEthernet0/1'
 
-        Returns:
-            - str.  The interface name as a string, or '' if the object is not an interface.
+        Returns
+        -------
+        str
+            The interface name as a string instance, or '' if the object is not an interface.
 
+        Examples
+        --------
         This example illustrates use of the method.
 
         .. code-block:: python
            :emphasize-lines: 17,20,23
 
+           >>> from ciscoconfparse import CiscoConfParse
            >>> config = [
            ...     '!',
            ...     'interface FastEthernet1/0',
@@ -423,21 +447,18 @@ class BaseNXOSIntfLine(NXOSCfgLine):
            ...     '!',
            ...     ]
            >>> parse = CiscoConfParse(config, factory=True)
-           >>> obj = parse.find_objects(r'^interface\sFast')[0]
+           >>> obj = parse.find_objects('^interface\sFast')[0]
            >>> obj.name
            'FastEthernet1/0'
-           >>> obj = parse.find_objects(r'^interface\sATM')[0]
+           >>> obj = parse.find_objects('^interface\sATM')[0]
            >>> obj.name
            'ATM2/0'
-           >>> obj = parse.find_objects(r'^interface\sATM')[1]
+           >>> obj = parse.find_objects('^interface\sATM')[1]
            >>> obj.name
            'ATM2/0.100'
            >>>
         """
-        if not self.is_intf:
-            return ""
-        name = self.re_match(self._INTF_NAME_REGEX).strip()
-        return name
+        return str(self.interface_object)
 
     @property
     def port(self):
@@ -474,7 +495,7 @@ class BaseNXOSIntfLine(NXOSCfgLine):
            0
            >>>
         """
-        return self.ordinal_list[-1]
+        return self.interface_object.port
 
     @property
     def port_type(self):
@@ -732,6 +753,24 @@ class BaseNXOSIntfLine(NXOSCfgLine):
             raise DynamicAddressException(e)
         except Exception:
             return self.default_ipv4_addr_object
+
+    @property
+    @logger.catch(reraise=True)
+    def has_no_ipv4(self):
+        r"""Return an ccp_util.IPv4Obj object representing the subnet on this interface; if there is no address, return ccp_util.IPv4Obj('0.0.0.1/32')"""
+        return self.ip_network_object == IPv4Obj("0.0.0.1/32")
+
+    @property
+    @logger.catch(reraise=True)
+    def ip(self):
+        r"""Return an ccp_util.IPv4Obj object representing the subnet on this interface; if there is no address, return ccp_util.IPv4Obj('0.0.0.1/32')"""
+        return self.ipv4_addr_object
+
+    @property
+    @logger.catch(reraise=True)
+    def ipv4(self):
+        r"""Return an ccp_util.IPv4Obj object representing the subnet on this interface; if there is no address, return ccp_util.IPv4Obj('0.0.0.1/32')"""
+        return self.ipv4_addr_object
 
     @property
     def ipv4_network_object(self):
@@ -2241,6 +2280,7 @@ class NXOSRouteLine(BaseNXOSRouteLine):
 ##
 ##-------------  NXOS TACACS+ Group
 ##
+
 class NXOSAaaGroupServerLine(BaseCfgLine):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -2286,11 +2326,9 @@ class NXOSAaaGroupServerLine(BaseCfgLine):
                 retval.add(mm.group(1))  # This is the server's ip
         return retval
 
-
 ##
-##-------------  NXOS AAA Lines
+##-------------  NXOS AAA Login Authentication Lines
 ##
-
 
 class NXOSAaaLoginAuthenticationLine(BaseCfgLine):
     def __init__(self, *args, **kwargs):
@@ -2311,6 +2349,9 @@ class NXOSAaaLoginAuthenticationLine(BaseCfgLine):
             return True
         return False
 
+##
+##-------------  NXOS AAA Enable Authentication Lines
+##
 
 class NXOSAaaEnableAuthenticationLine(BaseCfgLine):
     def __init__(self, *args, **kwargs):
@@ -2331,6 +2372,9 @@ class NXOSAaaEnableAuthenticationLine(BaseCfgLine):
             return True
         return False
 
+##
+##-------------  NXOS AAA Commands Authorization Lines
+##
 
 class NXOSAaaCommandsAuthorizationLine(BaseCfgLine):
     def __init__(self, *args, **kwargs):
@@ -2352,6 +2396,9 @@ class NXOSAaaCommandsAuthorizationLine(BaseCfgLine):
             return True
         return False
 
+##
+##-------------  NXOS AAA Commands Accounting Lines
+##
 
 class NXOSAaaCommandsAccountingLine(BaseCfgLine):
     def __init__(self, *args, **kwargs):
@@ -2374,6 +2421,9 @@ class NXOSAaaCommandsAccountingLine(BaseCfgLine):
             return True
         return False
 
+##
+##-------------  NXOS AAA Exec Accounting Lines
+##
 
 class NXOSAaaExecAccountingLine(BaseCfgLine):
     def __init__(self, *args, **kwargs):

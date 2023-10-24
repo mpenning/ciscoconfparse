@@ -650,6 +650,7 @@ def test_CiscoInterface_01():
     assert uut.port == 1
     assert uut.subinterface is None
     assert uut.channel is None
+    assert uut.interface_class is None
 
 def test_CiscoInterface_02():
     """Check that a card and port is parsed correctly"""
@@ -660,6 +661,7 @@ def test_CiscoInterface_02():
     assert uut.port == 42
     assert uut.subinterface is None
     assert uut.channel is None
+    assert uut.interface_class is None
 
 def test_CiscoInterface_03():
     """Check that a card and large port-number is parsed correctly"""
@@ -670,6 +672,7 @@ def test_CiscoInterface_03():
     assert uut.port == 4242
     assert uut.subinterface is None
     assert uut.channel is None
+    assert uut.interface_class is None
 
 def test_CiscoInterface_04():
     """Check that a card, port and subinterface is parsed correctly"""
@@ -680,6 +683,7 @@ def test_CiscoInterface_04():
     assert uut.port == 42
     assert uut.subinterface == 5
     assert uut.channel is None
+    assert uut.interface_class is None
 
 def test_CiscoInterface_05():
     """Check that a card, slot, port  is parsed correctly"""
@@ -690,6 +694,7 @@ def test_CiscoInterface_05():
     assert uut.port == 42
     assert uut.subinterface is None
     assert uut.channel is None
+    assert uut.interface_class is None
 
 def test_CiscoInterface_06():
     """Check that a card, slot, port and subinterface  is parsed correctly"""
@@ -700,6 +705,7 @@ def test_CiscoInterface_06():
     assert uut.port == 42
     assert uut.subinterface == 5
     assert uut.channel is None
+    assert uut.interface_class is None
 
 def test_CiscoInterface_07():
     """Check that a card, slot, port, subinterface, and channel is parsed correctly"""
@@ -710,6 +716,7 @@ def test_CiscoInterface_07():
     assert uut.port == 42
     assert uut.subinterface == 5
     assert uut.channel == 9
+    assert uut.interface_class is None
 
 def test_CiscoInterface_08():
     """Check that a card, slot, port, subinterface, and channel is parsed correctly from a dict"""
@@ -721,7 +728,8 @@ def test_CiscoInterface_08():
             'port': 3,
             'digit_separator': '/',
             'subinterface': 4,
-            'channel': 5
+            'channel': 5,
+            'interface_class': None,
         })
     assert uut.prefix == "Ethernet"
     assert uut.slot == 1
@@ -730,6 +738,7 @@ def test_CiscoInterface_08():
     assert uut.subinterface == 4
     assert uut.channel == 5
     assert uut.digit_separator == "/"
+    assert uut.interface_class is None
 
 def test_CiscoInterface_09():
     """Check that a port is parsed correctly from a dict"""
@@ -742,6 +751,7 @@ def test_CiscoInterface_09():
             'digit_separator': None,
             'subinterface': None,
             'channel':None,
+            'interface_class': None,
         })
     assert uut.prefix == "Ethernet"
     assert uut.slot == None
@@ -750,6 +760,18 @@ def test_CiscoInterface_09():
     assert uut.subinterface is None
     assert uut.channel is None
     assert uut.digit_separator is None
+    assert uut.interface_class is None
+
+def test_CiscoInterface_10():
+    """Check that a card, slot, port, subinterface, and channel is parsed correctly"""
+    uut = CiscoInterface("Serial1/3/42.5:9 multipoint")
+    assert uut.prefix == "Serial"
+    assert uut.slot == 1
+    assert uut.card == 3
+    assert uut.port == 42
+    assert uut.subinterface == 5
+    assert uut.channel == 9
+    assert uut.interface_class == "multipoint"
 
 def test_CiscoRange_01():
     """Basic vlan range test"""

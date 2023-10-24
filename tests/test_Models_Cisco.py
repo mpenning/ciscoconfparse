@@ -68,7 +68,7 @@ def testVal_IOSHostnameLine_dna(line):
 def testValues_IOSIntfLine(parse_c01_factory):
     """Test to check IOSIntfLine values"""
     obj = parse_c01_factory.find_objects_dna("IOSIntf")[0]
-    assert obj.name == "Serial 1/0"
+    assert obj.name == "Serial1/0"
     assert obj.ipv4_addr == "1.1.1.1"
     assert obj.ipv4_netmask == "255.255.255.252"
 
@@ -171,17 +171,17 @@ def testVal_IOSCfgLine_is_ethernet_intf():
 def testVal_IOSIntfLine_name():
     # Map a config line to result_correct
     result_map = {
-        "interface Loopback 0": "Loopback 0",
+        "interface Loopback 0": "Loopback0",
         "interface Loopback1": "Loopback1",
-        "interface Serial 1/0": "Serial 1/0",
+        "interface Serial 1/0": "Serial1/0",
         "interface Ethernet4/1": "Ethernet4/1",
-        "interface Ethernet 4/1": "Ethernet 4/1",
+        "interface Ethernet 4/1": "Ethernet4/1",
         "interface FastEthernet4/1": "FastEthernet4/1",
-        "interface FastEthernet 4/1": "FastEthernet 4/1",
+        "interface FastEthernet 4/1": "FastEthernet4/1",
         "interface GigabitEthernet4/1": "GigabitEthernet4/1",
-        "interface GigabitEthernet 4/1": "GigabitEthernet 4/1",
+        "interface GigabitEthernet 4/1": "GigabitEthernet4/1",
         "interface GigabitEthernet4/8.120": "GigabitEthernet4/8.120",
-        "interface GigabitEthernet 4/8.120": "GigabitEthernet 4/8.120",
+        "interface GigabitEthernet 4/8.120": "GigabitEthernet4/8.120",
         "interface ATM5/0/0": "ATM5/0/0",
         "interface ATM5/0/0.32 point-to-point": "ATM5/0/0.32",
     }
@@ -717,7 +717,7 @@ def testVal_IOSIntfLine_abbvs(parse_c03_factory):
     test_result = dict()
     for intf_obj in cfg.find_objects("^interface"):
         test_result[intf_obj.text] = intf_obj.abbvs
-    assert result_correct == test_result
+    assert test_result == result_correct
 
 
 def testVal_IOSIntfLine_is_abbv_as(parse_c03_factory):
@@ -746,25 +746,25 @@ def testVal_IOSIntfLine_is_abbv_as(parse_c03_factory):
 def testVal_IOSIntfLine_ordinal_list(parse_c03_factory):
     cfg = parse_c03_factory
     result_correct = {
-        "interface Serial 1/0": (1, 0),
-        "interface Serial 1/1": (1, 1),
-        "interface GigabitEthernet4/1": (4, 1),
-        "interface GigabitEthernet4/2": (4, 2),
-        "interface GigabitEthernet4/3": (4, 3),
-        "interface GigabitEthernet4/4": (4, 4),
-        "interface GigabitEthernet4/5": (4, 5),
-        "interface GigabitEthernet4/6": (4, 6),
-        "interface GigabitEthernet4/7": (4, 7),
-        "interface GigabitEthernet4/8.120": (4, 8),
-        "interface ATM5/0/0": (5, 0, 0),
-        "interface ATM5/0/0.32 point-to-point": (5, 0, 0),
-        "interface ATM5/0/1": (5, 0, 1),
+        "interface Serial 1/0": (1, -1, 0, -1, -1, -1),
+        "interface Serial 1/1": (1, -1, 1, -1, -1, -1),
+        "interface GigabitEthernet4/1": (4, -1, 1, -1, -1, -1),
+        "interface GigabitEthernet4/2": (4, -1, 2, -1, -1, -1),
+        "interface GigabitEthernet4/3": (4, -1, 3, -1, -1, -1),
+        "interface GigabitEthernet4/4": (4, -1, 4, -1, -1, -1),
+        "interface GigabitEthernet4/5": (4, -1, 5, -1, -1, -1),
+        "interface GigabitEthernet4/6": (4, -1, 6, -1, -1, -1),
+        "interface GigabitEthernet4/7": (4, -1, 7, -1, -1, -1),
+        "interface GigabitEthernet4/8.120": (4, -1, 8, 120, -1, -1),
+        "interface ATM5/0/0": (5, 0, 0, -1, -1, -1),
+        "interface ATM5/0/0.32 point-to-point": (5, 0, 0, 32, -1, -1),
+        "interface ATM5/0/1": (5, 0, 1, -1, -1, -1),
     }
     test_result = dict()
     ## Parse all interface objects in c01 and check ordinal_list
     for intf_obj in cfg.find_objects("^interface"):
         test_result[intf_obj.text] = intf_obj.ordinal_list
-    assert result_correct == test_result
+    assert test_result == result_correct
 
 
 def testVal_IOSIntfLine_interface_number(parse_c03_factory):
@@ -788,7 +788,7 @@ def testVal_IOSIntfLine_interface_number(parse_c03_factory):
     ## Parse all interface objects in self.c01 and check interface_number
     for intf_obj in cfg.find_objects("^interface"):
         test_result[intf_obj.text] = intf_obj.interface_number
-    assert result_correct == test_result
+    assert test_result == result_correct
 
 
 def testVal_IOSIntfLine_subinterface_number(parse_c03_factory):
@@ -812,7 +812,7 @@ def testVal_IOSIntfLine_subinterface_number(parse_c03_factory):
     ## Parse all interface objects in c01 and check subinterface_number
     for intf_obj in cfg.find_objects("^interface"):
         test_result[intf_obj.text] = intf_obj.subinterface_number
-    assert result_correct == test_result
+    assert test_result == result_correct
 
 
 def testVal_IOSIntfLine_port(parse_c03_factory):
@@ -836,7 +836,7 @@ def testVal_IOSIntfLine_port(parse_c03_factory):
     ## Parse all interface objects in c01 and check port number
     for intf_obj in cfg.find_objects("^interface"):
         test_result[intf_obj.text] = intf_obj.port
-    assert result_correct == test_result
+    assert test_result == result_correct
 
 
 def testVal_IOSIntfLine_port_type():
@@ -883,7 +883,7 @@ def testVal_IOSIntfLine_description_01(parse_c03_factory):
     ## Parse all interface objects in self.c01 and check description
     for intf_obj in cfg.find_objects("^interface"):
         test_result[intf_obj.text] = intf_obj.description
-    assert result_correct == test_result
+    assert test_result == result_correct
 
 def testVal_IOSIntfLine_description_02():
     gh269_conf = [
@@ -907,7 +907,7 @@ def testVal_IOSIntfLine_description_02():
     ## Parse all interface objects in cfg and check description
     for intf_obj in cfg.find_objects("^interface"):
         test_result[intf_obj.text] = intf_obj.description
-    assert result_correct == test_result
+    assert test_result == result_correct
 
 
 def testVal_IOSIntfLine_manual_bandwidth(parse_c03_factory):
@@ -931,7 +931,7 @@ def testVal_IOSIntfLine_manual_bandwidth(parse_c03_factory):
     ## Parse all interface objects in self.c01 and check bandwidth
     for intf_obj in cfg.find_objects("^interface"):
         test_result[intf_obj.text] = intf_obj.manual_bandwidth
-    assert result_correct == test_result
+    assert test_result == result_correct
 
 
 def testVal_IOSIntfLine_manual_delay(parse_c03_factory):
@@ -955,7 +955,7 @@ def testVal_IOSIntfLine_manual_delay(parse_c03_factory):
     ## Parse all interface objects in c01 and check delay
     for intf_obj in cfg.find_objects("^interface"):
         test_result[intf_obj.text] = intf_obj.manual_delay
-    assert result_correct == test_result
+    assert test_result == result_correct
 
 
 def testVal_IOSIntfLine_manual_holdqueue_in(parse_c03_factory):
@@ -979,7 +979,7 @@ def testVal_IOSIntfLine_manual_holdqueue_in(parse_c03_factory):
     ## Parse all interface objects in c01 and check holdqueue in
     for intf_obj in cfg.find_objects("^interface"):
         test_result[intf_obj.text] = intf_obj.manual_holdqueue_in
-    assert result_correct == test_result
+    assert test_result == result_correct
 
 
 def testVal_IOSIntfLine_manual_holdqueue_out(parse_c03_factory):
@@ -1003,7 +1003,7 @@ def testVal_IOSIntfLine_manual_holdqueue_out(parse_c03_factory):
     ## Parse all interface objects in c01 and check holdqueue out
     for intf_obj in cfg.find_objects("^interface"):
         test_result[intf_obj.text] = intf_obj.manual_holdqueue_out
-    assert result_correct == test_result
+    assert test_result == result_correct
 
 
 def testVal_IOSIntfLine_manual_encapsulation(parse_c03_factory):
@@ -1027,7 +1027,7 @@ def testVal_IOSIntfLine_manual_encapsulation(parse_c03_factory):
     ## Parse all interface objects in c01 and check encapsulation
     for intf_obj in cfg.find_objects("^interface"):
         test_result[intf_obj.text] = intf_obj.manual_encapsulation
-    assert result_correct == test_result
+    assert test_result == result_correct
 
 
 def testVal_IOSIntfLine_has_mpls(parse_c03_factory):
@@ -1051,35 +1051,31 @@ def testVal_IOSIntfLine_has_mpls(parse_c03_factory):
     ## Parse all interface objects in c01 and check has_mpls
     for intf_obj in cfg.find_objects("^interface"):
         test_result[intf_obj.text] = intf_obj.has_mpls
-    assert result_correct == test_result
+    assert test_result == result_correct
 
 def testVal_IOSIntfLine_ipv4_addr_object01(parse_c03_factory):
     cfg = parse_c03_factory
     result_correct = {
         "interface Serial 1/0": IPv4Obj("1.1.1.1/30", strict=False),
         "interface Serial 1/1": IPv4Obj("1.1.1.9/31", strict=False),
-        "interface GigabitEthernet4/1": IPv4Obj("0.0.0.1/32", strict=False),
-        "interface GigabitEthernet4/2": IPv4Obj("0.0.0.1/32", strict=False),
-        "interface GigabitEthernet4/3": IPv4Obj("0.0.0.1/32", strict=False),
-        "interface GigabitEthernet4/4": IPv4Obj("0.0.0.1/32", strict=False),
-        "interface GigabitEthernet4/5": IPv4Obj("0.0.0.1/32", strict=False),
-        "interface GigabitEthernet4/6": IPv4Obj("0.0.0.1/32", strict=False),
-        "interface GigabitEthernet4/7": IPv4Obj("0.0.0.1/32", strict=False),
+        "interface GigabitEthernet4/1": IPv4Obj(),
+        "interface GigabitEthernet4/2": IPv4Obj(),
+        "interface GigabitEthernet4/3": IPv4Obj(),
+        "interface GigabitEthernet4/4": IPv4Obj(),
+        "interface GigabitEthernet4/5": IPv4Obj(),
+        "interface GigabitEthernet4/6": IPv4Obj(),
+        "interface GigabitEthernet4/7": IPv4Obj(),
         "interface GigabitEthernet4/8.120": IPv4Obj("1.1.2.254/24", strict=False),
-        "interface ATM5/0/0": IPv4Obj("0.0.0.1/32", strict=False),
+        "interface ATM5/0/0": IPv4Obj(),
         "interface ATM5/0/0.32 point-to-point": IPv4Obj("1.1.1.5/30", strict=False),
-        "interface ATM5/0/1": IPv4Obj("0.0.0.1/32", strict=False),
-
-        # FIXME FIXME FIXME
-        #"interface ATM5/0/1": None,
+        "interface ATM5/0/1": IPv4Obj(),
     }
     test_result = dict()
     ## Parse all interface objects in c01 and check ipv4_addr_object
     for intf_obj in cfg.find_objects("^interface"):
-        print("INTF", intf_obj)
-        print("    IPv4", intf_obj.ipv4_addr_object)
+        print("    UUT IPV4_ADDR_OBJECT", intf_obj.name, intf_obj.ipv4_addr_object)
         test_result[intf_obj.text] = intf_obj.ipv4_addr_object
-    assert result_correct == test_result
+    assert test_result == result_correct
 
 
 def testVal_IOSIntfLine_ipv4_addr_object02():
@@ -1094,7 +1090,7 @@ def testVal_IOSIntfLine_ipv4_addr_object02():
     # NOTE - Due to infinite error recursion I used to throw an
     # DynamicAddressException() here but had to stop due to infinite
     # error recursion here...
-    assert cfg.find_objects("^interface")[0].ipv4_addr_object == IPv4Obj("0.0.0.1/32")
+    assert cfg.find_objects("^interface")[0].ipv4_addr_object == IPv4Obj()
 
 
 def testVal_IOSIntfLine_ip_network_object01():
@@ -1110,7 +1106,7 @@ def testVal_IOSIntfLine_ip_network_object01():
     # NOTE - Due to infinite error recursion I used to throw an
     # DynamicAddressException() here but had to stop due to infinite
     # error recursion here...
-    assert cfg.find_objects("^interface")[0].ipv4_addr_object == IPv4Obj("0.0.0.1/32")
+    assert cfg.find_objects("^interface")[0].ipv4_addr_object == IPv4Obj()
 
 def testVal_IOSIntfLine_has_autonegotiation(parse_c03_factory):
     cfg = parse_c03_factory
@@ -1133,7 +1129,7 @@ def testVal_IOSIntfLine_has_autonegotiation(parse_c03_factory):
     ## Parse all interface objects in c01 and check has_autonegotiation
     for intf_obj in cfg.find_objects("^interface"):
         test_result[intf_obj.text] = intf_obj.has_autonegotiation
-    assert result_correct == test_result
+    assert test_result == result_correct
 
 
 def testVal_IOSIntfLine_has_manual_speed(parse_c03_factory):
@@ -1157,7 +1153,7 @@ def testVal_IOSIntfLine_has_manual_speed(parse_c03_factory):
     ## Parse all interface objects in c01 and check has_manual_speed
     for intf_obj in cfg.find_objects("^interface"):
         test_result[intf_obj.text] = intf_obj.has_manual_speed
-    assert result_correct == test_result
+    assert test_result == result_correct
 
 
 def testVal_IOSIntfLine_has_manual_duplex(parse_c03_factory):
@@ -1181,7 +1177,7 @@ def testVal_IOSIntfLine_has_manual_duplex(parse_c03_factory):
     ## Parse all interface objects in c01 and check has_manual_duplex
     for intf_obj in cfg.find_objects("^interface"):
         test_result[intf_obj.text] = intf_obj.has_manual_duplex
-    assert result_correct == test_result
+    assert test_result == result_correct
 
 
 def testVal_IOSIntfLine_has_manual_carrierdelay(parse_c03_factory):
@@ -1205,7 +1201,7 @@ def testVal_IOSIntfLine_has_manual_carrierdelay(parse_c03_factory):
     ## Parse all interface objects in self.c01 and check has_manual_carrierdelay
     for intf_obj in cfg.find_objects("^interface"):
         test_result[intf_obj.text] = intf_obj.has_manual_carrierdelay
-    assert result_correct == test_result
+    assert test_result == result_correct
 
 
 def testVal_IOSIntfLine_manual_carrierdelay(parse_c03_factory):
@@ -1229,7 +1225,7 @@ def testVal_IOSIntfLine_manual_carrierdelay(parse_c03_factory):
     ## Parse all interface objects in c01 and check manual_carrierdelay
     for intf_obj in cfg.find_objects("^interface"):
         test_result[intf_obj.text] = intf_obj.manual_carrierdelay
-    assert result_correct == test_result
+    assert test_result == result_correct
 
 
 def testVal_IOSIntfLine_manual_clock_rate(parse_c03_factory):
@@ -1253,7 +1249,7 @@ def testVal_IOSIntfLine_manual_clock_rate(parse_c03_factory):
     ## Parse all interface objects in self.c01 and check manual_clock_rate
     for intf_obj in cfg.find_objects("^interface"):
         test_result[intf_obj.text] = intf_obj.manual_clock_rate
-    assert result_correct == test_result
+    assert test_result == result_correct
 
 
 def testVal_IOSIntfLine_manual_mtu(parse_c03_factory):
@@ -1277,7 +1273,7 @@ def testVal_IOSIntfLine_manual_mtu(parse_c03_factory):
     ## Parse all interface objects in c01 and check manual_mtu
     for intf_obj in cfg.find_objects("^interface"):
         test_result[intf_obj.text] = intf_obj.manual_mtu
-    assert result_correct == test_result
+    assert test_result == result_correct
 
 
 def testVal_IOSIntfLine_manual_mpls_mtu(parse_c03_factory):
@@ -1301,7 +1297,7 @@ def testVal_IOSIntfLine_manual_mpls_mtu(parse_c03_factory):
     ## Parse all interface objects in c01 and check manual_mpls_mtu
     for intf_obj in cfg.find_objects("^interface"):
         test_result[intf_obj.text] = intf_obj.manual_mpls_mtu
-    assert result_correct == test_result
+    assert test_result == result_correct
 
 
 def testVal_IOSIntfLine_manual_ip_mtu(parse_c03_factory):
@@ -1325,7 +1321,7 @@ def testVal_IOSIntfLine_manual_ip_mtu(parse_c03_factory):
     ## Parse all interface objects in c01 and check manual_ip_mtu
     for intf_obj in cfg.find_objects("^interface"):
         test_result[intf_obj.text] = intf_obj.manual_ip_mtu
-    assert result_correct == test_result
+    assert test_result == result_correct
 
 
 def testVal_IOSIntfLine_is_shutdown(parse_c03_factory):
@@ -1349,7 +1345,7 @@ def testVal_IOSIntfLine_is_shutdown(parse_c03_factory):
     ## Parse all interface objects in c01 and check is_shutdown
     for intf_obj in cfg.find_objects("^interface"):
         test_result[intf_obj.text] = intf_obj.is_shutdown
-    assert result_correct == test_result
+    assert test_result == result_correct
 
 
 def testVal_IOSIntfLine_vrf01(parse_c03_factory):
@@ -1373,7 +1369,7 @@ def testVal_IOSIntfLine_vrf01(parse_c03_factory):
     ## Parse all interface objects in c01 and check vrf
     for intf_obj in cfg.find_objects("^interface"):
         test_result[intf_obj.text] = intf_obj.vrf
-    assert result_correct == test_result
+    assert test_result == result_correct
 
 
 def testVal_IOSIntfLine_vrf02():
@@ -1411,7 +1407,7 @@ def testVal_IOSIntfLine_ipv4_addr(parse_c03_factory):
     ## Parse all interface objects in c01 and check ipv4_addr
     for intf_obj in cfg.find_objects("^interface"):
         test_result[intf_obj.text] = intf_obj.ipv4_addr
-    assert result_correct == test_result
+    assert test_result == result_correct
 
 
 def testVal_IOSIntfLine_ipv4_netmask(parse_c03_factory):
@@ -1435,7 +1431,7 @@ def testVal_IOSIntfLine_ipv4_netmask(parse_c03_factory):
     ## Parse all interface objects in c01 and check ipv4_netmask
     for intf_obj in cfg.find_objects("^interface"):
         test_result[intf_obj.text] = intf_obj.ipv4_netmask
-    assert result_correct == test_result
+    assert test_result == result_correct
 
 
 def testVal_IOSIntfLine_ipv4_masklength(parse_c03_factory):
@@ -1459,7 +1455,7 @@ def testVal_IOSIntfLine_ipv4_masklength(parse_c03_factory):
     ## Parse all interface objects in c01 and check ipv4_masklength
     for intf_obj in cfg.find_objects("^interface"):
         test_result[intf_obj.text] = intf_obj.ipv4_masklength
-    assert result_correct == test_result
+    assert test_result == result_correct
 
 
 def testVal_IOSIntfLine_in_ipv4_subnet(parse_c03_factory):
@@ -1467,25 +1463,27 @@ def testVal_IOSIntfLine_in_ipv4_subnet(parse_c03_factory):
     result_correct = {
         "interface Serial 1/0": True,
         "interface Serial 1/1": True,
-        "interface GigabitEthernet4/1": None,
-        "interface GigabitEthernet4/2": None,
-        "interface GigabitEthernet4/3": None,
-        "interface GigabitEthernet4/4": None,
-        "interface GigabitEthernet4/5": None,
-        "interface GigabitEthernet4/6": None,
-        "interface GigabitEthernet4/7": None,
+        "interface GigabitEthernet4/1": False,
+        "interface GigabitEthernet4/2": False,
+        "interface GigabitEthernet4/3": False,
+        "interface GigabitEthernet4/4": False,
+        "interface GigabitEthernet4/5": False,
+        "interface GigabitEthernet4/6": False,
+        "interface GigabitEthernet4/7": False,
         "interface GigabitEthernet4/8.120": True,
-        "interface ATM5/0/0": None,
+        "interface ATM5/0/0": False,
         "interface ATM5/0/0.32 point-to-point": True,
-        "interface ATM5/0/1": None,
+        "interface ATM5/0/1": False,
     }
     test_result = dict()
     ## Parse all interface objects in c01 and check in_ipv4_subnet
     ##   where the subnet is 1.1.0.0/22
     test_network = IPv4Obj("1.1.0.0/22", strict=False)
     for intf_obj in cfg.find_objects("^interface"):
+        print("CiscoConfParse().ipv4_addr_object", intf_obj.ipv4_addr_object)
+        print("CiscoConfParse().ipv4_network_object", intf_obj.ipv4_network_object)
         test_result[intf_obj.text] = intf_obj.in_ipv4_subnet(test_network)
-    assert result_correct == test_result
+    assert test_result == result_correct
 
 
 def testVal_IOSIntfLine_in_ipv4_subnets(parse_c03_factory):
@@ -1493,17 +1491,17 @@ def testVal_IOSIntfLine_in_ipv4_subnets(parse_c03_factory):
     result_correct = {
         "interface Serial 1/0": True,
         "interface Serial 1/1": True,
-        "interface GigabitEthernet4/1": None,
-        "interface GigabitEthernet4/2": None,
-        "interface GigabitEthernet4/3": None,
-        "interface GigabitEthernet4/4": None,
-        "interface GigabitEthernet4/5": None,
-        "interface GigabitEthernet4/6": None,
-        "interface GigabitEthernet4/7": None,
+        "interface GigabitEthernet4/1": False,
+        "interface GigabitEthernet4/2": False,
+        "interface GigabitEthernet4/3": False,
+        "interface GigabitEthernet4/4": False,
+        "interface GigabitEthernet4/5": False,
+        "interface GigabitEthernet4/6": False,
+        "interface GigabitEthernet4/7": False,
         "interface GigabitEthernet4/8.120": True,
-        "interface ATM5/0/0": None,
+        "interface ATM5/0/0": False,
         "interface ATM5/0/0.32 point-to-point": True,
-        "interface ATM5/0/1": None,
+        "interface ATM5/0/1": False,
     }
     test_result = dict()
     ## Parse all interface objects in c01 and check in_ipv4_subnets
@@ -1511,8 +1509,9 @@ def testVal_IOSIntfLine_in_ipv4_subnets(parse_c03_factory):
     test_network2 = IPv4Obj("1.1.2.0/23", strict=False)
     networks = set([test_network1, test_network2])
     for intf_obj in cfg.find_objects("^interface"):
+        #print("   INTF", intf_obj, networks)
         test_result[intf_obj.text] = intf_obj.in_ipv4_subnets(networks)
-    assert result_correct == test_result
+    assert test_result == result_correct
 
 
 def testVal_IOSIntfLine_has_no_icmp_unreachables(parse_c03_factory):
@@ -1536,7 +1535,7 @@ def testVal_IOSIntfLine_has_no_icmp_unreachables(parse_c03_factory):
     ## Parse all interface objects in c01 and check has_no_icmp_unreachables
     for intf_obj in cfg.find_objects("^interface"):
         test_result[intf_obj.text] = intf_obj.has_no_icmp_unreachables
-    assert result_correct == test_result
+    assert test_result == result_correct
 
 
 def testVal_IOSIntfLine_has_no_icmp_redirects(parse_c03_factory):
@@ -1560,7 +1559,7 @@ def testVal_IOSIntfLine_has_no_icmp_redirects(parse_c03_factory):
     ## Parse all interface objects in c01 and check has_no_icmp_redirects
     for intf_obj in cfg.find_objects("^interface"):
         test_result[intf_obj.text] = intf_obj.has_no_icmp_redirects
-    assert result_correct == test_result
+    assert test_result == result_correct
 
 
 def testVal_IOSIntfLine_has_no_ip_proxyarp(parse_c03_factory):
@@ -1584,7 +1583,7 @@ def testVal_IOSIntfLine_has_no_ip_proxyarp(parse_c03_factory):
     ## Parse all interface objects in c01 and check has_no_ip_proxyarp
     for intf_obj in cfg.find_objects("^interface"):
         test_result[intf_obj.text] = intf_obj.has_no_ip_proxyarp
-    assert result_correct == test_result
+    assert test_result == result_correct
 
 
 ###

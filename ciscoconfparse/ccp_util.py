@@ -864,11 +864,18 @@ def collapse_addresses(network_list):
 # interfaces (such as persisting host-bits when the intf masklen changes) and
 # add custom @properties
 class IPv4Obj(object):
+    dna = "IPv4Obj"
+    ip_object = None
+    network_object = None
+    strict = False
+    debug = 0
+    finished_parsing = False
+    empty = False
 
     # This method is on IPv4Obj().  @logger.catch() breaks the __init__() method.
-    # Use 'nosec' to disable default linter security flags about using 0.0.0.1
-    @logger.catch(reraise=True)
-    def __init__(self, v4input=f"0.0.0.1/{IPV4_MAX_PREFIXLEN}", strict=False, debug=0): # nosec
+    #@logger.catch(reraise=True)
+    #def __init__(self, v4input=f"0.0.0.1/{IPV4_MAX_PREFIXLEN}", strict=False, debug=0): # nosec
+    def __init__(self, v4input=None, strict=False, debug=0): # nosec
         """An object to represent IPv4 addresses and IPv4 networks.
 
         When :class:`~ccp_util.IPv4Obj` objects are compared or sorted, network numbers are sorted lower to higher.  If network numbers are the same, shorter masks are lower than longer masks. After comparing mask length, numerically higher IP addresses are greater than numerically lower IP addresses..  Comparisons between :class:`~ccp_util.IPv4Obj` instances was chosen so it's easy to find the longest-match for a given prefix (see examples below).
@@ -994,10 +1001,8 @@ class IPv4Obj(object):
             logger.critical(error)
             raise ValueError(error)
 
-        print("V4INPUT", v4input)
-
         try:
-            if isinstance(v4input, (str, int, IPv4Obj)) is False:
+            if v4input is not None and isinstance(v4input, (str, int, IPv4Obj)) is False:
                 raise ValueError()
         except ValueError as eee:
             raise AddressValueError(
@@ -1008,17 +1013,18 @@ class IPv4Obj(object):
                 f"Could not parse '{v4input}' (type: {type(v4input)}) into an IPv4 Address. {eee}"
             )
 
-        self.v4addr_prefixlen = v4input
-        self.dna = "IPv4Obj"
-        self.ip_object = None
-        self.network_object = None
         self.strict = strict
         self.debug = debug
-        self.params_dict = {}
 
         #################################### NEW
 
-        if isinstance(v4input, str):
+        if v4input is None:
+            self.empty = True
+
+        elif self.finished_parsing is True:
+            return self
+
+        elif isinstance(v4input, str):
             v4_str_rgx = _RGX_IPV4ADDR_WITH_MASK.search(v4input.strip())
             if v4_str_rgx is not None:
                 v4_groupdict = v4_str_rgx.groupdict()
@@ -1029,17 +1035,30 @@ class IPv4Obj(object):
             v4addr_netmask = v4_groupdict.get("v4addr_netmask", None) or ""
             v4addr_prefixlen = v4_groupdict.get("v4addr_prefixlen", None) or ""
             netmask = v4_groupdict.get("netmask", None) or ""
-            prefixlen = v4_groupdict.get("netmask", None) or ""
+            prefixlen = v4_groupdict.get("masklen", None) or ""
+
+            # There is a bug here... if I don't use this if condition, address
+            #     parsing fails
             if netmask == "" and prefixlen == "":
                 prefixlen = "32"
+
+            # Fix parsing problems...
+            if not re.search(r"^\d+$", prefixlen.strip()):
+                prefixlen = ""
+            if not re.search(r"^\d+\.\d+\.\d+\.\d+$", netmask.strip()):
+                netmask = ""
+
+            # Fix a tricky parsing error above... both netmask and prefixlen should
+            #     not be defined...
+            if netmask != "" and prefixlen != "":
+                prefixlen = ""
 
             v4addr = f"{v4addr_nomask}{v4addr_netmask}{v4addr_prefixlen}"
             mask_prefixlen = f"{netmask}{prefixlen}"
             if re.search(r"\d+\.\d+\.\d+\.\d+", v4addr):
                 self.ip_object = IPv4Address(v4addr)
-                self.network_object = IPv4Network(f"{v4addr}/{mask_prefixlen}")
+                self.network_object = IPv4Network(f"{v4addr}/{mask_prefixlen}", strict=False)
                 self.prefixlen = self.network_object.prefixlen
-                print("    SELF", self)
             elif v4addr == "dhcp":
                 raise DynamicAddressException("Cannot parse address from a DHCP string.")
             else:
@@ -1047,14 +1066,18 @@ class IPv4Obj(object):
                     f"Could not parse '{v4input}' {type(v4input)} into an IPv4 Address"
                 )
 
+            self.finished_parsing = True
+
         elif isinstance(v4input, int):
             assert 0 <= v4input <= IPV4_MAXINT
             self.ip_object = IPv4Address(v4input)
             self.network_object = IPv4Network(v4input, strict=False)
+            self.finished_parsing = True
 
         elif isinstance(v4input, IPv4Obj):
             self.ip_object = IPv4Address(v4input.ip)
             self.network_object = IPv4Network(v4input.as_cidr_net, strict=False)
+            self.finished_parsing = True
 
             if False:
                 if isinstance(v4_groupdict["v4addr_nomask"], str):
@@ -1149,19 +1172,20 @@ class IPv4Obj(object):
     # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     def __repr__(self):
-        if False and not isinstance(self.prefixlen, int):
-            raise ValueError
-
-        return f"""<IPv4Obj {str(self.ip_object)}/{self.prefixlen}>"""
+        if self.empty is False:
+            return f"""<IPv4Obj {str(self.ip_object)}/{self.prefixlen}>"""
+        else:
+            return f"""<IPv4Obj None empty={self.empty}>"""
 
     # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
     def __eq__(self, val):
+        if isinstance(val, IPv4Obj) and (self.empty is True or val.empty is True):
+            return self.empty == val.empty
         try:
             # Code to fix Github issue #180
             for obj in [self, val]:
                 for attr_name in ["as_decimal", "prefixlen"]:
-                    print(f"    THIS FAILING {obj}", obj)
                     try:
                         assert getattr(obj, attr_name, None) is not None
                     except AssertionError:
@@ -1180,8 +1204,12 @@ class IPv4Obj(object):
 
     # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
+    @logger.catch(reraise=True)
     def __ne__(self, val):
-        return not self.__eq__(val)
+        if isinstance(val, IPv4Obj):
+            return not self.__eq__(val)
+        else:
+            return True
 
     # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
@@ -1305,6 +1333,12 @@ class IPv4Obj(object):
     # On IPv4Obj()
     def __contains__(self, val):
         # Used for "foo in bar"... python calls bar.__contains__(foo)
+        if self.empty is True and val.empty is True:
+            return True
+        elif self.empty is True or val.empty is True:
+            return False
+
+        # For all other cases, see below...
         try:
             if self.network_object.prefixlen == 0:
                 return True
@@ -1338,7 +1372,10 @@ class IPv4Obj(object):
     # On IPv4Obj()
     def __hash__(self):
         # Python3 needs __hash__()
-        return hash(str(self.ip_object)) + hash(str(self.prefixlen))
+        if self.empty is False:
+            return hash(str(self.ip_object)) + hash(str(self.prefixlen))
+        else:
+            return hash(None)
 
     # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
@@ -1455,7 +1492,10 @@ class IPv4Obj(object):
     @property
     def prefixlen(self):
         """Returns the length of the network mask as an integer."""
-        return int(self.network_object.prefixlen)
+        if self.empty is False:
+            return int(self.network_object.prefixlen)
+        else:
+            return None
 
     # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
@@ -1515,7 +1555,7 @@ class IPv4Obj(object):
             return self.network_object.network
         else:
             ## The ipaddress module returns an "IPAddress" object in Python3...
-            return IPv4Network(f"{self.network_object.compressed}")
+            return IPv4Network(f"{self.network_object.compressed}", strict=False)
 
     # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
@@ -1612,7 +1652,6 @@ class IPv4Obj(object):
     @property
     def as_decimal(self):
         """Returns the IP address as a decimal integer"""
-        print("    AS_IP", self.ip_object, self.ip)
         num_strings = str(self.ip).split(".")
         num_strings.reverse()  # reverse the order
         return sum(int(num) * (256**idx) for idx, num in enumerate(num_strings))
