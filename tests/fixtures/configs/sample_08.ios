@@ -230,17 +230,18 @@ interface ATM0/0.32 point-to-point
  !
 !
 interface FastEthernet0/0
- description [Dual-stack v4/v6 hosts on 2nd-floor North LAN]
+ description [IPv4 and IPv6 desktop / laptop hosts on 2nd-floor North LAN]
  ip address 172.16.2.1 255.255.255.0
  ipv6 dhcp server IPV6_2FL_NORTH_LAN
  ipv6 address fd01:ab00::/64 eui-64
  ipv6 address fe80::1 link-local
  ipv6 enable
  ipv6 ospf 11 area 0
- standby 1 ip 172.16.2.254
- standby 1 ipv6 autoconfig
- standby 1 priority 150
- standby 1 preempt delay minimum 15
+ standby 11 ip 172.16.2.254
+ standby 11 ipv6 autoconfig
+ standby 11 priority 150
+ standby 11 preempt delay minimum 15
+ standby 11 track Dialer1 75
  ipv6 nd prefix default no-advertise
  ! Use DHCPv6...
  ipv6 nd managed-config-flag
@@ -268,7 +269,7 @@ interface FastEthernet0/0
  hold-queue 100 out
 !
 interface FastEthernet0/1
- description [Dual-stack OSPF Transit via West side of building]
+ description [IPv4 and IPv6 OSPF Transit via West side of building]
  ip address 172.16.3.1 255.255.255.252
  no ip unreachables
  ipv6 address fd01:ab01::/64 eui-64
@@ -292,7 +293,7 @@ interface FastEthernet0/1
  ipv6 dhcp server 2001:db8:aaaa:0012::0001::
 !
 interface FastEthernet1/0
- description [Dual-stack OSPF Transit via North side of building]
+ description [IPv4 and IPv6 OSPF Transit via North side of building]
  ip address 172.16.4.1 255.255.255.252
  no ip unreachables
  ipv6 address fd01:ab10::/64 eui-64
@@ -319,7 +320,7 @@ interface Virtual-Template1
  no ip address
 !
 interface Dialer1
- description [Dual-stack OSPF Transit via WAN Dialer interface]
+ description [IPv4 and IPv6 OSPF Transit via WAN Dialer: NAT, CBWFQ interface]
  mtu 1492
  bandwidth 800
  dialer idle-timeout 600
