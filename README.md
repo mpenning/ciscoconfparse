@@ -104,7 +104,7 @@ for ccp_obj in parse.find_objects('^interface'):
     # Print HSRP Group interface tracking information
     ##########################################################################
     print("")
-    print(f"HSRP Interface Groups Tracking for {set([ii.interface_name for ii in intf.hsrp_interfaces])}")
+    print(f"HSRP Interface Groups Tracking for {set([ii.interface for ii in intf.hsrp_interfaces])}")
     for hsrp_intf_group in ccp_obj.hsrp_interfaces:
         group = hsrp_intf_group.hsrp_group
         # hsrp_intf_group.interface_tracking is a list of dictionaries
