@@ -74,6 +74,29 @@ from ciscoconfparse import CiscoConfParse
 
 parse = CiscoConfParse('tests/fixtures/configs/sample_08.ios', syntax='ios', factory=True)
 
+##############################################################################
+# Parse an example Cisco IOS HSRP configuration from:
+#     tests/fixtures/configs/sample_08.ios
+#
+# !
+# interface FastEthernet0/0
+#  encapsulation dot1q
+#  ip address 172.16.2.1 255.255.255.0
+#  ip address 172.16.2.1 255.255.255.0
+#  ipv6 dhcp server IPV6_2FL_NORTH_LAN
+#  ipv6 address fd01:ab00::/64 eui-64
+#  ipv6 address fe80::1 link-local
+#  ipv6 enable
+#  ipv6 ospf 11 area 0
+#  standby 11 ip 172.16.2.254
+#  standby 11 ipv6 autoconfig
+#  standby 11 priority 150
+#  standby 11 preempt delay minimum 15
+#  standby 11 track Dialer1 75
+#  ipv6 nd prefix default no-advertise
+# !
+#
+##############################################################################
 for ccp_obj in parse.find_objects('^interface'):
 
     # Skip if there are no HSRPInterfaceGroup() instances...
