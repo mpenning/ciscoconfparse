@@ -110,7 +110,13 @@ class TrackingInterface(BaseCfgLine):
     def interface_name(self):
         # Derive the interface_name from 'interface GigabitEthernet 5/2'
         # return the name of the interface that owns this TrackingInterface()
-        return " ".join(self._parent.text.strip().split()[1:])
+        for obj in self._parent.children:
+            obj_parts = obj.text.strip().split()
+            obj_parts_lower = obj.text.lower().strip().split()
+            if obj_parts_lower[1:3] == [str(self._group), "track"]:
+                # Return the interface name from the hsrp / glbp track configuration
+                return obj_parts[3]
+        raise ValueError()
 
     # This method is on TrackingInterface()
     @property
@@ -166,8 +172,8 @@ class TrackingInterface(BaseCfgLine):
     # This method is on TrackingInterface()
     @property
     @logger.catch(reraise=True)
-    def initial_weighting(self):
-        """Return the initial weighting (ref GLBP) integer value."""
+    def weighting(self):
+        """Return the weighting (ref GLBP) integer value."""
         ## NOTE: I have no intention of checking self.is_shutdown here
         ##     People should be able to check the sanity of interfaces
         ##     before they put them into production
@@ -180,10 +186,8 @@ class TrackingInterface(BaseCfgLine):
             if re.search(r"weighting\s+\d+", obj.text):
                 if obj_parts[1:3] == [str(self._group), "weighting"]:
                     return int(obj_parts[3])
-        error = f"{reference_obj} does not have an initial weighting configured"
-        logger.error(error)
-        raise ValueError(error)
-
+        # Default weighting value...
+        return 100
 ##
 ##-------------  HSRP Interface Group
 ##
@@ -805,7 +809,7 @@ class BaseIOSIntfLine(IOSCfgLine):
     @property
     @logger.catch(reraise=True)
     def hsrp_interfaces(self):
-        """Return the list of configured HSRP Interface group instances"""
+        """Return the list of configured HSRPInterfaceGroup() instances"""
         retval = set()
         _parent = self
         for obj in _parent.children:
@@ -2472,7 +2476,6 @@ class IOSIntfLine(BaseIOSIntfLine):
         if re.search(intf_regex, line):
             return True
         return False
-
 
 ##
 ##-------------  IOS Interface Globals

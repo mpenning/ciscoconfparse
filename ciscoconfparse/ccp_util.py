@@ -3577,6 +3577,12 @@ class CiscoInterface(object):
     # This method is on CiscoInterface()
     @property
     @logger.catch(reraise=True)
+    def name(self):
+        return self.render_as_string()
+
+    # This method is on CiscoInterface()
+    @property
+    @logger.catch(reraise=True)
     def prefix(self):
         "Return 'Serial' if self.interface_name is 'Serial 2/1/8.3:6' and return '' if there is no interface prefix"
         return self._prefix
