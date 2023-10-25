@@ -72,8 +72,6 @@ CiscoConfParse has a special feature that abstracts common IOS / NXOS / ASA / IO
 ```python
 from ciscoconfparse import CiscoConfParse
 
-parse = CiscoConfParse('tests/fixtures/configs/sample_08.ios', syntax='ios', factory=True)
-
 ##############################################################################
 # Parse an example Cisco IOS HSRP configuration from:
 #     tests/fixtures/configs/sample_08.ios
@@ -97,13 +95,14 @@ parse = CiscoConfParse('tests/fixtures/configs/sample_08.ios', syntax='ios', fac
 # !
 #
 ##############################################################################
+parse = CiscoConfParse('tests/fixtures/configs/sample_08.ios', syntax='ios', factory=True)
 for ccp_obj in parse.find_objects('^interface'):
 
     # Skip if there are no HSRPInterfaceGroup() instances...
     if len(ccp_obj.hsrp_interfaces) == 0:
         continue
 
-    # Interface name, such as 'Serial1/0'
+    # Interface name, such as 'FastEthernet0/0'
     intf_name = ccp_obj.name
 
     # Interface description
