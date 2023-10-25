@@ -95,7 +95,7 @@ for ccp_obj in parse.find_objects('^interface'):
     # IPv4 netmask object: ipaddress.IPv4Address()
     intf_v4masklength = ccp_obj.ipv4_addr_object.masklength
 
-    # IPv4 HSRP Interface Group object instances... ref: models_cisco.py HSRPv4Group()
+    # IPv4 HSRP Interface Group object instances... ref: models_cisco.py HSRPInterfaceGroup()
     intf_hsrp_intf_groups = ccp_obj.hsrp_interfaces
 
     # List of IPv4 HSRP IPv4 Addresses
