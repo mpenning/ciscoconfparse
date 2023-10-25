@@ -95,10 +95,7 @@ for ccp_obj in parse.find_objects('^interface'):
     # IPv4 netmask object: ipaddress.IPv4Address()
     intf_v4masklength = ccp_obj.ipv4_addr_object.masklength
 
-    # IPv4 HSRP Interface Group object instances... ref: models_cisco.py HSRPInterfaceGroup()
-    intf_hsrp_intf_groups = ccp_obj.hsrp_interfaces
-
-    # List of IPv4 HSRP IPv4 Addresses
+    # List of HSRP IPv4 addrs from the ciscoconfpasre/models_cisco.py HSRPInterfaceGroup()
     intf_hsrp_addresses = [hsrp_grp.ip for hsrp_grp in ccp_obj.hsrp_interfaces]
 
     # A bool for using HSRP bia mac-address...
@@ -115,7 +112,7 @@ for ccp_obj in parse.find_objects('^interface'):
     # Print HSRP Group interface tracking information
     ##########################################################################
     print("")
-    print(f"  HSRP Group tracking for {set([ii.interface_name for ii in ccp_obj.hsrp_interfaces])}")
+    print(f"  HSRP tracking for {set([ii.interface_name for ii in ccp_obj.hsrp_interfaces])}")
     for hsrp_intf_group in ccp_obj.hsrp_interfaces:
         group = hsrp_intf_group.hsrp_group
         # hsrp_intf_group.interface_tracking is a list of dictionaries
@@ -132,25 +129,25 @@ for ccp_obj in parse.find_objects('^interface'):
     # Break out inidividual interface name components
     #   Example: 'Serial3/4/5.6:7 multipoint'
     ##########################################################################
-    #   The base CiscoInterface() instance
+    # The base ciscoconfparse/ccp_util.py CiscoInterface() instance
     intf_cisco_interface = ccp_obj.interface_object
-    #   The entire CiscoInterface() name
+    # The ciscoconfparse/ccp_util.py CiscoInterface() name, 'Serial3/4/5.6:7 multipoint'
     intf_name = ccp_obj.interface_object.name
-    #   The CiscoInterface() prefix
+    # The ciscoconfparse/ccp_util.py CiscoInterface() prefix, 'Serial'
     intf_prefix = ccp_obj.interface_object.prefix
-    #   The CiscoInterface() digit_separator (in this case, '/')
+    # The ciscoconfparse/ccp_util.py CiscoInterface() digit separator, '/'
     digit_separator = ccp_obj.interface_object.digit_separator or ""
-    #   The CiscoInterface() slot (in this case, 3)
+    # The ciscoconfparse/ccp_util.py CiscoInterface() slot, 3
     intf_slot = ccp_obj.interface_object.slot or ""
-    #   The CiscoInterface() card (in this case, 4)
+    # The ciscoconfparse/ccp_util.py CiscoInterface() card, 4
     intf_card = ccp_obj.interface_object.card or ""
-    #   The CiscoInterface() port (in this case, 5)
+    # The ciscoconfparse/ccp_util.py CiscoInterface() card, 5
     intf_port = ccp_obj.interface_object.port
-    #   The CiscoInterface() subinterface (in this case, 6)
+    # The ciscoconfparse/ccp_util.py CiscoInterface() subinterface, 6
     intf_subinterface = ccp_obj.interface_object.subinterface or ""
-    #   The CiscoInterface() subinterface (in this case, 7)
+    # The ciscoconfparse/ccp_util.py CiscoInterface() channel, 7
     intf_channel = ccp_obj.interface_object.channel or ""
-    #   The CiscoInterface() interface_class (in this case, 'multipoint')
+    # The ciscoconfparse/ccp_util.py CiscoInterface() interface_class, 'multipoint'
     intf_class = ccp_obj.interface_object.interface_class or ""
 ```
 
