@@ -1,6 +1,6 @@
 
 !
-version 12.4
+version 15.4
 service nagle
 no service pad
 service tcp-keepalives-in
@@ -52,13 +52,20 @@ ip cef accounting per-prefix load-balance-hash
 !
 !
 no ip dhcp use vrf connected
-ip dhcp excluded-address 172.16.1.1 172.16.1.50
+ip dhcp excluded-address 172.16.2.1 172.16.2.5
 !
-ip dhcp pool HOME_LAN
-   network 172.16.1.0 255.255.255.0
-   default-router 172.16.1.1
+ip dhcp pool IPV4_2FL_NORTH_LAN
+   network 172.16.2.0 255.255.255.0
+   default-router 172.16.2.1
    domain-name foo.com
    dns-server 172.16.1.5
+   lease 2
+!
+ipv6 dhcp pool IPV6_2FL_NORTH_LAN
+   address prefix fd01:ab00::0/64 lifetime infinite
+   default-router 172.16.2.1
+   domain-name foo.com
+   dns-server fd01:abff::0001:0001
    lease 2
 !
 !
@@ -192,7 +199,6 @@ interface Loopback0
  ipv6 address fd01:dead:beef::1/128
  ipv6 enable
  ipv6 ospf 11 area 0
- ospfv3 authentication md5 0 27576134094768132473302031209727
  no ip redirects
  no ip unreachables
 !
@@ -224,8 +230,9 @@ interface ATM0/0.32 point-to-point
  !
 !
 interface FastEthernet0/0
- description [Dual-stack DHCPv4/v6 hosts on 2nd-floor North]
+ description [Dual-stack v4/v6 hosts on 2nd-floor North LAN]
  ip address 172.16.2.1 255.255.255.0
+ ipv6 dhcp server IPV6_2FL_NORTH_LAN
  ipv6 address fd01:ab00::/64 eui-64
  ipv6 address fe80::1 link-local
  ipv6 enable
@@ -235,13 +242,15 @@ interface FastEthernet0/0
  standby 1 priority 150
  standby 1 preempt delay minimum 15
  ipv6 nd prefix default no-advertise
+ ! Use DHCPv6...
+ ipv6 nd managed-config-flag
  ipv6 nd other-config-flag
  ! set ipv6 router-advertisement lifetime to be 0...
  ipv6 nd ra lifetime 0
- ! 15.x IOS: suppress ipv6 RA... useful if the hosts
- !   are configured with the ipv6 router address
- !   otherwise we *want* RAs to be sent on host LAN interfaces
- ipv6 nd ra suppress all
+ !   15.x IOS: suppress ipv6 RA... useful if the hosts
+ !     are configured with the ipv6 router address;
+ !     otherwise we *want* RAs to be sent on host LAN interfaces
+ ! ipv6 nd ra suppress all
  no ipv6 redirects
  no ipv6 unreachables
  ipv6 dhcp server 2001:db8:aaaa:0012::0001::
@@ -273,7 +282,7 @@ interface FastEthernet0/1
  ! set ipv6 router-advertisement lifetime to be 0...
  ipv6 nd ra lifetime 0
  ! 15.x IOS: suppress ipv6 RA... useful if the hosts
- !   are configured with the ipv6 router address
+ !   are configured with the ipv6 router address;
  !   otherwise we *want* RAs to be sent on host LAN interfaces
  ipv6 nd ra suppress all
  ! Prevent IPv6 SLAAC usage...
@@ -297,7 +306,7 @@ interface FastEthernet1/0
  ! old-IOS: set ipv6 router-advertisement lifetime to be 0...
  ipv6 nd ra lifetime 0
  ! 15.x IOS: suppress ipv6 RA... useful if the hosts
- !   are configured with the ipv6 router address
+ !   are configured with the ipv6 router address;
  !   otherwise we *want* RAs to be sent on host LAN interfaces
  ipv6 nd ra suppress all
  ! Prevent IPv6 SLAAC usage...
@@ -353,9 +362,9 @@ router ospf 1
  log-adjacency-changes
  timers throttle spf 50 150 5000
  network 172.16.0.1 0.0.0.0 area 0.0.0.0
- network 172.16.2.0 0.0.0.255 area 0.0.0.0
- network 172.16.3.0 0.0.0.255 area 0.0.0.0
- network 172.16.4.0 0.0.0.255 area 0.0.0.0
+ network 172.16.2.0 0.0.0.3 area 0.0.0.0
+ network 172.16.3.0 0.0.0.3 area 0.0.0.0
+ network 172.16.4.0 0.0.0.3 area 0.0.0.0
  default-information originate metric 1 metric-type 1
  passsive-interface FastEthernet0/0
 !
@@ -367,7 +376,6 @@ ipv6 router ospf 11
  default-information metric 1 originate metric-type 1
 !
 ip route 0.0.0.0 0.0.0.0 Dialer1 250
-ip route 0.0.0.0 0.0.0.0 172.16.2.254 254
 ip route 172.16.255.254 255.255.255.255 Null0
 !
 ip bgp-community new-format
@@ -384,7 +392,9 @@ ip ospf name-lookup
 ip access-list standard INTERNAL_NETWORKS
  permit 172.16.0.1
  permit 172.16.1.0 0.0.0.255
- permit 172.16.2.0 0.0.0.255
+ permit 172.16.2.0 0.0.0.3
+ permit 172.16.3.0 0.0.0.3
+ permit 172.16.4.0 0.0.0.3
 ip access-list standard PERMIT_ANY
  permit any
 !
@@ -501,7 +511,7 @@ dial-peer cor custom
 !
 banner login ^C
 Router Foo. Access to this device or the attached
-networks is prohibited without express written permission from the
+networks is prohibited without express **written** permission from the
 legal owner of this device.  Violators will be prosecuted to the
 fullest extent of both civil and criminal law.
 
