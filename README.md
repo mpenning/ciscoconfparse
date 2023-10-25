@@ -72,24 +72,28 @@ CiscoConfParse has a special feature that abstracts common IOS / NXOS / ASA / IO
 ```python
 from ciscoconfparse import CiscoConfParse
 
-parse = CiscoConfParse('tests/fixtures/configs/sample_01.ios', syntax='ios', factory=True)
+parse = CiscoConfParse('tests/fixtures/configs/sample_08.ios', syntax='ios', factory=True)
 
 for ccp_obj in parse.find_objects('^interface'):
+
+    # Skip if there are no HSRPInterfaceGroup() instances...
+    if len(ccp_obj.hsrp_interfaces) == 0:
+        continue
 
     # Interface name, such as 'Serial1/0'
     intf_name = ccp_obj.name
 
+    # Interface description
+    intf_description = ccp_obj.description
+
     # IPv4Obj
     intf_v4obj = ccp_obj.ipv4_addr_object
-
-    # IPv4 network object: ipaddress.IPv4Network()
-    intf_v4obj = ccp_obj.ipv4_addr_object.network
 
     # IPv4 address object: ipaddress.IPv4Address()
     intf_v4addr = ccp_obj.ipv4_addr_object.ip
 
     # IPv4 netmask object: ipaddress.IPv4Address()
-    intf_v4netmask = ccp_obj.ipv4_addr_object.netmask
+    intf_v4masklength = ccp_obj.ipv4_addr_object.masklength
 
     # IPv4 HSRP Interface Group object instances... ref: models_cisco.py HSRPv4Group()
     intf_hsrp_intf_groups = ccp_obj.hsrp_interfaces
@@ -101,20 +105,27 @@ for ccp_obj in parse.find_objects('^interface'):
     intf_hsrp_usebia = any([ii.use_bia for ii in ccp_obj.hsrp_interfaces])
 
     ##########################################################################
+    # Print a simple interface summary
+    ##########################################################################
+    print("----")
+    print(f"Interface {ccp_obj.interface_object.name}: {intf_v4addr}/{intf_v4masklength}")
+    print(f"  Interface {intf_name} description: {intf_description}")
+
+    ##########################################################################
     # Print HSRP Group interface tracking information
     ##########################################################################
     print("")
-    print(f"HSRP Interface Groups Tracking for {set([ii.interface for ii in intf.hsrp_interfaces])}")
+    print(f"  HSRP Group tracking for {set([ii.interface_name for ii in ccp_obj.hsrp_interfaces])}")
     for hsrp_intf_group in ccp_obj.hsrp_interfaces:
         group = hsrp_intf_group.hsrp_group
         # hsrp_intf_group.interface_tracking is a list of dictionaries
         if len(hsrp_intf_group.interface_tracking) > 0:
-            print(f"--- HSRP Group {group} ---")
+            print(f"  --- HSRP Group {group} ---")
             for track_intf in hsrp_intf_group.interface_tracking:
-                print(f"  --- Tracking {track_intf.interface} ---")
-                print(f"  Tracking interface: {track_intf.interface}")
-                print(f"  Tracking decrement: {track_intf.decrement}")
-                print(f"  Tracking group    : {track_intf.group}")
+                print(f"    --- Tracking {track_intf.interface} ---")
+                print(f"    Tracking interface: {track_intf.interface}")
+                print(f"    Tracking decrement: {track_intf.decrement}")
+                print(f"    Tracking weighting: {track_intf.weighting}")
 
 
     ##########################################################################
@@ -141,12 +152,8 @@ for ccp_obj in parse.find_objects('^interface'):
     intf_channel = ccp_obj.interface_object.channel or ""
     #   The CiscoInterface() interface_class (in this case, 'multipoint')
     intf_class = ccp_obj.interface_object.interface_class or ""
-
-    ##########################################################################
-    # Print a simple interface summary
-    ##########################################################################
-    print(f"{intf_name}: {intf_v4addr} {intf_v4netmask}")
 ```
+
 
 ## Are there private copies of CiscoConfParse()?
 
