@@ -67,7 +67,7 @@ for ccp_obj in parse.find_objects('^interface'):
 
 ## Cisco IOS Factory Usage
 
-CiscoConfParse has a special feature that abstracts common IOS / NXOS / ASA / IOSXR fields; at this time, it is only supported on those configuration types. You will see factory parsing in CiscoConfParse code as parsing the configuration with `factory=True`.  A simple example of some these pre-parsed Cisco IOS fields follows; some variables are not used, but simply called out for quick reference.
+CiscoConfParse has a special feature that abstracts common IOS / NXOS / ASA / IOSXR fields; at this time, it is only supported on those configuration types. You will see factory parsing in CiscoConfParse code as parsing the configuration with `factory=True`.  A fraction of these pre-parsed Cisco IOS fields follows; some variables are not used below, but simply called out for quick reference.
 
 ```python
 from ciscoconfparse import CiscoConfParse
@@ -78,35 +78,73 @@ for ccp_obj in parse.find_objects('^interface'):
 
     # Interface name, such as 'Serial1/0'
     intf_name = ccp_obj.name
+
     # IPv4Obj
     intf_v4obj = ccp_obj.ipv4_addr_object
+
     # IPv4 network object: ipaddress.IPv4Network()
     intf_v4obj = ccp_obj.ipv4_addr_object.network
+
     # IPv4 address object: ipaddress.IPv4Address()
     intf_v4addr = ccp_obj.ipv4_addr_object.ip
+
     # IPv4 netmask object: ipaddress.IPv4Address()
     intf_v4netmask = ccp_obj.ipv4_addr_object.netmask
-    # IPv4 HSRPv4 Group object instances... ref: models_cisco.py HSRPv4Group()
-    intf_v4hsrp_groups = ccp_obj.hsrpv4_groups
-    # List of IPv4 HSRPv4 Addresses
-    intf_v4hsrp_addresses = [hsrp.ip for hsrp in ccp_obj.hsrpv4_groups]
-    # HSRP use-bia mac-address config...
-    intf_v4hsrp_usebia = any([ii.use_bia for ii in ccp_obj.hsrpv4_groups])
-    for hsrp_group in ccp_obj.hsrpv4_groups:
-        for track_dict in hsrp_group.interface_tracking:
-            # do something with the tracking dict here...
-            track_intf = track_dict["interface"]
-            track_decrement = track_dict["decrement"]
 
-    intf_cisco_interface = ccp_obj.cisco_interface
-    intf_name = ccp_obj.cisco_interface.name
-    intf_slot = ccp_obj.cisco_interface.slot or ""
-    intf_card = ccp_obj.cisco_interface.card or ""
-    intf_port = ccp_obj.cisco_interface.port
+    # IPv4 HSRP Interface Group object instances... ref: models_cisco.py HSRPv4Group()
+    intf_hsrp_intf_groups = ccp_obj.hsrp_interfaces
 
-    # Search children of all interfaces for a regex match and return
-    # the value matched in regex match group 1.  If there is no match,
-    # return a default value: ''
+    # List of IPv4 HSRP IPv4 Addresses
+    intf_hsrp_addresses = [hsrp_grp.ip for hsrp_grp in ccp_obj.hsrp_interfaces]
+
+    # A bool for using HSRP bia mac-address...
+    intf_hsrp_usebia = any([ii.use_bia for ii in ccp_obj.hsrp_interfaces])
+
+    ##########################################################################
+    # Print HSRP Group interface tracking information
+    ##########################################################################
+    print("")
+    print(f"HSRP Interface Groups Tracking for {set([ii.interface_name for ii in intf.hsrp_interfaces])}")
+    for hsrp_intf_group in ccp_obj.hsrp_interfaces:
+        group = hsrp_intf_group.hsrp_group
+        # hsrp_intf_group.interface_tracking is a list of dictionaries
+        if len(hsrp_intf_group.interface_tracking) > 0:
+            print(f"--- HSRP Group {group} ---")
+            for track_intf in hsrp_intf_group.interface_tracking:
+                print(f"  --- Tracking {track_intf.interface} ---")
+                print(f"  Tracking interface: {track_intf.interface}")
+                print(f"  Tracking decrement: {track_intf.decrement}")
+                print(f"  Tracking group    : {track_intf.group}")
+
+
+    ##########################################################################
+    # Break out inidividual interface name components
+    #   Example: 'Serial3/4/5.6:7 multipoint'
+    ##########################################################################
+    #   The base CiscoInterface() instance
+    intf_cisco_interface = ccp_obj.interface_object
+    #   The entire CiscoInterface() name
+    intf_name = ccp_obj.interface_object.name
+    #   The CiscoInterface() prefix
+    intf_prefix = ccp_obj.interface_object.prefix
+    #   The CiscoInterface() digit_separator (in this case, '/')
+    digit_separator = ccp_obj.interface_object.digit_separator or ""
+    #   The CiscoInterface() slot (in this case, 3)
+    intf_slot = ccp_obj.interface_object.slot or ""
+    #   The CiscoInterface() card (in this case, 4)
+    intf_card = ccp_obj.interface_object.card or ""
+    #   The CiscoInterface() port (in this case, 5)
+    intf_port = ccp_obj.interface_object.port
+    #   The CiscoInterface() subinterface (in this case, 6)
+    intf_subinterface = ccp_obj.interface_object.subinterface or ""
+    #   The CiscoInterface() subinterface (in this case, 7)
+    intf_channel = ccp_obj.interface_object.channel or ""
+    #   The CiscoInterface() interface_class (in this case, 'multipoint')
+    intf_class = ccp_obj.interface_object.interface_class or ""
+
+    ##########################################################################
+    # Print a simple interface summary
+    ##########################################################################
     print(f"{intf_name}: {intf_v4addr} {intf_v4netmask}")
 ```
 
