@@ -61,19 +61,21 @@ class TrackingInterface(BaseCfgLine):
     feature = "tracking_interface"
     _parent = None
     _group = None
+    _interface = None
+    _decrement = None
+    _weighting = None
 
     # This method is on TrackingInterface()
     @logger.catch(reraise=True)
-    def __init__(self, group, parent):
+    def __init__(self, group, interface, decrement, weighting=None):
         """Implement a TrackingInterface() object for Cisco IOS HSRP, GLBP and VRRP"""
         super().__init__()
+
+        self._parent = self.parent
         self._group = int(group)
-        if isinstance(parent, BaseCfgLine):
-            self._parent = parent
-        else:
-            error = f"{parent} is not a valid configuration line"
-            logger.error(error)
-            raise ValueError(error)
+        self._interface = interface
+        self._decrement = decrement
+        self._weighting = weighting
 
     # This method is on TrackingInterface()
     @logger.catch(reraise=True)
@@ -92,13 +94,13 @@ class TrackingInterface(BaseCfgLine):
             logger.critical(error)
             raise ValueError(error)
         else:
-            return hash(self._name) * hash(self._group) * hash(self.interface_name)
+            return hash(self._name) * hash(self._group) * hash(self.interface_name) * hash(self._decrement) * hash(self._weighting)
 
     # This method is on TrackingInterface()
     @logger.catch(reraise=True)
     def __eq__(self, other):
         if isinstance(other, TrackingInterface):
-            if self.name==other.name and self.group==other.group:
+            if self.name==other.name and self.group==other.group and self._interface==other._linterface and self._decrement==other._decrement and self._weighting==other._weighting:
                 return True
             else:
                 return False
@@ -110,13 +112,10 @@ class TrackingInterface(BaseCfgLine):
     def interface_name(self):
         # Derive the interface_name from 'interface GigabitEthernet 5/2'
         # return the name of the interface that owns this TrackingInterface()
-        for obj in self._parent.children:
-            obj_parts = obj.text.strip().split()
-            obj_parts_lower = obj.text.lower().strip().split()
-            if obj_parts_lower[1:3] == [str(self._group), "track"]:
-                # Return the interface name from the hsrp / glbp track configuration
-                return obj_parts[3]
-        raise ValueError()
+        if isinstance(self._interface, (int, str)):
+            return str(self._interface)
+        else:
+            return None
 
     # This method is on TrackingInterface()
     @property
@@ -150,24 +149,10 @@ class TrackingInterface(BaseCfgLine):
     @property
     @logger.catch(reraise=True)
     def decrement(self):
-        decrement = 10
-        for obj in self._parent.children:
-            obj_parts = obj.text.lower().strip().split()
-            if obj_parts[0:3] == ["standby", str(self._group), "track"]:
-                intf = obj_parts[3]
-                trackrgx_decrement = re.search(r"standby\s+\d+\s+track\s+(?P<intf>\S.+?)\s+(?P<decrement>\d+)$", obj.text.strip())
-                trackrgx = re.search(r"standby\s+\d+\s+track\s+(?P<intf>\S.+?)$", obj.text.strip())
-                if isinstance(trackrgx_decrement, re.Match):
-                    intf = trackrgx_decrement.groupdict()["intf"]
-                    decrement = int(trackrgx_decrement.groupdict()["decrement"])
-                elif isinstance(trackrgx, re.Match):
-                    intf = trackrgx.groupdict()["intf"]
-                    decrement = 10
-                else:
-                    error = f"Cannot parse `{obj.text}`"
-                    logger.error(error)
-                    raise ValueError(error)
-        return decrement
+        if isinstance(self._decrement, (str, int)):
+            return int(self._decrement)
+        else:
+            return None
 
     # This method is on TrackingInterface()
     @property
@@ -177,17 +162,9 @@ class TrackingInterface(BaseCfgLine):
         ## NOTE: I have no intention of checking self.is_shutdown here
         ##     People should be able to check the sanity of interfaces
         ##     before they put them into production
-        reference_obj = None
-        for obj in self._parent.children:
-            obj_parts = obj.text.lower().strip().split()
-            if obj_parts[1:3] == [str(self._group), "ip"]:
-                reference_obj = obj
-            # glbp 10 weighting 110 lower 95 upper 105
-            if re.search(r"weighting\s+\d+", obj.text):
-                if obj_parts[1:3] == [str(self._group), "weighting"]:
-                    return int(obj_parts[3])
-        # Default weighting value...
-        return 100
+        # Default HSRP weighting value...
+        return None
+
 ##
 ##-------------  HSRP Interface Group
 ##
@@ -303,24 +280,44 @@ class HSRPInterfaceGroup(BaseCfgLine):
     @property
     @logger.catch(reraise=True)
     def interface_tracking(self):
+        return self.get_hsrp_tracked_interfaces()
+
+    # This method is on HSRPInterfaceGroup()
+    @logger.catch(reraise=True)
+    def get_glbp_tracked_interfaces(self):
+        """Get a list of unique GLBP tracked interfaces.  This may never be supported by HSRPInterfaceGroup()"""
+        raise NotImplementedError()
+
+    # This method is on HSRPInterfaceGroup()
+    @logger.catch(reraise=True)
+    def get_vrrp_tracked_interfaces(self):
+        """Get a list of unique VRRP tracked interfaces.  This may never be supported by HSRPInterfaceGroup()"""
+        raise NotImplementedError()
+
+    # This method is on HSRPInterfaceGroup()
+    @logger.catch(reraise=True)
+    def get_hsrp_tracked_interfaces(self):
+        ######################################################################
+        # Find decrement and interface
+        ######################################################################
         retval = list()
         for obj in self._parent.children:
-            obj_parts = obj.text.lower().strip().split()
+            obj_parts = obj.text.strip().split()
             if obj_parts[0:3] == ["standby", str(self._group), "track"]:
-                intf = obj_parts[3]
-                trackrgx_decrement = re.search(r"standby\s+\d+\s+track\s+(?P<intf>\S.+?)\s+(?P<decrement>\d+)$", obj.text.strip())
-                trackrgx = re.search(r"standby\s+\d+\s+track\s+(?P<intf>\S.+?)$", obj.text.strip())
-                if isinstance(trackrgx_decrement, re.Match):
-                    intf = trackrgx_decrement.groupdict()["intf"]
-                    decrement = int(trackrgx_decrement.groupdict()["decrement"])
-                elif isinstance(trackrgx, re.Match):
-                    intf = trackrgx.groupdict()["intf"]
-                    decrement = 10
-                else:
-                    error = f"Cannot parse `{obj.text}`"
-                    logger.error(error)
-                    raise ValueError(error)
-                retval.append(TrackingInterface(group=int(self._group), parent=self._parent))
+                _groupdict = obj.re_match_iter_typed(
+                    r"standby\s(\d+)\s+track\s+(?P<intf>\S.+?)\s+(?P<decr>\d+)$",
+                    groupdict={"intf": str, "decr": int},
+                )
+                interface = _groupdict["intf"]
+                decrement = _groupdict["decr"]
+                retval.append(
+                    TrackingInterface(
+                        group=int(self._group),
+                        interface=interface,
+                        decrement=decrement,
+                        weighting=None
+                    )
+                )
         return retval
 
     # This method is on HSRPInterfaceGroup()
@@ -804,22 +801,20 @@ class BaseIOSIntfLine(IOSCfgLine):
                 retval.add(f"{port_type[0:ii]}{sep}{subinterface_number}")
         return retval
 
-
     # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def hsrp_interfaces(self):
         """Return the list of configured HSRPInterfaceGroup() instances"""
         retval = set()
-        _parent = self
-        for obj in _parent.children:
+        for obj in self.children:
             # Get each HSRP group number...
-            if re.search(r"standby\s+\d+\s+ip", obj.text.strip()):
+            if re.search(r"standby\s+(?P<group>\d+)\s+ip", obj.text.strip()):
                 group = int(obj.text.split()[1])
-                intf_grp_instance = HSRPInterfaceGroup(group=group, parent=_parent)
-                retval.add(intf_grp_instance)
+                retval.add(HSRPInterfaceGroup(group=group, parent=self))
         # Return a sorted list of HSRPInterfaceGroup() instances...
-        return sorted(retval, key=lambda x: x.group, reverse=False)
+        intf_groups = sorted(retval, key=lambda x: x.group, reverse=False)
+        return intf_groups
 
     # This method is on BaseIOSIntfLine()
     @logger.catch(reraise=True)
@@ -2472,10 +2467,12 @@ class IOSIntfLine(BaseIOSIntfLine):
     @classmethod
     @logger.catch(reraise=True)
     def is_object_for(cls, line="", re=re):
-        intf_regex = r"^interface\s+(\S+.+)"
-        if re.search(intf_regex, line):
+        intf_regex = re.search(r"^interface\s+(?P<interface>\S+.+)", line.strip())
+        if isinstance(intf_regex, re.Match):
+            interface = intf_regex.groupdict()["interface"]
             return True
-        return False
+        else:
+            return False
 
 ##
 ##-------------  IOS Interface Globals
