@@ -71,6 +71,7 @@ CiscoConfParse has a special feature that abstracts common IOS / NXOS / ASA / IO
 
 ```python
 from ciscoconfparse import CiscoConfParse
+from ciscoconfparse import IPv4Obj
 
 ##############################################################################
 # Parse an example Cisco IOS HSRP configuration from:
@@ -78,8 +79,6 @@ from ciscoconfparse import CiscoConfParse
 #
 # !
 # interface FastEthernet0/0
-#  encapsulation dot1q
-#  ip address 172.16.2.1 255.255.255.0
 #  ip address 172.16.2.1 255.255.255.0
 #  ipv6 dhcp server IPV6_2FL_NORTH_LAN
 #  ipv6 address fd01:ab00::/64 eui-64
@@ -171,6 +170,26 @@ for ccp_obj in parse.find_objects('^interface'):
     intf_channel = ccp_obj.interface_object.channel or ""
     # The ciscoconfparse/ccp_util.py CiscoInterface() interface_class, 'multipoint'
     intf_class = ccp_obj.interface_object.interface_class or ""
+
+    ##########################################################################
+    # Extract an IPv4Obj() with re_match_iter_typed()
+    ##########################################################################
+    intf_dict = ccp_obj.re_match_iter_typed(
+        r"ip\s+address\s+(?P<v4addr>\S.+)$",
+        groupdict={"addr": IPv4Obj},
+        default=None
+    )
+    intf_ipv4obj = intf_dict["v4addr"]
+
+    ##########################################################################
+    # Extract an IPv6Obj() (only EUI-64 portion) with re_match_iter_typed()
+    ##########################################################################
+    intf_dict = ccp_obj.re_match_iter_typed(
+        r"ipv6\s+address\s+(?P<v6addr>\S.+)\s+(eui.64)$",
+        groupdict={"addr": IPv6Obj},
+        default=None
+    )
+    intf_ipv6obj = intf_dict["v6addr"]
 ```
 
 
