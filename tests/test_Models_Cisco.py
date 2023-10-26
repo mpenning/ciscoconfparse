@@ -1479,8 +1479,6 @@ def testVal_IOSIntfLine_in_ipv4_subnet(parse_c03_factory):
     ##   where the subnet is 1.1.0.0/22
     test_network = IPv4Obj("1.1.0.0/22", strict=False)
     for intf_obj in cfg.find_objects("^interface"):
-        print("CiscoConfParse().ipv4_addr_object", intf_obj.ipv4_addr_object)
-        print("CiscoConfParse().ipv4_network_object", intf_obj.ipv4_network_object)
         test_result[intf_obj.text] = intf_obj.in_ipv4_subnet(test_network)
     assert test_result == result_correct
 

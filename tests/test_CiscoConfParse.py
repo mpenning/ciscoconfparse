@@ -2206,8 +2206,6 @@ def testValues_HDiff_10():
     test_result = test_diff.unified_diffs(header=False)
     for idx, correct_result_line in enumerate(correct_result_unified_diff):
         test_result_line = test_result[idx]
-        print("TEST_RESULT" + test_result_line, file=sys.stderr)
-        print("RESULT_CORR" + correct_result_line, file=sys.stderr)
         assert test_result_line == correct_result_line
 
 
