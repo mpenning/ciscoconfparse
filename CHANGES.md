@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 1.9.6
+
+- Released: 2023-10-26
+- Summary:
+    - Add missing import in `README.md` example
+
 ## Version: 1.9.5
 
 - Released: 2023-10-26
