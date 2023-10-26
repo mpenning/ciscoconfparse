@@ -24,6 +24,7 @@ import warnings
 import inspect
 import re
 
+from ciscoconfparse.errors import InvalidTypecast
 from ciscoconfparse.ccp_util import junos_unsupported
 from loguru import logger
 
