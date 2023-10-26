@@ -108,6 +108,12 @@ class InvalidShellVariableMapping(Exception):
         super().__init__(msg)
         self.msg = msg
 
+class InvalidTypecast(Exception):
+
+    def __init__(self, msg=""):
+        super().__init__(msg)
+        self.msg = msg
+
 class NoRegexMatch(Exception):
 
     def __init__(self, msg=""):
