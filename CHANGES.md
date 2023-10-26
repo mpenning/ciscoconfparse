@@ -4,6 +4,15 @@
 - Summary:
     - Insert something here
 
+## Version: 1.9.4
+
+- Released: 2023-10-26
+- Summary:
+    - Add more examples to `README.md`
+    - Add HSRP with interface-tracking intelligence to `ciscoconfparse/models_cisco.py`
+    - Add  `get_typed_dict()` to `ciscoconfparse/ccp_abc.py`
+    - Add  `tests/fixtures/configs/sample_08.ios`
+
 ## Version: 1.9.3
 
 - Released: 2023-10-24
