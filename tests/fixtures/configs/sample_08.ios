@@ -232,6 +232,8 @@ interface ATM0/0.32 point-to-point
 interface FastEthernet0/0
  description [IPv4 and IPv6 desktop / laptop hosts on 2nd-floor North LAN]
  ip address 172.16.2.1 255.255.255.0
+ ip address 172.16.21.1 255.255.255.0 secondary
+ ip address 172.16.22.1 255.255.255.0 secondary
  ipv6 dhcp server IPV6_2FL_NORTH_LAN
  ipv6 address fd01:ab00::/64 eui-64
  ipv6 address fe80::1 link-local
