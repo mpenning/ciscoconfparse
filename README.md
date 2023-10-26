@@ -85,11 +85,13 @@ from ciscoconfparse import CiscoConfParse
 #  ipv6 address fe80::1 link-local
 #  ipv6 enable
 #  ipv6 ospf 11 area 0
-#  standby 11 ip 172.16.2.254
-#  standby 11 ipv6 autoconfig
-#  standby 11 priority 150
-#  standby 11 preempt delay minimum 15
-#  standby 11 track Dialer1 75
+#  standby 110 ip 172.16.2.254
+#  standby 110 ipv6 autoconfig
+#  standby 110 priority 150
+#  standby 110 preempt delay minimum 15
+#  standby 110 track Dialer1 75
+#  standby 110 track FastEthernet0/1 20
+#  standby 110 track FastEthernet1/0 30
 #  standby 111 ip 172.16.2.253
 #  standby 111 priority 150
 #  standby 111 preempt delay minimum 15
@@ -207,9 +209,9 @@ Interface FastEthernet0/0: 172.16.2.1/24
     Tracking interface: Dialer1
     Tracking decrement: 75
     Tracking weighting: None
-    --- Tracking FastEthernet0/1 ---
-    Tracking interface: FastEthernet0/1
-    Tracking decrement: 20
+    --- Tracking FastEthernet 0/1 ---
+    Tracking interface: FastEthernet 0/1
+    Tracking decrement: 10
     Tracking weighting: None
     --- Tracking FastEthernet1/0 ---
     Tracking interface: FastEthernet1/0
@@ -220,6 +222,8 @@ Interface FastEthernet0/0: 172.16.2.1/24
     Tracking interface: Dialer1
     Tracking decrement: 50
     Tracking weighting: None
+GRP {'addr': <IPv6Obj fd01:ab00::/64>}
+RESULT <IOSIntfLine # 231 'FastEthernet0/0' primary_ipv4: '172.16.2.1/24'> <IPv6Obj fd01:ab00::/64>
 ```
 
 

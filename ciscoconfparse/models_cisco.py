@@ -149,7 +149,7 @@ class TrackingInterface(BaseCfgLine):
     @property
     @logger.catch(reraise=True)
     def decrement(self):
-        if isinstance(self._decrement, (str, int)):
+        if isinstance(self._decrement, (str, int)) and str(self._decrement) != "":
             return int(self._decrement)
         else:
             return None
@@ -304,12 +304,15 @@ class HSRPInterfaceGroup(BaseCfgLine):
         for obj in self._parent.children:
             obj_parts = obj.text.strip().split()
             if obj_parts[0:3] == ["standby", str(self._group), "track"]:
-                _groupdict = obj.re_match_iter_typed(
-                    r"standby\s(\d+)\s+track\s+(?P<intf>\S.+?)\s+(?P<decr>\d+)$",
-                    groupdict={"intf": str, "decr": int},
+                interface = None
+                decrement = 10
+                _gg = obj.re_match_iter_typed(
+                    r"standby\s(\d+)\s+track\s+(?P<intf>\S.+?)(?P<decr>\s+\d+)*$",
+                    groupdict={"intf": str, "decr": str},
                 )
-                interface = _groupdict["intf"]
-                decrement = _groupdict["decr"]
+                interface = _gg["intf"]
+                if isinstance(_gg["decr"], str) and _gg["decr"] != "None":
+                    decrement = int(_gg["decr"].strip())
                 retval.append(
                     TrackingInterface(
                         group=int(self._group),
