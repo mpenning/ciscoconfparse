@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 1.9.5
+
+- Released: 2023-10-26
+- Summary:
+    - Fix missing `InvalidTypecast()`
+
 ## Version: 1.9.4
 
 - Released: 2023-10-26
