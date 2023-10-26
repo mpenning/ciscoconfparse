@@ -37,6 +37,7 @@ Please be aware of the following things when filing bug reports:
      doesn't work" or "it fails". Tell us *how* it fails: do you get an
      exception? A hang? How was the actual result different from your expected
      result?
+   - Add the entire text configuration file as rendered by the network device.
    - Tell us **what version of [ciscoconfparse][1] you're using**, and
      **how you installed it**. Different versions of [ciscoconfparse][1] behave
      differently.  If possible, you should check the latest ciscoconfparse
