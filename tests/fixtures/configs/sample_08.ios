@@ -237,11 +237,18 @@ interface FastEthernet0/0
  ipv6 address fe80::1 link-local
  ipv6 enable
  ipv6 ospf 11 area 0
- standby 11 ip 172.16.2.254
- standby 11 ipv6 autoconfig
- standby 11 priority 150
- standby 11 preempt delay minimum 15
- standby 11 track Dialer1 75
+ standby 110 ip 172.16.2.254
+ standby 110 ipv6 autoconfig
+ standby 110 priority 150
+ standby 110 preempt delay minimum 15
+ standby 110 track Dialer1 75
+ standby 110 track FastEthernet0/1 20
+ standby 110 track FastEthernet1/0 30
+ ! ipv4-only HSRP group...
+ standby 111 ip 172.16.2.253
+ standby 111 priority 150
+ standby 111 preempt delay minimum 15
+ standby 111 track Dialer1 50
  ipv6 nd prefix default no-advertise
  ! Use DHCPv6...
  ipv6 nd managed-config-flag
