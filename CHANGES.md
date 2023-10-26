@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 1.9.7
+
+- Released: 2023-10-26
+- Summary:
+    - Fix HSRP decrement parsing
+
 ## Version: 1.9.6
 
 - Released: 2023-10-26
