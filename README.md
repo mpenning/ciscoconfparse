@@ -90,8 +90,10 @@ from ciscoconfparse import IPv4Obj
 #  standby 11 priority 150
 #  standby 11 preempt delay minimum 15
 #  standby 11 track Dialer1 75
-#  ipv6 nd prefix default no-advertise
-# !
+#  standby 111 ip 172.16.2.253
+#  standby 111 priority 150
+#  standby 111 preempt delay minimum 15
+#  standby 111 track Dialer1 50
 #
 ##############################################################################
 parse = CiscoConfParse('tests/fixtures/configs/sample_08.ios', syntax='ios', factory=True)
@@ -190,6 +192,34 @@ for ccp_obj in parse.find_objects('^interface'):
         default=None
     )
     intf_ipv6obj = intf_dict["v6addr"]
+```
+
+When that is run, you will see information similar to this...
+
+```
+----
+Interface FastEthernet0/0: 172.16.2.1/24
+  Interface FastEthernet0/0 description: [IPv4 and IPv6 desktop / laptop hosts on 2nd-floor North LAN]
+
+  HSRP Group tracking for {'FastEthernet0/0'}
+  --- HSRP Group 110 ---
+    --- Tracking Dialer1 ---
+    Tracking interface: Dialer1
+    Tracking decrement: 75
+    Tracking weighting: None
+    --- Tracking FastEthernet0/1 ---
+    Tracking interface: FastEthernet0/1
+    Tracking decrement: 20
+    Tracking weighting: None
+    --- Tracking FastEthernet1/0 ---
+    Tracking interface: FastEthernet1/0
+    Tracking decrement: 30
+    Tracking weighting: None
+  --- HSRP Group 111 ---
+    --- Tracking Dialer1 ---
+    Tracking interface: Dialer1
+    Tracking decrement: 50
+    Tracking weighting: None
 ```
 
 
