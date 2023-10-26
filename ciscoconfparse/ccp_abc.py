@@ -869,6 +869,55 @@ class BaseCfgLine(metaclass=ABCMeta):
         return self.re_sub(linespec, replacestr, ignore_rgx)
 
     # On BaseCfgLine()
+    @logger.catch(reraise=True)
+    def get_typed_dict(self, regex=None, type_dict=None, default=None, debug=False):
+        """Return a typed dict if `regex` is an re.Match() instance and `type_dict` is a `dict` of types.  If a key in `type_dict` does not match, `default` is returned for that key.
+
+        Examples
+        --------
+        These examples demonstrate how ``get_typed_dict()`` works.
+
+        .. code-block:: python
+           >>> _uut_regex = r"^(?P<my_digit>[\d+])(?P<no_digit>[^\d+])"
+           >>> _type_dict = {"my_digit", int, "no_digit": str}
+           >>> _default = "_no_match"
+           >>> get_typed_dict(re.search(_uut_regex, "1a"), type_dict=_type_dict, default=_default)
+           {'my_digit': 1, 'no_digit': 'a'}
+           >>> get_typed_dict(re.search(_uut_regex, "a1"), type_dict=_type_dict, default=_default)
+           {'my_digit': '_no_match', 'no_digit': '_no_match'}
+           >>> get_typed_dict(re.search(_uut_regex, ""), type_dict=_type_dict, default=_default)
+           {'my_digit': '_no_match', 'no_digit': '_no_match'}
+           >>>
+
+        """
+        retval = {}
+        if debug is True:
+            logger.info(f"{self}.get_typed_dict(`regex`={regex}, `type_dict`={type_dict}, `default`='{default}', debug={debug}) was called")
+
+        # If the `regex` is a string, compile so we can access match group info
+        if isinstance(regex, str):
+            regex = re.compile(regex)
+
+        if isinstance(regex, re.Match) and isinstance(type_dict, dict):
+            # If the `regex` matches, cast the results as the values
+            # in `type_dict`...
+            _groupdict = regex.groupdict()
+            for _regex_key, _type in type_dict.items():
+                retval[_regex_key] = _groupdict.get(_regex_key, default)
+                if _type is not None and retval[_regex_key] != default:
+                    retval[_regex_key] = _type(retval[_regex_key])
+        elif regex is None and isinstance(type_dict, dict):
+            # If the regex did not match, None is returned... and we should
+            # assign the default to the regex key...
+            for _regex_key in type_dict.keys():
+                retval[_regex_key] = default
+        else:
+            error = f"`regex` must be the result of a regex match, and `type_dict` must be a dict of types; however we received `regex`: {type(regex)} and `type_dict`: {type(type_dict)}."
+            logger.critical(error)
+            raise InvalidTypecast(error)
+        return retval
+
+    # On BaseCfgLine()
     def re_sub(self, regex, replacergx, ignore_rgx=None):
         """Replace all strings matching ``linespec`` with ``replacestr`` in the :class:`~models_cisco.IOSCfgLine` object; however, if the :class:`~models_cisco.IOSCfgLine` text matches ``ignore_rgx``, then the text is *not* replaced.
         Parameters
@@ -1102,7 +1151,9 @@ class BaseCfgLine(metaclass=ABCMeta):
         result_type=str,
         default="",
         untyped_default=False,
-        recurse=False,
+        groupdict=None,
+        recurse=True,
+        debug=False,
     ):
         r"""Use ``regex`` to search the children of
         :class:`~models_cisco.IOSCfgLine` text and return the contents of
@@ -1113,15 +1164,20 @@ class BaseCfgLine(metaclass=ABCMeta):
         regex : str
             A string or python compiled regular expression, which should be matched.  This regular expression should contain parenthesis, which bound a match group.
         group : int
-            An integer which specifies the desired regex group to be returned.  ``group`` defaults to 1.
+            An integer which specifies the desired regex group to be returned.  ``group`` defaults to 1; this is only used if ``groupdict`` is None.
         result_type : type
-            A type (typically one of: ``str``, ``int``, ``float``, or :class:`~ccp_util.IPv4Obj`).         All returned values are cast as ``result_type``, which defaults to ``str``.
+            A type (typically one of: ``str``, ``int``, ``float``, or :class:`~ccp_util.IPv4Obj`).  All returned values are cast as ``result_type``, which defaults to ``str``.  This is only used if ``groupdict`` is None.
         default : any
             The default value to be returned, if there is no match.
         recurse : bool
             Set True if you want to search all children (children, grand children, great grand children, etc...)
         untyped_default : bool
-            Set True if you don't want the default value to be typed
+            Set True if you don't want the default value to be typed; this is only used if ``groupdict`` is None.
+        groupdict : dict
+            Set to a dict of types if you want to match on regex group names; ``groupdict`` overrides the ``group``, ``result_type`` and ``untyped_default`` arguments.
+        debug : bool
+            Set True if you want to debug ``re_match_iter_typed()`` activity
+
         Returns
         -------
         ``result_type``
@@ -1129,6 +1185,7 @@ class BaseCfgLine(metaclass=ABCMeta):
         Notes
         -----
         This loops through the children (in order) and returns when the regex hits its first match.
+
         Examples
         --------
         This example illustrates how you can use
@@ -1164,26 +1221,91 @@ class BaseCfgLine(metaclass=ABCMeta):
         ## Ref IOSIntfLine.has_dtp for an example of how to code around
         ##   this while I build the API
         #    raise NotImplementedError
-        if recurse is False:
-            for cobj in self.children:
-                mm = re.search(regex, cobj.text)
-                if mm is not None:
-                    return result_type(mm.group(group))
-            ## Ref Github issue #121
-            if untyped_default:
-                return default
+        if debug is True:
+            logger.info(f"{self}.re_match_iter_typed(`regex`={regex}, `group`={group}, `result_type`={result_type}, `recurse`={recurse}, `untyped_default`={untyped_default}, `default`='{default}', `groupdict`={groupdict}, `debug`={debug}) was called")
+
+        if groupdict is None:
+            if debug is True:
+                logger.debug(f"    {self}.re_match_iter_typed() is checking with `groupdict`=None")
+
+            # Return the result if the parent line matches the regex...
+            mm = re.search(regex, self.text)
+            if isinstance(mm, re.Match):
+                return result_type(mm.group(group))
+
+            if recurse is False:
+                for cobj in self.children:
+                    if debug is True:
+                        logger.debug(f"    {self}.re_match_iter_typed() is checking match of r'''{regex}''' on -->{cobj}<--")
+                    mm = re.search(regex, cobj.text)
+                    if isinstance(mm, re.Match):
+                        return result_type(mm.group(group))
+                ## Ref Github issue #121
+                if untyped_default is True:
+                    return default
+                else:
+                    return result_type(default)
             else:
-                return result_type(default)
+                for cobj in self.all_children:
+                    if debug is True:
+                        logger.debug(f"    {self}.re_match_iter_typed() is checking match of r'''{regex}''' on -->{cobj}<--")
+                    mm = re.search(regex, cobj.text)
+                    if isinstance(mm, re.Match):
+                        return result_type(mm.group(group))
+                ## Ref Github issue #121
+                if untyped_default is True:
+                    return default
+                else:
+                    return result_type(default)
+        elif isinstance(groupdict, dict) is True:
+            if debug is True:
+                logger.debug(f"    {self}.re_match_iter_typed() is checking with `groupdict`={groupdict}")
+
+            # Return the result if the parent line matches the regex...
+            mm = re.search(regex, self.text)
+            if isinstance(mm, re.Match):
+                return self.get_typed_dict(
+                    regex=mm,
+                    type_dict=groupdict,
+                    default=default,
+                    debug=debug,
+                )
+
+            if recurse is False:
+                for cobj in self.children:
+                    mm = re.search(regex, cobj.text)
+                    return self.get_typed_dict(
+                        regex=mm,
+                        type_dict=groupdict,
+                        default=default,
+                        debug=debug,
+                    )
+                return self.get_typed_dict(
+                    regex=mm,
+                    type_dict=groupdict,
+                    default=default,
+                    debug=debug,
+                )
+            else:
+                for cobj in self.all_children:
+                    mm = re.search(regex, cobj.text)
+                    if isinstance(mm, re.Match):
+                        return self.get_typed_dict(
+                            regex=mm,
+                            type_dict=groupdict,
+                            default=default,
+                            debug=debug,
+                        )
+                return self.get_typed_dict(
+                    regex=mm,
+                    type_dict=groupdict,
+                    default=default,
+                    debug=debug,
+                )
         else:
-            for cobj in self.all_children:
-                mm = re.search(regex, cobj.text)
-                if mm is not None:
-                    return result_type(mm.group(group))
-            ## Ref Github issue #121
-            if untyped_default:
-                return default
-            else:
-                return result_type(default)
+            error = f"`groupdict` must be None or a `dict`, but we got {type(groupdict)}."
+            logger.error(error)
+            raise ValueError(error)
 
     # On BaseCfgLine()
     def reset(self):
