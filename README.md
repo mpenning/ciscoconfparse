@@ -70,8 +70,8 @@ for ccp_obj in parse.find_objects('^interface'):
 CiscoConfParse has a special feature that abstracts common IOS / NXOS / ASA / IOSXR fields; at this time, it is only supported on those configuration types. You will see factory parsing in CiscoConfParse code as parsing the configuration with `factory=True`.  A fraction of these pre-parsed Cisco IOS fields follows; some variables are not used below, but simply called out for quick reference.
 
 ```python
+from ciscoconfparse import IPv4Obj, IPv6Obj
 from ciscoconfparse import CiscoConfParse
-from ciscoconfparse import IPv4Obj
 
 ##############################################################################
 # Parse an example Cisco IOS HSRP configuration from:
