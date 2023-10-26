@@ -1073,7 +1073,6 @@ def testVal_IOSIntfLine_ipv4_addr_object01(parse_c03_factory):
     test_result = dict()
     ## Parse all interface objects in c01 and check ipv4_addr_object
     for intf_obj in cfg.find_objects("^interface"):
-        print("    UUT IPV4_ADDR_OBJECT", intf_obj.name, intf_obj.ipv4_addr_object)
         test_result[intf_obj.text] = intf_obj.ipv4_addr_object
     assert test_result == result_correct
 
