@@ -90,7 +90,7 @@ from ciscoconfparse import CiscoConfParse
 #  standby 110 priority 150
 #  standby 110 preempt delay minimum 15
 #  standby 110 track Dialer1 75
-#  standby 110 track FastEthernet0/1 20
+#  standby 110 track FastEthernet 0/1
 #  standby 110 track FastEthernet1/0 30
 #  standby 111 ip 172.16.2.253
 #  standby 111 priority 150
