@@ -1863,10 +1863,10 @@ class BaseIOSIntfLine(IOSCfgLine):
         if self.ipv4_addr == "":
             return False
 
-        retval = self.re_match_iter_typed(
-            r"^\s*(ip\spim\ssparse-dense-mode)\s*$", result_type=bool, default=False
-        )
-        return retval
+        for _obj in self.children:
+            if _obj.text.strip().split()[0:3] == ["ip", "pim", "sparse-dense-mode"]:
+                return True
+        return False
 
     # This method is on BaseIOSIntfLine()
     @property
@@ -1942,19 +1942,19 @@ class BaseIOSIntfLine(IOSCfgLine):
     @property
     @logger.catch(reraise=True)
     def is_switchport(self):
-        retval = self.re_match_iter_typed(
-            r"^\s*(switchport)\s*", result_type=bool, default=False
-        )
-        return retval
+        for _obj in self.children:
+            if _obj.text.strip().split()[0] == "switchport":
+                return True
+        return False
 
     # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_manual_switch_access(self):
-        retval = self.re_match_iter_typed(
-            r"^\s*(switchport\smode\s+access)\s*$", result_type=bool, default=False
-        )
-        return retval
+        for _obj in self.children:
+            if _obj.text.strip().split()[0:3] == ["switchport", "mode", "access"]:
+                return True
+        return False
 
     # This method is on BaseIOSIntfLine()
     @property
@@ -1966,19 +1966,20 @@ class BaseIOSIntfLine(IOSCfgLine):
     @property
     @logger.catch(reraise=True)
     def manual_switch_trunk_encap(self):
-        retval = self.re_match_iter_typed(
-            r"^\s*(switchport\s+trunk\s+encap\s+(\S+))\s*$", result_type=str, default=""
-        )
-        return retval
+        for _obj in self.children:
+            _parts = _obj.text.strip().split()
+            if len(_parts) == 4 and _parts[0:3] == ["switchport", "trunk", "encap"]:
+                return _parts[3]
+        return ""
 
     # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_manual_switch_trunk(self):
-        retval = self.re_match_iter_typed(
-            r"^\s*(switchport\s+mode\s+trunk)\s*$", result_type=bool, default=False
-        )
-        return retval
+        for _obj in self.children:
+            if _obj.text.strip().split()[0:3] == ["switchport", "mode", "trunk"]:
+                return True
+        return False
 
     # This method is on BaseIOSIntfLine()
     @property
@@ -1989,10 +1990,10 @@ class BaseIOSIntfLine(IOSCfgLine):
         ## IMPORTANT: Cisco IOS will not enable port-security on the port
         ##    unless 'switch port-security' (with no other options)
         ##    is in the configuration
-        retval = self.re_match_iter_typed(
-            r"^\s*(switchport\sport-security)\s*$", result_type=bool, default=False
-        )
-        return retval
+        for _obj in self.children:
+            if _obj.text.strip().split()[0:2] == ["switchport", "port-security"]:
+                return True
+        return False
 
     # This method is on BaseIOSIntfLine()
     @property
@@ -2000,10 +2001,10 @@ class BaseIOSIntfLine(IOSCfgLine):
     def has_switch_stormcontrol(self):
         if not self.is_switchport:
             return False
-        retval = self.re_match_iter_typed(
-            r"^\s*(storm-control)\s*$", result_type=bool, default=False
-        )
-        return retval
+        for _obj in self.children:
+            if _obj.text.strip().split()[0:1] == ["storm-control"]:
+                return True
+        return False
 
     # This method is on BaseIOSIntfLine()
     @property
@@ -2030,12 +2031,11 @@ class BaseIOSIntfLine(IOSCfgLine):
             default_val = 1
         else:
             default_val = 0
-        retval = self.re_match_iter_typed(
-            r"^\s*switchport\s+access\s+vlan\s+(\d+)$",
-            result_type=int,
-            default=default_val,
-        )
-        return retval
+
+        for _obj in self.children:
+            if _obj.text.strip().split()[0:3] == ["switchport", "access", "vlan"]:
+                return int(_obj.text.strip().split()[3])
+        return default_val
 
     # This method is on BaseIOSIntfLine()
     @property
@@ -2191,12 +2191,12 @@ class BaseIOSIntfLine(IOSCfgLine):
             default_val = 1
         else:
             default_val = 0
-        retval = self.re_match_iter_typed(
-            r"^\s*switchport\s+trunk\s+native\s+vlan\s+(\d+)$",
-            result_type=int,
-            default=default_val,
-        )
-        return retval
+        for _obj in self.children:
+            _parts = _obj.text.strip().split()
+            if len(_parts) == 5 and _parts[0:4] == ["switchport", "trunk", "native", "vlan"]:
+                # return the vlan integer from 'switchport trunk native vlan 911'
+                return int(_parts[4])
+        return default_val
 
     ##-------------  CDP
 
@@ -2204,10 +2204,11 @@ class BaseIOSIntfLine(IOSCfgLine):
     @property
     @logger.catch(reraise=True)
     def has_manual_disable_cdp(self):
-        retval = self.re_match_iter_typed(
-            r"^\s*(no\s+cdp\s+enable\s*)", result_type=bool, default=False
-        )
-        return retval
+        for _obj in self.children:
+            _parts = _obj.text.strip().split()
+            if len(_parts) == 3 and _parts[0:3] == ["no", "cdp", "enable",]:
+                return True
+        return False
 
     ##-------------  EoMPLS
 
@@ -2265,12 +2266,11 @@ class BaseIOSIntfLine(IOSCfgLine):
         if self.ipv4_addr == "":
             return ""
         retval = self.re_match_iter_typed(
-            r"^\s*standby\s+(\d+\s+)*ip\s+\S+\s+(\S+)\s*$",
-            group=2,
-            result_type=str,
+            r"^\s*standby\s+(?P<group>\d+\s+)*ip\s+\S+\s+(?P<mask>\S+)\s*$",
+            groupdict = {"mask": str},
             default="",
         )
-        return retval
+        return retval["mask"]
 
     # This method is on BaseIOSIntfLine()
     @property
@@ -2279,9 +2279,11 @@ class BaseIOSIntfLine(IOSCfgLine):
         ## For API simplicity, I always assume there is only one hsrp
         ##     group on the interface
         retval = self.re_match_iter_typed(
-            r"^\s*standby\s+(\d+)\s+ip\s+\S+", result_type=int, default=-1
+            r"^\s*standby\s+(?P<group>\d+)\s+ip\s+(?P<hsrp_addr>\S+)",
+            groupdict={"group": int},
+            default=-1
         )
-        return retval
+        return retval["group"]
 
     # This method is on BaseIOSIntfLine()
     @property
@@ -2292,12 +2294,11 @@ class BaseIOSIntfLine(IOSCfgLine):
         if not self.has_ip_hsrp:
             return 0  # Return this if there is no hsrp on the interface
         retval = self.re_match_iter_typed(
-            r"^\s*standby\s+(\d+\s+)*priority\s+(\d+)",
-            group=2,
-            result_type=int,
+            r"^\s*standby\s+(?P<group>\d+\s+)*priority\s+(?P<priority>\d+)",
+            groupdict={"group": int, "priority": int},
             default=100,
         )
-        return retval
+        return retval["priority"]
 
     # This method is on BaseIOSIntfLine()
     @property
@@ -2429,18 +2430,22 @@ class BaseIOSIntfLine(IOSCfgLine):
     @logger.catch(reraise=True)
     def mac_accessgroup_in(self):
         retval = self.re_match_iter_typed(
-            r"^\s*mac\saccess-group\s+(\S+)\s+in\s*$", result_type=str, default=""
+            r"^\s*mac\saccess-group\s+(?P<group_number>\S+)\s+in\s*$",
+            groupdict={"group_number": str},
+            default=""
         )
-        return retval
+        return retval["group_number"]
 
     # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def mac_accessgroup_out(self):
         retval = self.re_match_iter_typed(
-            r"^\s*mac\saccess-group\s+(\S+)\s+out\s*$", result_type=str, default=""
+            r"^\s*mac\saccess-group\s+(?P<group_number>\S+)\s+out\s*$",
+            groupdict={"group_number": str},
+            default=""
         )
-        return retval
+        return retval["group_number"]
 
     ##-------------  IPv4 ACLs
 
