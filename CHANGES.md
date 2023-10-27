@@ -4,11 +4,18 @@
 - Summary:
     - Insert something here
 
+## Version: 1.9.8
+
+- Released: 2023-10-26
+- Summary:
+    - Add IPv4 secondary addresses / networks to `ciscoconfparse/models_cisco.py`
+    - Update `README.md` example
+
 ## Version: 1.9.7
 
 - Released: 2023-10-26
 - Summary:
-    - Fix HSRP decrement parsing
+    - Fix `README.md` example
 
 ## Version: 1.9.6
 

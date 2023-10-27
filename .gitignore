@@ -7,4 +7,4 @@ tags
 .tox
 .undodir
 
-go.sum
+*go.sum

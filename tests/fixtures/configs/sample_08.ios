@@ -232,6 +232,8 @@ interface ATM0/0.32 point-to-point
 interface FastEthernet0/0
  description [IPv4 and IPv6 desktop / laptop hosts on 2nd-floor North LAN]
  ip address 172.16.2.1 255.255.255.0
+ ip address 172.16.21.1 255.255.255.0 secondary
+ ip address 172.16.22.1 255.255.255.0 secondary
  ipv6 dhcp server IPV6_2FL_NORTH_LAN
  ipv6 address fd01:ab00::/64 eui-64
  ipv6 address fe80::1 link-local
@@ -242,7 +244,7 @@ interface FastEthernet0/0
  standby 110 priority 150
  standby 110 preempt delay minimum 15
  standby 110 track Dialer1 75
- standby 110 track FastEthernet0/1 20
+ standby 110 track FastEthernet 0/1
  standby 110 track FastEthernet1/0 30
  ! ipv4-only HSRP group...
  standby 111 ip 172.16.2.253

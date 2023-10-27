@@ -90,7 +90,7 @@ from ciscoconfparse import CiscoConfParse
 #  standby 110 priority 150
 #  standby 110 preempt delay minimum 15
 #  standby 110 track Dialer1 75
-#  standby 110 track FastEthernet0/1 20
+#  standby 110 track FastEthernet 0/1
 #  standby 110 track FastEthernet1/0 30
 #  standby 111 ip 172.16.2.253
 #  standby 111 priority 150
@@ -119,6 +119,12 @@ for ccp_obj in parse.find_objects('^interface'):
 
     # IPv4 netmask object: ipaddress.IPv4Address()
     intf_v4masklength = ccp_obj.ipv4_addr_object.masklength
+
+    # set() of IPv4 secondary address/prefixlen strings
+    intf_v4secondary_networks = ccp_obj.ip_secondary_networks
+
+    # set() of IPv4 secondary address strings
+    intf_v4secondary_addresses = ccp_obj.ip_secondary_addresses
 
     # List of HSRP IPv4 addrs from the ciscoconfpasre/models_cisco.py HSRPInterfaceGroup()
     intf_hsrp_addresses = [hsrp_grp.ip for hsrp_grp in ccp_obj.hsrp_interfaces]
@@ -352,10 +358,8 @@ If you already git cloned the repo and want to manually run tests either run wit
 
 ```shell
 $ cd tests
-$ pytest -vvs ./test_CiscoConfParse.py
+$ pytest -vvs ./test_*py
 ...
-$ pytest -vvs ./test_Ccp_Util.py
-etc...
 ```
 
 ## Editing the Package

@@ -99,14 +99,6 @@ lint:
 
 dep:
 	@echo "$(COL_GREEN)>> getting deploy_docs dependencies$(COL_END)"
-<<<<<<< HEAD
-	# Remove unused dependencies that may be lingering in go.mod...
-	go mod tidy
-	# Get required dependencies...
-||||||| b4f0f68
-=======
-	go mod tidy
->>>>>>> develop
 	go get github.com/melbahja/goph@latest
 	go get github.com/gleich/logoru@latest
 .PHONY: dep
@@ -119,13 +111,7 @@ backup:
 	# Delete backups older than 30 days... dont crash if directory is empty
 	-find ./_bak/*tgz -maxdepth 1 -type f -mtime +30 -delete
 	# Create a timestamped backup tarball... exclude the _bak directory
-<<<<<<< HEAD
-	tar --exclude=$(GO_BIN_DIR) --exclude=_bak -zcv -f _bak/$(shell date "+%Y%m%d_%H.%M.%S").tgz .
-||||||| b4f0f68
-	tar --exclude=_bak -zcv -f _bak/$(shell date "+%Y%m%d_%H.%M.%S").tgz .
-=======
 	tar --exclude=bin --exclude=_bak -zcv -f _bak/$(shell date "+%Y%m%d_%H.%M.%S").tgz .
->>>>>>> develop
 .PHONY: backup
 
 clean:
