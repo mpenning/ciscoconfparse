@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 1.9.9
+
+- Released: 2023-10-27
+- Summary:
+    - Add more IPv4 / IPv6 address parsing examples in `README.md`
+
 ## Version: 1.9.8
 
 - Released: 2023-10-26

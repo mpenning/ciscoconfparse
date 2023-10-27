@@ -182,24 +182,35 @@ for ccp_obj in parse.find_objects('^interface'):
     intf_class = ccp_obj.interface_object.interface_class or ""
 
     ##########################################################################
-    # Extract an IPv4Obj() with re_match_iter_typed()
+    # Extract all IPv4Obj() with re_match_iter_typed()
     ##########################################################################
-    intf_dict = ccp_obj.re_match_iter_typed(
-        r"ip\s+address\s+(?P<v4addr>\S.+)$",
-        groupdict={"v4addr": IPv4Obj},
-        default=None
-    )
-    intf_ipv4obj = intf_dict["v4addr"]
+    for _obj in ccp_obj.children:
+        # Get a dict() from re_match_iter_typed() by caling it with 'groupdict'
+        intf_dict = _obj.re_match_iter_typed(
+            # Add a regex match-group called 'v4addr'
+            r"ip\s+address\s+(?P<v4addr>\S.+)$",
+            # Cast the v4addr regex match group as an IPv4Obj() type
+            groupdict={"v4addr": IPv4Obj},
+            # Default to None if there is no regex match
+            default=None
+        )
+        intf_ipv4obj = intf_dict["v4addr"]
 
     ##########################################################################
-    # Extract an IPv6Obj() (only EUI-64 portion) with re_match_iter_typed()
+    # Extract all IPv6Obj() with re_match_iter_typed()
     ##########################################################################
-    intf_dict = ccp_obj.re_match_iter_typed(
-        r"ipv6\s+address\s+(?P<v6addr>\S.+)\s+(eui.64)$",
-        groupdict={"v6addr": IPv6Obj},
-        default=None
-    )
-    intf_ipv6obj = intf_dict["v6addr"]
+    for _obj in ccp_obj.children:
+        # Get a dict() from re_match_iter_typed() by caling it with 'groupdict'
+        intf_dict = _obj.re_match_iter_typed(
+            # Add regex match-groups called 'v6addr' and an optional 'ipv6type'
+            r"ipv6\s+address\s+(?P<v6addr>\S.+)\s*(?P<v6type>eui.64|link.local)*$",
+            # Cast the v6addr regex match group as an IPv6Obj() type
+            groupdict={"v6addr": IPv6Obj, "v6type": str},
+            # Default to None if there is no regex match
+            default=None
+        )
+        intf_ipv6obj = intf_dict["v6addr"]
+        intf_ipv6type = intf_dict["v6type"]
 ```
 
 When that is run, you will see information similar to this...
