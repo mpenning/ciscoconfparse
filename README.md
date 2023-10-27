@@ -120,6 +120,12 @@ for ccp_obj in parse.find_objects('^interface'):
     # IPv4 netmask object: ipaddress.IPv4Address()
     intf_v4masklength = ccp_obj.ipv4_addr_object.masklength
 
+    # set() of IPv4 secondary address/prefixlen strings
+    intf_v4secondary_networks = ccp_obj.ip_secondary_networks
+
+    # set() of IPv4 secondary address strings
+    intf_v4secondary_addresses = ccp_obj.ip_secondary_addresses
+
     # List of HSRP IPv4 addrs from the ciscoconfpasre/models_cisco.py HSRPInterfaceGroup()
     intf_hsrp_addresses = [hsrp_grp.ip for hsrp_grp in ccp_obj.hsrp_interfaces]
 
@@ -352,10 +358,8 @@ If you already git cloned the repo and want to manually run tests either run wit
 
 ```shell
 $ cd tests
-$ pytest -vvs ./test_CiscoConfParse.py
+$ pytest -vvs ./test_*py
 ...
-$ pytest -vvs ./test_Ccp_Util.py
-etc...
 ```
 
 ## Editing the Package

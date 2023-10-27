@@ -179,6 +179,7 @@ class HSRPInterfaceGroup(BaseCfgLine):
     # This method is on HSRPInterfaceGroup()
     @logger.catch(reraise=True)
     def __init__(self, group, parent):
+        """A HSRP Interface Group object"""
         super().__init__()
         self.feature = "hsrp"
         self._group = int(group)
@@ -217,24 +218,28 @@ class HSRPInterfaceGroup(BaseCfgLine):
     @property
     @logger.catch(reraise=True)
     def hsrp_group(self):
+        """Return the integer HSRP group number for this HSRP group"""
         return int(self._group)
 
     # This method is on HSRPInterfaceGroup()
     @property
     @logger.catch(reraise=True)
     def group(self):
+        """Return the integer HSRP group number for this HSRP group"""
         return self.hsrp_group
 
     # This method is on HSRPInterfaceGroup()
     @property
     @logger.catch(reraise=True)
     def ip(self):
+        """Return the string IPv4 HSRP address for this HSRP group"""
         return self.ipv4
 
     # This method is on HSRPInterfaceGroup()
     @property
     @logger.catch(reraise=True)
     def ipv4(self):
+        """Return the string IPv4 HSRP address for this HSRP group"""
         ## NOTE: I have no intention of checking self.is_shutdown here
         ##     People should be able to check the sanity of interfaces
         ##     before they put them into production
@@ -250,6 +255,7 @@ class HSRPInterfaceGroup(BaseCfgLine):
     @property
     @logger.catch(reraise=True)
     def has_ipv6(self):
+        """Return a boolean for whether this interface is configured with an IPv6 HSRP address"""
         ## NOTE: I have no intention of checking self.is_shutdown here
         ##     People should be able to check the sanity of interfaces
         ##     before they put them into production
@@ -280,23 +286,25 @@ class HSRPInterfaceGroup(BaseCfgLine):
     @property
     @logger.catch(reraise=True)
     def interface_tracking(self):
-        return self.get_hsrp_tracked_interfaces()
+        """Return a list of HSRP TrackingInterface() objects for this HSRPInterfaceGroup()"""
+        return self.get_hsrp_tracking_interfaces()
 
     # This method is on HSRPInterfaceGroup()
     @logger.catch(reraise=True)
-    def get_glbp_tracked_interfaces(self):
+    def get_glbp_tracking_interfaces(self):
         """Get a list of unique GLBP tracked interfaces.  This may never be supported by HSRPInterfaceGroup()"""
         raise NotImplementedError()
 
     # This method is on HSRPInterfaceGroup()
     @logger.catch(reraise=True)
-    def get_vrrp_tracked_interfaces(self):
+    def get_vrrp_tracking_interfaces(self):
         """Get a list of unique VRRP tracked interfaces.  This may never be supported by HSRPInterfaceGroup()"""
         raise NotImplementedError()
 
     # This method is on HSRPInterfaceGroup()
     @logger.catch(reraise=True)
-    def get_hsrp_tracked_interfaces(self):
+    def get_hsrp_tracking_interfaces(self):
+        """Return a list of HSRP TrackingInterface() interfaces for this HSRPInterfaceGroup()"""
         ######################################################################
         # Find decrement and interface
         ######################################################################
@@ -1293,29 +1301,73 @@ class BaseIOSIntfLine(IOSCfgLine):
     # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
+    def has_ip_secondary(self):
+        r"""Return an boolean for whether this interface has IPv4 secondary addresses"""
+        retval = self.re_match_iter_typed(
+            r"^\s*ip\s+address\s+\S+\s+\S+\s+(?P<secondary>secondary)\s*$",
+            groupdict={"secondary": bool},
+            default=False
+        )
+        return retval["secondary"]
+
+    # This method is on BaseIOSIntfLine()
+    @property
+    @logger.catch(reraise=True)
+    def ip_secondary_addresses(self):
+        r"""Return a set of IPv4 secondary addresses (as strings)"""
+        retval = set()
+        for obj in self.parent.all_children:
+            _gg = obj.re_match_iter_typed(
+                r"^\s*ip\s+address\s+(?P<secondary>\S+\s+\S+)\s+secondary\s*$",
+                groupdict={"secondary": IPv4Obj},
+                default=False
+            )
+            if _gg["secondary"]:
+                retval.add(str(_gg["secondary"].ip))
+        return retval
+
+    # This method is on BaseIOSIntfLine()
+    @property
+    @logger.catch(reraise=True)
+    def ip_secondary_networks(self):
+        r"""Return a set  of IPv4 secondary addresses / prefixlen"""
+        retval = set()
+        for obj in self.parent.all_children:
+            _gg = obj.re_match_iter_typed(
+                r"^\s*ip\s+address\s+(?P<secondary>\S+\s+\S+)\s+secondary\s*$",
+                groupdict={"secondary": IPv4Obj},
+                default=False
+            )
+            if _gg["secondary"]:
+                retval.add(f"{_gg['secondary'].ip}/{_gg['secondary'].prefixlen}")
+        return retval
+
+    # This method is on BaseIOSIntfLine()
+    @property
+    @logger.catch(reraise=True)
     def has_no_ipv4(self):
-        r"""Return an ccp_util.IPv4Obj object representing the subnet on this interface; if there is no address, return ccp_util.IPv4Obj('0.0.0.1/32')"""
+        r"""Return an ccp_util.IPv4Obj object representing the subnet on this interface; if there is no address, return ccp_util.IPv4Obj()"""
         return self.ipv4_addr_object == IPv4Obj()
 
     # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def ip(self):
-        r"""Return an ccp_util.IPv4Obj object representing the IPv4 address on this interface; if there is no address, return ccp_util.IPv4Obj('0.0.0.1/32')"""
+        r"""Return an ccp_util.IPv4Obj object representing the IPv4 address on this interface; if there is no address, return ccp_util.IPv4Obj()"""
         return self.ipv4_addr_object
 
     # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def ipv4(self):
-        r"""Return an ccp_util.IPv4Obj object representing the IPv4 address on this interface; if there is no address, return ccp_util.IPv4Obj('0.0.0.1/32')"""
+        r"""Return an ccp_util.IPv4Obj object representing the IPv4 address on this interface; if there is no address, return ccp_util.IPv4Obj()"""
         return self.ipv4_addr_object
 
     # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def ipv4_network_object(self):
-        r"""Return an ccp_util.IPv4Obj object representing the subnet on this interface; if there is no address, return ccp_util.IPv4Obj('0.0.0.1/32')"""
+        r"""Return an ccp_util.IPv4Obj object representing the subnet on this interface; if there is no address, return ccp_util.IPv4Obj()"""
         return self.ip_network_object
 
     # This method is on BaseIOSIntfLine()

@@ -1822,6 +1822,49 @@ def testVal_IOSRouteLine_12():
     assert 1 == obj.admin_distance
     assert "" == obj.tag
 
+###
+### ------ IPv4 secondary addresses
+###
+
+def testVal_IOSIntfLine_ip_secondary01():
+    """Test that a single secondary IPv4 address is detected"""
+    config = """!
+interface Vlan21
+ ip address 172.16.1.1 255.255.255.0
+ ip address 172.16.21.1 255.255.255.0 secondary
+ no ip proxy-arp
+!
+"""
+    cfg = CiscoConfParse(config.splitlines(), factory=True)
+    intf_obj = cfg.find_objects("^interface")[0]
+    assert intf_obj.has_ip_secondary is True
+
+def testVal_IOSIntfLine_ip_secondary02():
+    """Test that a multiple secondary IPv4 addresses are detected"""
+    config = """!
+interface Vlan21
+ ip address 172.16.1.1 255.255.255.0
+ ip address 172.16.21.1 255.255.255.0 secondary
+ ip address 172.16.31.1 255.255.255.0 secondary
+ no ip proxy-arp
+!
+"""
+    cfg = CiscoConfParse(config.splitlines(), factory=True)
+    intf_obj = cfg.find_objects("^interface")[0]
+    assert intf_obj.has_ip_secondary is True
+
+def testVal_IOSIntfLine_ip_secondary03():
+    """Test that a missing secondary IPv4 addresses are detected"""
+    config = """!
+interface Vlan21
+ ip address 172.16.1.1 255.255.255.0
+ no ip proxy-arp
+!
+"""
+    cfg = CiscoConfParse(config.splitlines(), factory=True)
+    intf_obj = cfg.find_objects("^interface")[0]
+    assert intf_obj.has_ip_secondary is False
+
 
 ###
 ### ------ IPv4 Helper-Addresses --------
@@ -1936,3 +1979,4 @@ def testVal_IOSAaaGroupServerLine_02():
     assert set(["192.0.2.10", "192.0.2.11"]) == obj.server_private
     assert "VRF_001" == obj.vrf
     assert "FastEthernet0/48" == obj.source_interface
+
