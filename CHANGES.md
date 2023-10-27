@@ -4,6 +4,13 @@
 - Summary:
     - Insert something here
 
+## Version: 1.9.12
+
+- Released: 2023-10-27
+- Summary:
+    - Replace some `re_match_iter_typed()` calls with simpler `str().split()`
+    - Fix `README.md` examples
+
 ## Version: 1.9.11
 
 - Released: 2023-10-27
