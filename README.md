@@ -203,7 +203,7 @@ for ccp_obj in parse.find_objects('^interface'):
         # Get a dict() from re_match_iter_typed() by caling it with 'groupdict'
         intf_dict = _obj.re_match_iter_typed(
             # Add regex match-groups called 'v6addr' and an optional 'ipv6type'
-            r"ipv6\s+address\s+(?P<v6addr>\S.+)\s*(?P<v6type>eui.64|link.local)*$",
+            r"ipv6\s+address\s+(?P<v6addr>\S.+?\d)\s*(?P<v6type>eui.64|link.local)*$",
             # Cast the v6addr regex match group as an IPv6Obj() type
             groupdict={"v6addr": IPv6Obj, "v6type": str},
             # Default to None if there is no regex match
