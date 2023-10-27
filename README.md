@@ -188,7 +188,7 @@ for ccp_obj in parse.find_objects('^interface'):
         # Get a dict() from re_match_iter_typed() by caling it with 'groupdict'
         intf_dict = _obj.re_match_iter_typed(
             # Add a regex match-group called 'v4addr'
-            r"ip\s+address\s+(?P<v4addr>\S.+)\s*(?P<secondary>secondary)*$",
+            r"ip\s+address\s+(?P<v4addr>\S.+?\d)\s*(?P<secondary>secondary)*$",
             # Cast the v4addr regex match group as an IPv4Obj() type
             groupdict={"v4addr": IPv4Obj, "secondary": str},
             # Default to None if there is no regex match
