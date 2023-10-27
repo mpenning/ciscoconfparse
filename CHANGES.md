@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 1.9.11
+
+- Released: 2023-10-27
+- Summary:
+    - Fix `README.md` examples
+
 ## Version: 1.9.10
 
 - Released: 2023-10-27
