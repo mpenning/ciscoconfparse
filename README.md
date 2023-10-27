@@ -186,7 +186,7 @@ for ccp_obj in parse.find_objects('^interface'):
     ##########################################################################
     intf_dict = ccp_obj.re_match_iter_typed(
         r"ip\s+address\s+(?P<v4addr>\S.+)$",
-        groupdict={"addr": IPv4Obj},
+        groupdict={"v4addr": IPv4Obj},
         default=None
     )
     intf_ipv4obj = intf_dict["v4addr"]
@@ -196,7 +196,7 @@ for ccp_obj in parse.find_objects('^interface'):
     ##########################################################################
     intf_dict = ccp_obj.re_match_iter_typed(
         r"ipv6\s+address\s+(?P<v6addr>\S.+)\s+(eui.64)$",
-        groupdict={"addr": IPv6Obj},
+        groupdict={"v6addr": IPv6Obj},
         default=None
     )
     intf_ipv6obj = intf_dict["v6addr"]
