@@ -184,6 +184,7 @@ for ccp_obj in parse.find_objects('^interface'):
     ##########################################################################
     # Extract all IPv4Obj() with re_match_iter_typed()
     ##########################################################################
+    _default = None
     for _obj in ccp_obj.children:
         # Get a dict() from re_match_iter_typed() by caling it with 'groupdict'
         intf_dict = _obj.re_match_iter_typed(
@@ -192,13 +193,14 @@ for ccp_obj in parse.find_objects('^interface'):
             # Cast the v4addr regex match group as an IPv4Obj() type
             groupdict={"v4addr": IPv4Obj, "secondary": str},
             # Default to None if there is no regex match
-            default=None
+            default=_default,
         )
         intf_ipv4obj = intf_dict["v4addr"]
 
     ##########################################################################
     # Extract all IPv6Obj() with re_match_iter_typed()
     ##########################################################################
+    _default = None
     for _obj in ccp_obj.children:
         # Get a dict() from re_match_iter_typed() by caling it with 'groupdict'
         intf_dict = _obj.re_match_iter_typed(
@@ -207,10 +209,13 @@ for ccp_obj in parse.find_objects('^interface'):
             # Cast the v6addr regex match group as an IPv6Obj() type
             groupdict={"v6addr": IPv6Obj, "v6type": str},
             # Default to None if there is no regex match
-            default=None
+            default=_default,
         )
         intf_ipv6obj = intf_dict["v6addr"]
         intf_ipv6type = intf_dict["v6type"]
+        # Skip this object if it has no IPv6 address
+        if intf_ipv6obj is _default:
+            continue
 ```
 
 When that is run, you will see information similar to this...
