@@ -880,8 +880,43 @@ def test_CiscoRange_15():
     uut_str = "Eth 2/1/1,2,3-5"
     assert CiscoRange(uut_str).as_set(result_type=str) == result_correct
 
+def test_CiscoRange_16():
+    """Basic interface port range test"""
+    result_correct = {"Eth7", "Eth8", "Eth9"}
+    uut_str = "Eth 7-9"
+    assert CiscoRange(uut_str).as_set(result_type=str) == result_correct
+
+def test_CiscoRange_17():
+    """Basic interface slot and port range test"""
+    result_correct = {"Eth1/7", "Eth1/8", "Eth1/9"}
+    uut_str = "Eth 1/7-9"
+    assert CiscoRange(uut_str).as_set(result_type=str) == result_correct
 
 def test_CiscoRange_18():
+    """Basic interface slot, card, and port range test"""
+    result_correct = {"Eth1/2/7", "Eth1/2/8", "Eth1/2/9"}
+    uut_str = "Eth 1/2/7-9"
+    assert CiscoRange(uut_str).as_set(result_type=str) == result_correct
+
+def test_CiscoRange_19():
+    """Basic interface slot, card, port, and subinterface range test"""
+    result_correct = {"Eth1/2/3.7", "Eth1/2/3.8", "Eth1/2/3.9"}
+    uut_str = "Eth 1/2/3.7-9"
+    assert CiscoRange(uut_str).as_set(result_type=str) == result_correct
+
+def test_CiscoRange_20():
+    """Basic interface slot, card, port, subinterface and channel range test"""
+    result_correct = {"Eth1/2/3.4:7", "Eth1/2/3.4:8", "Eth1/2/3.4:9"}
+    uut_str = "Eth 1/2/3.4:7-9"
+    assert CiscoRange(uut_str).as_set(result_type=str) == result_correct
+
+def test_CiscoRange_21():
+    """Basic interface slot, card, port, subinterface, channel and interface_class range test"""
+    result_correct = {"Eth1/2/3.4:7 multipoint", "Eth1/2/3.4:8 multipoint", "Eth1/2/3.4:9 multipoint"}
+    uut_str = "Eth 1/2/3.4:7-9 multipoint"
+    assert CiscoRange(uut_str).as_set(result_type=str) == result_correct
+
+def test_CiscoRange_22():
     """Parse a string with a common prefix on all of the CiscoRange() inputs"""
     result_correct = {
         "Eth1/1", "Eth1/10", "Eth1/12", "Eth1/13", "Eth1/14",
@@ -892,7 +927,7 @@ def test_CiscoRange_18():
     assert CiscoRange(uut_str).as_set(result_type=str) == result_correct
 
 
-def test_CiscoRange_19():
+def test_CiscoRange_23():
     """Check that the exact results are correct for CiscoRange().as_set() with a redundant input ('Eth1/1')"""
     result_correct = {
         CiscoInterface("Eth1/1"),
@@ -906,7 +941,7 @@ def test_CiscoRange_19():
     # CiscoRange(text="foo", result_type=None) returns CiscoInterface() instances...
     assert CiscoRange(uut_str, result_type=None).as_set(result_type=None) == result_correct
 
-def test_CiscoRange_20():
+def test_CiscoRange_24():
     """Check that the exact results are correct for CiscoRange().as_list() with a redundant input ('Eth1/1')"""
     result_correct = [
         CiscoInterface("Eth1/1"),

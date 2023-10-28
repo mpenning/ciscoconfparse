@@ -3196,8 +3196,6 @@ class CiscoInterface(object):
             intf_short = self.parse_intf_short(re_intf_short=re_intf_short)
 
             _prefix = intf_short["prefix"]
-            if False:
-                _slot_card_port_subinterface_channel = intf_short["slot_card_port_subinterface_channel"]
             _sep1 = intf_short["sep1"]
             _sep2 = intf_short["sep1"]
             _slot = intf_short["slot"]
@@ -3213,8 +3211,6 @@ class CiscoInterface(object):
             intf_long = self.parse_intf_long(re_intf_long=re_intf_long)
 
             _prefix = intf_long["prefix"]
-            if False:
-                _slot_card_port_subinterface_channel = intf_long["slot_card_port_subinterface_channel"]
             _sep1 = intf_long["sep1"]
             _sep2 = intf_long["sep1"]
             _slot = intf_long["slot"]
@@ -3399,7 +3395,10 @@ class CiscoInterface(object):
                 _slot = groupdict_slot_card_port["slot"]
                 _card = groupdict_slot_card_port["card"]
                 _port = groupdict_slot_card_port["port"]
-                _interface_class = self._interface_class
+                try:
+                    _interface_class = re.split(r"\s+", groupdict_intf_long["slot_card_port_subinterface_channel"])[1]
+                except:
+                    _interface_class = None
 
                 # Handle Ethernet1/48, where 48 is initially assigned to
                 #     _card (should be port)
@@ -3945,6 +3944,7 @@ class CiscoRange(MutableSequence):
                     # Append a whole range of interfaces...
                     begin_ordinal = int(_csv_part.split("-")[0].strip())
                     end_ordinal = int(_csv_part.split("-")[1].strip())
+                    end_ordinal = int("".join(filter(str.isdigit, _csv_part.split("-")[1].strip())))
                     if debug is True:
                         logger.info(f"CiscoRange(text={text}, debug=True) : end_ordinal={end_ordinal}")
                 else:
@@ -4005,9 +4005,10 @@ class CiscoRange(MutableSequence):
             if debug is True:
                 logger.info(f"    CiscoRange() idx: {idx} for --> _csv_part: {_csv_part} <--")
 
-            ##############################################################
+
+            ##################################################################
             # Build base instances of begin_obj and this_obj
-            ##############################################################
+            ##################################################################
             if idx == 0:
                 # Set the begin_obj...
                 begin_obj = CiscoInterface(_csv_part.split("-")[0], debug=debug)
@@ -4015,17 +4016,33 @@ class CiscoRange(MutableSequence):
                 self.this_obj = CiscoInterface(interface_dict=begin_obj.as_dict())
                 intf_dict = begin_obj.as_dict()
 
-            ##############################################################
+                ##############################################################
+                # Manually add interface class because begin_obj won't see
+                #   it by default: 'multipoint' in 'Serial1/0-5 multipoint'
+                ##############################################################
+                if "".join(filter(str.isdigit, text.split()[-1])) == '':
+                    # if there are no digits in the last word, that's an 
+                    # interface_class...
+                    _interface_class = text.split()[-1]
+                else:
+                    _interface_class = None
+                # Rebuild begin_obj with the interface_class
+                if isinstance(_interface_class, str):
+                    intf_dict["interface_class"] = _interface_class
+                    begin_obj = CiscoInterface(interface_dict=intf_dict)
+                    self.begin_obj = begin_obj
+
+            ##################################################################
             # this_obj will also be modified in the large per
             #     attribute if-clauses, below
-            ##############################################################
+            ##################################################################
             # WAS DEEPCOPY
             self.this_obj = copy.deepcopy(begin_obj)
 
-            ##############################################################
+            ##################################################################
             # Walk all possible attributes to find which target_attribute
             #     we're iterating on...
-            ##############################################################
+            ##################################################################
             iterate_attribute = None
             for potential_iter_attr in ['channel', 'subinterface', 'port', 'card', 'slot']:
                 if isinstance(getattr(begin_obj, potential_iter_attr), int):
@@ -4072,7 +4089,9 @@ class CiscoRange(MutableSequence):
                     # Append a whole range of interfaces...
                     obj = CiscoInterface(_csv_part.split("-")[0].strip(), debug=debug)
                     begin_ordinal = getattr(obj, self.iterate_attribute)
-                    end_ordinal = int(_csv_part.split("-")[1].strip())
+                    # parse end_ordinal from 'Eth1/2-4 multipoint'
+                    #     ref: https://stackoverflow.com/a/1450900
+                    end_ordinal = int("".join(filter(str.isdigit, _csv_part.split("-")[1].strip())))
                     if debug is True:
                         logger.info(f"CiscoRange(text={text}, debug=True) : end_ordinal={end_ordinal}")
                 else:
@@ -4393,28 +4412,24 @@ class CiscoRange(MutableSequence):
     @logger.catch(reraise=True)
     def insert(self, idx, val, sort=True):
         """CiscoRange().insert() is disabled because it currently generates a stackoverflow.  Use CiscoRange().append() instead."""
-        # I have to use a bizarre way to deprecate CiscoRange().insert()
-        # due to the way DeepSource analyzes the code...
-        if idx != -3.14159265359:
-            error = "CiscoRange().insert() is disabled because it currently generates a stackoverflow."
-            logger.critical(error)
-            raise NotImplementedError(error)
-        else:
-            # Insert at the end of the list with new_last_list_idx = len(self._list)
-            if val in self._list:
-                raise DuplicateMember(val)
-            # WAS DEEPCOPY
-            new_list = copy.deepcopy(self._list)
+        # This function currently generates a stackoverflow...
+        raise NotImplementedError()
 
-            #pragma warning disable S2190
-            new_list = new_list.insert(int(idx), val)
-            #pragma warning restore S2190
-            if sort is True:
-                retval = self.attribute_sort(new_list, attribute="sort_list", reverse=False)
-            else:
-                retval = new_list
-            self._list = retval
-            return self
+        # Insert at the end of the list with new_last_list_idx = len(self._list)
+        if val in self._list:
+            raise DuplicateMember(val)
+        # WAS DEEPCOPY
+        new_list = copy.deepcopy(self._list)
+
+        #pragma warning disable S2190
+        new_list = new_list.insert(int(idx), val)
+        #pragma warning restore S2190
+        if sort is True:
+            retval = self.attribute_sort(new_list, attribute="sort_list", reverse=False)
+        else:
+            retval = new_list
+        self._list = retval
+        return self
 
 
     # This method is on CiscoRange()
