@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 1.9.15
+
+- Released: 2023-10-28
+- Summary:
+    - Add fixes CiscoRange() interface_class
+
 ## Version: 1.9.14
 
 - Released: 2023-10-28
