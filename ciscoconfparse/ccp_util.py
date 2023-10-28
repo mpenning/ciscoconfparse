@@ -4102,7 +4102,7 @@ class CiscoRange(MutableSequence):
                         if debug is True:
                             logger.info(f"    idx: {idx} at point02, Appending {self.this_obj}{os.linesep}")
                         # WAS DEEPCOPY
-                        expanded_interfaces.append(copy.deepcopy(self.this_obj))
+                        expanded_interfaces.append(self.this_obj.from_dict(iter_dict))
                         continue
                 else:
                     # Append a single interface
