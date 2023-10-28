@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 1.9.13
+
+- Released: 2023-10-27
+- Summary:
+    - Add more unit tests
+
 ## Version: 1.9.12
 
 - Released: 2023-10-27
