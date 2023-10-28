@@ -4,6 +4,13 @@
 - Summary:
     - Insert something here
 
+## Version: 1.9.16
+
+- Released: 2023-10-28
+- Summary:
+    - Deprecate CiscoRange().insert()
+
+
 ## Version: 1.9.15
 
 - Released: 2023-10-28
