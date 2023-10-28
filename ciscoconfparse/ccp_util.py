@@ -4412,24 +4412,7 @@ class CiscoRange(MutableSequence):
     @logger.catch(reraise=True)
     def insert(self, idx, val, sort=True):
         """CiscoRange().insert() is disabled because it currently generates a stackoverflow.  Use CiscoRange().append() instead."""
-        # This function currently generates a stackoverflow...
         raise NotImplementedError()
-
-        # Insert at the end of the list with new_last_list_idx = len(self._list)
-        if val in self._list:
-            raise DuplicateMember(val)
-        # WAS DEEPCOPY
-        new_list = copy.deepcopy(self._list)
-
-        #pragma warning disable S2190
-        new_list = new_list.insert(int(idx), val)
-        #pragma warning restore S2190
-        if sort is True:
-            retval = self.attribute_sort(new_list, attribute="sort_list", reverse=False)
-        else:
-            retval = new_list
-        self._list = retval
-        return self
 
 
     # This method is on CiscoRange()
