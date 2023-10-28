@@ -2,9 +2,9 @@
 
 [![git commits][41]][42] [![Version][2]][3] [![Downloads][6]][7] [![License][8]][9]
 
-[![SonarCloud][51]][52] [![SonarCloud Maintainability Rating][53]][54] [![SonarCloud Lines of Code][55]][56] [![SonarCloud Bugs][61]][62] [![SonarCloud Code Smells][57]][58] [![SonarCloud Tech Debt][63]][64]
+[![SonarCloud][51]][52] [![SonarCloud Maintainability Rating][53]][54] [![SonarCloud Lines of Code][55]][56] [![SonarCloud Bugs][59]][60] [![SonarCloud Code Smells][57]][58] [![SonarCloud Tech Debt][61]][62]
 
-[![Snyk Package Health][37]][38] [![Deepsource.io][59]][60]
+[![Snyk Package Health][37]][38]
 
 
 ## Introduction: What is ciscoconfparse?
@@ -370,7 +370,7 @@ Caveats:
 - At this point, [CiscoConfParse][3] does NOT adhere to [Semantic Versioning][49]
 - Although we added [commitizen][48] as a dev dependency, we are NOT enforcing commit rules (such as [Conventional Commits][50]) yet.
 
-If you already git cloned the repo and want to manually run tests either run with `make test` from the base directory, or manually run with [`pytest`][65] in a unix-like system...
+If you already git cloned the repo and want to manually run tests either run with `make test` from the base directory, or manually run with [`pytest`][63] in a unix-like system...
 
 ```shell
 $ cd tests
@@ -530,10 +530,8 @@ The following are featured [CiscoConfParse](https://github.com/mpenning/ciscocon
   [56]: https://sonarcloud.io/summary/new_code?id=mpenning_ciscoconfparse
   [57]: https://sonarcloud.io/api/project_badges/measure?project=mpenning_ciscoconfparse&metric=code_smells
   [58]: https://sonarcloud.io/summary/new_code?id=mpenning_ciscoconfparse
-  [59]: https://app.deepsource.com/gh/mpenning/ciscoconfparse.svg/?label=active+issues&show_trend=true&token=x36MVZRBr0jhT1izPow379Gr
-  [60]: https://app.deepsource.com/gh/mpenning/ciscoconfparse/
-  [61]: https://sonarcloud.io/api/project_badges/measure?project=mpenning_ciscoconfparse&metric=bugs
+  [59]: https://sonarcloud.io/api/project_badges/measure?project=mpenning_ciscoconfparse&metric=bugs
+  [60]: https://sonarcloud.io/summary/new_code?id=mpenning_ciscoconfparse
+  [61]: https://sonarcloud.io/api/project_badges/measure?project=mpenning_ciscoconfparse&metric=sqale_index
   [62]: https://sonarcloud.io/summary/new_code?id=mpenning_ciscoconfparse
-  [63]: https://sonarcloud.io/api/project_badges/measure?project=mpenning_ciscoconfparse&metric=sqale_index
-  [64]: https://sonarcloud.io/summary/new_code?id=mpenning_ciscoconfparse
-  [65]: https://docs.pytest.org/en/
+  [63]: https://docs.pytest.org/en/
