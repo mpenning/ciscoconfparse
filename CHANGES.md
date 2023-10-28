@@ -4,6 +4,13 @@
 - Summary:
     - Insert something here
 
+## Version: 1.9.14
+
+- Released: 2023-10-28
+- Summary:
+    - Fix incrementing CiscoRange() channel numbers
+    - Improve 'make test'
+
 ## Version: 1.9.13
 
 - Released: 2023-10-27
