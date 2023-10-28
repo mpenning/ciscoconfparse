@@ -450,3 +450,107 @@ policy-map SHAPE_HEIR
     # Check that base assumption is True... we are checking the right parent
     assert obj.text == "interface GigabitEthernet 1/1"
     assert uut_result == 911
+
+def testVal_re_match_iter_typed_intf_norecurse():
+    """Test that re_match_iter_typed(recurse=False) finds the parent and returns a `str`"""
+    config = """!
+interface GigabitEthernet 1/1
+ switchport mode trunk
+ switchport trunk native vlan 911
+ channel-group 25 mode active
+!
+!
+class-map match-all IP_PREC_MEDIUM
+ match ip precedence 2  3  4  5
+class-map match-all IP_PREC_HIGH
+ match ip precedence 6  7
+class-map match-all TEST
+class-map match-all TO_ATM
+ match access-group name NOT_INTERNAL
+class-map match-any ALL
+ match any
+!
+!
+policy-map EXTERNAL_CBWFQ
+ class IP_PREC_HIGH
+  priority percent 10
+  police cir percent 10
+    conform-action transmit
+    exceed-action drop
+ class IP_PREC_MEDIUM
+  bandwidth percent 50
+  queue-limit 100
+ class class-default
+  bandwidth percent 40
+  queue-limit 100
+policy-map SHAPE_HEIR
+ class ALL
+  shape average 630000
+  service-policy EXTERNAL_CBWFQ
+!
+!"""
+    cfg = CiscoConfParse(config.splitlines(), factory=True)
+    obj = cfg.find_objects("^interface")[0]
+
+    uut_result = obj.re_match_iter_typed(
+        r"^interface\s+(?P<intf>\S.+)$",
+        groupdict={"intf": str},
+        default="_no_match",
+        recurse=False,
+        debug=False,
+    )
+    # Check that base assumption is True... we are checking the right parent
+    assert obj.text == "interface GigabitEthernet 1/1"
+    assert uut_result["intf"] == "GigabitEthernet 1/1"
+
+def testVal_re_match_iter_typed_vlan_recurse():
+    """Test that re_match_iter_typed(recurse=False) finds the second child and returns an `int`"""
+    config = """!
+interface GigabitEthernet 1/1
+ switchport mode trunk
+ switchport trunk native vlan 911
+ channel-group 25 mode active
+!
+!
+class-map match-all IP_PREC_MEDIUM
+ match ip precedence 2  3  4  5
+class-map match-all IP_PREC_HIGH
+ match ip precedence 6  7
+class-map match-all TEST
+class-map match-all TO_ATM
+ match access-group name NOT_INTERNAL
+class-map match-any ALL
+ match any
+!
+!
+policy-map EXTERNAL_CBWFQ
+ class IP_PREC_HIGH
+  priority percent 10
+  police cir percent 10
+    conform-action transmit
+    exceed-action drop
+ class IP_PREC_MEDIUM
+  bandwidth percent 50
+  queue-limit 100
+ class class-default
+  bandwidth percent 40
+  queue-limit 100
+policy-map SHAPE_HEIR
+ class ALL
+  shape average 630000
+  service-policy EXTERNAL_CBWFQ
+!
+!"""
+    cfg = CiscoConfParse(config.splitlines(), factory=True)
+    obj = cfg.find_objects("^interface")[0]
+
+    uut_result = obj.re_match_iter_typed(
+        r"switchport\s+trunk\s+native\s+vlan\s+(?P<vlan>\S+)$",
+        groupdict={"vlan": int},
+        recurse=True,
+        default="_no_match",
+        debug=False,
+    )
+    # Check that base assumption is True... we are checking the right parent
+    assert obj.text == "interface GigabitEthernet 1/1"
+    assert uut_result["vlan"] == 911
