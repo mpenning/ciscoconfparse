@@ -2696,12 +2696,12 @@ class IOSAccessLine(BaseCfgLine):
         return tmp
 
     @logger.catch(reraise=True)
-    def manual_exectimeout_min(self):
+    def manual_exectimeout_minutes(self):
         tmp = self.parse_exectimeout
         return tmp[0]
 
     @logger.catch(reraise=True)
-    def manual_exectimeout_sec(self):
+    def manual_exectimeout_seconds(self):
         tmp = self.parse_exectimeout
         if len(tmp > 0):
             return 0
