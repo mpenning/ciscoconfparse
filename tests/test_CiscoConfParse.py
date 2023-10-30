@@ -40,6 +40,7 @@ THIS_TEST_PATH = os.path.dirname(os.path.abspath(__file__))
 from loguru import logger
 from passlib.hash import cisco_type7
 import pytest
+
 from ciscoconfparse.ciscoconfparse import CiscoConfParse, IOSCfgLine, IOSIntfLine
 from ciscoconfparse.ciscoconfparse import IOSCfgLine, IOSIntfLine
 from ciscoconfparse.ciscoconfparse import CiscoPassword
@@ -49,6 +50,10 @@ from ciscoconfparse.ccp_util import ccp_logger_control
 from ciscoconfparse.ccp_util import IPv4Obj, IPv6Obj
 from ciscoconfparse.ccp_abc import BaseCfgLine
 
+
+def testParse_valid_config_blanklines_01(parse_n01_w_blanklines):
+    """Test reading a config with blank lines"""
+    assert len(parse_n01_w_blanklines.ioscfg) == 126
 
 def testParse_valid_filepath_01():
     """Test reading a cisco ios config-file on disk (without the config keyword); ref github issue #262."""

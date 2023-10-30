@@ -1392,12 +1392,19 @@ def parse_a02_factory(request):
     yield parse_a02_factory
 
 
-## config_n02 yields a nexus configuration
+## config_n01 yields a nexus configuration
 @pytest.fixture(scope="function")
 def config_n01(request):
     """Unparsed n01"""
     yield n01
 
+## parse_n01 yields a nexus configuration
+@pytest.fixture(scope="function")
+def parse_n01_w_blanklines(request):
+    """Preparsed n01 with no ignored blank lines"""
+    parse_n01_blanklines = CiscoConfParse(n01, syntax="nxos", ignore_blank_lines=False, factory=False)
+
+    yield parse_n01_blanklines
 
 ## parse_n01 yields a nexus configuration
 @pytest.fixture(scope="function")
