@@ -18,7 +18,6 @@ r""" ccp_abc.py - Parse, Query, Build, and Modify IOS-style configurations
      mike [~at~] pennington [/dot\] net
 """
 
-from difflib import get_close_matches
 from abc import ABCMeta
 import warnings
 import inspect
