@@ -2570,7 +2570,7 @@ class CiscoConfParse(object):
     @logger.catch(reraise=True)
     def insert_after(
         self,
-        exist_val="",
+        exist_val=None,
         new_val=None,
         exactmatch=False,
         ignore_ws=False,
@@ -2763,7 +2763,11 @@ class CiscoConfParse(object):
         The parsed :class:`~models_cisco.IOSCfgLine` object instance
 
         """
-        if isinstance(linespec, (int, str, float)):
+        if isinstance(linespec, str) and linespec.strip()=="" and self.ignore_blank_lines is True:
+            error = f"Cannot insert a blank line if `ignore_blank_lines` is True"
+            logger.error(error)
+            raise InvalidParameters(error)
+        elif isinstance(linespec, (int, str, float)):
             self.ConfigObjs.append(IOSCfgLine(str(linespec)))
         elif isinstance(linespec, IOSCfgLine):
             self.ConfigObjs.append(linespec)
@@ -4806,7 +4810,7 @@ class ConfigList(MutableSequence):
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def insert_before(self, exist_val, new_val, atomic=False):
+    def insert_before(self, exist_val=None, new_val=None, atomic=False):
         """
         Insert new_val before all occurances of exist_val.
 
@@ -4847,6 +4851,12 @@ class ConfigList(MutableSequence):
             exist_val,
             new_val,
         )
+        if isinstance(new_val, str) and new_val.strip()=="" and self.ignore_blank_lines is True:
+            logger.warning(f"`new_val`=`{new_val}`")
+            error = f"Cannot insert a blank line if `ignore_blank_lines` is True"
+            logger.error(error)
+            raise InvalidParameters(error)
+
         # exist_val MUST be a string
         if isinstance(exist_val, str) is True and exist_val != "":
             pass
@@ -4910,7 +4920,7 @@ class ConfigList(MutableSequence):
     # This method is on ConfigList()
     @junos_unsupported
     @logger.catch(reraise=True)
-    def insert_after(self, exist_val="", new_val="", atomic=False, new_val_indent=-1):
+    def insert_after(self, exist_val=None, new_val=None, atomic=False, new_val_indent=-1):
         """
         Insert new_val after all occurances of exist_val.
 
@@ -4961,6 +4971,12 @@ class ConfigList(MutableSequence):
             exist_val,
             new_val,
         )
+        if isinstance(new_val, str) and new_val.strip()=="" and self.ignore_blank_lines is True:
+            logger.warning(f"`new_val`=`{new_val}`")
+            error = f"Cannot insert a blank line if `ignore_blank_lines` is True"
+            logger.error(error)
+            raise InvalidParameters(error)
+
         # exist_val MUST be a string
         if isinstance(exist_val, str) is True and exist_val != "":
             pass

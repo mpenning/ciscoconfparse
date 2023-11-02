@@ -679,7 +679,7 @@ class BaseCfgLine(metaclass=ABCMeta):
 
     # On BaseCfgLine()
     @junos_unsupported
-    def insert_before(self, insertstr=""):
+    def insert_before(self, insertstr=None):
         """
         Usage:
         confobj.insert_before('! insert text before this confobj')
@@ -693,10 +693,10 @@ class BaseCfgLine(metaclass=ABCMeta):
             calling_filename, calling_lineno, calling_function, insertstr
         )
         if isinstance(insertstr, str) is True:
-            retval = self.confobj.insert_before(insertstr, atomic=False)
+            retval = self.confobj.insert_before(exist_val=self.text, new_val=insertstr, atomic=False)
 
         elif isinstance(insertstr, BaseCfgLine) is True:
-            retval = self.confobj.insert_before(insertstr.text, atomic=False)
+            retval = self.confobj.insert_before(exist_val=self.text, new_val=insertstr.text, atomic=False)
 
         else:
             raise ValueError(error)
@@ -706,7 +706,7 @@ class BaseCfgLine(metaclass=ABCMeta):
 
     # On BaseCfgLine()
     @junos_unsupported
-    def insert_after(self, insertstr=""):
+    def insert_after(self, insertstr=None):
         """Usage:
         confobj.insert_after('! insert text after this confobj')"""
 
@@ -722,23 +722,24 @@ class BaseCfgLine(metaclass=ABCMeta):
         calling_filename = inspect.stack()[calling_fn_index].filename
         calling_function = inspect.stack()[calling_fn_index].function
         calling_lineno = inspect.stack()[calling_fn_index].lineno
-        error = "FATAL CALL: in {} line {} {}(insertstr='{}')".format(
-            calling_filename, calling_lineno, calling_function, insertstr
-        )
         if self.confobj.debug >= 1:
             logger.debug("Inserting '{}' after '{}'".format(insertstr, self))
 
         if isinstance(insertstr, str) is True:
             # Handle insertion of a plain-text line
-            retval = self.confobj.insert_after(insertstr, atomic=False)
+            retval = self.confobj.insert_after(exist_val=self.text, new_val=insertstr, atomic=False)
 
         elif isinstance(insertstr, "BaseCfgLine"):
             # Handle insertion of a configuration line obj such as IOSCfgLine()
-            retval = self.confobj.insert_after(insertstr.text, atomic=False)
+            retval = self.confobj.insert_after(exist_val=self.text, new_val=insertstr.text, atomic=False)
 
         else:
+            error = "FATAL CALL: in {} line {} {}(insertstr='{}')".format(
+                calling_filename, calling_lineno, calling_function, insertstr
+            )
             logger.error(error)
             raise ValueError(error)
+
         # retval = self.confobj.insert_after(self, insertstr, atomic=False)
         return retval
 
