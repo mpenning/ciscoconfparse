@@ -402,7 +402,7 @@ def _cfgobj_from_text(
         )
 
     # if factory is **faster** than if factory is True
-    elif factory:
+    elif syntax in ALL_VALID_SYNTAX and factory:
         obj = ConfigLineFactory(
             txt,
             comment_delimiter,
@@ -411,8 +411,7 @@ def _cfgobj_from_text(
 
     else:
         err_txt = (
-            "Cannot classify config list item '%s' "
-            "into a proper configuration object line" % txt
+            f"Cannot classify config list item `{txt}` into a proper configuration object line"
         )
         logger.error(err_txt)
         raise ValueError(err_txt)

@@ -23,7 +23,7 @@ import warnings
 import inspect
 import re
 
-from ciscoconfparse.errors import InvalidTypecast
+from ciscoconfparse.errors import InvalidTypecast, InvalidParameters
 from ciscoconfparse.ccp_util import junos_unsupported
 from loguru import logger
 
@@ -292,7 +292,10 @@ class BaseCfgLine(metaclass=ABCMeta):
     def text(self, newtext=None):
         """Set self.text, self.indent, self.line_id (and all comments' self.parent)"""
         # FIXME - children do not associate correctly if this is used as-is...
-        assert isinstance(newtext, str)
+        if not isinstance(newtext, str):
+            error = f"text=`{newtext}` is an invalid config line"
+            error.critical(error)
+            raise InvalidParameters(error)
 
         # escape braces since single braces could be misunderstood as
         # f-string or string.format() delimiters...
