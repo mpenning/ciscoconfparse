@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 1.9.21
+
+- Released: 2023-11-02
+- Summary:
+    - Add checks for CiscoConfParse() InvalidParameters()
+
 ## Version: 1.9.20
 
 - Released: 2023-11-02
