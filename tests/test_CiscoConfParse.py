@@ -165,6 +165,19 @@ def testValues_IOSCfgLine_06():
     with pytest.raises(InvalidParameters):
         parse.insert_before("1")
 
+def testValues_IOSCfgLine_07():
+    """test that a bool in the config list and factory=False is rejected with a InvalidParameters()"""
+    with pytest.raises(InvalidParameters):
+        parse = CiscoConfParse([False], factory=False)
+
+    with pytest.raises(InvalidParameters):
+        parse = CiscoConfParse([True], factory=False)
+
+def testValues_IOSCfgLine_08():
+    """test that a bool in the config list and factory=True is rejected with a InvalidParameters()"""
+    with pytest.raises(InvalidParameters):
+        parse = CiscoConfParse([False], factory=True)
+
 def testParse_f5_as_ios_00(parse_f01_ios):
     assert len(parse_f01_ios.objs)==20
 
