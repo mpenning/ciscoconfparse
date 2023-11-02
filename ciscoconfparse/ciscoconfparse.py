@@ -635,6 +635,29 @@ class CiscoConfParse(object):
         self.encoding = encoding or ENCODING
         self.read_only = read_only
 
+        if len(config) > 0:
+            try:
+                correct_element_types = []
+                for ii in config:
+                    # Check whether the elements are the correct types...
+                    if isinstance(ii, (str, BaseCfgLine)):
+                        correct_element_types.append(True)
+                    else:
+                        correct_element_types.append(False)
+
+                elements_have_len = all(correct_element_types)
+            except AttributeError:
+                elements_have_len = False
+            except TypeError:
+                elements_have_len = False
+        else:
+            elements_have_len = None
+
+        if elements_have_len is False:
+            error = f"All ConfigList elements must have a length()"
+            logger.error(error)
+            raise InvalidParameters(error)
+
         # Read the configuration lines and detect invalid inputs...
         # tmp_lines = self._get_ccp_lines(config=config, logger=logger)
         if isinstance(config, (str, pathlib.Path,)):
