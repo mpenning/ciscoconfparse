@@ -4,6 +4,15 @@
 - Summary:
     - Insert something here
 
+## Version: 1.9.17
+
+- Released: 2023-11-02
+- Summary:
+    - Fix `append_line()` when appending non-`IOSCfgLine()` objects
+    - Only honor `ignore_blank_lines=True` when `factory=False`
+    - Adjust linenumbers when parsing a brace-delimited-config (such as F5 config) as IOS syntax (`CiscoConfParse("path/to/f5.conf", syntax="ios", comment="#", factory=False)`)
+    - Remove an unused import
+
 ## Version: 1.9.16
 
 - Released: 2023-10-28

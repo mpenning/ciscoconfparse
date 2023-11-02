@@ -83,6 +83,9 @@ from ciscoconfparse.ccp_util import enforce_valid_types
 from ciscoconfparse.ccp_util import junos_unsupported
 from ciscoconfparse.ccp_util import configure_loguru
 
+from ciscoconfparse.errors import InvalidParameters
+
+
 # Not using ccp_re yet... still a work in progress
 # from ciscoconfparse.ccp_util import ccp_re
 
@@ -442,7 +445,7 @@ def build_space_tolerant_regex(linespec):
 
 
 @logger.catch(reraise=True)
-def assign_parent_to_closing_braces(input_list=None):
+def assign_parent_to_closing_braces(input_list=None, keep_blank_lines=False):
     """Accept a list of brace-delimited BaseCfgLine() objects; these objects should not already have a parent assigned.  Walk the list of BaseCfgLine() objects and assign the 'parent' attribute BaseCfgLine() objects to the closing config braces.  Return the list of objects (with the assigned 'parent' attributes).
 
     Closing Brace Assignment Example
@@ -600,8 +603,16 @@ class CiscoConfParse(object):
             A string holding the configuration type.  Default: 'ios'.  Must be one of: 'ios', 'nxos', 'asa', 'junos'.  Use 'junos' for any brace-delimited network configuration (including F5, Palo Alto, etc...).
 
         """
+        ######################################################################
+        # Log a warning if parsing with `ignore_blank_lines=True` and
+        #     `factory=False`, which is the default parsing config...
+        ######################################################################
+        if ignore_blank_lines is True and factory is False:
+            logger.info("As of version 1.9.17 and later, `ignore_blank_lines=True` is only honored when `factory=True`")
 
+        ######################################################################
         # Reconfigure loguru if read_only is True
+        ######################################################################
         if read_only is True:
             active_loguru_handlers = configure_loguru(read_only=read_only, active_handlers=globals()["ACTIVE_LOGURU_HANDLERS"], debug=debug)
             globals()["ACTIVE_LOGURU_HANDLERS"] = active_loguru_handlers
@@ -627,9 +638,15 @@ class CiscoConfParse(object):
         # Read the configuration lines and detect invalid inputs...
         # tmp_lines = self._get_ccp_lines(config=config, logger=logger)
         if isinstance(config, (str, pathlib.Path,)):
-            tmp_lines = self.read_config_file(filepath=config, logger=logger)
+            if ignore_blank_lines is True and factory is False:
+                tmp_lines = self.read_config_file(filepath=config, logger=logger, linesplit_rgx=r"\r*\n+")
+            else:
+                tmp_lines = self.read_config_file(filepath=config, logger=logger, linesplit_rgx=r"\r*\n")
         elif isinstance(config, Sequence):
-            tmp_lines = config
+            if ignore_blank_lines is True and factory is False:
+                tmp_lines = [ii for ii in config if len(ii)!=0]
+            else:
+                tmp_lines = config
         else:
             error = f"Cannot read config from {config}"
             logger.critical(error)
@@ -2721,7 +2738,15 @@ class CiscoConfParse(object):
         The parsed :class:`~models_cisco.IOSCfgLine` object instance
 
         """
-        self.ConfigObjs.append(linespec)
+        if isinstance(linespec, (int, str, float)):
+            self.ConfigObjs.append(IOSCfgLine(str(linespec)))
+        elif isinstance(linespec, IOSCfgLine):
+            self.ConfigObjs.append(linespec)
+        else:
+            error = f"Cannot append {type(linespec)}"
+            error.critical(error)
+            raise InvalidParameters(error)
+        self.atomic()
         return self.ConfigObjs[-1]
 
     # This method is on CiscoConfParse()
@@ -4468,12 +4493,11 @@ class ConfigList(MutableSequence):
         self._list = self._bootstrap_obj_init_ng(initlist, debug=debug)
 
         # Removed this portion of __init__() in 1.7.16...
-        if False:
-            if getattr(initlist, "__iter__", False) is not False:
-                self._list = self._bootstrap_obj_init_ng(initlist)
+        if getattr(initlist, "__iter__", False) is not False:
+            self._list = self._bootstrap_obj_init_ng(initlist)
 
-            else:
-                self._list = []
+        else:
+            self._list = []
 
         if self.debug > 0:
             message = "Create ConfigList() with %i elements" % len(self._list)
@@ -5237,7 +5261,6 @@ class ConfigList(MutableSequence):
 
         if self.debug >= 1:
             logger.info("    ConfigList()._bootstrap_obj_init_ng() was called.")
-
 
         retval = []
         idx = None

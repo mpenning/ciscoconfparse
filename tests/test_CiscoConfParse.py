@@ -118,25 +118,54 @@ def testParse_invalid_filepath_02():
 
 def testParse_invalid_config_01():
     """test that we do not raise an error when parsing an empty config list"""
-    CiscoConfParse([])
+    parse = CiscoConfParse([])
+    assert len(parse.objs) == 0
+
+def testValues_IOSCfgLine_01():
+    """test that default factory=False config inserts IOSCfgLine objects"""
+    parse = CiscoConfParse(["1"], factory=False)
+    assert len(parse.objs) == 1
+    assert isinstance(parse.objs[0], IOSCfgLine) is True
+    assert parse.objs[0].linenum == 0
+
+def testValues_IOSCfgLine_02():
+    """test that default factory=False config inserts a new IOSCfgLine object if a string is submitted"""
+    parse = CiscoConfParse(["1"], factory=False)
+    parse.append_line("2")
+    assert len(parse.objs) == 2
+    assert isinstance(parse.objs[1], IOSCfgLine) is True
+    assert parse.objs[1].linenum == 1
+
+def testValues_IOSCfgLine_03():
+    """test that default factory=False config inserts a new IOSCfgLine object if an int is submitted"""
+    parse = CiscoConfParse(["1"], factory=False)
+    parse.append_line(2)
+    assert len(parse.objs) == 2
+    assert isinstance(parse.objs[1], IOSCfgLine) is True
+    assert parse.objs[1].linenum == 1
+
+def testValues_IOSCfgLine_04():
+    """test that default factory=False config inserts a new IOSCfgLine object if a float is submitted"""
+    parse = CiscoConfParse(["1"], factory=False)
+    parse.append_line(2.0)
+    assert len(parse.objs) == 2
+    assert isinstance(parse.objs[1], IOSCfgLine) is True
+    assert parse.objs[1].linenum == 1
 
 def testParse_f5_as_ios_00(parse_f01_ios):
     assert len(parse_f01_ios.objs)==20
 
 def testParse_f5_as_ios_02(parse_f02_ios_01):
     """
-    Test parsing a brace-delimited f5 config with ios syntax.  Use
-    fixtures/configs/sample_02.f5 as the test config.  That f5 config is pre-parsed in
-    conftest.py as 'parse_f02_ios'.
+    Test parsing a brace-delimited f5 config with ios syntax.  Use fixtures/configs/sample_02.f5 as the test config.  That f5 config is pre-parsed in conftest.py as 'parse_f02_ios'.
 
     This Config Parsing Syntax:
-    parse_f02_ios = CiscoConfParse('fixtures/configs/sample_02.f5', syntax='ios')
+    parse_f02_ios = CiscoConfParse('fixtures/configs/sample_02.f5', syntax='ios', factory=False)
 
     Ensure that line numbers, parent line numbers, and config text line up
     correctly... important note... closing curly-braces should be assigned as
     a child of the opening curly-brace.
     """
-    assert len(parse_f02_ios_01.objs)==67
 
     correct_result = [
         "ltm profile udp DNS-UDP {",
@@ -277,18 +306,18 @@ def testParse_f5_as_ios_02(parse_f02_ios_01):
         65: {'linenum': 66, 'parent_linenum': 44,},
         66: {'linenum': 67, 'parent_linenum': 67,},
     }
-    for idx, obj in enumerate(parse_f02_ios_01.objs):
-        # CiscoConfParse object line numbers start with 1...
-        assert idx + 1 == obj.linenum
+    assert len(parse_f02_ios_01.objs)==67
+    for dict_idx, obj in enumerate(parse_f02_ios_01.objs):
+        assert dict_idx == obj.linenum
 
         # Be sure to strip off any double-spacing before comparing to obj.text
-        tmp = correct_result[idx]
+        tmp = correct_result[dict_idx]
         indent = len(tmp.rstrip()) - len(tmp.strip())
         assert indent == obj.indent
-        assert correct_result[idx] == obj.text
+        assert correct_result[dict_idx] == obj.text
 
-        assert correct_result_linenum_dict[idx]['linenum'] == obj.linenum
-        assert correct_result_linenum_dict[idx]['parent_linenum'] == obj.parent.linenum
+        assert correct_result_linenum_dict[dict_idx]['linenum'] == obj.linenum + 1
+        assert correct_result_linenum_dict[dict_idx]['parent_linenum'] == obj.parent.linenum + 1
 
 def testParse_f5_as_junos(parse_f01_junos_01):
     """Test parsing f5 config as junos syntax"""
@@ -434,8 +463,7 @@ end""".splitlines()
 
 def testValues_banner_delimiter_07():
     """
-    Test banners with blank lines in them regardless of the setting in
-    ignore_blank_lines.
+    Test banners with blank lines in them regardless of the setting in ignore_blank_lines.
     """
     CONFIG = """!
 banner motd z
@@ -456,10 +484,10 @@ end""".splitlines()
     # Blank lines in banner should always be accepted, even if
     # ignore_blank_lines is True.
     # See Github Issue #229
-    parse = CiscoConfParse(CONFIG, ignore_blank_lines=True)
+    parse = CiscoConfParse(CONFIG, ignore_blank_lines=True, factory=True)
     assert len(parse.find_objects(r"banner")[0].children) == 8
 
-    parse = CiscoConfParse(CONFIG, ignore_blank_lines=False)
+    parse = CiscoConfParse(CONFIG, ignore_blank_lines=False, factory=True)
     assert len(parse.find_objects(r"banner")[0].children) == 8
 
 
