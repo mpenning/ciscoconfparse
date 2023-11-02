@@ -21,5 +21,6 @@ jobs:
     steps:
       - uses: dessant/lock-threads@be8aa5be94131386884a6da4189effda9b14aa21
         with:
+          exclude-any-issue-labels: 'accepted, documentation, work-in-progress, help-wanted'
           issue-inactive-days: 21
           pr-inactive-days: 21
