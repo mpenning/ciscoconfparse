@@ -81,6 +81,9 @@ class BaseCfgLine(metaclass=ABCMeta):
     def __str__(self):
         return self.__repr__()
 
+    def __len__(self):
+        return len(self.text)
+
     # On BaseCfgLine()
     def __hash__(self):
         ##   I inlined the hash() argument below for speed... whenever I change
