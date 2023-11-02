@@ -50,6 +50,7 @@ from ciscoconfparse.ccp_util import ccp_logger_control
 from ciscoconfparse.ccp_util import IPv4Obj, IPv6Obj
 from ciscoconfparse.ccp_abc import BaseCfgLine
 
+from ciscoconfparse.errors import InvalidParameters
 
 def testParse_valid_config_blanklines_01(parse_n01_w_blanklines):
     """Test reading a config with blank lines"""
@@ -151,6 +152,18 @@ def testValues_IOSCfgLine_04():
     assert len(parse.objs) == 2
     assert isinstance(parse.objs[1], IOSCfgLine) is True
     assert parse.objs[1].linenum == 1
+
+def testValues_IOSCfgLine_05():
+    """test that an empty insert_after parameter is rejected"""
+    parse = CiscoConfParse(["1"], factory=False)
+    with pytest.raises(InvalidParameters):
+        parse.insert_after("1")
+
+def testValues_IOSCfgLine_06():
+    """test that an empty insert_before parameter is rejected"""
+    parse = CiscoConfParse(["1"], factory=False)
+    with pytest.raises(InvalidParameters):
+        parse.insert_before("1")
 
 def testParse_f5_as_ios_00(parse_f01_ios):
     assert len(parse_f01_ios.objs)==20

@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 1.9.18
+
+- Released: 2023-11-02
+- Summary:
+    - Change `CiscoConfParse()` `insert_before()`, `insert_after()`, and `append_line()` methods to require an explicit object instead of defaulting to an empty string
+
 ## Version: 1.9.17
 
 - Released: 2023-11-02

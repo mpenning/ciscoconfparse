@@ -2451,8 +2451,8 @@ class CiscoConfParse(object):
     @logger.catch(reraise=True)
     def insert_before(
         self,
-        exist_val="",
-        new_val="",
+        exist_val=None,
+        new_val=None,
         exactmatch=False,
         ignore_ws=False,
         atomic=False,
@@ -2513,6 +2513,16 @@ class CiscoConfParse(object):
         #   - `linespec` is now called exist_val
         #   - `insertstr` is now called new_val
         ######################################################################
+        if exist_val is None:
+            error = f"exist_val must not be {type(new_val)}"
+            logger.critical(error)
+            raise InvalidParameters(error)
+
+        if new_val is None:
+            error = f"Cannot insert new_val {type(new_val)}"
+            logger.critical(error)
+            raise InvalidParameters(error)
+
         if kwargs.get("linespec", "") != "":
             exist_val = kwargs.get("linespec")
             logger.info(
@@ -2561,7 +2571,7 @@ class CiscoConfParse(object):
     def insert_after(
         self,
         exist_val="",
-        new_val="",
+        new_val=None,
         exactmatch=False,
         ignore_ws=False,
         atomic=False,
@@ -2623,6 +2633,16 @@ class CiscoConfParse(object):
         #   - `linespec` is now called exist_val
         #   - `insertstr` is now called new_val
         ######################################################################
+        if exist_val is None:
+            error = f"exist_val must not be {type(new_val)}"
+            logger.critical(error)
+            raise InvalidParameters(error)
+
+        if new_val is None:
+            error = f"Cannot insert new_val {type(new_val)}"
+            logger.critical(error)
+            raise InvalidParameters(error)
+
         if kwargs.get("linespec", "") != "":
             exist_val = kwargs.get("linespec")
             logger.info(
@@ -2667,7 +2687,7 @@ class CiscoConfParse(object):
         self,
         parentspec,
         childspec,
-        insertstr="",
+        insertstr=None,
         exactmatch=False,
         excludespec=None,
         ignore_ws=False,
@@ -2679,6 +2699,11 @@ class CiscoConfParse(object):
         insert an :class:`~models_cisco.IOSCfgLine` object for ``insertstr``
         after those child objects.
         """
+        if insertstr is None:
+            error = f"Cannot insert `insertstr` {type(insertstr)}"
+            logger.critical(error)
+            raise InvalidParameters(error)
+
         retval = list()
         modified = False
         for pobj in self._find_line_OBJ(parentspec, exactmatch=exactmatch):
@@ -2744,7 +2769,7 @@ class CiscoConfParse(object):
             self.ConfigObjs.append(linespec)
         else:
             error = f"Cannot append {type(linespec)}"
-            error.critical(error)
+            logger.critical(error)
             raise InvalidParameters(error)
         self.atomic()
         return self.ConfigObjs[-1]
