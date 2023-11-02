@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 1.9.20
+
+- Released: 2023-11-02
+- Summary:
+    - Fix an error message
+
 ## Version: 1.9.19
 
 - Released: 2023-11-02

@@ -5015,8 +5015,8 @@ class ConfigList(MutableSequence):
 
 
         else:
-            logger.error(error)
-            raise ValueError(error)
+            logger.error(err_txt)
+            raise ValueError(err_txt)
 
         # Find all config lines which need to be modified... store in all_idx
 
