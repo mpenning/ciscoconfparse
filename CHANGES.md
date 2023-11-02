@@ -4,6 +4,13 @@
 - Summary:
     - Insert something here
 
+## Version: 1.9.19
+
+- Released: 2023-11-02
+- Summary:
+    - fix some default values and insert statements
+    - simplify test case
+
 ## Version: 1.9.18
 
 - Released: 2023-11-02
