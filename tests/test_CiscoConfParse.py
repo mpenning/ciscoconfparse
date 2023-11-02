@@ -758,105 +758,107 @@ def testValues_parent_child_parsing_01(parse_c01):
             assert correct_result == test_result
 
 
-def testValues_parent_child_parsing_02(parse_c01):
-    cfg = parse_c01
+def testValues_parent_child_parsing_02():
+
+    config = """!
+interface Serial 1/0
+ encapsulation ppp
+ ip address 1.1.1.1 255.255.255.252
+!
+interface GigabitEthernet4/1
+ switchport
+ switchport access vlan 100
+ switchport voice vlan 150
+ power inline static max 7000
+!
+interface GigabitEthernet4/2
+ switchport
+ switchport access vlan 100
+ switchport voice vlan 150
+ power inline static max 7000
+!
+interface GigabitEthernet4/3
+ shutdown
+!
+end"""
+    cfg = CiscoConfParse(config.splitlines(), syntax="ios", factory=False)
     # Expected child / parent line numbers before the insert
-    parent_intf_before_dict = {
+    parent_before_dict = {
         0: 0,
-        # Line 11 is Serial1/0, child is line 13
+        # Line 1 is Serial1/0, child is line 13
+        1: 1,
+        2: 1,
+        3: 1,
+        4: 4,
+        # Line 5 is GigabitEthernet4/1
+        5: 5,
+        6: 5,
+        7: 5,
+        8: 5,
+        9: 5,
+        # Line 10 is comment
+        10: 10,
+        # Line 11 is GigabitEthernet4/2
         11: 11,
         12: 11,
         13: 11,
         14: 11,
-        # Line 15 is GigabitEthernet4/1
-        15: 15,
-        16: 15,
-        17: 15,
-        18: 15,
-        19: 15,
-        # Line 21 is GigabitEthernet4/2
-        21: 21,
-        22: 21,
-        23: 21,
-        24: 21,
-        25: 21,
-        # Line 27 is GigabitEthernet4/3
-        27: 27,
-        # Line 32 is GigabitEthernet4/4
-        32: 32,
-        # Line 35 is GigabitEthernet4/5
-        35: 35,
-        # Line 39 is GigabitEthernet4/6
-        39: 39,
-        # Line 43 is GigabitEthernet4/7
-        43: 43,
-        # Line 47 is GigabitEthernet4/8
-        47: 47,
+        15: 11,
+        # Line 16 is comment
+        16: 16,
+        # Line 17 is GigabitEthernet4/3
+        17: 17,
+        18: 17,
+        # Line 19 is comment
+        19: 19,
+        # Line 20 is end
+        20: 20,
     }
 
     # Validate line numbers *before* inserting
-    for obj in cfg.find_objects("^interface"):
-        correct_result = parent_intf_before_dict.get(obj.linenum, -1)
-        if correct_result:
-            test_result = obj.parent.linenum
-            ## Does this object parent's line number match?
-            assert correct_result == test_result
+    for obj in cfg.find_objects(""):
+        correct_result = parent_before_dict.get(obj.linenum, -1)
+        test_result = obj.parent.linenum
+        ## Does this object parent's line number match?
+        assert correct_result == test_result
 
 
     # Dictionary of parent linenumber assignments below...
-    parent_linenum_after_dict = {
+    parent_after_dict = {
         # dictionary format...
         # - key (integer) is CHILD line number
         # - value (integer) is PARENT line number
-
-        # Line 11 is Serial1/0
+        0: 0,
+        # Line 1 is Serial1/0, child is line 13
+        1: 1,
+        2: 1,
+        3: 1,
+        4: 4,
+        # Line 5 is GigabitEthernet4/1
+        5: 5,
+        6: 5,
+        7: 5,
+        8: 5,
+        9: 5,
+        10: 5,
+        # Line 11 is comment
         11: 11,
-        12: 11,
-        13: 11,
-        # Line 15 is GigabitEthernet4/1
-        16: 15,
-        17: 15,
-        18: 15,
-        19: 15,
-        # Line 21 is GigabitEthernet4/2
+        # Line 12 is GigabitEthernet4/2
+        12: 12,
+        13: 12,
+        14: 12,
+        15: 12,
+        16: 12,
+        17: 12,
+        # Line 18 is comment
+        18: 18,
+        # Line 19 is GigabitEthernet4/3
+        19: 19,
+        20: 19,
+        # Line 21 is comment
         21: 21,
-        22: 21,
-        23: 21,
-        24: 21,
-        25: 21,
-        26: 21,
-        # Line 27 is GigabitEthernet4/3
-        27: 27,
-        28: 27,
-        29: 27,
-        30: 27,
-        # Line 32 is GigabitEthernet4/4
-        32: 32,
-        33: 32,
-        # Line 34 is a comment
-        34: 34,
-        # Line 35 is GigabitEthernet4/5
-        35: 35,
-        36: 35,
-        37: 35,
-        # Line 38 is a comment
-        38: 38,
-        # Line 39 is GigabitEthernet4/6
-        39: 39,
-        40: 39,
-        41: 39,
-        # Line 42 is a comment
-        42: 42,
-        # Line 43 is GigabitEthernet4/7
-        43: 43,
-        44: 43,
-        45: 43,
-        # Line 46 is a comment
-        46: 46,
-        # Line 47 is GigabitEthernet4/8
-        47: 47,
-        48: 47,
-        49: 47,
+        # Line 22 is end
+        22: 22,
     }
 
     # Insert lines here...
@@ -864,13 +866,13 @@ def testValues_parent_child_parsing_02(parse_c01):
         # Configured with an access vlan...
         if " switchport access vlan 100" in {ii.text for ii in intf_obj.children}:
             intf_obj.insert_after(" spanning-tree portfast")
-    cfg.atomic()
+    cfg.commit()
 
     # Validate line numbers *after* inserting
-    for parent_obj in cfg.find_objects("^interface"):
+    for parent_obj in cfg.find_objects(""):
         for child_obj in parent_obj.all_children:
             # correct_result is the **correct parent line number** after insert...
-            correct_result = parent_linenum_after_dict.get(child_obj.linenum, -1)
+            correct_result = parent_after_dict.get(child_obj.linenum, -1)
 
             test_result = child_obj.parent.linenum
             ## Does this object parent's line number match?
