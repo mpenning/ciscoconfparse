@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 1.9.22
+
+- Released: 2023-11-02
+- Summary:
+    - Improve parsing and parse error-handling
+
 ## Version: 1.9.21
 
 - Released: 2023-11-02
