@@ -35,9 +35,19 @@ DEFAULT_TEXT = "__undefined__"
 class BaseCfgLine(metaclass=ABCMeta):
     # deprecating py2.foo metaclass syntax in version 1.6.8...
     # __metaclass__ = ABCMeta
-    def __init__(self, text=DEFAULT_TEXT, comment_delimiter="!"):
-        """Accept an IOS line number and initialize family relationship
-        attributes"""
+    def __init__(self, all_lines=None, line=DEFAULT_TEXT, comment_delimiter="!"):
+        """Accept an IOS line number and initialize family relationship attributes"""
+
+        if not isinstance(all_lines, list):
+            error = f"BaseCfgLine() expected `type(all_lines)` to be a list, but got {type(all_lines)}"
+            error.critical(error)
+            raise InvalidParameters(error)
+
+        if not isinstance(line, str):
+            error = f"BaseCfgLine() expected BaseCfgLine(line=`{line}`) to be a string, but got {type(line)}"
+            error.critical(error)
+            raise InvalidParameters(error)
+
         self.comment_delimiter = comment_delimiter
         self._uncfgtext_to_be_deprecated = ""
         self._text = DEFAULT_TEXT
@@ -51,7 +61,7 @@ class BaseCfgLine(metaclass=ABCMeta):
         self.blank_line_keep = False  # CiscoConfParse() uses blank_line_keep
 
         # Call set_comment_bool() in the self.text setter method...
-        self.text = text  # Use self.text setter method to set this value
+        self.text = line  # Use self.text setter method to set this value
 
         self._line_id = None
         self.diff_rendered = None

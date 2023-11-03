@@ -47,6 +47,7 @@ from ciscoconfparse.models_cisco import IOSAccessLine, IOSIntfGlobal
 from ciscoconfparse.models_cisco import IOSAaaLoginAuthenticationLine
 from ciscoconfparse.models_cisco import IOSAaaEnableAuthenticationLine
 from ciscoconfparse.models_cisco import IOSAaaCommandsAuthorizationLine
+from ciscoconfparse.models_cisco import IOSAaaConsoleAuthorizationLine
 from ciscoconfparse.models_cisco import IOSAaaCommandsAccountingLine
 from ciscoconfparse.models_cisco import IOSAaaExecAccountingLine
 from ciscoconfparse.models_cisco import IOSAaaGroupServerLine
@@ -57,6 +58,7 @@ from ciscoconfparse.models_nxos import NXOSAccessLine, NXOSIntfGlobal
 from ciscoconfparse.models_nxos import NXOSAaaLoginAuthenticationLine
 from ciscoconfparse.models_nxos import NXOSAaaEnableAuthenticationLine
 from ciscoconfparse.models_nxos import NXOSAaaCommandsAuthorizationLine
+from ciscoconfparse.models_nxos import NXOSAaaConsoleAuthorizationLine
 from ciscoconfparse.models_nxos import NXOSAaaCommandsAccountingLine
 from ciscoconfparse.models_nxos import NXOSAaaExecAccountingLine
 from ciscoconfparse.models_nxos import NXOSCfgLine, NXOSIntfLine
@@ -100,6 +102,7 @@ ALL_IOS_FACTORY_CLASSES = [
     IOSAaaLoginAuthenticationLine,
     IOSAaaEnableAuthenticationLine,
     IOSAaaCommandsAuthorizationLine,
+    IOSAaaConsoleAuthorizationLine,
     IOSAaaCommandsAccountingLine,
     IOSAaaExecAccountingLine,
     IOSAaaGroupServerLine,
@@ -114,6 +117,7 @@ ALL_NXOS_FACTORY_CLASSES = [
     NXOSAaaLoginAuthenticationLine,
     NXOSAaaEnableAuthenticationLine,
     NXOSAaaCommandsAuthorizationLine,
+    NXOSAaaConsoleAuthorizationLine,
     NXOSAaaCommandsAccountingLine,
     NXOSAaaExecAccountingLine,
     NXOSAaaGroupServerLine,
@@ -391,23 +395,47 @@ def _parse_line_braces(line_txt=None, comment_delimiter=None) -> tuple:
 # This method was on ConfigList()
 @logger.catch(reraise=True)
 def _cfgobj_from_text(
-    txt, idx, syntax=None, comment_delimiter=None, factory=None
+    text_list, txt, idx, syntax=None, comment_delimiter=None, factory=None
 ):
     """Build cfgobj from configuration text syntax, and factory inputs."""
+
+    if not isinstance(txt, str):
+        error = f"_cfgobj_from_text(txt=`{txt}`) must be a string"
+        logger.error(error)
+        raise InvalidParameters(error)
+
+    if not isinstance(idx, int):
+        error = f"_cfgobj_from_text(idx=`{idx}`) must be an int"
+        logger.error(error)
+        raise InvalidParameters(error)
+
     # if not factory is **faster** than factory is False
-    if not factory:
+    if syntax in ALL_VALID_SYNTAX and not factory:
         obj = CFGLINE[syntax](
             text=txt,
             comment_delimiter=comment_delimiter,
         )
+        if isinstance(obj, BaseCfgLine):
+            obj.linenum = idx
+        else:
+            error = f"{CFGLINE[syntax]}(txt=`{txt}`) must return an instance of BaseCfgLine(), but it returned {obj}"
+            logger.error(error)
+            raise ValueError(error)
 
     # if factory is **faster** than if factory is True
     elif syntax in ALL_VALID_SYNTAX and factory:
-        obj = ConfigLineFactory(
-            txt,
-            comment_delimiter,
+        obj = config_line_factory(
+            all_lines=text_list,
+            line=txt,
+            comment_delimiter=comment_delimiter,
             syntax=syntax,
         )
+        if isinstance(obj, BaseCfgLine):
+            obj.linenum = idx
+        else:
+            error = f"config_line_factory(line=`{txt}`) must return an instance of BaseCfgLine(), but it returned {obj}"
+            logger.error(error)
+            raise ValueError(error)
 
     else:
         err_txt = (
@@ -416,7 +444,6 @@ def _cfgobj_from_text(
         logger.error(err_txt)
         raise ValueError(err_txt)
 
-    obj.linenum = idx
 
     return obj
 
@@ -702,15 +729,24 @@ class CiscoConfParse(object):
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
     def _handle_ccp_syntax(self, tmp_lines=None, syntax=None):
-        """Deal with syntax issues, such as conditionally discarding junos closing brace-lines."""
+        """Deal with brace-delimited syntax issues, such as conditionally discarding junos closing brace-lines."""
 
-        assert tmp_lines is not None
-        if syntax == "junos":
-            err_msg = "junos parser factory is not yet enabled; use factory=False"
-            assert self.factory is False, err_msg
-            config_lines = convert_junos_to_ios(tmp_lines, comment_delimiter="#")
-        else:
+        if not syntax in ALL_VALID_SYNTAX:
+            error = f"{syntax} parser factory is not yet enabled; use factory=False"
+            logger.critical(error)
+            raise InvalidParameters(error)
+
+        if tmp_lines is None:
+            error = f"_handle_ccp_syntax(tmp_lines={tmp_lines}) must not be None"
+            logger.error(error)
+            raise InvalidParameters(error)
+
+        if syntax in ALL_VALID_SYNTAX:
             config_lines = tmp_lines
+        else:
+            error = f"_handle_ccp_syntax(syntax=`{syntax}`) is not yet supported"
+            logger.error(error)
+            raise InvalidParameters(error)
 
         return config_lines
 
@@ -4909,7 +4945,7 @@ class ConfigList(MutableSequence):
             )
 
         elif self.factory is True:
-            new_obj = ConfigLineFactory(
+            new_obj = config_line_factory(
                 text=new_val,
                 comment_delimiter=self.comment_delimiter,
                 syntax=self.syntax,
@@ -5029,7 +5065,7 @@ class ConfigList(MutableSequence):
             )
 
         elif self.factory is True:
-            new_obj = ConfigLineFactory(
+            new_obj = config_line_factory(
                 text=new_val,
                 comment_delimiter=self.comment_delimiter,
                 syntax=self.syntax,
@@ -5068,7 +5104,7 @@ class ConfigList(MutableSequence):
         # Coerce a string into the appropriate object
         if getattr(val, "capitalize", False):
             if self.factory:
-                obj = ConfigLineFactory(
+                obj = config_line_factory(
                     text=val,
                     comment_delimiter=self.comment_delimiter,
                     syntax=self.syntax,
@@ -5342,6 +5378,7 @@ class ConfigList(MutableSequence):
 
             # Assign a custom *CfgLine() based on factory...
             obj = _cfgobj_from_text(
+                text_list,
                 txt=txt,
                 idx=idx,
                 syntax=syntax,
@@ -5662,40 +5699,52 @@ class CiscoPassword(object):
 
 
 @logger.catch(reraise=True)
-def ConfigLineFactory(text="", comment_delimiter="!", syntax="ios"):
-    """A factory method to assign a custom *CfgLine() object based on the contents of the input text parameter and input syntax parameter."""
+def config_line_factory(all_lines=None, line=None, comment_delimiter="!", syntax="ios"):
+    """A factory method to assign a custom BaseCfgLine() subclass based on `all_lines`, `line`, `comment_delimiter`, and `syntax` parameters."""
     # Complicted & Buggy
     # classes = [j for (i,j) in globals().iteritems() if isinstance(j, TypeType) and issubclass(j, BaseCfgLine)]
+    if not isinstance(all_lines, list):
+        error = f"config_line_factory(all_lines=`{all_lines}`) must be a list, but we got {type(all_lines)}"
+        logger.error(error)
+        raise InvalidParameters(error)
 
-    ## Manual and simple
-    if syntax == "ios":
-        classes = ALL_IOS_FACTORY_CLASSES
-    elif syntax == "nxos":
-        classes = ALL_NXOS_FACTORY_CLASSES
-    elif syntax == "asa":
-        classes = ALL_ASA_FACTORY_CLASSES
-    elif syntax == "junos":
-        classes = ALL_JUNOS_FACTORY_CLASSES
+    if not isinstance(line, str):
+        error = f"config_line_factory(text=`{line}`) must be a string, but we got {type(line)}"
+        logger.error(error)
+        raise InvalidParameters(error)
 
-    else:
-        err_txt = "'{}' is an unknown syntax".format(syntax)
-        logger.error(err_txt)
-        raise ValueError(err_txt)
+    if not isinstance(comment_delimiter, str):
+        error = f"config_line_factory(comment_delimiter=`{comment_delimiter}`) must be a string, but we got {type(comment_delimiter)}"
+        logger.error(error)
+        raise InvalidParameters(error)
+
+    if not isinstance(syntax, str):
+        error = f"config_line_factory(syntax=`{syntax}`) must be a string, but we got {type(syntax)}"
+        logger.error(error)
+        raise InvalidParameters(error)
+
+    if syntax not in ALL_VALID_SYNTAX:
+        error = f"`{syntax}` is an unknown syntax"
+        logger.error(error)
+        raise ValueError(error)
 
     # Walk all the classes and return the first class that
     # matches `.is_object_for(text)`.
     try:
-        for cls in classes:
-            if cls.is_object_for(text):
-                inst = cls(
-                    text=text,
+        for cls in ALL_IOS_FACTORY_CLASSES:
+            print(f"  Consider config_line_factory() CLASS {cls}")
+            if cls.is_object_for(all_lines=all_lines, line=line):
+                basecfgline_subclass = cls(
+                    all_lines=all_lines, line=line,
                     comment_delimiter=comment_delimiter,
                 )  # instance of the proper subclass
-                return inst
+                return basecfgline_subclass
     except ValueError:
-        err_txt = "Could not find an object for '%s'" % text
-        logger.error(err_txt)
-        raise ValueError(err_txt)
+        error = f"ciscoconfparse.py config_line_factory(all_lines={all_lines}, line=`{line}`, comment_delimiter=`{comment_delimiter}`, syntax=`{syntax}`) could not find a subclass of BaseCfgLine()"
+        logger.error(error)
+        raise ValueError(error)
+
+    return IOSCfgLine(all_lines=all_lines, line=line, comment_delimiter=comment_delimiter)
 
 ### TODO: Add unit tests below
 if __name__ == "__main__":

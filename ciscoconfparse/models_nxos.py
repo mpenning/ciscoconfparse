@@ -83,7 +83,7 @@ class NXOSCfgLine(BaseCfgLine):
         super().__init__(*args, **kwargs)
 
     @classmethod
-    def is_object_for(cls, line="", re=re):
+    def is_object_for(cls, all_lines, line, re=re):
         ## Default object, for now
         return True
 
@@ -387,7 +387,7 @@ class BaseNXOSIntfLine(NXOSCfgLine):
             )
 
     @classmethod
-    def is_object_for(cls, line="", re=re):
+    def is_object_for(cls, all_lines, line, re=re):
         return False
 
     ##-------------  Basic interface properties
@@ -1727,7 +1727,7 @@ class NXOSIntfLine(BaseNXOSIntfLine):
         self.feature = "interface"
 
     @classmethod
-    def is_object_for(cls, line="", re=re):
+    def is_object_for(cls, all_lines, line, re=re):
         if re.search(r"^interface\s+(\S.+)", line):
             return True
         return False
@@ -1747,7 +1747,7 @@ class NXOSIntfGlobal(BaseCfgLine):
         return "<{} # {} '{}'>".format(self.classname, self.linenum, self.text)
 
     @classmethod
-    def is_object_for(cls, line="", re=re):
+    def is_object_for(cls, all_lines, line, re=re):
         if re.search(
             r"^(no\s+cdp\s+run)|(logging\s+event\s+link-status\s+global)|(spanning-tree\sportfast\sdefault)|(spanning-tree\sportfast\sbpduguard\sdefault)",
             line,
@@ -1792,7 +1792,7 @@ class NXOSvPCLine(BaseCfgLine):
         return "<{} # {} '{}'>".format(self.classname, self.linenum, self.vpc_domain_id)
 
     @classmethod
-    def is_object_for(cls, line="", re=re):
+    def is_object_for(cls, all_lines, line, re=re):
         if re.search(r"^vpc\s+domain", line):
             return True
         return False
@@ -1941,7 +1941,7 @@ class NXOSHostnameLine(BaseCfgLine):
         return "<{} # {} '{}'>".format(self.classname, self.linenum, self.hostname)
 
     @classmethod
-    def is_object_for(cls, line="", re=re):
+    def is_object_for(cls, all_lines, line, re=re):
         if re.search("^hostname", line):
             return True
         return False
@@ -1971,7 +1971,7 @@ class NXOSAccessLine(BaseCfgLine):
         )
 
     @classmethod
-    def is_object_for(cls, line="", re=re):
+    def is_object_for(cls, all_lines, line, re=re):
         if re.search("^line", line):
             return True
         return False
@@ -2063,7 +2063,7 @@ class BaseNXOSRouteLine(BaseCfgLine):
             return self.nexthop_str + " AD: " + str(self.admin_distance)
 
     @classmethod
-    def is_object_for(cls, line="", re=re):
+    def is_object_for(cls, all_lines, line, re=re):
         return False
 
     @property
@@ -2159,7 +2159,7 @@ class NXOSRouteLine(BaseNXOSRouteLine):
                 raise ValueError("Could not parse '{}'".format(self.text))
 
     @classmethod
-    def is_object_for(cls, line="", re=re):
+    def is_object_for(cls, all_lines, line, re=re):
         if (line[0:8] == "ip route") or (line[0:11] == "ipv6 route "):
             return True
         return False
@@ -2296,7 +2296,7 @@ class NXOSAaaGroupServerLine(BaseCfgLine):
             raise ValueError
 
     @classmethod
-    def is_object_for(cls, line="", re=re):
+    def is_object_for(cls, all_lines, line, re=re):
         if re.search(r"^aaa\sgroup\sserver", line):
             return True
         return False
@@ -2344,7 +2344,7 @@ class NXOSAaaLoginAuthenticationLine(BaseCfgLine):
         self.methods = methods_str.strip().split(r"\s")
 
     @classmethod
-    def is_object_for(cls, line="", re=re):
+    def is_object_for(cls, all_lines, line, re=re):
         if re.search(r"^aaa\sauthentication\slogin", line):
             return True
         return False
@@ -2367,7 +2367,7 @@ class NXOSAaaEnableAuthenticationLine(BaseCfgLine):
         self.methods = methods_str.strip().split(r"\s")
 
     @classmethod
-    def is_object_for(cls, line="", re=re):
+    def is_object_for(cls, all_lines, line, re=re):
         if re.search(r"^aaa\sauthentication\senable", line):
             return True
         return False
@@ -2391,8 +2391,32 @@ class NXOSAaaCommandsAuthorizationLine(BaseCfgLine):
         self.methods = methods_str.strip().split(r"\s")
 
     @classmethod
-    def is_object_for(cls, line="", re=re):
+    def is_object_for(cls, all_lines, line, re=re):
         if re.search(r"^aaa\sauthorization\scommands", line):
+            return True
+        return False
+
+##
+##-------------  NXOS AAA Console Authorization Lines
+##
+
+class NXOSAaaConsoleAuthorizationLine(BaseCfgLine):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.feature = "aaa authorization console"
+
+        regex = r"^aaa\s+authorization\s+console\s+(\d+)\s(\S+)\s+group\s+(\S+)(.+?)$"
+        self.level = self.re_match_typed(regex, group=1, result_type=int, default=0)
+        self.list_name = self.re_match_typed(
+            regex, group=2, result_type=str, default=""
+        )
+        self.group = self.re_match_typed(regex, group=3, result_type=str, default="")
+        methods_str = self.re_match_typed(regex, group=4, result_type=str, default="")
+        self.methods = methods_str.strip().split(r"\s")
+
+    @classmethod
+    def is_object_for(cls, all_lines, line, re=re):
+        if re.search(r"^aaa\s+authorization\s+console", line.strip()):
             return True
         return False
 
@@ -2416,7 +2440,7 @@ class NXOSAaaCommandsAccountingLine(BaseCfgLine):
         self.group = self.re_match_typed(regex, group=4, result_type=str, default="")
 
     @classmethod
-    def is_object_for(cls, line="", re=re):
+    def is_object_for(cls, all_lines, line, re=re):
         if re.search(r"^aaa\saccounting\scommands", line):
             return True
         return False
@@ -2440,7 +2464,7 @@ class NXOSAaaExecAccountingLine(BaseCfgLine):
         self.group = self.re_match_typed(regex, group=3, result_type=str, default="")
 
     @classmethod
-    def is_object_for(cls, line="", re=re):
+    def is_object_for(cls, all_lines, line, re=re):
         if re.search(r"^aaa\saccounting\sexec", line):
             return True
         return False

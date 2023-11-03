@@ -105,7 +105,7 @@ class IOSCfgLine(BaseCfgLine):
         super().__init__(*args, **kwargs)
 
     @classmethod
-    def is_object_for(cls, line="", re=re):
+    def is_object_for(cls, all_lines, line, re=re):
         ## Default object, for now
         return True
 
@@ -430,7 +430,7 @@ class BaseIOSIntfLine(IOSCfgLine):
             )
 
     @classmethod
-    def is_object_for(cls, line="", re=re):
+    def is_object_for(cls, all_lines, line, re=re):
         return False
 
     ##-------------  Basic interface properties
@@ -1740,7 +1740,7 @@ class IOSIntfLine(BaseIOSIntfLine):
         self.feature = "interface"
 
     @classmethod
-    def is_object_for(cls, line="", re=re):
+    def is_object_for(cls, all_lines, line, re=re):
         intf_regex = r"^interface\s+(\S+.+)"
         if re.search(intf_regex, line):
             return True
@@ -1761,7 +1761,7 @@ class IOSIntfGlobal(BaseCfgLine):
         return "<{} # {} '{}'>".format(self.classname, self.linenum, self.text)
 
     @classmethod
-    def is_object_for(cls, line="", re=re):
+    def is_object_for(cls, all_lines, line, re=re):
         if re.search(
             r"^(no\s+cdp\s+run)|(logging\s+event\s+link-status\s+global)|(spanning-tree\sportfast\sdefault)|(spanning-tree\sportfast\sbpduguard\sdefault)",
             line,
@@ -1814,7 +1814,7 @@ class IOSHostnameLine(BaseCfgLine):
         return "<{} # {} '{}'>".format(self.classname, self.linenum, self.hostname)
 
     @classmethod
-    def is_object_for(cls, line="", re=re):
+    def is_object_for(cls, all_lines, line, re=re):
         if re.search(r"^hostname", line):
             return True
         return False
@@ -1844,7 +1844,7 @@ class IOSAccessLine(BaseCfgLine):
         )
 
     @classmethod
-    def is_object_for(cls, line="", re=re):
+    def is_object_for(cls, all_lines, line, re=re):
         if re.search(r"^line", line):
             return True
         return False
@@ -1936,7 +1936,7 @@ class BaseIOSRouteLine(BaseCfgLine):
             return self.nexthop_str + " AD: " + str(self.admin_distance)
 
     @classmethod
-    def is_object_for(cls, line="", re=re):
+    def is_object_for(cls, all_lines, line, re=re):
         return False
 
     @property
@@ -2038,7 +2038,7 @@ class IOSRouteLine(BaseIOSRouteLine):
                 raise ValueError("Could not parse '{}'".format(self.text))
 
     @classmethod
-    def is_object_for(cls, line="", re=re):
+    def is_object_for(cls, all_lines, line, re=re):
         if (line[0:8] == "ip route") or (line[0:11] == "ipv6 route "):
             return True
         return False
@@ -2230,7 +2230,7 @@ class IOSAaaGroupServerLine(BaseCfgLine):
             raise ValueError
 
     @classmethod
-    def is_object_for(cls, line="", re=re):
+    def is_object_for(cls, all_lines, line, re=re):
         if re.search(r"^aaa\sgroup\sserver", line):
             return True
         return False
@@ -2282,7 +2282,7 @@ class IOSAaaLoginAuthenticationLine(BaseCfgLine):
         self.methods = methods_str.strip().split(r"\s")
 
     @classmethod
-    def is_object_for(cls, line="", re=re):
+    def is_object_for(cls, all_lines, line, re=re):
         if re.search(r"^aaa\sauthentication\slogin", line):
             return True
         return False
@@ -2306,7 +2306,7 @@ class IOSAaaEnableAuthenticationLine(BaseCfgLine):
         self.methods = methods_str.strip().split(r"\s")
 
     @classmethod
-    def is_object_for(cls, line="", re=re):
+    def is_object_for(cls, all_lines, line, re=re):
         if re.search(r"^aaa\sauthentication\senable", line):
             return True
         return False
@@ -2330,7 +2330,7 @@ class IOSAaaCommandsAuthorizationLine(BaseCfgLine):
         self.methods = methods_str.strip().split(r"\s")
 
     @classmethod
-    def is_object_for(cls, line="", re=re):
+    def is_object_for(cls, all_lines, line, re=re):
         if re.search(r"^aaa\sauthorization\scommands", line):
             return True
         return False
@@ -2355,7 +2355,7 @@ class IOSAaaCommandsAccountingLine(BaseCfgLine):
         self.group = self.re_match_typed(regex, group=4, result_type=str, default="")
 
     @classmethod
-    def is_object_for(cls, line="", re=re):
+    def is_object_for(cls, all_lines, line, re=re):
         if re.search(r"^aaa\saccounting\scommands", line):
             return True
         return False
@@ -2380,7 +2380,7 @@ class IOSAaaExecAccountingLine(BaseCfgLine):
         self.group = self.re_match_typed(regex, group=3, result_type=str, default="")
 
     @classmethod
-    def is_object_for(cls, line="", re=re):
+    def is_object_for(cls, all_lines, line, re=re):
         if re.search(r"^aaa\saccounting\sexec", line):
             return True
         return False

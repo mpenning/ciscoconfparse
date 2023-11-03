@@ -517,15 +517,96 @@ class IOSCfgLine(BaseCfgLine):
 
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
-        r"""Accept an IOS line number and initialize family relationship
-        attributes"""
+        r"""Accept an IOS line number and initialize family relationship attributes"""
         super(IOSCfgLine, self).__init__(*args, **kwargs)
 
     @classmethod
     @logger.catch(reraise=True)
-    def is_object_for(cls, line="", re=re):
+    def is_object_for(cls, all_lines, line, re=re):
+        """Return True if this object should be used for a given configuration line; otherwise return False"""
         ## Default object, for now
-        return True
+        if cls.is_object_for_hostname(line=line):
+            return False
+        elif cls.is_object_for_interface(line=line):
+            return False
+        elif cls.is_object_for_aaa_authentication(line=line):
+            return False
+        elif cls.is_object_for_aaa_authorization(line=line):
+            return False
+        elif cls.is_object_for_aaa_accounting(line=line):
+            return False
+        elif cls.is_object_for_ip_route(line=line):
+            return False
+        elif cls.is_object_for_ipv6_route(line=line):
+            return False
+        else:
+            return True
+
+    @classmethod
+    @logger.catch(reraise=True)
+    def is_object_for_hostname(cls, line):
+        if isinstance(line, str):
+            line_parts = line.strip().split()
+            if len(line_parts) > 0 and line_parts[0]=="hostname":
+                return True
+        return False
+
+    @classmethod
+    @logger.catch(reraise=True)
+    def is_object_for_interface(cls, line):
+        if isinstance(line, str):
+            line_parts = line.strip().split()
+            if len(line_parts) > 0 and line_parts[0]=="interface":
+                return True
+        return False
+
+    @classmethod
+    @logger.catch(reraise=True)
+    def is_object_for_aaa_authentication(cls, line):
+        """Return True if this is an object for aaa authentication.  Be sure to reject 'aaa new-model'"""
+        if isinstance(line, str):
+            line_parts = line.strip().split()
+            if len(line_parts) > 0 and line_parts[0:2]==["aaa", "authentication"]:
+                return True
+        return False
+
+    @classmethod
+    @logger.catch(reraise=True)
+    def is_object_for_aaa_authorization(cls, line):
+        """Return True if this is an object for aaa authorization.  Be sure to reject 'aaa new-model'"""
+        if isinstance(line, str):
+            line_parts = line.strip().split()
+            if len(line_parts) > 0 and line_parts[0:2]==["aaa", "authorization"]:
+                return True
+        return False
+
+    @classmethod
+    @logger.catch(reraise=True)
+    def is_object_for_aaa_accounting(cls, line):
+        """Return True if this is an object for aaa accounting.  Be sure to reject 'aaa new-model'"""
+        if isinstance(line, str):
+            line_parts = line.strip().split()
+            if len(line_parts) > 0 and line_parts[0:2]==["aaa", "accounting"]:
+                return True
+        return False
+
+    @classmethod
+    @logger.catch(reraise=True)
+    def is_object_for_ip_route(cls, line):
+        if isinstance(line, str):
+            line_parts = line.strip().split()
+            if len(line_parts) > 0 and line_parts[0:2]==["ip", "route"]:
+                return True
+        return False
+
+    @classmethod
+    @logger.catch(reraise=True)
+    def is_object_for_ipv6_route(cls, line):
+        if isinstance(line, str):
+            line_parts = line.strip().split()
+            if len(line_parts) > 0 and line_parts[0:2]==["ipv6", "route"]:
+                return True
+        return False
 
     @property
     @logger.catch(reraise=True)
@@ -872,7 +953,7 @@ class BaseIOSIntfLine(IOSCfgLine):
     # This method is on BaseIOSIntfLine()
     @classmethod
     @logger.catch(reraise=True)
-    def is_object_for(cls, line="", re=re):
+    def is_object_for(cls, all_lines, line, re=re):
         return False
 
     ##-------------  Basic interface properties
@@ -2526,20 +2607,15 @@ class IOSIntfLine(BaseIOSIntfLine):
     # This method is on IOSIntfLine()
     @classmethod
     @logger.catch(reraise=True)
-    def is_object_for(cls, line="", re=re):
-        intf_regex = re.search(r"^interface\s+(?P<interface>\S+.+)", line.strip())
-        if isinstance(intf_regex, re.Match):
-            interface = intf_regex.groupdict()["interface"]
-            return True
-        else:
-            return False
+    def is_object_for(cls, all_lines, line, re=re):
+        return cls.is_object_for_interface(line)
 
 ##
 ##-------------  IOS Interface Globals
 ##
 
 
-class IOSIntfGlobal(BaseCfgLine):
+class IOSIntfGlobal(IOSCfgLine):
     # This method is on IOSIntGlobal()
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
@@ -2553,7 +2629,7 @@ class IOSIntfGlobal(BaseCfgLine):
 
     @classmethod
     @logger.catch(reraise=True)
-    def is_object_for(cls, line="", re=re):
+    def is_object_for(cls, all_lines, line, re=re):
         if re.search(
             r"^(no\s+cdp\s+run)|(logging\s+event\s+link-status\s+global)|(spanning-tree\sportfast\sdefault)|(spanning-tree\sportfast\sbpduguard\sdefault)",
             line,
@@ -2602,7 +2678,7 @@ class IOSIntfGlobal(BaseCfgLine):
 ##
 
 
-class IOSHostnameLine(BaseCfgLine):
+class IOSHostnameLine(IOSCfgLine):
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
         super(IOSHostnameLine, self).__init__(*args, **kwargs)
@@ -2614,7 +2690,7 @@ class IOSHostnameLine(BaseCfgLine):
 
     @classmethod
     @logger.catch(reraise=True)
-    def is_object_for(cls, line="", re=re):
+    def is_object_for(cls, all_lines, line, re=re):
         if re.search(r"^hostname", line):
             return True
         return False
@@ -2631,7 +2707,7 @@ class IOSHostnameLine(BaseCfgLine):
 ##
 
 
-class IOSAccessLine(BaseCfgLine):
+class IOSAccessLine(IOSCfgLine):
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
         super(IOSAccessLine, self).__init__(*args, **kwargs)
@@ -2648,7 +2724,7 @@ class IOSAccessLine(BaseCfgLine):
 
     @classmethod
     @logger.catch(reraise=True)
-    def is_object_for(cls, line="", re=re):
+    def is_object_for(cls, all_lines, line, re=re):
         if re.search(r"^line", line):
             return True
         return False
@@ -2722,7 +2798,7 @@ class IOSAccessLine(BaseCfgLine):
 ##
 
 
-class BaseIOSRouteLine(BaseCfgLine):
+class BaseIOSRouteLine(IOSCfgLine):
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
         super(BaseIOSRouteLine, self).__init__(*args, **kwargs)
@@ -2753,7 +2829,7 @@ class BaseIOSRouteLine(BaseCfgLine):
 
     @classmethod
     @logger.catch(reraise=True)
-    def is_object_for(cls, line="", re=re):
+    def is_object_for(cls, all_lines, line, re=re):
         return False
 
     @property
@@ -2841,7 +2917,7 @@ _RE_IPV6_ROUTE = re.compile(
 )
 
 
-class IOSRouteLine(BaseIOSRouteLine):
+class IOSRouteLine(IOSCfgLine):
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
         super(IOSRouteLine, self).__init__(*args, **kwargs)
@@ -2864,8 +2940,8 @@ class IOSRouteLine(BaseIOSRouteLine):
 
     @classmethod
     @logger.catch(reraise=True)
-    def is_object_for(cls, line="", re=re):
-        if (line[0:8] == "ip route") or (line[0:11] == "ipv6 route "):
+    def is_object_for(cls, all_lines, line, re=re):
+        if (line[0:9] == "ip route ") or (line[0:11] == "ipv6 route "):
             return True
         return False
 
@@ -3056,7 +3132,7 @@ class IOSRouteLine(BaseIOSRouteLine):
 ##
 ##-------------  IOS TACACS+ Group
 ##
-class IOSAaaGroupServerLine(BaseCfgLine):
+class IOSAaaGroupServerLine(IOSCfgLine):
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
         super(IOSAaaGroupServerLine, self).__init__(*args, **kwargs)
@@ -3073,7 +3149,7 @@ class IOSAaaGroupServerLine(BaseCfgLine):
 
     @classmethod
     @logger.catch(reraise=True)
-    def is_object_for(cls, line="", re=re):
+    def is_object_for(cls, all_lines, line, re=re):
         if re.search(r"^aaa\sgroup\sserver", line):
             return True
         return False
@@ -3114,7 +3190,7 @@ class IOSAaaGroupServerLine(BaseCfgLine):
 ##-------------  IOS AAA Login Authentication Lines
 ##
 
-class IOSAaaLoginAuthenticationLine(BaseCfgLine):
+class IOSAaaLoginAuthenticationLine(IOSCfgLine):
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
         super(IOSAaaLoginAuthenticationLine, self).__init__(*args, **kwargs)
@@ -3130,8 +3206,8 @@ class IOSAaaLoginAuthenticationLine(BaseCfgLine):
 
     @classmethod
     @logger.catch(reraise=True)
-    def is_object_for(cls, line="", re=re):
-        if re.search(r"^aaa\sauthentication\slogin", line):
+    def is_object_for(cls, all_lines, line, re=re):
+        if re.search(r"^aaa\s+authentication\s+login", line.strip()):
             return True
         return False
 
@@ -3139,13 +3215,13 @@ class IOSAaaLoginAuthenticationLine(BaseCfgLine):
 ##-------------  IOS AAA Enable Authentication Lines
 ##
 
-class IOSAaaEnableAuthenticationLine(BaseCfgLine):
+class IOSAaaEnableAuthenticationLine(IOSCfgLine):
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
         super(IOSAaaEnableAuthenticationLine, self).__init__(*args, **kwargs)
         self.feature = "aaa authentication enable"
 
-        regex = r"^aaa\sauthentication\senable\s(\S+)\sgroup\s(\S+)(.+?)$"
+        regex = r"^aaa\s+authentication\s+enable\s+(\S+)\s+group\s+(\S+)(.+?)$"
         self.list_name = self.re_match_typed(
             regex, group=1, result_type=str, default=""
         )
@@ -3155,8 +3231,8 @@ class IOSAaaEnableAuthenticationLine(BaseCfgLine):
 
     @classmethod
     @logger.catch(reraise=True)
-    def is_object_for(cls, line="", re=re):
-        if re.search(r"^aaa\sauthentication\senable", line):
+    def is_object_for(cls, all_lines, line, re=re):
+        if re.search(r"^aaa\s+authentication\s+enable", line.strip()):
             return True
         return False
 
@@ -3164,13 +3240,13 @@ class IOSAaaEnableAuthenticationLine(BaseCfgLine):
 ##-------------  IOS AAA Commands Authorization Lines
 ##
 
-class IOSAaaCommandsAuthorizationLine(BaseCfgLine):
+class IOSAaaCommandsAuthorizationLine(IOSCfgLine):
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
         super(IOSAaaCommandsAuthorizationLine, self).__init__(*args, **kwargs)
         self.feature = "aaa authorization commands"
 
-        regex = r"^aaa\sauthorization\scommands\s(\d+)\s(\S+)\sgroup\s(\S+)(.+?)$"
+        regex = r"^aaa\s+authorization\s+commands\s+(\d+)\s+(\S+)\s+group\s+(\S+)(.+?)$"
         self.level = self.re_match_typed(regex, group=1, result_type=int, default=0)
         self.list_name = self.re_match_typed(
             regex, group=2, result_type=str, default=""
@@ -3181,8 +3257,36 @@ class IOSAaaCommandsAuthorizationLine(BaseCfgLine):
 
     @classmethod
     @logger.catch(reraise=True)
-    def is_object_for(cls, line="", re=re):
-        if re.search(r"^aaa\sauthorization\scommands", line):
+    def is_object_for(cls, all_lines, line, re=re):
+        print(f"DBG IOSAaaCommandsAuthorizationLine {line}")
+        if re.search(r"^aaa\s+authorization\s+commands", line.strip()):
+            return True
+        return False
+
+##
+##-------------  IOS AAA Console Authorization Lines
+##
+
+class IOSAaaConsoleAuthorizationLine(IOSCfgLine):
+    @logger.catch(reraise=True)
+    def __init__(self, *args, **kwargs):
+        super(IOSAaaConsoleAuthorizationLine, self).__init__(*args, **kwargs)
+        self.feature = "aaa authorization console"
+
+        regex = r"^aaa\s+authorization\s+console\s+(\d+)\s+(\S+)\s+group\s+(\S+)(.+?)$"
+        self.level = self.re_match_typed(regex, group=1, result_type=int, default=0)
+        self.list_name = self.re_match_typed(
+            regex, group=2, result_type=str, default=""
+        )
+        self.group = self.re_match_typed(regex, group=3, result_type=str, default="")
+        methods_str = self.re_match_typed(regex, group=4, result_type=str, default="")
+        self.methods = methods_str.strip().split(r"\s")
+
+    @classmethod
+    @logger.catch(reraise=True)
+    def is_object_for(cls, all_lines, line, re=re):
+        print(f"DBG IOSAaaConsoleAuthorizationLine {line}")
+        if re.search(r"^aaa\s+authorization\s+console", line.strip()):
             return True
         return False
 
@@ -3190,13 +3294,13 @@ class IOSAaaCommandsAuthorizationLine(BaseCfgLine):
 ##-------------  IOS AAA Commands Accounting Lines
 ##
 
-class IOSAaaCommandsAccountingLine(BaseCfgLine):
+class IOSAaaCommandsAccountingLine(IOSCfgLine):
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
         super(IOSAaaCommandsAccountingLine, self).__init__(*args, **kwargs)
         self.feature = "aaa accounting commands"
 
-        regex = r"^aaa\saccounting\scommands\s(\d+)\s(\S+)\s(none|stop\-only|start\-stop)\sgroup\s(\S+)$"
+        regex = r"^aaa\s+accounting\s+commands\s+(\d+)\s+(\S+)\s+(none|stop\-only|start\-stop)\s+group\s+(\S+)$"
         self.level = self.re_match_typed(regex, group=1, result_type=int, default=0)
         self.list_name = self.re_match_typed(
             regex, group=2, result_type=str, default=""
@@ -3208,8 +3312,8 @@ class IOSAaaCommandsAccountingLine(BaseCfgLine):
 
     @classmethod
     @logger.catch(reraise=True)
-    def is_object_for(cls, line="", re=re):
-        if re.search(r"^aaa\saccounting\scommands", line):
+    def is_object_for(cls, all_lines, line, re=re):
+        if re.search(r"^aaa\s+accounting\s+commands", line.strip()):
             return True
         return False
 
@@ -3217,13 +3321,13 @@ class IOSAaaCommandsAccountingLine(BaseCfgLine):
 ##-------------  IOS AAA Exec Accounting Lines
 ##
 
-class IOSAaaExecAccountingLine(BaseCfgLine):
+class IOSAaaExecAccountingLine(IOSCfgLine):
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
         super(IOSAaaExecAccountingLine, self).__init__(*args, **kwargs)
         self.feature = "aaa accounting exec"
 
-        regex = r"^aaa\saccounting\sexec\s(\S+)\s(none|stop\-only|start\-stop)\sgroup\s(\S+)$"
+        regex = r"^aaa\s+accounting\s+exec\s+(\S+)\s+(none|stop\-only|start\-stop)\s+group\s(\S+)$"
         self.list_name = self.re_match_typed(
             regex, group=1, result_type=str, default=""
         )
@@ -3234,7 +3338,7 @@ class IOSAaaExecAccountingLine(BaseCfgLine):
 
     @classmethod
     @logger.catch(reraise=True)
-    def is_object_for(cls, line="", re=re):
-        if re.search(r"^aaa\saccounting\sexec", line):
+    def is_object_for(cls, all_lines, line, re=re):
+        if re.search(r"^aaa\s+accounting\s+exec", line.strip()):
             return True
         return False

@@ -112,7 +112,7 @@ class BaseCfgModel(BaseCfgLine):
 
     @classmethod
     @logger.catch(reraise=True)
-    def is_object_for(cls, line="", re=re):
+    def is_object_for(cls, all_lines, line, re=re):
         ## Default object, for now
         raise NotImplementedError()
 
@@ -2144,7 +2144,7 @@ if False:
         # This method is on IOSIntfLine()
         @classmethod
         @logger.catch(reraise=True)
-        def is_object_for(cls, line="", re=re):
+        def is_object_for(cls, all_lines, line, re=re):
             intf_regex = re.search(r"^interface\s+(?P<interface>\S+.+)", line.strip())
             if isinstance(intf_regex, re.Match):
                 interface = intf_regex.groupdict()["interface"]
@@ -2469,7 +2469,7 @@ class IOSAaaGroupServerLine(BaseCfgLine):
 
     @classmethod
     @logger.catch(reraise=True)
-    def is_object_for(cls, line="", re=re):
+    def is_object_for(cls, all_lines, line, re=re):
         if re.search(r"^aaa\sgroup\sserver", line):
             return True
         return False
@@ -2526,7 +2526,7 @@ class IOSAaaLoginAuthenticationLine(BaseCfgLine):
 
     @classmethod
     @logger.catch(reraise=True)
-    def is_object_for(cls, line="", re=re):
+    def is_object_for(cls, all_lines, line, re=re):
         if re.search(r"^aaa\sauthentication\slogin", line):
             return True
         return False
@@ -2551,7 +2551,7 @@ class IOSAaaEnableAuthenticationLine(BaseCfgLine):
 
     @classmethod
     @logger.catch(reraise=True)
-    def is_object_for(cls, line="", re=re):
+    def is_object_for(cls, all_lines, line, re=re):
         if re.search(r"^aaa\sauthentication\senable", line):
             return True
         return False
@@ -2577,7 +2577,7 @@ class IOSAaaCommandsAuthorizationLine(BaseCfgLine):
 
     @classmethod
     @logger.catch(reraise=True)
-    def is_object_for(cls, line="", re=re):
+    def is_object_for(cls, all_lines, line, re=re):
         if re.search(r"^aaa\sauthorization\scommands", line):
             return True
         return False
@@ -2604,7 +2604,7 @@ class IOSAaaCommandsAccountingLine(BaseCfgLine):
 
     @classmethod
     @logger.catch(reraise=True)
-    def is_object_for(cls, line="", re=re):
+    def is_object_for(cls, all_lines, line, re=re):
         if re.search(r"^aaa\saccounting\scommands", line):
             return True
         return False
@@ -2630,7 +2630,7 @@ class IOSAaaExecAccountingLine(BaseCfgLine):
 
     @classmethod
     @logger.catch(reraise=True)
-    def is_object_for(cls, line="", re=re):
+    def is_object_for(cls, all_lines, line, re=re):
         if re.search(r"^aaa\saccounting\sexec", line):
             return True
         return False

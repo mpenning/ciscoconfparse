@@ -91,15 +91,14 @@ class JunosCfgLine(BaseCfgLine):
         super().__init__(*args, **kwargs)
 
     @classmethod
-    def is_object_for(cls, line="", re=re):
+    def is_object_for(cls, all_lines, line, re=re):
         ## Default object, for now
         return True
 
     @property
     def is_intf(self):
         # Includes subinterfaces
-        r"""Returns a boolean (True or False) to answer whether this
-        :class:`~models_junos.JunosCfgLine` is an interface; subinterfaces
+        r"""Returns a boolean (True or False) to answer whether this :class:`~models_junos.JunosCfgLine` is an interface; subinterfaces
         also return True.
 
         Returns
@@ -110,34 +109,42 @@ class JunosCfgLine(BaseCfgLine):
         --------
 
         .. code-block:: python
-           :emphasize-lines: 17,20
 
            >>> config = [
-           ...     '!',
-           ...     'interface Serial1/0',
-           ...     ' ip address 1.1.1.1 255.255.255.252',
-           ...     '!',
-           ...     'interface ATM2/0',
-           ...     ' no ip address',
-           ...     '!',
-           ...     'interface ATM2/0.100 point-to-point',
-           ...     ' ip address 1.1.1.5 255.255.255.252',
-           ...     ' pvc 0/100',
-           ...     '  vbr-nrt 704 704',
-           ...     '!',
+           ...     "interfaces {",
+           ...     "    ge-0/0/0 {",
+           ...     "        unit 0 {",
+           ...     "        }",
+           ...     "    }",
+           ...     "}",
            ...     ]
            >>> parse = CiscoConfParse(config)
-           >>> obj = parse.find_objects('^interface\sSerial')[0]
+           >>> obj = parse.find_objects('^\s+ge-0.0.0')[0]
            >>> obj.is_intf
            True
-           >>> obj = parse.find_objects('^interface\sATM')[0]
+           >>> obj = parse.find_objects('^\s+unit\s0')[0]
            >>> obj.is_intf
            True
            >>>
         """
-        intf_regex = r"^interface\s+(\S+.+)"
-        if self.re_match(intf_regex):
-            return True
+        # Check whether the oldest parent is "interfaces {"...
+        if len(self.all_parents) >= 1:
+            in_intf_block = bool(self.all_parents[0].text[0:10].strip()=="interfaces")
+        else:
+            in_intf_block = False
+
+        if in_intf_block:
+            # Walk all children of interfaces {...}
+            for childobj in self.parent.children:
+                # We are in the children of the interface or unit number...
+                if len(self.all_parents) > 2:
+                    continue
+                elif childobj.text == self.text:
+                    return True
+                else:
+                    for grandcobj in childobj.children:
+                        if grandcobj.text.strip()[0:5]=="unit":
+                            return True
         return False
 
     @property
@@ -346,7 +353,7 @@ class BaseJunosIntfLine(JunosCfgLine):
             )
 
     @classmethod
-    def is_object_for(cls, line="", re=re):
+    def is_object_for(cls, all_lines, line, re=re):
         return False
 
     ##-------------  Basic interface properties
@@ -558,7 +565,7 @@ class JunosIntfGlobal(BaseCfgLine):
         return "<{} # {} '{}'>".format(self.classname, self.linenum, self.text)
 
     @classmethod
-    def is_object_for(cls, line="", re=re):
+    def is_object_for(cls, all_lines, line, re=re):
         if re.search(
             r"^(no\s+cdp\s+run)|(logging\s+event\s+link-status\s+global)|(spanning-tree\sportfast\sdefault)|(spanning-tree\sportfast\sbpduguard\sdefault)",
             line,
@@ -611,7 +618,7 @@ class JunosHostnameLine(BaseCfgLine):
         return "<{} # {} '{}'>".format(self.classname, self.linenum, self.hostname)
 
     @classmethod
-    def is_object_for(cls, line="", re=re):
+    def is_object_for(cls, all_lines, line, re=re):
         if re.search("^hostname", line):
             return True
         return False
@@ -654,7 +661,7 @@ class BaseJunosRouteLine(BaseCfgLine):
             return self.nexthop_str + " AD: " + str(self.admin_distance)
 
     @classmethod
-    def is_object_for(cls, line="", re=re):
+    def is_object_for(cls, all_lines, line, re=re):
         return False
 
     @property
@@ -701,7 +708,7 @@ class JunosRouteLine(BaseJunosRouteLine):
             self.feature = "ip route"
 
     @classmethod
-    def is_object_for(cls, line="", re=re):
+    def is_object_for(cls, all_lines, line, re=re):
         if re.search(r"^(ip|ipv6)\s+route\s+\S", line):
             return True
         return False
