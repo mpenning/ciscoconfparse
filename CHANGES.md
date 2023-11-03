@@ -4,6 +4,13 @@
 - Summary:
     - Insert something here
 
+## Version: 1.9.23
+
+- Released: 2023-11-02
+- Summary:
+    - Rename `ConfigLineFactory()` to `config_line_factory()`
+    - Add / rename function parameters
+
 ## Version: 1.9.22
 
 - Released: 2023-11-02
