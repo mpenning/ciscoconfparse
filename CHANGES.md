@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 1.9.25
+
+- Released: 2023-11-04
+- Summary:
+    - Add attributes to `ConfigList()`
+
 ## Version: 1.9.22
 
 - Released: 2023-11-02
