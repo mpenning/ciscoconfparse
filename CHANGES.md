@@ -4,6 +4,14 @@
 - Summary:
     - Insert something here
 
+## Version: 1.9.27
+
+- Released: 2023-11-04
+- Summary:
+    - Add error traps and enhancements to `ccp_abc.py`
+    - Modify setter methods
+    - Rename methods and functions
+
 ## Version: 1.9.26
 
 - Released: 2023-11-04
