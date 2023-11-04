@@ -1728,7 +1728,7 @@ class NXOSIntfLine(BaseNXOSIntfLine):
 
     @classmethod
     def is_object_for(cls, all_lines, line, re=re):
-        if re.search(r"^interface\s+(\S.+)", line):
+        if re.search(r"^interface\s+([a-zA-Z0-9]\S*)", line):
             return True
         return False
 
