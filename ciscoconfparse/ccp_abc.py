@@ -155,7 +155,7 @@ class BaseCfgLine(metaclass=ABCMeta):
     # On BaseCfgLine()
     @is_intf.setter
     @logger.catch(reraise=True)
-    def is_intf(self):
+    def is_intf(self, value):
         raise NotImplementedError()
 
     # On BaseCfgLine()
@@ -168,7 +168,7 @@ class BaseCfgLine(metaclass=ABCMeta):
     # On BaseCfgLine()
     @is_subintf.setter
     @logger.catch(reraise=True)
-    def is_subintf(self):
+    def is_subintf(self, value):
         raise NotImplementedError()
 
     # On BaseCfgLine()
