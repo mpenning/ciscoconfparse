@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 1.9.26
+
+- Released: 2023-11-04
+- Summary:
+    - Modify setter methods
+
 ## Version: 1.9.25
 
 - Released: 2023-11-04
