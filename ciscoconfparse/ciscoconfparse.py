@@ -4486,6 +4486,15 @@ class ConfigList(MutableSequence):
     """
     A custom list to hold :class:`~ccp_abc.BaseCfgLine` objects.  Most people will never need to use this class directly.
     """
+    CiscoConfParse = None
+    ccp_ref = None
+    comment_delimiter = None
+    factory = None
+    ignore_blank_lines = None
+    syntax = None
+    dna = "ConfigList"
+    debug = None
+    _list = []
 
     @logger.catch(reraise=True)
     def __init__(
