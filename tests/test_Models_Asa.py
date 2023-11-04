@@ -82,7 +82,7 @@ def testVal_object_group_network_01():
         " network-object 1.1.2.0 255.255.255.0",
         "!",
     ]
-    cfg_factory = CiscoConfParse(conf, factory=True, syntax="asa")
+    cfg_factory = CiscoConfParse(conf, syntax="asa", factory=True)
     obj = cfg_factory.find_objects(r"object-group\snetwork")[0]
 
     result_correct_01 = [

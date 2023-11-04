@@ -43,6 +43,7 @@ import pytest
 
 from ciscoconfparse.ciscoconfparse import CiscoConfParse, IOSCfgLine, IOSIntfLine
 from ciscoconfparse.ciscoconfparse import IOSCfgLine, IOSIntfLine
+from ciscoconfparse.ciscoconfparse import parse_line_braces
 from ciscoconfparse.ciscoconfparse import CiscoPassword
 from ciscoconfparse.ciscoconfparse import HDiff
 from ciscoconfparse.models_junos import JunosCfgLine
@@ -91,6 +92,189 @@ def testParse_valid_filepath_06():
     parse = CiscoConfParse(config=f"{THIS_TEST_PATH}/fixtures/configs/sample_01.junos", comment="#", syntax="junos")
     assert len(parse.ioscfg) == 79
 
+def testParse_parse_line_braces_01():
+    uut = parse_line_braces("ltm pool FOO {", comment_delimiter="#")
+    assert uut == (0, 1, "ltm pool FOO ")
+
+def testParse_parse_line_braces_02():
+    uut = parse_line_braces("}", comment_delimiter="#")
+    assert uut == (-1, -1, "")
+
+def testParse_parse_syntax_f5_as_junos_nofactory_ioscfg_01():
+    """Parse fixtures/configs/sample_01.f5 as `syntax='junos'`, `factory=False` and test rendering as Cisco-IOS"""
+    result_correct_ioscfg = [
+        "ltm virtual ACME",
+        "    destination 192.168.1.191:http",
+        "    ip-protocol tcp",
+        "    mask 255.255.255.255",
+        "    pool pool1",
+        "    profiles",
+        "        http",
+        "        tcp",
+        "    rules",
+        "        MOBILE",
+        "    source 0.0.0.0/0",
+        "    source-address-translation",
+        "        type automap",
+        "    translate-address enabled",
+        "    translate-port enabled",
+        "    vs-index 17",
+    ]
+    parse = CiscoConfParse(
+        "fixtures/configs/sample_01.f5",
+        syntax="junos",
+        comment="#",
+        factory=False,
+    )
+    uut = parse.ioscfg
+    assert uut == result_correct_ioscfg
+
+def testParse_parse_syntax_junos_as_junos_nofactory_ioscfg_01():
+    config = """## Last commit: 2015-06-28 13:00:59 CST by mpenning
+system {
+    host-name TEST01_EX;
+    domain-name pennington.net;
+    domain-search [ pennington.net lab.pennington.net ];
+    location {
+        country-code 001;
+        building HQ_005;
+        floor 1;
+    }
+    root-authentication {
+        encrypted-password "$1$y7ArHxKU$zUbdeLfBirgkCsKiOJ5Qa0"; ## SECRET-DATA
+    }
+    name-server {
+        172.16.3.222;
+    }
+    login {
+        announcement "Test Lab Switch";
+        message "Unauthorized access is prohibited";
+        user mpenning {
+            full-name "Mike Pennington";
+            uid 1000;
+            class super-user;
+            authentication {
+                encrypted-password "$1$y7ArHxKU$zUbdeLfBirgkCsKiOJ5Qa0"; ## SECRET-DATA
+            }
+        }
+    }
+    services {
+        ssh {
+            root-login allow;
+        }
+    }
+    syslog {
+        user * {
+            any emergency;
+        }
+        file messages {
+            any notice;
+            authorization info;
+        }
+        file interactive-commands {
+            interactive-commands any;
+        }
+    }
+    ntp {
+        server 172.16.8.3;
+    }
+}
+vlans {
+    Management {
+        vlan-id 1;
+        interface {
+            ge-0/0/0.0;
+        }
+    }
+    VLAN_FOO {
+        vlan-id 5;
+    }
+}
+interfaces {
+    ge-0/0/0 {
+        unit 0 {
+            family ethernet-switching {
+                port-mode access;
+                vlan {
+                    members VLAN_FOO;
+                }
+            }
+        }
+    }
+}
+routing-options {
+    static {
+        route 0.0.0.0/0 next-hop 172.16.12.1;
+        route 192.168.36.0/25 next-hop 172.16.12.1;
+    }
+}
+"""
+
+    result_correct_ioscfg = [
+        '## Last commit: 2015-06-28 13:00:59 CST by mpenning',
+        'system',
+        '    host-name TEST01_EX',
+        '    domain-name pennington.net',
+        '    domain-search [ pennington.net lab.pennington.net ]',
+        '    location',
+        '        country-code 001',
+        '        building HQ_005',
+        '        floor 1',
+        '    root-authentication',
+        '        encrypted-password "$1$y7ArHxKU$zUbdeLfBirgkCsKiOJ5Qa0"; ## '
+        'SECRET-DATA',
+        '    name-server',
+        '        172.16.3.222',
+        '    login',
+        '        announcement "Test Lab Switch"',
+        '        message "Unauthorized access is prohibited"',
+        '        user mpenning',
+        '            full-name "Mike Pennington"',
+        '            uid 1000',
+        '            class super-user',
+        '            authentication',
+        '                encrypted-password "$1$y7ArHxKU$zUbdeLfBirgkCsKiOJ5Qa0"; ## '
+        'SECRET-DATA',
+        '    services',
+        '        ssh',
+        '            root-login allow',
+        '    syslog',
+        '        user *',
+        '            any emergency',
+        '        file messages',
+        '            any notice',
+        '            authorization info',
+        '        file interactive-commands',
+        '            interactive-commands any',
+        '    ntp',
+        '        server 172.16.8.3',
+        'vlans',
+        '    Management',
+        '        vlan-id 1',
+        '        interface',
+        '            ge-0/0/0.0',
+        '    VLAN_FOO',
+        '        vlan-id 5',
+        'interfaces',
+        '    ge-0/0/0',
+        '        unit 0',
+        '            family ethernet-switching',
+        '                port-mode access',
+        '                vlan',
+        '                    members VLAN_FOO',
+        'routing-options',
+        '    static',
+        '        route 0.0.0.0/0 next-hop 172.16.12.1',
+        '        route 192.168.36.0/25 next-hop 172.16.12.1',
+    ]
+    parse = CiscoConfParse(
+        config.splitlines(),
+        syntax="junos",
+        comment="#",
+        factory=False,
+    )
+    uut = parse.ioscfg
+    assert uut == result_correct_ioscfg
 
 def testParse_invalid_filepath_01():
     """Test that ciscoconfparse raises an error if the filepath is invalid"""
@@ -2577,7 +2761,7 @@ base_hello
     correct_result = 'parameter_03'
     assert(geneology_text[2].lstrip()==correct_result)
 
-def testValues_find_objects(parse_c01):
+def testValues_syntax_ios_nofactory_find_objects(parse_c01):
     lines = [
         ("interface Serial 1/0", 11),
         ("interface GigabitEthernet4/1", 15),
@@ -2589,17 +2773,16 @@ def testValues_find_objects(parse_c01):
         ("interface GigabitEthernet4/7", 43),
         ("interface GigabitEthernet4/8", 47),
     ]
-    c01_find_objects = list()
+    result_correct = list()
     for config_line, linenum in lines:
         # Mock up the correct object
-        obj = IOSCfgLine(config_line)
+        obj = IOSCfgLine(all_lines=lines, line=config_line)
         obj.linenum = linenum
-        c01_find_objects.append(obj)
+        result_correct.append(obj)
 
     ## test whether find_objects returns correct IOSCfgLine objects
-    correct_result = c01_find_objects
-    test_result = parse_c01.find_objects("^interface")
-    assert correct_result == test_result
+    uut = parse_c01.find_objects("^interface")
+    assert uut == result_correct
 
 def test_nxos_blank_line_01():
     """
