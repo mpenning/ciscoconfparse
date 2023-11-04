@@ -142,6 +142,7 @@ ALL_JUNOS_FACTORY_CLASSES = [
     JunosCfgLine,      # JunosCfgLine MUST be last
 ]
 
+
 # Indexing into CFGLINE is normally faster than serial if-statements...
 CFGLINE = {
     "ios": IOSCfgLine,
@@ -149,6 +150,13 @@ CFGLINE = {
     "asa": ASACfgLine,
     "junos": JunosCfgLine,
 }
+
+ALL_VALID_SYNTAX = (
+    "ios",
+    "nxos",
+    "asa",
+    "junos",
+)
 
 
 @logger.catch(reraise=True)
@@ -190,7 +198,6 @@ def enforce_valid_types(var, var_types=None, error_str=None):
 @logger.catch(reraise=True)
 def initialize_globals():
     """Initialize ciscoconfparse global dunder-variables and a couple others."""
-    global ALL_VALID_SYNTAX
     global ENCODING
     global ACTIVE_LOGURU_HANDLERS
     global __author_email__
@@ -201,12 +208,6 @@ def initialize_globals():
     global __version__
 
     ENCODING = locale.getpreferredencoding()
-    ALL_VALID_SYNTAX = (
-        "ios",
-        "nxos",
-        "asa",
-        "junos",
-    )
 
     __author_email__ = r"mike /at\ pennington [dot] net"
     __author__ = "David Michael Pennington <{__author_email__}>"
@@ -264,9 +265,11 @@ _, ACTIVE_LOGURU_HANDLERS = initialize_ciscoconfparse()
 
 
 @logger.catch(reraise=True)
-def _parse_line_braces(line_txt=None, comment_delimiter=None) -> tuple:
-    """Internal helper-method for brace-delimited configs (typically JunOS)."""
+def parse_line_braces(line_txt=None, comment_delimiter=None) -> tuple:
+    """Internal helper-method for brace-delimited configs (typically JunOS, syntax='junos')."""
     # Removed config parameter assertions in 1.7.2...
+
+    retval = ()
 
     enforce_valid_types(line_txt, (str,), "line_txt parameter must be a string.")
     enforce_valid_types(
@@ -275,7 +278,6 @@ def _parse_line_braces(line_txt=None, comment_delimiter=None) -> tuple:
     if len(comment_delimiter) > 1:
         raise ValueError("len(comment_delimiter) must be one.")
 
-    syntax = "ios"
     child_indent = 0
     this_line_indent = 0
 
@@ -284,28 +286,30 @@ def _parse_line_braces(line_txt=None, comment_delimiter=None) -> tuple:
         (?P<braces_close_left>\})*(?P<line1>.*?)(?P<braces_open_right>\{)*;*
         |(?P<line2>[^\{\}]*?)(?P<braces_open_left>\{)(?P<condition2>.*?)(?P<braces_close_right>\});*\s*
         |(?P<line3>[^\{\}]*?);*\s*
-    )$
+    )\s*$
     """
-    line_re = re.compile(junos_re_str, re.VERBOSE)
+    brace_re = re.compile(junos_re_str, re.VERBOSE)
     comment_re = re.compile(
         r"^\s*(?P<delimiter>[{0}]+)(?P<comment>[^{0}]*)$".format(
             re.escape(comment_delimiter)
         )
     )
 
-    mm = line_re.search(line_txt.strip())
-    nn = comment_re.search(line_txt.strip())
+    brace_match = brace_re.search(line_txt.strip())
+    comment_match = comment_re.search(line_txt.strip())
 
-    if nn is not None:
-        results = nn.groupdict()
-        return (
+    if isinstance(comment_match, re.Match):
+        results = comment_match.groupdict()
+        delimiter = results.get("delimiter", "")
+        comment = results.get("comment", "")
+        retval = (
             this_line_indent,
             child_indent,
-            results.get("delimiter", "") + results.get("comment", ""),
+            delimiter + comment
         )
 
-    elif mm is not None:
-        results = mm.groupdict()
+    elif isinstance(brace_match, re.Match):
+        results = brace_match.groupdict()
 
         # } line1 { foo bar this } {
         braces_close_left = bool(results.get("braces_close_left", ""))
@@ -324,8 +328,8 @@ def _parse_line_braces(line_txt=None, comment_delimiter=None) -> tuple:
             #     } elseif { bar baz } {
             this_line_indent -= 1
             child_indent += 0
-            retval = results.get("line1", None)
-            return (this_line_indent, child_indent, retval)
+            line1 = results.get("line1", None)
+            retval = (this_line_indent, child_indent, line1)
 
         elif (
             bool(line1_str)
@@ -336,10 +340,10 @@ def _parse_line_braces(line_txt=None, comment_delimiter=None) -> tuple:
             #     address 1.1.1.1
             this_line_indent -= 0
             child_indent += 0
-            retval = results.get("line1", "").strip()
+            _line1 = results.get("line1", "").strip()
             # Strip empty braces here
-            retval = re.sub(r"\s*\{\s*\}\s*", "", retval)
-            return (this_line_indent, child_indent, retval)
+            line1 = re.sub(r"\s*\{\s*\}\s*", "", _line1)
+            retval = (this_line_indent, child_indent, line1)
 
         elif (
             (line1_str == "")
@@ -350,27 +354,27 @@ def _parse_line_braces(line_txt=None, comment_delimiter=None) -> tuple:
             #     return empty string
             this_line_indent -= 0
             child_indent += 0
-            return (this_line_indent, child_indent, "")
+            retval = (this_line_indent, child_indent, "")
 
         elif braces_open_left and braces_close_right:
             # Based off line2
             #    this { bar baz }
             this_line_indent -= 0
             child_indent += 0
-            line = results.get("line2", None) or ""
+            _line2 = results.get("line2", None) or ""
             condition = results.get("condition2", None) or ""
             if condition.strip() == "":
-                retval = line
+                line2 = _line2
             else:
-                retval = line + " {" + condition + " }"
-            return (this_line_indent, child_indent, retval)
+                line2 = _line2 + " {" + condition + " }"
+            retval = (this_line_indent, child_indent, line2)
 
         elif braces_close_left:
             # Based off line1
             #   }
             this_line_indent -= 1
             child_indent -= 1
-            return (this_line_indent, child_indent, "")
+            retval = (this_line_indent, child_indent, "")
 
         elif braces_open_right:
             # Based off line1
@@ -378,19 +382,24 @@ def _parse_line_braces(line_txt=None, comment_delimiter=None) -> tuple:
             this_line_indent -= 0
             child_indent += 1
             line = results.get("line1", None) or ""
-            return (this_line_indent, child_indent, line)
+            retval = (this_line_indent, child_indent, line)
 
         elif (line2_str != "") and (line2_str is not None):
             this_line_indent += 0
             child_indent += 0
-            return (this_line_indent, child_indent, "")
+            retval = (this_line_indent, child_indent, "")
 
         else:
-            raise ValueError('Cannot parse {} match:"{}"'.format(syntax, line_txt))
+            error = f'Cannot parse `{line_txt}`'
+            logger.error(error)
+            raise ValueError(error)
 
     else:
-        raise ValueError('Cannot parse {}:"{}"'.format(syntax, line_txt))
+        error = f'Cannot parse `{line_txt}`'
+        logger.error(error)
+        raise ValueError(error)
 
+    return retval
 
 # This method was on ConfigList()
 @logger.catch(reraise=True)
@@ -412,7 +421,8 @@ def _cfgobj_from_text(
     # if not factory is **faster** than factory is False
     if syntax in ALL_VALID_SYNTAX and not factory:
         obj = CFGLINE[syntax](
-            text=txt,
+            all_lines=text_list,
+            line=txt,
             comment_delimiter=comment_delimiter,
         )
         if isinstance(obj, BaseCfgLine):
@@ -521,20 +531,43 @@ def assign_parent_to_closing_braces(input_list=None, keep_blank_lines=False):
 @logger.catch(reraise=True)
 def convert_junos_to_ios(input_list=None, stop_width=4, comment_delimiter="!", debug=0):
     """Accept `input_list` containing a list of junos-brace-formatted-string config lines.  This method strips off semicolons / braces from the string lines in `input_list` and returns the lines in a new list where all lines are explicitly indented as IOS would (as if IOS understood braces)."""
+
+    if not isinstance(input_list, list):
+        error = f"convert_junos_to_ios() `input_list` must be a non-empty python list"
+        logger.error(error)
+        raise InvalidParameters(error)
+
+    if not isinstance(stop_width, int):
+        error = f"convert_junos_to_ios() `stop_width` must be an integer"
+        logger.error(error)
+        raise InvalidParameters(error)
+
+    if not isinstance(comment_delimiter, str):
+        error = f"convert_junos_to_ios() `comment_delimiter` must be a string"
+        logger.error(error)
+        raise InvalidParameters(error)
+
+    if not isinstance(debug, int):
+        error = f"convert_junos_to_ios() `debug` must be an integer"
+        logger.error(error)
+        raise InvalidParameters(error)
+
     ## Note to self, I made this regex fairly junos-specific...
     input_condition_01 = isinstance(input_list, list) and len(input_list) > 0
     input_condition_02 = "{" not in set(comment_delimiter)
     input_condition_03 = "}" not in set(comment_delimiter)
     if not (input_condition_01 and input_condition_02 and input_condition_03):
-        raise ValueError
+        error = f"convert_junos_to_ios() input conditions failed"
+        logger.error(error)
+        raise ValueError(error)
 
-    lines = list()
+    lines = []
     offset = 0
     STOP_WIDTH = stop_width
     for idx, tmp in enumerate(input_list):
         if debug > 0:
-            logger.debug("Parse line {}:'{}'".format(idx + 1, tmp.strip()))
-        (this_line_indent, child_indent, line) = _parse_line_braces(
+            logger.debug(f"Parse line {idx + 1}:'{tmp.strip()}'")
+        (this_line_indent, child_indent, line) = parse_line_braces(
             tmp.strip(), comment_delimiter=comment_delimiter
         )
         lines.append((" " * STOP_WIDTH * (offset + this_line_indent)) + line.strip())
@@ -545,6 +578,15 @@ def convert_junos_to_ios(input_list=None, stop_width=4, comment_delimiter="!", d
 
 class CiscoConfParse(object):
     """Parse Cisco IOS configurations and answer queries about the configs."""
+    finished_config_parse = False
+    debug = 0
+    ConfigObjs = None
+    syntax = "ios"
+    comment_delimiter = "!"
+    factory = False
+    ignore_blank_lines = True
+    encoding = locale.getpreferredencoding()
+    read_only = False
 
     # Something breaks in CiscoConfParse() if using @logger.catch, below...
     @logger.catch(reraise=True)
@@ -702,13 +744,12 @@ class CiscoConfParse(object):
             raise ValueError(error)
 
         # conditionally strip off junos-config braces and other syntax
-        #     parsing  issues...
-        config_lines = self._handle_ccp_syntax(tmp_lines=tmp_lines, syntax=syntax)
-        if self._check_ccp_input_good(config=config_lines, logger=logger) is False:
+        #     parsing issues...
+        config_lines = self.handle_ccp_brace_syntax(tmp_lines=tmp_lines, syntax=syntax)
+        if self.check_ccp_input_good(config=config_lines, logger=logger) is False:
             error = f"Cannot parse config=`{tmp_lines}`"
             logger.critical(error)
             raise ValueError(error)
-
 
         if self.debug > 0:
             logger.info("assigning self.ConfigObjs = ConfigList()")
@@ -728,7 +769,7 @@ class CiscoConfParse(object):
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
-    def _handle_ccp_syntax(self, tmp_lines=None, syntax=None):
+    def handle_ccp_brace_syntax(self, tmp_lines=None, syntax=None):
         """Deal with brace-delimited syntax issues, such as conditionally discarding junos closing brace-lines."""
 
         if not syntax in ALL_VALID_SYNTAX:
@@ -736,15 +777,19 @@ class CiscoConfParse(object):
             logger.critical(error)
             raise InvalidParameters(error)
 
-        if tmp_lines is None:
-            error = f"_handle_ccp_syntax(tmp_lines={tmp_lines}) must not be None"
+        if not isinstance(tmp_lines, (list, tuple)):
+            error = f"handle_ccp_brace_syntax(tmp_lines={tmp_lines}) must not be None"
             logger.error(error)
             raise InvalidParameters(error)
 
-        if syntax in ALL_VALID_SYNTAX:
+        if syntax == "junos":
+            err_msg = "junos parser factory is not yet enabled; use factory=False"
+            assert self.factory is False, err_msg
+            config_lines = convert_junos_to_ios(tmp_lines, comment_delimiter="#")
+        elif syntax in ALL_VALID_SYNTAX:
             config_lines = tmp_lines
         else:
-            error = f"_handle_ccp_syntax(syntax=`{syntax}`) is not yet supported"
+            error = f"handle_ccp_brace_syntax(syntax=`{syntax}`) is not yet supported"
             logger.error(error)
             raise InvalidParameters(error)
 
@@ -850,7 +895,7 @@ class CiscoConfParse(object):
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
-    def _check_ccp_input_good(self, config=None, logger=None, linesplit_rgx=r"\r*\n+"):
+    def check_ccp_input_good(self, config=None, logger=None, linesplit_rgx=r"\r*\n+"):
         """The config parameter is a sequence of text config commands.  Return True or False based on whether the config can be parsed."""
 
         assert self.finished_config_parse is False
@@ -929,7 +974,7 @@ class CiscoConfParse(object):
         :func:`~ciscoconfparse.CiscoConfParse.commit`.
         """
         #self.ConfigObjs._bootstrap_from_text()
-        self.ConfigObjs._list = self.ConfigObjs._bootstrap_obj_init_ng(self.ioscfg, debug=self.debug)
+        self.ConfigObjs._list = self.ConfigObjs.bootstrap_obj_init_ng(self.ioscfg, debug=self.debug)
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
@@ -944,7 +989,7 @@ class CiscoConfParse(object):
         --------
         :func:`~ciscoconfparse.CiscoConfParse.atomic`.
         """
-        self.atomic()  # atomic() calls self.ConfigObjs._bootstrap_obj_init_ng
+        self.atomic()  # atomic() calls self.ConfigObjs.bootstrap_obj_init_ng
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
@@ -2948,7 +2993,7 @@ class CiscoConfParse(object):
             retval.append(obj.re_sub(linespec, replacestr))
 
         if self.factory and atomic:
-            self.ConfigObjs._list = self.ConfigObjs._bootstrap_obj_init_ng(self.ioscfg)
+            self.ConfigObjs._list = self.ConfigObjs.bootstrap_obj_init_ng(self.ioscfg)
 
         return retval
 
@@ -3036,7 +3081,7 @@ class CiscoConfParse(object):
                     pass
 
         if self.factory and atomic:
-            self.ConfigObjs._list = self.ConfigObjs._bootstrap_obj_init_ng(self.ioscfg)
+            self.ConfigObjs._list = self.ConfigObjs.bootstrap_obj_init_ng(self.ioscfg)
         return retval
 
     # This method is on CiscoConfParse()
@@ -3070,7 +3115,7 @@ class CiscoConfParse(object):
                     pass
 
         if self.factory and atomic:
-            self.ConfigObjs._list = self.ConfigObjs._bootstrap_obj_init_ng(self.ioscfg)
+            self.ConfigObjs._list = self.ConfigObjs.bootstrap_obj_init_ng(self.ioscfg)
 
         return retval
 
@@ -4560,7 +4605,6 @@ class ConfigList(MutableSequence):
             logger.critical(error)
             raise OSError(error)
 
-
         ciscoconfparse_kwarg_val = kwargs.get("CiscoConfParse", None)
         ccp_ref_kwarg_val = kwargs.get("ccp_ref", None)
         if ciscoconfparse_kwarg_val is not None:
@@ -4586,11 +4630,11 @@ class ConfigList(MutableSequence):
         #
         # as of python 3.9, getattr() below is slightly faster than
         #     isinstance(initlist, Sequence)
-        self._list = self._bootstrap_obj_init_ng(initlist, debug=debug)
+        self._list = self.bootstrap_obj_init_ng(initlist, debug=debug)
 
         # Removed this portion of __init__() in 1.7.16...
         if getattr(initlist, "__iter__", False) is not False:
-            self._list = self._bootstrap_obj_init_ng(initlist)
+            self._list = self.bootstrap_obj_init_ng(initlist)
 
         else:
             self._list = []
@@ -4676,7 +4720,7 @@ class ConfigList(MutableSequence):
     def __delitem__(self, ii):
         del self._list[ii]
         #self._bootstrap_from_text()
-        self._list = self._bootstrap_obj_init_ng(self.ioscfg, debug=self.debug)
+        self._list = self.bootstrap_obj_init_ng(self.ioscfg, debug=self.debug)
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
@@ -4949,13 +4993,15 @@ class ConfigList(MutableSequence):
 
         if self.factory is False:
             new_obj = CFGLINE[self.syntax](
-                text=new_val,
+                all_lines=self._list,
+                line=new_val,
                 comment_delimiter=self.comment_delimiter,
             )
 
         elif self.factory is True:
             new_obj = config_line_factory(
-                text=new_val,
+                all_lines=self._list,
+                line=new_val,
                 comment_delimiter=self.comment_delimiter,
                 syntax=self.syntax,
             )
@@ -4978,7 +5024,7 @@ class ConfigList(MutableSequence):
         if atomic:
             # Reparse the whole config as a text list
             #self._bootstrap_from_text()
-            self._list = self._bootstrap_obj_init_ng(self.ioscfg)
+            self._list = self.bootstrap_obj_init_ng(self.ioscfg)
 
         else:
             ## Just renumber lines...
@@ -5069,13 +5115,15 @@ class ConfigList(MutableSequence):
 
         if self.factory is False:
             new_obj = CFGLINE[self.syntax](
-                text=new_val,
+                all_lines=self._list,
+                line=new_val,
                 comment_delimiter=self.comment_delimiter,
             )
 
         elif self.factory is True:
             new_obj = config_line_factory(
-                text=new_val,
+                all_lines=self._list,
+                line=new_val,
                 comment_delimiter=self.comment_delimiter,
                 syntax=self.syntax,
             )
@@ -5098,7 +5146,7 @@ class ConfigList(MutableSequence):
         if atomic is True:
             # Reparse the whole config as a text list
             #self._bootstrap_from_text()
-            self._list = self._bootstrap_obj_init_ng(self.ioscfg)
+            self._list = self.bootstrap_obj_init_ng(self.ioscfg)
         else:
             ## Just renumber lines...
             self.reassign_linenums()
@@ -5358,7 +5406,7 @@ class ConfigList(MutableSequence):
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def _bootstrap_obj_init_ng(self, text_list=None, debug=0):
+    def bootstrap_obj_init_ng(self, text_list=None, debug=0):
         """
         Accept a text list, and format into a list of *CfgLine() objects.
 
@@ -5368,7 +5416,7 @@ class ConfigList(MutableSequence):
             raise ValueError
 
         if self.debug >= 1:
-            logger.info("    ConfigList()._bootstrap_obj_init_ng() was called.")
+            logger.info("    ConfigList().bootstrap_obj_init_ng() was called.")
 
         retval = []
         idx = None
@@ -5381,7 +5429,7 @@ class ConfigList(MutableSequence):
         parents_cache = {}
         for idx, txt in enumerate(text_list):
             if self.debug >= 1:
-                logger.debug("    _bootstrap_obj_init_ng() adding text cmd: '%s' at idx %s" % (txt, idx,))
+                logger.debug("    bootstrap_obj_init_ng() adding text cmd: '%s' at idx %s" % (txt, idx,))
             if not isinstance(txt, str):
                 raise ValueError
 
@@ -5737,10 +5785,24 @@ def config_line_factory(all_lines=None, line=None, comment_delimiter="!", syntax
         logger.error(error)
         raise ValueError(error)
 
+    factory_classes = None
+    if syntax=="ios":
+        factory_classes = ALL_IOS_FACTORY_CLASSES
+    elif syntax=="nxos":
+        factory_classes = ALL_NXOS_FACTORY_CLASSES
+    elif syntax=="asa":
+        factory_classes = ALL_ASA_FACTORY_CLASSES
+    elif syntax=="junos":
+        factory_classes = ALL_JUNOS_FACTORY_CLASSES
+    else:
+        error = f"Cannot find a factory class list for syntax=`{syntax}`"
+        logger.error(error)
+        raise InvalidParameters(error)
+
     # Walk all the classes and return the first class that
     # matches `.is_object_for(text)`.
     try:
-        for cls in ALL_IOS_FACTORY_CLASSES:
+        for cls in factory_classes:
             print(f"  Consider config_line_factory() CLASS {cls}")
             if cls.is_object_for(all_lines=all_lines, line=line):
                 basecfgline_subclass = cls(
