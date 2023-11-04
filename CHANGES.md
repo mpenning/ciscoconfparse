@@ -4,12 +4,11 @@
 - Summary:
     - Insert something here
 
-## Version: 1.9.24
+## Version: 1.9.25
 
 - Released: 2023-11-04
 - Summary:
-    - Add methods and loguru to `BaseCfgLine()`
-    - Modify `ConfigList()` attributes
+    - Add attributes to `ConfigList()`
 
 ## Version: 1.9.22
 
