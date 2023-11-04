@@ -45,7 +45,8 @@ class BaseCfgLine(metaclass=ABCMeta):
     confobj = None  # Reference to the list object which owns it
     blank_line_keep = False  # CiscoConfParse() uses blank_line_keep
 
-    text = None  # Use self.text setter method to set this value
+    all_text = []
+    text = DEFAULT_TEXT  # Use self.text setter method to set this value
 
     _line_id = None
     diff_rendered = None
@@ -56,9 +57,17 @@ class BaseCfgLine(metaclass=ABCMeta):
     # deprecating py2.foo metaclass syntax in version 1.6.8...
     # __metaclass__ = ABCMeta
     @logger.catch(reraise=True)
-    def __init__(self, text=DEFAULT_TEXT, comment_delimiter="!"):
-        """Accept an IOS line number and initialize family relationship
-        attributes"""
+    def __init__(self, all_lines=None, line=DEFAULT_TEXT, comment_delimiter="!", **kwargs):
+        """Accept an IOS line number and initialize family relationship attributes"""
+
+        # Hack to accept old parameter names instead of finding all the places
+        # where `all_text` and `text` are used and renaming attributes all
+        # over the place
+        if isinstance(kwargs.get("all_text", None), list):
+            all_lines = kwargs.get("all_text")
+        if isinstance(kwargs.get("text", None), str):
+            line = kwargs.get("text")
+
         self.comment_delimiter = comment_delimiter
         self._uncfgtext_to_be_deprecated = ""
         self._text = DEFAULT_TEXT
@@ -72,6 +81,7 @@ class BaseCfgLine(metaclass=ABCMeta):
         self.blank_line_keep = False  # CiscoConfParse() uses blank_line_keep
 
         # Call set_comment_bool() in the self.text setter method...
+        self.all_text = all_lines
         self.text = line  # Use self.text setter method to set this value
 
         self._line_id = None
@@ -89,6 +99,11 @@ class BaseCfgLine(metaclass=ABCMeta):
     # On BaseCfgLine()
     @logger.catch(reraise=True)
     def __repr__(self):
+        try:
+            parent_linenum = self.parent.linenum
+        except AttributeError:
+            parent_linenum = self.linenum
+
         if not self.is_child:
             return "<{} # {} '{}'>".format(self.classname, self.linenum, self.text)
         else:
@@ -96,7 +111,7 @@ class BaseCfgLine(metaclass=ABCMeta):
                 self.classname,
                 self.linenum,
                 self.text,
-                self.parent.linenum,
+                parent_linenum,
             )
 
     # On BaseCfgLine()
@@ -360,7 +375,7 @@ class BaseCfgLine(metaclass=ABCMeta):
         # FIXME - children do not associate correctly if this is used as-is...
         if not isinstance(newtext, str):
             error = f"text=`{newtext}` is an invalid config line"
-            error.critical(error)
+            logger.critical(error)
             raise InvalidParameters(error)
 
         # escape braces since single braces could be misunderstood as
