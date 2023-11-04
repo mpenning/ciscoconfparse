@@ -33,21 +33,32 @@ DEFAULT_TEXT = "__undefined__"
 # -------------  Config Line ABC
 #
 class BaseCfgLine(metaclass=ABCMeta):
+    comment_delimiter = None
+    _uncfgtext_to_be_deprecated = ""
+    _text = DEFAULT_TEXT
+    linenum = -1
+    parent = None
+    child_indent = 0
+    is_comment = None
+    children = []
+    indent = 0  # assign indent in the self.text setter method
+    confobj = None  # Reference to the list object which owns it
+    blank_line_keep = False  # CiscoConfParse() uses blank_line_keep
+
+    text = None  # Use self.text setter method to set this value
+
+    _line_id = None
+    diff_rendered = None
+    diff_linenum = -1
+    _diff_word = ""  # diff_word: 'keep', 'remove', 'unchanged', 'add'
+    _diff_side = ""  # diff_side: 'before', 'after' or ''
+
     # deprecating py2.foo metaclass syntax in version 1.6.8...
     # __metaclass__ = ABCMeta
-    def __init__(self, all_lines=None, line=DEFAULT_TEXT, comment_delimiter="!"):
-        """Accept an IOS line number and initialize family relationship attributes"""
-
-        if not isinstance(all_lines, list):
-            error = f"BaseCfgLine() expected `type(all_lines)` to be a list, but got {type(all_lines)}"
-            error.critical(error)
-            raise InvalidParameters(error)
-
-        if not isinstance(line, str):
-            error = f"BaseCfgLine() expected BaseCfgLine(line=`{line}`) to be a string, but got {type(line)}"
-            error.critical(error)
-            raise InvalidParameters(error)
-
+    @logger.catch(reraise=True)
+    def __init__(self, text=DEFAULT_TEXT, comment_delimiter="!"):
+        """Accept an IOS line number and initialize family relationship
+        attributes"""
         self.comment_delimiter = comment_delimiter
         self._uncfgtext_to_be_deprecated = ""
         self._text = DEFAULT_TEXT
@@ -76,6 +87,7 @@ class BaseCfgLine(metaclass=ABCMeta):
         # self.text = text
 
     # On BaseCfgLine()
+    @logger.catch(reraise=True)
     def __repr__(self):
         if not self.is_child:
             return "<{} # {} '{}'>".format(self.classname, self.linenum, self.text)
@@ -88,19 +100,24 @@ class BaseCfgLine(metaclass=ABCMeta):
             )
 
     # On BaseCfgLine()
+    @logger.catch(reraise=True)
     def __str__(self):
         return self.__repr__()
 
+    # On BaseCfgLine()
+    @logger.catch(reraise=True)
     def __len__(self):
         return len(self.text)
 
     # On BaseCfgLine()
+    @logger.catch(reraise=True)
     def __hash__(self):
         ##   I inlined the hash() argument below for speed... whenever I change
         ##   self.__eq__() I *must* change this
         return hash(str(self.linenum) + self.text)
 
     # On BaseCfgLine()
+    @logger.catch(reraise=True)
     def __eq__(self, val):
         try:
             ##   try / except is much faster than isinstance();
@@ -114,12 +131,14 @@ class BaseCfgLine(metaclass=ABCMeta):
             return False
 
     # On BaseCfgLine()
+    @logger.catch(reraise=True)
     def __gt__(self, val):
         if self.linenum > val.linenum:
             return True
         return False
 
     # On BaseCfgLine()
+    @logger.catch(reraise=True)
     def __lt__(self, val):
         # Ref: http://stackoverflow.com/a/7152796/667301
         if self.linenum < val.linenum:
@@ -127,6 +146,33 @@ class BaseCfgLine(metaclass=ABCMeta):
         return False
 
     # On BaseCfgLine()
+    @property
+    @logger.catch(reraise=True)
+    def is_intf(self):
+        """Default to False; intf subclasses will override this method"""
+        return False
+
+    # On BaseCfgLine()
+    @is_intf.setter
+    @logger.catch(reraise=True)
+    def is_intf(self):
+        raise NotImplementedError()
+
+    # On BaseCfgLine()
+    @property
+    @logger.catch(reraise=True)
+    def is_subintf(self):
+        """Default to False; subintf subclasses will override this method"""
+        return False
+
+    # On BaseCfgLine()
+    @is_subintf.setter
+    @logger.catch(reraise=True)
+    def is_subintf(self):
+        raise NotImplementedError()
+
+    # On BaseCfgLine()
+    @logger.catch(reraise=True)
     def set_comment_bool(self):
         """Set the .is_comment attribute for this object."""
         delimiters = set(self.comment_delimiter)
@@ -142,11 +188,13 @@ class BaseCfgLine(metaclass=ABCMeta):
 
     # On BaseCfgLine()
     @property
+    @logger.catch(reraise=True)
     def index(self):
         """Alias index to linenum"""
         return self.linenum
 
     # On BaseCfgLine()
+    @logger.catch(reraise=True)
     def calculate_line_id(self):
         """
         Calculate and return an integer line_id for BaseCfgLine()
@@ -189,6 +237,7 @@ class BaseCfgLine(metaclass=ABCMeta):
 
     # On BaseCfgLine()
     @property
+    @logger.catch(reraise=True)
     def diff_id_list(self):
         """
         Return a list of integers as a context-sensitive diff identifier.
@@ -224,12 +273,14 @@ class BaseCfgLine(metaclass=ABCMeta):
 
     # On BaseCfgLine()
     @property
+    @logger.catch(reraise=True)
     def diff_word(self):
         """A diff_word getter attribute (typically used in HDiff())"""
         return self._diff_word
 
     # On BaseCfgLine()
     @diff_word.setter
+    @logger.catch(reraise=True)
     def diff_word(self, val):
         """A diff_word setter attribute (typically used in HDiff())"""
 
@@ -259,12 +310,14 @@ class BaseCfgLine(metaclass=ABCMeta):
 
     # On BaseCfgLine()
     @property
+    @logger.catch(reraise=True)
     def diff_side(self):
         """A diff_side getter attribute (typically used in HDiff())"""
         return self._diff_side
 
     # On BaseCfgLine()
     @diff_side.setter
+    @logger.catch(reraise=True)
     def diff_side(self, val):
         """A diff_side setter attribute (typically used in HDiff())"""
         assert val in set(
@@ -278,6 +331,7 @@ class BaseCfgLine(metaclass=ABCMeta):
 
     # On BaseCfgLine()
     @property
+    @logger.catch(reraise=True)
     def as_diff_dict(self):
         """An internal dict which is used in :class:`~ciscoconfparse.HDiff()`"""
         retval = {
@@ -293,12 +347,14 @@ class BaseCfgLine(metaclass=ABCMeta):
 
     # On BaseCfgLine()
     @property
+    @logger.catch(reraise=True)
     def text(self):
         """Get the self.text attribute"""
         return self._text
 
     # On BaseCfgLine()
     @text.setter
+    @logger.catch(reraise=True)
     def text(self, newtext=None):
         """Set self.text, self.indent, self.line_id (and all comments' self.parent)"""
         # FIXME - children do not associate correctly if this is used as-is...
@@ -331,6 +387,8 @@ class BaseCfgLine(metaclass=ABCMeta):
             #
             self.parent = self
 
+    # On BaseCfgLine()
+    @logger.catch(reraise=True)
     def safe_escape_curly_braces(self, text):
         """
         Escape curly braces in strings since they could be misunderstood as

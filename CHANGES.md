@@ -4,12 +4,12 @@
 - Summary:
     - Insert something here
 
-## Version: 1.9.23
+## Version: 1.9.24
 
-- Released: 2023-11-02
+- Released: 2023-11-04
 - Summary:
-    - Rename `ConfigLineFactory()` to `config_line_factory()`
-    - Add / rename function parameters
+    - Add methods and loguru to `BaseCfgLine()`
+    - Modify `ConfigList()` attributes
 
 ## Version: 1.9.22
 
