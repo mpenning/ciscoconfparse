@@ -32,21 +32,23 @@ r""" models_asa.py - Parse, Query, Build, and Modify IOS-style configurations
 
 import re
 
+from loguru import logger
+
 from ciscoconfparse.protocol_values import (
     ASA_TCP_PORTS,
     ASA_UDP_PORTS,
     ASA_IP_PROTOCOLS,
 )
-from ciscoconfparse.ccp_abc import BaseCfgLine
 from ciscoconfparse.ccp_util import L4Object
 from ciscoconfparse.ccp_util import IPv4Obj
 
-from loguru import logger
+from ciscoconfparse.ccp_abc import BaseCfgLine
+
+from ciscoconfparse.errors import InvalidParameters
 
 ##
 ##-------------  ASA Configuration line object
 ##
-
 
 class ASACfgLine(BaseCfgLine):
     """An object for a parsed ASA-style configuration line.
@@ -89,7 +91,7 @@ class ASACfgLine(BaseCfgLine):
         attributes"""
         super().__init__(*args, **kwargs)
 
-        self.text = kwargs.get("text", None)
+        self.text = kwargs.get("line", None)
         self._mm_results = None
 
     @classmethod
@@ -1252,9 +1254,14 @@ class ASAAclLine(ASACfgLine):
         super().__init__(*args, **kwargs)
 
         # Parse out the most common parameter names...
-        text = kwargs.get("text", None)
+        text = kwargs.get("text", None) or kwargs.get("line", None)
         syntax = kwargs.get("syntax", "asa")
         comment_delimiter = kwargs.get("comment_delimiter", None)
+
+        if text is None:
+            error = f"line=None is an invalid input"
+            logger.critical(error)
+            raise InvalidParameters(error)
 
         self.text = text
         self._mm_results = None
