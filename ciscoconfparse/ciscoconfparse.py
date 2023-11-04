@@ -5756,7 +5756,7 @@ class CiscoPassword(object):
 
 
 @logger.catch(reraise=True)
-def config_line_factory(all_lines=None, line=None, comment_delimiter="!", syntax="ios"):
+def config_line_factory(all_lines=None, line=None, comment_delimiter="!", syntax="ios", debug=0):
     """A factory method to assign a custom BaseCfgLine() subclass based on `all_lines`, `line`, `comment_delimiter`, and `syntax` parameters."""
     # Complicted & Buggy
     # classes = [j for (i,j) in globals().iteritems() if isinstance(j, TypeType) and issubclass(j, BaseCfgLine)]
@@ -5780,11 +5780,19 @@ def config_line_factory(all_lines=None, line=None, comment_delimiter="!", syntax
         logger.error(error)
         raise InvalidParameters(error)
 
+    if not isinstance(debug, int):
+        error = f"config_line_factory(debug=`{debug}`) must be an integer, but we got {type(debug)}"
+        logger.error(error)
+        raise InvalidParameters(error)
+
     if syntax not in ALL_VALID_SYNTAX:
         error = f"`{syntax}` is an unknown syntax"
         logger.error(error)
         raise ValueError(error)
 
+    ##########################################################################
+    # Select which list of factory classes will be used
+    ##########################################################################
     factory_classes = None
     if syntax=="ios":
         factory_classes = ALL_IOS_FACTORY_CLASSES
@@ -5799,11 +5807,14 @@ def config_line_factory(all_lines=None, line=None, comment_delimiter="!", syntax
         logger.error(error)
         raise InvalidParameters(error)
 
+    ##########################################################################
     # Walk all the classes and return the first class that
     # matches `.is_object_for(text)`.
+    ##########################################################################
     try:
         for cls in factory_classes:
-            print(f"  Consider config_line_factory() CLASS {cls}")
+            if debug > 0:
+                logger.debug(f"Consider config_line_factory() CLASS {cls}")
             if cls.is_object_for(all_lines=all_lines, line=line):
                 basecfgline_subclass = cls(
                     all_lines=all_lines, line=line,
@@ -5814,7 +5825,11 @@ def config_line_factory(all_lines=None, line=None, comment_delimiter="!", syntax
         error = f"ciscoconfparse.py config_line_factory(all_lines={all_lines}, line=`{line}`, comment_delimiter=`{comment_delimiter}`, syntax=`{syntax}`) could not find a subclass of BaseCfgLine()"
         logger.error(error)
         raise ValueError(error)
+    except Exception as eee:
+        error = f"ciscoconfparse.py config_line_factory(all_lines={all_lines}, line=`{line}`, comment_delimiter=`{comment_delimiter}`, syntax=`{syntax}`): {eee}"
 
+    if debug > 0:
+        logger.debug(f"config_line_factory() is returning a default of IOSCfgLine()")
     return IOSCfgLine(all_lines=all_lines, line=line, comment_delimiter=comment_delimiter)
 
 ### TODO: Add unit tests below

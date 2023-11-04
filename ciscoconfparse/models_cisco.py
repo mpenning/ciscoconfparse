@@ -3258,7 +3258,6 @@ class IOSAaaCommandsAuthorizationLine(IOSCfgLine):
     @classmethod
     @logger.catch(reraise=True)
     def is_object_for(cls, all_lines, line, re=re):
-        print(f"DBG IOSAaaCommandsAuthorizationLine {line}")
         if re.search(r"^aaa\s+authorization\s+commands", line.strip()):
             return True
         return False
@@ -3285,7 +3284,6 @@ class IOSAaaConsoleAuthorizationLine(IOSCfgLine):
     @classmethod
     @logger.catch(reraise=True)
     def is_object_for(cls, all_lines, line, re=re):
-        print(f"DBG IOSAaaConsoleAuthorizationLine {line}")
         if re.search(r"^aaa\s+authorization\s+console", line.strip()):
             return True
         return False
