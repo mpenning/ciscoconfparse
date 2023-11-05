@@ -4,6 +4,14 @@
 - Summary:
     - Insert something here
 
+## Version: 1.9.28
+
+- Released: 2023-11-05
+- Summary:
+    - Remove `print()` statements and add debugging
+    - Use `InvalidParameters()` if parsed with `factory=True` on an unsupported syntax (was an `AssertionError()`).
+    - Rename internal methods
+
 ## Version: 1.9.27
 
 - Released: 2023-11-04
