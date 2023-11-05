@@ -34,6 +34,8 @@ import re
 from ciscoconfparse.ccp_abc import BaseCfgLine
 from ciscoconfparse.ccp_util import IPv4Obj
 
+from loguru import logger
+
 ##
 ##-------------  Junos Configuration line object
 ##
@@ -550,6 +552,30 @@ class BaseJunosIntfLine(JunosCfgLine):
         )
         return retval
 
+##
+##-------------  IOS Interface Object
+##
+
+
+class JunosIntfLine(BaseJunosIntfLine):
+    # This method is on IOSIntfLine()
+    @logger.catch(reraise=True)
+    def __init__(self, *args, **kwargs):
+        r"""Accept a JunOS interface number and initialize family relationship
+        attributes
+
+        Warnings
+        --------
+        All :class:`~models_cisco.JunosIntfLine` methods are still considered beta-quality, until this notice is removed.  The behavior of APIs on this object could change at any time.
+        """
+        super().__init__(*args, **kwargs)
+        self.feature = "interface"
+
+    # This method is on IOSIntfLine()
+    @classmethod
+    @logger.catch(reraise=True)
+    def is_object_for(cls, all_lines, line, re=re):
+        return cls.is_object_for_interface(line)
 
 ##
 ##-------------  Junos Interface Globals
