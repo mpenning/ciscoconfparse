@@ -1760,9 +1760,16 @@ class IPv4Obj(object):
 # interfaces (such as persisting host-bits when the intf masklen changes) and
 # add custom @properties
 class IPv6Obj(object):
+    dna = "IPv6Obj"
+    ip_object = None
+    network_object = None
+    strict = False
+    debug = 0
+    finished_parsing = False
+    empty = False
 
     # This method is on IPv6Obj().  @logger.catch() breaks the __init__() method.
-    def __init__(self, v6addr_prefixlen=f"::1/{IPV6_MAX_PREFIXLEN}", strict=False, debug=0):
+    def __init__(self, v6addr_prefixlen=None, strict=False, debug=0):
         """An object to represent IPv6 addresses and IPv6 networks.
 
         When :class:`~ccp_util.IPv6Obj` objects are compared or sorted, network numbers are sorted lower to higher.  If network numbers are the same, shorter masks are lower than longer masks. After comparing mask length, numerically higher IP addresses are greater than numerically lower IP addresses.  Comparisons between :class:`~ccp_util.IPv6Obj` instances was chosen so it's easy to find the longest-match for a given prefix.
@@ -1832,17 +1839,19 @@ class IPv6Obj(object):
             logger.critical(error)
             raise ValueError(error)
 
-        try:
-            if isinstance(v6addr_prefixlen, (str, int, IPv6Obj)) is False:
-                raise ValueError()
-        except ValueError as eee:
-            raise AddressValueError(
-                f"Could not parse '{v6addr_prefixlen}' (type: {type(v6addr_prefixlen)}) into an IPv6 Address. {eee}"
-            )
-        except BaseException as eee:
-            raise AddressValueError(
-                f"Could not parse '{v6addr_prefixlen}' (type: {type(v6addr_prefixlen)}) into an IPv6 Address. {eee}"
-            )
+
+        if v6addr_prefixlen is not None:
+            try:
+                if isinstance(v6addr_prefixlen, (str, int, IPv6Obj)) is False:
+                    raise ValueError()
+            except ValueError as eee:
+                error = f"Could not parse '{v6addr_prefixlen}' (type: {type(v6addr_prefixlen)}) into an IPv6 Address. {eee}"
+                logger.error(error)
+                raise AddressValueError(error)
+            except BaseException as eee:
+                error = f"Could not parse '{v6addr_prefixlen}' (type: {type(v6addr_prefixlen)}) into an IPv6 Address. {eee}"
+                logger.error(error)
+                raise AddressValueError(error)
 
         self.v6addr_prefixlen = v6addr_prefixlen
         self.dna = "IPv6Obj"
@@ -1850,9 +1859,12 @@ class IPv6Obj(object):
         self.network_object = None
         self.strict = strict
         self.debug = debug
+        self.empty = False
 
 
-        if isinstance(v6addr_prefixlen, str):
+        if v6addr_prefixlen is None:
+            self.empty = True
+        elif isinstance(v6addr_prefixlen, str):
             assert len(v6addr_prefixlen) <= IPV6_MAXSTR_LEN
 
             tmp = re.split(r"\s+", v6addr_prefixlen.strip())
@@ -1904,7 +1916,9 @@ class IPv6Obj(object):
     # On IPv6Obj()
     def __repr__(self):
         # Detect IPv4_mapped IPv6 addresses...
-        if self.is_ipv4_mapped:
+        if self.empty is True:
+            return f"""<IPv6Obj None empty={self.empty}>"""
+        elif self.is_ipv4_mapped:
             return """<IPv6Obj ::ffff:{}/{}>""".format(
                 str(self.ip.ipv4_mapped), self.prefixlen
             )
@@ -1913,6 +1927,11 @@ class IPv6Obj(object):
 
     # On IPv6Obj()
     def __eq__(self, val):
+        if self.empty is True:
+            if val.empty is True:
+                return True
+            else:
+                return False
         try:
             for obj in [self, val]:
                 for attr_name in ["as_decimal", "prefixlen"]:
