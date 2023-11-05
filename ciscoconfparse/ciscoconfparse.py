@@ -76,6 +76,7 @@ from ciscoconfparse.models_asa import ASACfgLine
 from ciscoconfparse.models_asa import ASAName
 from ciscoconfparse.models_asa import ASAAclLine
 
+from ciscoconfparse.models_junos import JunosIntfLine
 from ciscoconfparse.models_junos import JunosCfgLine
 
 from ciscoconfparse.ccp_abc import BaseCfgLine
@@ -139,6 +140,7 @@ ALL_ASA_FACTORY_CLASSES = [
     ASACfgLine,        # ASACfgLine MUST be last
 ]
 ALL_JUNOS_FACTORY_CLASSES = [
+    JunosIntfLine,
     JunosCfgLine,      # JunosCfgLine MUST be last
 ]
 
@@ -403,18 +405,28 @@ def parse_line_braces(line_txt=None, comment_delimiter=None) -> tuple:
 
 # This method was on ConfigList()
 @logger.catch(reraise=True)
-def _cfgobj_from_text(
+def cfgobj_from_text(
     text_list, txt, idx, syntax=None, comment_delimiter=None, factory=None
 ):
     """Build cfgobj from configuration text syntax, and factory inputs."""
 
     if not isinstance(txt, str):
-        error = f"_cfgobj_from_text(txt=`{txt}`) must be a string"
+        error = f"cfgobj_from_text(txt=`{txt}`) must be a string"
         logger.error(error)
         raise InvalidParameters(error)
 
     if not isinstance(idx, int):
-        error = f"_cfgobj_from_text(idx=`{idx}`) must be an int"
+        error = f"cfgobj_from_text(idx=`{idx}`) must be an int"
+        logger.error(error)
+        raise InvalidParameters(error)
+
+    if not isinstance(comment_delimiter, str):
+        error = f"cfgobj_from_text(comment_delimiter=`{comment_delimiter}`) must be a string"
+        logger.error(error)
+        raise InvalidParameters(error)
+
+    if not isinstance(factory, bool):
+        error = f"cfgobj_from_text(factory=`{factory}`) must be a boolean"
         logger.error(error)
         raise InvalidParameters(error)
 
@@ -782,9 +794,14 @@ class CiscoConfParse(object):
             logger.error(error)
             raise InvalidParameters(error)
 
+        ######################################################################
+        # Explicitly handle all brace-parsing factory syntax here...
+        ######################################################################
         if syntax == "junos":
-            err_msg = "junos parser factory is not yet enabled; use factory=False"
-            assert self.factory is False, err_msg
+            if self.factory is True:
+                error = "junos parser factory is not yet enabled; use factory=False"
+                logger.critical(error)
+                raise InvalidParameters(error)
             config_lines = convert_junos_to_ios(tmp_lines, comment_delimiter="#")
         elif syntax in ALL_VALID_SYNTAX:
             config_lines = tmp_lines
@@ -5434,7 +5451,7 @@ class ConfigList(MutableSequence):
                 raise ValueError
 
             # Assign a custom *CfgLine() based on factory...
-            obj = _cfgobj_from_text(
+            obj = cfgobj_from_text(
                 text_list,
                 txt=txt,
                 idx=idx,
