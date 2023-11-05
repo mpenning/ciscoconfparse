@@ -856,11 +856,15 @@ class IOSCfgLine(BaseCfgLine):
 
 
 class BaseIOSIntfLine(IOSCfgLine):
+    default_ipv4_addr_object = None
+    default_ipv6_addr_object = None
+
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
-        super(BaseIOSIntfLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.ifindex = None  # Optional, for user use
         self.default_ipv4_addr_object = IPv4Obj()
+        self.default_ipv6_addr_object = IPv6Obj()
 
     # This method is on BaseIOSIntfLine()
     @logger.catch(reraise=True)
@@ -1362,22 +1366,41 @@ class BaseIOSIntfLine(IOSCfgLine):
     def ipv4_addr_object(self):
         r"""Return a ccp_util.IPv4Obj object representing the address on this interface; if there is no address, return IPv4Obj()"""
 
-        if self.ipv4_addr=="":
+        retval = self.re_match_iter_typed(
+            r"^\s+ip\s+address\s+(?P<v4addr>\S+)\s+(?P<v4netmask>\d+\.\d+\.\d+\.\d+)",
+            groupdict={"v4addr": str, "v4netmask": str},
+            default="",
+        )
+
+        if retval["v4addr"]=="":
             return self.default_ipv4_addr_object
-        elif self.ipv4_addr=="dhcp":
+        elif retval["v4addr"]=="dhcp":
+            return self.default_ipv4_addr_object
+        elif retval["v4addr"]=="negotiated":
             return self.default_ipv4_addr_object
         else:
-            return IPv4Obj(f"{self.ipv4_addr}/{self.ipv4_netmask}")
+            return IPv4Obj(f"{retval['v4addr']}/{retval['v4netmask']}")
 
-        try:
-            logger.info(f"intf='{self.name}' ipv4_addr='{self.ipv4_addr}' ipv4_netmask='{self.ipv4_netmask}'")
-            return IPv4Obj(f"{self.ipv4_addr}/{self.ipv4_netmask}")
-        except DynamicAddressException as eee:
-            logger.critical(f"intf='{self.name}' ipv4_addr='{self.ipv4_addr}' ipv4_netmask='{self.ipv4_netmask}': {eee}")
-            raise DynamicAddressException(eee)
-        except BaseException:
-            logger.warning(f"intf='{self.name}' ipv4_addr='{self.ipv4_addr}' ipv4_netmask='{self.ipv4_netmask}'")
-            return self.default_ipv4_addr_object
+    # This method is on BaseIOSIntfLine()
+    @property
+    @logger.catch(reraise=True)
+    def ipv6_addr_object(self):
+        r"""Return a ccp_util.IPv6Obj object representing the address on this interface; if there is no address, return IPv6Obj()"""
+
+        retval = self.re_match_iter_typed(
+            r"^\s+ipv6\s+address\s+(?P<v6addr>\S+?)\/(?P<v6masklength>\d+)",
+            groupdict={"v6addr": str, "v6masklength": str},
+            default="",
+        )
+
+        if retval["v6addr"]=="":
+            return self.default_ipv6_addr_object
+        elif retval["v6addr"]=="dhcp":
+            return self.default_ipv6_addr_object
+        elif retval["v6addr"]=="negotiated":
+            return self.default_ipv6_addr_object
+        else:
+            return IPv6Obj(f"{retval['v6addr']}/{retval['v6masklength']}")
 
     # This method is on BaseIOSIntfLine()
     @property
@@ -1690,7 +1713,12 @@ class BaseIOSIntfLine(IOSCfgLine):
         condition1 = self.re_match_iter_typed(
             r"^\s+ip\s+address\s+(dhcp)\s*$", result_type=str, default=""
         )
+        condition2 = self.re_match_iter_typed(
+            r"^\s+ip\s+address\s+(negotiated)\s*$", result_type=str, default=""
+        )
         if condition1.lower() == "dhcp":
+            return ""
+        elif condition2.lower() == "negotiated":
             return ""
         else:
             return retval
@@ -1715,6 +1743,44 @@ class BaseIOSIntfLine(IOSCfgLine):
         ipv4_addr_object = self.ipv4_addr_object
         if ipv4_addr_object != self.default_ipv4_addr_object:
             return ipv4_addr_object.prefixlen
+        return 0
+
+    # This method is on BaseIOSIntfLine()
+    @property
+    @logger.catch(reraise=True)
+    def ipv6_addr(self):
+        r"""Return a string with the interface's IPv6 address, or '' if there is none"""
+        retval = self.re_match_iter_typed(
+            r"^\s+ipv6\s+address\s+(?P<v6addr>[^\/]+)",
+            result_type=str,
+            default="",
+        )
+        condition1 = self.re_match_iter_typed(
+            r"^\s+ipv6\s+address\s+(dhcp)\s*$", result_type=str, default=""
+        )
+        condition2 = self.re_match_iter_typed(
+            r"^\s+ipv6\s+address\s+(autoconfig)\s*$", result_type=str, default=""
+        )
+        condition3 = self.re_match_iter_typed(
+            r"^\s+ipv6\s+address\s+(negotiated)\s*$", result_type=str, default=""
+        )
+        if condition1.lower() == "dhcp":
+            return ""
+        elif condition2.lower() == "autoconfig":
+            return ""
+        elif condition3.lower() == "negotiated":
+            return ""
+        else:
+            return retval
+
+    # This method is on BaseIOSIntfLine()
+    @property
+    @logger.catch(reraise=True)
+    def ipv6_masklength(self):
+        r"""Return an integer with the interface's IPv6 mask length, or 0 if there is no IP address on the interace"""
+        ipv6_addr_object = self.ipv6_addr_object
+        if ipv6_addr_object != self.default_ipv6_addr_object:
+            return ipv6_addr_object.masklength
         return 0
 
     # This method is on BaseIOSIntfLine()
