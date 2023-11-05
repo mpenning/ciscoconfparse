@@ -11,6 +11,7 @@
     - Remove `print()` statements and add debugging
     - Use `InvalidParameters()` if parsed with `factory=True` on an unsupported syntax (was an `AssertionError()`).
     - Rename internal methods
+    - Fix several `models_cisco.py` methods / attributes, including initial IPv6 support
 
 ## Version: 1.9.27
 
