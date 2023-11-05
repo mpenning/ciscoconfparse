@@ -1234,6 +1234,7 @@ class BaseCfgLine(metaclass=ABCMeta):
             return result_type(default)
 
     # On BaseCfgLine()
+    @logger.catch(reraise=True)
     def re_match_iter_typed(
         self,
         regex,
