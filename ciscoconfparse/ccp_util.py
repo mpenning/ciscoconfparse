@@ -4119,7 +4119,7 @@ class CiscoIOSXRInterface(object):
             _sep2 = intf_short["sep1"]
             _sep3 = intf_short["sep1"]
             _slot = intf_short["slot"]
-            _processor = intf_long["processor"]
+            _processor = intf_short["processor"]
             _card = intf_short["card"]
             _port = intf_short["port"]
             _digit_separator = intf_short["digit_separator"]
