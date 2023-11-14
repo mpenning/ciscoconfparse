@@ -62,35 +62,112 @@ def testParse_valid_filepath_01():
     parse = CiscoConfParse(f"{THIS_TEST_PATH}/fixtures/configs/sample_01.ios")
     assert len(parse.ioscfg) == 450
 
-
 def testParse_valid_filepath_02():
     """Test reading a cisco ios config-file on disk (from filename in the config parameter); ref github issue #262."""
     parse = CiscoConfParse(config=f"{THIS_TEST_PATH}/fixtures/configs/sample_01.ios")
     assert len(parse.ioscfg) == 450
-
 
 def testParse_valid_filepath_03():
     """Test reading an f5 config-file on disk (without the config keyword); ref github issue #262."""
     parse = CiscoConfParse(f"{THIS_TEST_PATH}/fixtures/configs/sample_01.f5", comment="#", syntax="junos")
     assert len(parse.ioscfg) == 16
 
-
 def testParse_valid_filepath_04():
     """Test reading an f5 config-file on disk (from filename in the config parameter); ref github issue #262."""
     parse = CiscoConfParse(config=f"{THIS_TEST_PATH}/fixtures/configs/sample_01.f5", comment="#", syntax="junos")
     assert len(parse.ioscfg) == 16
-
 
 def testParse_valid_filepath_05():
     """Test reading a junos config-file on disk (without the config keyword); ref github issue #262."""
     parse = CiscoConfParse(f"{THIS_TEST_PATH}/fixtures/configs/sample_01.junos", comment="#", syntax="junos")
     assert len(parse.ioscfg) == 79
 
-
 def testParse_valid_filepath_06():
     """Test reading a junos config-file on disk (from filename in the config parameter); ref github issue #262."""
     parse = CiscoConfParse(config=f"{THIS_TEST_PATH}/fixtures/configs/sample_01.junos", comment="#", syntax="junos")
     assert len(parse.ioscfg) == 79
+
+def testParse_syntax_ios_nofactory_01():
+    """Ensure successful parse of IOS with no factory"""
+    parse = CiscoConfParse(
+        "fixtures/configs/sample_01.ios",
+        syntax="ios",
+        comment="!",
+        factory=False,
+    )
+    # No Factory ignores blank lines
+    assert len(parse.objs) == 450
+
+def testParse_syntax_ios_factory_01():
+    """Ensure successful parse of IOS with factory"""
+    parse = CiscoConfParse(
+        "fixtures/configs/sample_01.ios",
+        syntax="ios",
+        comment="!",
+        factory=True,
+    )
+    # Factory allows blank lines to exist... the banner has a blank line
+    assert len(parse.objs) == 451
+
+def testParse_syntax_nxos_nofactory_01():
+    """Ensure successful parse of NXOS with no factory"""
+    parse = CiscoConfParse(
+        "fixtures/configs/sample_01.nxos",
+        syntax="nxos",
+        comment="!",
+        factory=False,
+    )
+    assert len(parse.objs) == 998
+
+def testParse_syntax_nxos_factory_01():
+    """Ensure successful parse of NXOS with factory"""
+    parse = CiscoConfParse(
+        "fixtures/configs/sample_01.nxos",
+        syntax="nxos",
+        comment="!",
+        factory=True,
+    )
+    assert len(parse.objs) == 998
+
+def testParse_syntax_iosxr_nofactory_01():
+    """Ensure successful parse of IOS XR with no factory"""
+    parse = CiscoConfParse(
+        "fixtures/configs/sample_01.iosxr",
+        syntax="iosxr",
+        comment="!",
+        factory=False,
+    )
+    assert len(parse.objs) == 468
+
+def testParse_syntax_iosxr_factory_01():
+    """Ensure successful parse of IOS XR with factory"""
+    parse = CiscoConfParse(
+        "fixtures/configs/sample_01.iosxr",
+        syntax="iosxr",
+        comment="!",
+        factory=True,
+    )
+    assert len(parse.objs) == 476
+
+def testParse_syntax_asa_nofactory_01():
+    """Ensure successful parse of ASA with no factory"""
+    parse = CiscoConfParse(
+        "fixtures/configs/sample_01.asa",
+        syntax="asa",
+        comment="!",
+        factory=False,
+    )
+    assert len(parse.objs) == 422
+
+def testParse_syntax_asa_factory_01():
+    """Ensure successful parse of ASA with factory"""
+    parse = CiscoConfParse(
+        "fixtures/configs/sample_01.asa",
+        syntax="asa",
+        comment="!",
+        factory=True,
+    )
+    assert len(parse.objs) == 422
 
 def testParse_parse_line_braces_01():
     uut = parse_line_braces("ltm pool FOO {", comment_delimiter="#")
