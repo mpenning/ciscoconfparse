@@ -1023,12 +1023,12 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
     def ipv4_addr(self):
         r"""Return a string with the interface's IPv4 address, or '' if there is none"""
         retval = self.re_match_iter_typed(
-            r"^\s+ip\s+address\s+(\d+\.\d+\.\d+\.\d+)\s+\d+\.\d+\.\d+\.\d+\s*$",
+            r"^\s+ipv4\s+address\s+(\d+\.\d+\.\d+\.\d+)\s+\d+\.\d+\.\d+\.\d+\s*$",
             result_type=str,
             default="",
         )
         condition1 = self.re_match_iter_typed(
-            r"^\s+ip\s+address\s+(dhcp)\s*$", result_type=str, default=""
+            r"^\s+ipv4\s+address\s+(dhcp)\s*$", result_type=str, default=""
         )
         if condition1.lower() == "dhcp":
             error = "Cannot parse address from a dhcp interface: {}".format(self.name)
@@ -1040,7 +1040,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
     def ipv4_netmask(self):
         r"""Return a string with the interface's IPv4 netmask, or '' if there is none"""
         retval = self.re_match_iter_typed(
-            r"^\s+ip\s+address\s+\d+\.\d+\.\d+\.\d+\s+(\d+\.\d+\.\d+\.\d+)\s*$",
+            r"^\s+ipv4\s+address\s+\d+\.\d+\.\d+\.\d+\s+(\d+\.\d+\.\d+\.\d+)\s*$",
             result_type=str,
             default="",
         )
