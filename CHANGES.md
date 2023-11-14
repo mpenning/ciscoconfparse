@@ -4,6 +4,13 @@
 - Summary:
     - Insert something here
 
+
+## Version: 1.9.30
+
+- Released: 2023-11-14
+- Summary:
+    - Fix mis-named variable
+
 ## Version: 1.9.29
 
 - Released: 2023-11-14
