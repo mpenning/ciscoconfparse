@@ -65,6 +65,8 @@ from ciscoconfparse.models_nxos import NXOSCfgLine, NXOSIntfLine
 from ciscoconfparse.models_nxos import NXOSAaaGroupServerLine
 from ciscoconfparse.models_nxos import NXOSvPCLine
 
+from ciscoconfparse.models_iosxr import IOSXRCfgLine
+
 from ciscoconfparse.models_asa import ASAObjGroupNetwork
 from ciscoconfparse.models_asa import ASAObjGroupService
 from ciscoconfparse.models_asa import ASAHostnameLine
@@ -127,6 +129,9 @@ ALL_NXOS_FACTORY_CLASSES = [
     NXOSIntfGlobal,
     NXOSCfgLine,        # NXOSCfgLine MUST be last
 ]
+ALL_IOSXR_FACTORY_CLASSES = [
+    IOSXRCfgLine,
+]
 ALL_ASA_FACTORY_CLASSES = [
     ASAIntfLine,
     ASAName,
@@ -144,11 +149,11 @@ ALL_JUNOS_FACTORY_CLASSES = [
     JunosCfgLine,      # JunosCfgLine MUST be last
 ]
 
-
 # Indexing into CFGLINE is normally faster than serial if-statements...
 CFGLINE = {
     "ios": IOSCfgLine,
     "nxos": NXOSCfgLine,
+    "iosxr": IOSXRCfgLine,
     "asa": ASACfgLine,
     "junos": JunosCfgLine,
 }
@@ -156,6 +161,7 @@ CFGLINE = {
 ALL_VALID_SYNTAX = (
     "ios",
     "nxos",
+    "iosxr",
     "asa",
     "junos",
 )
@@ -632,7 +638,7 @@ class CiscoConfParse(object):
         ignore_blank_lines : bool
             ``ignore_blank_lines`` defaults to True; when this is set True, ciscoconfparse ignores blank configuration lines.  You might want to set ``ignore_blank_lines`` to False if you intentionally use blank lines in your configuration (ref: Github Issue #3), or you are parsing configurations which naturally have blank lines (such as Cisco Nexus configurations).
         syntax : str
-            A string holding the configuration type.  Default: 'ios'.  Must be one of: 'ios', 'nxos', 'asa', 'junos'.  Use 'junos' for any brace-delimited network configuration (including F5, Palo Alto, etc...).
+            A string holding the configuration type.  Default: 'ios'.  Must be one of: 'ios', 'nxos', 'iosxr', 'asa', 'junos'.  Use 'junos' for any brace-delimited network configuration (including F5, Palo Alto, etc...).
         encoding : str
             A string holding the coding type.  Default is `locale.getpreferredencoding()`
         read_only : bool
@@ -680,7 +686,7 @@ class CiscoConfParse(object):
         openargs : dict
             Returns a dictionary of valid arguments for `open()` (these change based on the running python version).
         syntax : str
-            A string holding the configuration type.  Default: 'ios'.  Must be one of: 'ios', 'nxos', 'asa', 'junos'.  Use 'junos' for any brace-delimited network configuration (including F5, Palo Alto, etc...).
+            A string holding the configuration type.  Default: 'ios'.  Must be one of: 'ios', 'nxos', 'iosxr', 'asa', 'junos'.  Use 'junos' for any brace-delimited network configuration (including F5, Palo Alto, etc...).
 
         """
         ######################################################################
@@ -1335,6 +1341,7 @@ class CiscoConfParse(object):
         if self.syntax in (
             "ios",
             "nxos",
+            "iosxr",
         ):
             if exactmatch is True:
                 for obj in self.find_objects("^interface"):
@@ -3658,6 +3665,7 @@ class CiscoConfParse(object):
                     {
                         "ios",
                         "nxos",
+                        "iosxr",
                         "asa",
                     }
                 ):
@@ -3816,7 +3824,7 @@ class HDiff(object):
         after_config : list
             A list of text configuration statements representing the most-recent config. Default value: `None`
         syntax : str
-            A string holding the configuration type.  Default: 'ios'.  Must be one of: 'ios', 'nxos', 'asa', 'junos'.  Use 'junos' for any brace-delimited network configuration (including F5, Palo Alto, etc...).
+            A string holding the configuration type.  Default: 'ios'.  Must be one of: 'ios', 'nxos', 'iosxr', 'asa', 'junos'.  Use 'junos' for any brace-delimited network configuration (including F5, Palo Alto, etc...).
         ordered_diff : bool
             A boolean for whether the returned-diff lines must be ordered.  Default value: `False`
         allow_duplicates : bool
@@ -5498,7 +5506,7 @@ class ConfigList(MutableSequence):
         #
         # Build the banner_re regexp... at this point ios
         #    and nxos share the same method...
-        if syntax=="ios" or syntax=="nxos":
+        if syntax=="ios" or syntax=="nxos" or syntax=="iosxr":
             banner_re = self._build_banner_re_ios()
             self._banner_mark_regex(banner_re)
 
@@ -5815,6 +5823,8 @@ def config_line_factory(all_lines=None, line=None, comment_delimiter="!", syntax
         factory_classes = ALL_IOS_FACTORY_CLASSES
     elif syntax=="nxos":
         factory_classes = ALL_NXOS_FACTORY_CLASSES
+    elif syntax=="iosxr":
+        factory_classes = ALL_IOSXR_FACTORY_CLASSES
     elif syntax=="asa":
         factory_classes = ALL_ASA_FACTORY_CLASSES
     elif syntax=="junos":

@@ -5,7 +5,7 @@ import os
 
 sys.path.insert(0, "..")
 
-from ciscoconfparse.ccp_util import IPv4Obj, CiscoRange, CiscoInterface
+from ciscoconfparse.ccp_util import IPv4Obj, CiscoRange, CiscoIOSInterface
 from ciscoconfparse.errors import DynamicAddressException
 from ciscoconfparse.ciscoconfparse import CiscoConfParse
 import pytest

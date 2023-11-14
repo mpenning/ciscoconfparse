@@ -30,7 +30,8 @@ from ciscoconfparse.ccp_util import PythonOptimizeCheck
 from ciscoconfparse.ciscoconfparse import *
 from ciscoconfparse.ccp_util import IPv4Obj
 from ciscoconfparse.ccp_util import IPv6Obj
-from ciscoconfparse.ccp_util import CiscoRange, CiscoInterface
+from ciscoconfparse.ccp_util import CiscoIOSInterface, CiscoIOSXRInterface
+from ciscoconfparse.ccp_util import CiscoRange
 from ciscoconfparse.ccp_util import run_this_posix_command
 from ciscoconfparse.ccp_util import ccp_logger_control
 from ciscoconfparse.ccp_util import configure_loguru

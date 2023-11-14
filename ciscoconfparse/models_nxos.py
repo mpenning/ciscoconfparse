@@ -42,7 +42,7 @@ from ciscoconfparse.ccp_util import (
 from ciscoconfparse.errors import InvalidCiscoInterface
 from ciscoconfparse.ccp_util import _IPV6_REGEX_STR_COMPRESSED3
 from ciscoconfparse.ccp_util import CiscoRange, IPv4Obj, IPv6Obj
-from ciscoconfparse.ccp_util import CiscoInterface
+from ciscoconfparse.ccp_util import CiscoIOSInterface
 from ciscoconfparse.ccp_abc import BaseCfgLine
 
 from loguru import logger

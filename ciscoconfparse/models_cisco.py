@@ -14,7 +14,7 @@ from ciscoconfparse.errors import InvalidCiscoEthernetVlan
 from ciscoconfparse.errors import InvalidCiscoInterface
 
 from ciscoconfparse.ccp_util import _IPV6_REGEX_STR_COMPRESSED3
-from ciscoconfparse.ccp_util import CiscoRange, CiscoInterface
+from ciscoconfparse.ccp_util import CiscoRange, CiscoIOSInterface
 from ciscoconfparse.ccp_util import IPv4Obj, IPv6Obj
 from ciscoconfparse.ccp_abc import BaseCfgLine
 
@@ -974,18 +974,18 @@ class BaseIOSIntfLine(IOSCfgLine):
 
     @property
     def interface_object(self):
-        """Return a CiscoInterface() instance for this interface
+        """Return a CiscoIOSInterface() instance for this interface
 
         Returns
         -------
-        CiscoInterface
-            The interface name as a CiscoInterface() instance, or '' if the object is not an interface.  The CiscoInterface instance can be transparently cast as a string into a typical Cisco IOS name.
+        CiscoIOSInterface
+            The interface name as a CiscoIOSInterface() instance, or '' if the object is not an interface.  The CiscoIOSInterface instance can be transparently cast as a string into a typical Cisco IOS name.
         """
         if not self.is_intf:
             error = f"`{self.text}` is not a valid Cisco interface"
             logger.error(error)
             raise InvalidCiscoInterface(error)
-        return CiscoInterface("".join(self.text.split()[1:]))
+        return CiscoIOSInterface("".join(self.text.split()[1:]))
 
     # This method is on BaseIOSIntfLine()
     @property

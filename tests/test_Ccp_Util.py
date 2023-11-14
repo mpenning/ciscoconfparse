@@ -44,7 +44,7 @@ sys.path.insert(0, "..")
 from ciscoconfparse.ccp_util import dns_lookup, reverse_dns_lookup, collapse_addresses
 from ciscoconfparse.ccp_util import IPv6Obj, IPv4Obj, L4Object, ip_factory
 from ciscoconfparse.ccp_util import _RGX_IPV4ADDR, _RGX_IPV6ADDR
-from ciscoconfparse.ccp_util import CiscoInterface, CiscoRange
+from ciscoconfparse.ccp_util import CiscoIOSInterface, CiscoRange
 import pytest
 
 from loguru import logger
@@ -641,9 +641,9 @@ def test_reverse_dns_lookup():
     except Exception:
         pytest.skip(test_result["error"])
 
-def test_CiscoInterface_01():
+def test_CiscoIOSInterface_01():
     """Check that a single number is parsed correctly"""
-    uut = CiscoInterface("Ethernet1")
+    uut = CiscoIOSInterface("Ethernet1")
     assert uut.prefix == "Ethernet"
     assert uut.card is None
     assert uut.slot is None
@@ -652,9 +652,9 @@ def test_CiscoInterface_01():
     assert uut.channel is None
     assert uut.interface_class is None
 
-def test_CiscoInterface_02():
+def test_CiscoIOSInterface_02():
     """Check that a card and port is parsed correctly"""
-    uut = CiscoInterface("Ethernet1/42")
+    uut = CiscoIOSInterface("Ethernet1/42")
     assert uut.prefix == "Ethernet"
     assert uut.slot == 1
     assert uut.card is None
@@ -663,9 +663,9 @@ def test_CiscoInterface_02():
     assert uut.channel is None
     assert uut.interface_class is None
 
-def test_CiscoInterface_03():
+def test_CiscoIOSInterface_03():
     """Check that a card and large port-number is parsed correctly"""
-    uut = CiscoInterface("Ethernet1/4242")
+    uut = CiscoIOSInterface("Ethernet1/4242")
     assert uut.prefix == "Ethernet"
     assert uut.slot == 1
     assert uut.card is None
@@ -674,9 +674,9 @@ def test_CiscoInterface_03():
     assert uut.channel is None
     assert uut.interface_class is None
 
-def test_CiscoInterface_04():
+def test_CiscoIOSInterface_04():
     """Check that a card, port and subinterface is parsed correctly"""
-    uut = CiscoInterface("Ethernet1/42.5")
+    uut = CiscoIOSInterface("Ethernet1/42.5")
     assert uut.prefix == "Ethernet"
     assert uut.slot == 1
     assert uut.card is None
@@ -685,9 +685,9 @@ def test_CiscoInterface_04():
     assert uut.channel is None
     assert uut.interface_class is None
 
-def test_CiscoInterface_05():
+def test_CiscoIOSInterface_05():
     """Check that a card, slot, port  is parsed correctly"""
-    uut = CiscoInterface("Ethernet1/3/42")
+    uut = CiscoIOSInterface("Ethernet1/3/42")
     assert uut.prefix == "Ethernet"
     assert uut.slot == 1
     assert uut.card == 3
@@ -696,9 +696,9 @@ def test_CiscoInterface_05():
     assert uut.channel is None
     assert uut.interface_class is None
 
-def test_CiscoInterface_06():
+def test_CiscoIOSInterface_06():
     """Check that a card, slot, port and subinterface  is parsed correctly"""
-    uut = CiscoInterface("Ethernet1/3/42.5")
+    uut = CiscoIOSInterface("Ethernet1/3/42.5")
     assert uut.prefix == "Ethernet"
     assert uut.slot == 1
     assert uut.card == 3
@@ -707,9 +707,9 @@ def test_CiscoInterface_06():
     assert uut.channel is None
     assert uut.interface_class is None
 
-def test_CiscoInterface_07():
+def test_CiscoIOSInterface_07():
     """Check that a card, slot, port, subinterface, and channel is parsed correctly"""
-    uut = CiscoInterface("Ethernet1/3/42.5:9")
+    uut = CiscoIOSInterface("Ethernet1/3/42.5:9")
     assert uut.prefix == "Ethernet"
     assert uut.slot == 1
     assert uut.card == 3
@@ -718,9 +718,9 @@ def test_CiscoInterface_07():
     assert uut.channel == 9
     assert uut.interface_class is None
 
-def test_CiscoInterface_08():
+def test_CiscoIOSInterface_08():
     """Check that a card, slot, port, subinterface, and channel is parsed correctly from a dict"""
-    uut = CiscoInterface(
+    uut = CiscoIOSInterface(
         interface_dict={
             'prefix': 'Ethernet',
             'card': 2,
@@ -740,9 +740,9 @@ def test_CiscoInterface_08():
     assert uut.digit_separator == "/"
     assert uut.interface_class is None
 
-def test_CiscoInterface_09():
+def test_CiscoIOSInterface_09():
     """Check that a port is parsed correctly from a dict"""
-    uut = CiscoInterface(
+    uut = CiscoIOSInterface(
         interface_dict={
             'prefix': 'Ethernet',
             'card': None,
@@ -762,9 +762,9 @@ def test_CiscoInterface_09():
     assert uut.digit_separator is None
     assert uut.interface_class is None
 
-def test_CiscoInterface_10():
+def test_CiscoIOSInterface_10():
     """Check that a card, slot, port, subinterface, and channel is parsed correctly"""
-    uut = CiscoInterface("Serial1/3/42.5:9 multipoint")
+    uut = CiscoIOSInterface("Serial1/3/42.5:9 multipoint")
     assert uut.prefix == "Serial"
     assert uut.slot == 1
     assert uut.card == 3
@@ -812,7 +812,7 @@ def test_CiscoRange_06():
     """Basic slot range test"""
     result_correct = {"1/1", "1/2", "1/3", "1/4", "1/5"}
     uut_str = "1/1-3,4,5"
-    # the CiscoRange() result_type None is a CiscoInterface() type with a 
+    # the CiscoRange() result_type None is a CiscoIOSInterface() type with a 
     #     port attribute...
     assert CiscoRange(uut_str, result_type=None).as_set(result_type=str) == result_correct
     assert CiscoRange(uut_str).iterate_attribute == "port"
@@ -930,29 +930,29 @@ def test_CiscoRange_22():
 def test_CiscoRange_23():
     """Check that the exact results are correct for CiscoRange().as_set() with a redundant input ('Eth1/1')"""
     result_correct = {
-        CiscoInterface("Eth1/1"),
-        CiscoInterface("Eth1/2"),
-        CiscoInterface("Eth1/3"),
-        CiscoInterface("Eth1/4"),
-        CiscoInterface("Eth1/5"),
-        CiscoInterface("Eth1/16"),
+        CiscoIOSInterface("Eth1/1"),
+        CiscoIOSInterface("Eth1/2"),
+        CiscoIOSInterface("Eth1/3"),
+        CiscoIOSInterface("Eth1/4"),
+        CiscoIOSInterface("Eth1/5"),
+        CiscoIOSInterface("Eth1/16"),
     }
     uut_str = "Eth1/1,Eth1/1-5,Eth1/16"
-    # CiscoRange(text="foo", result_type=None) returns CiscoInterface() instances...
+    # CiscoRange(text="foo", result_type=None) returns CiscoIOSInterface() instances...
     assert CiscoRange(uut_str, result_type=None).as_set(result_type=None) == result_correct
 
 def test_CiscoRange_24():
     """Check that the exact results are correct for CiscoRange().as_list() with a redundant input ('Eth1/1')"""
     result_correct = [
-        CiscoInterface("Eth1/1"),
-        CiscoInterface("Eth1/2"),
-        CiscoInterface("Eth1/3"),
-        CiscoInterface("Eth1/4"),
-        CiscoInterface("Eth1/5"),
-        CiscoInterface("Eth1/16"),
+        CiscoIOSInterface("Eth1/1"),
+        CiscoIOSInterface("Eth1/2"),
+        CiscoIOSInterface("Eth1/3"),
+        CiscoIOSInterface("Eth1/4"),
+        CiscoIOSInterface("Eth1/5"),
+        CiscoIOSInterface("Eth1/16"),
     ]
     uut_str = "Eth1/1,Eth1/1-5,Eth1/16"
-    # CiscoRange(text="foo", result_type=None) returns CiscoInterface() instances...
+    # CiscoRange(text="foo", result_type=None) returns CiscoIOSInterface() instances...
     assert CiscoRange(uut_str, result_type=None).as_list(result_type=None) == result_correct
 
 def test_CiscoRange_compressed_str_01():
@@ -970,13 +970,13 @@ def test_CiscoRange_contains_01():
     """Check that the exact results are correct that a CiscoRange() contains an input"""
     uut_str = "Ethernet1/1-20"
     # Ethernet1/5 is in CiscoRange("Ethernet1/1-20")...
-    assert CiscoInterface("Ethernet1/5") in CiscoRange(uut_str)
+    assert CiscoIOSInterface("Ethernet1/5") in CiscoRange(uut_str)
 
 def test_CiscoRange_contains_02():
     """Check that the exact results are correct that a CiscoRange() does not contain an input"""
     uut_str = "Ethernet1/1-20"
     # Ethernet1/5 is in CiscoRange("Ethernet1/1-20")...
-    assert (CiscoInterface("Ethernet1/48") in CiscoRange(uut_str)) is False
+    assert (CiscoIOSInterface("Ethernet1/48") in CiscoRange(uut_str)) is False
 
 #pragma warning restore S1192
 #pragma warning restore S1313
