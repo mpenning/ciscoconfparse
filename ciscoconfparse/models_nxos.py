@@ -402,18 +402,18 @@ class BaseNXOSIntfLine(NXOSCfgLine):
 
     @property
     def interface_object(self):
-        """Return a CiscoInterface() instance for this interface
+        """Return a CiscoIOSInterface() instance for this interface
 
         Returns
         -------
-        CiscoInterface
+        CiscoIOSInterface
             The interface name as a CiscoInterface() instance, or '' if the object is not an interface.  The CiscoInterface instance can be transparently cast as a string into a typical Cisco IOS name.
         """
         if not self.is_intf:
             error = "`{self.text}` is not a valid Cisco interface"
             logger.error(error)
             raise InvalidCiscoInterface(error)
-        return CiscoInterface("".join(self.text.split()[1:]))
+        return CiscoIOSInterface("".join(self.text.split()[1:]))
 
     @property
     def name(self):
