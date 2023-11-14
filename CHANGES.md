@@ -6,10 +6,11 @@
 
 ## Version: 1.9.29
 
-- Released: 2023-11-05
+- Released: 2023-11-14
 - Summary:
     - Add a keyword for `syntax='iosxr'` even though IOS XR parsing is not robust yet
     - Rename `CiscoInterface()` to `CiscoIOSInterface()`
+    - Add `CiscoIOSXRInterface()`
 
 ## Version: 1.9.28
 

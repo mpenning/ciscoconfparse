@@ -3104,6 +3104,7 @@ class CiscoIOSInterface(object):
             logger.debug(f"    CiscoRange().dump_internal_state(): channel = '{self._channel}'")
             logger.debug(f"    CiscoRange().dump_internal_state(): interface_class = '{self._interface_class}'")
             logger.debug(f"    CiscoRange().dump_internal_state():     initialized = '{self.initialized}'")
+            # Sleep to prevent stdout race conditions
             time.sleep(0.05)
         return True
 
@@ -3883,6 +3884,7 @@ class CiscoIOSXRInterface(object):
     _digit_separator = None
     _slot = None
     _card = None
+    _processor = None
     _port = None
     _subinterface = None
     _channel = None
@@ -3984,17 +3986,20 @@ class CiscoIOSXRInterface(object):
 
         self.initialized = True
 
+    # This method is on CiscoIOSXRInterface()
     def dump_internal_state(self):
         if self.debug is True:
             logger.debug(f"    CiscoRange().dump_internal_state(): prefix = '{self._prefix}'")
             logger.debug(f"    CiscoRange().dump_internal_state(): digit_separator = '{self._digit_separator}'")
             logger.debug(f"    CiscoRange().dump_internal_state(): slot = '{self._slot}'")
             logger.debug(f"    CiscoRange().dump_internal_state(): card = '{self._card}'")
+            logger.debug(f"    CiscoRange().dump_internal_state(): processor = '{self._processor}'")
             logger.debug(f"    CiscoRange().dump_internal_state(): port = '{self._port}'")
             logger.debug(f"    CiscoRange().dump_internal_state(): subinterface = '{self._subinterface}'")
             logger.debug(f"    CiscoRange().dump_internal_state(): channel = '{self._channel}'")
             logger.debug(f"    CiscoRange().dump_internal_state(): interface_class = '{self._interface_class}'")
             logger.debug(f"    CiscoRange().dump_internal_state():     initialized = '{self.initialized}'")
+            # Sleep to prevent stdout race conditions
             time.sleep(0.05)
         return True
 
@@ -4006,18 +4011,18 @@ class CiscoIOSXRInterface(object):
         params = {
             "slot": self._slot,
             "card": self._card,
+            "processor": self._processor,
             "port": self._port,
             "subinterface": self._subinterface,
             "channel": self._channel,
             "interface_class": self._interface_class,
         }
-        for param_key in ["slot", "card", "port", "subinterface", "channel", "interface_class"]:
+        for param_key in ["slot", "card", "processor", "port", "subinterface", "channel", "interface_class"]:
             ii = params[param_key]
             if isinstance(ii, (str, int)):
-                if param_key!="interface_class":
-                    retval.append(int(ii))
-                else:
-                    retval.append(str(ii))
+                # Under CiscoIOSInterface() the card could only be an integer, but
+                # CiscoIOSXRInterface() can have something like 'RP0'
+                retval.append(str(ii))
             elif ii is None:
                 retval.append(None)
             else:
@@ -4039,6 +4044,7 @@ class CiscoIOSXRInterface(object):
         if isinstance(intf_dict["slot"], (str, int)) and isinstance(intf_dict["port"], (str, int)):
             _slot = intf_dict["slot"]
             _card = intf_dict["card"]
+            _processor = intf_dict["processor"]
             _port = intf_dict["port"]
         ######################################################################
         # Handle port alone... if we don't rewrite slot as None, it isn't
@@ -4047,6 +4053,7 @@ class CiscoIOSXRInterface(object):
         elif intf_dict["slot"] is None and isinstance(intf_dict["port"], (str, int)):
             _slot = None
             _card = None
+            _processor = intf_dict["processor"]
             _port = intf_dict["port"]
         else:
             raise InvalidCiscoInterface(f"intf_dict={intf_dict}")
@@ -4057,6 +4064,7 @@ class CiscoIOSXRInterface(object):
         self.digit_separator = _digit_separator
         self.slot = _slot
         self.card = _card
+        self.processor = _processor
         self.port = _port
         self.subinterface = _subinterface
         self.channel = _channel
@@ -4078,6 +4086,7 @@ class CiscoIOSXRInterface(object):
         - number: '4/1/2'
         - slot: 4
         - card: 1
+        - processor: None
         - port: 2
         - subinterface: 9
         - channel: 5
@@ -4099,7 +4108,7 @@ class CiscoIOSXRInterface(object):
             raise InvalidCiscoInterface(error)
 
         re_intf_short = re.search(r"^(?P<prefix>[a-zA-Z\-\s]*)(?P<port_subinterface_channel>[\d\:\.^\-^a-z^A-Z^\s]+)(?P<interface_class>\s+[a-zA-Z\-]+){0,1}$", interface_name.strip())
-        re_intf_long = re.search(r"^(?P<prefix>[a-zA-Z\-\s]*)(?P<slot_card_port_subinterface_channel>[\d\:\.\/^\-^a-z^A-Z^\s]+)(?P<interface_class>\s+[a-zA-Z\-]+){0,1}$", interface_name.strip())
+        re_intf_long = re.search(r"^(?P<prefix>[a-zA-Z\-\s]*)(?P<slot_card_port_subinterface_channel>(?P<slot>[a-zA-Z0-9]+)(?P<sep1>[^\:^\.^\-^\s^\d^a-z^A-Z])?(?P<card>[a-zA-Z0-9]+)?(?P<sep2>[^\:^\.^\-^\s^\d^a-z^A-Z])?(?P<processor>[a-zA-Z0-9]+)?(?P<sep3>[^\:^\.^\-^\s^\d^a-z^A-Z])?(?P<port>[a-zA-Z0-9]+)?)", interface_name.strip())
         re_any = re.search(r".*", interface_name.strip())
         if isinstance(re_intf_short, re.Match):
 
@@ -4108,7 +4117,9 @@ class CiscoIOSXRInterface(object):
             _prefix = intf_short["prefix"]
             _sep1 = intf_short["sep1"]
             _sep2 = intf_short["sep1"]
+            _sep3 = intf_short["sep1"]
             _slot = intf_short["slot"]
+            _processor = intf_long["processor"]
             _card = intf_short["card"]
             _port = intf_short["port"]
             _digit_separator = intf_short["digit_separator"]
@@ -4123,7 +4134,9 @@ class CiscoIOSXRInterface(object):
             _prefix = intf_long["prefix"]
             _sep1 = intf_long["sep1"]
             _sep2 = intf_long["sep1"]
+            _sep3 = intf_long["sep1"]
             _slot = intf_long["slot"]
+            _processor = intf_long["processor"]
             _card = intf_long["card"]
             _port = intf_long["port"]
             _digit_separator = intf_long["digit_separator"]
@@ -4148,6 +4161,7 @@ class CiscoIOSXRInterface(object):
             "digit_separator": _digit_separator,
             "slot": _slot,
             "card": _card,
+            "processor": _processor,
             "port": _port,
             "subinterface": _subinterface,
             "channel": _channel,
@@ -4158,6 +4172,7 @@ class CiscoIOSXRInterface(object):
             logger.debug(f"    CiscoRange().parse_single_interface(): _digit_separator = '{_digit_separator}'")
             logger.debug(f"    CiscoRange().parse_single_interface(): _slot = '{_slot}'")
             logger.debug(f"    CiscoRange().parse_single_interface(): _card = '{_card}'")
+            logger.debug(f"    CiscoRange().parse_single_interface(): _processor = '{_processor}'")
             logger.debug(f"    CiscoRange().parse_single_interface(): _port = '{_port}'")
             logger.debug(f"    CiscoRange().parse_single_interface(): _subinterface = '{_subinterface}'")
             logger.debug(f"    CiscoRange().parse_single_interface(): _channel = '{_channel}'")
@@ -4178,8 +4193,10 @@ class CiscoIOSXRInterface(object):
         _prefix = interface_dict["prefix"]
         _sep1 = interface_dict.get("sep1", None)
         _sep2 = interface_dict.get("sep1", None)
+        _sep3 = interface_dict.get("sep1", None)
         _slot = interface_dict["slot"]
         _card = interface_dict["card"]
+        _processor = interface_dict["processor"]
         _port = interface_dict["port"]
         _digit_separator = interface_dict["digit_separator"]
         _subinterface = interface_dict["subinterface"]
@@ -4231,8 +4248,10 @@ class CiscoIOSXRInterface(object):
         _slot_card_port_subinterface_channel = groupdict_intf_short["port_subinterface_channel"]
         _sep1 = None
         _sep2 = None
+        _sep3 = None
         _slot = None
         _card = None
+        _processor = None
         _port = groupdict_port_short["port"]
         _digit_separator = _sep1
         _number = f"{_port}"
@@ -4256,14 +4275,16 @@ class CiscoIOSXRInterface(object):
         else:
             _interface_class = None
 
-        _sort_list = [_slot, _card, _port, _subinterface, _channel, _interface_class]
+        _sort_list = [_slot, _card, _processor, _port, _subinterface, _channel, _interface_class]
 
         return {
             "prefix": _prefix,
             "sep1": _sep1,
             "sep2": _sep2,
+            "sep3": _sep3,
             "card": _card,
             "slot": _slot,
+            "processor": _processor,
             "port": _port,
             "digit_separator": _digit_separator,
             "subinterface": _subinterface,
@@ -4291,8 +4312,10 @@ class CiscoIOSXRInterface(object):
             raise ValueError(error)
 
         _prefix = groupdict_intf_long.get("prefix", '').strip()
+        # Cisco IOS XR can have mixed number and letter interfaces, it's different than
+        # Cisco IOS, example: MgmtEth0/RSP1/CPU0/0
         re_slot_card_port = re.search(
-            r"^(?P<slot>\d+)(?P<sep1>[^\:^\.^\-^\s^\d^a-z^A-Z])?(?P<card>\d+)?(?P<sep2>[^\:^\.^\-^\s^\d^a-z^A-Z])?(?P<port>\d+)?",
+            r"^(?P<prefix>[a-zA-Z\-\s]*)(?P<slot_card_port_subinterface_channel>(?P<slot>[a-zA-Z0-9]+)(?P<sep1>[^\:^\.^\-^\s^\d^a-z^A-Z])?(?P<card>[a-zA-Z0-9]+)?(?P<sep2>[^\:^\.^\-^\s^\d^a-z^A-Z])?(?P<processor>[a-zA-Z0-9]+)?(?P<sep3>[^\:^\.^\-^\s^\d^a-z^A-Z])?(?P<port>[a-zA-Z0-9]+)?)",
             groupdict_intf_long["slot_card_port_subinterface_channel"]
         )
         if isinstance(re_slot_card_port, re.Match):
@@ -4301,9 +4324,11 @@ class CiscoIOSXRInterface(object):
                 _slot_card_port_subinterface_channel = groupdict_intf_long["slot_card_port_subinterface_channel"]
                 _prefix = groupdict_intf_long["prefix"]
                 _sep1 = groupdict_slot_card_port["sep1"]
-                _sep2 = groupdict_slot_card_port["sep1"]
+                _sep2 = groupdict_slot_card_port["sep2"]
+                _sep3 = groupdict_slot_card_port["sep3"]
                 _slot = groupdict_slot_card_port["slot"]
                 _card = groupdict_slot_card_port["card"]
+                _processor = groupdict_slot_card_port["processor"]
                 _port = groupdict_slot_card_port["port"]
                 try:
                     _interface_class = re.split(r"\s+", groupdict_intf_long["slot_card_port_subinterface_channel"])[1]
@@ -4317,16 +4342,9 @@ class CiscoIOSXRInterface(object):
                     _port = _card
                     _card = None
 
-                if isinstance(_slot, str):
-                    _slot = int(_slot)
-                if isinstance(_card, str):
-                    _card = int(_card)
-                if isinstance(_port, str):
-                    _port = int(_port)
-
                 if debug is True:
                     logger.debug(f"    CiscoRange().parse_single_interface(): {groupdict_slot_card_port}")
-                if isinstance(_sep1, str) and _sep1 == _sep2:
+                if isinstance(_sep1, str) and _sep1 == _sep2 == _sep3:
                     _digit_separator = _sep1
                     if debug is True:
                         logger.debug(f"    CiscoRange().parse_single_interface(): `_digit_separator` = '{_digit_separator}'`")
@@ -4366,7 +4384,7 @@ class CiscoIOSXRInterface(object):
                 else:
                     _interface_class = self._interface_class
 
-                _sort_list = [_slot, _card, _port, _subinterface, _channel, _interface_class]
+                _sort_list = [_slot, _card, _processor, _port, _subinterface, _channel, _interface_class]
 
 
             else:
@@ -4386,8 +4404,10 @@ class CiscoIOSXRInterface(object):
             "digit_separator": _digit_separator,
             "sep1": _sep1,
             "sep2": _sep2,
+            "sep3": _sep3,
             "card": _card,
             "slot": _slot,
+            "processor": _processor,
             "port": _port,
             "subinterface": _subinterface,
             "channel": _channel,
@@ -4402,6 +4422,7 @@ class CiscoIOSXRInterface(object):
         obj.digit_separator = attribute_dict["digit_separator"]
         obj.slot = attribute_dict["slot"]
         obj.card = attribute_dict["card"]
+        obj.processor = attribute_dict["processor"]
         obj.port = attribute_dict["port"]
         obj.subinterface = attribute_dict["subinterface"]
         obj.channel = attribute_dict["channel"]
@@ -4416,6 +4437,7 @@ class CiscoIOSXRInterface(object):
             "digit_separator": self.digit_separator,
             "card": self.card,
             "slot": self.slot,
+            "processor": self.processor,
             "port": self.port,
             "subinterface": self.subinterface,
             "channel": self.channel,
@@ -4515,8 +4537,8 @@ class CiscoIOSXRInterface(object):
 
         if self.initialized is True:
             # Shortcut invalid interface configurations...
-            if self.slot is None and self.card is None and self.port is None:
-                error = f"Could not parse into _number: _slot: {self._slot} _card: {self._card} _port: {self._port} _digit_separator: {self.digit_separator}"
+            if self.slot is None and self.card is None and self.processor is None and self.port is None:
+                error = f"Could not parse into _number: _slot: {self._slot} _card: {self._card} _processor: {seof._processor} _port: {self._port} _digit_separator: {self.digit_separator}"
                 logger.error(error)
                 # Use sys.exit(1) here to avoid infinite recursion during
                 #     pathological errors such as a dash in an interface range
@@ -4524,14 +4546,14 @@ class CiscoIOSXRInterface(object):
                 sys.exit(99)
 
             # Fix regex port parsing problems... relocate _slot and _card, as-required
-            if self._slot is None and self._card is None and isinstance(self._port, (int, str)):
+            if self._slot is None and self._card is None and self._processor is None and isinstance(self._port, (int, str)):
                 self._number = f"{self._port}"
-            elif isinstance(self._slot, (int, str)) and self._card is None and isinstance(self._port, (int, str)):
+            elif isinstance(self._slot, (int, str)) and self._card is None and self._processor is None and isinstance(self._port, (int, str)):
                 self._number = f"{self._slot}{self.digit_separator}{self._port}"
-            elif isinstance(self._slot, (int, str)) and isinstance(self._card, (int, str)) and isinstance(self._port, (int, str)):
-                self._number = f"{self._slot}{self.digit_separator}{self._card}{self.digit_separator}{self._port}"
+            elif isinstance(self._slot, (int, str)) and isinstance(self._card, (int, str)) and isinstance(self._processor, (int, str)) and isinstance(self._port, (int, str)):
+                self._number = f"{self._slot}{self.digit_separator}{self._card}{self.digit_separator}{self.processor}{self.digit_separator}{self._port}"
             else:
-                error = f"Could not parse into _number: _slot: {self._slot} _card: {self._card} _port: {self._port} _digit_separator: {self.digit_separator}"
+                error = f"Could not parse into _number: _slot: {self._slot} _card: {self._card} _processor: {self._processor} _port: {self._port} _digit_separator: {self.digit_separator}"
                 logger.critical(error)
                 raise ValueError(error)
         else:
@@ -4552,7 +4574,7 @@ class CiscoIOSXRInterface(object):
         retval = []
         for ii in [self._slot, self._card, self._port]:
             if isinstance(ii, (str, int)):
-                retval.append(int(ii))
+                retval.append(str(ii))
             elif ii is None:
                 retval.append(None)
             else:
@@ -4618,7 +4640,7 @@ class CiscoIOSXRInterface(object):
         if self._slot is None:
             return None
         else:
-            return int(self._slot)
+            return str(self._slot)
 
     # This method is on CiscoIOSXRInterface()
     @slot.setter
@@ -4641,18 +4663,41 @@ class CiscoIOSXRInterface(object):
         if self._card is None:
             return self._card
         else:
-            return int(self._card)
+            return str(self._card)
 
     # This method is on CiscoIOSXRInterface()
     @card.setter
     @logger.catch(reraise=True)
     def card(self, value):
         if isinstance(value, (int, str)):
-            self._card = int(value)
+            self._card = str(value)
         elif value is None:
             self._card = value
         else:
             error = f"Could not set _card: {value} {type(value)}"
+            logger.critical(error)
+            raise ValueError(error)
+
+    # This method is on CiscoIOSXRInterface()
+    @property
+    @logger.catch(reraise=True)
+    def processor(self):
+        "Return 8 if self.interface_name is 'Serial 2/1/8.3:6' and raise a ValueError if there is no port"
+        if self._processor is None:
+            return None
+        else:
+            return str(self._processor)
+
+    # This method is on CiscoIOSXRInterface()
+    @processor.setter
+    @logger.catch(reraise=True)
+    def processor(self, value):
+        if isinstance(value, (int, str)):
+            self._processor = str(value)
+        elif value is None:
+            self._processor = value
+        else:
+            error = f"Could not set _processor: {value} {type(value)}"
             logger.critical(error)
             raise ValueError(error)
 
