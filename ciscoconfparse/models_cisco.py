@@ -2283,10 +2283,9 @@ class BaseIOSIntfLine(IOSCfgLine):
             elif vdict["allowed"] != "_nomatch_":
                 retval = CiscoRange(vdict["allowed"], result_type=int)
 
-        print("----")
+        # Inspect vdict keys in a specific order to ensure best results...
         for key in ["allowed", "add", "except", "remove"]:
             _value = vdict[key]
-            print(f"KEY: {key}, VALUE: {_value}")
 
             if isinstance(_value, str):
                 _value = _value.strip()

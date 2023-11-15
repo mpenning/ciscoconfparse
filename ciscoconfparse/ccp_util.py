@@ -91,19 +91,20 @@ _CISCO_RANGE_STR = r"""^(?P<intf_prefix>[a-zA-Z\s]*)(?P<slot_prefix>[\d\/]*\d+\/
 _RGX_CISCO_RANGE = re.compile(_CISCO_RANGE_STR)
 
 ####################### Begin IPv6 #############################
-_IPV6_REGEX_STR = r"""(?!:::\S+?$)       # Negative Lookahead for 3 colons
- (?P<addr>                               # Begin a group named 'addr'
- (?P<opt1>{0}(?::{0}){{7}})              # no double colons, option 1
-|(?P<opt2>(?:{0}:){{1}}(?::{0}){{1,6}})  # match fe80::1
-|(?P<opt3>(?:{0}:){{2}}(?::{0}){{1,5}})  # match fe80:a::1
-|(?P<opt4>(?:{0}:){{3}}(?::{0}){{1,4}})  # match fe80:a:b::1
-|(?P<opt5>(?:{0}:){{4}}(?::{0}){{1,3}})  # match fe80:a:b:c::1
-|(?P<opt6>(?:{0}:){{5}}(?::{0}){{1,2}})  # match fe80:a:b:c:d::1
-|(?P<opt7>(?:{0}:){{6}}(?::{0}){{1,1}})  # match fe80:a:b:c:d:e::1
-|(?P<opt8>:(?::{0}){{1,7}})              # ipv6 with leading double colons
-|(?P<opt9>(?:{0}:){{1,7}}:)              # ipv6 with trailing double colons
-|(?P<opt10>(?:::))                       # ipv6 bare double colons (default route)
-)([/\s](?P<masklen>\d+))*                # match 'masklen' and end 'addr' group
+_IPV6_REGEX_STR = r"""(?!:::\S+?$)             # Negative Lookahead for 3 colons
+ (?P<addr>                                     # Begin a group named 'addr'
+ (?P<opt1>{0}(?::{0}){{7}})                    # no double colons, option 1
+|(?P<opt2>[0-9a-fA-F\:]+?\d+\.\d+\.\d+\.\d+)   # ipv4 embedded in an ipv6 address
+|(?P<opt3>(?:{0}:){{1}}(?::{0}){{1,6}})        # match fe80::1
+|(?P<opt4>(?:{0}:){{2}}(?::{0}){{1,5}})        # match fe80:a::1
+|(?P<opt5>(?:{0}:){{3}}(?::{0}){{1,4}})        # match fe80:a:b::1
+|(?P<opt6>(?:{0}:){{4}}(?::{0}){{1,3}})        # match fe80:a:b:c::1
+|(?P<opt7>(?:{0}:){{5}}(?::{0}){{1,2}})        # match fe80:a:b:c:d::1
+|(?P<opt8>(?:{0}:){{6}}(?::{0}){{1,1}})        # match fe80:a:b:c:d:e::1
+|(?P<opt9>:(?::{0}){{1,7}})                    # ipv6 with leading double colons
+|(?P<opt10>(?:{0}:){{1,7}}:)                   # ipv6 with trailing double colons
+|(?P<opt11>(?:::))                             # ipv6 bare double colons (default route)
+)([/\s](?P<masklen>\d+))*                      # match 'masklen' and end 'addr' group
 """.format(_IPV6_RGX_CLS)
 
 _IPV6_REGEX_STR_COMPRESSED1 = r"""(?!:::\S+?$)(?P<addr1>(?P<opt1_1>{0}(?::{0}){{7}})|(?P<opt1_2>(?:{0}:){{1}}(?::{0}){{1,6}})|(?P<opt1_3>(?:{0}:){{2}}(?::{0}){{1,5}})|(?P<opt1_4>(?:{0}:){{3}}(?::{0}){{1,4}})|(?P<opt1_5>(?:{0}:){{4}}(?::{0}){{1,3}})|(?P<opt1_6>(?:{0}:){{5}}(?::{0}){{1,2}})|(?P<opt1_7>(?:{0}:){{6}}(?::{0}){{1,1}})|(?P<opt1_8>:(?::{0}){{1,7}})|(?P<opt1_9>(?:{0}:){{1,7}}:)|(?P<opt1_10>(?:::)))""".format(_IPV6_RGX_CLS)
@@ -1879,7 +1880,7 @@ class IPv6Obj(object):
             # Example 'v6_groupdict'
             #     v6_groupdict = {'addr': '2b00:cd80:14:10::1', 'opt1': None, 'opt2': None, 'opt3': None, 'opt4': None, 'opt5': '2b00:cd80:14:10::1', 'opt6': None, 'opt7': None, 'opt8': None, 'opt9': None, 'opt10': None, 'masklen': '64'}
             v6_groupdict = v6_str_rgx.groupdict()
-            for key in ["addr", "opt1", "opt2", "opt3", "opt4", "opt5", "opt6", "opt7", "opt8", "opt9", "opt10",]:
+            for key in ["addr", "opt1", "opt2", "opt3", "opt4", "opt5", "opt6", "opt7", "opt8", "opt9", "opt10", "opt11"]:
                 _ipv6 = v6_groupdict[key]
                 if _ipv6 is not None:
                     break

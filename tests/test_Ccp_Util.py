@@ -597,12 +597,25 @@ def testIPv6Obj_lt_01():
     """Simple less_than test"""
     assert IPv6Obj("::1") < IPv6Obj("::2")
 
+def testIPv6Obj_IPv4_embedded_in_IPv6_01():
+    """Test IPv6Obj with an IPv4 address (192.168.1.254) embedded in an IPv6 address"""
+    assert IPv6Obj("::192.168.1.254") == IPv6Obj("::c0a8:1fe")
+
+def testIPv6Obj_IPv4_embedded_in_IPv6_02():
+    """Test IPv6Obj with an IPv4 address (192.0.2.33) embedded in an IPv6 address"""
+    assert IPv6Obj("2001:db8:122:344::192.0.2.33") == IPv6Obj("2001:db8:122:344::c000:221")
+
+def testIPv6Obj_IPv4_embedded_in_IPv6_03():
+    """Test IPv6Obj with an RFC 6052 NAT64 prefix (64:ff9b::) using IPv4 address (10.20.0.1) embedded in an IPv6 address"""
+    assert IPv6Obj("64:ff9b::192.0.2.33") == IPv6Obj("64:ff9b::c000:221")
+
+def testIPv6Obj_IPv4_embedded_in_IPv6_04():
+    """Test IPv6Obj with an IPv4 address (192.0.2.4) embedded in an IPv6 address"""
+    assert IPv6Obj("::ffff:192.0.2.4") == IPv6Obj("::ffff:c000:204")
 
 def test_collapse_addresses_01():
 
     net_collapsed = ipaddress.collapse_addresses([IPv4Network('192.0.0.0/22'), IPv4Network('192.0.2.128/25')])
-
-
     for idx, entry in enumerate(net_collapsed):
         if idx==0:
             assert entry == IPv4Network("192.0.0.0/22")
