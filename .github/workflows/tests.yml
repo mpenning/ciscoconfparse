@@ -47,3 +47,4 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
           cache-dependency-path: 'requirements/*.txt'
+        run: cd tests && pytest test_*py
