@@ -166,6 +166,10 @@ ALL_VALID_SYNTAX = (
     "junos",
 )
 
+ALL_BRACE_SYNTAX = {
+    "junos",
+}
+
 
 @logger.catch(reraise=True)
 def get_version_number():
@@ -1338,11 +1342,7 @@ class CiscoConfParse(object):
             raise ValueError(err_text)
 
         retval = list()
-        if self.syntax in (
-            "ios",
-            "nxos",
-            "iosxr",
-        ):
+        if self.syntax not in ALL_BRACE_SYNTAX:
             if exactmatch is True:
                 for obj in self.find_objects("^interface"):
                     if intfspec.lower() in obj.abbvs:
@@ -3661,14 +3661,7 @@ class CiscoConfParse(object):
                 continue
 
             if remove_lines is True and action == "remove":
-                if _syntax in set(
-                    {
-                        "ios",
-                        "nxos",
-                        "iosxr",
-                        "asa",
-                    }
-                ):
+                if _syntax not in ALL_BRACE_SYNTAX:
                     uu = re.search(uncfgspec, command)
                     remove_cmd = indent * " " + "no " + uu.group(0).strip()
                     # 'no no ' will become ''...
@@ -5506,7 +5499,7 @@ class ConfigList(MutableSequence):
         #
         # Build the banner_re regexp... at this point ios
         #    and nxos share the same method...
-        if syntax=="ios" or syntax=="nxos" or syntax=="iosxr":
+        if syntax not in ALL_BRACE_SYNTAX:
             banner_re = self._build_banner_re_ios()
             self._banner_mark_regex(banner_re)
 

@@ -44,7 +44,8 @@ sys.path.insert(0, "..")
 from ciscoconfparse.ccp_util import dns_lookup, reverse_dns_lookup, collapse_addresses
 from ciscoconfparse.ccp_util import IPv6Obj, IPv4Obj, L4Object, ip_factory
 from ciscoconfparse.ccp_util import _RGX_IPV4ADDR, _RGX_IPV6ADDR
-from ciscoconfparse.ccp_util import CiscoIOSInterface, CiscoRange
+from ciscoconfparse.ccp_util import CiscoIOSInterface, CiscoIOSXRInterface
+from ciscoconfparse.ccp_util import CiscoRange
 import pytest
 
 from loguru import logger
@@ -814,7 +815,7 @@ def test_CiscoRange_06():
     uut_str = "1/1-3,4,5"
     # the CiscoRange() result_type None is a CiscoIOSInterface() type with a 
     #     port attribute...
-    assert CiscoRange(uut_str, result_type=None).as_set(result_type=str) == result_correct
+    assert CiscoRange(uut_str, result_type=CiscoIOSInterface).as_set(result_type=str) == result_correct
     assert CiscoRange(uut_str).iterate_attribute == "port"
 
 

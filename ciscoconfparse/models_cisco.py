@@ -2197,132 +2197,125 @@ class BaseIOSIntfLine(IOSCfgLine):
             return 0
 
 
+        _all_vlans = "1-4094"
+        _max_number_vlans = 4094
         # Default to allow allow all vlans...
-        vdict = {"allowed": "1-4094"}
+        vdict = {
+            "allowed": _all_vlans,
+            "add": None,
+            "except": None,
+            "remove": None,
+        }
 
         ## Iterate over switchport trunk statements
         for obj in self.children:
             split_line = [ii for ii in obj.text.split() if ii.strip() != ""]
             length_split_line = len(split_line)
 
-            ## For every child object, check whether the vlan list is modified
-            allowed_str = obj.re_match_typed(
-                # switchport trunk allowed vlan
-                r"^\s+switchport\s+trunk\s+allowed\s+vlan\s+(all|none|\d[\d\-\,\s]*)$",
-                default="_nomatch_",
-                result_type=str,
-            ).lower()
-            if allowed_str != "_nomatch_":
-                if vdict.get("allowed", "_no_allowed_") != "_no_allowed_":
-                    # Replace the default allow of 1-4094...
-                    vdict["allowed"] = allowed_str
-                elif vdict.get("allowed", None) is None:
-                    # Specify an initial list of vlans...
-                    vdict["allowed"] = allowed_str
-                elif allowed_str != "none" and allowed_str != "all":
-                    # handle **double allowed** statements here...
-                    vdict["allowed"] += f",{allowed_str}"
-                else:
-                    raise NotImplementedError("Unexpected command: `{obj.text}`")
 
-            add_str = obj.re_match_typed(
-                r"^\s+switchport\s+trunk\s+allowed\s+vlan\s+add\s+(\d[\d\-\,\s]*)$",
-                default="_nomatch_",
-                result_type=str,
-            ).lower()
-            if add_str != "_nomatch_":
-                if vdict.get("add", None) is None:
-                    vdict["add"] = add_str
-                else:
-                    vdict["add"] += f",{add_str}"
+            if obj.text.split()[0:5] == ["switchport", "trunk", "allowed", "vlan", "add"]:
+                add_str = obj.re_match_typed(
+                    r"^\s+switchport\s+trunk\s+allowed\s+vlan\s+add\s+(\d[\d\-\,\s]*)$",
+                    default="_nomatch_",
+                    result_type=str,
+                ).lower()
+                if add_str != "_nomatch_":
+                    if vdict["add"] is None:
+                        vdict["add"] = add_str
+                    else:
+                        vdict["add"] += f",{add_str}"
 
-            exc_str = obj.re_match_typed(
-                r"^\s+switchport\s+trunk\s+allowed\s+vlan\s+except\s+(\d[\d\-\,\s]*)$",
-                default="_nomatch_",
-                result_type=str,
-            ).lower()
-            if exc_str != "_nomatch_":
-                if vdict.get("except", None) is None:
-                    vdict["except"] = exc_str
-                else:
-                    vdict["except"] += f",{exc_str}"
+            elif obj.text.split()[0:5] == ["switchport", "trunk", "allowed", "vlan", "except"]:
+                exc_str = obj.re_match_typed(
+                    r"^\s+switchport\s+trunk\s+allowed\s+vlan\s+except\s+(\d[\d\-\,\s]*)$",
+                    default="_nomatch_",
+                    result_type=str,
+                ).lower()
+                if exc_str != "_nomatch_":
+                    if vdict["except"] is None:
+                        vdict["except"] = exc_str
+                    else:
+                        vdict["except"] += f",{exc_str}"
 
-            rem_str = obj.re_match_typed(
-                r"^\s+switchport\s+trunk\s+allowed\s+vlan\s+remove\s+(\d[\d\-\,\s]*)$",
-                default="_nomatch_",
-                result_type=str,
-            ).lower()
-            if rem_str != "_nomatch_":
-                if vdict.get("remove", None) is None:
-                    vdict["remove"] = rem_str
-                else:
-                    vdict["remove"] += f",{rem_str}"
+            elif obj.text.split()[0:5] == ["switchport", "trunk", "allowed", "vlan", "remove"]:
+                rem_str = obj.re_match_typed(
+                    r"^\s+switchport\s+trunk\s+allowed\s+vlan\s+remove\s+(\d[\d\-\,\s]*)$",
+                    default="_nomatch_",
+                    result_type=str,
+                ).lower()
+                if rem_str != "_nomatch_":
+                    if vdict["remove"] is None:
+                        vdict["remove"] = rem_str
+                    else:
+                        vdict["remove"] += f",{rem_str}"
+
+            elif obj.text.split()[0:4] == ["switchport", "trunk", "allowed", "vlan"]:
+                ## For every child object, check whether the vlan list is modified
+                allowed_str = obj.re_match_typed(
+                    # switchport trunk allowed vlan
+                    r"^\s+switchport\s+trunk\s+allowed\s+vlan\s+(all|none|\d[\d\-\,\s]*)$",
+                    default="_nomatch_",
+                    result_type=str,
+                ).lower()
+                if allowed_str != "_nomatch_":
+                    if allowed_str == "none":
+                        # Replace the default allow of 1-4094...
+                        vdict["allowed"] = ""
+                    elif allowed_str == "all":
+                        # Specify an initial list of vlans...
+                        vdict["allowed"] = _all_vlans
+                    else:
+                        # handle **double allowed** statements here...
+                        if vdict["allowed"] == _all_vlans:
+                            vdict["allowed"] = f"{allowed_str}"
+                        elif vdict["allowed"] == "":
+                            vdict["allowed"] = f"{allowed_str}"
+                        else:
+                            vdict["allowed"] += f",{allowed_str}"
 
         ## Analyze each vdict in sequence and apply to retval sequentially
-        if isinstance(vdict.get("allowed", None), str):
-            if vdict.get("allowed") == "all":
-                if len(retval) != 4094:
+        if isinstance(vdict["allowed"], str):
+            if vdict["allowed"] == _all_vlans:
+                if len(retval) != _max_number_vlans:
                     retval = CiscoRange(f"1-{MAX_VLAN}", result_type=int)
-            elif vdict.get("allowed") == "none":
+            elif vdict["allowed"] == "":
                 retval = CiscoRange(result_type=int)
-            elif vdict.get("allowed") != "_nomatch_":
+            elif vdict["allowed"] != "_nomatch_":
                 retval = CiscoRange(vdict["allowed"], result_type=int)
 
-        for key, _value in vdict.items():
-            _value = _value.strip()
+        print("----")
+        for key in ["allowed", "add", "except", "remove"]:
+            _value = vdict[key]
+            print(f"KEY: {key}, VALUE: {_value}")
+
+            if isinstance(_value, str):
+                _value = _value.strip()
+            elif _value is None:
+                # There is nothing to be done if _value is None...
+                continue
+
             if _value == "":
                 continue
             elif _value != "_nomatch_":
                 ## allowed in the key overrides previous values
                 if key=="allowed":
+                    # When considering 'allowed', reset retval to be empty...
                     retval = CiscoRange(result_type=int)
                     if _value.lower() == "none":
                         continue
                     elif _value.lower() == "all":
                         retval = CiscoRange(text=f"1-{MAX_VLAN}", result_type=int)
-                    elif _value == "_nomatch_":
-                        for ii in _value.split(","):
-                            if "-" in _value:
-                                for jj in CiscoRange(_value, result_type=int):
-                                    retval.append(int(jj), ignore_errors=True)
-                            else:
-                                retval.append(int(ii), ignore_errors=True)
-                    elif isinstance(re.search(r"^\d[\d\-\,]*", _value), re.Match):
-                        for ii in _value.split(","):
-                            if "-" in _value:
-                                for jj in CiscoRange(_value, result_type=int):
-                                    retval.append(int(jj), ignore_errors=True)
-                            else:
-                                retval.append(int(ii), ignore_errors=True)
+                    elif isinstance(re.search(r"^\d[\d\-\,\s]*", _value), re.Match):
+                        retval = retval + CiscoRange(_value, result_type=int)
                     else:
                         error = f"Could not derive a vlan range for {_value}"
                         logger.error(error)
                         raise InvalidCiscoEthernetVlan(error)
 
                 elif key=="add":
-                    for ii in _value.split(","):
-                        if "-" in _value:
-                            for jj in CiscoRange(_value, result_type=int):
-                                retval.append(int(jj), ignore_errors=True)
-                        else:
-                            retval.append(int(ii), ignore_errors=True)
-                elif key=="except":
-                    retval = CiscoRange(text=f"1-{MAX_VLAN}", result_type=int)
-                    for ii in _value.split(","):
-                        if "-" in _value:
-                            for jj in CiscoRange(_value, result_type=int):
-                                retval.remove(int(jj), ignore_errors=True)
-                        else:
-                            retval.remove(int(ii), ignore_errors=True)
-                elif key=="remove":
-                    for ii in _value.split(","):
-                        if "-" in _value:
-                            for jj in CiscoRange(text=_value, result_type=int):
-                                # Use ignore_errors to ignore missing elements...
-                                retval.remove(int(jj), ignore_errors=True)
-                        else:
-                            # Use ignore_errors to ignore missing elements...
-                            retval.remove(int(ii), ignore_errors=True)
+                    retval = retval + CiscoRange(_value, result_type=int)
+                elif key == "except" or key == "remove":
+                    retval = retval - CiscoRange(_value, result_type=int)
                 else:
                     error = f"{key} is an invalid Cisco switched dot1q ethernet trunk action."
                     logger.error(error)

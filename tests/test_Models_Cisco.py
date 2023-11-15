@@ -315,7 +315,7 @@ def testVal_IOSIntfLine_trunk_vlan_allowed_03():
 
 
 def testVal_IOSIntfLine_trunk_vlan_allowed_04():
-    lines = [
+    lines_01 = [
         "!",
         "interface GigabitEthernet 1/1",
         " switchport mode trunk",
@@ -324,9 +324,10 @@ def testVal_IOSIntfLine_trunk_vlan_allowed_04():
         " switchport trunk native vlan 911",
         "!",
     ]
-    cfg = CiscoConfParse(lines, factory=True)
-    intf_obj = cfg.find_objects("^interface")[0]
-    assert intf_obj.trunk_vlans_allowed.as_set(result_type=int) == {1}
+    cfg_01 = CiscoConfParse(lines_01, factory=True)
+    intf_obj = cfg_01.find_objects("^interface")[0]
+    vlans_allowed_set = intf_obj.trunk_vlans_allowed.as_set(result_type=int)
+    assert vlans_allowed_set == {1}
 
 
 def testVal_IOSIntfLine_trunk_vlan_allowed_05():
@@ -334,14 +335,14 @@ def testVal_IOSIntfLine_trunk_vlan_allowed_05():
         "!",
         "interface GigabitEthernet 1/1",
         " switchport mode trunk",
-        " switchport trunk allowed vlan all",
-        " switchport trunk allowed vlan except 2-4094",
+        " switchport trunk allowed vlan 2,4,6,911",
+        " switchport trunk allowed vlan except 2,4,6",
         " switchport trunk native vlan 911",
         "!",
     ]
     cfg = CiscoConfParse(lines, factory=True)
     intf_obj = cfg.find_objects("^interface")[0]
-    assert intf_obj.trunk_vlans_allowed.as_set(result_type=int) == {1,}
+    assert intf_obj.trunk_vlans_allowed.as_set(result_type=int) == {911,}
 
 
 def testVal_IOSIntfLine_trunk_vlan_allowed_06():
@@ -367,14 +368,13 @@ interface GigabitEthernet 1/1
  switchport mode trunk
  switchport trunk allowed vlan none
  switchport trunk allowed vlan add 1-20
- ! except 1 implicitly allows vlans 2-4094 on the trunk
  switchport trunk allowed vlan except 1
  switchport trunk allowed vlan remove 20
 !
 """
     cfg = CiscoConfParse(config.splitlines(), factory=True)
     intf_obj = cfg.find_objects("^interface")[0]
-    assert intf_obj.trunk_vlans_allowed == CiscoRange("2-19,21-4094", result_type=int)
+    assert intf_obj.trunk_vlans_allowed == CiscoRange("2-19", result_type=int)
 
 
 def testVal_IOSIntfLine_trunk_vlan_allowed_08():

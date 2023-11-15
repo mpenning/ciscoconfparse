@@ -3016,7 +3016,7 @@ class CiscoIOSInterface(object):
         if isinstance(interface_name, str):
             if debug is True:
                 logger.info(f"CiscoIOSInterface(interface_name='{interface_name}') was called")
-        elif isinstance(interface_name, CiscoIOSInterface):
+        elif isinstance(interface_name, (CiscoIOSInterface, CiscoIOSXRInterface)):
             if debug is True:
                 logger.info(f"CiscoIOSInterface(interface_name={interface_name}) {type(interface_name)} was called")
             # Re-parse the
@@ -3051,7 +3051,7 @@ class CiscoIOSInterface(object):
             logger.critical(error)
             raise InvalidCiscoInterface(error)
         else:
-            error = f"Could not create a CiscoIOSInterface() instance"
+            error = f"Could not create a CiscoIOSInterface() or CiscoIOSXRInterface instance"
             logger.critical(error)
             raise InvalidCiscoInterface(error)
 
@@ -4855,7 +4855,7 @@ class CiscoRange(MutableSequence):
             raise InvalidCiscoRange(error)
 
         # Ensure that result_type is in the set of valid_result_types...
-        valid_result_types = {str, int, float, None}
+        valid_result_types = {str, int, float, None, CiscoIOSInterface, CiscoIOSXRInterface}
         if not result_type in valid_result_types:
             error = f'CiscoRange(text="{text}", result_type={result_type}) [text: {type(text)}] is not a valid result_type.  Choose from {valid_result_types}'
             logger.critical(error)
@@ -4876,7 +4876,11 @@ class CiscoRange(MutableSequence):
         self.range_str = ""
         if isinstance(text, str) or empty is False:
             if result_type is None:
-                self._list = self.parse_cisco_interfaces(text, debug=debug)
+                self._list = self.parse_cisco_interfaces(text, result_type=CiscoIOSInterface, debug=debug)
+            elif result_type is CiscoIOSInterface:
+                self._list = self.parse_cisco_interfaces(text, result_type=CiscoIOSInterface, debug=debug)
+            elif result_type is CiscoIOSXRInterface:
+                self._list = self.parse_cisco_interfaces(text, result_type=CiscoIOSXRInterface, debug=debug)
             elif result_type is int:
                 self._list = self.parse_integers(text, debug=debug)
             elif result_type is float:
@@ -4939,7 +4943,7 @@ class CiscoRange(MutableSequence):
     def parse_strings(self, text, debug=False):
         """Parse text input to CiscoRange(), such as CiscoRange('1-5,7', result_type=None).  '1-5,7 will be parsed.  By default, CiscoIOSInterface() instances are used when CiscoRange(result_type=None) is parsed.'  An error is raised if the CiscoRange() cannot be parsed"""
         self.result_type = str
-        return self.parse_cisco_interfaces(text=text, debug=debug)
+        return self.parse_cisco_interfaces(text=text, result_type=self.result_type, debug=debug)
 
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
@@ -4949,12 +4953,19 @@ class CiscoRange(MutableSequence):
 
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
-    def parse_cisco_interfaces(self, text, debug=False):
+    def parse_cisco_interfaces(self, text, result_type, debug=False):
         """Parse text input to CiscoRange(), such as CiscoRange('Eth1/1-5,7', result_type=None).  'Eth1/1-5,7 will be parsed.  By default, CiscoIOSInterface() objects are used when CiscoRange(result_type=None) is parsed.'  An error is raised if the CiscoRange() cannot be parsed"""
         self.result_type = None
         range_str = ""
         expanded_interfaces = []
         csv_parts = text.split(",")
+
+        if result_type is CiscoIOSXRInterface:
+            _result_type = CiscoIOSXRInterface
+        else:
+            # Default to CiscoIOSInterface for **everything else**
+            _result_type = CiscoIOSInterface
+
         for idx, _csv_part in enumerate(csv_parts):
 
             if debug is True:
@@ -4966,9 +4977,9 @@ class CiscoRange(MutableSequence):
             ##################################################################
             if idx == 0:
                 # Set the begin_obj...
-                begin_obj = CiscoIOSInterface(_csv_part.split("-")[0], debug=debug)
+                begin_obj = _result_type(_csv_part.split("-")[0])
                 self.begin_obj = begin_obj
-                self.this_obj = CiscoIOSInterface(interface_dict=begin_obj.as_dict())
+                self.this_obj = _result_type(interface_dict=begin_obj.as_dict(), debug=debug)
                 intf_dict = begin_obj.as_dict()
 
                 ##############################################################
@@ -4984,7 +4995,7 @@ class CiscoRange(MutableSequence):
                 # Rebuild begin_obj with the interface_class
                 if isinstance(_interface_class, str):
                     intf_dict["interface_class"] = _interface_class
-                    begin_obj = CiscoIOSInterface(interface_dict=intf_dict)
+                    begin_obj = _result_type(interface_dict=intf_dict)
                     self.begin_obj = begin_obj
 
             ##################################################################
@@ -5011,15 +5022,15 @@ class CiscoRange(MutableSequence):
 
             if idx > 0:
                 if self.iterate_attribute == 'channel' and isinstance(begin_obj.channel, int):
-                    self.this_obj.channel = CiscoIOSInterface(_csv_part.split("-")[0].strip(), debug=debug).channel
+                    self.this_obj.channel = _result_type(_csv_part.split("-")[0].strip(), debug=debug).channel
                 elif self.iterate_attribute == 'subinterface' and isinstance(begin_obj.subinterface, int):
-                    self.this_obj.subinterface = CiscoIOSInterface(_csv_part.split("-")[0].strip(), debug=debug).subinterface
+                    self.this_obj.subinterface = _result_type(_csv_part.split("-")[0].strip(), debug=debug).subinterface
                 elif self.iterate_attribute == 'port' and isinstance(begin_obj.port, int):
-                    self.this_obj.port = CiscoIOSInterface(_csv_part.split("-")[0].strip(), debug=debug).port
+                    self.this_obj.port = _result_type(_csv_part.split("-")[0].strip(), debug=debug).port
                 elif self.iterate_attribute == 'card' and isinstance(begin_obj.card, int):
-                    self.this_obj.card = CiscoIOSInterface(_csv_part.split("-")[0].strip(), debug=debug).card
+                    self.this_obj.card = _result_type(_csv_part.split("-")[0].strip(), debug=debug).card
                 elif self.iterate_attribute == 'slot' and isinstance(begin_obj.card, int):
-                    self.this_obj.slot = CiscoIOSInterface(_csv_part.split("-")[0].strip(), debug=debug).slot
+                    self.this_obj.slot = _result_type(_csv_part.split("-")[0].strip(), debug=debug).slot
                 else:
                     raise NotImplementedError()
 
@@ -5042,7 +5053,7 @@ class CiscoRange(MutableSequence):
             if "-" in _csv_part:
                 if len(_csv_part.split("-")) == 2:
                     # Append a whole range of interfaces...
-                    obj = CiscoIOSInterface(_csv_part.split("-")[0].strip(), debug=debug)
+                    obj = _result_type(_csv_part.split("-")[0].strip(), debug=debug)
                     begin_ordinal = getattr(obj, self.iterate_attribute)
                     # parse end_ordinal from 'Eth1/2-4 multipoint'
                     #     ref: https://stackoverflow.com/a/1450900
@@ -5276,6 +5287,31 @@ class CiscoRange(MutableSequence):
         else:
             return self._list[ii]
 
+    def __add__(self, other):
+        if isinstance(other, CiscoRange):
+            self._list.extend(other._list)
+            self._list = sorted(set(self._list))
+            return self
+        else:
+            error = f'`{other}` must be a CiscoRange() instance; the received argument was {type(other)} instead of a CiscoRange()'
+            logger.error(error)
+            raise InvalidCiscoRange(error)
+
+    def __sub__(self, other):
+        if isinstance(other, CiscoRange):
+            for ii in other._list:
+                try:
+                    self._list.remove(ii)
+                except ValueError:
+                    # Skip the item if it does not exist...
+                    pass
+            return self
+        else:
+            error = f'`{other}` must be a CiscoRange() instance; the received argument was {type(other)} instead of a CiscoRange()'
+            logger.error(error)
+            raise InvalidCiscoRange(error)
+
+
     # This method is on CiscoRange()
     @logger.catch(reraise=True)
     def attribute_sort(self, target_list=None, attribute="sort_list", reverse=False):
@@ -5291,8 +5327,8 @@ class CiscoRange(MutableSequence):
         else:
             if len(target_list) > 0:
                 if isinstance(target_list, list):
-                    if isinstance(target_list[0], CiscoIOSInterface):
-                        # Sort CiscoIOSInterface() members
+                    if isinstance(target_list[0], (CiscoIOSInterface, CiscoIOSXRInterface)):
+                        # Sort CiscoIOSInterface() or CiscoIOSXRInterface members
                         new_list = sorted(target_list, key=lambda x: getattr(x, attribute), reverse=reverse)
                     elif isinstance(target_list[0], (int, float)):
                         # Sort int or float members
@@ -5398,8 +5434,11 @@ class CiscoRange(MutableSequence):
                     logger.error(error)
                     raise MismatchedType(error)
                 elif result_type is None:
-                    # These should be CiscoIOSInterface() types...
-                    new_list = [ii for ii in list_before if ii != arg]
+                    # These are CiscoIOSInterface() or CiscoIOSXRInterface()
+                    new_list = [CiscoIOSInterface(ii) for ii in list_before if ii != arg]
+                elif isinstance(result_type, (CiscoIOSInterface, CiscoIOSXRInterface)):
+                    # These are CiscoIOSInterface() or CiscoIOSXRInterface()
+                    new_list = [result_type(ii) for ii in list_before if ii != arg]
                 else:
                     try:
                         new_list = [result_type(ii) for ii in list_before if result_type(ii) != result_type(arg)]
@@ -5461,6 +5500,8 @@ class CiscoRange(MutableSequence):
                     return set()
             elif result_type is None:
                 return [CiscoIOSInterface(ii) for ii in retval]
+            elif isinstance(result_type, (CiscoIOSInterface, CiscoIOSXRInterface)):
+                return [result_type(ii) for ii in retval]
             elif result_type is str:
                 return [str(ii) for ii in retval]
             elif result_type is int:
@@ -5468,7 +5509,7 @@ class CiscoRange(MutableSequence):
             elif result_type is float:
                 return [float(ii) for ii in retval]
             else:
-                error = f"CiscoRange().as_list(result_type={result_type}) is not valid.  Choose from {['auto', None, int, str, float]}.  result_type: None will return CiscoIOSInterface() objects."
+                error = f"CiscoRange().as_list(result_type={result_type}) is not valid.  Choose from {['auto', None, int, str, float, CiscoIOSInterface, CiscoIOSXRInterface]}.  result_type: None will return CiscoIOSInterface() objects."
                 logger.critical(error)
                 raise ValueError(error)
         except AttributeError as eee:
@@ -5492,6 +5533,8 @@ class CiscoRange(MutableSequence):
                 return list()
         elif result_type is None:
             return set([CiscoIOSInterface(ii) for ii in retval])
+        elif isinstance(result_type, (CiscoIOSInterface, CiscoIOSXRInterface)):
+            return set([result_type(ii) for ii in retval])
         elif result_type is str:
             return set([str(ii) for ii in retval])
         elif result_type is int:
@@ -5522,10 +5565,10 @@ class CiscoRange(MutableSequence):
             retval = list()
 
         # Handle CiscoIOSInterface() instances...
-        if self.member_type is CiscoIOSInterface:
+        if isinstance(self.member_type, (CiscoIOSInterface, CiscoIOSXRInterface)):
             # Build a magic attribute dict so we can intelligently prepend slot/card/port/etc...
             magic_string = "3141592653591892234109876543212345678"
-            this_obj = CiscoIOSInterface(self.text.split(",")[0])
+            this_obj = self.member_type(self.text.split(",")[0])
             magic_dict = this_obj.as_dict()
             for attr_name in ("channel", "subinterface", "port", "card", "slot",):
                 if magic_dict[attr_name] is not None:
@@ -5533,17 +5576,17 @@ class CiscoRange(MutableSequence):
                         magic_dict[attr_name] = int(magic_string)
                         break
             if debug is True:
-                logger.info(f"CiscoRange() calling CiscoIOSInterface(interface_dict={magic_dict}).as_compressed_str()")
-            obj = CiscoIOSInterface(interface_dict=magic_dict, debug=debug)
+                logger.info(f"CiscoRange() calling {self.member_type}(interface_dict={magic_dict}).as_compressed_str()")
+            obj = self.member_type(interface_dict=magic_dict, debug=debug)
             if debug is True:
-                logger.success(f"    CiscoRange() call to CiscoIOSInterface().as_compressed_str() with `interface_dict` parameter succeeded")
+                logger.success(f"    CiscoRange() call to {self.member_type}().as_compressed_str() with `interface_dict` parameter succeeded")
             prefix_str = str(obj).replace(magic_string, "")
             prefix_str_len = len(prefix_str)
 
             # Build a list of the relevant string iteration pieces...
             input_str = []
             for _, component in enumerate(self.as_list()):
-                input_str.append(getattr(CiscoIOSInterface(component), self.iterate_attribute))
+                input_str.append(getattr(self.member_type(component), self.iterate_attribute))
         # Handle str() instances...
         elif self.member_type is str:
             prefix_str = ""
