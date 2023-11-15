@@ -164,8 +164,8 @@ class BaseCfgLine(metaclass=ABCMeta):
     @property
     @logger.catch(reraise=True)
     def is_intf(self):
-        """Default to False; intf subclasses will override this method"""
-        return False
+        """subclasses will override this method"""
+        raise NotImplementedError()
 
     # On BaseCfgLine()
     @is_intf.setter
@@ -177,13 +177,26 @@ class BaseCfgLine(metaclass=ABCMeta):
     @property
     @logger.catch(reraise=True)
     def is_subintf(self):
-        """Default to False; subintf subclasses will override this method"""
-        return False
+        """subclasses will override this method"""
+        raise NotImplementedError()
 
     # On BaseCfgLine()
     @is_subintf.setter
     @logger.catch(reraise=True)
     def is_subintf(self, value):
+        raise NotImplementedError()
+
+    # On BaseCfgLine()
+    @property
+    @logger.catch(reraise=True)
+    def is_switchport(self):
+        """subclasses will override this method"""
+        raise NotImplementedError()
+
+    # On BaseCfgLine()
+    @is_switchport.setter
+    @logger.catch(reraise=True)
+    def is_switchport(self, value):
         raise NotImplementedError()
 
     # On BaseCfgLine()

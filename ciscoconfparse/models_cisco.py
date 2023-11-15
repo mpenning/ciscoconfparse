@@ -881,9 +881,9 @@ class BaseIOSIntfLine(IOSCfgLine):
                 addr_str = "No IPv4"
             else:
                 addr_str = f"{self.ipv4_addr}/{self.ipv4_masklength}"
-            return f"<{self.classname} # {self.linenum} '{self.name}' primary_ipv4: '{addr_str}'>"
+            return f"<{self.classname} # {self.linenum} '{self.text.strip()}' primary_ipv4: '{addr_str}'>"
         else:
-            return f"<{self.classname} # {self.linenum} '{self.name}' switchport: 'switchport'>"
+            return f"<{self.classname} # {self.linenum} '{self.text.strip()}' switchport: 'switchport'>"
 
     # This method is on BaseIOSIntfLine()
     @logger.catch(reraise=True)

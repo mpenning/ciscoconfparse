@@ -87,17 +87,35 @@ class JunosCfgLine(BaseCfgLine):
 
     """
 
+    # This method is on JunosCfgLine()
+    @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
         r"""Accept an Junos line number and initialize family relationship
         attributes"""
         super().__init__(*args, **kwargs)
 
+    # This method is on JunosCfgLine()
     @classmethod
+    @logger.catch(reraise=True)
     def is_object_for(cls, all_lines, line, re=re):
         ## Default object, for now
+        if cls.is_object_for_interface(all_lines, line, re=re) is True:
+            return False
         return True
 
+    # This method is on JunosCfgLine()
+    @classmethod
+    @logger.catch(reraise=True)
+    def is_object_for_interface(cls, all_lines, line, re=re):
+        if isinstance(line, str):
+            line_parts = line.strip().split()
+            if len(line_parts) > 0 and line_parts[0]=="unit":
+                return True
+        return False
+
+    # This method is on JunosCfgLine()
     @property
+    @logger.catch(reraise=True)
     def is_intf(self):
         # Includes subinterfaces
         r"""Returns a boolean (True or False) to answer whether this :class:`~models_junos.JunosCfgLine` is an interface; subinterfaces
@@ -149,7 +167,9 @@ class JunosCfgLine(BaseCfgLine):
                             return True
         return False
 
+    # This method is on JunosCfgLine()
     @property
+    @logger.catch(reraise=True)
     def is_subintf(self):
         r"""Returns a boolean (True or False) to answer whether this
         :class:`~models_junos.JunosCfgLine` is a subinterface.
@@ -190,7 +210,9 @@ class JunosCfgLine(BaseCfgLine):
             return True
         return False
 
+    # This method is on JunosCfgLine()
     @property
+    @logger.catch(reraise=True)
     def is_virtual_intf(self):
         intf_regex = (
             r"^interface\s+(Loopback|Tunnel|Dialer|Virtual-Template|Port-Channel)"
@@ -199,7 +221,9 @@ class JunosCfgLine(BaseCfgLine):
             return True
         return False
 
+    # This method is on JunosCfgLine()
     @property
+    @logger.catch(reraise=True)
     def is_loopback_intf(self):
         r"""Returns a boolean (True or False) to answer whether this
         :class:`~models_junos.JunosCfgLine` is a loopback interface.
@@ -235,7 +259,9 @@ class JunosCfgLine(BaseCfgLine):
             return True
         return False
 
+    # This method is on JunosCfgLine()
     @property
+    @logger.catch(reraise=True)
     def is_ethernet_intf(self):
         r"""Returns a boolean (True or False) to answer whether this
         :class:`~models_junos.JunosCfgLine` is an ethernet interface.
@@ -292,11 +318,16 @@ class JunosCfgLine(BaseCfgLine):
 
 
 class BaseJunosIntfLine(JunosCfgLine):
+
+    # This method is on BaseJunosIntfLine()
+    @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.ifindex = None  # Optional, for user use
         self.default_ipv4_addr_object = IPv4Obj("0.0.0.1/32", strict=False)
 
+    # This method is on BaseJunosIntfLine()
+    @logger.catch(reraise=True)
     def __repr__(self):
         if not self.is_switchport:
             if self.ipv4_addr_object == self.default_ipv4_addr_object:
@@ -304,29 +335,79 @@ class BaseJunosIntfLine(JunosCfgLine):
             else:
                 ip = str(self.ipv4_addr_object.ip)
                 prefixlen = str(self.ipv4_addr_object.prefixlen)
-                addr = "{}/{}".format(ip, prefixlen)
-            return "<{} # {} '{}' info: '{}'>".format(
-                self.classname,
-                self.linenum,
-                self.name,
-                addr,
-            )
+                addr = f"{ip}/{prefixlen}"
+            return f"<{self.classname} # {self.linenum} '{self.text.strip()}' info: '{addr}'>"
         else:
-            return "<{} # {} '{}' info: 'switchport'>".format(
-                self.classname,
-                self.linenum,
-                self.name,
-            )
+            return f"<{self.classname} # {self.linenum} '{self.text.strip()}' info: 'switchport'>"
 
+    # This method is on BaseJunosIntfLine()
+    @logger.catch(reraise=True)
     def reset(self, atomic=True):
         # Insert build_reset_string() before this line...
         self.insert_before(self.build_reset_string(), atomic=atomic)
 
+    # This method is on BaseJunosIntfLine()
+    @logger.catch(reraise=True)
     def build_reset_string(self):
         # Junos interfaces are defaulted like this...
         return "default " + self.text
 
+    # This method is on BaseJunosIntfLine()
     @property
+    @logger.catch(reraise=True)
+    def ipv4_addr_object(self):
+        r"""Return a ccp_util.IPv4Obj object representing the address on this logical interface; if there is no address, return IPv4Obj()"""
+        ######################################################################
+        # Return an empty IPv4Obj() unless tihs is an interface unit line
+        ######################################################################
+        if self.text.split()[0] != "unit":
+            return IPv4Obj()
+
+        ######################################################################
+        # Check if a child is 'family inet', and then return the IPv4 addr
+        #     for it
+        ######################################################################
+        for obj in self.children:
+            if obj.text.split()[0:2] == ["family", "inet"]:
+                for cobj in obj.children:
+                    if cobj.text.split()[0] == "address":
+                        return IPv4Obj(cobj.text.split()[1].strip(";"))
+        return IPv4Obj()
+
+    # This method is on BaseJunosIntfLine()
+    @property
+    @logger.catch(reraise=True)
+    def ipv6_addr_object(self):
+        r"""Return a ccp_util.IPv6Obj object representing the address on this logical interface; if there is no address, return IPv6Obj()"""
+        ######################################################################
+        # Return an empty IPv6Obj() unless tihs is an interface unit line
+        ######################################################################
+        if self.text.split()[0] != "unit":
+            return IPv6Obj()
+
+        ######################################################################
+        # Check if a child is 'family inet6', and then return the IPv6 addr
+        #     for it
+        ######################################################################
+        for obj in self.children:
+            if obj.text.split()[0:2] == ["family", "inet6"]:
+                for cobj in obj.children:
+                    if cobj.text.split()[0] == "address":
+                        return IPv6Obj(cobj.text.split()[1].strip(";"))
+        return IPv6Obj()
+
+    # This method is on JunosIntfLine()
+    @property
+    @logger.catch(reraise=True)
+    def is_switchport(self):
+        for obj in self.parent.all_children:
+            if obj.parent.text.split()[0] == "unit" and obj.text.split()[0:2] == ["family", "ethernet-switching"]:
+                return True
+        return False
+
+    # This method is on BaseJunosIntfLine()
+    @property
+    @logger.catch(reraise=True)
     def verbose(self):
         if not self.is_switchport:
             return (
@@ -354,13 +435,12 @@ class BaseJunosIntfLine(JunosCfgLine):
                 )
             )
 
-    @classmethod
-    def is_object_for(cls, all_lines, line, re=re):
-        return False
 
     ##-------------  Basic interface properties
 
+    # This method is on BaseJunosIntfLine()
     @property
+    @logger.catch(reraise=True)
     def name(self):
         r"""Return the interface name as a string, such as 'GigabitEthernet0/1'
 
@@ -404,7 +484,9 @@ class BaseJunosIntfLine(JunosCfgLine):
         name = self.re_match(intf_regex).strip()
         return name
 
+    # This method is on BaseJunosIntfLine()
     @property
+    @logger.catch(reraise=True)
     def port(self):
         r"""Return the interface's port number
 
@@ -441,7 +523,9 @@ class BaseJunosIntfLine(JunosCfgLine):
         """
         return self.ordinal_list[-1]
 
+    # This method is on BaseJunosIntfLine()
     @property
+    @logger.catch(reraise=True)
     def port_type(self):
         r"""Return Loopback, ATM, GigabitEthernet, Virtual-Template, etc...
 
@@ -479,7 +563,9 @@ class BaseJunosIntfLine(JunosCfgLine):
         port_type_regex = r"^interface\s+([A-Za-z\-]+)"
         return self.re_match(port_type_regex, group=1, default="")
 
+    # This method is on BaseJunosIntfLine()
     @property
+    @logger.catch(reraise=True)
     def ordinal_list(self):
         r"""Return a tuple of numbers representing card, slot, port for this interface.  If you call ordinal_list on GigabitEthernet2/25.100, you'll get this python tuple of integers: (2, 25).  If you call ordinal_list on GigabitEthernet2/0/25.100 you'll get this python list of integers: (2, 0, 25).  This method strips all subinterface information in the returned value.
 
@@ -528,7 +614,9 @@ class BaseJunosIntfLine(JunosCfgLine):
             else:
                 return ()
 
+    # This method is on BaseJunosIntfLine()
     @property
+    @logger.catch(reraise=True)
     def description(self):
         """Return the current interface description string.
 
@@ -538,14 +626,18 @@ class BaseJunosIntfLine(JunosCfgLine):
         )
         return retval
 
+    # This method is on BaseJunosIntfLine()
     @property
+    @logger.catch(reraise=True)
     def manual_bandwidth(self):
         retval = self.re_match_iter_typed(
             r"^\s*bandwidth\s+(\d+)$", result_type=int, default=0
         )
         return retval
 
+    # This method is on BaseJunosIntfLine()
     @property
+    @logger.catch(reraise=True)
     def manual_delay(self):
         retval = self.re_match_iter_typed(
             r"^\s*delay\s+(\d+)$", result_type=int, default=0
@@ -558,7 +650,8 @@ class BaseJunosIntfLine(JunosCfgLine):
 
 
 class JunosIntfLine(BaseJunosIntfLine):
-    # This method is on IOSIntfLine()
+
+    # This method is on JunosIntfLine()
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
         r"""Accept a JunOS interface number and initialize family relationship
@@ -571,89 +664,12 @@ class JunosIntfLine(BaseJunosIntfLine):
         super().__init__(*args, **kwargs)
         self.feature = "interface"
 
-    # This method is on IOSIntfLine()
+    # This method is on JunosIntfLine()
     @classmethod
     @logger.catch(reraise=True)
     def is_object_for(cls, all_lines, line, re=re):
-        return cls.is_object_for_interface(line)
-
-##
-##-------------  Junos Interface Globals
-##
-
-
-class JunosIntfGlobal(BaseCfgLine):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.feature = "interface global"
-
-    def __repr__(self):
-        return "<{} # {} '{}'>".format(self.classname, self.linenum, self.text)
-
-    @classmethod
-    def is_object_for(cls, all_lines, line, re=re):
-        if re.search(
-            r"^(no\s+cdp\s+run)|(logging\s+event\s+link-status\s+global)|(spanning-tree\sportfast\sdefault)|(spanning-tree\sportfast\sbpduguard\sdefault)",
-            line,
-        ):
-            return True
-        return False
-
-    @property
-    def has_cdp_disabled(self):
-        if self.re_search(r"^no\s+cdp\s+run\s*"):
-            return True
-        return False
-
-    @property
-    def has_intf_logging_def(self):
-        if self.re_search(r"^logging\s+event\s+link-status\s+global"):
-            return True
-        return False
-
-    @property
-    def has_stp_portfast_def(self):
-        if self.re_search(r"^spanning-tree\sportfast\sdefault"):
-            return True
-        return False
-
-    @property
-    def has_stp_portfast_bpduguard_def(self):
-        if self.re_search(r"^spanning-tree\sportfast\sbpduguard\sdefault"):
-            return True
-        return False
-
-    @property
-    def has_stp_mode_rapidpvst(self):
-        if self.re_search(r"^spanning-tree\smode\srapid-pvst"):
-            return True
-        return False
-
-
-##
-##-------------  Junos Hostname Line
-##
-
-
-class JunosHostnameLine(BaseCfgLine):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.feature = "hostname"
-
-    def __repr__(self):
-        return "<{} # {} '{}'>".format(self.classname, self.linenum, self.hostname)
-
-    @classmethod
-    def is_object_for(cls, all_lines, line, re=re):
-        if re.search("^hostname", line):
-            return True
-        return False
-
-    @property
-    def hostname(self):
-        retval = self.re_match_typed(r"^hostname\s+(\S+)", result_type=str, default="")
-        return retval
-
+        print("FOO", line)
+        return cls.is_object_for_interface(all_lines, line, re=re)
 
 ##
 ##-------------  Base Junos Route line object
@@ -661,9 +677,11 @@ class JunosHostnameLine(BaseCfgLine):
 
 
 class BaseJunosRouteLine(BaseCfgLine):
+    @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+    @logger.catch(reraise=True)
     def __repr__(self):
         return "<{} # {} '{}' info: '{}'>".format(
             self.classname,
@@ -673,6 +691,7 @@ class BaseJunosRouteLine(BaseCfgLine):
         )
 
     @property
+    @logger.catch(reraise=True)
     def routeinfo(self):
         ### Route information for the repr string
         if self.tracking_object_name:
@@ -687,35 +706,43 @@ class BaseJunosRouteLine(BaseCfgLine):
             return self.nexthop_str + " AD: " + str(self.admin_distance)
 
     @classmethod
+    @logger.catch(reraise=True)
     def is_object_for(cls, all_lines, line, re=re):
         return False
 
     @property
+    @logger.catch(reraise=True)
     def vrf(self):
         raise NotImplementedError
 
     @property
+    @logger.catch(reraise=True)
     def address_family(self):
         ## ipv4, ipv6, etc
         raise NotImplementedError
 
     @property
+    @logger.catch(reraise=True)
     def network(self):
         raise NotImplementedError
 
     @property
+    @logger.catch(reraise=True)
     def netmask(self):
         raise NotImplementedError
 
     @property
+    @logger.catch(reraise=True)
     def admin_distance(self):
         raise NotImplementedError
 
     @property
+    @logger.catch(reraise=True)
     def nexthop_str(self):
         raise NotImplementedError
 
     @property
+    @logger.catch(reraise=True)
     def tracking_object_name(self):
         raise NotImplementedError
 
@@ -726,6 +753,7 @@ class BaseJunosRouteLine(BaseCfgLine):
 
 
 class JunosRouteLine(BaseJunosRouteLine):
+    @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if "ipv6" in self.text:
@@ -734,12 +762,14 @@ class JunosRouteLine(BaseJunosRouteLine):
             self.feature = "ip route"
 
     @classmethod
+    @logger.catch(reraise=True)
     def is_object_for(cls, all_lines, line, re=re):
         if re.search(r"^(ip|ipv6)\s+route\s+\S", line):
             return True
         return False
 
     @property
+    @logger.catch(reraise=True)
     def vrf(self):
         retval = self.re_match_typed(
             r"^(ip|ipv6)\s+route\s+(vrf\s+)*(\S+)", group=3, result_type=str, default=""
@@ -747,6 +777,7 @@ class JunosRouteLine(BaseJunosRouteLine):
         return retval
 
     @property
+    @logger.catch(reraise=True)
     def address_family(self):
         ## ipv4, ipv6, etc
         retval = self.re_match_typed(
@@ -755,6 +786,7 @@ class JunosRouteLine(BaseJunosRouteLine):
         return retval
 
     @property
+    @logger.catch(reraise=True)
     def network(self):
         if self.address_family == "ip":
             retval = self.re_match_typed(
@@ -770,6 +802,7 @@ class JunosRouteLine(BaseJunosRouteLine):
         return retval
 
     @property
+    @logger.catch(reraise=True)
     def netmask(self):
         if self.address_family == "ip":
             retval = self.re_match_typed(
@@ -788,6 +821,7 @@ class JunosRouteLine(BaseJunosRouteLine):
         return retval
 
     @property
+    @logger.catch(reraise=True)
     def network_object(self):
         try:
             if self.address_family == "ip":
@@ -798,6 +832,7 @@ class JunosRouteLine(BaseJunosRouteLine):
             return None
 
     @property
+    @logger.catch(reraise=True)
     def nexthop_str(self):
         if self.address_family == "ip":
             retval = self.re_match_typed(
@@ -816,11 +851,13 @@ class JunosRouteLine(BaseJunosRouteLine):
         return retval
 
     @property
+    @logger.catch(reraise=True)
     def admin_distance(self):
         retval = self.re_match_typed(r"(\d+)$", group=1, result_type=int, default=1)
         return retval
 
     @property
+    @logger.catch(reraise=True)
     def tracking_object_name(self):
         retval = self.re_match_typed(
             r"^ip(v6)*\s+route\s+.+?track\s+(\S+)", group=2, result_type=str, default=""

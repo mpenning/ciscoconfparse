@@ -4,13 +4,24 @@
 - Summary:
     - Insert something here
 
+## Version: 1.9.33
+
+- Released: 2023-11-15
+- Summary:
+    - Add `IOSXRIntfLine` to `syntax=iosxr`
+    - Remove fence on JunOS factory parser
+    - Update `__repr__()` method on various classes
+    - Improve github workflows to run tests across windows / unix on github again
+    - Update `CONTRIBUTING.md` with information about locked issues.
+
 ## Version: 1.9.32
 
 - Released: 2023-11-15
 - Summary:
     - Add IPv6Obj() support for IPv4 embedded in an IPv6 address
-    - Add IPv6Obj() tests with an RFC 6052 NAT64 IPv4 embedded in an IPv6 address
+    - Add IPv6Obj() tests with an [RFC 6052][1] [NAT64][2] IPv4 embedded in an IPv6 address
     - Add IPv6Obj() tests with other IPv4 embedded in an IPv6 addresses
+    - Greatly improve github workflows
     - Remove print() debugging
 
 ## Version: 1.9.31
@@ -2033,3 +2044,5 @@
     - Existing APIs should be stable now
 
 
+[1]: https://datatracker.ietf.org/doc/html/rfc6052
+[2]: https://en.wikipedia.org/wiki/NAT64

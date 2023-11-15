@@ -65,7 +65,7 @@ from ciscoconfparse.models_nxos import NXOSCfgLine, NXOSIntfLine
 from ciscoconfparse.models_nxos import NXOSAaaGroupServerLine
 from ciscoconfparse.models_nxos import NXOSvPCLine
 
-from ciscoconfparse.models_iosxr import IOSXRCfgLine
+from ciscoconfparse.models_iosxr import IOSXRCfgLine, IOSXRIntfLine
 
 from ciscoconfparse.models_asa import ASAObjGroupNetwork
 from ciscoconfparse.models_asa import ASAObjGroupService
@@ -130,6 +130,7 @@ ALL_NXOS_FACTORY_CLASSES = [
     NXOSCfgLine,        # NXOSCfgLine MUST be last
 ]
 ALL_IOSXR_FACTORY_CLASSES = [
+    IOSXRIntfLine,
     IOSXRCfgLine,
 ]
 ALL_ASA_FACTORY_CLASSES = [
@@ -808,10 +809,6 @@ class CiscoConfParse(object):
         # Explicitly handle all brace-parsing factory syntax here...
         ######################################################################
         if syntax == "junos":
-            if self.factory is True:
-                error = "junos parser factory is not yet enabled; use factory=False"
-                logger.critical(error)
-                raise InvalidParameters(error)
             config_lines = convert_junos_to_ios(tmp_lines, comment_delimiter="#")
         elif syntax in ALL_VALID_SYNTAX:
             config_lines = tmp_lines

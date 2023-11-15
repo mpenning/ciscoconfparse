@@ -324,19 +324,10 @@ class BaseNXOSIntfLine(NXOSCfgLine):
             else:
                 ip = str(self.ipv4_addr_object.ip)
                 prefixlen = str(self.ipv4_addr_object.prefixlen)
-                addr = "{}/{}".format(ip, prefixlen)
-            return "<{} # {} '{}' info: '{}'>".format(
-                self.classname,
-                self.linenum,
-                self.name,
-                addr,
-            )
+                addr = f"{ip}/{prefixlen}"
+            return f"<{self.classname} # {self.linenum} '{self.text.strip()}' info: '{addr}'>"
         else:
-            return "<{} # {} '{}' info: 'switchport'>".format(
-                self.classname,
-                self.linenum,
-                self.name,
-            )
+            return f"<{self.classname} # {self.linenum} '{self.text.strip()}' info: 'switchport'>"
 
     def _build_abbvs(self):
         """Build a set of valid abbreviations (lowercased) for the interface"""

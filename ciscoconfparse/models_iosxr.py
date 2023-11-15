@@ -29,13 +29,7 @@ from loguru import logger
 
 from ciscoconfparse.errors import DynamicAddressException
 
-from ciscoconfparse.ccp_util import (
-    _IPV6_REGEX_STR_COMPRESSED1,
-    _IPV6_REGEX_STR_COMPRESSED2,
-)
-
 from ciscoconfparse.errors import InvalidCiscoInterface
-from ciscoconfparse.ccp_util import _IPV6_REGEX_STR_COMPRESSED3
 from ciscoconfparse.ccp_util import CiscoRange, IPv4Obj, IPv6Obj
 from ciscoconfparse.ccp_util import CiscoIOSXRInterface
 from ciscoconfparse.ccp_abc import BaseCfgLine
@@ -369,19 +363,10 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
             else:
                 ip = str(self.ipv4_addr_object.ip)
                 prefixlen = str(self.ipv4_addr_object.prefixlen)
-                addr = "{}/{}".format(ip, prefixlen)
-            return "<{} # {} '{}' info: '{}'>".format(
-                self.classname,
-                self.linenum,
-                self.name,
-                addr,
-            )
+                addr = f"{ip}/{prefixlen}"
+            return f"<{self.classname} # {self.linenum} '{self.text.strip()}' info: '{addr}'>"
         else:
-            return "<{} # {} '{}' info: 'switchport'>".format(
-                self.classname,
-                self.linenum,
-                self.name,
-            )
+            return f"<{self.classname} # {self.linenum} '{self.text.strip()}' info: 'switchport'>"
 
     def _build_abbvs(self):
         r"""Build a set of valid abbreviations (lowercased) for the interface"""

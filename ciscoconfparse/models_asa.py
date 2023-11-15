@@ -168,18 +168,9 @@ class BaseASAIntfLine(ASACfgLine):
                 addr = "No IPv4"
             else:
                 addr = self.ipv4_addr_object
-            return "<{} # {} '{}' info: '{}'>".format(
-                self.classname,
-                self.linenum,
-                self.name,
-                addr,
-            )
+            return f"<{self.classname} # {self.linenum} '{self.text.strip()}' info: '{addr}'>"
         else:
-            return "<{} # {} '{}' info: 'switchport'>".format(
-                self.classname,
-                self.linenum,
-                self.name,
-            )
+            return f"<{self.classname} # {self.linenum} '{self.text.strip()}' info: 'switchport'>"
 
     @logger.catch(reraise=True)
     def reset(self, atomic=True):
