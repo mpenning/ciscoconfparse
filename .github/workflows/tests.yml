@@ -46,5 +46,4 @@ jobs:
       - uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1
         with:
           python-version: ${{ matrix.python }}
-          cache: 'pip'
           cache-dependency-path: 'requirements/*.txt'
