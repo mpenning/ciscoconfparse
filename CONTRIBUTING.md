@@ -56,6 +56,15 @@ Please be aware of the following things when filing bug reports:
 2. PRs must include tests for the functionality being added, or bugs being
    fixed.  Needless to say, your PR itself must not fail existing tests.
 
+### Github Issues
+
+1. CiscoConfParse Github issues are automatically watched for inactivity.
+   Upon detecting stale or inactive issues, they will be automatically locked
+   by a Github Workflow job.
+
+2. Once locked, no further comments can be added.  Locked issues may be
+   unlocked by CiscoConfParse admins solely at their discretion.
+
 ## Usage Questions
 
 The [GitHub issue tracker][3] is for *bug reports* and *feature requests*.
