@@ -172,8 +172,9 @@ test:
 	make timestamp
 	#make ping
 	make clean
-	# Attempt to fix strange github unit test import failures
-	cd tests && pytest -vvvvs ./test_*py
+	# You can also test with verbose output:
+	#     cd tests && pytest -vvs ./test_*py
+	cd tests && pytest ./test_*py
 
 .PHONY: clean
 clean:

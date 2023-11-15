@@ -4,6 +4,15 @@
 - Summary:
     - Insert something here
 
+## Version: 1.9.32
+
+- Released: 2023-11-15
+- Summary:
+    - Add IPv6Obj() support for IPv4 embedded in an IPv6 address
+    - Add IPv6Obj() tests with an RFC 6052 NAT64 IPv4 embedded in an IPv6 address
+    - Add IPv6Obj() tests with other IPv4 embedded in an IPv6 addresses
+    - Remove print() debugging
+
 ## Version: 1.9.31
 
 - Released: 2023-11-15
