@@ -55,5 +55,5 @@ jobs:
              pip install -Ur './requirements/requirements.txt'
       - name: Run pytest
         run: |
-             cd tests && pytest ./test_*.py
+             cd tests && pytest test*
 
