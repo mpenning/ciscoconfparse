@@ -51,20 +51,20 @@ jobs:
         run: python -c "import sys; print(sys.version)"
       - name: Install dependencies
         run: |
-             : ###############################################################
-             : # install pip, pytest, and python packages
-             : #     asterisk globbing is fragile, so don't use asterisk path
-             : #     globs.  Just call out individual files, below.
-             : ###############################################################
+             true ###############################################################
+             true # install pip, pytest, and python packages
+             true #     asterisk globbing is fragile, so don't use asterisk path
+             true #     globs.  Just call out individual files, below.
+             true ###############################################################
              python -m pip install --upgrade pip
              pip install -U pytest
              pip install -Ur './requirements/requirements.txt'
              pip install -Ur './requirements/requirements-dev.txt'
       - name: Run pytest
         run: |
-             : ###############################################################
-             : # use pytest dot path because it's portable across
-             : #     windows and unix
-             : ###############################################################
+             true ###############################################################
+             true # use pytest dot path because it's portable across
+             true #     windows and unix
+             true ###############################################################
              cd tests && pytest .
 
