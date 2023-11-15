@@ -4,12 +4,18 @@
 - Summary:
     - Insert something here
 
+## Version: 1.9.31
+
+- Released: 2023-11-15
+- Summary:
+    - Vastly speed up large CiscoRange() operations
 
 ## Version: 1.9.30
 
 - Released: 2023-11-14
 - Summary:
     - Fix mis-named variable
+    - Update iosxr ipv4 address parsing with factory=True
 
 ## Version: 1.9.29
 
