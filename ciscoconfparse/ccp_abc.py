@@ -133,6 +133,17 @@ class BaseCfgLine(metaclass=ABCMeta):
 
     # On BaseCfgLine()
     @logger.catch(reraise=True)
+    def __getattr__(self, attr):
+        try:
+            retval = getattr(object, attr)
+            return retval
+        except BaseException:
+            error = f"The {attr} attribute does not exist"
+            logger.error(error)
+            raise AttributeError(error)
+
+    # On BaseCfgLine()
+    @logger.catch(reraise=True)
     def __eq__(self, val):
         try:
             ##   try / except is much faster than isinstance();
