@@ -174,6 +174,19 @@ class BaseCfgLine(metaclass=ABCMeta):
     # On BaseCfgLine()
     @property
     @logger.catch(reraise=True)
+    def name(self):
+        """subclasses will override this method"""
+        raise NotImplementedError()
+
+    # On BaseCfgLine()
+    @name.setter
+    @logger.catch(reraise=True)
+    def name(self, value):
+        raise NotImplementedError()
+
+    # On BaseCfgLine()
+    @property
+    @logger.catch(reraise=True)
     def is_intf(self):
         """subclasses will override this method"""
         raise NotImplementedError()
