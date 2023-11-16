@@ -1336,7 +1336,7 @@ def parse_f01_junos_01(request):
 @pytest.fixture(scope="function")
 def parse_j01(request):
     """Preparsed j01"""
-    parse_j01 = CiscoConfParse(j01, syntax="junos", comment="#!", factory=False)
+    parse_j01 = CiscoConfParse(j01, syntax="junos", comment="#", factory=False)
 
     yield parse_j01
 

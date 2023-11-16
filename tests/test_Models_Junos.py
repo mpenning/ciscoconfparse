@@ -32,20 +32,51 @@ r""" test_Models_Junos.py - Parse, Query, Build, and Modify IOS-style configs
 
 
 
-@pytest.mark.xfail(True, reason="Junos factory parsing is not supported yet")
-def testVal_JunosIntfLine_dna(j01):
-    with pytest.raises(AssertionError):
-        parse = CiscoConfParse(j01, factory=True, syntax="junos")
-        #obj = parse.find_objects_w_child("interfaces", "ge-0/0/1")[0]
-        #assert obj.dna == "JunosIntfLine"
+#@pytest.mark.xfail(True, reason="Junos factory parsing is not supported yet")
+def testVal_JunosIntfLine_dna(parse_j01):
+    uut = parse_j01.objs
+    assert len(uut) == 76
+    #obj = parse.find_objects_w_child("interfaces", "ge-0/0/1")[0]
+    #assert obj.dna == "JunosIntfLine"
 
 
-@pytest.mark.xfail(True, reason="Junos configs currently use IOSCfgLine objects")
-def testVal_JunosCfgLine_dna(parse_j01):
+def testVal_JunosCfgLine_dna_parent_01(parse_j01):
     cfg = parse_j01
     obj = cfg.find_objects_w_child("interfaces", "ge-0/0/1")[0]
     assert obj.dna == "JunosCfgLine"
+    assert obj.is_intf is False
+    assert obj.is_subintf is False
 
+@pytest.mark.xfail(True, reason="parse_j01 ge-0/0/1 is not correctly identified by `is_intf`")
+def testVal_JunosCfgLine_child_01(parse_j01):
+    cfg = parse_j01
+    obj = cfg.find_objects_w_parents("interfaces", "ge-0/0/1")[0]
+    assert obj.dna == "JunosCfgLine"
+    assert obj.text.strip() == "ge-0/0/1"
+    assert obj.is_intf is True
+    assert obj.is_subintf is False
+    assert obj.name == "ge-0/0/1"
+
+
+def testVal_JunosCfgLine_child_02():
+    """Identify a JunOS physical interface"""
+    cfg = CiscoConfParse("fixtures/configs/sample_01.junos", syntax="junos", factory=False)
+    obj = cfg.find_objects_w_parents("interfaces", "ge-0/0/1")[0]
+    assert obj.dna == "JunosCfgLine"
+    assert obj.text.strip() == "ge-0/0/1"
+    assert obj.is_intf is True
+    assert obj.is_subintf is False
+    assert obj.name == "ge-0/0/1"
+
+def testVal_JunosCfgLine_child_03():
+    """Identify a JunOS logical interface unit"""
+    cfg = CiscoConfParse("fixtures/configs/sample_01.junos", syntax="junos", factory=False)
+    obj = cfg.find_objects_w_parents("ge-0/0/1", "unit 0")[0]
+    assert obj.dna == "JunosCfgLine"
+    assert obj.text.strip() == "unit 0"
+    assert obj.is_intf is True
+    assert obj.is_subintf is True
+    assert obj.name == "ge-0/0/1 unit 0"
 
 def testVal_find_objects_w_parents(parse_j01):
     cfg = parse_j01
