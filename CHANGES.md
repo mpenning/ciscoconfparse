@@ -4,6 +4,18 @@
 - Summary:
     - Insert something here
 
+## Version: 1.9.34
+
+- Released: 2023-11-l6
+- Summary:
+    - Add fence to `BaseCfgLine()` to throw a custom error on invalid attributes
+    - Add template `name` attribute to `BaseCfgLine()`
+    - Change `name` attribute to keep spaces in various names; update tests accordingly
+    - Improve JunOS interface name support
+    - Add basic IPv6 interface support to Cisco ASA
+    - Fix various `super()` calls
+    - Add `loguru` to `models_iosxr.py`
+
 ## Version: 1.9.33
 
 - Released: 2023-11-15
