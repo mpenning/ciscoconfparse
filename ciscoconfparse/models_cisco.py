@@ -518,7 +518,7 @@ class IOSCfgLine(BaseCfgLine):
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
         r"""Accept an IOS line number and initialize family relationship attributes"""
-        super(IOSCfgLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     @classmethod
     @logger.catch(reraise=True)
@@ -1032,7 +1032,7 @@ class BaseIOSIntfLine(IOSCfgLine):
            'ATM2/0.100'
            >>>
         """
-        return str(self.interface_object)
+        return " ".join(self.text.split()[1:])
 
     # This method is on BaseIOSIntfLine()
     @property
@@ -2649,6 +2649,7 @@ class BaseIOSIntfLine(IOSCfgLine):
 
 
 class IOSIntfLine(BaseIOSIntfLine):
+
     # This method is on IOSIntfLine()
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
@@ -2659,7 +2660,7 @@ class IOSIntfLine(BaseIOSIntfLine):
         --------
         All :class:`~models_cisco.IOSIntfLine` methods are still considered beta-quality, until this notice is removed.  The behavior of APIs on this object could change at any time.
         """
-        super(IOSIntfLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.feature = "interface"
 
     # This method is on IOSIntfLine()
@@ -2677,7 +2678,7 @@ class IOSIntfGlobal(IOSCfgLine):
     # This method is on IOSIntGlobal()
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
-        super(IOSIntfGlobal, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.feature = "interface global"
 
     # This method is on IOSIntGlobal()
@@ -2739,7 +2740,7 @@ class IOSIntfGlobal(IOSCfgLine):
 class IOSHostnameLine(IOSCfgLine):
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
-        super(IOSHostnameLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.feature = "hostname"
 
     @logger.catch(reraise=True)
@@ -2768,7 +2769,7 @@ class IOSHostnameLine(IOSCfgLine):
 class IOSAccessLine(IOSCfgLine):
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
-        super(IOSAccessLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.feature = "access line"
 
     @logger.catch(reraise=True)
@@ -2859,7 +2860,7 @@ class IOSAccessLine(IOSCfgLine):
 class BaseIOSRouteLine(IOSCfgLine):
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
-        super(BaseIOSRouteLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     @logger.catch(reraise=True)
     def __repr__(self):
@@ -2978,7 +2979,7 @@ _RE_IPV6_ROUTE = re.compile(
 class IOSRouteLine(IOSCfgLine):
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
-        super(IOSRouteLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         if "ipv6" in self.text[0:4]:
             self.feature = "ipv6 route"
             self._address_family = "ipv6"
@@ -3193,7 +3194,7 @@ class IOSRouteLine(IOSCfgLine):
 class IOSAaaGroupServerLine(IOSCfgLine):
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
-        super(IOSAaaGroupServerLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.feature = "aaa group server"
 
         REGEX = r"^aaa\sgroup\sserver\s(?P<protocol>\S+)\s(?P<group>\S+)\s*$"
@@ -3251,7 +3252,7 @@ class IOSAaaGroupServerLine(IOSCfgLine):
 class IOSAaaLoginAuthenticationLine(IOSCfgLine):
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
-        super(IOSAaaLoginAuthenticationLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.feature = "aaa authentication login"
 
         regex = r"^aaa\sauthentication\slogin\s(\S+)\sgroup\s(\S+)(.+?)$"
@@ -3276,7 +3277,7 @@ class IOSAaaLoginAuthenticationLine(IOSCfgLine):
 class IOSAaaEnableAuthenticationLine(IOSCfgLine):
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
-        super(IOSAaaEnableAuthenticationLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.feature = "aaa authentication enable"
 
         regex = r"^aaa\s+authentication\s+enable\s+(\S+)\s+group\s+(\S+)(.+?)$"
@@ -3301,7 +3302,7 @@ class IOSAaaEnableAuthenticationLine(IOSCfgLine):
 class IOSAaaCommandsAuthorizationLine(IOSCfgLine):
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
-        super(IOSAaaCommandsAuthorizationLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.feature = "aaa authorization commands"
 
         regex = r"^aaa\s+authorization\s+commands\s+(\d+)\s+(\S+)\s+group\s+(\S+)(.+?)$"
@@ -3327,7 +3328,7 @@ class IOSAaaCommandsAuthorizationLine(IOSCfgLine):
 class IOSAaaConsoleAuthorizationLine(IOSCfgLine):
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
-        super(IOSAaaConsoleAuthorizationLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.feature = "aaa authorization console"
 
         regex = r"^aaa\s+authorization\s+console\s+(\d+)\s+(\S+)\s+group\s+(\S+)(.+?)$"
@@ -3353,7 +3354,7 @@ class IOSAaaConsoleAuthorizationLine(IOSCfgLine):
 class IOSAaaCommandsAccountingLine(IOSCfgLine):
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
-        super(IOSAaaCommandsAccountingLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.feature = "aaa accounting commands"
 
         regex = r"^aaa\s+accounting\s+commands\s+(\d+)\s+(\S+)\s+(none|stop\-only|start\-stop)\s+group\s+(\S+)$"
@@ -3380,7 +3381,7 @@ class IOSAaaCommandsAccountingLine(IOSCfgLine):
 class IOSAaaExecAccountingLine(IOSCfgLine):
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
-        super(IOSAaaExecAccountingLine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.feature = "aaa accounting exec"
 
         regex = r"^aaa\s+accounting\s+exec\s+(\S+)\s+(none|stop\-only|start\-stop)\s+group\s(\S+)$"
