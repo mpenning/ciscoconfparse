@@ -60,7 +60,7 @@ class NXOSCfgLine(BaseCfgLine):
     parent and child :class:`~models_nxos.NXOSCfgLine` objects.
 
     Args:
-        - text (str): A string containing a text copy of the NXOS configuration line.  :class:`~ciscoconfparse.CiscoConfParse` will automatically identify the parent and children (if any) when it parses the configuration.
+        - line (str): A string containing a text copy of the NXOS configuration line.  :class:`~ciscoconfparse.CiscoConfParse` will automatically identify the parent and children (if any) when it parses the configuration.
         - comment_delimiter (str): A string which is considered a comment for the configuration format.  Since this is for Cisco IOS-style configurations, it defaults to ``!``.
 
     Attributes:

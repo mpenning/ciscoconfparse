@@ -487,7 +487,7 @@ class IOSCfgLine(BaseCfgLine):
 
     Parameters
     ----------
-    text : str
+    line : str
         A string containing a text copy of the IOS configuration line.  :class:`~ciscoconfparse.CiscoConfParse` will automatically identify the parent and children (if any) when it parses the configuration.
     comment_delimiter : str
         A string which is considered a comment for the configuration format.  Since this is for Cisco IOS-style configurations, it defaults to ``!``.
