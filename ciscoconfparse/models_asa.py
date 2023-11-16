@@ -40,7 +40,7 @@ from ciscoconfparse.protocol_values import (
     ASA_IP_PROTOCOLS,
 )
 from ciscoconfparse.ccp_util import L4Object
-from ciscoconfparse.ccp_util import IPv4Obj
+from ciscoconfparse.ccp_util import IPv4Obj, IPv6Obj
 
 from ciscoconfparse.ccp_abc import BaseCfgLine
 
@@ -67,7 +67,7 @@ class ASACfgLine(BaseCfgLine):
        :class:`~ciscoconfparse.CiscoConfParse` methods.
 
     Args:
-        - text (str): A string containing a text copy of the ASA configuration line.  :class:`~ciscoconfparse.CiscoConfParse` will automatically identify the parent and children (if any) when it parses the configuration.
+        - line (str): A string containing a text copy of the ASA configuration line.  :class:`~ciscoconfparse.CiscoConfParse` will automatically identify the parent and children (if any) when it parses the configuration.
         - comment_delimiter (str): A string which is considered a comment for the configuration format.  Since this is for Cisco ASA-style configurations, it defaults to ``!``.
 
     Attributes:
@@ -91,7 +91,7 @@ class ASACfgLine(BaseCfgLine):
         attributes"""
         super().__init__(*args, **kwargs)
 
-        self.text = kwargs.get("line", None)
+        #self.text = kwargs.get("line", None)
         self._mm_results = None
 
     @classmethod
@@ -155,11 +155,14 @@ class ASACfgLine(BaseCfgLine):
 
 
 class BaseASAIntfLine(ASACfgLine):
+    default_ipv4_addr_object = IPv4Obj()
+    default_ipv6_addr_object = IPv6Obj()
+
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.ifindex = None  # Optional, for user use
-        self.default_ipv4_addr_object = IPv4Obj("0.0.0.1/32", strict=False)
+        self.default_ipv4_addr_object = IPv4Obj()
 
     @logger.catch(reraise=True)
     def __repr__(self):
@@ -277,36 +280,59 @@ class BaseASAIntfLine(ASACfgLine):
     @property
     @logger.catch(reraise=True)
     def has_no_ipv4(self):
-        r"""Return an ccp_util.IPv4Obj object representing the subnet on this interface; if there is no address, return ccp_util.IPv4Obj('0.0.0.1/32')"""
-        return self.ipv4_addr_object == IPv4Obj("0.0.0.1/32")
+        r"""Return an ccp_util.IPv4Obj object representing the subnet on this interface; if there is no address, return ccp_util.IPv4Obj()"""
+        return self.ipv4_addr_object == IPv4Obj()
 
     # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def ip(self):
-        r"""Return an ccp_util.IPv4Obj object representing the IPv4 address on this interface; if there is no address, return ccp_util.IPv4Obj('0.0.0.1/32')"""
+        r"""Return an ccp_util.IPv4Obj object representing the IPv4 address on this interface; if there is no address, return ccp_util.IPv4Obj()"""
         return self.ipv4_addr_object
 
     # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def ipv4(self):
-        r"""Return an ccp_util.IPv4Obj object representing the IPv4 address on this interface; if there is no address, return ccp_util.IPv4Obj('0.0.0.1/32')"""
+        r"""Return an ccp_util.IPv4Obj object representing the IPv4 address on this interface; if there is no address, return ccp_util.IPv4Obj()"""
         return self.ipv4_addr_object
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def ipv4_addr_object(self):
-        """Return a ccp_util.IPv4Obj object representing the address on this interface; if there is no address, return IPv4Obj('0.0.0.1/32')"""
+        """Return a ccp_util.IPv4Obj object representing the address on this interface; if there is no address, return IPv4Obj()"""
         try:
             return IPv4Obj("{}/{}".format(self.ipv4_addr, self.ipv4_netmask))
         except Exception as ee:
             return self.default_ipv4_addr_object
 
+    # This method is on BaseIOSIntfLine()
+    @property
+    @logger.catch(reraise=True)
+    def ipv6_addr_object(self):
+        r"""Return a ccp_util.IPv6Obj object representing the address on this interface; if there is no address, return IPv6Obj()"""
+
+        retval = self.re_match_iter_typed(
+            r"^\s+ipv6\s+address\s+(?P<v6addr>\S+?)\/(?P<v6masklength>\d+)",
+            groupdict={"v6addr": str, "v6masklength": str},
+            default="",
+        )
+
+        if retval["v6addr"]=="":
+            return self.default_ipv6_addr_object
+        elif retval["v6addr"]=="dhcp":
+            return self.default_ipv6_addr_object
+        elif retval["v6addr"]=="negotiated":
+            return self.default_ipv6_addr_object
+        else:
+            return IPv6Obj(f"{retval['v6addr']}/{retval['v6masklength']}")
+
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def ipv4_standby_addr_object(self):
-        """Return a ccp_util.IPv4Obj object representing the standby address on this interface; if there is no address, return IPv4Obj('0.0.0.1/32')"""
+        """Return a ccp_util.IPv4Obj object representing the standby address on this interface; if there is no address, return IPv4Obj()"""
         try:
             return IPv4Obj("{}/{}".format(self.ipv4_standby_addr, self.ipv4_netmask))
         except Exception as ee:
@@ -316,29 +342,31 @@ class BaseASAIntfLine(ASACfgLine):
     @property
     @logger.catch(reraise=True)
     def has_no_ipv4(self):
-        r"""Return an ccp_util.IPv4Obj object representing the subnet on this interface; if there is no address, return ccp_util.IPv4Obj('0.0.0.1/32')"""
-        return self.ip_network_object == IPv4Obj("0.0.0.1/32")
+        r"""Return an ccp_util.IPv4Obj object representing the subnet on this interface; if there is no address, return ccp_util.IPv4Obj()"""
+        return self.ip_network_object == IPv4Obj()
 
     # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def ip(self):
-        r"""Return an ccp_util.IPv4Obj object representing the subnet on this interface; if there is no address, return ccp_util.IPv4Obj('0.0.0.1/32')"""
+        r"""Return an ccp_util.IPv4Obj object representing the subnet on this interface; if there is no address, return ccp_util.IPv4Obj()"""
         return self.ip_network_object
 
     # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def ipv4(self):
-        r"""Return an ccp_util.IPv4Obj object representing the subnet on this interface; if there is no address, return ccp_util.IPv4Obj('0.0.0.1/32')"""
+        r"""Return an ccp_util.IPv4Obj object representing the subnet on this interface; if there is no address, return ccp_util.IPv4Obj()"""
         return self.ip_network_object
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def ipv4_network_object(self):
-        """Return an ccp_util.IPv4Obj object representing the subnet on this interface; if there is no address, return ccp_util.IPv4Obj('0.0.0.1/32')"""
+        """Return an ccp_util.IPv4Obj object representing the subnet on this interface; if there is no address, return ccp_util.IPv4Obj()"""
         return self.ip_network_object
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def ip_network_object(self):
@@ -347,12 +375,39 @@ class BaseASAIntfLine(ASACfgLine):
                 "{}/{}".format(self.ipv4_addr, self.ipv4_netmask), strict=False
             ).network
         except AttributeError:
-            err_text = "{}/{} does not have a .network attribute.".format(self.ipv4_addr, self.ipv4_netmask)
+            err_text = f"{self.ipv4_addr}/{self.ipv4_netmask} does not have a .network attribute."
             raise AttributeError(err_text)
         except Exception as ee:
-            err_text = "{}/{} does not seem to have a valid network address.".format(self.ipv4_addr, self.ipv4_netmask)
+            err_text = f"{self.ipv4_addr}/{self.ipv4_netmask} does not seem to have a valid network address."
             raise ValueError(err_text)
 
+    # This method is on BaseIOSIntfLine()
+    @property
+    @logger.catch(reraise=True)
+    def ipv6_addr(self):
+        if self.ipv6_addr_object.empty is False:
+            return str(self.ipv6_addr_object.ip)
+        return ""
+
+    @property
+    @logger.catch(reraise=True)
+    def ipv6_standby_addr(self):
+        for cobj in self.children:
+            cmd_parts = cobj.text.split()
+            if len(cmd_parts) == 5:
+                if cmd_parts[0:2] == ["ipv6", "address"] and cmd_parts[3] == "standby":
+                    return cmd_parts[4]
+        return ""
+
+    # This method is on BaseIOSIntfLine()
+    @property
+    @logger.catch(reraise=True)
+    def ipv6_masklength(self):
+        if self.ipv6_addr_object.empty is False:
+            return int(self.ipv6_addr_object.masklength)
+        return 0
+
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_autonegotiation(self):
@@ -367,6 +422,7 @@ class BaseASAIntfLine(ASACfgLine):
         else:
             raise ValueError
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_manual_speed(self):
@@ -375,6 +431,7 @@ class BaseASAIntfLine(ASACfgLine):
         )
         return retval
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_manual_duplex(self):
@@ -383,6 +440,7 @@ class BaseASAIntfLine(ASACfgLine):
         )
         return retval
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def is_shutdown(self):
@@ -391,11 +449,13 @@ class BaseASAIntfLine(ASACfgLine):
         )
         return retval
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def ip_addr(self):
         return self.ipv4_addr
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def ipv4_addr(self):
@@ -407,6 +467,7 @@ class BaseASAIntfLine(ASACfgLine):
         )
         return retval
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def ipv4_standby_addr(self):
@@ -418,6 +479,7 @@ class BaseASAIntfLine(ASACfgLine):
         )
         return retval
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def ipv4_netmask(self):
@@ -429,6 +491,7 @@ class BaseASAIntfLine(ASACfgLine):
         )
         return retval
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def ipv4_masklength(self):
@@ -438,10 +501,11 @@ class BaseASAIntfLine(ASACfgLine):
             return ipv4_addr_object.prefixlen
         return 0
 
+    # This method is on BaseIOSIntfLine()
     @logger.catch(reraise=True)
     def in_ipv4_subnet(self, ipv4network=IPv4Obj("0.0.0.0/32", strict=False)):
         """Accept two string arguments for network and netmask, and return a boolean for whether this interface is within the requested subnet.  Return None if there is no address on the interface"""
-        if not (str(self.ipv4_addr_object.ip) == "0.0.0.1"):
+        if self.ipv4_addr_object.empty is False:
             try:
                 # Return a boolean for whether the interface is in that network and mask
                 return self.ipv4_addr_object in ipv4network
@@ -454,6 +518,7 @@ class BaseASAIntfLine(ASACfgLine):
         else:
             return None
 
+    # This method is on BaseIOSIntfLine()
     @logger.catch(reraise=True)
     def in_ipv4_subnets(self, subnets=None):
         """Accept a set or list of ccp_util.IPv4Obj objects, and return a boolean for whether this interface is within the requested subnets."""
@@ -467,6 +532,7 @@ class BaseASAIntfLine(ASACfgLine):
                 return tmp
         return tmp
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_ip_pim_sparse_mode(self):
@@ -483,6 +549,7 @@ class BaseASAIntfLine(ASACfgLine):
         )
         return retval
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def is_switchport(self):
@@ -491,6 +558,7 @@ class BaseASAIntfLine(ASACfgLine):
         )
         return retval
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_manual_switch_access(self):
@@ -499,11 +567,13 @@ class BaseASAIntfLine(ASACfgLine):
         )
         return retval
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_manual_switch_trunk_encap(self):
         return bool(self.manual_switch_trunk_encap)
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_manual_switch_trunk(self):
@@ -512,6 +582,7 @@ class BaseASAIntfLine(ASACfgLine):
         )
         return retval
 
+    # This method is on BaseIOSIntfLine()
     @property
     @logger.catch(reraise=True)
     def access_vlan(self):
