@@ -509,13 +509,7 @@ class BaseJunosIntfLine(JunosCfgLine):
     @property
     @logger.catch(reraise=True)
     def name(self):
-        for pidx, pobj in enumerate(self.all_parents):
-            if pobj.text.split()[0] == "interface":
-                if not "unit" in self.text:
-                    # This is a basic physical interface
-                    return (self.all_parents, self.text.strip())
-                else:
-                    return (self.all_parents, self.text.strip())
+        raise NotImplementedError()
 
 
     # This method is on BaseJunosIntfLine()
