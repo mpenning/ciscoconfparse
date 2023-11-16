@@ -146,7 +146,10 @@ ALL_ASA_FACTORY_CLASSES = [
     ASACfgLine,        # ASACfgLine MUST be last
 ]
 ALL_JUNOS_FACTORY_CLASSES = [
-    JunosIntfLine,
+    ##########################################################################
+    # JunosIntfLine is rather broken; JunosCfgLine should be enough
+    ##########################################################################
+    #JunosIntfLine,
     JunosCfgLine,      # JunosCfgLine MUST be last
 ]
 
