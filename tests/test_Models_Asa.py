@@ -142,16 +142,24 @@ def testVal_object_group_network_02():
     assert obj.networks == result_correct_01
 
 
-def testVal_ipv4_addr():
+def testVal_ipv4_addr_01():
     conf = [
+        "hostname MYASA",
         "!",
         "interface Ethernet0/0",
         " nameif OUTSIDE",
         " ip address 198.101.172.106 255.255.255.128 standby 198.101.172.107",
+        " ipv6 address 2001:dead:beef::1/64 standby 2001:dead:beef::2",
+        " ipv6 enable",
         "!",
         "interface Ethernet0/1",
         " nameif INSIDE",
         " ip address 192.0.2.254 255.255.255.0",
+        " ipv6 address fd80::1/64 standby fd80::2",
+        " ipv6 enable",
+        "!",
+        "interface Ethernet0/2",
+        " shutdown",
         "!",
     ]
     cfg_factory = CiscoConfParse(conf, factory=True, syntax="asa")
@@ -164,6 +172,42 @@ def testVal_ipv4_addr():
     obj = cfg_factory.find_objects(r"^interface\sEthernet0\/1$")[0]
     assert obj.ipv4_addr == "192.0.2.254"
 
+def testVal_ipv6_addr_01():
+    conf = [
+        "hostname MYASA",
+        "!",
+        "interface Ethernet0/0",
+        " nameif OUTSIDE",
+        " ip address 198.101.172.106 255.255.255.128 standby 198.101.172.107",
+        " ipv6 address 2001:dead:beef::1/64 standby 2001:dead:beef::2",
+        " ipv6 enable",
+        "!",
+        "interface Ethernet0/1",
+        " nameif INSIDE",
+        " ip address 192.0.2.254 255.255.255.0",
+        " ipv6 address fd80::1/64 standby fd80::2",
+        " ipv6 enable",
+        "!",
+        "interface Ethernet0/2",
+        " shutdown",
+        "!",
+    ]
+    cfg_factory = CiscoConfParse(conf, factory=True, syntax="asa")
+
+    obj = cfg_factory.find_objects(r"^interface\sEthernet0\/0$")[0]
+    assert obj.ipv6_addr == "2001:dead:beef::1"
+    assert obj.ipv6_standby_addr == "2001:dead:beef::2"
+    assert obj.ipv6_masklength == 64
+
+    obj = cfg_factory.find_objects(r"^interface\sEthernet0\/1$")[0]
+    assert obj.ipv6_addr == "fd80::1"
+    assert obj.ipv6_standby_addr == "fd80::2"
+    assert obj.ipv6_masklength == 64
+
+    obj = cfg_factory.find_objects(r"^interface\sEthernet0\/2$")[0]
+    assert obj.ipv6_addr == ""
+    assert obj.ipv6_standby_addr == ""
+    assert obj.ipv6_masklength == 0
 
 def testVal_object_group_service_01():
     ## This can only be configured as protocol object-group
