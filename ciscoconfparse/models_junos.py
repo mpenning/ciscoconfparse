@@ -99,27 +99,42 @@ class JunosCfgLine(BaseCfgLine):
     @logger.catch(reraise=True)
     def is_object_for(cls, all_lines, line, re=re):
         ## Default object, for now
-        if cls.is_object_for_interface(all_lines, line, re=re) is True:
-            return False
         return True
 
     # This method is on JunosCfgLine()
     @classmethod
     @logger.catch(reraise=True)
     def is_object_for_interface(cls, all_lines, line, re=re):
-        if isinstance(line, str):
-            line_parts = line.strip().split()
-            if len(line_parts) > 0 and line_parts[0]=="unit":
-                return True
         return False
+
+    @property
+    def name(self):
+        """If this is an interface, return a name such as 'ge-0/0/0 unit 0', otherwise return None"""
+        return self.intf_name
+
+    # This method is on JunosCfgLine()
+    @property
+    def intf_name(self):
+        """If this is an interface, return a name such as 'ge-0/0/0 unit 0', otherwise return None"""
+        if self.is_intf is True:
+            intf_parts = list()
+            for pobj in self.all_parents:
+                if pobj.text.strip()=="interfaces":
+                    continue
+                intf_parts.append(pobj.text.strip())
+            # Append this object text
+            intf_parts.append(self.text.strip())
+            return " ".join(intf_parts)
+        else:
+            return None
 
     # This method is on JunosCfgLine()
     @property
     @logger.catch(reraise=True)
     def is_intf(self):
-        # Includes subinterfaces
+        # Includes subinterfaces / JunOS units
         r"""Returns a boolean (True or False) to answer whether this :class:`~models_junos.JunosCfgLine` is an interface; subinterfaces
-        also return True.
+        and unit numbers also return True.
 
         Returns
         -------
@@ -149,22 +164,26 @@ class JunosCfgLine(BaseCfgLine):
         """
         # Check whether the oldest parent is "interfaces {"...
         if len(self.all_parents) >= 1:
-            in_intf_block = bool(self.all_parents[0].text[0:10].strip()=="interfaces")
+            in_intf_block = bool(self.all_parents[0].text.strip()[0:10]=="interfaces")
+            interfacesobj = self.all_parents[0]
         else:
             in_intf_block = False
 
-        if in_intf_block:
-            # Walk all children of interfaces {...}
-            for childobj in self.parent.children:
-                # We are in the children of the interface or unit number...
-                if len(self.all_parents) > 2:
-                    continue
-                elif childobj.text == self.text:
+        if in_intf_block is True:
+            for intfobj in interfacesobj.children:
+                ##############################################################
+                # identify a junos physical interface
+                ##############################################################
+                if intfobj is self:
                     return True
-                else:
-                    for grandcobj in childobj.children:
-                        if grandcobj.text.strip()[0:5]=="unit":
-                            return True
+
+                ##############################################################
+                # identify a junos subinterfaces (i.e. unit numbers)
+                ##############################################################
+                for unitobj in intfobj.children:
+                    if unitobj is self:
+                        return True
+            return False
         return False
 
     # This method is on JunosCfgLine()
@@ -205,9 +224,9 @@ class JunosCfgLine(BaseCfgLine):
            True
            >>>
         """
-        intf_regex = r"^interface\s+(\S+?\.\d+)"
-        if self.re_match(intf_regex):
-            return True
+        if self.is_intf is True:
+            if "unit" in self.intf_name:
+                return True
         return False
 
     # This method is on JunosCfgLine()
@@ -341,6 +360,54 @@ class BaseJunosIntfLine(JunosCfgLine):
             return f"<{self.classname} # {self.linenum} '{self.text.strip()}' info: 'switchport'>"
 
     # This method is on BaseJunosIntfLine()
+    @classmethod
+    @logger.catch(reraise=True)
+    def is_object_for_interface(cls, all_lines, line, re=re):
+        print(f"CALLING FOR {line.strip()}")
+        is_interfaces = False
+        intf_idx = -1
+        _line_indent = len(line) - len(line.strip())
+        parents = []
+
+        # This is the indent of the first interface line
+        _intf_indent = -1
+        for lidx, lline in enumerate(all_lines):
+            _llindent = len(lline) - len(lline.strip())
+
+
+            #################################################################
+            # Identify beginning of the 'interfaces' block...
+            #################################################################
+            if lline.strip() == "interfaces":
+                is_interfaces = True
+                intf_idx = lidx
+                parents.append(lline.strip())
+            elif is_interfaces is True and _llindent == 0:
+                print("RESET_INTF_BLOCK", _llindent, line)
+                intf_idx = -1
+                is_interfaces = False
+
+            if is_interfaces is True:
+                _intf_level = lidx - intf_idx
+            else:
+                _intf_level = -1
+
+            if _intf_level > 0:
+                print("    IS_INTERFACES", lline)
+                #############################################################
+                # Reset is_interfaces in another base config block...
+                #############################################################
+                if _intf_level > 0 and line.strip==lline.strip():
+                        _intf_indent = _llindent
+                        print("TRUE1", _intf_level, parents, lline)
+                        return True
+
+        if _intf_level >= 0:
+            return True
+        else:
+            return False
+
+    # This method is on BaseJunosIntfLine()
     @logger.catch(reraise=True)
     def reset(self, atomic=True):
         # Insert build_reset_string() before this line...
@@ -442,47 +509,14 @@ class BaseJunosIntfLine(JunosCfgLine):
     @property
     @logger.catch(reraise=True)
     def name(self):
-        r"""Return the interface name as a string, such as 'GigabitEthernet0/1'
+        for pidx, pobj in enumerate(self.all_parents):
+            if pobj.text.split()[0] == "interface":
+                if not "unit" in self.text:
+                    # This is a basic physical interface
+                    return (self.all_parents, self.text.strip())
+                else:
+                    return (self.all_parents, self.text.strip())
 
-        Returns:
-            - str.  The interface name as a string, or '' if the object is not an interface.
-
-        This example illustrates use of the method.
-
-        .. code-block:: python
-           :emphasize-lines: 17,20,23
-
-           >>> config = [
-           ...     '!',
-           ...     'interface FastEthernet1/0',
-           ...     ' ip address 1.1.1.1 255.255.255.252',
-           ...     '!',
-           ...     'interface ATM2/0',
-           ...     ' no ip address',
-           ...     '!',
-           ...     'interface ATM2/0.100 point-to-point',
-           ...     ' ip address 1.1.1.5 255.255.255.252',
-           ...     ' pvc 0/100',
-           ...     '  vbr-nrt 704 704',
-           ...     '!',
-           ...     ]
-           >>> parse = CiscoConfParse(config, factory=True)
-           >>> obj = parse.find_objects(r'^interface\sFast')[0]
-           >>> obj.name
-           'FastEthernet1/0'
-           >>> obj = parse.find_objects(r'^interface\sATM')[0]
-           >>> obj.name
-           'ATM2/0'
-           >>> obj = parse.find_objects(r'^interface\sATM')[1]
-           >>> obj.name
-           'ATM2/0.100'
-           >>>
-        """
-        if not self.is_intf:
-            return ""
-        intf_regex = r"^interface\s+(\S+[0-9\/\.\s]+)\s*"
-        name = self.re_match(intf_regex).strip()
-        return name
 
     # This method is on BaseJunosIntfLine()
     @property
@@ -664,11 +698,12 @@ class JunosIntfLine(BaseJunosIntfLine):
         super().__init__(*args, **kwargs)
         self.feature = "interface"
 
+
+
     # This method is on JunosIntfLine()
     @classmethod
     @logger.catch(reraise=True)
     def is_object_for(cls, all_lines, line, re=re):
-        print("FOO", line)
         return cls.is_object_for_interface(all_lines, line, re=re)
 
 ##
