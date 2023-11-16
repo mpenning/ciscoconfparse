@@ -68,7 +68,7 @@ def testVal_IOSHostnameLine_dna(line):
 def testValues_IOSIntfLine(parse_c01_factory):
     """Test to check IOSIntfLine values"""
     obj = parse_c01_factory.find_objects_dna("IOSIntf")[0]
-    assert obj.name == "Serial1/0"
+    assert obj.name == "Serial 1/0"
     assert obj.ipv4_addr == "1.1.1.1"
     assert obj.ipv4_netmask == "255.255.255.252"
 
@@ -171,19 +171,19 @@ def testVal_IOSCfgLine_is_ethernet_intf():
 def testVal_IOSIntfLine_name():
     # Map a config line to result_correct
     result_map = {
-        "interface Loopback 0": "Loopback0",
+        "interface Loopback 0": "Loopback 0",
         "interface Loopback1": "Loopback1",
-        "interface Serial 1/0": "Serial1/0",
+        "interface Serial 1/0": "Serial 1/0",
         "interface Ethernet4/1": "Ethernet4/1",
-        "interface Ethernet 4/1": "Ethernet4/1",
+        "interface Ethernet 4/1": "Ethernet 4/1",
         "interface FastEthernet4/1": "FastEthernet4/1",
-        "interface FastEthernet 4/1": "FastEthernet4/1",
+        "interface FastEthernet 4/1": "FastEthernet 4/1",
         "interface GigabitEthernet4/1": "GigabitEthernet4/1",
-        "interface GigabitEthernet 4/1": "GigabitEthernet4/1",
+        "interface GigabitEthernet 4/1": "GigabitEthernet 4/1",
         "interface GigabitEthernet4/8.120": "GigabitEthernet4/8.120",
-        "interface GigabitEthernet 4/8.120": "GigabitEthernet4/8.120",
+        "interface GigabitEthernet 4/8.120": "GigabitEthernet 4/8.120",
         "interface ATM5/0/0": "ATM5/0/0",
-        "interface ATM5/0/0.32 point-to-point": "ATM5/0/0.32",
+        "interface ATM5/0/0.32 point-to-point": "ATM5/0/0.32 point-to-point",
     }
     for cfgline, result_correct in result_map.items():
         cfg = CiscoConfParse([cfgline], factory=True)
