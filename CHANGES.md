@@ -6,7 +6,7 @@
 
 ## Version: 1.9.34
 
-- Released: 2023-11-l6
+- Released: 2023-11-16
 - Summary:
     - Add fence to `BaseCfgLine()` to throw a custom error on invalid attributes
     - Add template `name` attribute to `BaseCfgLine()`
