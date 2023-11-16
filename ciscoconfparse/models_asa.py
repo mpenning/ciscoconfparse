@@ -227,9 +227,7 @@ class BaseASAIntfLine(ASACfgLine):
         """Return a string, such as 'GigabitEthernet0/1'"""
         if not self.is_intf:
             return ""
-        intf_regex = r"^interface\s+(\S+[0-9\/\.\s]+)\s*"
-        name = self.re_match(intf_regex).strip()
-        return name
+        return " ".join(self.text.split()[1:])
 
     @property
     @logger.catch(reraise=True)
