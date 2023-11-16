@@ -66,6 +66,7 @@ def testVal_JunosCfgLine_child_02():
     assert obj.text.strip() == "ge-0/0/1"
     assert obj.is_intf is True
     assert obj.is_subintf is False
+    assert obj.is_switchport is True
     assert obj.name == "ge-0/0/1"
 
 def testVal_JunosCfgLine_child_03():
@@ -76,7 +77,19 @@ def testVal_JunosCfgLine_child_03():
     assert obj.text.strip() == "unit 0"
     assert obj.is_intf is True
     assert obj.is_subintf is True
+    assert obj.is_switchport is True
     assert obj.name == "ge-0/0/1 unit 0"
+
+def testVal_JunosCfgLine_child_04():
+    """Identify a JunOS logical interface unit"""
+    cfg = CiscoConfParse("fixtures/configs/sample_01.junos", syntax="junos", factory=False)
+    obj = cfg.find_objects_w_parents("vlan", "unit 0")[0]
+    assert obj.dna == "JunosCfgLine"
+    assert obj.text.strip() == "unit 0"
+    assert obj.is_intf is True
+    assert obj.is_subintf is True
+    assert obj.is_switchport is False
+    assert obj.name == "vlan unit 0"
 
 def testVal_find_objects_w_parents(parse_j01):
     cfg = parse_j01
