@@ -232,6 +232,18 @@ class JunosCfgLine(BaseCfgLine):
     # This method is on JunosCfgLine()
     @property
     @logger.catch(reraise=True)
+    def is_switchport(self):
+        """Return True if this is a switchport interface"""
+        if self.is_intf is True:
+            for cobj in self.all_children:
+                if "family ethernet-switching" in cobj.text:
+                    return True
+        return False
+
+
+    # This method is on JunosCfgLine()
+    @property
+    @logger.catch(reraise=True)
     def is_virtual_intf(self):
         intf_regex = (
             r"^interface\s+(Loopback|Tunnel|Dialer|Virtual-Template|Port-Channel)"
