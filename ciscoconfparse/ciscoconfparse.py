@@ -1776,12 +1776,42 @@ class CiscoConfParse(object):
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
-    def find_objects_w_child(
+    def find_objects_w_child(self, parentspec, childspec, ignore_ws=False, recurse=False):
+        """
+        Return a list of parent :class:`~models_cisco.IOSCfgLine` objects,
+        which matched the ``parentspec`` and whose children match ``childspec``.
+        Only the parent :class:`~models_cisco.IOSCfgLine` objects will be
+        returned.
+
+        This is an alias for :func:`~ciscoconfparse.CiscoConfParse.find_parent_objects`
+
+        Parameters
+        ----------
+        parentspec : str
+            Text regular expression for the :class:`~models_cisco.IOSCfgLine` object to be matched; this must match the parent's line
+        childspec : str
+            Text regular expression for the line to be matched; this must match the child's line
+        ignore_ws : bool
+            boolean that controls whether whitespace is ignored
+        recurse : bool
+            Set True if you want to search all children (children, grand children, great grand children, etc...)
+
+        Returns
+        -------
+        list
+            A list of matching parent :class:`~models_cisco.IOSCfgLine` objects
+        """
+        return self.find_parent_objects(parentspec, childspec, ignore_ws=ignore_ws, recurse=recurse, escape_chars=False)
+
+    # This method is on CiscoConfParse()
+    @logger.catch(reraise=True)
+    def find_parent_objects(
         self,
         parentspec,
         childspec,
         ignore_ws=False,
         recurse=False,
+        escape_chars=False,
     ):
         """
         Return a list of parent :class:`~models_cisco.IOSCfgLine` objects,
@@ -1799,6 +1829,8 @@ class CiscoConfParse(object):
             boolean that controls whether whitespace is ignored
         recurse : bool
             Set True if you want to search all children (children, grand children, great grand children, etc...)
+        escape_chars : bool
+            Set True if you want to escape characters before searching
 
         Returns
         -------
@@ -1807,7 +1839,7 @@ class CiscoConfParse(object):
 
         Examples
         --------
-        This example uses :func:`~ciscoconfparse.find_objects_w_child()` to
+        This example uses :func:`~ciscoconfparse.find_parent_objects()` to
         find all ports that are members of access vlan 300 in following
         config...
 
@@ -1861,16 +1893,24 @@ class CiscoConfParse(object):
            ...           '!',
            ...     ]
            >>> p = CiscoConfParse(config=config)
-           >>> p.find_objects_w_child('^interface',
+           >>> p.find_parent_objects('^interface',
            ...     'switchport access vlan 300')
            ...
            [<IOSCfgLine # 5 'interface FastEthernet0/2'>, <IOSCfgLine # 9 'interface FastEthernet0/3'>]
            >>>
         """
 
+
         if ignore_ws:
             parentspec = build_space_tolerant_regex(parentspec)
             childspec = build_space_tolerant_regex(childspec)
+
+        if escape_chars is True:
+            ###################################################################
+            # Escape regex to avoid embedded parenthesis problems
+            ###################################################################
+            parentspec = re.escape(parentspec)
+            childspec = re.escape(childspec)
 
         return list(
             filter(
@@ -2056,6 +2096,7 @@ class CiscoConfParse(object):
 
         return retval
 
+
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
     def find_parents_w_child(self, parentspec, childspec, ignore_ws=False):
@@ -2146,7 +2187,7 @@ class CiscoConfParse(object):
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
-    def find_objects_wo_child(self, parentspec, childspec, ignore_ws=False):
+    def find_objects_wo_child(self, parentspec, childspec, ignore_ws=False, recurse=False):
         r"""Return a list of parent :class:`~models_cisco.IOSCfgLine` objects, which matched the ``parentspec`` and whose children did not match ``childspec``.  Only the parent :class:`~models_cisco.IOSCfgLine` objects will be returned.  For simplicity, this method only finds oldest_ancestors without immediate children that match.
 
         Parameters
@@ -2157,6 +2198,31 @@ class CiscoConfParse(object):
             Text regular expression for the line to be matched; this must match the child's line
         ignore_ws : bool
             boolean that controls whether whitespace is ignored
+
+        Returns
+        -------
+        list
+            A list of matching parent configuration lines
+        """
+        return self.find_parent_objects_wo_child(parentspec, childspec, ignore_ws=ignore_ws, recurse=recurse)
+
+    # This method is on CiscoConfParse()
+    @logger.catch(reraise=True)
+    def find_parent_objects_wo_child(self, parentspec, childspec, ignore_ws=False, recurse=False, escape_chars=False):
+        r"""Return a list of parent :class:`~models_cisco.IOSCfgLine` objects, which matched the ``parentspec`` and whose children did not match ``childspec``.  Only the parent :class:`~models_cisco.IOSCfgLine` objects will be returned.  For simplicity, this method only finds oldest_ancestors without immediate children that match.
+
+        Parameters
+        ----------
+        parentspec : str
+            Text regular expression for the :class:`~models_cisco.IOSCfgLine` object to be matched; this must match the parent's line
+        childspec : str
+            Text regular expression for the line to be matched; this must match the child's line
+        ignore_ws : bool
+            boolean that controls whether whitespace is ignored
+        recurse : bool
+            boolean that controls whether to recurse through children of children
+        escape_chars : bool
+            boolean that controls whether to escape characters before searching
 
         Returns
         -------
@@ -2192,7 +2258,7 @@ class CiscoConfParse(object):
            interface FastEthernet0/1
            interface FastEthernet0/2
 
-        We do this by quering `find_objects_wo_child()`; we set our
+        We do this by quering `find_parent_objects_wo_child()`; we set our
         parent as `^interface` and set the child as `speed\s\d+` (a
         regular-expression which matches the word 'speed' followed by
         an integer).
@@ -2218,19 +2284,25 @@ class CiscoConfParse(object):
            ...           '!',
            ...     ]
            >>> p = CiscoConfParse(config=config)
-           >>> p.find_objects_wo_child(r'^interface', r'speed\s\d+')
+           >>> p.find_parent_objects_wo_child(r'^interface', r'speed\s\d+')
            [<IOSCfgLine # 1 'interface FastEthernet0/1'>, <IOSCfgLine # 5 'interface FastEthernet0/2'>]
            >>>
         """
-
         if ignore_ws is True:
             parentspec = build_space_tolerant_regex(parentspec)
             childspec = build_space_tolerant_regex(childspec)
 
+        if escape_chars is True:
+            ###################################################################
+            # Escape regex to avoid embedded parenthesis problems
+            ###################################################################
+            parentspec = re.escape(parentspec)
+            childspec = re.escape(childspec)
+
         return [
             obj
             for obj in self.find_objects(parentspec)
-            if not obj.re_search_children(childspec)
+            if not obj.re_search_children(childspec, recurse=recurse)
         ]
 
     # This method is on CiscoConfParse()
@@ -2313,7 +2385,7 @@ class CiscoConfParse(object):
            >>>
 
         """
-        tmp = self.find_objects_wo_child(
+        tmp = self.find_parent_objects_wo_child(
             parentspec,
             childspec,
             ignore_ws=ignore_ws,
@@ -2437,6 +2509,8 @@ class CiscoConfParse(object):
         r"""Parse through the children of all parents matching parentspec,
         and return a list of child objects, which matched the childspec.
 
+        This is just an alias for `find_child_objects()`
+
         Parameters
         ----------
         parentspec : str
@@ -2445,6 +2519,30 @@ class CiscoConfParse(object):
             Text regular expression for the line to be matched; this must match the child's line
         ignore_ws : bool
             boolean that controls whether whitespace is ignored
+
+        Returns
+        -------
+        list
+            A list of matching child objects
+    """
+        return self.find_child_objects(parentspec, childspec, ignore_ws=ignore_ws, recurse=False)
+
+    # This method is on CiscoConfParse()
+    @logger.catch(reraise=True)
+    def find_child_objects(self, parentspec, childspec, ignore_ws=False, recurse=False, escape_chars=False):
+        r"""Parse through the children of all parents matching parentspec,
+        and return a list of child objects, which matched the childspec.
+
+        Parameters
+        ----------
+        parentspec : str
+            Text regular expression for the line to be matched; this must match the parent's line
+        childspec : str
+            Text regular expression for the line to be matched; this must match the child's line
+        ignore_ws : bool
+            boolean that controls whether whitespace is ignored
+        escape_chars : bool
+            boolean that controls whether characters are escaped before searching
 
         Returns
         -------
@@ -2484,7 +2582,7 @@ class CiscoConfParse(object):
 
             <IOSCfgLine # 7 '    ge-0/0/1' (parent is # 0)>
 
-        We do this by quering `find_objects_w_parents()`; we set our
+        We do this by quering `find_child_objects()`; we set our
         parent as `^\s*interface` and set the child as
         `^\s+ge-0/0/1`.
 
@@ -2512,7 +2610,7 @@ class CiscoConfParse(object):
            ...           '                address 172.16.15.5/22',
            ...     ]
            >>> p = CiscoConfParse(config=config)
-           >>> p.find_objects_w_parents('^\s*interfaces',
+           >>> p.find_child_objects('^\s*interfaces',
            ... r'\s+ge-0/0/1')
            [<IOSCfgLine # 7 '    ge-0/0/1' (parent is # 0)>]
            >>>
@@ -2522,13 +2620,32 @@ class CiscoConfParse(object):
             parentspec = build_space_tolerant_regex(parentspec)
             childspec = build_space_tolerant_regex(childspec)
 
+        if escape_chars is True:
+            ######################################################################
+            # Escape regex to avoid embedded parenthesis problems
+            ######################################################################
+            parentspec = re.escape(parentspec)
+            childspec = re.escape(childspec)
+
         retval = set()
-        childobjs = self._find_line_OBJ(childspec)
-        for child in childobjs:
-            parents = child.all_parents
+        parents = self.find_objects(parentspec)
+        if recurse is False:
             for parent in parents:
-                if re.search(parentspec, parent.text):
-                    retval.add(child)
+                ##############################################################
+                # If recurse is False, only search direct children
+                ##############################################################
+                for child in parent.children:
+                    if child.re_match(rf"({childspec})", default=False):
+                        retval.add(child)
+        else:
+            for parent in parents:
+                ##############################################################
+                # If recurse is True, search all children including children
+                #    of the children
+                ##############################################################
+                for child in parent.all_children:
+                    if child.re_match(rf"({childspec})", default=False):
+                        retval.add(child)
 
         return sorted(retval)
 
