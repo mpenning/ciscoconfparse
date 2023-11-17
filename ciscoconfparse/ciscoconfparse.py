@@ -3262,14 +3262,14 @@ class CiscoConfParse(object):
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
-    def re_search_children(self, regex, recurse=False):
-        """Use ``regex`` to search for root parents in the config with text matching regex.  If `recurse` is False, only root parent objects are returned.  A list of matching objects is returned.
+    def re_search_children(self, regexspec, recurse=False):
+        """Use ``regexspec`` to search for root parents in the config with text matching regex.  If `recurse` is False, only root parent objects are returned.  A list of matching objects is returned.
 
         This method is very similar to :func:`~ciscoconfparse.CiscoConfParse.find_objects` (when `recurse` is True); however it was written in response to the use-case described in `Github Issue #156 <https://github.com/mpenning/ciscoconfparse/issues/156>`_.
 
         Parameters
         ----------
-        regex : str
+        regexspec : str
             A string or python regular expression, which should be matched.
         recurse : bool
             Set True if you want to search all objects, and not just the root parents
@@ -3283,22 +3283,22 @@ class CiscoConfParse(object):
         ## I implemented this method in response to Github issue #156
         if recurse is False:
             # Only return the matching oldest ancestor objects...
-            return [obj for obj in self.find_objects(regex) if (obj.parent is obj)]
+            return [obj for obj in self.find_objects(regexspec) if (obj.parent is obj)]
         else:
             # Return any matching object
-            return [obj for obj in self.find_objects(regex)]
+            return [obj for obj in self.find_objects(regexspec)]
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
     def re_match_iter_typed(
         self,
-        regex,
+        regexspec,
         group=1,
         result_type=str,
         default="",
         untyped_default=False,
     ):
-        r"""Use ``regex`` to search the root parents in the config
+        r"""Use ``regexspec`` to search the root parents in the config
         and return the contents of the regular expression group, at the
         integer ``group`` index, cast as ``result_type``; if there is no
         match, ``default`` is returned.
@@ -3310,16 +3310,15 @@ class CiscoConfParse(object):
 
         Parameters
         ----------
-
-        :regex : str
+        regexspec : str
             A string or python compiled regular expression, which should be matched.  This regular expression should contain parenthesis, which bound a match group.
-        :group : int
+        group : int
             An integer which specifies the desired regex group to be returned.  ``group`` defaults to 1.
-        :result_type : type
+        result_type : type
             A type (typically one of: ``str``, ``int``, ``float``, or :class:`~ccp_util.IPv4Obj`).         All returned values are cast as ``result_type``, which defaults to ``str``.
-        :default : any
+        default : any
             The default value to be returned, if there is no match.  The default is an empty string.
-        :untyped_default : bool
+        untyped_default : bool
             Set True if you don't want the default value to be typed
 
         Returns
@@ -3388,7 +3387,7 @@ class CiscoConfParse(object):
             if cobj.parent is not cobj:
                 continue
 
-            mm = re.search(regex, cobj.text)
+            mm = re.search(regexspec, cobj.text)
             if mm is not None:
                 return result_type(mm.group(group))
         ## Ref Github issue #121
