@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 1.9.36
+
+- Released: 2023-11-17
+- Summary:
+    - Update the [documentation][3]
+
 ## Version: 1.9.35
 
 - Released: 2023-11-17
@@ -2068,3 +2074,4 @@
 
 [1]: https://datatracker.ietf.org/doc/html/rfc6052
 [2]: https://en.wikipedia.org/wiki/NAT64
+[3]: http://www.pennington.net/py/ciscoconfparse/
