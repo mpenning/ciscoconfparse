@@ -36,21 +36,19 @@ r""" test_Models_Junos.py - Parse, Query, Build, and Modify IOS-style configs
 def testVal_JunosIntfLine_dna(parse_j01):
     uut = parse_j01.objs
     assert len(uut) == 76
-    #obj = parse.find_objects_w_child("interfaces", "ge-0/0/1")[0]
     #assert obj.dna == "JunosIntfLine"
 
-
 def testVal_JunosCfgLine_dna_parent_01(parse_j01):
-    cfg = parse_j01
-    obj = cfg.find_objects_w_child("interfaces", "ge-0/0/1")[0]
+    parse = parse_j01
+    obj = parse.find_parent_objects("interfaces", "ge-0/0/1")[0]
     assert obj.dna == "JunosCfgLine"
     assert obj.is_intf is False
     assert obj.is_subintf is False
 
 @pytest.mark.xfail(True, reason="parse_j01 ge-0/0/1 is not correctly identified by `is_intf`")
 def testVal_JunosCfgLine_child_01(parse_j01):
-    cfg = parse_j01
-    obj = cfg.find_objects_w_parents("interfaces", "ge-0/0/1")[0]
+    parse = parse_j01
+    obj = parse.find_child_objects("interfaces", "ge-0/0/1")[0]
     assert obj.dna == "JunosCfgLine"
     assert obj.text.strip() == "ge-0/0/1"
     assert obj.is_intf is True
@@ -60,8 +58,8 @@ def testVal_JunosCfgLine_child_01(parse_j01):
 
 def testVal_JunosCfgLine_child_02():
     """Identify a JunOS physical interface"""
-    cfg = CiscoConfParse("fixtures/configs/sample_01.junos", syntax="junos", factory=False)
-    obj = cfg.find_objects_w_parents("interfaces", "ge-0/0/1")[0]
+    parse = CiscoConfParse("fixtures/configs/sample_01.junos", syntax="junos", factory=False)
+    obj = parse.find_child_objects("interfaces", "ge-0/0/1")[0]
     assert obj.dna == "JunosCfgLine"
     assert obj.text.strip() == "ge-0/0/1"
     assert obj.is_intf is True
@@ -71,8 +69,8 @@ def testVal_JunosCfgLine_child_02():
 
 def testVal_JunosCfgLine_child_03():
     """Identify a JunOS logical interface unit"""
-    cfg = CiscoConfParse("fixtures/configs/sample_01.junos", syntax="junos", factory=False)
-    obj = cfg.find_objects_w_parents("ge-0/0/1", "unit 0")[0]
+    parse = CiscoConfParse("fixtures/configs/sample_01.junos", syntax="junos", factory=False)
+    obj = parse.find_child_objects("ge-0/0/1", "unit 0")[0]
     assert obj.dna == "JunosCfgLine"
     assert obj.text.strip() == "unit 0"
     assert obj.is_intf is True
@@ -82,8 +80,8 @@ def testVal_JunosCfgLine_child_03():
 
 def testVal_JunosCfgLine_child_04():
     """Identify a JunOS logical interface unit"""
-    cfg = CiscoConfParse("fixtures/configs/sample_01.junos", syntax="junos", factory=False)
-    obj = cfg.find_objects_w_parents("vlan", "unit 0")[0]
+    parse = CiscoConfParse("fixtures/configs/sample_01.junos", syntax="junos", factory=False)
+    obj = parse.find_child_objects("vlan", "unit 0")[0]
     assert obj.dna == "JunosCfgLine"
     assert obj.text.strip() == "unit 0"
     assert obj.is_intf is True
@@ -91,16 +89,17 @@ def testVal_JunosCfgLine_child_04():
     assert obj.is_switchport is False
     assert obj.name == "vlan unit 0"
 
-def testVal_find_objects_w_parents(parse_j01):
-    cfg = parse_j01
-    obj = cfg.find_objects_w_parents("interfaces", "ge-0/0/1")[0]
+def testVal_find_child_objects_01(parse_j01):
+    """Identify the number of grandchildren of parse_j01 ge-0/0/1"""
+    parse = parse_j01
+    obj = parse.find_child_objects("interfaces", "ge-0/0/1")[0]
     assert not ("{" in set(obj.text))  # Ensure there are no braces on this line
     assert len(obj.all_children) == 6
 
 
 # test for Github issue #49
 def testVal_parse_F5():
-    """Test for Github issue #49"""
+    """Test for Github issue #49 two different ways"""
     config = [
         "ltm virtual virtual1 {",
         "    profiles {",
@@ -114,5 +113,9 @@ def testVal_parse_F5():
         "}",
     ]
     parse = CiscoConfParse(config, syntax="junos")
-    retval = parse.find_objects("profiles2")[0].children
-    assert retval[0].text.strip() == "test2"
+
+    uut_01 = parse.find_objects("profiles2")[0].children
+    assert uut_01[0].text.strip() == "test2"
+
+    uut_02 = parse.find_child_objects("ltm virtual", "test2", recurse=True)[0]
+    assert uut_02.text.strip() == "test2"

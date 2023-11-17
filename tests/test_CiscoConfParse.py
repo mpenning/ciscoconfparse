@@ -278,6 +278,26 @@ interfaces {
             }
         }
     }
+    ge-0/0/1 {
+        unit 0 {
+            family ethernet-switching {
+                port-mode access;
+                vlan {
+                    members VLAN_FOO;
+                }
+            }
+        }
+    }
+    ge-0/0/2 {
+        unit 0 {
+            family ethernet-switching {
+                port-mode access;
+                vlan {
+                    members VLAN_FOO;
+                }
+            }
+        }
+    }
 }
 routing-options {
     static {
@@ -339,19 +359,33 @@ routing-options {
         '                port-mode access',
         '                vlan',
         '                    members VLAN_FOO',
+        '    ge-0/0/1',
+        '        unit 0',
+        '            family ethernet-switching',
+        '                port-mode access',
+        '                vlan',
+        '                    members VLAN_FOO',
+        '    ge-0/0/2',
+        '        unit 0',
+        '            family ethernet-switching',
+        '                port-mode access',
+        '                vlan',
+        '                    members VLAN_FOO',
         'routing-options',
         '    static',
         '        route 0.0.0.0/0 next-hop 172.16.12.1',
         '        route 192.168.36.0/25 next-hop 172.16.12.1',
     ]
-    parse = CiscoConfParse(
+    uut = CiscoConfParse(
         config.splitlines(),
         syntax="junos",
         comment="#",
         factory=False,
     )
-    uut = parse.ioscfg
-    assert uut == result_correct_ioscfg
+    assert uut.ioscfg == result_correct_ioscfg
+    assert uut.find_child_objects("interfaces", "ge-0/0/1",)[0].text == "    ge-0/0/1"
+    assert uut.find_parent_objects("interfaces", "ge-0/0/1")[0].text == "interfaces"
+    assert len(uut.find_parent_objects_wo_child("interfaces", "vlan", recurse=True)) == 0
 
 def testParse_invalid_filepath_01():
     """Test that ciscoconfparse raises an error if the filepath is invalid"""
@@ -1680,21 +1714,14 @@ def testValues_find_object_branches_05():
     assert test_result[1][2].text.strip() == "matchthis"
 
 def testValues_find_objects_w_parents(parse_c01):
-    c01_children_w_parents_switchport = [
+    correct_result = [
         " switchport",
         " switchport access vlan 100",
         " switchport voice vlan 150",
     ]
-    find_objects_w_parents_Values = (
-        (
-            {"parentspec": "^interface GigabitEthernet4/1", "childspec": "switchport"},
-            c01_children_w_parents_switchport,
-        ),
-    )
     ## test find_children_w_parents
-    for args, correct_result in find_objects_w_parents_Values:
-        test_result = [ii.text for ii in parse_c01.find_objects_w_parents(**args)]
-        assert correct_result == test_result
+    test_result = [ii.text for ii in parse_c01.find_objects_w_parents("interface GigabitEthernet4/1", "switchport")]
+    assert correct_result == test_result
 
 
 def testValues_find_objects_w_all_children(parse_c01):
