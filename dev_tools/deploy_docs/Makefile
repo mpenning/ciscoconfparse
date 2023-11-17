@@ -22,26 +22,22 @@ PLATFORM := $(shell perl -e '`uname -a` =~ /^(\w+).*?$$/;print("$$1");')
 .SILENT: build
 .DEFAULT_GOAL := build
 
-# 'make release' will perform the ultimate binary packing (sometimes
-#     resulting in a 70% smaller binary!!!); however, 'upx' is really slow
-release:
-	make build
-	upx --ultra-brute bin/deploy_docs
-.PHONY: release
-
 # Ref -> https://stackoverflow.com/a/26737258/667301
 build:
 	@echo "$(COL_GREEN)>> compiling the project.$(COL_END)"
 	# Very Important... do not skip the backup step here...
 	mkdir -p $(GO_BIN_DIR)
 	make backup
+	-rm go.mod
+	go mod init deploy_docs
+	go mod tidy
 	-make fmt
 	make dep
 	make lint
 	go build $(GO_SOURCE_FILE)
 	strip deploy_docs
 	-make lint
-	cd src && go vet .
+	#cd src && go vet .
 	############################################################################
 	#
 	# Replace this line with PLATFORM detection...
@@ -56,7 +52,7 @@ build:
 	else \
 		echo "$(COL_RED)Unknown PLATFORM -> $(PLATFORM)$(COL_END)"; \
 	fi
-	make release
+	#upx --ultra-brute deploy_docs
 .PHONY: build
 
 deploy:
@@ -91,8 +87,6 @@ lint:
 	mv $(GO_SOURCE_FILE).imports $(GO_SOURCE_FILE)
 	@echo "$(COL_CYAN)>>     running gocritic$(COL_END)"
 	gocritic check -enableAll $(GO_SOURCE_FILE)
-	@echo "$(COL_CYAN)>>     running staticcheck$(COL_END)"
-	staticcheck src/*go
 	@echo "$(COL_CYAN)>>     running errcheck$(COL_END)"
 	errcheck -verbose $(GO_SOURCE_FILE)
 .PHONY: lint
