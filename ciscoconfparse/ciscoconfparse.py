@@ -3303,8 +3303,8 @@ class CiscoConfParse(object):
         integer ``group`` index, cast as ``result_type``; if there is no
         match, ``default`` is returned.
 
-        Notes
-        -----
+        Note
+        ----
         Only the first regex match is returned.
 
         Parameters
