@@ -17,27 +17,25 @@ import time
 # Absolute import path referenced to this sphinx-doc directory
 sys.path.insert(0, os.path.join(os.path.abspath(os.path.dirname(__file__)), ".."))
 
+# Import sphinx-rtd-theme to ensure pip installed it...
+import sphinx_rtd_theme
+
 from sphinx.ext.autodoc import AttributeDocumenter, ClassLevelDocumenter
 import ciscoconfparse.ciscoconfparse, ciscoconfparse.ccp_abc, ciscoconfparse.ccp_util
 from loguru import logger
 
-try:
-    import sphinx_bootstrap_theme
-except:
-    error = "Could not load sphinx_bootstrap_theme"
-    logger.error(error)
-    raise OSError(error)
+if False:
+    try:
+        import sphinx_bootstrap_theme
+    except:
+        error = "Could not load sphinx_bootstrap_theme"
+        logger.error(error)
+        raise OSError(error)
 
 from ciscoconfparse.ciscoconfparse import __author_email__
 from ciscoconfparse.ciscoconfparse import __author__
 
 import toml
-
-
-def setup(app):
-    ## add a stylesheet to add more whitespace around method and section docs
-    app.add_css_file("css/custom.css")
-
 
 ## http://ericholscher.com/blog/2013/nov/4/new-theme-read-the-docs/
 RTD_NEW_THEME = True
@@ -157,26 +155,21 @@ pygments_style = "tango"
 # The theme to use for HTML and HTML Help pages.  Major themes that come with
 # Sphinx are currently 'default' and 'sphinxdoc'.
 bootstrap_theme_installed = sys.modules.get("sphinx_bootstrap_theme", False)
+_default_sphinx_python_package = "sphinx_rtd_theme"
 if bootstrap_theme_installed is True:
 #if sys.modules.get("sphinx_press_theme", False):
     html_theme = "bootstrap"
     html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
 
-elif bootstrap_theme_installed is False:
-    html_theme = "press"
-    html_theme_path = sphinx_press_theme.get_html_theme_path()
-
 else:
-    html_theme = "default"
+    html_theme = _default_sphinx_python_package
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 html_theme_options = {
-    "navbar_title": "ciscoconfparse",
-    "navbar_site_name": "ciscoconfparse",
-    "globaltoc_depth": 2,
-    "bootswatch_theme": "united",
+    "display_version": True,
+    "style_nav_header_background": "light_blue",
 }
 
 # Add any paths that contain custom themes here, relative to this directory.

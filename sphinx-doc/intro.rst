@@ -64,21 +64,31 @@ ciscoconfparse, it's really this easy...
 .. sourcecode:: python
 
    >>> from ciscoconfparse import CiscoConfParse
-   >>> parse = CiscoConfParse('/tftpboot/largeConfig.conf')
-   >>> trunks = parse.find_parents_w_child("^interface", "switchport trunk")
-   >>> for intf in trunks:
+   >>> parse = CiscoConfParse('/tftpboot/largeConfig.conf', syntax='ios', factory=False)
+   >>>
+   >>> # Find parent interfaces that are configured with 'switchport trunk'
+   >>> dot1q_trunks = parse.find_parent_objects("^interface", "switchport trunk")
+   >>> for intf in dot1q_trunks:
    ...     print(intf)
-   interface GigabitEthernet 1/7
-   interface GigabitEthernet 1/23
-   interface GigabitEthernet 1/24
-   interface GigabitEthernet 1/30
-   interface GigabitEthernet 3/2
-   interface GigabitEthernet 5/10
-   <and so on...>
+   <IOSCfgLine # 217 'interface FastEthernet1/1'>
+   <IOSCfgLine # 237 'interface FastEthernet1/2'>
+   ...
+   >>>
 
-So you may be saying, that all sounds great, but I have no idea what you did
-with that code up there.  If so, don't worry... There is a tutorial following
-this intro.  For more depth, I highly recommend `Dive into Python3`_.
+This example:
+
+- Imports `CiscoConfParse`_
+- Searches a Cisco IOS configuration file stored in ``/tftpboot/largeConfig.conf``
+
+  - Use the default 'ios' syntax for the configuration file
+  - Use the default 'factory' setting, which is disabled
+
+- Search for configuration lines which have:
+
+  - The parent beginning with ``interface`` (and anything else on the config line); ``^`` is a special character that requests to anchor the string at the beginning of the config line.
+  - A child of that parent configured with ``switchport trunk`` (and anything else on the config line)
+
+The search found two configuration lines.
 
 We don't have Ciscos
 --------------------
@@ -102,7 +112,6 @@ CiscoConfParse understands these configurations too:
 - Juniper Networks Junos, and Screenos
 - Palo Alto Networks Firewall configurations
 - F5 Networks configurations
-- Terraform .tf files
 
 Quotes
 ------
@@ -171,6 +180,7 @@ changes were made:
 .. _`Dive into Python3`: https://diveintopython3.problemsolving.io/
 .. _`regular expressions`: https://docs.python.org/3/howto/regex.html
 .. _Python: http://python.org/
+.. _CiscoConfParse: https://github.com/mpenning/ciscoconfparse
 
 .. |br| raw:: html
 

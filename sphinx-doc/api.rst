@@ -13,7 +13,7 @@ This part of the documentation covers all the significant Python classes and met
    :caption: Contents:
 
    api_CiscoConfParse.rst
-   api_IOSConfigList.rst
+   api_ConfigList.rst
    api_IOSCfgLine.rst
    api_IOSIntfLine.rst
    api_ccp_util.rst

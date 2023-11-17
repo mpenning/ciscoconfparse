@@ -5,4 +5,5 @@ ciscoconfparse.ConfigList Object
 
 .. autoclass:: ciscoconfparse.ConfigList
    :members:
+   :undoc-members:
    :inherited-members:
