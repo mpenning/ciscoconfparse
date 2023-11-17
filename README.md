@@ -34,14 +34,17 @@ complex queries about these relationships.
 ## Generic Usage
 
 The following code will parse a configuration stored in
-\'exampleswitch.conf\' and select interfaces that are shutdown.
+`exampleswitch.conf` and select interfaces that are shutdown.
+
+In this case, the parent is a line containing `interface` and
+the child is a line containing the word `shutdown`.
 
 ```python
 from ciscoconfparse import CiscoConfParse
 
 parse = CiscoConfParse('exampleswitch.conf', syntax='ios')
 
-for intf_obj in parse.find_objects_w_child('^interface', '^\s+shutdown'):
+for intf_obj in parse.find_parent_objects('^interface', '^\s+shutdown'):
     print("Shutdown: " + intf_obj.text)
 ```
 
@@ -286,7 +289,6 @@ CiscoConfParse also handles anything that has a Cisco IOS style of configuration
 - Screenos
 
 ## Docs
-
 
 - Blogs
   - Kirk Byers published [a ciscoconfparse blog piece](https://pynet.twb-tech.com/blog/parsing-configurations-w-ciscoconfparse.html)

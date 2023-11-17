@@ -4,6 +4,16 @@
 - Summary:
     - Insert something here
 
+## Version: 1.9.35
+
+- Released: 2023-11-17
+- Summary:
+    - Add `is_switchport` property to `JunosCfgLine()`
+    - Add `ciscoconfparse.find_parent_objects()`.
+    - Add `ciscoconfparse.find_parent_objects_wo_child()`.
+    - Add `ciscoconfparse.find_child_objects()`.
+    - Add tests to cover the new `find_foo()` methods, above
+
 ## Version: 1.9.34
 
 - Released: 2023-11-16
