@@ -248,14 +248,14 @@ Method 2: `list-comprehension`_ to iterate over objects and search children
    >>> qos_intfs
    [<IOSCfgLine # 18 'interface Serial1/1'>]
 
-Method 3: :func:`~ciscoconfparse.CiscoConfParse.find_objects_w_child()`
+Method 3: :func:`~ciscoconfparse.CiscoConfParse.find_parent_objects()`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
    :emphasize-lines: 2,3
 
    >>> parse = CiscoConfParse("/tftpboot/bucksnort.conf")
-   >>> qos_intfs = parse.find_objects_w_child(parentspec=r"^interf", \
+   >>> qos_intfs = parse.find_parent_objects(parentspec=r"^interf", \
    ...     childspec=r"service-policy\soutput\sQOS_1")
    ...
    >>> qos_intfs
@@ -263,11 +263,11 @@ Method 3: :func:`~ciscoconfparse.CiscoConfParse.find_objects_w_child()`
 
 You can choose any of these methods to accomplish your task...
 some might question why we cover the first two methods when
-:func:`~ciscoconfparse.CiscoConfParse.find_objects_w_child()` solves
+:func:`~ciscoconfparse.CiscoConfParse.find_parent_objects()` solves
 the problem completely.  In this case, they have a point; however,
-:func:`~ciscoconfparse.CiscoConfParse.find_objects_w_child()` is much slower
+:func:`~ciscoconfparse.CiscoConfParse.find_parent_objects()` is much slower
 when you have more than one child line to inspect per interface, because
-:func:`~ciscoconfparse.CiscoConfParse.find_objects_w_child()` performs a
+:func:`~ciscoconfparse.CiscoConfParse.find_parent_objects()` performs a
 line-by-line search of the whole configuration line each time it is called.
 By contrast, Method 1 is more efficient because you could simply call
 :func:`~models_cisco.IOSCfgLine.re_search_children()` multiple times for each
@@ -283,15 +283,15 @@ Let's suppose you wanted a list of all interfaces that have CDP enabled; this im
 1.  CDP has not been disabled globally with ``no cdp run``
 2.  The interfaces in question are not configured with ``no cdp enable``
 
-:func:`~ciscoconfparse.CiscoConfParse.find_objects_wo_child` is a function to
+:func:`~ciscoconfparse.CiscoConfParse.find_parent_objects_wo_child` is a function to
 find parents without a specific child; it requires arguments similar to
-:func:`~ciscoconfparse.CiscoConfParse.find_objects_w_child`:
+:func:`~ciscoconfparse.CiscoConfParse.find_parent_objects`:
 
 - The first argument is a regular expression to match the parents
 - The second argument is a regular expression to match the child's *exclusion*
 
 Since we need to find parents that do not have ``no cdp enable``, we will use
-:func:`~ciscoconfparse.CiscoConfParse.find_objects_wo_child` for this query.
+:func:`~ciscoconfparse.CiscoConfParse.find_parent_objects_wo_child` for this query.
 Note that the script below makes use of a special property of python lists...
 empty lists test False in Python; thus, we can
 use ``if not bool(parse.find_objects(r'no cdp run'))`` to ensure that CDP is
@@ -302,7 +302,7 @@ running globally on this device.
 
    >>> parse = CiscoConfParse("/tftpboot/bucksnort.conf")
    >>> if not bool(parse.find_objects(r'no cdp run')):
-   ...     cdp_intfs = parse.find_objects_wo_child(r'^interface',
+   ...     cdp_intfs = parse.find_parent_objects_wo_child(r'^interface',
    ...         r'no cdp enable')
 
 Results:
