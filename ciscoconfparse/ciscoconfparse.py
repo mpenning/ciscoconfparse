@@ -3305,7 +3305,6 @@ class CiscoConfParse(object):
 
         Notes
         -----
-
         Only the first regex match is returned.
 
         Parameters
@@ -3323,14 +3322,12 @@ class CiscoConfParse(object):
 
         Returns
         -------
-
         ``result_type``
             The text matched by the regular expression group; if there is no match, ``default`` is returned.  All values are cast as ``result_type``.  The default result_type is `str`.
 
 
         Examples
         --------
-
         This example illustrates how you can use
         :func:`~ciscoconfparse.re_match_iter_typed` to get the
         first interface name listed in the config.
