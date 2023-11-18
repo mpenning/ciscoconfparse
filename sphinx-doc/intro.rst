@@ -135,10 +135,7 @@ These are a few selected public mentions about CiscoConfParse; I usually try not
 |br|
 |br|
 
-.. raw:: html
-
-   <blockquote class="twitter-tweet" lang="en"><p>Have to audit &gt; 100 catalyst sw configs for misconfiguration/non-standard configs. Perfect job for CiscoConfParse http://is.gd/d13z2 <a href="https://twitter.com/hashtag/python?src=hash">#python</a></p>&mdash; Jochen - l0b0 (@verbosemode) <a href="https://twitter.com/verbosemode/status/16878620193">June 23, 2010</a></blockquote>
-   <script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
+- Have to audit 100 catalyst sw configs for misconfiguration/non-standard configs. Perfect job for CiscoConfParse; Jochen - l0b0 (@verbosemode) June 23, 2010
 
 |br|
 |br|
