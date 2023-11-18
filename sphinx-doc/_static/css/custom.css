@@ -1,0 +1,20 @@
+dl.attribute {
+  /* Add 5em bottom padding around each method and each section's block */
+  padding-top: 2.5em;    /* Keep this split up at top and bottom... */
+  padding-bottom: 2.5em;
+}
+dl.class {
+  /* Add 5em bottom padding around each method and each section's block */
+  padding-top: 2.5em;    /* Keep this split up at top and bottom... */
+  padding-bottom: 2.5em;
+}
+dl.method {
+  /* Add 5em bottom padding around each method and each section's block */
+  padding-top: 2.5em;    /* Keep this split up at top and bottom... */
+  padding-bottom: 2.5em;
+}
+div.section {
+  /* Add 5em bottom padding around each method and each section's block */
+  padding-top: 2.5em;    /* Keep this split up at top and bottom... */
+  padding-bottom: 2.5em;
+}
