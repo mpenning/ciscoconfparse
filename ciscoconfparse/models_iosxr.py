@@ -95,18 +95,21 @@ class IOSXRCfgLine(BaseCfgLine):
 
     """
 
+    # This method is on IOSXRCfgLine()
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
         r"""Accept an IOS line number and initialize family relationship
         attributes"""
         super().__init__(*args, **kwargs)
 
+    # This method is on IOSXRCfgLine()
     @classmethod
     @logger.catch(reraise=True)
     def is_object_for(cls, all_lines, line, re=re):
         ## Default object, for now
         return True
 
+    # This method is on IOSXRCfgLine()
     @property
     @logger.catch(reraise=True)
     def is_intf(self):
@@ -154,6 +157,7 @@ class IOSXRCfgLine(BaseCfgLine):
             return True
         return False
 
+    # This method is on IOSXRCfgLine()
     @property
     @logger.catch(reraise=True)
     def is_subintf(self):
@@ -205,6 +209,7 @@ class IOSXRCfgLine(BaseCfgLine):
     )
     _VIRTUAL_INTF_REGEX = re.compile(_VIRTUAL_INTF_REGEX_STR, re.I)
 
+    # This method is on IOSXRCfgLine()
     @property
     @logger.catch(reraise=True)
     def is_virtual_intf(self):
@@ -212,6 +217,7 @@ class IOSXRCfgLine(BaseCfgLine):
             return True
         return False
 
+    # This method is on IOSXRCfgLine()
     @property
     @logger.catch(reraise=True)
     def is_loopback_intf(self):
@@ -253,6 +259,7 @@ class IOSXRCfgLine(BaseCfgLine):
             return True
         return False
 
+    # This method is on IOSXRCfgLine()
     @property
     @logger.catch(reraise=True)
     def is_ethernet_intf(self):
@@ -301,6 +308,7 @@ class IOSXRCfgLine(BaseCfgLine):
             return True
         return False
 
+    # This method is on IOSXRCfgLine()
     @property
     @logger.catch(reraise=True)
     def intf_in_portchannel(self):
@@ -315,6 +323,7 @@ class IOSXRCfgLine(BaseCfgLine):
         )
         return retval
 
+    # This method is on IOSXRCfgLine()
     @property
     @logger.catch(reraise=True)
     def portchannel_number(self):
@@ -329,6 +338,7 @@ class IOSXRCfgLine(BaseCfgLine):
         )
         return retval
 
+    # This method is on IOSXRCfgLine()
     @property
     @logger.catch(reraise=True)
     def is_portchannel_intf(self):
@@ -354,12 +364,14 @@ class IOSXRCfgLine(BaseCfgLine):
 
 
 class BaseIOSXRIntfLine(IOSXRCfgLine):
+    # This method is on BaseIOSXRIntfLine()
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.ifindex = None  # Optional, for user use
         self.default_ipv4_addr_object = IPv4Obj("0.0.0.1/32", strict=False)
 
+    # This method is on BaseIOSXRIntfLine()
     @logger.catch(reraise=True)
     def __repr__(self):
         if not self.is_switchport:
@@ -380,6 +392,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
         else:
             return f"<{self.classname} # {self.linenum} '{self.text.strip()}' info: 'switchport'>"
 
+    # This method is on BaseIOSXRIntfLine()
     @logger.catch(reraise=True)
     def _build_abbvs(self):
         r"""Build a set of valid abbreviations (lowercased) for the interface"""
@@ -393,16 +406,19 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
                 )
         return retval
 
+    # This method is on BaseIOSXRIntfLine()
     @logger.catch(reraise=True)
     def reset(self, atomic=True):
         # Insert build_reset_string() before this line...
         self.insert_before(self.build_reset_string(), atomic=atomic)
 
+    # This method is on BaseIOSXRIntfLine()
     @logger.catch(reraise=True)
     def build_reset_string(self):
         # IOS interfaces are defaulted like this...
         return "default " + self.text
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def verbose(self):
@@ -432,6 +448,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
                 )
             )
 
+    # This method is on BaseIOSXRIntfLine()
     @classmethod
     @logger.catch(reraise=True)
     def is_object_for(cls, all_lines, line, re=re):
@@ -439,6 +456,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
 
     ##-------------  Basic interface properties
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def abbvs(self):
@@ -448,6 +466,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
     _INTF_NAME_RE_STR = r"^interface\s+(\S+[0-9\/\.\s]+)\s*"
     _INTF_NAME_REGEX = re.compile(_INTF_NAME_RE_STR)
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def interface_object(self):
@@ -464,6 +483,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
             raise InvalidCiscoInterface(error)
         return CiscoIOSXRInterface("".join(self.text.split()[1:]))
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def name(self):
@@ -510,6 +530,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
         """
         return str(self.interface_object)
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def port(self):
@@ -553,6 +574,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
         """
         return self.interface_object.port
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def port_type(self):
@@ -597,6 +619,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
         port_type_regex = r"^interface\s+([A-Za-z\-]+)"
         return self.re_match(port_type_regex, group=1, default="")
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def ordinal_list(self):
@@ -651,6 +674,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
             else:
                 return ()
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def interface_number(self):
@@ -702,6 +726,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
             intf_number = self.re_match(intf_regex, group=1, default="")
             return intf_number
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def subinterface_number(self):
@@ -753,6 +778,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
             subintf_number = self.re_match(subintf_regex, group=1, default="")
             return subintf_number
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def description(self):
@@ -764,6 +790,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def manual_bandwidth(self):
@@ -772,6 +799,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def manual_delay(self):
@@ -780,6 +808,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def manual_holdqueue_out(self):
@@ -789,6 +818,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def manual_holdqueue_in(self):
@@ -798,6 +828,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def manual_encapsulation(self):
@@ -806,6 +837,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_mpls(self):
@@ -814,6 +846,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def ipv4_addr_object(self):
@@ -825,30 +858,35 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
         except Exception:
             return self.default_ipv4_addr_object
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_no_ipv4(self):
         r"""Return an ccp_util.IPv4Obj object representing the subnet on this interface; if there is no address, return ccp_util.IPv4Obj('0.0.0.1/32')"""
         return self.ip_network_object == IPv4Obj("0.0.0.1/32")
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def ip(self):
         r"""Return an ccp_util.IPv4Obj object representing the subnet on this interface; if there is no address, return ccp_util.IPv4Obj('0.0.0.1/32')"""
         return self.ipv4_addr_object
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def ipv4(self):
         r"""Return an ccp_util.IPv4Obj object representing the subnet on this interface; if there is no address, return ccp_util.IPv4Obj('0.0.0.1/32')"""
         return self.ipv4_addr_object
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def ipv4_network_object(self):
         r"""Return an ccp_util.IPv4Obj object representing the subnet on this interface; if there is no address, return ccp_util.IPv4Obj('0.0.0.1/32')"""
         return self.ip_network_object
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def ip_network_object(self):
@@ -862,6 +900,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
         except (Exception) as e:
             return self.default_ipv4_addr_object
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_autonegotiation(self):
@@ -876,6 +915,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
         else:
             raise ValueError
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_manual_speed(self):
@@ -884,6 +924,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_manual_duplex(self):
@@ -892,12 +933,14 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_manual_carrierdelay(self):
         r"""Return a python boolean for whether carrier delay is manually configured on the interface"""
         return bool(self.manual_carrierdelay)
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def manual_carrierdelay(self):
@@ -916,11 +959,13 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
         else:
             return 0.0
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_manual_clock_rate(self):
         return bool(self.manual_clock_rate)
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def manual_clock_rate(self):
@@ -930,6 +975,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def manual_mtu(self):
@@ -980,6 +1026,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def manual_mpls_mtu(self):
@@ -990,6 +1037,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def manual_ip_mtu(self):
@@ -1000,6 +1048,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def manual_speed(self):
@@ -1008,6 +1057,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def manual_duplex(self):
@@ -1016,21 +1066,25 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_manual_mtu(self):
         return bool(self.manual_mtu)
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_manual_mpls_mtu(self):
         return bool(self.manual_mpls_mtu)
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_manual_ip_mtu(self):
         return bool(self.manual_ip_mtu)
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def is_shutdown(self):
@@ -1039,11 +1093,13 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_vrf(self):
         return bool(self.vrf)
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def vrf(self):
@@ -1053,11 +1109,13 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def ip_addr(self):
         return self.ipv4_addr
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def ipv4_addr(self):
@@ -1076,6 +1134,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
         else:
             return retval
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def ipv4_netmask(self):
@@ -1087,6 +1146,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def ipv4_masklength(self):
@@ -1096,6 +1156,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
             return ipv4_addr_object.prefixlen
         return 0
 
+    # This method is on BaseIOSXRIntfLine()
     @logger.catch(reraise=True)
     def is_abbreviated_as(self, val):
         r"""Test whether `val` is a good abbreviation for the interface"""
@@ -1103,6 +1164,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
             return True
         return False
 
+    # This method is on BaseIOSXRIntfLine()
     @logger.catch(reraise=True)
     def in_ipv4_subnet(self, ipv4network=IPv4Obj("0.0.0.0/32", strict=False)):
         r"""Accept an argument for the :class:`~ccp_util.IPv4Obj` to be
@@ -1166,6 +1228,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
         else:
             return None
 
+    # This method is on BaseIOSXRIntfLine()
     @logger.catch(reraise=True)
     def in_ipv4_subnets(self, subnets=None):
         r"""Accept a set or list of ccp_util.IPv4Obj objects, and return a boolean for whether this interface is within the requested subnets."""
@@ -1179,6 +1242,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
                 return tmp
         return tmp
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_no_icmp_unreachables(self):
@@ -1195,6 +1259,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_no_icmp_redirects(self):
@@ -1211,6 +1276,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_no_ip_proxyarp(self):
@@ -1259,6 +1325,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_ip_pim_dense_mode(self):
@@ -1275,6 +1342,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_ip_pim_sparse_mode(self):
@@ -1291,6 +1359,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_ip_pim_sparsedense_mode(self):
@@ -1307,6 +1376,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def manual_arp_timeout(self):
@@ -1326,6 +1396,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_ip_helper_addresses(self):
@@ -1334,6 +1405,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
             return True
         return False
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def ip_helper_addresses(self):
@@ -1374,6 +1446,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
                 retval.append({"addr": addr, "vrf": vrf, "global": bool(global_addr)})
         return retval
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def is_switchport(self):
@@ -1382,6 +1455,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_manual_switch_access(self):
@@ -1390,11 +1464,13 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_manual_switch_trunk_encap(self):
         return bool(self.manual_switch_trunk_encap)
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def manual_switch_trunk_encap(self):
@@ -1403,6 +1479,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_manual_switch_trunk(self):
@@ -1411,6 +1488,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_switch_portsecurity(self):
@@ -1424,6 +1502,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_switch_stormcontrol(self):
@@ -1434,6 +1513,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_dtp(self):
@@ -1449,6 +1529,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
                 return False
         return True
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def access_vlan(self):
@@ -1464,6 +1545,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def trunk_vlans_allowed(self):
@@ -1531,6 +1613,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
 
         return retval
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def native_vlan(self):
@@ -1548,6 +1631,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
 
     ##-------------  CDP
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_manual_disable_cdp(self):
@@ -1558,11 +1642,13 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
 
     ##-------------  EoMPLS
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_xconnect(self):
         return bool(self.xconnect_vc)
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def xconnect_vc(self):
@@ -1573,11 +1659,13 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
 
     ##-------------  HSRP
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_ip_hsrp(self):
         return bool(self.hsrp_ip_addr)
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def hsrp_ip_addr(self):
@@ -1595,6 +1683,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def hsrp_ip_mask(self):
@@ -1614,6 +1703,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def hsrp_group(self):
@@ -1624,6 +1714,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def hsrp_priority(self):
@@ -1639,6 +1730,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def hsrp_hello_timer(self):
@@ -1654,6 +1746,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def hsrp_hold_timer(self):
@@ -1669,11 +1762,13 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_hsrp_track(self):
         return bool(self.hsrp_track)
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def hsrp_track(self):
@@ -1687,6 +1782,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_hsrp_usebia(self):
@@ -1700,6 +1796,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_hsrp_preempt(self):
@@ -1713,6 +1810,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def hsrp_authentication_md5_keychain(self):
@@ -1726,12 +1824,14 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_hsrp_authentication_md5(self):
         keychain = self.hsrp_authentication_md5_keychain
         return bool(keychain)
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def hsrp_authentication_cleartext(self):
@@ -1739,6 +1839,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
 
     ##-------------  MAC ACLs
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_mac_accessgroup_in(self):
@@ -1746,6 +1847,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
             return False
         return bool(self.mac_accessgroup_in)
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_mac_accessgroup_out(self):
@@ -1753,6 +1855,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
             return False
         return bool(self.mac_accessgroup_out)
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def mac_accessgroup_in(self):
@@ -1761,6 +1864,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def mac_accessgroup_out(self):
@@ -1771,36 +1875,43 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
 
     ##-------------  IPv4 ACLs
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_ip_accessgroup_in(self):
         return bool(self.ipv4_accessgroup_in)
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_ip_accessgroup_out(self):
         return bool(self.ipv4_accessgroup_out)
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_ipv4_accessgroup_in(self):
         return bool(self.ipv4_accessgroup_in)
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def has_ipv4_accessgroup_out(self):
         return bool(self.ipv4_accessgroup_out)
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def ip_accessgroup_in(self):
         return self.ipv4_accessgroup_in
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def ip_accessgroup_out(self):
         return self.ipv4_accessgroup_out
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def ipv4_accessgroup_in(self):
@@ -1809,6 +1920,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
         )
         return retval
 
+    # This method is on BaseIOSXRIntfLine()
     @property
     @logger.catch(reraise=True)
     def ipv4_accessgroup_out(self):
@@ -1824,6 +1936,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
 
 
 class IOSXRIntfLine(BaseIOSXRIntfLine):
+    # This method is on IOSXRIntfLine()
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
         r"""Accept an IOS line number and initialize family relationship
@@ -1836,6 +1949,7 @@ class IOSXRIntfLine(BaseIOSXRIntfLine):
         super().__init__(*args, **kwargs)
         self.feature = "interface"
 
+    # This method is on IOSXRIntfLine()
     @classmethod
     @logger.catch(reraise=True)
     def is_object_for(cls, all_lines, line, re=re):
