@@ -35,7 +35,7 @@ from ciscoconfparse.ccp_util import CiscoIOSXRInterface
 from ciscoconfparse.ccp_abc import BaseCfgLine
 
 ### HUGE UGLY WARNING:
-###   Anything in models_cisco.py could change at any time, until I remove this
+###   Anything in models_iosxr.py could change at any time, until I remove this
 ###   warning.  I have good reason to believe that these methods are stable and
 ###   function correctly, but I've been wrong before.  There are no unit tests
 ###   for this functionality yet, so I consider all this code alpha quality.
