@@ -4,6 +4,13 @@
 - Summary:
     - Insert something here
 
+## Version: 1.9.37
+
+- Released: 2023-11-18
+- Summary:
+    - Add class comments in `models_iosxr.py`
+    - Update and expand documentation
+
 ## Version: 1.9.36
 
 - Released: 2023-11-17
