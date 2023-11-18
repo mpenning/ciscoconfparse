@@ -614,7 +614,7 @@ class CiscoConfParse(object):
     encoding = locale.getpreferredencoding()
     read_only = False
 
-    # Something breaks in CiscoConfParse() if using @logger.catch, below...
+    # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
     def __init__(
         self,
