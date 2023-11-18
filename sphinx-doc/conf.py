@@ -18,7 +18,7 @@ import time
 sys.path.insert(0, os.path.join(os.path.abspath(os.path.dirname(__file__)), ".."))
 
 # Import sphinx-rtd-theme to ensure pip installed it...
-import sphinx_rtd_theme
+#import sphinx_rtd_theme
 
 from sphinx.ext.autodoc import AttributeDocumenter, ClassLevelDocumenter
 import ciscoconfparse.ciscoconfparse, ciscoconfparse.ccp_abc, ciscoconfparse.ccp_util

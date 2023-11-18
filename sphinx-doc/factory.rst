@@ -23,10 +23,14 @@ The most developed factory is ``ios``.
 .. warning::
    Anything about ``factory`` parsing can change at any time (but mostly does not).
 
-factory=True example
---------------------
+syntax='ios'
+------------
 
-This is an example of getting an :class:`~ciscoconfparse.ccp_util.IPv4Obj()` for an interface that was parsed with ``factory=True``.
+syntax='ios', factory=True example
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Documentation for ``IOSIntfLine`` properties: :class:`~ciscoconfparse.models_cisco.IOSIntfLine()`.
+- This is an example of getting an :class:`~ciscoconfparse.ccp_util.IPv4Obj()` for an :class:`~ciscoconfparse.models_cisco.IOSIntfLine()` that was parsed with ``factory=True``.
 
 .. sourcecode:: python
 
@@ -41,10 +45,10 @@ This is an example of getting an :class:`~ciscoconfparse.ccp_util.IPv4Obj()` for
    <IPv4Obj 172.16.2.1/24>
    >>>
 
-factory=False example
----------------------
+syntax='ios', factory=False example
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This is the same operation with ``factory=False``.
+This is the same operation with ``factory=False``; we expect an ``AttributeError`` because ``factory=False`` returns :class:`~ciscoconfparse.models_cisco.IOSCfgLine()` instances instead of :class:`~ciscoconfparse.models_cisco.IOSIntfLine()` instances (which have the ``ipv4`` attribute).
 
 .. sourcecode:: python
 

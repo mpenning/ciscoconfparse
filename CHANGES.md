@@ -4,6 +4,13 @@
 - Summary:
     - Insert something here
 
+## Version: 1.9.38
+
+- Released: 2023-11-18
+- Summary:
+    - Update and expand documentation
+    - Delete unnecessary documentation files
+
 ## Version: 1.9.37
 
 - Released: 2023-11-18

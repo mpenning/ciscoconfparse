@@ -1,4 +1,4 @@
-.. _ciscoconfparse.models_cisco:
+.. _models_cisco:
 
 ciscoconfparse.models_cisco
 ---------------------------

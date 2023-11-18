@@ -42,11 +42,14 @@ help:
 	@echo "  doctest   to run all doctests embedded in the documentation (if enabled)"
 
 clean:
-	-rm -rf $(BUILDDIR)/*
+	-rm -rf .undodir/
+	-rm -rf $(BUILDDIR)/
+	-rm -rf _static/
 
 html:
+	make clean
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
-	cd _build/html; tar cvfz $(USERHOME)/ccp.tar.gz *
+	cd $(BUILDDIR)/html; tar cvfz $(USERHOME)/ccp.tar.gz *
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
 	@echo "                The HTML tarball is in $(USERHOME)/ccp.tar.gz."
