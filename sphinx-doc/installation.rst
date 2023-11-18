@@ -29,17 +29,16 @@ This is a "Hello World" example from within a unix Python interpreter.
 .. code-block:: none
    :emphasize-lines: 3,8
 
-   [mpenning@mpenning-S10 ~]$ which python
+   [mpenning@mpenning-mudslide ~]$ which python
    /usr/local/bin/python
-   [mpenning@mpenning-S10 ~]$ python
-   Python 2.5.2 (r252:60911, Dec  5 2008, 11:57:32)
-   [GCC 3.4.6 [FreeBSD] 20060305] on freebsd6
+   [mpenning@mpenning-mudslide ~]$ python
+   Python 3.10.13 (main, Nov  2 2023, 08:33:35) [GCC 10.2.1 20210110] on linux
    Type "help", "copyright", "credits" or "license" for more information.
    >>>
    >>> print("Hello world")
    Hello world
    >>> quit()
-   [mpenning@mpenning-S10 ~]$
+   [mpenning@mpenning-mudslide ~]$
 
 The same commands could be used in an executable script (mode 755) saved to
 disk... and run from the unix shell.
@@ -83,7 +82,7 @@ You can check your python version with the ``-V`` switch...
 .. code-block:: none
 
    [mpenning@Mudslide ~]$ python -V
-   Python 2.7.3
+   Python 3.10.13
    [mpenning@Mudslide ~]$
 
 The best way to get ciscoconfparse is with pip_ or setuptools_.
