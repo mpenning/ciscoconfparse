@@ -55,7 +55,10 @@ extensions = [
     "sphinx.ext.doctest",
     "sphinx.ext.intersphinx",
     "sphinx.ext.autosummary",
+    "sphinx.ext.autosectionlabel",
 ]
+autosectionlabel_prefix_document = True
+
 # numpydoc parameters...
 numpydoc_show_class_members = False
 numpydoc_attributes_as_param_list = False

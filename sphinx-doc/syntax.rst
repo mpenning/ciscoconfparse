@@ -1,6 +1,7 @@
-======
+.. _syntax:
+
 syntax
-======
+------
 
 ``syntax`` is used with all configurations.  By default ``ios`` syntax is used and it's
 a good default for many vendor configurations (without braces).
