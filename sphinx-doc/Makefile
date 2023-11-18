@@ -44,7 +44,6 @@ help:
 clean:
 	-rm -rf .undodir/
 	-rm -rf $(BUILDDIR)/
-	-rm -rf _static/
 
 html:
 	make clean
