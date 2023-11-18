@@ -10,6 +10,9 @@ Welcome to ciscoconfparse's documentation!
    installation
    tutorial
    legacy_syntax
+   syntax_factory_intro
+   syntax
+   factory
    license_copyright
    api
 

@@ -201,7 +201,7 @@ Sometimes you find yourself wishing you could decrypt vty or console passwords t
 
 .. note::
 
-   Cisco IOS Type 7 passwords were never meant to be secure; these passwords only protect against shoulder-surfing.  When you add users and enable passwords to your router, be sure to use Cisco IOS Type 5 passwords; these are much more secure and cannot be decrypted.
+   Cisco IOS Type 7 passwords were never meant to be secure; these passwords only protect against shoulder-surfing.  When you add users and enable passwords to your router, be sure to another Cisco IOS Type password; these are much more secure and cannot be easily decrypted.
 
 .. warning::
 

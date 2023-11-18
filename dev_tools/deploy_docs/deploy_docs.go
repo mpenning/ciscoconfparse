@@ -28,7 +28,7 @@ func main() {
 
 	// Start a new goph ssh connection with private key auth...
 	logoru.Info("    Initialize ssh key-auth")
-	auth, err := goph.Key("/home/mpenning/.ssh/id_ed25519", "")
+	auth, err := goph.Key("/home/mpenning/.ssh/id_rsa", "")
 	if err != nil {
 		logoru.Critical(err.Error())
 	}
