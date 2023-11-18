@@ -3,7 +3,7 @@ License and Copyright
 
 ciscoconfparse_ is licensed GPLv3_
 
-Copyright copyright holders, 2007-2023.
+Copyright David Michael Pennington and other authors, 2007-2023.  All rights reserved.
 
 ciscoconfparse_ is not affiliated with Cisco Systems in any way; the word "Cisco" is a registered trademark of Cisco Systems.
 
