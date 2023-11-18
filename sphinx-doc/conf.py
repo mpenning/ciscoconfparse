@@ -157,15 +157,7 @@ pygments_style = "tango"
 
 # The theme to use for HTML and HTML Help pages.  Major themes that come with
 # Sphinx are currently 'default' and 'sphinxdoc'.
-bootstrap_theme_installed = sys.modules.get("sphinx_bootstrap_theme", False)
-_default_sphinx_python_package = "sphinx_rtd_theme"
-if bootstrap_theme_installed is True:
-#if sys.modules.get("sphinx_press_theme", False):
-    html_theme = "bootstrap"
-    html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
-
-else:
-    html_theme = _default_sphinx_python_package
+html_theme = "sphinx_rtd_theme"
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
