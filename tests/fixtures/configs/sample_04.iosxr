@@ -1,0 +1,215 @@
+username vagrant
+ group root-lr
+ group cisco-support
+ secret 5 $1$FXeb$aLMudSH4.B8BK1IYlIm.j.
+!
+tpa
+ address-family ipv4
+  update-source MgmtEth0/RP0/CPU0/0
+ !
+!
+control-plane
+ management-plane
+  out-of-band
+   interface all
+    allow all
+   !
+  !
+ !
+!
+interface Loopback0
+ ipv4 address 1.1.0.10 255.255.255.255
+!
+interface MgmtEth0/RP0/CPU0/0
+ ipv4 address dhcp
+!
+community-set public_ipv4_prefixes
+  65001:4
+end-set
+!
+community-set public_ipv6_prefixes
+  65001:6
+end-set
+!
+community-set peering_ipv4_prefixes
+  65001:44
+end-set
+!
+community-set peering_ipv6_prefixes
+  65001:66
+end-set   
+!
+route-policy public_v4_peering_egress
+  if community matches-any public_ipv4_prefixes then
+    pass
+  else
+    drop
+  endif
+  # Permit prefix with public IPv4 community only
+end-policy
+!
+route-policy public_v6_peering_egress
+  if community matches-any public_ipv6_prefixes then
+    pass
+  else
+    drop
+  endif
+  # Permit prefix with public IPv6 community only
+end-policy
+!
+route-policy public_v4_peering_ingress
+  set community peering_ipv4_prefixes
+  # Tag ingress public peering v4 prefixes
+end-policy
+!
+route-policy public_v6_peering_ingress
+  set community peering_ipv6_prefixes
+  # Tag ingress public peering v6 prefixes
+end-policy
+!
+router static
+ address-family ipv4 unicast
+  0.0.0.0/0 MgmtEth0/RP0/CPU0/0 10.0.2.2
+ !
+!
+router bgp 65001
+ bgp router-id 1.1.0.10
+ address-family ipv4 unicast
+ !
+ address-family ipv6 unicast
+ !
+ neighbor-group public_v4_peers
+  address-family ipv4 unicast
+   route-policy public_v4_peering_ingress in
+   route-policy public_v4_peering_egress out
+  !       
+ !
+ neighbor-group public_v6_peers
+  address-family ipv6 unicast
+   route-policy public_v6_peering_ingress in
+   route-policy public_v6_peering_egress out
+  !
+ !
+!
+router bgp 65001
+ bgp router-id 1.1.0.10
+ address-family ipv4 unicast
+ !
+ address-family ipv6 unicast
+ !
+ neighbor-group public_v4_peers
+  address-family ipv4 unicast
+   route-policy public_v4_peering_ingress in
+   route-policy public_v4_peering_egress out
+  !
+ !
+ neighbor-group public_v6_peers
+  address-family ipv6 unicast
+   route-policy public_v6_peering_ingress in
+   route-policy public_v6_peering_egress out
+  !
+ !
+ neighbor 195.66.228.1
+  remote-as 59455
+  use neighbor-group public_v4_peers
+  description Clearstream Technology Ltd
+  address-family ipv4 unicast
+   maximum-prefix 30 90 restart 1
+  !
+ !
+ neighbor 195.66.228.2
+  remote-as 48294
+  use neighbor-group public_v4_peers
+  description Spectrum Internet Ltd
+  address-family ipv4 unicast
+   maximum-prefix 35 90 restart 1
+  !
+ !
+ neighbor 195.66.228.14
+  remote-as 201353
+  use neighbor-group public_v4_peers
+  description Net Support UK Ltd
+  address-family ipv4 unicast
+   maximum-prefix 2 90 restart 1
+  !
+ !
+ neighbor 195.66.228.25
+  remote-as 31595
+  use neighbor-group public_v4_peers
+  description Datacentres Ltd
+  address-family ipv4 unicast
+   maximum-prefix 10 90 restart 1
+  !
+ !
+ neighbor 195.66.228.31
+  remote-as 42689
+  use neighbor-group public_v4_peers
+  description Cablecom Networking Ltd
+  address-family ipv4 unicast
+   maximum-prefix 20 90 restart 1
+  !
+ !
+ neighbor 195.66.228.32
+  remote-as 8468
+  use neighbor-group public_v4_peers
+  description Entanet International Ltd
+  address-family ipv4 unicast
+   maximum-prefix 500 90 restart 1
+  !
+ !
+ neighbor 195.66.228.230
+  remote-as 8714
+  use neighbor-group public_v4_peers
+  description LINX Route Servers
+  address-family ipv4 unicast
+   maximum-prefix 115000 90 restart 1
+  !
+ !
+ neighbor 2001:7f8:4:4::2114:1
+  remote-as 8468
+  use neighbor-group public_v6_peers
+  description Entanet International Ltd
+  address-family ipv6 unicast
+   maximum-prefix 25 90 restart 1
+  !
+ !
+ neighbor 2001:7f8:4:4::220a:1
+  remote-as 8714
+  use neighbor-group public_v6_peers
+  description LINX Route Servers
+  address-family ipv6 unicast
+   maximum-prefix 15500 90 restart 1
+  !
+ !
+ neighbor 2001:7f8:4:4::a6c1:1
+  remote-as 42689
+  use neighbor-group public_v6_peers
+  description Cablecom Networking Ltd
+  address-family ipv6 unicast
+   maximum-prefix 5 90 restart 1
+  !
+ !
+ neighbor 2001:7f8:4:4::bca6:1
+  remote-as 48294
+  use neighbor-group public_v6_peers
+  description Spectrum Internet Ltd
+  address-family ipv6 unicast
+   maximum-prefix 2 90 restart 1
+  !
+ !
+!
+grpc
+ port 57777
+ tls
+!
+xml agent
+!
+netconf agent tty
+!
+netconf-yang agent
+ ssh
+!
+ssh server v2
+ssh server vrf default
+ssh server netconf vrf default
+end

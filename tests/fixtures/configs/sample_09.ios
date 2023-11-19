@@ -1,0 +1,68 @@
+!
+hostname AS65503
+!
+! This publication is available free of charge from: http://doi.org/10.6028/NIST.SP.1800-14.
+!
+ip cef
+ipv6 unicast-routing
+ipv6 cef
+!
+interface Loopback1
+ ip address 10.30.0.1 255.255.0.0
+ ipv6 address 2003:3333:3333:3333::1/64This publication is available free of charge from: http://doi.org/10.6028/NIST.SP.1800-14.
+!
+interface GigabitEthernet0/1
+ ip address 10.90.90.3 255.255.255.0
+ ipv6 address FD00:F:F:1::3/64
+!
+interface FastEthernet0/2
+ ip address 192.168.1.251 255.255.255.0
+!
+interface GigabitEthernet0/2
+ ip address 10.99.99.13 255.255.255.252
+!
+interface GigabitEthernet0/3
+ description VLAN7
+ ip address 10.99.99.21 255.255.255.252
+ ipv6 address FD37:F:F:1::1/64
+!
+router bgp 65503
+ bgp log-neighbor-changes
+ bgp rpki server tcp 192.168.1.146 port 8282 refresh 10
+ neighbor 10.90.90.1 remote-as 65501
+ neighbor 10.90.90.2 remote-as 65502
+ neighbor 10.90.90.10 remote-as 65500
+ neighbor 10.99.99.14 remote-as 65504
+ neighbor 10.99.99.22 remote-as 65507
+ neighbor FD00:F:F:1::1 remote-as 65501
+ neighbor FD00:F:F:1::2 remote-as 65502
+ neighbor FD00:F:F:1::10 remote-as 65500
+ neighbor FD34:F:F:1::4 remote-as 65504
+ neighbor FD34:F:F:1::7 remote-as 65507
+ !
+ address-family ipv4
+  redistribute connected
+  redistribute static
+  neighbor 10.90.90.1 activate
+  neighbor 10.90.90.2 activate
+  neighbor 10.90.90.10 activate
+  neighbor 10.99.99.14 activate
+  neighbor 10.99.99.22 activate
+  no neighbor FD00:F:F:1::1 activate
+  no neighbor FD00:F:F:1::2 activate
+  no neighbor FD00:F:F:1::10 activate
+  no neighbor FD34:F:F:1::4 activate
+  no neighbor FD34:F:F:1::7 activate
+ exit-address-family
+ !
+ address-family ipv6
+  redistribute connected
+  neighbor FD00:F:F:1::1 activate
+  neighbor FD00:F:F:1::2 activate
+  neighbor FD00:F:F:1::10 activate
+  neighbor FD34:F:F:1::4 activate
+ exit-address-family
+!
+ipv6 router rip proc1
+!
+end

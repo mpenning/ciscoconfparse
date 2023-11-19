@@ -1,0 +1,61 @@
+Sat Feb 16 15:59:22.174 GMT-7
+Building configuration...
+!! IOS XR Configuration version = 6.5.1
+!! Last configuration change at Sat Feb 16 15:59:17 2019 by umar
+!
+hostname xrv1.udx.web.id
+clock timezone GMT-7 Etc/GMT-7
+domain name-server 167.205.3.1
+username umar
+ group root-lr
+ group cisco-support
+ secret 5 $1$umMq$LYS6omVUNNA.Kp3lETBS20
+!
+ntp
+ server 167.205.3.1
+!
+interface MgmtEth0/RP0/CPU0/0
+ ipv4 address 167.205.3.51/24
+!
+interface GigabitEthernet0/0/0/0
+ ipv4 address 172.18.0.1/30
+!
+interface GigabitEthernet0/0/0/1
+ ipv4 address 172.18.1.1/24
+!
+interface GigabitEthernet0/0/0/2
+ ipv4 address 172.18.3.1/24
+!
+router static
+ address-family ipv4 unicast
+  0.0.0.0/0 167.205.3.1
+ !        
+!         
+router ospf udx
+ area 0   
+  interface GigabitEthernet0/0/0/0
+  !       
+  interface GigabitEthernet0/0/0/1
+  !       
+  interface GigabitEthernet0/0/0/2
+  !       
+ !        
+!         
+grpc      
+ port 18443
+ no-tls   
+!         
+telemetry model-driven
+ sensor-group ipv4_ospf
+  sensor-path Cisco-IOS-XR-ipv4-ospf-oper:ospf/processes/process/default-vrf/route-information/connected-routes
+ !        
+ subscription ipv4
+  sensor-group-id ipv4_ospf sample-interval 30000
+ !        
+!         
+netconf-yang agent
+ ssh      
+!         
+ssh server v2
+ssh server netconf vrf default
+end

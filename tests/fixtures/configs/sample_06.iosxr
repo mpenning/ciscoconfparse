@@ -1,0 +1,1415 @@
+!! IOS XR Configuration 7.3.1
+!! Last configuration-comange at Thu Mar 31 11:46:06 2022 by foo
+!
+hostname ncs540
+snmp-server traps alarm
+banner exec /
+*******************************************************************************
+*
+  Welcome!
+*
+*******************************************************************************
+/
+banner login /
+*******************************************************************************
+*         
+*         
+*******************************************************************************
+*         
+*         
+*******************************************************************************
+/
+domain name-server 192.0.0.212
+domain name-server 192.0.0.213
+tacacs source-interface Loopback0 vrf default
+tacacs-server host 192.0.0.226 port 49
+ key 7 1323022234242342343SSSSS24065F17
+!
+username admin
+ group root-lr
+ group cisco-support
+ secret 10 $6$oIgXZ03vMdCK8Z0.$oIgXZ5nt0SfahU2432342342424CK8Z0.oIgXZ03234248Z0.
+!
+username ACME_root
+ group root-lr
+ group cisco-support
+ secret 10 $6$Yo1Z6xE70IW6..$WLFYF624234234yHUrfQvPLif.bhEgq4t5nt0SfahUm96B/w1L76BINOwbBMs234234234234234CbBhWR9zk0
+!
+aaa accounting exec default start-stop group ACME-AUTH none
+aaa accounting system default start-stop group ACME-AUTH none
+aaa accounting commands default start-stop group ACME-AUTH none
+aaa group server tacacs+ ACME-AUTH
+ server 192.0.0.226
+!
+aaa authorization exec default group ACME-AUTH none
+aaa authorization commands default group ACME-AUTH none
+aaa authentication login default group ACME-AUTH local
+cdp
+vrf ACME_TEST
+ description *** ACME_TEST ***
+ address-family ipv4 unicast
+  import route-target
+   64512:10001030
+   64512:10001031
+   64512:10001032
+   64512:10001061
+  !
+  export route-policy RP-VRF-ACME_TEST-EXPORT
+  export route-target
+   64512:10001030
+   64512:10001031
+   64512:10001032
+  !
+ !
+!
+vrf ACME_mgmt
+ address-family ipv4 unicast
+  import route-target
+   64512:10001061
+   64512:100001011
+  !
+  export route-policy RP-VRF-ACME-MGMT-EXPORT
+  export route-target
+   64512:100001011
+  !
+ !
+!
+line console
+ exec-timeout 20 0
+ length 0
+ escape-comaracter 0x5a
+ session-limit 10
+ disconnect-comaracter 0x59
+ session-timeout 100
+ transport input telnet
+ transport output telnet
+!
+line default
+ login authentication default
+ exec-timeout 20 0
+ access-class ingress ACL-IPV4-MGMT-ACCESS
+ session-timeout 20
+!
+http client source-interface ipv4 Loopback0
+snmp-server engineID local 0000000000002121111
+snmp-server host 192.0.0.208 traps version 2c encrypted 121C121A01
+snmp-server user ACME-RO-V3-USER ACME-RO-GROUP v3 auth sha encrypted 1515030165546542230190B16271065150774C4C priv aes 128 encrypted 020155B13430B753F36D590B004542595D2F2F32 SystemOwner
+snmp-server user ACME-RW-V3-USER ACME-RW-GROUP v3 auth sha encrypted 020104542595D2B753F352F135B6D590B0053F3F priv aes 128 encrypted 0601067A79755D2B123033600F787D442190952C
+snmp-server view ACME-READ-VIEW 1 included
+snmp-server view ACME-WRITE-VIEW 1 included
+snmp-server community ACME.ro RO IPv4 ACL-IPV4-MGMT-ACCESS IPv6 ACL-IPV6-MGMT-ACCESS
+snmp-server group ACME-RO-GROUP v3 priv read ACME-READ-VIEW IPv4 ACL-IPV4-MGMT-ACCESS IPv6 ACL-IPV6-MGMT-ACCESS
+snmp-server group ACME-RW-GROUP v3 priv write ACME-WRITE-VIEW IPv4 ACL-IPV4-MGMT-ACCESS IPv6 ACL-IPV6-MGMT-ACCESS
+snmp-server traps rf
+snmp-server traps bfd
+snmp-server traps ethernet cfm
+snmp-server traps ntp
+snmp-server traps ethernet oam eveACME
+snmp-server traps otn
+snmp-server traps copy-complete
+snmp-server traps snmp linkup
+snmp-server traps snmp linkdown
+snmp-server traps snmp coldstart
+snmp-server traps snmp warmstart
+snmp-server traps snmp authentication
+snmp-server traps flash removal
+snmp-server traps flash insertion
+snmp-server traps power
+snmp-server traps config
+snmp-server traps entity
+snmp-server traps selective-vrf-download role-comange
+snmp-server traps syslog
+snmp-server traps system
+snmp-server traps frequency sy-comronization
+snmp-server traps bridgemib
+snmp-server traps optical
+snmp-server traps addrpool low
+snmp-server traps addrpool high
+snmp-server traps cisco-entity-ext
+snmp-server traps entity-state operstatus
+snmp-server traps entity-state swi-comover
+snmp-server traps entity-redundancy all
+snmp-server traps entity-redundancy status
+snmp-server traps entity-redundancy swi-comover
+snmp-server trap-source Loopback0
+dhcp ipv4
+ profile DHCP-RELEY relay
+  relay information option allow-untrusted
+ !
+!
+ntp
+ authentication-key 1 md5 encrypted 02D55F5D08055C24
+ authenticate
+ trusted-key 1
+ server 192.0.0.212 key 1
+ server 192.0.0.213 key 1
+ source Loopback0
+ update-calendar
+!
+tftp client source-interface Loopback0
+call-home
+ service active
+ contact smart-licensing
+ profile test_foo
+  active
+  destination address http http://192.0.0.200/Transportgateway/services/RouterRequestHandler
+  reporting smart-licensing-data
+  destination transport-method http
+ !
+ profile CiscoTAC-1
+  destination transport-method http
+ !
+!
+ipv6 access-list ACL-IPV6-MGMT-ACCESS
+ 10 permit ipv6 2001:db8:103::/48 any
+ 100 deny ipv6 any any
+!
+ipv4 access-list ACL-IPV4-MGMT-ACCESS
+ 10 permit ipv4 192.0.0.128 0.0.0.63 any
+ 20 permit ipv4 192.0.0.192 0.0.0.63 any
+ 100 deny ipv4 any any
+!
+ipv4 access-list ACL-IPV4-BCP38-VL2014
+ 10 permit ipv4 192.88.73.0 0.0.0.7 any
+!
+class-map ma-com-any CM-NQ-QG1
+ ma-com qos-group 1 
+ end-class-map
+! 
+class-map ma-com-any CM-NQ-QG2
+ ma-com qos-group 2 
+ end-class-map
+! 
+class-map ma-com-any CM-NQ-QG3
+ ma-com qos-group 3 
+ end-class-map
+! 
+class-map ma-com-any CM-NQ-QG4
+ ma-com qos-group 4 
+ end-class-map
+! 
+class-map ma-com-any CM-NQ-QG5
+ ma-com qos-group 5 
+ end-class-map
+! 
+class-map ma-com-any CM-NQ-TC1
+ ma-com traffic-class 1 
+ end-class-map
+! 
+class-map ma-com-any CM-NQ-TC2
+ ma-com traffic-class 2 
+ end-class-map
+! 
+class-map ma-com-any CM-NQ-TC3
+ ma-com traffic-class 3 
+ end-class-map
+! 
+class-map ma-com-any CM-NQ-TC4
+ ma-com traffic-class 4 
+ end-class-map
+! 
+class-map ma-com-any CM-NQ-TC5
+ ma-com traffic-class 5 
+ end-class-map
+! 
+class-map ma-com-any CM-NQ-QG0-IN
+ ma-com mpls experimental topmost 0 
+ end-class-map
+! 
+class-map ma-com-any CM-NQ-QG1-IN
+ ma-com mpls experimental topmost 1 
+ end-class-map
+! 
+class-map ma-com-any CM-NQ-QG2-IN
+ ma-com mpls experimental topmost 2 
+ end-class-map
+! 
+class-map ma-com-any CM-NQ-QG3-IN
+ ma-com mpls experimental topmost 3 
+ end-class-map
+! 
+class-map ma-com-any CM-NQ-QG4-IN
+ ma-com mpls experimental topmost 4 
+ end-class-map
+! 
+class-map ma-com-any CM-NQ-QG5-IN
+ ma-com mpls experimental topmost 5 
+ end-class-map
+! 
+class-map ma-com-any CM-NQ-QG6-IN
+ ma-com mpls experimental topmost 6 
+ ma-com precedence 6 
+ end-class-map
+! 
+class-map ma-com-any CM-NQ-QG7-IN
+ ma-com mpls experimental topmost 7 
+ ma-com precedence 7 
+ end-class-map
+! 
+class-map ma-com-any CM-NQ-L2-COS0
+ ma-com cos 0 
+ end-class-map
+! 
+class-map ma-com-any CM-NQ-L2-COS1
+ ma-com cos 1 
+ end-class-map
+! 
+class-map ma-com-any CM-NQ-L2-COS2
+ ma-com cos 2 
+ end-class-map
+! 
+class-map ma-com-any CM-NQ-L2-COS3
+ ma-com cos 3 
+ end-class-map
+! 
+class-map ma-com-any CM-NQ-L2-COS4
+ ma-com cos 4 
+ end-class-map
+! 
+class-map ma-com-any CM-NQ-L2-COS5
+ ma-com cos 5 
+ end-class-map
+! 
+class-map ma-com-any CM-NQ-L2-COS6
+ ma-com cos 6 
+ end-class-map
+! 
+class-map ma-com-any CM-NQ-L2-COS7
+ ma-com cos 7 
+ end-class-map
+! 
+class-map ma-com-any CM-NQ-QG0-OUT
+ ma-com traffic-class 0 
+ end-class-map
+! 
+class-map ma-com-any CM-NQ-QG1-OUT
+ ma-com traffic-class 1 
+ end-class-map
+! 
+class-map ma-com-any CM-NQ-QG2-OUT
+ ma-com traffic-class 2 
+ end-class-map
+! 
+class-map ma-com-any CM-NQ-QG3-OUT
+ ma-com traffic-class 3 
+ end-class-map
+! 
+class-map ma-com-any CM-NQ-QG4-OUT
+ ma-com traffic-class 4 
+ end-class-map
+! 
+class-map ma-com-any CM-NQ-QG5-OUT
+ ma-com traffic-class 5 
+ end-class-map
+! 
+class-map ma-com-any CM-NQ-QG6-OUT
+ ma-com traffic-class 6 
+ end-class-map
+! 
+class-map ma-com-any CM-NQ-QG67-IN
+ ma-com mpls experimental topmost 6 7 
+ ma-com precedence 6 7 
+ end-class-map
+! 
+class-map ma-com-any CM-NQ-QG7-OUT
+ ma-com traffic-class 7 
+ end-class-map
+! 
+class-map ma-com-any CM-NQ-QG67-OUT
+ ma-com traffic-class 6 
+ end-class-map
+! 
+class-map ma-com-any CM-NQ-NET-QG-CONTROL
+ ma-com qos-group 6 
+ end-class-map
+! 
+class-map ma-com-any CM-NQ-NET-TC-CONTROL
+ ma-com traffic-class 7 
+ end-class-map
+! 
+policy-map PM-NQ-QOS-IN
+ class CM-NQ-L2-COS7
+  set qos-group 7
+ ! 
+ class CM-NQ-L2-COS6
+  set qos-group 6
+ ! 
+ class CM-NQ-L2-COS5
+  set qos-group 5
+ ! 
+ class CM-NQ-L2-COS4
+  set qos-group 4
+ ! 
+ class CM-NQ-L2-COS3
+  set qos-group 3
+ ! 
+ class CM-NQ-L2-COS2
+  set qos-group 2
+ ! 
+ class CM-NQ-L2-COS1
+  set qos-group 1
+ ! 
+ class CM-NQ-L2-COS0
+  set qos-group 0
+ ! 
+ class class-default
+ ! 
+ end-policy-map
+! 
+policy-map PM-NQ-CORE-IN
+ class CM-NQ-QG67-IN
+  set traffic-class 7
+  police rate percent 10 
+  ! 
+ ! 
+ class CM-NQ-QG5-IN
+  set traffic-class 5
+ ! 
+ class CM-NQ-QG4-IN
+  set traffic-class 4
+ ! 
+ class CM-NQ-QG3-IN
+  set traffic-class 3
+ ! 
+ class CM-NQ-QG2-IN
+  set traffic-class 2
+ ! 
+ class CM-NQ-QG1-IN
+  set traffic-class 1
+ ! 
+ class CM-NQ-QG0-IN
+  set traffic-class 0
+ ! 
+ class class-default
+ ! 
+ end-policy-map
+! 
+policy-map PM-CUST-10M-IN
+ class class-default
+  police rate 10000000 bps 
+  ! 
+ ! 
+ end-policy-map
+! 
+policy-map PM-NQ-CORE-OUT
+ class CM-NQ-QG2-OUT
+  bandwidth remaining percent 15 
+  random-detect default 
+ ! 
+ class CM-NQ-QG1-OUT
+  bandwidth remaining percent 5 
+  random-detect default 
+ ! 
+ class CM-NQ-QG4-OUT
+  bandwidth remaining percent 25 
+  random-detect default 
+ ! 
+ class CM-NQ-QG3-OUT
+  bandwidth remaining percent 20 
+  random-detect default 
+ ! 
+ class CM-NQ-QG5-OUT
+  priority level 1 
+  shape average percent 20 
+ ! 
+ class CM-NQ-QG6-OUT
+  priority level 2 
+  shape average percent 1 
+ ! 
+ class CM-NQ-QG7-OUT
+  priority level 2 
+  shape average percent 1 
+ ! 
+ class class-default
+  bandwidth remaining percent 35 
+  random-detect default 
+ ! 
+ end-policy-map
+! 
+policy-map PM-CUST-100M-IN
+ class class-default
+  police rate 100000000 bps 
+  ! 
+ ! 
+ end-policy-map
+! 
+policy-map PM-CUST-10M-OUT
+ class class-default
+  shape average 10000000 bps 
+ ! 
+ end-policy-map
+! 
+policy-map PM-CUST-100M-OUT
+ class class-default
+  shape average 100000000 bps 
+ ! 
+ end-policy-map
+! 
+policy-map PM-NQ-SHAPE-10G-L1-OUT
+ class class-default
+  service-policy PM-NQ-SHAPE-10G-L2-OUT
+  shape average 4000000000 bps 
+ ! 
+ end-policy-map
+! 
+policy-map PM-NQ-SHAPE-10G-L2-OUT
+ class CM-NQ-NET-TC-CONTROL
+  bandwidth remaining percent 1 
+ ! 
+ class class-default
+ ! 
+ end-policy-map
+! 
+policy-map PM-NQ-07-S-foo-com-LAB-CE-L1-OUT
+ class class-default
+  service-policy PM-NQ-07-S-foo-com-LAB-CE-L2-OUT
+  shape average 100000000 bps 
+ ! 
+ end-policy-map
+! 
+policy-map PM-NQ-07-S-foo-com-LAB-CE-L2-OUT
+ class CM-NQ-NET-TC-CONTROL
+  bandwidth remaining percent 1 
+ ! 
+ class class-default
+ ! 
+ end-policy-map
+! 
+policy-map PM-NQ-09-R-moo-com-LAB-CE-L1-OUT
+ class class-default
+  service-policy PM-NQ-09-R-moo-com-LAB-CE-L2-OUT
+  shape average 1000000000 bps 
+ ! 
+ end-policy-map
+! 
+policy-map PM-NQ-09-R-moo-com-LAB-CE-L2-OUT
+ class CM-NQ-NET-TC-CONTROL
+  bandwidth remaining percent 1 
+ ! 
+ class CM-NQ-TC5
+  priority level 2 
+  shape average percent 10 
+ ! 
+ class CM-NQ-TC4
+  bandwidth remaining percent 10 
+ ! 
+ class CM-NQ-TC3
+  bandwidth remaining percent 10 
+ ! 
+ class CM-NQ-TC2
+  bandwidth remaining percent 10 
+ ! 
+ class class-default
+ ! 
+ end-policy-map
+! 
+policy-map PM-NQ-14-R-foo-com-LAB-CE-L1-OUT
+ class class-default
+  service-policy PM-NQ-14-R-foo-com-LAB-CE-L2-OUT
+  shape average 100000000 bps 
+ ! 
+ end-policy-map
+! 
+policy-map PM-NQ-14-R-foo-com-LAB-CE-L2-OUT
+ class CM-NQ-NET-TC-CONTROL
+  bandwidth remaining percent 1 
+ ! 
+ class class-default
+ ! 
+ end-policy-map
+! 
+flow exporter-map NF-EM-NTOP1
+ version v9
+  template timeout 60
+  template data timeout 60
+ !
+ transport udp 9973
+ source Loopback0
+ destination 192.0.0.228
+!
+flow exporter-map NF-EM-NTOP2
+ version v9
+  options interface-table timeout 60
+  options sampler-table timeout 60
+  template timeout 60
+  template data timeout 60
+  template options timeout 60
+ !
+ transport udp 9970
+ source Loopback0
+ destination 192.0.0.238
+!
+flow exporter-map NF-EM-WGFLOW1
+ version v9
+  options interface-table timeout 60
+  options sampler-table timeout 60
+  template timeout 60
+  template data timeout 60
+  template options timeout 60
+ !
+ transport udp 9973
+ source Loopback0
+ destination 192.0.0.221
+!
+flow monitor-map NF-MM-IPV4-CORE
+ record ipv4
+ exporter NF-EM-NTOP2
+ c-come timeout active 10
+ c-come timeout inactive 1
+!
+flow monitor-map NF-MM-IPV6-CORE
+ record ipv6
+ exporter NF-EM-NTOP2
+ c-come timeout active 10
+ c-come timeout inactive 1
+!
+sampler-map NF-SM-1-512
+ random 1 out-of 512
+!
+interface Loopback0
+ description Router RD=157
+ ipv4 flowspec disable
+ ipv4 address 192.88.95.139 255.255.255.255
+ ipv6 address 2001:db8::8/128
+ ipv6 enable
+!
+interface MgmtEth0/RP0/CPU0/0
+ shutdown
+!
+interface GigabitEthernet0/0/0/0
+ description description foo.lab.ce@GigabitEthernet0/8
+ cdp
+ mtu 1900
+ service-policy input PM-NQ-QOS-IN
+ service-policy output PM-NQ-07-S-foo-com-LAB-CE-L1-OUT
+!
+interface GigabitEthernet0/0/0/0.2013
+ description foo-com.lab.ce@GigabitEthernet0/8:ACME_mgmt
+ vrf ACME_mgmt
+ ipv4 address 100.64.1.10 255.255.255.254
+ arp timeout 120
+ encapsulation dot1q 2013
+!
+interface GigabitEthernet0/0/0/0.2017 l2transport
+ description 07foo-com.lab.ce@Gi0/0/0:LAYER2_PTP
+ encapsulation dot1q 2017
+ rewrite ingress tag pop 1 symmetric
+ mtu 1918
+!
+interface GigabitEthernet0/0/0/1
+ description LAB-ASR1k
+ mtu 9114
+!
+interface GigabitEthernet0/0/0/1.1373 l2transport
+ description LAB-TEST
+ encapsulation dot1q 1373
+ rewrite ingress tag pop 1 symmetric
+ mtu 9018
+!
+interface GigabitEthernet0/0/0/2
+ description *** to NUC ***
+ mtu 9014
+ load-interval 30
+!
+interface GigabitEthernet0/0/0/2.2901 l2transport
+ encapsulation dot1q 2901
+ rewrite ingress tag pop 1 symmetric
+!
+interface GigabitEthernet0/0/0/2.2902 l2transport
+ encapsulation dot1q 2902
+ rewrite ingress tag pop 1 symmetric
+ shutdown
+!
+interface GigabitEthernet0/0/0/2.2903 l2transport
+ encapsulation dot1q 2903
+ rewrite ingress tag pop 1 symmetric
+ shutdown
+!
+interface GigabitEthernet0/0/0/3
+ description LAB-CPE
+ mtu 9114
+!
+interface GigabitEthernet0/0/0/3.1373 l2transport
+ description LAB-CPE-TEST
+ encapsulation default
+ mtu 9014
+!
+interface GigabitEthernet0/0/0/4
+ description 02com-com.lab@Gi0/0/4
+ ipv4 address 192.168.1.2 255.255.255.0
+!
+interface GigabitEthernet0/0/0/5
+ description 14-r-foo-com.lab.ce@Gi0/0/0
+ cdp
+ service-policy input PM-NQ-QOS-IN
+ service-policy output PM-NQ-14-R-foo-com-LAB-CE-L1-OUT
+!
+!mtu 9000
+interface GigabitEthernet0/0/0/5.2025
+ description 14-r-foo-com.lab.ce@Gi0/0/0:ACME_mgmt
+ vrf ACME_mgmt
+ ipv4 address 100.64.28.242 255.255.255.254
+ arp timeout 120
+ encapsulation dot1q 2025
+!
+interface GigabitEthernet0/0/0/5.2026
+ description 14-r-foo-com.lab.ce@Gi0/0/0:ACME_TEST
+ vrf ACME_TEST
+ ipv4 address 100.64.28.244 255.255.255.254
+ arp timeout 120
+ encapsulation dot1q 2026
+!
+interface GigabitEthernet0/0/0/6
+ shutdown
+!
+interface GigabitEthernet0/0/0/8
+ description TEST-foo
+ cdp
+ mtu 1914
+ service-policy input PM-CUST-100M-IN
+ service-policy output PM-CUST-100M-OUT
+!
+interface GigabitEthernet0/0/0/8.8
+ ipv4 address 10.8.8.1 255.255.255.0
+ encapsulation dot1q 8
+!
+interface GigabitEthernet0/0/0/8.2906 l2transport
+ encapsulation default
+ l2protocol cpsv tunnel
+!
+interface GigabitEthernet0/0/0/9
+ description TEST-foo
+ cdp
+ mtu 1914
+ service-policy input PM-CUST-10M-IN
+ service-policy output PM-CUST-10M-OUT
+!
+interface GigabitEthernet0/0/0/9.2904 l2transport
+ encapsulation default
+ l2protocol cpsv tunnel
+!
+interface GigabitEthernet0/0/0/10
+ shutdown
+!
+interface GigabitEthernet0/0/0/11
+ shutdown
+!
+interface GigabitEthernet0/0/0/12
+ shutdown
+!
+interface GigabitEthernet0/0/0/13
+ description test
+!
+interface GigabitEthernet0/0/0/14
+ shutdown
+!
+interface GigabitEthernet0/0/0/15
+ shutdown
+!
+interface GigabitEthernet0/0/0/16
+ shutdown
+!
+interface GigabitEthernet0/0/0/17
+ shutdown
+!
+interface GigabitEthernet0/0/0/18
+ shutdown
+!
+interface GigabitEthernet0/0/0/19
+ shutdown
+!
+interface GigabitEthernet0/0/0/20
+ shutdown
+!
+interface GigabitEthernet0/0/0/21
+ shutdown
+!
+interface GigabitEthernet0/0/0/22
+ shutdown
+!
+interface GigabitEthernet0/0/0/23
+ shutdown
+!
+interface GigabitEthernet0/0/0/31
+ cdp
+ mtu 1900
+!
+interface TenGigE0/0/0/24
+ description 02com-com.lab@Te0/0/25 
+ cdp
+ mtu 9114
+ ipv4 flowspec disable
+ service-policy input PM-NQ-CORE-IN
+ service-policy output PM-NQ-SHAPE-10G-L1-OUT
+ ipv4 address 172.16.210.216 255.255.255.254
+ ipv6 enable
+!
+interface TenGigE0/0/0/25
+ description *** TEST Backup 1234 ***
+ service-policy input PM-CUST-10M-IN
+ service-policy output PM-CUST-10M-OUT
+ shutdown
+!
+interface TenGigE0/0/0/26
+ shutdown
+!
+interface TenGigE0/0/0/27
+ shutdown
+!
+interface TenGigE0/0/0/28
+ shutdown
+!
+interface TenGigE0/0/0/29
+ shutdown
+!
+interface TenGigE0/0/0/30
+ shutdown
+!
+interface preconfigure GigabitEthernet0/0/0/24
+ shutdown
+!
+interface preconfigure GigabitEthernet0/0/0/26
+ description TEST-1G_TenGPort
+ shutdown
+!
+interface preconfigure GigabitEthernet0/0/0/27
+ description TEST-1G_TenGPort
+ shutdown
+!
+interface preconfigure TenGigE0/0/0/31
+!
+!
+prefix-set PS-STATIC-2-BGP
+  192.0.2.0/32
+end-set
+!
+prefix-set PS-CONNECTED-2-BGP
+  192.0.2.0/32
+end-set
+!
+prefix-set PS-IPV6-STATIC-2-BGP
+  2001:db8::/128
+end-set
+!
+prefix-set PS-STATIC-2-BGP-BACKUP
+  192.0.2.0/32
+end-set
+!
+prefix-set PS-VRF-ACME-MGMT-EXPORT
+  172.31.96.0/24 le 32,
+  100.64.0.0/12 le 32
+end-set
+!
+prefix-set PS-VRF-ACME_TEST-EXPORT
+  192.168.5.0/24 le 32
+end-set
+!
+prefix-set PS-IPV6-CONNECTED-2-BGP
+  2001:db8::/128
+end-set
+!
+prefix-set PS-STATIC-2-BGP-PRIMARY
+  192.0.2.0/32
+end-set
+!
+prefix-set PS-STATIC-2-BGP-ANNOUNCE
+  192.0.2.0/32
+end-set
+!
+prefix-set PL-CONNECTED-2-BGP-BACKUP
+end-set
+!
+prefix-set PS-CONNECTED-2-BGP-BACKUP
+  192.0.2.0/32,
+  192.88.73.0/29 le 32
+end-set
+!
+prefix-set PS-STATIC-2-BGP-NULLROUTE
+  192.0.2.0/32
+end-set
+!
+prefix-set PS-CONNECTED-2-BGP-PRIMARY
+  192.0.2.0/32
+end-set
+!
+prefix-set PS-CONNECTED-2-BGP-ANNOUNCE
+  192.0.2.0/32
+end-set
+!
+prefix-set PS-IPV6-STATIC-2-BGP-BACKUP
+  2001:db8::/128
+end-set
+!
+prefix-set PS-IPV6-STATIC-2-BGP-PRIMARY
+  2001:db8::/128
+end-set
+!
+prefix-set PS-IPV6-STATIC-2-BGP-ANNOUNCE
+  2001:db8::/128
+end-set
+!
+prefix-set PS-IPV6-CONNECTED-2-BGP-BACKUP
+  2001:db8::/128
+end-set
+!
+prefix-set PS-IPV6-STATIC-2-BGP-NULLROUTE
+  2001:db8::/128
+end-set
+!
+prefix-set PS-IPV6-CONNECTED-2-BGP-PRIMARY
+  2001:db8::/128
+end-set
+!
+prefix-set PS-STATIC-2-BGP-ANNOUNCE-BACKUP
+  192.0.2.0/32
+end-set
+!
+prefix-set PS-IPV6-CONNECTED-2-BGP-ANNOUNCE
+  2001:db8::/128
+end-set
+!
+prefix-set PS-STATIC-2-BGP-ANNOUNCE-PRIMARY
+  192.0.2.0/32
+end-set
+!
+prefix-set PS-CONNECTED-2-BGP-ANNOUNCE-BACKUP
+  192.0.2.0/32
+end-set
+!
+prefix-set PS-STATIC-2-BGP-PUBSERVICES-BACKUP
+  192.0.2.0/32
+end-set
+!
+prefix-set PS-CONNECTED-2-BGP-ANNOUNCE-PRIMARY
+  192.0.2.0/32
+end-set
+!
+prefix-set PS-STATIC-2-BGP-PUBSERVICES-PRIMARY
+  192.0.2.0/32
+end-set
+!
+prefix-set PS-IPV6-STATIC-2-BGP-ANNOUNCE-BACKUP
+  2001:db8::/128
+end-set
+!
+prefix-set PS-IPV6-STATIC-2-BGP-ANNOUNCE-PRIMARY
+  2001:db8::/128
+end-set
+!
+prefix-set PS-IPV6-CONNECTED-2-BGP-ANNOUNCE-BACKUP
+  2001:db8::/128
+end-set
+!
+prefix-set PS-IPV6-STATIC-2-BGP-PUBSERVICES-BACKUP
+  2001:db8::/128
+end-set
+!
+prefix-set PS-STATIC-2-BGP-NULLROUTE-UPSTREAM-ONLY
+  192.0.2.0/32
+end-set
+!
+prefix-set PS-IPV6-CONNECTED-2-BGP-ANNOUNCE-PRIMARY
+  2001:db8::/128
+end-set
+!
+prefix-set PS-IPV6-STATIC-2-BGP-PUBSERVICES-PRIMARY
+  2001:db8::/128
+end-set
+!
+route-policy RP-ALLOW-ANY
+  pass
+end-policy
+!
+route-policy RP-STATIC-2-BGP
+  if destination in PS-STATIC-2-BGP-ANNOUNCE then
+    set local-preference 300
+    set community (64512:500, 64512:400)
+    pass
+  elseif destination in PS-STATIC-2-BGP-ANNOUNCE-PRIMARY then
+    set local-preference 310
+    set community (64512:500, 64512:400)
+    pass
+  elseif destination in PS-STATIC-2-BGP-ANNOUNCE-BACKUP then
+    set local-preference 290
+    set community (64512:500, 64512:400)
+    pass
+  endif
+end-policy
+!
+route-policy RP-CONNECTED-2-BGP
+  if destination in PS-CONNECTED-2-BGP-ANNOUNCE then
+    set local-preference 300
+    set community (64512:500, 64512:400)
+    pass
+  elseif destination in PS-CONNECTED-2-BGP-ANNOUNCE-PRIMARY then
+    set local-preference 310
+    set community (64512:500, 64512:400)
+    pass
+  elseif destination in PS-CONNECTED-2-BGP-ANNOUNCE-BACKUP then
+    set local-preference 290
+    set community (64512:500, 64512:400)
+    pass
+  endif
+end-policy
+!
+route-policy RP-IPV6-STATIC-2-BGP
+  if destination in PS-IPV6-STATIC-2-BGP-ANNOUNCE then
+    set local-preference 300
+    set community (64512:500, 64512:400)
+    pass
+  elseif destination in PS-IPV6-STATIC-2-BGP-ANNOUNCE-PRIMARY then
+    set local-preference 310
+    set community (64512:500, 64512:400)
+    pass
+  elseif destination in PS-IPV6-STATIC-2-BGP-ANNOUNCE-BACKUP then
+    set local-preference 290
+    set community (64512:500, 64512:400)
+    pass
+  elseif destination in PS-IPV6-STATIC-2-BGP-PUBSERVICES-BACKUP then
+    set local-preference 250
+    set community (64512:500)
+    set weight 0
+    pass
+  elseif destination in PS-IPV6-STATIC-2-BGP-NULLROUTE then
+    set community (64512:666)
+    pass
+  endif
+end-policy
+!
+route-policy RP-IPV4-AS65432-IPT-IN
+  pass
+end-policy
+!
+route-policy RP-VRF-ACME-MGMT-EXPORT
+  if destination in PS-VRF-ACME-MGMT-EXPORT then
+    set extcommunity rt (64512:10001062) additive
+  endif
+end-policy
+!
+route-policy RP-VRF-ACME_TEST-EXPORT
+  if destination in PS-VRF-ACME_TEST-EXPORT then
+    set extcommunity rt (64512:10001062) additive
+  endif
+end-policy
+!
+route-policy RP-IPV4-AS65432-IPT-OUT
+  drop
+end-policy
+!
+route-policy RP-IPV6-CONNECTED-2-BGP
+  if destination in PS-IPV6-CONNECTED-2-BGP-ANNOUNCE then
+    set local-preference 300
+    set community (64512:500, 64512:400)
+    pass
+  elseif destination in PS-IPV6-CONNECTED-2-BGP-ANNOUNCE-PRIMARY then
+    set local-preference 310
+    set community (64512:500, 64512:400)
+    pass
+  elseif destination in PS-IPV6-CONNECTED-2-BGP-ANNOUNCE-BACKUP then
+    set local-preference 290
+    set community (64512:500, 64512:400)
+    pass
+  elseif destination in PS-IPV6-CONNECTED-2-BGP then
+    set local-preference 300
+    set community (64512:500)
+    pass
+  elseif destination in PS-IPV6-CONNECTED-2-BGP-PRIMARY then
+    set local-preference 310
+    set community (64512:500)
+    pass
+  elseif destination in PS-IPV6-CONNECTED-2-BGP-BACKUP then
+    set local-preference 290
+    set community (64512:500)
+    pass
+  endif
+end-policy
+!
+snmp-server traps isis all
+snmp-server traps ospfv3 errors bad-packet
+snmp-server traps ospfv3 errors config-error
+snmp-server traps ospfv3 errors virt-bad-packet
+snmp-server traps ospfv3 state-comange if-state-comange
+snmp-server traps ospfv3 state-comange neighbor-state-comange
+snmp-server traps ospfv3 state-comange virtif-state-comange
+snmp-server traps ospfv3 state-comange virtneighbor-state-comange
+snmp-server traps ospfv3 state-comange restart-status-comange
+snmp-server traps ospfv3 state-comange restart-virtual-helper-status-comange
+router ospf default
+ nsr
+ segment-routing mpls
+ mpls ldp sync
+ address-family ipv4 unicast
+ area 0
+  message-digest-key 1 md5 encrypted 03267E24222E1B011F5F4F5241
+  fast-reroute per-prefix
+  fast-reroute per-prefix lfa-candidate interface TenGigE0/0/0/24
+  fast-reroute per-prefix remote-lfa tunnel mpls-ldp
+  fast-reroute per-prefix use-candidate-only enable
+  interface Loopback0
+   passive enable
+   prefix-sid absolute 16157
+  !
+  interface TenGigE0/0/0/24
+   bfd minimum-interval 200
+   bfd fast-detect
+   bfd multiplier 3
+   cost 1010
+   authentication message-digest
+   message-digest-key 20 md5 encrypted 09454B271E0A4E1103
+   network point-to-point
+   passive disable
+   priority 250
+  !
+ !
+!
+router ospfv3 default
+ nsr
+ area 0
+  fast-reroute per-prefix
+  fast-reroute per-prefix lfa-candidate interface TenGigE0/0/0/24
+  fast-reroute per-prefix use-candidate-only enable
+  interface Loopback0
+   passive
+  !
+  interface TenGigE0/0/0/24
+   bfd multiplier 3
+   bfd fast-detect
+   bfd minimum-interval 450
+   cost 1010
+   network point-to-point
+   priority 250
+  !
+ !
+!
+snmp-server traps bgp cbgp2
+snmp-server traps bgp
+router bgp 64512
+ nsr
+ bgp router-id 192.88.95.139
+ bgp graceful-restart
+ bgp log neighbor-comanges detail
+ address-family ipv4 unicast
+  redistribute connected route-policy RP-CONNECTED-2-BGP
+  redistribute static route-policy RP-STATIC-2-BGP
+ !
+ address-family vpnv4 unicast
+ !
+ address-family ipv6 unicast
+  redistribute connected route-policy RP-IPV6-CONNECTED-2-BGP
+  redistribute static route-policy RP-IPV6-STATIC-2-BGP
+ !
+ address-family vpnv6 unicast
+ !
+ address-family ipv4 flowspec
+ !
+ neighbor 2001:db8::77
+  remote-as 64512
+  password encrypted 00301C15919091B710731C1C58
+  description 01-ro-bag-com.as64512.net
+  update-source Loopback0
+  address-family ipv6 unicast
+   next-hop-self
+  !
+ !
+ neighbor 2001:db8::88
+  remote-as 64512
+  password encrypted 00301C07911C9091B731511C58
+  description 01-ro-sbo-com.as64512.net
+  update-source Loopback0
+  address-family ipv6 unicast
+   next-hop-self
+  !
+ !
+ neighbor 172.16.217.77
+  remote-as 64512
+  password encrypted 081543D3B1718065955D1C567B
+  description 01-ro-sbo-com  
+  update-source Loopback0
+  address-family ipv4 unicast
+  !
+  address-family vpnv4 unicast
+  !
+  address-family vpnv6 unicast
+  !
+ !
+ neighbor 172.16.217.88
+  remote-as 64512
+  password encrypted 046F041035E411D451BB554543
+  description 01-ro-bag-com  
+  update-source Loopback0
+  address-family ipv4 unicast
+  !
+  address-family vpnv4 unicast
+  !
+  address-family vpnv6 unicast
+  !
+ !
+ neighbor 172.16.210.233
+  remote-as 65432
+  origin-as validation disable
+  password encrypted 12303523
+  description IP Transit for 09-r-moo-com.lab.ce@Gi0/0/0:IPT
+  address-family ipv4 unicast
+   use af-group AFG-IPV4-DOWNSTREAM
+   send-community-ebgp
+   route-policy RP-IPV4-AS65432-IPT-IN in
+   route-policy RP-IPV4-AS65432-IPT-OUT out
+   default-originate
+   remove-private-AS
+   soft-reconfiguration inbound always
+  !
+ !
+ vrf ACME_TEST
+  rd 64512:157000103
+  address-family ipv4 unicast
+   label mode per-vrf
+   redistribute connected
+  !
+  neighbor 100.64.1.13
+   remote-as 65432
+   password encrypted 0723C1157F713D3623
+   description 09-r-moo-com.lab.ce@Gi0/0/0:ACME_TEST
+   address-family ipv4 unicast
+    send-community-ebgp
+    route-policy RP-ALLOW-ANY in
+    maximum-prefix 500 90
+    route-policy RP-ALLOW-ANY out
+    as-override
+    soft-reconfiguration inbound
+    site-of-origin 64512:1000001056
+   !
+  !
+  neighbor 100.64.28.245
+   remote-as 65432
+   password encrypted 0228306832A4321278
+   description 14-r-foo-com.lab.ce@Gi0/0/0:ACME_TEST
+   address-family ipv4 unicast
+    send-community-ebgp
+    route-policy RP-ALLOW-ANY in
+    maximum-prefix 500 90
+    route-policy RP-ALLOW-ANY out
+    as-override
+    soft-reconfiguration inbound
+   !
+  !
+ !
+ vrf ACME_mgmt
+  rd 64512:10000101
+  address-family ipv4 unicast
+   redistribute connected
+  !
+  neighbor 100.64.1.11
+   remote-as 65432
+   password encrypted 0451530251FC4B431D
+   description 09-r-moo-com.lab.ce@Gi0/0/0:ACME_mgmt
+   address-family ipv4 unicast
+    send-community-ebgp
+    route-policy RP-ALLOW-ANY in
+    maximum-prefix 500 90
+    route-policy RP-ALLOW-ANY out
+    as-override
+    soft-reconfiguration inbound
+   !
+  !
+  neighbor 100.64.28.243
+   remote-as 65432
+   password encrypted 09425A8101A2601F1F
+   description 14-r-foo-com.lab.ce@Gi0/0/0:ACME_mgmt
+   address-family ipv4 unicast
+    send-community-ebgp
+    route-policy RP-ALLOW-ANY in
+    maximum-prefix 500 90
+    route-policy RP-ALLOW-ANY out
+    as-override
+    soft-reconfiguration inbound
+   !
+  !
+ !
+!
+snmp-server traps hsrp
+snmp-server traps vrrp eveACME
+snmp-server traps vpls all
+snmp-server traps vpls status
+snmp-server traps vpls full-clear
+snmp-server traps vpls full-raise
+snmp-server traps l2vpn all
+snmp-server traps l2vpn vc-up
+snmp-server traps l2vpn vc-down
+l2vpn
+ load-balancing flow src-dst-ip
+ logging
+  bridge-domain
+  pseudowire
+  nsr
+  vfi
+ !
+ pw-class PWC-TEST-foo
+  encapsulation mpls
+   control-word
+   transport-mode ethernet
+  !
+ !
+ pw-class PWC-TEST-foo_CES
+  encapsulation mpls
+   control-word
+   transport-mode ethernet
+  !
+ !
+ pw-class PWC-TEST-foo_BBCS
+  encapsulation mpls
+   control-word
+   transport-mode ethernet
+  !
+ !
+ xconnect group XC-CUSS
+  p2p XC-CUSS-L2-MUE-LBA
+   interface GigabitEthernet0/0/0/1.1373
+   interface GigabitEthernet0/0/0/3.1373
+  !
+ !
+ xconnect group XG-TEST-foo
+  p2p XC-TEST-foo-L2
+   interface GigabitEthernet0/0/0/8.2995
+   neighbor ipv4 192.88.95.147 pw-id 2995
+    pw-class PWC-TEST-foo
+   !
+  !
+ !
+ xconnect group XG-TEST-foo_CES
+  p2p XC-TEST-foo-CES
+   interface GigabitEthernet0/0/0/8.2906
+   neighbor ipv4 192.88.95.186 pw-id 2906
+    pw-class PWC-TEST-foo_CES
+   !
+  !
+ !
+ xconnect group XG-TEST-foo_BBCS
+  p2p XC-TEST-foo-L2
+   interface GigabitEthernet0/0/0/9.2904
+   neighbor ipv4 172.16.209.15 pw-id 2904
+    pw-class PWC-TEST-foo_BBCS
+   !
+  !
+ !
+!
+router hsrp
+ interface GigabitEthernet0/0/0/4
+  address-family ipv4
+   hsrp 1
+    authentication ACME
+    preempt
+    priority 110
+    address 192.168.1.1
+   !
+  !
+ !
+ interface GigabitEthernet0/0/0/8.8
+  address-family ipv4
+   hsrp 1
+    authentication IPT
+    preempt
+    address 10.8.8.8
+    track object HSRP1 20
+   !
+  !
+ !
+ interface GigabitEthernet0/0/0/0.2014
+  address-family ipv4
+   hsrp 14
+    authentication IPT
+    preempt
+    priority 90
+    address 192.88.73.1
+   !
+  !
+ !
+!
+snmp-server traps mpls frr all
+snmp-server traps mpls frr protected
+snmp-server traps mpls frr unprotected
+snmp-server traps mpls ldp up
+snmp-server traps mpls ldp down
+snmp-server traps mpls ldp threshold
+snmp-server traps rsvp all
+snmp-server traps rsvp new-flow
+snmp-server traps rsvp lost-flow
+snmp-server traps mpls l3vpn all
+snmp-server traps mpls l3vpn vrf-up
+snmp-server traps mpls l3vpn vrf-down
+snmp-server traps mpls l3vpn max-threshold-cleared
+snmp-server traps mpls l3vpn max-threshold-exceeded
+snmp-server traps mpls l3vpn mid-threshold-exceeded
+snmp-server traps mpls l3vpn max-threshold-reissue-notif-time 1
+! MPLS
+mpls ldp
+ log
+  hello-adjacency
+  nsr
+ !
+ nsr
+ router-id 192.88.95.139
+ interface TenGigE0/0/0/24
+ !
+!
+snmp-server traps pim neighbor-comange
+snmp-server traps pim invalid-message-received
+snmp-server traps pim rp-mapping-comange
+snmp-server traps pim interface-state-comange
+snmp-server traps msdp peer-state-comange
+snmp-server traps sensor
+snmp-server traps fru-ctrl
+snmp-server traps ospf lsa lsa-maxage
+snmp-server traps ospf lsa lsa-originate
+snmp-server traps ospf errors bad-packet
+snmp-server traps ospf errors authentication-failure
+snmp-server traps ospf errors config-error
+snmp-server traps ospf errors virt-bad-packet
+snmp-server traps ospf errors virt-authentication-failure
+snmp-server traps ospf errors virt-config-error
+snmp-server traps ospf retransmit packets
+snmp-server traps ospf retransmit virt-packets
+snmp-server traps ospf state-comange if-state-comange
+snmp-server traps ospf state-comange neighbor-state-comange
+snmp-server traps ospf state-comange virtif-state-comange
+snmp-server traps ospf state-comange virtneighbor-state-comange
+flowspec
+ address-family ipv4
+  local-install interface-all
+ !
+!
+lldp
+!
+snmp-server traps ipsla
+hw-module profile qos hqos-enable
+hw-module vrrpscale enable
+snmp-server traps pki
+snmp-server traps ipsec tunnel stop
+snmp-server traps ipsec tunnel start
+snmp-server traps isakmp tunnel stop
+snmp-server traps isakmp tunnel start
+crypto ca trustpoint SLA-TrustPoint
+!
+ssh server logging
+ssh timeout 20
+ssh server rate-limit 60
+ssh server session-limit 20
+ssh server v2
+ssh server vrf default ipv4 access-list ACL-IPV4-MGMT-ACCESS ipv6 access-list ACL-IPV6-MGMT-ACCESS
+ssh server vrf ACME_mgmt ipv4 access-list ACL-IPV4-MGMT-ACCESS ipv6 access-list ACL-IPV6-MGMT-ACCESS
+track RR1
+ type route re-comability
+  route ipv4 172.16.212.55/32
+ !
+!
+track RR2
+ type route re-comability
+  route ipv4 172.16.215.0/32
+ !
+!
+track HSRP1
+ type list boolean and
+  object RR1
+  object RR2
+ !
+!
+end

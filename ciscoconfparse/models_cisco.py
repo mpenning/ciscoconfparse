@@ -89,16 +89,18 @@ class TrackingInterface(BaseCfgLine):
 
     @logger.catch(reraise=True)
     def __hash__(self):
+        """Return a hash value based on the Tracking interface group, interface name and decrement / weighting."""
         if self._name is None or self._group is None:
             error = f"Cannot hash TrackingInterface() {self}"
             logger.critical(error)
             raise ValueError(error)
         else:
-            return hash(self._name) * hash(self._group) * hash(self.interface_name) * hash(self._decrement) * hash(self._weighting)
+            return hash(self.name) * hash(self._group) * hash(self.interface_name) * hash(self._decrement) * hash(self._weighting)
 
     # This method is on TrackingInterface()
     @logger.catch(reraise=True)
     def __eq__(self, other):
+        """Return True or False based on whether this Tracking interface is equal to the other instance; both instances must be a TrackingInterface() instance to compare True"""
         if isinstance(other, TrackingInterface):
             if self.name==other.name and self.group==other.group and self._interface==other._linterface and self._decrement==other._decrement and self._weighting==other._weighting:
                 return True
@@ -110,6 +112,7 @@ class TrackingInterface(BaseCfgLine):
     @property
     @logger.catch(reraise=True)
     def interface_name(self):
+        """Return the interface name as a string, or return None"""
         # Derive the interface_name from 'interface GigabitEthernet 5/2'
         # return the name of the interface that owns this TrackingInterface()
         if isinstance(self._interface, (int, str)):
@@ -137,18 +140,21 @@ class TrackingInterface(BaseCfgLine):
     @property
     @logger.catch(reraise=True)
     def tracking_interface_group(self):
+        """Return an integer with the TrackingInterface() Group"""
         return int(self._group)
 
     # This method is on TrackingInterface()
     @property
     @logger.catch(reraise=True)
     def group(self):
+        """Return an integer with the TrackingInterface() Group"""
         return self.tracking_interface_group
 
     # This method is on TrackingInterfac3()
     @property
     @logger.catch(reraise=True)
     def decrement(self):
+        """Return an integer with the TrackingInterface() decrement or None if there is no decrement."""
         if isinstance(self._decrement, (str, int)) and str(self._decrement) != "":
             return int(self._decrement)
         else:
@@ -193,6 +199,7 @@ class HSRPInterfaceGroup(BaseCfgLine):
     # This method is on HSRPInterfaceGroup()
     @logger.catch(reraise=True)
     def __str__(self):
+        """Return a string representation of this HSRPInterfaceGroup() instance."""
         return f"'{self.interface_name}' version: {self.version}, group: {self.group}, ipv4: {self.ipv4}, has_ipv6: {self.has_ipv6}, priority: {self.priority}, preempt: {self.preempt}, preempt_delay: {self.preempt_delay}, hello_timer: {self.hello_timer}, hold_timer: {self.hold_timer}"
 
     # This method is on HSRPInterfaceGroup()
@@ -202,11 +209,13 @@ class HSRPInterfaceGroup(BaseCfgLine):
 
     @logger.catch(reraise=True)
     def __hash__(self):
+        """Return a hash for this HSRPInterfaceGroup() instance."""
         return hash(self.interface_name) * hash(self.group)
 
     # This method is on HSRPInterfaceGroup()
     @logger.catch(reraise=True)
     def __eq__(self, other):
+        """Return True if this HSRPInterfaceGroup() is equal to the other instance or False if the other instance is not an HSRPInterfaceGroup()."""
         if isinstance(other, HSRPInterfaceGroup):
             if self.group==other.group and self.interface_name==other.interface_name:
                 return True
@@ -218,7 +227,7 @@ class HSRPInterfaceGroup(BaseCfgLine):
     @property
     @logger.catch(reraise=True)
     def hsrp_group(self):
-        """Return the integer HSRP group number for this HSRP group"""
+        """Return the integer HSRP group number for this HSRPInterfaceGroup() instance."""
         return int(self._group)
 
     # This method is on HSRPInterfaceGroup()
@@ -265,6 +274,7 @@ class HSRPInterfaceGroup(BaseCfgLine):
     @property
     @logger.catch(reraise=True)
     def ipv6(self):
+        """Return the string IPv6 HSRP address for this HSRP group"""
         ## NOTE: I have no intention of checking self.is_shutdown here
         ##     People should be able to check the sanity of interfaces
         ##     before they put them into production
@@ -279,6 +289,7 @@ class HSRPInterfaceGroup(BaseCfgLine):
     @property
     @logger.catch(reraise=True)
     def interface_name(self):
+        """Return the string interface name of the interface owning this HSRP group instance."""
         # return the name of the interface that owns this HSRPInterfaceGroup()
         return " ".join(self._parent.text.strip().split()[1:])
 
@@ -335,6 +346,7 @@ class HSRPInterfaceGroup(BaseCfgLine):
     @property
     @logger.catch(reraise=True)
     def group(self):
+        """Return the integer HSRP Group for this HSRPInterfaceGroup() instance."""
         ## For API simplicity, I always assume there is only one hsrp
         ##     group on the interface
         return self._group
@@ -343,6 +355,7 @@ class HSRPInterfaceGroup(BaseCfgLine):
     @property
     @logger.catch(reraise=True)
     def preempt_delay(self):
+        """Return the configured integer HSRP preempt delay, or 0 if there is none."""
         ## NOTE: I have no intention of checking self.is_shutdown here
         ##     People should be able to check the sanity of interfaces
         ##     before they put them into production
@@ -357,6 +370,7 @@ class HSRPInterfaceGroup(BaseCfgLine):
     @property
     @logger.catch(reraise=True)
     def hello_timer(self):
+        """Return the configured integer HSRP hello timer, or the HSRP default of 3 if there is no explicit hello timer."""
         ## NOTE: I have no intention of checking self.is_shutdown here
         ##     People should be able to check the sanity of interfaces
         ##     before they put them into production
@@ -373,6 +387,7 @@ class HSRPInterfaceGroup(BaseCfgLine):
     @property
     @logger.catch(reraise=True)
     def hold_timer(self):
+        """Return the configured integer HSRP hold timer, or the HSRP default of 10 if there is no explicit hold timer."""
         ## NOTE: I have no intention of checking self.is_shutdown here
         ##     People should be able to check the sanity of interfaces
         ##     before they put them into production
@@ -389,6 +404,7 @@ class HSRPInterfaceGroup(BaseCfgLine):
     @property
     @logger.catch(reraise=True)
     def priority(self):
+        """Return the configured integer HSRP priority, or the HSRP default of 100 if there is no explicit HSRP priority configured."""
         for obj in self._parent.children:
             obj_parts = obj.text.lower().strip().split()
             if obj_parts[0:3] == ["standby", str(self._group), "priority"]:
@@ -400,13 +416,14 @@ class HSRPInterfaceGroup(BaseCfgLine):
     @property
     @logger.catch(reraise=True)
     def version(self):
+        """Return the configured integer HSRP version, or the HSRP default of 1 if there is no explicit HSRP version configured."""
         ## NOTE: I have no intention of checking self.is_shutdown here
         ##     People should be able to check the sanity of interfaces
         ##     before they put them into production
         for obj in self._parent.children:
             obj_parts = obj.text.lower().strip().split()
             if obj_parts[0:2] == ["standby", "version"]:
-                return obj_parts[-1]
+                return int(obj_parts[-1])
         # default to version 1...
         return 1
 
@@ -420,7 +437,7 @@ class HSRPInterfaceGroup(BaseCfgLine):
     @property
     @logger.catch(reraise=True)
     def use_bia(self):
-        """`standby use-bia` helps avoid instability when introducing new HSRP routers"""
+        """Return True if the router is configured with `standby use-bia`; `standby use-bia` helps avoid instability when introducing new HSRP routers.  Return False if the router is not configured with `standby use-bia`."""
         for obj in self._parent.children:
             if "use-bia" in obj.text:
                 return True
@@ -430,6 +447,7 @@ class HSRPInterfaceGroup(BaseCfgLine):
     @property
     @logger.catch(reraise=True)
     def preempt(self):
+        """Return True if the router is configured to preempt for this HSRP Group; otherwise return False."""
         ## For API simplicity, I always assume there is only one hsrp
         ##     group on the interface
         for obj in self._parent.children:
@@ -442,6 +460,7 @@ class HSRPInterfaceGroup(BaseCfgLine):
     @property
     @logger.catch(reraise=True)
     def authentication_md5_keychain(self):
+        """Return the string text of the MD5 key-chain if this HSRP group is configured with an MD5 authentication key-chain; otherwise return an empty string."""
         ## For API simplicity, I always assume there is only one hsrp
         ##     group on the interface
         retval = self.re_match_iter_typed(
@@ -456,6 +475,7 @@ class HSRPInterfaceGroup(BaseCfgLine):
     @property
     @logger.catch(reraise=True)
     def has_authentication_md5(self):
+        """Return True if the router is configured with an MD5 key-chain; otherwise return False."""
         keychain = self.authentication_md5_keychain
         return bool(keychain)
 

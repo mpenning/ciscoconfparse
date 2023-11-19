@@ -9,6 +9,7 @@
 - Released: 2023-11-18
 - Summary:
     - Update and expand documentation
+    - Add fix for documentation build pipeline if `sphinx-doc/.undodir` exists
     - Delete unnecessary documentation files
 
 ## Version: 1.9.37

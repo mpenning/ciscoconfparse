@@ -1,0 +1,111 @@
+hostname rtr1
+logging console debugging
+domain name cisco.com
+domain name-server 8.8.8.8
+!
+!
+interface Loopback0
+ ipv4 address 12.1.1.1 255.255.255.255
+!
+!
+interface Loopback100
+ ipv4 address 13.1.1.1 255.255.255.255
+!
+!
+interface FourHundredGigE0/0/0/0
+ ipv4 address 17.1.1.20 255.255.255.0
+ ipv6 nd unicast-ra
+ ipv6 enable
+ shutdown
+!
+interface FourHundredGigE0/0/0/8
+ ipv4 address 19.1.1.10 255.255.255.0
+ ipv6 nd unicast-ra
+ ipv6 enable
+ no shutdown
+!
+interface FourHundredGigE0/0/0/9
+ ipv4 address 18.1.1.10 255.255.255.0
+ ipv6 nd unicast-ra
+ ipv6 enable
+ no shutdown
+!
+interface FourHundredGigE0/0/0/9.1
+ ipv4 address 21.1.1.2 255.255.255.0
+ encapsulation dot1q 3000
+ no shutdown
+!
+interface FourHundredGigE0/0/0/12
+ ipv4 address 15.1.1.20 255.255.255.0
+ ipv6 nd unicast-ra
+ ipv6 enable
+ no shutdown
+!
+interface FourHundredGigE0/0/0/13
+ ipv4 address 16.1.1.20 255.255.255.0
+ ipv6 nd unicast-ra
+ ipv6 enable
+ no shutdown
+!
+router ospf 1
+ router-id 2.2.2.2
+ address-family ipv4 unicast
+ area 0
+  mpls traffic-eng
+  interface Loopback0
+  !
+  interface FourHundredGigE0/0/0/8
+  !
+  interface FourHundredGigE0/0/0/9
+  !
+  interface FourHundredGigE0/0/0/12
+  !
+  interface FourHundredGigE0/0/0/13
+  !
+ !
+ mpls traffic-eng router-id Loopback0
+!
+rsvp
+ interface FourHundredGigE0/0/0/8
+ !
+ interface FourHundredGigE0/0/0/9
+ !
+ interface FourHundredGigE0/0/0/12
+ !
+ interface FourHundredGigE0/0/0/13
+ !
+!
+mpls traffic-eng
+ interface FourHundredGigE0/0/0/8
+ !
+ interface FourHundredGigE0/0/0/9
+ !
+ interface FourHundredGigE0/0/0/12
+ !
+ interface FourHundredGigE0/0/0/13
+ !
+!
+mpls static
+ interface FourHundredGigE0/0/0/8
+ interface FourHundredGigE0/0/0/9
+ interface FourHundredGigE0/0/0/12
+!
+grpc
+ port 57777
+ address-family ipv4
+ service-layer
+ !
+!
+telemetry model-driven
+ sensor-group test
+  sensor-path Cisco-IOS-XR-bundlemgr-oper:bundles-adjacency/nodes/node/brief
+ !
+!
+netconf-yang agent
+ ssh
+!
+lldp
+!
+ssh server v2
+ssh server netconf vrf default
+end

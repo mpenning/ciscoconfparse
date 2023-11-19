@@ -1,0 +1,1674 @@
+!! Building configuration
+!! IOS XR Configuration 7.10.1
+!! Last configuration change at Fri Oct 27 12:56:11 2023 by   
+!
+hostname NCS57B1
+banner exec /
+*******************************************************************************
+*
+  Welcome!
+*
+*******************************************************************************
+/
+banner login /
+*******************************************************************************
+*
+*         
+*******************************************************************************
+/
+logging console debugging
+logging buffered 2097152
+logging buffered debugging
+logging 233.252.222.217 vrf default severity info port default
+logging suppress rule ACME-LOG-SUPPRESS
+ alarm SECURITY SSHD WARNING_LOGIN
+ alarm SECURITY SSHD INFO_USER_LOGOUT
+!
+logging suppress apply rule ACME-LOG-SUPPRESS
+ all-of-router
+!
+logging source-interface Loopback0
+domain name as65412.ACME.com
+domain list as65412.ACME.com
+domain name-server 233.252.222.212
+domain name-server 233.252.222.213
+tacacs source-interface Loopback0 vrf default
+tacacs-server host 233.252.222.236 port 49
+ key 7 0111111111111111111111111111111F13
+!
+tacacs-server host 233.252.222.226 port 49
+ key 7 1311111111111111111111111124065F17
+!
+username ACME_root
+ group root-lr
+ group cisco-support
+ secret 10 $6$vVgiw06f22222w0.$Kz59D4/nkvvp.P2L5Tu8H2TyegTcPjj5iVujk22222222222222222222222222222222222222222OHCF6Nk1
+!
+aaa accounting exec default start-stop group ACME-AUTH none
+aaa accounting system default start-stop group ACME-AUTH none
+aaa accounting commands default start-stop group ACME-AUTH none
+aaa group server tacacs+ ACME-AUTH
+ server 233.252.222.226
+ server 233.252.222.236
+!
+aaa authorization exec default group ACME-AUTH none
+aaa authorization commands default group ACME-AUTH none
+aaa authentication login default group ACME-AUTH local
+cdp
+telemetry model-driven
+ destination-group DGroup1
+  address-family ipv4 233.252.222.229 port 57500
+   encoding self-describing-gpb
+   protocol tcp
+  !
+ !
+ sensor-group interfaces
+  sensor-path Cisco-IOS-XR-controller-optics-oper
+  sensor-path Cisco-IOS-XR-controller-optics-oper-sub1
+  sensor-path Cisco-IOS-XR-coherent-portmode-oper-sub1.yang
+  sensor-path Cisco-IOS-XR-NCS-BDplatforms-npu-resources-oper.yang
+  sensor-path Cisco-IOS-XR-pfi-im-cmd-oper:interfaces/interface-summary
+  sensor-path Cisco-IOS-XR-infra-statsd-oper:infra-statistics/interfaces/interface/latest/generic-counters
+ !
+ subscription interfaces
+  sensor-group-id interfaces strict-timer
+  sensor-group-id interfaces sample-interval 30000
+  destination-id DGroup1
+  source-interface Loopback0
+ !
+!
+nsr process-failures switchover
+vrf ACME_TEST
+ description *** ACME_TEST ***
+ address-family ipv4 unicast
+  import route-target
+   65412:10001030
+   65412:10001031
+   65412:10001032
+   65412:10001061
+  !
+  export route-policy RP-VRF-ACME_TEST-EXPORT
+  export route-target
+   65412:10001030
+   65412:10001031
+   65412:10001032
+  !
+ !
+!
+vrf ACME_mgmt
+ address-family ipv4 unicast
+  import route-target
+   65412:10001061
+   65412:100001011
+  !
+  export route-policy RP-VRF-ACME-MGMT-EXPORT
+  export route-target
+   65412:100001011
+  !
+ !
+!
+vrf ACME_TEST2
+ description *** ACME_TEST2 ***
+ address-family ipv4 unicast
+  import route-target
+   65412:10001040
+   65412:10001260
+  !
+  export route-target
+   65412:10001040
+   65412:10001260
+  !
+ !
+!
+vrf BAZZER
+ address-family ipv4 unicast
+  import route-target
+   65412:10001120
+  !
+  export route-target
+   65412:10001120
+  !
+ !
+ address-family ipv6 unicast
+  import route-target
+   65412:10001120
+  !
+  export route-target
+   65412:10001120
+  !
+ !
+!
+vrf INTERNET10
+ description *** INTERNET ***    
+ address-family ipv4 unicast
+  import route-target
+   65412:20001030
+   65432:20001030
+  !
+  export route-target
+   65412:20001030
+   65432:20001030
+  !
+ !
+ address-family ipv6 unicast
+  import route-target
+   65412:20001030
+   65432:20001030
+  !
+  export route-target
+   65412:20001030
+   65432:20001030
+  !
+ !
+!
+vrf INTERNET11
+ description *** INTERNET ***  
+ address-family ipv4 unicast
+  import route-target
+   65412:20001040
+   65432:20001040
+  !
+  export route-target
+   65412:20001040
+   65432:20001040
+  !
+ !
+!
+vrf INTERNET12
+ description *** INTERNET ***  
+ address-family ipv4 unicast
+  import route-target
+   65412:20001050
+   65432:20001050
+  !
+  export route-target
+   65412:20001050
+   65432:20001050
+  !
+ !
+!
+line console
+ exec-timeout 20 0
+ ! line console stopbits 1
+ length 0
+ escape-character 0x5a
+ session-limit 10
+ disconnect-character 0x59
+ session-timeout 100
+!
+line default
+ login authentication default
+ exec-timeout 20 0
+ access-class ingress ACL-IPV4-MGMT-ACCESS
+ session-timeout 20
+!
+vty-pool default 0 20
+install
+ repository local-repo
+  url file:///harddisk:/IOS-XR_7.10.1/
+ !
+!
+snmp-server host 233.252.222.208 traps version 2c encrypted 121C121A01
+snmp-server user ACME-RO-V3-USER ACME-RO-GROUP v3 auth sha encrypted 050C0921157F111111111111111111787A053D27 priv aes 128 encrypted 045C042833333333333333333333333333333331 SystemOwner
+snmp-server user ACME-RW-V3-USER ACME-RW-GROUP v3 auth sha encrypted 1302183C3F3F24183C0772222222222222222222 priv aes 128 encrypted 08222222222222222222222222222222222E270A
+snmp-server view ACME-READ-VIEW 1 included
+snmp-server view ACME-WRITE-VIEW 1 included
+snmp-server community ACME.ro RO IPv4 ACL-IPV4-MGMT-ACCESS IPv6 ACL-IPV6-MGMT-ACCESS
+snmp-server group ACME-RO-GROUP v3 priv read ACME-READ-VIEW IPv4 ACL-IPV4-MGMT-ACCESS IPv6 ACL-IPV6-MGMT-ACCESS
+snmp-server group ACME-RW-GROUP v3 priv write ACME-WRITE-VIEW IPv4 ACL-IPV4-MGMT-ACCESS IPv6 ACL-IPV6-MGMT-ACCESS
+snmp-server traps rf
+snmp-server traps bfd
+snmp-server traps ethernet cfm
+snmp-server traps ntp
+snmp-server traps ethernet oam eveACME
+snmp-server traps otn
+snmp-server traps copy-complete
+snmp-server traps snmp linkup
+snmp-server traps snmp linkdown
+snmp-server traps snmp coldstart
+snmp-server traps snmp warmstart
+snmp-server traps snmp authentication
+snmp-server traps flash removal
+snmp-server traps flash insertion
+snmp-server traps power
+snmp-server traps config
+snmp-server traps entity
+snmp-server traps selective-vrf-download role-change
+snmp-server traps syslog
+snmp-server traps system
+snmp-server traps frequency synchronization
+snmp-server traps bridgemib
+snmp-server traps optical
+snmp-server traps addrpool low
+snmp-server traps addrpool high
+snmp-server traps cisco-entity-ext
+snmp-server traps entity-state operstatus
+snmp-server traps entity-state switchover
+snmp-server traps entity-redundancy all
+snmp-server traps entity-redundancy status
+snmp-server traps entity-redundancy switchover
+snmp-server contact support@ACME.com
+snmp-server trap-source Loopback0
+dhcp ipv4
+ profile client relay
+  helper-address vrf ACME_TEST 192.168.1.1
+ !
+ profile DHCP-RELEY relay
+  relay information option allow-untrusted
+ !
+ interface HundredGigE0/0/0/6 relay profile client
+!
+ntp
+ authentication-key 1 md5 encrypted 025F5D4444444444
+ authenticate
+ trusted-key 1
+ server 233.252.222.212 key 1
+ server 233.252.222.213 key 1
+ source Loopback0
+ update-calendar
+!
+key chain test_macsec
+ macsec
+  key 01
+   key-string password 12495445415F59527D737D244444444444442345dsfgasdfg66444444444444444444444444444444444asdfasdfasdf44666666666666666666620D06292F212E cryptographic-algorithm aes-256-cmac
+   lifetime 00:00:00 january 01 2020 infinite
+  !
+ !
+!
+call-home
+ service active
+ contact smart-licensing
+ profile CiscoTAC-1
+  destination transport-method email disable
+  destination transport-method http
+ !
+ profile ssm1.ACME.com
+  active
+  destination address http http://233.252.222.200/Transportgateway/services/RouterRequestHandler
+  reporting smart-licensing-data
+  destination transport-method http
+ !
+!
+ipv6 access-list ACL-IPV6-MGMT-ACCESS
+ 10 permit ipv6 2a00:db:103::/48 any
+ 100 deny ipv6 any any
+!
+ipv4 access-list ACL-IPV4-MGMT-ACCESS
+ 10 permit ipv4 233.252.222.128 0.0.0.63 any
+ 20 permit ipv4 233.252.222.192 0.0.0.63 any
+ 100 deny ipv4 any any
+!
+ipv4 access-list ACL-IPV4-BCP38-HU-0-0-0-6
+ 10 permit ipv4 198.18.82.84 0.0.0.3 any
+!
+class-map match-any CM-NQ-QG0-IN
+ match mpls experimental topmost 0 
+ end-class-map
+! 
+class-map match-any CM-NQ-QG1-IN
+ match mpls experimental topmost 1 
+ end-class-map
+! 
+class-map match-any CM-NQ-QG2-IN
+ match mpls experimental topmost 2 
+ end-class-map
+! 
+class-map match-any CM-NQ-QG3-IN
+ match mpls experimental topmost 3 
+ end-class-map
+! 
+class-map match-any CM-NQ-QG4-IN
+ match mpls experimental topmost 4 
+ end-class-map
+! 
+class-map match-any CM-NQ-QG5-IN
+ match mpls experimental topmost 5 
+ end-class-map
+! 
+class-map match-any CM-NQ-QG6-IN
+ match mpls experimental topmost 6 
+ match precedence 6 
+ end-class-map
+! 
+class-map match-any CM-NQ-QG7-IN
+ match mpls experimental topmost 7 
+ match precedence 7 
+ end-class-map
+! 
+class-map match-any CM-NQ-L2-COS0
+ match cos 0 
+ end-class-map
+! 
+class-map match-any CM-NQ-L2-COS1
+ match cos 1 
+ end-class-map
+! 
+class-map match-any CM-NQ-L2-COS2
+ match cos 2 
+ end-class-map
+! 
+class-map match-any CM-NQ-L2-COS3
+ match cos 3 
+ end-class-map
+! 
+class-map match-any CM-NQ-L2-COS4
+ match cos 4 
+ end-class-map
+! 
+class-map match-any CM-NQ-L2-COS5
+ match cos 5 
+ end-class-map
+! 
+class-map match-any CM-NQ-L2-COS6
+ match cos 6 
+ end-class-map
+! 
+class-map match-any CM-NQ-L2-COS7
+ match cos 7 
+ end-class-map
+! 
+class-map match-any CM-NQ-QG0-OUT
+ match traffic-class 0 
+ end-class-map
+! 
+class-map match-any CM-NQ-QG1-OUT
+ match traffic-class 1 
+ end-class-map
+! 
+class-map match-any CM-NQ-QG2-OUT
+ match traffic-class 2 
+ end-class-map
+! 
+class-map match-any CM-NQ-QG3-OUT
+ match traffic-class 3 
+ end-class-map
+! 
+class-map match-any CM-NQ-QG4-OUT
+ match traffic-class 4 
+ end-class-map
+! 
+class-map match-any CM-NQ-QG5-OUT
+ match traffic-class 5 
+ end-class-map
+! 
+class-map match-any CM-NQ-QG6-OUT
+ match traffic-class 6 
+ end-class-map
+! 
+class-map match-any CM-NQ-QG67-IN
+ match mpls experimental topmost 6 7 
+ match precedence 6 7 
+ end-class-map
+! 
+class-map match-any CM-NQ-QG7-OUT
+ match traffic-class 7 
+ end-class-map
+! 
+class-map match-any CM-NQ-QG67-OUT
+ match traffic-class 6 
+ end-class-map
+! 
+class-map match-any CM-NQ-NET-QG-CONTROL
+ match qos-group 6 
+ end-class-map
+! 
+class-map match-any CM-NQ-NET-TC-CONTROL
+ match traffic-class 7 
+ end-class-map
+! 
+policy-map PM-NQ-QOS-IN
+ class CM-NQ-L2-COS7
+  set qos-group 7
+ ! 
+ class CM-NQ-L2-COS6
+  set qos-group 6
+ ! 
+ class CM-NQ-L2-COS5
+  set qos-group 5
+ ! 
+ class CM-NQ-L2-COS4
+  set qos-group 4
+ ! 
+ class CM-NQ-L2-COS3
+  set qos-group 3
+ ! 
+ class CM-NQ-L2-COS2
+  set qos-group 2
+ ! 
+ class CM-NQ-L2-COS1
+  set qos-group 1
+ ! 
+ class CM-NQ-L2-COS0
+  set qos-group 0
+ ! 
+ class class-default
+ ! 
+ end-policy-map
+! 
+policy-map PM-NQ-CORE-IN
+ class CM-NQ-QG67-IN
+  set traffic-class 7
+  police rate percent 10 
+  ! 
+ ! 
+ class CM-NQ-QG5-IN
+  set traffic-class 5
+ ! 
+ class CM-NQ-QG4-IN
+  set traffic-class 4
+ ! 
+ class CM-NQ-QG3-IN
+  set traffic-class 3
+ ! 
+ class CM-NQ-QG2-IN
+  set traffic-class 2
+ ! 
+ class CM-NQ-QG1-IN
+  set traffic-class 1
+ ! 
+ class CM-NQ-QG0-IN
+  set traffic-class 0
+ ! 
+ class class-default
+ ! 
+ end-policy-map
+! 
+policy-map PM-NQ-CORE-OUT
+ class CM-NQ-QG2-OUT
+  bandwidth remaining percent 15 
+  random-detect default 
+ ! 
+ class CM-NQ-QG1-OUT
+  bandwidth remaining percent 5 
+  random-detect default 
+ ! 
+ class CM-NQ-QG4-OUT
+  bandwidth remaining percent 25 
+  random-detect default 
+ ! 
+ class CM-NQ-QG3-OUT
+  bandwidth remaining percent 20 
+  random-detect default 
+ ! 
+ class CM-NQ-QG5-OUT
+  priority level 1 
+  shape average percent 20 
+ ! 
+ class CM-NQ-QG6-OUT
+  priority level 2 
+  shape average percent 1 
+ ! 
+ class CM-NQ-QG7-OUT
+  priority level 2 
+  shape average percent 1 
+ ! 
+ class class-default
+  bandwidth remaining percent 35 
+  random-detect default 
+ ! 
+ end-policy-map
+! 
+policy-map PM-NQ-SHAPE-1G-L1-OUT
+ class class-default
+  service-policy PM-NQ-SHAPE-1G-L2-OUT
+  shape average 1000000000 bps 
+ ! 
+ end-policy-map
+! 
+policy-map PM-NQ-SHAPE-1G-L2-OUT
+ class CM-NQ-NET-TC-CONTROL
+  bandwidth remaining percent 1 
+ ! 
+ class class-default
+ ! 
+ end-policy-map
+! 
+policy-map PM-NQ-AS65124-ACME-LABOR-L1-IN
+ class class-default
+  set dscp 0
+ ! 
+ end-policy-map
+! 
+policy-map PM-NQ-15-R-foo-CH-LAB-CE-L1-OUT
+ class class-default
+  service-policy PM-NQ-15-R-foo-CH-LAB-CE-L2-OUT
+  shape average 100000000 bps 
+ ! 
+ end-policy-map
+! 
+policy-map PM-NQ-15-R-foo-CH-LAB-CE-L2-OUT
+ class CM-NQ-NET-TC-CONTROL
+  bandwidth remaining percent 1 
+ ! 
+ class class-default
+ ! 
+ end-policy-map
+! 
+policy-map PM-NQ-AS65124-ACME-LABOR-10G-L1-OUT
+ class class-default
+  shape average 10 gbps 
+ ! 
+ end-policy-map
+! 
+flow exporter-map NF-EM-NTOP1
+ version v9
+  template timeout 60
+  template data timeout 60
+ !
+ transport udp 9973
+ source Loopback0
+ destination 233.252.222.228
+!
+flow exporter-map NF-EM-NTOP2
+ version v9
+  options interface-table timeout 60
+  options sampler-table timeout 60
+  template timeout 60
+  template data timeout 60
+  template options timeout 60
+ !
+ transport udp 9970
+ source Loopback0
+ destination 233.252.222.238
+!
+flow exporter-map NF-EM-WGFLOW1
+ version v9
+  options interface-table timeout 60
+  options sampler-table timeout 60
+  template timeout 60
+  template data timeout 60
+  template options timeout 60
+ !
+ transport udp 9973
+ source Loopback0
+ destination 233.252.222.221
+!
+flow monitor-map NF-MM-IPV4-CORE
+ record ipv4
+ exporter NF-EM-NTOP2
+ cache timeout active 10
+ cache timeout inactive 1
+!
+flow monitor-map NF-MM-IPV6-CORE
+ record ipv6
+ exporter NF-EM-NTOP2
+ cache timeout active 10
+ cache timeout inactive 1
+!
+sampler-map NF-SM-1-512
+ random 1 out-of 512
+!
+hw-module port-range 0 1 instance 0 location 0/RP0/CPU0 mode 4x10
+hw-module port-range 2 3 instance 0 location 0/RP0/CPU0 mode 4x10
+hw-module port-range 4 5 instance 0 location 0/RP0/CPU0 mode 4x25
+hw-module port-range 6 7 instance 0 location 0/RP0/CPU0 mode 4x25
+hw-module port-range 8 9 instance 0 location 0/RP0/CPU0 mode 4x10
+hw-module port-range 10 11 instance 0 location 0/RP0/CPU0 mode 4x10
+interface Bundle-Ether1
+ description 02.p.ull.lab.com@Po1
+ mtu 9114
+ ipv4 flowspec disable
+ service-policy input PM-NQ-CORE-IN
+ service-policy output PM-NQ-CORE-OUT
+ ipv4 address 233.252.214.134 255.255.255.254
+ ipv6 enable
+ shutdown
+!
+interface Loopback0
+ description Router RD=173
+ ipv4 flowspec disable
+ ipv4 address 198.18.95.237 255.255.255.255
+ ipv6 address 2a00:db::7e/128
+ ipv6 enable
+!
+interface MgmtEth0/RP0/CPU0/0
+ shutdown
+!
+interface TenGigE0/0/0/0/0
+ description LAB_ASR9010@Te0/6/0/18 (NDF1254/2 nach Labor EG (for Guido) Bidi Greun)
+ shutdown
+!
+interface TenGigE0/0/0/0/0.10
+ description LAB_ASR9010@Te/6/0/18.10
+ vrf INTERNET10
+ ipv4 address 192.168.10.2 255.255.255.0
+ encapsulation dot1q 10
+!
+interface TenGigE0/0/0/0/0.11
+ description LAB_ASR9010@Te/6/0/18.11
+ vrf INTERNET11
+ ipv4 address 192.168.11.2 255.255.255.0
+ encapsulation dot1q 11
+!
+interface TenGigE0/0/0/0/0.12
+ description LAB_ASR9010@Te/6/0/18.11
+ vrf INTERNET12
+ ipv4 address 192.168.12.2 255.255.255.0
+ encapsulation dot1q 12
+!
+interface TenGigE0/0/0/0/1
+ shutdown
+!
+interface TenGigE0/0/0/0/2
+ shutdown
+!
+interface TenGigE0/0/0/0/3
+ shutdown
+!
+interface TenGigE0/0/0/2/0
+ shutdown
+!
+interface TenGigE0/0/0/2/1
+ shutdown
+!
+interface TenGigE0/0/0/2/2
+ shutdown
+!
+interface TenGigE0/0/0/2/3
+ shutdown
+!
+interface TenGigE0/0/0/8/0
+ description 10G-TEST
+!
+interface TenGigE0/0/0/8/1
+ description 10G-TEST
+!
+interface TenGigE0/0/0/8/2
+ description 10G-TEST
+!
+interface TenGigE0/0/0/8/3
+ description 10G-TEST
+!
+interface TenGigE0/0/0/10/0
+ description 01.p.ull.com.lab@Te0/0/0/26
+ vrf ACME_TEST
+ ipv4 address 192.168.2.3 255.255.255.0
+!
+interface TenGigE0/0/0/10/1
+ description 02.p.ull.lab.com@Te0/0/26#Po1
+ bundle id 1 mode active
+ cdp
+ lacp period short
+!
+interface TenGigE0/0/0/10/2
+ description 01.p.ull.com.lab@Te0/0/0/29
+ mtu 9114
+ ipv4 flowspec disable
+ service-policy input PM-NQ-CORE-IN
+ service-policy output PM-NQ-CORE-OUT
+ ipv4 address 233.252.214.130 255.255.255.254
+ ipv6 enable
+!
+interface TenGigE0/0/0/10/3
+ description 02.p.ull.lab.com@Te0/0/27#Po1
+ bundle id 1 mode active
+ cdp
+ lacp period short
+!
+interface BVI999
+ description ACME-LABOR-65124
+ ipv4 flowspec disable
+ ipv4 mtu 1500
+ ipv4 address 100.63.151.48 255.255.255.254
+ ipv6 nd suppress-ra
+ ipv6 mtu 1500
+ ipv6 address 2a00:db:fffe::99:10/124
+ ipv6 enable
+ load-interval 30
+!
+interface TwentyFiveGigE0/0/0/4/0
+ shutdown
+!
+interface TwentyFiveGigE0/0/0/4/1
+ shutdown
+!
+interface TwentyFiveGigE0/0/0/4/2
+ shutdown
+!
+interface TwentyFiveGigE0/0/0/4/3
+ shutdown
+!
+interface TwentyFiveGigE0/0/0/6/0
+ shutdown
+!
+interface TwentyFiveGigE0/0/0/6/1
+ shutdown
+!
+interface TwentyFiveGigE0/0/0/6/2
+ shutdown
+!
+interface TwentyFiveGigE0/0/0/6/3
+ shutdown
+!
+interface HundredGigE0/0/0/12
+ shutdown
+!
+interface HundredGigE0/0/0/13
+ shutdown
+!
+interface HundredGigE0/0/0/14
+ shutdown
+!
+interface HundredGigE0/0/0/15
+ shutdown
+!
+interface HundredGigE0/0/0/16
+ mtu 9114
+!
+interface HundredGigE0/0/0/17
+ shutdown
+!
+interface HundredGigE0/0/0/18
+ description 02.co.cbw.com@Hu0/0/0/18
+ mtu 9114
+ ipv4 flowspec disable
+ service-policy input PM-NQ-CORE-IN
+ service-policy output PM-NQ-CORE-OUT
+ ipv4 address 233.252.214.138 255.255.255.254
+ ipv6 enable
+ shutdown
+!
+interface HundredGigE0/0/0/19
+ shutdown
+!
+interface HundredGigE0/0/0/20
+ mtu 9114
+ ipv4 flowspec disable
+!
+interface HundredGigE0/0/0/21
+ shutdown
+!
+interface HundredGigE0/0/0/22
+ description 01.co.lab.com@Hu0/0/0/22
+ cdp
+ mtu 9646
+ ipv4 flowspec disable
+ service-policy input PM-NQ-CORE-IN
+ service-policy output PM-NQ-CORE-OUT
+ ipv4 address 233.252.214.132 255.255.255.254
+ ipv6 enable
+ macsec psk-keychain test_macsec
+ flow ipv4 monitor NF-MM-IPV4-CORE sampler NF-SM-1-512 ingress
+ flow ipv6 monitor NF-MM-IPV6-CORE sampler NF-SM-1-512 ingress
+!
+interface HundredGigE0/0/0/23
+ description L2-TEST
+!
+interface HundredGigE0/0/0/23.1234 l2transport
+ description L2-TEST
+ encapsulation dot1q 1234
+!
+interface FourHundredGigE0/0/0/24
+ shutdown
+!
+interface FourHundredGigE0/0/0/25
+ shutdown
+!
+interface FourHundredGigE0/0/0/26
+ shutdown
+!
+interface FourHundredGigE0/0/0/27
+ shutdown
+!
+interface FourHundredGigE0/0/0/28
+ shutdown
+!
+interface preconfigure TenGigE0/0/0/0
+ description 01lab@Hu0/0/0/22
+ mtu 9114
+ ipv4 flowspec disable
+ service-policy input PM-NQ-CORE-IN
+ service-policy output PM-NQ-CORE-OUT
+ ipv4 address 233.252.214.130 255.255.255.254
+ ipv6 enable
+!
+interface preconfigure HundredGigE0/0/0/0
+ shutdown
+!
+interface preconfigure HundredGigE0/0/0/1
+ shutdown
+!
+interface preconfigure HundredGigE0/0/0/2
+ shutdown
+!
+interface preconfigure HundredGigE0/0/0/3
+ shutdown
+!
+interface preconfigure HundredGigE0/0/0/4
+ shutdown
+!
+interface preconfigure HundredGigE0/0/0/5
+ shutdown
+!
+interface preconfigure HundredGigE0/0/0/6
+ shutdown
+!
+interface preconfigure HundredGigE0/0/0/7
+ shutdown
+!
+interface preconfigure HundredGigE0/0/0/8
+ shutdown
+!
+interface preconfigure HundredGigE0/0/0/9
+ shutdown
+!
+interface preconfigure FortyGigE0/0/0/10
+ shutdown
+!
+interface preconfigure HundredGigE0/0/0/11
+ shutdown
+!
+!
+prefix-set PS-STATIC-2-BGP
+  192.0.2.0/32
+end-set
+!
+prefix-set PS-CONNECTED-2-BGP
+  192.0.2.0/32,
+  198.18.12.84/30
+end-set
+!
+prefix-set PS-IPv4-AS123-IWAY
+  22.56.40.0/22 le 32, 
+end-set
+!
+prefix-set PS-IPV6-STATIC-2-BGP
+  2001:db8::/128
+end-set
+!
+prefix-set PS-STATIC-2-BGP-BACKUP
+  192.0.2.0/32
+end-set
+!
+prefix-set PS-VRF-ACME-MGMT-EXPORT
+  100.64.0.0/12 le 32
+end-set
+!
+prefix-set PS-VRF-ACME_TEST-EXPORT
+  192.168.5.0/24 le 32,
+  192.168.155.0/24 le 32
+end-set
+!
+prefix-set PS-IPV6-CONNECTED-2-BGP
+  2001:db8::/128
+end-set
+!
+prefix-set PS-STATIC-2-BGP-PRIMARY
+  192.0.2.0/32
+end-set
+!
+prefix-set PS-STATIC-2-BGP-ANNOUNCE
+  192.0.2.0/32
+end-set
+!
+prefix-set PS-CONNECTED-2-BGP-BACKUP
+  192.0.2.0/32
+end-set
+!
+prefix-set PS-STATIC-2-BGP-NULLROUTE
+  192.0.2.0/32
+end-set
+!
+prefix-set PS-CONNECTED-2-BGP-PRIMARY
+  192.0.2.0/32
+end-set
+!
+prefix-set PS-CONNECTED-2-BGP-ANNOUNCE
+  192.0.2.0/32
+end-set
+!
+prefix-set PS-IPV6-STATIC-2-BGP-BACKUP
+  2001:db8::/128
+end-set
+!
+prefix-set PS-IPV6-STATIC-2-BGP-PRIMARY
+  2001:db8::/128
+end-set
+!
+prefix-set PS-IPV6-STATIC-2-BGP-ANNOUNCE
+  2001:db8::/128
+end-set
+!
+prefix-set PS-IPV6-CONNECTED-2-BGP-BACKUP
+  2001:db8::/128
+end-set
+!
+prefix-set PS-IPV6-STATIC-2-BGP-NULLROUTE
+  2001:db8::/128
+end-set
+!
+prefix-set PS-IPV6-CONNECTED-2-BGP-PRIMARY
+  2001:db8::/128
+end-set
+!
+prefix-set PS-STATIC-2-BGP-ANNOUNCE-BACKUP
+  192.0.2.0/32
+end-set
+!
+prefix-set PS-IPV6-CONNECTED-2-BGP-ANNOUNCE
+  2001:db8::/128
+end-set
+!
+prefix-set PS-STATIC-2-BGP-ANNOUNCE-PRIMARY
+  192.0.2.0/32
+end-set
+!
+prefix-set PS-CONNECTED-2-BGP-ANNOUNCE-BACKUP
+  192.0.2.0/32
+end-set
+!
+prefix-set PS-STATIC-2-BGP-PUBSERVICES-BACKUP
+  192.0.2.0/32
+end-set
+!
+prefix-set PS-CONNECTED-2-BGP-ANNOUNCE-PRIMARY
+  192.0.2.0/32
+end-set
+!
+prefix-set PS-STATIC-2-BGP-PUBSERVICES-PRIMARY
+  192.0.2.0/32
+end-set
+!
+prefix-set PS-IPV6-STATIC-2-BGP-ANNOUNCE-BACKUP
+  2001:db8::/128
+end-set
+!
+prefix-set PS-IPV6-STATIC-2-BGP-ANNOUNCE-PRIMARY
+  2001:db8::/128
+end-set
+!
+prefix-set PS-IPV6-CONNECTED-2-BGP-ANNOUNCE-BACKUP
+  2001:db8::/128
+end-set
+!
+prefix-set PS-IPV6-STATIC-2-BGP-PUBSERVICES-BACKUP
+  2001:db8::/128
+end-set
+!
+prefix-set PS-STATIC-2-BGP-NULLROUTE-UPSTREAM-ONLY
+  192.0.2.0/32
+end-set
+!
+prefix-set PS-IPV6-CONNECTED-2-BGP-ANNOUNCE-PRIMARY
+  2001:db8::/128
+end-set
+!
+prefix-set PS-IPV6-STATIC-2-BGP-PUBSERVICES-PRIMARY
+  2001:db8::/128
+end-set
+!
+route-policy RP-ALLOW-ANY
+  pass
+end-policy
+!
+route-policy RP-STATIC-2-BGP
+  if destination in PS-STATIC-2-BGP-ANNOUNCE then
+    set local-preference 300
+    set community (65412:500, 65412:400)
+    pass
+  elseif destination in PS-STATIC-2-BGP-ANNOUNCE-PRIMARY then
+    set local-preference 310
+    set community (65412:500, 65412:400)
+    pass
+  elseif destination in PS-STATIC-2-BGP-ANNOUNCE-BACKUP then
+    set local-preference 290
+    set community (65412:500, 65412:400)
+    pass
+  elseif destination in PS-STATIC-2-BGP then
+    set local-preference 300
+    set community (65412:500)
+    pass
+  elseif destination in PS-STATIC-2-BGP-PRIMARY then
+    set local-preference 310
+    set community (65412:500)
+    pass
+  elseif destination in PS-STATIC-2-BGP-BACKUP then
+    set local-preference 290
+    set community (65412:500)
+    pass
+  elseif destination in PS-STATIC-2-BGP-PUBSERVICES-PRIMARY then
+    set local-preference 270
+    set community (65412:500)
+    set weight 0
+    pass
+  elseif destination in PS-STATIC-2-BGP-PUBSERVICES-BACKUP then
+    set local-preference 250
+    set community (65412:500)
+    set weight 0
+    pass
+  elseif destination in PS-STATIC-2-BGP-NULLROUTE then
+    set community (65412:666)
+    pass
+  elseif destination in PS-STATIC-2-BGP-NULLROUTE-UPSTREAM-ONLY then
+    set community (65412:667)
+    pass
+  endif
+end-policy
+!
+route-policy RP-CONNECTED-2-BGP
+  if destination in PS-CONNECTED-2-BGP-ANNOUNCE then
+    set local-preference 300
+    set community (65412:500, 65412:400)
+    pass
+  elseif destination in PS-CONNECTED-2-BGP-ANNOUNCE-PRIMARY then
+    set local-preference 310
+    set community (65412:500, 65412:400)
+    pass
+  elseif destination in PS-CONNECTED-2-BGP-ANNOUNCE-BACKUP then
+    set local-preference 290
+    set community (65412:500, 65412:400)
+    pass
+  elseif destination in PS-CONNECTED-2-BGP then
+    set local-preference 300
+    set community (65412:500)
+    pass
+  elseif destination in PS-CONNECTED-2-BGP-PRIMARY then
+    set local-preference 310
+    set community (65412:500)
+    pass
+  elseif destination in PS-CONNECTED-2-BGP-BACKUP then
+    set local-preference 290
+    set community (65412:500)
+    pass
+  endif
+end-policy
+!
+route-policy RP-IPV6-STATIC-2-BGP
+  if destination in PS-IPV6-STATIC-2-BGP-ANNOUNCE then
+    set local-preference 300
+    set community (65412:500, 65412:400)
+    pass
+  elseif destination in PS-IPV6-STATIC-2-BGP-ANNOUNCE-PRIMARY then
+    set local-preference 310
+    set community (65412:500, 65412:400)
+    pass
+  elseif destination in PS-IPV6-STATIC-2-BGP-ANNOUNCE-BACKUP then
+    set local-preference 290
+    set community (65412:500, 65412:400)
+    pass
+  elseif destination in PS-IPV6-STATIC-2-BGP then
+    set local-preference 300
+    set community (65412:500)
+    pass
+  elseif destination in PS-IPV6-STATIC-2-BGP-PRIMARY then
+    set local-preference 310
+    set community (65412:500)
+    pass
+  elseif destination in PS-IPV6-STATIC-2-BGP-BACKUP then
+    set local-preference 290
+    set community (65412:500)
+    pass
+  elseif destination in PS-IPV6-STATIC-2-BGP-PUBSERVICES-PRIMARY then
+    set local-preference 270
+    set community (65412:500)
+    set weight 0
+    pass
+  elseif destination in PS-IPV6-STATIC-2-BGP-PUBSERVICES-BACKUP then
+    set local-preference 250
+    set community (65412:500)
+    set weight 0
+    pass
+  elseif destination in PS-IPV6-STATIC-2-BGP-NULLROUTE then
+    set community (65412:666)
+    pass
+  endif
+end-policy
+!
+route-policy RP-VRF-ACME-MGMT-EXPORT
+  if destination in PS-VRF-ACME-MGMT-EXPORT then
+    set extcommunity rt (65412:10001062) additive
+  endif
+end-policy
+!
+route-policy RP-VRF-ACME_TEST-EXPORT
+  if destination in PS-VRF-ACME_TEST-EXPORT then
+    set extcommunity rt (65412:10001062) additive
+  endif
+end-policy
+!
+route-policy RP-IPV6-CONNECTED-2-BGP
+  if destination in PS-IPV6-CONNECTED-2-BGP-ANNOUNCE then
+    set local-preference 300
+    set community (65412:500, 65412:400)
+    pass
+  elseif destination in PS-IPV6-CONNECTED-2-BGP-ANNOUNCE-PRIMARY then
+    set local-preference 310
+    set community (65412:500, 65412:400)
+    pass
+  elseif destination in PS-IPV6-CONNECTED-2-BGP-ANNOUNCE-BACKUP then
+    set local-preference 290
+    set community (65412:500, 65412:400)
+    pass
+  elseif destination in PS-IPV6-CONNECTED-2-BGP then
+    set local-preference 300
+    set community (65412:500)
+    pass
+  elseif destination in PS-IPV6-CONNECTED-2-BGP-PRIMARY then
+    set local-preference 310
+    set community (65412:500)
+    pass
+  elseif destination in PS-IPV6-CONNECTED-2-BGP-BACKUP then
+    set local-preference 290
+    set community (65412:500)
+    pass
+  endif
+end-policy
+!
+route-policy RP-CBR-CORE-IPV4-BLACKHOLE
+  if community matches-any (43906:666) then
+    set next-hop 192.0.2.1
+  endif
+end-policy
+!
+route-policy RP-CBR-CORE-IPV6-BLACKHOLE
+  if community matches-any (43906:666) then
+    set next-hop 2001:db8::666
+  endif
+end-policy
+!
+router static
+ address-family ipv4 unicast
+  0.0.0.0/0 Null0
+  192.0.2.1/32 Null0
+ !
+ address-family ipv6 unicast
+  ::/0 Null0
+  2001:db8::666/128 Null0
+ !
+!
+snmp-server traps isis all
+snmp-server traps ospfv3 errors bad-packet
+snmp-server traps ospfv3 errors config-error
+snmp-server traps ospfv3 errors virt-bad-packet
+snmp-server traps ospfv3 state-change if-state-change
+snmp-server traps ospfv3 state-change neighbor-state-change
+snmp-server traps ospfv3 state-change virtif-state-change
+snmp-server traps ospfv3 state-change virtneighbor-state-change
+snmp-server traps ospfv3 state-change restart-status-change
+snmp-server traps ospfv3 state-change restart-virtual-helper-status-change
+! OSPF
+router ospf default
+ nsr
+ segment-routing mpls
+ mpls ldp sync
+ address-family ipv4 unicast
+ area 0
+  message-digest-key 1 md5 encrypted 03267E24222E1B011F5F4F5241
+  fast-reroute per-prefix
+  fast-reroute per-prefix lfa-candidate interface Bundle-Ether1
+  fast-reroute per-prefix lfa-candidate interface TenGigE0/0/0/0
+  fast-reroute per-prefix lfa-candidate interface HundredGigE0/0/0/18
+  fast-reroute per-prefix lfa-candidate interface HundredGigE0/0/0/22
+  fast-reroute per-prefix remote-lfa tunnel mpls-ldp
+  fast-reroute per-prefix use-candidate-only enable
+  interface Bundle-Ether1
+   bfd minimum-interval 200
+   bfd fast-detect
+   bfd multiplier 3
+   cost 10000
+   authentication message-digest
+   message-digest-key 20 md5 encrypted 09454B271E0A4E1103
+   network point-to-point
+   passive disable
+   priority 250
+  !
+  interface Loopback0
+   passive enable
+   prefix-sid absolute 16173
+  !
+  interface TenGigE0/0/0/0
+   bfd minimum-interval 200
+   bfd fast-detect
+   bfd multiplier 3
+   cost 1000
+   authentication message-digest
+   message-digest-key 20 md5 encrypted 09454B271E0A4E1103
+   network point-to-point
+   passive disable
+   priority 250
+  !
+  interface TenGigE0/0/0/10/2
+   bfd minimum-interval 200
+   bfd fast-detect
+   bfd multiplier 3
+   cost 1000
+   authentication message-digest
+   message-digest-key 20 md5 encrypted 09454B271E0A4E1103
+   network point-to-point
+   passive disable
+   priority 250
+  !
+  interface HundredGigE0/0/0/18
+   bfd minimum-interval 200
+   bfd fast-detect
+   bfd multiplier 3
+   cost 1000
+   authentication message-digest
+   message-digest-key 20 md5 encrypted 09454B271E0A4E1103
+   network point-to-point
+   passive disable
+   priority 250
+  !
+  interface HundredGigE0/0/0/22
+   bfd minimum-interval 200
+   bfd fast-detect
+   bfd multiplier 3
+   cost 1000
+   authentication message-digest
+   message-digest-key 20 md5 encrypted 09454B271E0A4E1103
+   network point-to-point
+   passive disable
+   priority 250
+  !
+ !
+!
+! OSPFv6
+router ospfv3 default
+ nsr
+ area 0
+  fast-reroute per-prefix
+  fast-reroute per-prefix lfa-candidate interface Bundle-Ether1
+  fast-reroute per-prefix lfa-candidate interface TenGigE0/0/0/0
+  fast-reroute per-prefix lfa-candidate interface HundredGigE0/0/0/18
+  fast-reroute per-prefix lfa-candidate interface HundredGigE0/0/0/22
+  fast-reroute per-prefix use-candidate-only enable
+  interface Loopback0
+   passive
+  !
+  interface Bundle-Ether1
+   bfd multiplier 3
+   bfd fast-detect
+   bfd minimum-interval 450
+   cost 10000
+   network point-to-point
+   priority 250
+  !
+  interface TenGigE0/0/0/0
+   bfd multiplier 3
+   bfd fast-detect
+   bfd minimum-interval 450
+   cost 1000
+   network point-to-point
+   priority 250
+  !
+  interface TenGigE0/0/0/10/2
+   bfd multiplier 3
+   bfd fast-detect
+   bfd minimum-interval 450
+   cost 1000
+   network point-to-point
+   priority 250
+  !
+  interface HundredGigE0/0/0/18
+   bfd multiplier 3
+   bfd fast-detect
+   bfd minimum-interval 450
+   cost 1000
+   network point-to-point
+   priority 250
+  !
+  interface HundredGigE0/0/0/22
+   bfd multiplier 3
+   bfd fast-detect
+   bfd minimum-interval 450
+   cost 1000
+   network point-to-point
+   priority 250
+  !
+ !
+!
+snmp-server traps bgp cbgp2
+snmp-server traps bgp
+router bgp 65412
+ attribute-filter group ATFG-eBGP
+  attribute 11 discard
+  attribute 12 discard
+  attribute 13 discard
+  attribute EXTENDED-COMMUNITIES discard
+  attribute SSA discard
+  attribute CONNECTOR discard
+  attribute 21 discard
+  attribute 28 discard
+  attribute 30 discard
+  attribute 31 discard
+  attribute range 41-127 discard
+  attribute 129 discard
+  attribute range 241-255 discard
+  attribute unrecognized discard
+ !
+ nsr
+ bgp router-id 198.18.95.237
+ rpki server 233.252.222.231
+  transport tcp port 3323
+ !
+ rpki server 233.252.222.232
+  transport tcp port 3323
+ !
+ bgp graceful-restart
+ bgp log neighbor changes detail
+ bgp bestpath origin-as allow invalid
+ address-family ipv4 unicast
+  bgp origin-as validation enable
+  redistribute connected route-policy RP-CONNECTED-2-BGP
+  redistribute static route-policy RP-STATIC-2-BGP
+ !
+ address-family vpnv4 unicast
+ !
+ address-family ipv6 unicast
+  bgp dampening 10 2000 4000 30
+  bgp attribute-download
+  maximum-paths ebgp 4
+  bgp origin-as validation enable
+  redistribute connected route-policy RP-IPV6-CONNECTED-2-BGP
+  redistribute static route-policy RP-IPV6-STATIC-2-BGP
+ !
+ address-family vpnv6 unicast
+ !
+ address-family ipv4 flowspec
+ !
+ address-family ipv6 flowspec
+ !
+ af-group AFG-IPV4-DOWNSTREAM address-family ipv4 unicast
+  send-community-ebgp
+  default-originate
+  remove-private-AS
+  soft-reconfiguration inbound always
+ !
+ neighbor 2a00:db::77
+  remote-as 65412
+  password encrypted 062A2E03637C363A2720
+  description rrzh.com.as65412.net
+  update-source Loopback0
+  address-family ipv6 unicast
+   next-hop-self
+   soft-reconfiguration inbound always
+  !
+  address-family ipv6 flowspec
+   validation disable
+  !
+ !
+ neighbor 2a00:db::88
+  remote-as 65412
+  password encrypted 062A2E03637C363A2720
+  description rrbw.com.as65412.net
+  update-source Loopback0
+  address-family ipv6 unicast
+   next-hop-self
+   soft-reconfiguration inbound always
+  !
+  address-family ipv6 flowspec
+   validation disable
+  !
+ !
+ neighbor 233.252.217.77
+  remote-as 65412
+  password encrypted 00301C11111111111111111111
+  description rrzh.com.as65412.net
+  update-source Loopback0
+  address-family ipv4 unicast
+   next-hop-self
+   soft-reconfiguration inbound always
+  !
+  address-family vpnv4 unicast
+   soft-reconfiguration inbound always
+  !
+  address-family vpnv6 unicast
+   soft-reconfiguration inbound always
+  !
+  address-family ipv4 flowspec
+   validation disable
+  !
+ !
+ neighbor 233.252.217.88
+  remote-as 65412
+  password encrypted 00301C11111111111111111111
+  description rrbw.com.as65412.net
+  update-source Loopback0
+  address-family ipv4 unicast
+   next-hop-self
+   soft-reconfiguration inbound always
+  !
+  address-family vpnv4 unicast
+   soft-reconfiguration inbound always
+  !
+  address-family vpnv6 unicast
+   soft-reconfiguration inbound always
+  !
+  address-family ipv4 flowspec
+   validation disable
+  !
+ !
+ vrf ACME_TEST
+  rd 65412:157000103
+  address-family ipv4 unicast
+   label mode per-vrf
+    address 192.168.3.1
+   redistribute connected
+  !
+ !
+ vrf ACME_mgmt
+  rd 65412:17300101
+  address-family ipv4 unicast
+   redistribute connected
+  !
+  neighbor 100.64.3.187
+   remote-as 65432
+   password encrypted 11111111111119040D
+   description 15.r.foo.com.lab.ce@Gi0/0/0:ACME_mgmt
+   address-family ipv4 unicast
+    maximum-prefix 500 90
+    send-community-ebgp
+    route-policy RP-ALLOW-ANY in
+    route-policy RP-ALLOW-ANY out
+    as-override
+    soft-reconfiguration inbound
+   !
+  !
+ !
+ vrf ACME_TEST2
+  rd 65412:173000126
+  address-family ipv4 unicast
+   label mode per-vrf
+   redistribute connected
+  !
+  neighbor 100.64.31.245
+   remote-as 65432
+   password encrypted 12423523523523523556
+   description 15.r.foo.com.lab.ce@Gi0/0/0:ACME_TEST2
+   address-family ipv4 unicast
+    maximum-prefix 500 90
+    send-community-ebgp
+    route-policy RP-ALLOW-ANY in
+    route-policy RP-ALLOW-ANY out
+    as-override
+    soft-reconfiguration inbound
+    site-of-origin 65412:1000002948
+   !
+  !
+ !
+ vrf BAZZER
+  rd 65412:10001120
+  address-family ipv4 unicast
+  !
+ !
+ vrf INTERNET10
+  rd 65412:251000103
+  address-family ipv4 unicast
+   label mode per-vrf
+   network 192.168.10.0/24
+  !
+  neighbor 192.168.10.1
+   remote-as 43906
+   description LAB_ASR9010@Te0/6/0/18.10:INTERNET10
+   address-family ipv4 unicast
+    soft-reconfiguration inbound
+   !
+  !
+ !
+ vrf INTERNET11
+  rd 65412:251000104
+  address-family ipv4 unicast
+   label mode per-vrf
+   network 192.168.11.0/24
+  !
+  neighbor 192.168.11.1
+   remote-as 43906
+   description LAB_ASR9010@Te0/6/0/18.11:INTERNET11
+   address-family ipv4 unicast
+    soft-reconfiguration inbound
+   !
+  !
+ !
+ vrf INTERNET12
+  rd 65412:251000107
+  address-family ipv4 unicast
+   label mode per-vrf
+   network 192.168.12.0/24
+  !
+  neighbor 192.168.12.1
+   remote-as 43906
+   description LAB_ASR9010@Te0/6/0/18.12:INTERNET12
+   address-family ipv4 unicast
+    soft-reconfiguration inbound
+   !
+  !
+ !
+!
+snmp-server traps hsrp
+snmp-server traps vrrp eveACME
+snmp-server traps vpls all
+snmp-server traps vpls status
+snmp-server traps vpls full-clear
+snmp-server traps vpls full-raise
+snmp-server traps l2vpn all
+snmp-server traps l2vpn vc-up
+snmp-server traps l2vpn vc-down
+l2vpn
+ load-balancing flow src-dst-ip
+ logging
+  bridge-domain
+  pseudowire
+  vfi
+ !
+ pw-class PWC-L2-TEST
+  encapsulation mpls
+   control-word
+   transport-mode ethernet
+  !
+ !
+ xconnect group XG-L2-TEST
+  p2p XC-L2-TEST
+   interface HundredGigE0/0/0/23.1234
+   neighbor ipv4 198.18.95.211 pw-id 1234
+    pw-class PWC-L2-TEST
+   !
+  !
+ !
+!
+router hsrp
+ interface TenGigE0/0/0/10/0
+  address-family ipv4
+   hsrp 26
+    authentication ACME
+    priority 110
+    address 192.168.2.1
+   !
+  !
+ !
+ interface HundredGigE0/0/0/6
+  address-family ipv4
+   hsrp 6
+    authentication ACME
+    priority 110
+   !
+  !
+ !
+!
+mpls oam
+!
+snmp-server traps mpls frr all
+snmp-server traps mpls frr protected
+snmp-server traps mpls frr unprotected
+snmp-server traps mpls ldp up
+snmp-server traps mpls ldp down
+snmp-server traps mpls ldp threshold
+snmp-server traps rsvp all
+snmp-server traps rsvp new-flow
+snmp-server traps rsvp lost-flow
+snmp-server traps mpls l3vpn all
+snmp-server traps mpls l3vpn vrf-up
+snmp-server traps mpls l3vpn vrf-down
+snmp-server traps mpls l3vpn max-threshold-cleared
+snmp-server traps mpls l3vpn max-threshold-exceeded
+snmp-server traps mpls l3vpn mid-threshold-exceeded
+snmp-server traps mpls l3vpn max-threshold-reissue-notif-time 1
+! MPLS
+mpls ldp
+ log
+  hello-adjacency
+  nsr
+ !
+ nsr
+ router-id 198.18.95.237
+ interface TenGigE0/0/0/0
+ !
+ interface TenGigE0/0/0/10/2
+ !
+ interface HundredGigE0/0/0/18
+ !
+ interface HundredGigE0/0/0/22
+ !
+!
+snmp-server traps pim neighbor-change
+snmp-server traps pim invalid-message-received
+snmp-server traps pim rp-mapping-change
+snmp-server traps pim interface-state-change
+snmp-server traps msdp peer-state-change
+snmp-server traps sensor
+snmp-server traps fru-ctrl
+snmp-server traps ospf lsa lsa-maxage
+snmp-server traps ospf lsa lsa-originate
+snmp-server traps ospf errors bad-packet
+snmp-server traps ospf errors authentication-failure
+snmp-server traps ospf errors config-error
+snmp-server traps ospf errors virt-bad-packet
+snmp-server traps ospf errors virt-authentication-failure
+snmp-server traps ospf errors virt-config-error
+snmp-server traps ospf retransmit packets
+snmp-server traps ospf retransmit virt-packets
+snmp-server traps ospf state-change if-state-change
+snmp-server traps ospf state-change neighbor-state-change
+snmp-server traps ospf state-change virtif-state-change
+snmp-server traps ospf state-change virtneighbor-state-change
+flowspec
+ address-family ipv4
+  local-install interface-all
+ !
+ address-family ipv6
+  local-install interface-all
+ !
+!
+hw-module profile qos hqos-enable
+hw-module vrrpscale enable
+ssh server logging
+ssh timeout 20
+ssh server rate-limit 60
+ssh server session-limit 20
+ssh server v2
+ssh server vrf default ipv4 access-list ACL-IPV4-MGMT-ACCESS ipv6 access-list ACL-IPV6-MGMT-ACCESS
+ssh server vrf ACME_mgmt ipv4 access-list ACL-IPV4-MGMT-ACCESS ipv6 access-list ACL-IPV6-MGMT-ACCESS
+snmp-server traps ipsla
+ipsla
+ operation 26
+  type icmp echo
+   vrf ACME_TEST
+   source address 192.168.2.2
+   destination address 192.168.1.254
+  !
+ !
+ schedule operation 26
+  start-time now
+  life forever
+ !
+!
+end
