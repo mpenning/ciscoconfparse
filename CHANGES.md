@@ -9,7 +9,7 @@
 - Released: 2023-11-19
 - Summary:
     - Add many more IOS XR configurations in test fixtures
-    - Special thanks to Stefan Grosser (stef ~at~ broccoli /dot/ rocks) for three rather useful IOS XR config samples
+    - Special thanks to Stefan Grosser (stef .at. broccoli /dot/ rocks) for three rather useful IOS XR config samples
     - Update and expand documentation
     - Add fix for documentation build pipeline if `sphinx-doc/.undodir` exists
     - Delete unnecessary documentation files
