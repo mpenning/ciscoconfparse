@@ -6,7 +6,7 @@ extend-select =
     B9
     # implicit str concat
     ISC
-extend-ignore =
+exclude =
     # slice notation whitespace, invalid
     E203
     # line length, handled by bugbear B950
