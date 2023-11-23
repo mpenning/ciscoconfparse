@@ -9,6 +9,7 @@
 - Released: 2023-11-23
 - Summary:
     - Fix tons of ALE pylama errors and warnings
+    - Add ruff and pylama configs
 
 ## Version: 1.9.38
 
