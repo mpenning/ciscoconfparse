@@ -4,6 +4,12 @@
 - Summary:
     - Insert something here
 
+## Version: 1.9.39
+
+- Released: 2023-11-23
+- Summary:
+    - Fix tons of ALE pylama errors and warnings
+
 ## Version: 1.9.38
 
 - Released: 2023-11-19
