@@ -22,16 +22,19 @@ r""" errors.py - Parse, Query, Build, and Modify IOS-style configs
      mike [~at~] pennington [/dot\] net
 """
 
+
 class BaseError(Exception):
     def __init__(self, msg=""):
         super().__init__(msg)
         self.msg = msg
+
 
 class PythonOptimizeException(BaseError):
 
     def __init__(self, msg=""):
         super().__init__(msg)
         self.msg = msg
+
 
 class ListItemMissingAttribute(Exception):
     """Raise this error if a list() item is missing a required attribute."""
@@ -40,6 +43,7 @@ class ListItemMissingAttribute(Exception):
         super().__init__(msg)
         self.msg = msg
 
+
 class ListItemTypeError(Exception):
     """Raise this error if a list() contains more than one object type"""
 
@@ -47,17 +51,20 @@ class ListItemTypeError(Exception):
         super().__init__(msg)
         self.msg = msg
 
+
 class DNSLookupError(Exception):
 
     def __init__(self, msg=""):
         super().__init__(msg)
         self.msg = msg
 
+
 class DuplicateMember(Exception):
 
     def __init__(self, msg=""):
         super().__init__(msg)
         self.msg = msg
+
 
 class DynamicAddressException(Exception):
     """Throw this if you try to get an address object from a dhcp interface"""
@@ -66,11 +73,13 @@ class DynamicAddressException(Exception):
         super().__init__(msg)
         self.msg = msg
 
+
 class InvalidCiscoInterface(Exception):
 
     def __init__(self, msg=""):
         super().__init__(msg)
         self.msg = msg
+
 
 class InvalidCiscoEthernetTrunkAction(Exception):
 
@@ -78,11 +87,13 @@ class InvalidCiscoEthernetTrunkAction(Exception):
         super().__init__(msg)
         self.msg = msg
 
+
 class InvalidCiscoEthernetVlan(Exception):
 
     def __init__(self, msg=""):
         super().__init__(msg)
         self.msg = msg
+
 
 class InvalidMember(Exception):
 
@@ -90,11 +101,13 @@ class InvalidMember(Exception):
         super().__init__(msg)
         self.msg = msg
 
+
 class InvalidParameters(Exception):
 
     def __init__(self, msg=""):
         super().__init__(msg)
         self.msg = msg
+
 
 class InvalidCiscoRange(Exception):
 
@@ -102,17 +115,20 @@ class InvalidCiscoRange(Exception):
         super().__init__(msg)
         self.msg = msg
 
+
 class InvalidShellVariableMapping(Exception):
 
     def __init__(self, msg=""):
         super().__init__(msg)
         self.msg = msg
 
+
 class InvalidTypecast(Exception):
 
     def __init__(self, msg=""):
         super().__init__(msg)
         self.msg = msg
+
 
 class NoRegexMatch(Exception):
 
@@ -127,6 +143,7 @@ class MismatchedType(Exception):
         super().__init__(msg)
         self.msg = msg
 
+
 class UnexpectedType(Exception):
 
     def __init__(self, msg=""):
@@ -139,4 +156,3 @@ class UntypedError(Exception):
     def __init__(self, msg=""):
         super().__init__(msg)
         self.msg = msg
-
