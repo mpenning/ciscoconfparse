@@ -29,10 +29,11 @@ r""" models_junos.py - Parse, Query, Build, and Modify Junos-style configuration
 ###
 ###   Use models_junos.py at your own risk.  You have been warned :-)
 
+import ipaddress
 import re
 
 from ciscoconfparse.ccp_abc import BaseCfgLine
-from ciscoconfparse.ccp_util import IPv4Obj
+from ciscoconfparse.ccp_util import IPv4Obj, IPv6Obj
 
 from loguru import logger
 
@@ -119,7 +120,7 @@ class JunosCfgLine(BaseCfgLine):
         if self.is_intf is True:
             intf_parts = list()
             for pobj in self.all_parents:
-                if pobj.text.strip()=="interfaces":
+                if pobj.text.strip() == "interfaces":
                     continue
                 intf_parts.append(pobj.text.strip())
             # Append this object text
@@ -164,7 +165,7 @@ class JunosCfgLine(BaseCfgLine):
         """
         # Check whether the oldest parent is "interfaces {"...
         if len(self.all_parents) >= 1:
-            in_intf_block = bool(self.all_parents[0].text.strip()[0:10]=="interfaces")
+            in_intf_block = bool(self.all_parents[0].text.strip()[0:10] == "interfaces")
             interfacesobj = self.all_parents[0]
         else:
             in_intf_block = False
@@ -239,7 +240,6 @@ class JunosCfgLine(BaseCfgLine):
                 if "family ethernet-switching" in cobj.text:
                     return True
         return False
-
 
     # This method is on JunosCfgLine()
     @property
@@ -375,17 +375,13 @@ class BaseJunosIntfLine(JunosCfgLine):
     @classmethod
     @logger.catch(reraise=True)
     def is_object_for_interface(cls, all_lines, line, re=re):
-        print(f"CALLING FOR {line.strip()}")
         is_interfaces = False
         intf_idx = -1
-        _line_indent = len(line) - len(line.strip())
         parents = []
 
         # This is the indent of the first interface line
-        _intf_indent = -1
         for lidx, lline in enumerate(all_lines):
             _llindent = len(lline) - len(lline.strip())
-
 
             #################################################################
             # Identify beginning of the 'interfaces' block...
@@ -395,7 +391,6 @@ class BaseJunosIntfLine(JunosCfgLine):
                 intf_idx = lidx
                 parents.append(lline.strip())
             elif is_interfaces is True and _llindent == 0:
-                print("RESET_INTF_BLOCK", _llindent, line)
                 intf_idx = -1
                 is_interfaces = False
 
@@ -405,14 +400,11 @@ class BaseJunosIntfLine(JunosCfgLine):
                 _intf_level = -1
 
             if _intf_level > 0:
-                print("    IS_INTERFACES", lline)
                 #############################################################
                 # Reset is_interfaces in another base config block...
                 #############################################################
-                if _intf_level > 0 and line.strip==lline.strip():
-                        _intf_indent = _llindent
-                        print("TRUE1", _intf_level, parents, lline)
-                        return True
+                if _intf_level > 0 and line.strip == lline.strip():
+                    return True
 
         if _intf_level >= 0:
             return True
@@ -514,7 +506,6 @@ class BaseJunosIntfLine(JunosCfgLine):
                 )
             )
 
-
     ##-------------  Basic interface properties
 
     # This method is on BaseJunosIntfLine()
@@ -522,7 +513,6 @@ class BaseJunosIntfLine(JunosCfgLine):
     @logger.catch(reraise=True)
     def name(self):
         raise NotImplementedError()
-
 
     # This method is on BaseJunosIntfLine()
     @property
@@ -704,8 +694,6 @@ class JunosIntfLine(BaseJunosIntfLine):
         super().__init__(*args, **kwargs)
         self.feature = "interface"
 
-
-
     # This method is on JunosIntfLine()
     @classmethod
     @logger.catch(reraise=True)
@@ -868,8 +856,8 @@ class JunosRouteLine(BaseJunosRouteLine):
             if self.address_family == "ip":
                 return IPv4Obj("{}/{}".format(self.network, self.netmask), strict=False)
             elif self.address_family == "ipv6":
-                return IPv6Network("{}/{}".format(self.network, self.netmask))
-        except:
+                return ipaddress.IPv6Network("{}/{}".format(self.network, self.netmask))
+        except BaseException:
             return None
 
     @property

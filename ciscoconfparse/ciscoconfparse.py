@@ -78,7 +78,7 @@ from ciscoconfparse.models_asa import ASACfgLine
 from ciscoconfparse.models_asa import ASAName
 from ciscoconfparse.models_asa import ASAAclLine
 
-from ciscoconfparse.models_junos import JunosIntfLine
+# from ciscoconfparse.models_junos import JunosIntfLine
 from ciscoconfparse.models_junos import JunosCfgLine
 
 from ciscoconfparse.ccp_abc import BaseCfgLine
@@ -149,7 +149,7 @@ ALL_JUNOS_FACTORY_CLASSES = [
     ##########################################################################
     # JunosIntfLine is rather broken; JunosCfgLine should be enough
     ##########################################################################
-    #JunosIntfLine,
+    # JunosIntfLine,
     JunosCfgLine,      # JunosCfgLine MUST be last
 ]
 
@@ -205,13 +205,6 @@ def get_version_number():
 
 
 @logger.catch(reraise=True)
-def enforce_valid_types(var, var_types=None, error_str=None):
-    assert isinstance(var_types, tuple)
-    if not isinstance(var, var_types):
-        raise ValueError(error_str)
-
-
-@logger.catch(reraise=True)
 def initialize_globals():
     """Initialize ciscoconfparse global dunder-variables and a couple others."""
     global ENCODING
@@ -259,7 +252,6 @@ def initialize_ciscoconfparse(read_only=False, debug=0):
         # Example, this will set __version__ to content of 'value'
         #     from -> https://stackoverflow.com/a/3972978/667301
         globals()[key] = value
-
 
     # Re-configure loguru... not a perfect solution, but this should be good enough
     #     Ref Github Issue #281
@@ -347,11 +339,7 @@ def parse_line_braces(line_txt=None, comment_delimiter=None) -> tuple:
             line1 = results.get("line1", None)
             retval = (this_line_indent, child_indent, line1)
 
-        elif (
-            bool(line1_str)
-            and (braces_close_left is False)
-            and (braces_open_right is False)
-        ):
+        elif bool(line1_str) and (braces_close_left is False) and (braces_open_right is False):
             # Based off line1:
             #     address 1.1.1.1
             this_line_indent -= 0
@@ -361,11 +349,7 @@ def parse_line_braces(line_txt=None, comment_delimiter=None) -> tuple:
             line1 = re.sub(r"\s*\{\s*\}\s*", "", _line1)
             retval = (this_line_indent, child_indent, line1)
 
-        elif (
-            (line1_str == "")
-            and (braces_close_left is False)
-            and (braces_open_right is False)
-        ):
+        elif (line1_str == "") and (braces_close_left is False) and (braces_open_right is False):
             # Based off line1:
             #     return empty string
             this_line_indent -= 0
@@ -416,6 +400,7 @@ def parse_line_braces(line_txt=None, comment_delimiter=None) -> tuple:
         raise ValueError(error)
 
     return retval
+
 
 # This method was on ConfigList()
 @logger.catch(reraise=True)
@@ -479,7 +464,6 @@ def cfgobj_from_text(
         )
         logger.error(err_txt)
         raise ValueError(err_txt)
-
 
     return obj
 
@@ -559,31 +543,31 @@ def convert_junos_to_ios(input_list=None, stop_width=4, comment_delimiter="!", d
     """Accept `input_list` containing a list of junos-brace-formatted-string config lines.  This method strips off semicolons / braces from the string lines in `input_list` and returns the lines in a new list where all lines are explicitly indented as IOS would (as if IOS understood braces)."""
 
     if not isinstance(input_list, list):
-        error = f"convert_junos_to_ios() `input_list` must be a non-empty python list"
+        error = "convert_junos_to_ios() `input_list` must be a non-empty python list"
         logger.error(error)
         raise InvalidParameters(error)
 
     if not isinstance(stop_width, int):
-        error = f"convert_junos_to_ios() `stop_width` must be an integer"
+        error = "convert_junos_to_ios() `stop_width` must be an integer"
         logger.error(error)
         raise InvalidParameters(error)
 
     if not isinstance(comment_delimiter, str):
-        error = f"convert_junos_to_ios() `comment_delimiter` must be a string"
+        error = "convert_junos_to_ios() `comment_delimiter` must be a string"
         logger.error(error)
         raise InvalidParameters(error)
 
     if not isinstance(debug, int):
-        error = f"convert_junos_to_ios() `debug` must be an integer"
+        error = "convert_junos_to_ios() `debug` must be an integer"
         logger.error(error)
         raise InvalidParameters(error)
 
-    ## Note to self, I made this regex fairly junos-specific...
+    # Note to self, I made this regex fairly junos-specific...
     input_condition_01 = isinstance(input_list, list) and len(input_list) > 0
     input_condition_02 = "{" not in set(comment_delimiter)
     input_condition_03 = "}" not in set(comment_delimiter)
     if not (input_condition_01 and input_condition_02 and input_condition_03):
-        error = f"convert_junos_to_ios() input conditions failed"
+        error = "convert_junos_to_ios() input conditions failed"
         logger.error(error)
         raise ValueError(error)
 
@@ -748,7 +732,7 @@ class CiscoConfParse(object):
             elements_have_len = None
 
         if elements_have_len is False:
-            error = f"All ConfigList elements must have a length()"
+            error = "All ConfigList elements must have a length()"
             logger.error(error)
             raise InvalidParameters(error)
 
@@ -761,7 +745,7 @@ class CiscoConfParse(object):
                 tmp_lines = self.read_config_file(filepath=config, logger=logger, linesplit_rgx=r"\r*\n")
         elif isinstance(config, Sequence):
             if ignore_blank_lines is True and factory is False:
-                tmp_lines = [ii for ii in config if len(ii)!=0]
+                tmp_lines = [ii for ii in config if len(ii) != 0]
             else:
                 tmp_lines = config
         else:
@@ -798,7 +782,7 @@ class CiscoConfParse(object):
     def handle_ccp_brace_syntax(self, tmp_lines=None, syntax=None):
         """Deal with brace-delimited syntax issues, such as conditionally discarding junos closing brace-lines."""
 
-        if not syntax in ALL_VALID_SYNTAX:
+        if syntax not in ALL_VALID_SYNTAX:
             error = f"{syntax} parser factory is not yet enabled; use factory=False"
             logger.critical(error)
             raise InvalidParameters(error)
@@ -907,13 +891,9 @@ class CiscoConfParse(object):
             return config_lines
 
         except OSError:
-            error = "CiscoConfParse could not open() the filepath named '%s'" % filename
+            error = "CiscoConfParse could not open() the filepath named '%s'" % filepath
             logger.critical(error)
-            raise OSError(
-                "FATAL - could not open() the config filepath named '{}'".format(
-                    filename
-                )
-            )
+            raise OSError(error)
 
         except BaseException as eee:
             error = "FATAL - {}".format(str(eee))
@@ -962,7 +942,7 @@ class CiscoConfParse(object):
     @logger.catch(reraise=True)
     def ioscfg(self):
         """Return a list containing all text configuration statements."""
-        ## I keep ioscfg to emulate legacy ciscoconfparse behavior
+        # I keep ioscfg to emulate legacy ciscoconfparse behavior
         #
         # FYI: map / methodcaller is not significantly faster than a list
         #     comprehension, below...
@@ -979,12 +959,11 @@ class CiscoConfParse(object):
     def objs(self):
         """CiscoConfParse().objs is an alias for the CiscoConfParse().ConfigObjs property; it returns a ConfigList() of config-line objects."""
         if self.ConfigObjs is None:
-            err_txt = (
-                "ConfigObjs is set to None.  ConfigObjs should be a "
-                "ConfigList() of configuration-line objects".format(self.syntax)
+            error = (
+                "ConfigObjs is set to None.  ConfigObjs should be a ConfigList() of configuration-line objects"
             )
-            logger.error(err_txt)
-            raise ValueError(err_txt)
+            logger.error(error)
+            raise ValueError(error)
         return self.ConfigObjs
 
     # This method is on CiscoConfParse()
@@ -1000,7 +979,7 @@ class CiscoConfParse(object):
         --------
         :func:`~ciscoconfparse.CiscoConfParse.commit`.
         """
-        #self.ConfigObjs._bootstrap_from_text()
+        # self.ConfigObjs._bootstrap_from_text()
         self.ConfigObjs._list = self.ConfigObjs.bootstrap_obj_init_ng(self.ioscfg, debug=self.debug)
 
     # This method is on CiscoConfParse()
@@ -1900,6 +1879,10 @@ class CiscoConfParse(object):
            >>>
         """
 
+        if isinstance(parentspec, BaseCfgLine):
+            parentspec = parentspec.text
+        if isinstance(childspec, BaseCfgLine):
+            parentspec = childspec.text
 
         if ignore_ws:
             parentspec = build_space_tolerant_regex(parentspec)
@@ -2096,7 +2079,6 @@ class CiscoConfParse(object):
 
         return retval
 
-
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
     def find_parents_w_child(self, parentspec, childspec, ignore_ws=False):
@@ -2288,6 +2270,12 @@ class CiscoConfParse(object):
            [<IOSCfgLine # 1 'interface FastEthernet0/1'>, <IOSCfgLine # 5 'interface FastEthernet0/2'>]
            >>>
         """
+
+        if isinstance(parentspec, BaseCfgLine):
+            parentspec = parentspec.text
+        if isinstance(childspec, BaseCfgLine):
+            parentspec = childspec.text
+
         if ignore_ws is True:
             parentspec = build_space_tolerant_regex(parentspec)
             childspec = build_space_tolerant_regex(childspec)
@@ -2616,6 +2604,12 @@ class CiscoConfParse(object):
            >>>
 
         """
+
+        if isinstance(parentspec, BaseCfgLine):
+            parentspec = parentspec.text
+        if isinstance(childspec, BaseCfgLine):
+            parentspec = childspec.text
+
         if ignore_ws:
             parentspec = build_space_tolerant_regex(parentspec)
             childspec = build_space_tolerant_regex(childspec)
@@ -2949,7 +2943,6 @@ class CiscoConfParse(object):
             raise InvalidParameters(error)
 
         retval = list()
-        modified = False
         for pobj in self._find_line_OBJ(parentspec, exactmatch=exactmatch):
             if excludespec and re.search(excludespec, pobj.text):
                 # Exclude replacements on pobj lines which match excludespec
@@ -2959,7 +2952,6 @@ class CiscoConfParse(object):
                     # Exclude replacements on pobj lines which match excludespec
                     continue
                 elif re.search(childspec, cobj.text):
-                    modified = True
                     retval.append(
                         self.ConfigObjs.insert_after(
                             cobj,
@@ -3007,8 +2999,8 @@ class CiscoConfParse(object):
         The parsed :class:`~models_cisco.IOSCfgLine` object instance
 
         """
-        if isinstance(linespec, str) and linespec.strip()=="" and self.ignore_blank_lines is True:
-            error = f"Cannot insert a blank line if `ignore_blank_lines` is True"
+        if isinstance(linespec, str) and linespec.strip() == "" and self.ignore_blank_lines is True:
+            error = "Cannot insert a blank line if `ignore_blank_lines` is True"
             logger.error(error)
             raise InvalidParameters(error)
         elif isinstance(linespec, (int, str, float)):
@@ -4059,8 +4051,6 @@ class HDiff(object):
         self.all_output_dicts = []
         self.debug = debug
 
-
-
         if debug > 0:
             logger.info("HDiff().syntax={}".format(self.syntax))
 
@@ -4347,7 +4337,6 @@ class HDiff(object):
 
         return all_dict_lines
 
-
     # This method is on HDiff()
     @logger.catch(reraise=True)
     def find_in_before_obj_list(
@@ -4461,7 +4450,7 @@ class HDiff(object):
             if len(aobj.children) > 0:
                 aobj.diff_rendered = True
                 aobj.diff_linenum = aobj.linenum
-                #aobj.diff_side = "after"
+                # aobj.diff_side = "after"
                 output.append(aobj.as_diff_dict)
 
         elif aobj.diff_word == "unchanged" and aobj.diff_rendered is True:
@@ -4628,10 +4617,10 @@ class HDiff(object):
                             if debug > 1:
                                 logger.info(
                                     "    compress_dict_diffs() INSERT at retval[{0}] -> {1}".format(
-                                        loop_idx+1, this_dict
+                                        loop_idx + 1, this_dict
                                     )
                                 )
-                            retval.insert(loop_idx+1, line_dict)
+                            retval.insert(loop_idx + 1, line_dict)
                             lines[diff_id_list] = len(retval) - 1
                             break
                 else:
@@ -4748,7 +4737,6 @@ class ConfigList(MutableSequence):
             )
         ccp_value = ccp_ref_kwarg_val or ciscoconfparse_kwarg_val
 
-
         self.CiscoConfParse = (
             ccp_value  # FIXME - CiscoConfParse attribute should go away soon
         )
@@ -4759,7 +4747,6 @@ class ConfigList(MutableSequence):
         self.syntax = syntax
         self.dna = "ConfigList"
         self.debug = debug
-
 
         # Support input configuration as either a list or a generator instance
         #
@@ -5097,9 +5084,9 @@ class ConfigList(MutableSequence):
             exist_val,
             new_val,
         )
-        if isinstance(new_val, str) and new_val.strip()=="" and self.ignore_blank_lines is True:
+        if isinstance(new_val, str) and new_val.strip() == "" and self.ignore_blank_lines is True:
             logger.warning(f"`new_val`=`{new_val}`")
-            error = f"Cannot insert a blank line if `ignore_blank_lines` is True"
+            error = "Cannot insert a blank line if `ignore_blank_lines` is True"
             logger.error(error)
             raise InvalidParameters(error)
 
@@ -5219,9 +5206,9 @@ class ConfigList(MutableSequence):
             exist_val,
             new_val,
         )
-        if isinstance(new_val, str) and new_val.strip()=="" and self.ignore_blank_lines is True:
+        if isinstance(new_val, str) and new_val.strip() == "" and self.ignore_blank_lines is True:
             logger.warning(f"`new_val`=`{new_val}`")
-            error = f"Cannot insert a blank line if `ignore_blank_lines` is True"
+            error = "Cannot insert a blank line if `ignore_blank_lines` is True"
             logger.error(error)
             raise InvalidParameters(error)
 
@@ -5262,7 +5249,6 @@ class ConfigList(MutableSequence):
                 comment_delimiter=self.comment_delimiter,
                 syntax=self.syntax,
             )
-
 
         else:
             logger.error(err_txt)
@@ -5475,9 +5461,7 @@ class ConfigList(MutableSequence):
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
-    def _maintain_bootstrap_parent_cache(
-            self, parents_cache, indent, max_indent, is_config_line
-        ):
+    def _maintain_bootstrap_parent_cache(self, parents_cache, indent, max_indent, is_config_line):
         ## Parent cache:
         ## Maintain indent vs max_indent in a family and
         ##     cache the parent until indent<max_indent
@@ -5501,9 +5485,7 @@ class ConfigList(MutableSequence):
         return parents_cache, parent
 
     @logger.catch(reraise=True)
-    def _build_bootstrap_parent_child(
-            self, retval, parents_cache, parent, idx, indent, obj, debug,
-        ):
+    def _build_bootstrap_parent_child(self, retval, parents_cache, parent, idx, indent, obj, debug,):
         candidate_parent = None
         candidate_parent_idx = None
         ## If indented, walk backwards and find the parent...
@@ -5537,7 +5519,6 @@ class ConfigList(MutableSequence):
                 logger.debug("    root obj assign: %s" % obj)
 
         return retval, parents_cache, parent
-
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
@@ -5582,7 +5563,7 @@ class ConfigList(MutableSequence):
             is_config_line = obj.is_config_line
 
             # list out macro parent line numbers...
-            if txt[0:11] == "macro name " and syntax=="ios":
+            if txt[0:11] == "macro name " and syntax == "ios":
                 macro_parent_idx_list.append(obj.linenum)
 
             parents_cache, parent = self._maintain_bootstrap_parent_cache(
@@ -5929,15 +5910,15 @@ def config_line_factory(all_lines=None, line=None, comment_delimiter="!", syntax
     # Select which list of factory classes will be used
     ##########################################################################
     factory_classes = None
-    if syntax=="ios":
+    if syntax == "ios":
         factory_classes = ALL_IOS_FACTORY_CLASSES
-    elif syntax=="nxos":
+    elif syntax == "nxos":
         factory_classes = ALL_NXOS_FACTORY_CLASSES
-    elif syntax=="iosxr":
+    elif syntax == "iosxr":
         factory_classes = ALL_IOSXR_FACTORY_CLASSES
-    elif syntax=="asa":
+    elif syntax == "asa":
         factory_classes = ALL_ASA_FACTORY_CLASSES
-    elif syntax=="junos":
+    elif syntax == "junos":
         factory_classes = ALL_JUNOS_FACTORY_CLASSES
     else:
         error = f"Cannot find a factory class list for syntax=`{syntax}`"
@@ -5966,8 +5947,9 @@ def config_line_factory(all_lines=None, line=None, comment_delimiter="!", syntax
         error = f"ciscoconfparse.py config_line_factory(all_lines={all_lines}, line=`{line}`, comment_delimiter=`{comment_delimiter}`, syntax=`{syntax}`): {eee}"
 
     if debug > 0:
-        logger.debug(f"config_line_factory() is returning a default of IOSCfgLine()")
+        logger.debug("config_line_factory() is returning a default of IOSCfgLine()")
     return IOSCfgLine(all_lines=all_lines, line=line, comment_delimiter=comment_delimiter)
+
 
 ### TODO: Add unit tests below
 if __name__ == "__main__":

@@ -1,7 +1,5 @@
 from __future__ import absolute_import
-import copy
 import re
-import os
 
 from ciscoconfparse.errors import DynamicAddressException
 
@@ -57,6 +55,7 @@ MAX_VLAN = 4094
 ##-------------  Tracking Interface (HSRP, GLBP, VRRP)
 ##
 
+
 class TrackingInterface(BaseCfgLine):
     feature = "tracking_interface"
     _parent = None
@@ -102,7 +101,7 @@ class TrackingInterface(BaseCfgLine):
     def __eq__(self, other):
         """Return True or False based on whether this Tracking interface is equal to the other instance; both instances must be a TrackingInterface() instance to compare True"""
         if isinstance(other, TrackingInterface):
-            if self.name==other.name and self.group==other.group and self._interface==other._linterface and self._decrement==other._decrement and self._weighting==other._weighting:
+            if self.name == other.name and self.group == other.group and self._interface == other._linterface and self._decrement == other._decrement and self._weighting == other._weighting:
                 return True
             else:
                 return False
@@ -143,13 +142,6 @@ class TrackingInterface(BaseCfgLine):
         """Return an integer with the TrackingInterface() Group"""
         return int(self._group)
 
-    # This method is on TrackingInterface()
-    @property
-    @logger.catch(reraise=True)
-    def group(self):
-        """Return an integer with the TrackingInterface() Group"""
-        return self.tracking_interface_group
-
     # This method is on TrackingInterfac3()
     @property
     @logger.catch(reraise=True)
@@ -174,6 +166,7 @@ class TrackingInterface(BaseCfgLine):
 ##
 ##-------------  HSRP Interface Group
 ##
+
 
 class HSRPInterfaceGroup(BaseCfgLine):
     feature = "hsrp"
@@ -217,7 +210,7 @@ class HSRPInterfaceGroup(BaseCfgLine):
     def __eq__(self, other):
         """Return True if this HSRPInterfaceGroup() is equal to the other instance or False if the other instance is not an HSRPInterfaceGroup()."""
         if isinstance(other, HSRPInterfaceGroup):
-            if self.group==other.group and self.interface_name==other.interface_name:
+            if self.group == other.group and self.interface_name == other.interface_name:
                 return True
             else:
                 return False
@@ -377,7 +370,7 @@ class HSRPInterfaceGroup(BaseCfgLine):
         for obj in self._parent.children:
             obj_parts = obj.text.lower().strip().split()
             if obj_parts[0:4] == ["standby", str(self._group), "timers", "msec"]:
-                return float(obj_parts[4])/1000.0
+                return float(obj_parts[4]) / 1000.0
             elif obj_parts[0:3] == ["standby", str(self._group), "timers"]:
                 return int(obj_parts[-2])
         # The default hello timer is 3 seconds...
@@ -393,8 +386,8 @@ class HSRPInterfaceGroup(BaseCfgLine):
         ##     before they put them into production
         for obj in self._parent.children:
             obj_parts = obj.text.lower().strip().split()
-            if obj_parts[0:2]==["standby", str(self._group)] and obj_parts[-2] == "msec":
-                return float(obj_parts[-1])/1000.0
+            if obj_parts[0:2] == ["standby", str(self._group)] and obj_parts[-2] == "msec":
+                return float(obj_parts[-1]) / 1000.0
             elif obj_parts[0:3] == ["standby", str(self._group), "timers"]:
                 return int(obj_parts[-1])
         # The default hold timer is 10 seconds...
@@ -489,6 +482,7 @@ class HSRPInterfaceGroup(BaseCfgLine):
 ##-------------  IOS Configuration line object
 ##
 
+
 class IOSCfgLine(BaseCfgLine):
     """An object for a parsed IOS-style configuration line.
     :class:`~models_cisco.IOSCfgLine` objects contain references to other
@@ -567,7 +561,7 @@ class IOSCfgLine(BaseCfgLine):
     def is_object_for_hostname(cls, line):
         if isinstance(line, str):
             line_parts = line.strip().split()
-            if len(line_parts) > 0 and line_parts[0]=="hostname":
+            if len(line_parts) > 0 and line_parts[0] == "hostname":
                 return True
         return False
 
@@ -576,7 +570,7 @@ class IOSCfgLine(BaseCfgLine):
     def is_object_for_interface(cls, line):
         if isinstance(line, str):
             line_parts = line.strip().split()
-            if len(line_parts) > 0 and line_parts[0]=="interface":
+            if len(line_parts) > 0 and line_parts[0] == "interface":
                 return True
         return False
 
@@ -586,7 +580,7 @@ class IOSCfgLine(BaseCfgLine):
         """Return True if this is an object for aaa authentication.  Be sure to reject 'aaa new-model'"""
         if isinstance(line, str):
             line_parts = line.strip().split()
-            if len(line_parts) > 0 and line_parts[0:2]==["aaa", "authentication"]:
+            if len(line_parts) > 0 and line_parts[0:2] == ["aaa", "authentication"]:
                 return True
         return False
 
@@ -596,7 +590,7 @@ class IOSCfgLine(BaseCfgLine):
         """Return True if this is an object for aaa authorization.  Be sure to reject 'aaa new-model'"""
         if isinstance(line, str):
             line_parts = line.strip().split()
-            if len(line_parts) > 0 and line_parts[0:2]==["aaa", "authorization"]:
+            if len(line_parts) > 0 and line_parts[0:2] == ["aaa", "authorization"]:
                 return True
         return False
 
@@ -606,7 +600,7 @@ class IOSCfgLine(BaseCfgLine):
         """Return True if this is an object for aaa accounting.  Be sure to reject 'aaa new-model'"""
         if isinstance(line, str):
             line_parts = line.strip().split()
-            if len(line_parts) > 0 and line_parts[0:2]==["aaa", "accounting"]:
+            if len(line_parts) > 0 and line_parts[0:2] == ["aaa", "accounting"]:
                 return True
         return False
 
@@ -615,7 +609,7 @@ class IOSCfgLine(BaseCfgLine):
     def is_object_for_ip_route(cls, line):
         if isinstance(line, str):
             line_parts = line.strip().split()
-            if len(line_parts) > 0 and line_parts[0:2]==["ip", "route"]:
+            if len(line_parts) > 0 and line_parts[0:2] == ["ip", "route"]:
                 return True
         return False
 
@@ -624,7 +618,7 @@ class IOSCfgLine(BaseCfgLine):
     def is_object_for_ipv6_route(cls, line):
         if isinstance(line, str):
             line_parts = line.strip().split()
-            if len(line_parts) > 0 and line_parts[0:2]==["ipv6", "route"]:
+            if len(line_parts) > 0 and line_parts[0:2] == ["ipv6", "route"]:
                 return True
         return False
 
@@ -725,7 +719,6 @@ class IOSCfgLine(BaseCfgLine):
         r"""^interface\s+(Loopback|Vlan|Tunnel|Dialer|Virtual-Template|Port-Channel)"""
     )
     _VIRTUAL_INTF_REGEX = re.compile(_VIRTUAL_INTF_REGEX_STR, re.I)
-
 
     @property
     @logger.catch(reraise=True)
@@ -1392,11 +1385,11 @@ class BaseIOSIntfLine(IOSCfgLine):
             default="",
         )
 
-        if retval["v4addr"]=="":
+        if retval["v4addr"] == "":
             return self.default_ipv4_addr_object
-        elif retval["v4addr"]=="dhcp":
+        elif retval["v4addr"] == "dhcp":
             return self.default_ipv4_addr_object
-        elif retval["v4addr"]=="negotiated":
+        elif retval["v4addr"] == "negotiated":
             return self.default_ipv4_addr_object
         else:
             return IPv4Obj(f"{retval['v4addr']}/{retval['v4netmask']}")
@@ -1413,11 +1406,11 @@ class BaseIOSIntfLine(IOSCfgLine):
             default="",
         )
 
-        if retval["v6addr"]=="":
+        if retval["v6addr"] == "":
             return self.default_ipv6_addr_object
-        elif retval["v6addr"]=="dhcp":
+        elif retval["v6addr"] == "dhcp":
             return self.default_ipv6_addr_object
-        elif retval["v6addr"]=="negotiated":
+        elif retval["v6addr"] == "negotiated":
             return self.default_ipv6_addr_object
         else:
             return IPv6Obj(f"{retval['v6addr']}/{retval['v6masklength']}")
@@ -1503,7 +1496,7 @@ class BaseIOSIntfLine(IOSCfgLine):
             return IPv4Obj(f"{self.ipv4_addr}/{self.ipv4_mask}", strict=False)
         except DynamicAddressException as e:
             raise DynamicAddressException(e)
-        except BaseException as e:
+        except BaseException:
             return self.default_ipv4_addr_object
 
     # This method is on BaseIOSIntfLine()
@@ -2216,7 +2209,6 @@ class BaseIOSIntfLine(IOSCfgLine):
         else:
             return 0
 
-
         _all_vlans = "1-4094"
         _max_number_vlans = 4094
         # Default to allow allow all vlans...
@@ -2229,9 +2221,6 @@ class BaseIOSIntfLine(IOSCfgLine):
 
         ## Iterate over switchport trunk statements
         for obj in self.children:
-            split_line = [ii for ii in obj.text.split() if ii.strip() != ""]
-            length_split_line = len(split_line)
-
 
             if obj.text.split()[0:5] == ["switchport", "trunk", "allowed", "vlan", "add"]:
                 add_str = obj.re_match_typed(
@@ -2317,7 +2306,7 @@ class BaseIOSIntfLine(IOSCfgLine):
                 continue
             elif _value != "_nomatch_":
                 ## allowed in the key overrides previous values
-                if key=="allowed":
+                if key == "allowed":
                     # When considering 'allowed', reset retval to be empty...
                     retval = CiscoRange(result_type=int)
                     if _value.lower() == "none":
@@ -2331,7 +2320,7 @@ class BaseIOSIntfLine(IOSCfgLine):
                         logger.error(error)
                         raise InvalidCiscoEthernetVlan(error)
 
-                elif key=="add":
+                elif key == "add":
                     retval = retval + CiscoRange(_value, result_type=int)
                 elif key == "except" or key == "remove":
                     retval = retval - CiscoRange(_value, result_type=int)
@@ -2426,7 +2415,7 @@ class BaseIOSIntfLine(IOSCfgLine):
             return ""
         retval = self.re_match_iter_typed(
             r"^\s*standby\s+(?P<group>\d+\s+)*ip\s+\S+\s+(?P<mask>\S+)\s*$",
-            groupdict = {"mask": str},
+            groupdict={"mask": str},
             default="",
         )
         return retval["mask"]
@@ -3294,6 +3283,7 @@ class IOSAaaLoginAuthenticationLine(IOSCfgLine):
 ##-------------  IOS AAA Enable Authentication Lines
 ##
 
+
 class IOSAaaEnableAuthenticationLine(IOSCfgLine):
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
@@ -3318,6 +3308,7 @@ class IOSAaaEnableAuthenticationLine(IOSCfgLine):
 ##
 ##-------------  IOS AAA Commands Authorization Lines
 ##
+
 
 class IOSAaaCommandsAuthorizationLine(IOSCfgLine):
     @logger.catch(reraise=True)
@@ -3345,6 +3336,7 @@ class IOSAaaCommandsAuthorizationLine(IOSCfgLine):
 ##-------------  IOS AAA Console Authorization Lines
 ##
 
+
 class IOSAaaConsoleAuthorizationLine(IOSCfgLine):
     @logger.catch(reraise=True)
     def __init__(self, *args, **kwargs):
@@ -3370,6 +3362,7 @@ class IOSAaaConsoleAuthorizationLine(IOSCfgLine):
 ##
 ##-------------  IOS AAA Commands Accounting Lines
 ##
+
 
 class IOSAaaCommandsAccountingLine(IOSCfgLine):
     @logger.catch(reraise=True)
@@ -3397,6 +3390,7 @@ class IOSAaaCommandsAccountingLine(IOSCfgLine):
 ##
 ##-------------  IOS AAA Exec Accounting Lines
 ##
+
 
 class IOSAaaExecAccountingLine(IOSCfgLine):
     @logger.catch(reraise=True)

@@ -23,14 +23,13 @@ r""" models_iosxr.py - Parse, Query, Build, and Modify IOS-style configurations
 """
 
 import re
-import os
 
 from loguru import logger
 
 from ciscoconfparse.errors import DynamicAddressException
 
 from ciscoconfparse.errors import InvalidCiscoInterface
-from ciscoconfparse.ccp_util import CiscoRange, IPv4Obj, IPv6Obj
+from ciscoconfparse.ccp_util import CiscoRange, IPv4Obj
 from ciscoconfparse.ccp_util import CiscoIOSXRInterface
 from ciscoconfparse.ccp_abc import BaseCfgLine
 
@@ -897,7 +896,7 @@ class BaseIOSXRIntfLine(IOSXRCfgLine):
             )
         except DynamicAddressException as e:
             raise DynamicAddressException(e)
-        except (Exception) as e:
+        except Exception:
             return self.default_ipv4_addr_object
 
     # This method is on BaseIOSXRIntfLine()
@@ -1957,5 +1956,3 @@ class IOSXRIntfLine(BaseIOSXRIntfLine):
         if re.search(intf_regex, line):
             return True
         return False
-
-

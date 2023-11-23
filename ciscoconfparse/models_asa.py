@@ -33,12 +33,9 @@ r""" models_asa.py - Parse, Query, Build, and Modify IOS-style configurations
 import re
 
 from loguru import logger
+import ipaddress
 
-from ciscoconfparse.protocol_values import (
-    ASA_TCP_PORTS,
-    ASA_UDP_PORTS,
-    ASA_IP_PROTOCOLS,
-)
+from ciscoconfparse.protocol_values import ASA_IP_PROTOCOLS
 from ciscoconfparse.ccp_util import L4Object
 from ciscoconfparse.ccp_util import IPv4Obj, IPv6Obj
 
@@ -49,6 +46,7 @@ from ciscoconfparse.errors import InvalidParameters
 ##
 ##-------------  ASA Configuration line object
 ##
+
 
 class ASACfgLine(BaseCfgLine):
     """An object for a parsed ASA-style configuration line.
@@ -302,7 +300,7 @@ class BaseASAIntfLine(ASACfgLine):
         """Return a ccp_util.IPv4Obj object representing the address on this interface; if there is no address, return IPv4Obj()"""
         try:
             return IPv4Obj("{}/{}".format(self.ipv4_addr, self.ipv4_netmask))
-        except Exception as ee:
+        except BaseException:
             return self.default_ipv4_addr_object
 
     # This method is on BaseIOSIntfLine()
@@ -317,11 +315,11 @@ class BaseASAIntfLine(ASACfgLine):
             default="",
         )
 
-        if retval["v6addr"]=="":
+        if retval["v6addr"] == "":
             return self.default_ipv6_addr_object
-        elif retval["v6addr"]=="dhcp":
+        elif retval["v6addr"] == "dhcp":
             return self.default_ipv6_addr_object
-        elif retval["v6addr"]=="negotiated":
+        elif retval["v6addr"] == "negotiated":
             return self.default_ipv6_addr_object
         else:
             return IPv6Obj(f"{retval['v6addr']}/{retval['v6masklength']}")
@@ -333,29 +331,8 @@ class BaseASAIntfLine(ASACfgLine):
         """Return a ccp_util.IPv4Obj object representing the standby address on this interface; if there is no address, return IPv4Obj()"""
         try:
             return IPv4Obj("{}/{}".format(self.ipv4_standby_addr, self.ipv4_netmask))
-        except Exception as ee:
+        except Exception:
             return self.default_ipv4_addr_object
-
-    # This method is on BaseIOSIntfLine()
-    @property
-    @logger.catch(reraise=True)
-    def has_no_ipv4(self):
-        r"""Return an ccp_util.IPv4Obj object representing the subnet on this interface; if there is no address, return ccp_util.IPv4Obj()"""
-        return self.ip_network_object == IPv4Obj()
-
-    # This method is on BaseIOSIntfLine()
-    @property
-    @logger.catch(reraise=True)
-    def ip(self):
-        r"""Return an ccp_util.IPv4Obj object representing the subnet on this interface; if there is no address, return ccp_util.IPv4Obj()"""
-        return self.ip_network_object
-
-    # This method is on BaseIOSIntfLine()
-    @property
-    @logger.catch(reraise=True)
-    def ipv4(self):
-        r"""Return an ccp_util.IPv4Obj object representing the subnet on this interface; if there is no address, return ccp_util.IPv4Obj()"""
-        return self.ip_network_object
 
     # This method is on BaseIOSIntfLine()
     @property
@@ -375,7 +352,7 @@ class BaseASAIntfLine(ASACfgLine):
         except AttributeError:
             err_text = f"{self.ipv4_addr}/{self.ipv4_netmask} does not have a .network attribute."
             raise AttributeError(err_text)
-        except Exception as ee:
+        except BaseException:
             err_text = f"{self.ipv4_addr}/{self.ipv4_netmask} does not seem to have a valid network address."
             raise ValueError(err_text)
 
@@ -507,7 +484,7 @@ class BaseASAIntfLine(ASACfgLine):
             try:
                 # Return a boolean for whether the interface is in that network and mask
                 return self.ipv4_addr_object in ipv4network
-            except Exception as ee:
+            except BaseException:
                 raise ValueError(
                     "FATAL: %s.in_ipv4_subnet(ipv4network={}) is an invalid arg".format(
                         ipv4network
@@ -624,7 +601,6 @@ class ASAName(ASACfgLine):
     @property
     @logger.catch(reraise=True)
     def result_dict(self):
-        mm_r = self._mm_results
         retval = dict()
 
         retval["name"] = self._mm_results["name"]
@@ -759,7 +735,7 @@ class ASAObjGroupNetwork(ASACfgLine):
                 group_nets = self.confobj.object_group_network.get(groupobject, None)
                 if group_nets is None:
                     raise ValueError(
-                        "FATAL: Cannot find group-object named {}".format(name)
+                        "FATAL: Cannot find group-object named {}".format(self.name)
                     )
                 else:
                     retval.extend(group_nets.network_strings)
@@ -862,7 +838,6 @@ class ASAObjGroupService(ASACfgLine):
 
             if svc_obj.get("protocol", None):
                 protocol = svc_obj.get("protocol")
-                src_dst = svc_obj.get("src_dst", "")
                 port = svc_obj.get("s_port", "")
 
                 if protocol == "tcp-udp":
@@ -1126,10 +1101,10 @@ class ASARouteLine(BaseASARouteLine):
     def network_object(self):
         try:
             if self.address_family == "ip":
-                return IPv4Obj("{}/{}".format(self.network, self.netmask), strict=False)
+                return IPv4Obj(f"{self.network}/{self.netmask}", strict=False)
             elif self.address_family == "ipv6":
-                return IPv6Network("{}/{}".format(self.network, self.netmask))
-        except Exception as ee:
+                return ipaddress.IPv6Network(f"{self.network}/{self.netmask}")
+        except BaseException:
             return None
 
     @property
@@ -1315,11 +1290,9 @@ class ASAAclLine(ASACfgLine):
 
         # Parse out the most common parameter names...
         text = kwargs.get("text", None) or kwargs.get("line", None)
-        syntax = kwargs.get("syntax", "asa")
-        comment_delimiter = kwargs.get("comment_delimiter", None)
 
         if text is None:
-            error = f"line=None is an invalid input"
+            error = "line=None is an invalid input"
             logger.critical(error)
             raise InvalidParameters(error)
 

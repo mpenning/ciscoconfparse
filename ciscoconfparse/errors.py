@@ -59,6 +59,13 @@ class DNSLookupError(Exception):
         self.msg = msg
 
 
+class DNSTimeoutError(Exception):
+
+    def __init__(self, msg=""):
+        super().__init__(msg)
+        self.msg = msg
+
+
 class DuplicateMember(Exception):
 
     def __init__(self, msg=""):
