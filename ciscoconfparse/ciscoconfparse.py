@@ -96,6 +96,8 @@ from ciscoconfparse.errors import InvalidParameters
 
 from deprecated import deprecated
 from loguru import logger
+import hier_config
+import yaml
 import toml
 
 ALL_IOS_FACTORY_CLASSES = [
@@ -698,7 +700,7 @@ class CiscoConfParse(object):
                 logger.warning(f"Disabled loguru enqueue because read_only={read_only}")
 
         if not (isinstance(syntax, str) and (syntax in ALL_VALID_SYNTAX)):
-            error = "'{}' is an unknown syntax".format(syntax)
+            error = f"'{syntax}' is an unknown syntax"
             logger.error(error)
             raise ValueError(error)
 
@@ -849,27 +851,24 @@ class CiscoConfParse(object):
 
         config_lines = None
 
+        _encoding = self.openargs['encoding']
         if valid_path_variable is True and os.path.isfile(filepath) is True:
             # config string - assume a filename...
             if self.debug > 0:
-                logger.debug("reading config from the filepath named '%s'" % filepath)
+                logger.debug(f"reading config from the filepath named '{filepath}'")
 
         elif valid_path_variable is True and os.path.isfile(filepath) is False:
             if self.debug > 0:
-                logger.debug("filepath not found - '%s'" % filepath)
+                logger.debug(f"filepath not found - '{filepath}'")
             try:
                 _ = open(file=filepath, **self.openargs)
             except FileNotFoundError:
-                error = """FATAL - Attempted to open(file='{0}', mode='r', encoding='{1}'); the filepath named:"{0}" does not exist.""".format(
-                    filepath, self.openargs["encoding"]
-                )
+                error = f"""FATAL - Attempted to open(file='{filepath}', mode='r', encoding="{_encoding}"); the filepath named:"{filepath}" does not exist."""
                 logger.critical(error)
                 raise FileNotFoundError(error)
 
             except OSError:
-                error = """FATAL - Attempted to open(file='{0}', mode='r', encoding='{1}'); OSError opening "{0}".""".format(
-                    filepath, self.openargs["encoding"]
-                )
+                error = f"""FATAL - Attempted to open(file='{filepath}', mode='r', encoding="{_encoding}"); OSError opening "{filepath}"."""
                 logger.critical(error)
                 raise OSError(error)
 
@@ -891,12 +890,12 @@ class CiscoConfParse(object):
             return config_lines
 
         except OSError:
-            error = "CiscoConfParse could not open() the filepath named '%s'" % filepath
+            error = f"CiscoConfParse could not open() the filepath named '{filepath}'"
             logger.critical(error)
             raise OSError(error)
 
         except BaseException as eee:
-            error = "FATAL - {}".format(str(eee))
+            error = f"FATAL - {eee}"
             logger.critical(error)
             raise OSError(error) from eee
 
@@ -1105,12 +1104,7 @@ class CiscoConfParse(object):
 
         if isinstance(branchspec, tuple):
             if debug > 1:
-                message = (
-                    "{}().find_object_branches(branchspec='{}') was called".format(
-                        self.__class__.__name__,
-                        branchspec,
-                    )
-                )
+                message = f"{self.__class__.__name__}().find_object_branches(branchspec='{branchspec}') was called"
                 logger.info(message)
 
             if branchspec == ():
@@ -1380,11 +1374,7 @@ class CiscoConfParse(object):
         """
         if self.debug > 1:
             method_name = inspect.currentframe().f_code.co_name
-            message = "METHOD {}().{}(dnaspec='{}') was called".format(
-                self.__class__.__name__,
-                method_name,
-                dnaspec,
-            )
+            message = f"METHOD {self.__class__.__name__}().{method_name}(dnaspec='{dnaspec}') was called"
             logger.info(message)
 
         if self.ConfigObjs is None:
@@ -3787,9 +3777,7 @@ class CiscoConfParse(object):
 
                     retval.append(remove_cmd)
                 else:
-                    raise ValueError(
-                        "Cannot remove the command for syntax={}".format(self.syntax)
-                    )
+                    raise ValueError(f"Cannot remove the command for syntax={self.syntax}")
 
             elif action == "add":
                 # NOTE: if HDiff().compress_dict_diffs() was working as
@@ -3897,6 +3885,100 @@ class CiscoConfParse(object):
                 retval.append(obj.uncfgtext)
             else:
                 retval.append(obj.text)
+        return retval
+
+
+class Diff(object):
+
+    @logger.catch(reraise=True)
+    def __init__(self, hostname=None, old_config=None, new_config=None, syntax='ios'):
+        """
+        Initialize Diff().
+
+        Parameters
+        ----------
+        hostname : None
+            An empty parameter, which seems to be optional for the diff backend
+        old_config : list
+            A list of text configuration statements representing the most-recent config. Default value: `None`
+        new_config : list
+            A list of text configuration statements representing the desired config. Default value: `None`
+        syntax : str
+            A string holding the configuration type.  Default: 'ios'.
+
+        Returns
+        -------
+        :class:`~ciscoconfparse.Diff()`
+        """
+
+        if hostname is not None:
+            error = f"hostname='{hostname}' is not supported"
+            logger.error(error)
+
+        if old_config is None:
+            old_config = []
+        elif isinstance(old_config, str):
+            old_config = open(old_config).read()
+        elif isinstance(old_config, list):
+            pass
+        elif isinstance(old_config, tuple):
+            old_config = list(old_config)
+        else:
+            error = f"old_config {type(old_config)} must be a list"
+            logger.error(error)
+            raise ValueError(error)
+
+        if new_config is None:
+            new_config = []
+        elif isinstance(new_config, str):
+            new_config = open(new_config).read()
+        elif isinstance(new_config, list):
+            pass
+        elif isinstance(new_config, tuple):
+            new_config = list(new_config)
+        else:
+            error = f"new_config {type(new_config)} must be a list"
+            logger.error(error)
+            raise ValueError(error)
+
+        if syntax != 'ios':
+            error = f"syntax='{syntax}' is not supported"
+            logger.error(error)
+            raise NotImplementedError(error)
+
+        if False:
+            ###################################################################
+            # For now, we will not use options_ios.yml... see
+            #     https://github.com/netdevops/hier_config/blob/master/tests/fixtures/options_ios.yml
+            ###################################################################
+            options = yaml.load(open('./options_ios.yml'), Loader=yaml.SafeLoader)
+
+        self.host = hier_config.Host('example_hostname', 'ios', options={})
+        # Old configuration
+        self.host.load_running_config(old_config)
+        # New configuration
+        self.host.load_generated_config(new_config)
+
+    @logger.catch(reraise=True)
+    def diff(self):
+        """
+        diff() returns the list of required configuration statements to go from the old_config to the new_config
+        """
+        retval = []
+        diff_config = self.host.remediation_config()
+        for obj in diff_config.all_children_sorted():
+            retval.append(obj.cisco_style_text())
+        return retval
+
+    @logger.catch(reraise=True)
+    def rollback(self):
+        """
+        rollback() returns the list of required configuration statements to rollback from the new_config to the old_config
+        """
+        retval = []
+        rollback_config = self.host.rollback_config()
+        for obj in rollback_config.all_children_sorted():
+            retval.append(obj.cisco_style_text())
         return retval
 
 
@@ -4052,7 +4134,7 @@ class HDiff(object):
         self.debug = debug
 
         if debug > 0:
-            logger.info("HDiff().syntax={}".format(self.syntax))
+            logger.info(f"HDiff().syntax={self.syntax}")
 
         self.parse_hdiff_configs()    # OK
 
@@ -4069,16 +4151,8 @@ class HDiff(object):
     def parse_hdiff_configs(self):
 
         if self.debug > 1:
-            logger.info(
-                "HDiff().before_config={0}{1}".format(
-                    os.linesep, "\n".join(self.before_config)
-                )
-            )
-            logger.info(
-                "HDiff().after_config={0}{1}".format(
-                    os.linesep, "\n".join(self.after_config)
-                )
-            )
+            logger.info("HDiff().before_config={0}{1}".format(os.linesep, '\n'.join(self.before_config)))
+            logger.info("HDiff().after_config={0}{1}".format(os.linesep, '\n'.join(self.after_config)))
 
         # TODO - incorporate difflib.get_close_matches() to reorder the
         #     diff (in unified format)
@@ -6028,10 +6102,7 @@ if __name__ == "__main__":
         print("   find_blocks:            arg1=linespec")
         print("   find_parents_w_child:   arg1=parentspec  arg2=childspec")
         print("   find_parents_wo_child:  arg1=parentspec  arg2=childspec")
-        print(
-            "   req_cfgspec_excl_diff:  arg1=linespec    arg2=uncfgspec"
-            + "   arg3=cfgspec",
-        )
+        print("   req_cfgspec_excl_diff:  arg1=linespec    arg2=uncfgspec   arg3=cfgspec")
         print("   req_cfgspec_all_diff:   arg1=cfgspec")
         print("   decrypt:                arg1=encrypted_passwd")
         exit(1)

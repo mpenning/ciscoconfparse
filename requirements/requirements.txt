@@ -1,9 +1,10 @@
 # Ensure wheel is upgraded to fix CVE-2022-40898
-#     Also ref Github Issue #257
+#     Also ref ciscoconfparse Github Issue #257
 loguru == 0.7.2
 passlib == 1.7.4
 toml > 0.10.1
 dnspython == 2.4.2
+hier_config == 2.2.3
 deprecated == 1.2.14
 # virtualenv is required by tox
 virtualenv > 20.2

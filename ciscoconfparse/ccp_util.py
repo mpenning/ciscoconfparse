@@ -1338,17 +1338,9 @@ class IPv4Obj(object):
                 return (self.as_decimal_network <= val.as_decimal_network) and (self.as_decimal_broadcast >= val.as_decimal_broadcast) and (self.prefixlen <= val.prefixlen)
 
         except ValueError as eee:
-            raise ValueError(
-                "Could not check whether '{}' is contained in '{}': {}".format(
-                    val, self, str(eee)
-                )
-            )
+            raise ValueError(f"Could not check whether '{val}' is contained in '{self}': {eee}")
         except BaseException as eee:
-            raise ValueError(
-                "Could not check whether '{}' is contained in '{}': {}".format(
-                    val, self, str(eee)
-                )
-            )
+            raise ValueError(f"Could not check whether '{val}' is contained in '{self}': {eee}")
 
     # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
@@ -1675,10 +1667,8 @@ class IPv4Obj(object):
     def as_zeropadded_network(self):
         """Returns the IP network as a zero-padded string (useful when sorting in a text-file)"""
         num_strings = self.as_cidr_net.split("/")[0].split(".")
-        return (
-            ".".join([f"{int(num):03}" for num in num_strings])
-            + "/" + str(self.prefixlen)
-        )
+        zero_padded_addr = ".".join([f"{int(num):03}" for num in num_strings])
+        return f"{zero_padded_addr}/{self.prefixlen}"
 
     # do NOT wrap with @logger.catch(...)
     # On IPv4Obj()
@@ -1889,11 +1879,7 @@ class IPv6Obj(object):
             self.network_object = IPv6Network(v6addr_prefixlen.as_cidr_net, strict=False)
 
         else:
-            raise AddressValueError(
-                "Could not parse '{}' (type: {}) into an IPv6 Address".format(
-                    v6addr_prefixlen, type(v6addr_prefixlen)
-                )
-            )
+            raise AddressValueError(f"Could not parse '{v6addr_prefixlen}' {type(v6addr_prefixlen)} into an IPv6 Address")
 
     # On IPv6Obj()
     def __repr__(self):
@@ -1901,9 +1887,7 @@ class IPv6Obj(object):
         if self.empty is True:
             return f"""<IPv6Obj None empty={self.empty}>"""
         elif self.is_ipv4_mapped:
-            return """<IPv6Obj ::ffff:{}/{}>""".format(
-                str(self.ip.ipv4_mapped), self.prefixlen
-            )
+            return f"""<IPv6Obj ::ffff:{self.ip.ipv4_mapped}/{self.prefixlen}>"""
         else:
             return f"""<IPv6Obj {str(self.ip)}/{self.prefixlen}>"""
 
@@ -1926,10 +1910,8 @@ class IPv6Obj(object):
             if self.as_decimal == val.as_decimal and self.prefixlen == val.prefixlen:
                 return True
             return False
-        except BaseException as e:
-            errmsg = "'{}' cannot compare itself to '{}': {}".format(
-                self.__repr__(), val, e
-            )
+        except BaseException as eee:
+            errmsg = f"'{self.__repr__()}' cannot compare itself to '{val}': {eee}"
             raise ValueError(errmsg)
 
     # On IPv6Obj()
@@ -1944,9 +1926,7 @@ class IPv6Obj(object):
                     try:
                         assert getattr(obj, attr_name, None) is not None
                     except (AssertionError):
-                        error_str = "Cannot compare {} with '{}'".format(
-                            self, type(obj)
-                        )
+                        error_str = f"Cannot compare {self} with '{type(obj)}'"
                         raise AssertionError(error_str)
 
             val_prefixlen = int(getattr(val, "prefixlen"))
@@ -1977,10 +1957,8 @@ class IPv6Obj(object):
                 for attr_name in ["as_decimal", "prefixlen"]:
                     try:
                         assert getattr(obj, attr_name, None) is not None
-                    except (AssertionError):
-                        error_str = "Cannot compare {} with '{}'".format(
-                            self, type(obj)
-                        )
+                    except AssertionError:
+                        error_str = f"Cannot compare {self} with '{type(obj)}'"
                         raise AssertionError(error_str)
 
             val_prefixlen = int(getattr(val, "prefixlen"))
@@ -2024,7 +2002,7 @@ class IPv6Obj(object):
     def __add__(self, val):
         """Add an integer to IPv6Obj() and return an IPv6Obj()"""
         if not isinstance(val, int):
-            raise ValueError("Cannot add type: '{}' to {}".format(type(val), self))
+            raise ValueError(f"Cannot add type: '{type(val)}' to {self}")
 
         orig_prefixlen = self.prefixlen
         total = self.as_decimal + val
@@ -2038,7 +2016,7 @@ class IPv6Obj(object):
     def __sub__(self, val):
         """Subtract an integer from IPv6Obj() and return an IPv6Obj()"""
         if not isinstance(val, int):
-            raise ValueError("Cannot subtract type: '{}' from {}".format(type(val), self))
+            raise ValueError(f"Cannot subtract type: '{type(val)}' from {self}")
 
         orig_prefixlen = self.prefixlen
         total = self.as_decimal - val
@@ -2059,25 +2037,13 @@ class IPv6Obj(object):
                 #    val, this object cannot contain val
                 return False
             else:
-                # NOTE: We cannot use the same algorithm as IPv4Obj.__contains__() because IPv6Obj doesn't have .broadcast
-                # return (val.network in self.network)
-                #
-                ## Last used: 2020-07-12... version 1.5.6
-                # return (self.network <= val.network) and (
-                #    (self.as_decimal + self.numhosts - 1)
-                #    >= (val.as_decimal + val.numhosts - 1)
-                # )
-                return (self.as_decimal_network <= val.as_decimal_network) and (
-                    (self.as_decimal_network + self.numhosts - 1)
-                    >= (val.as_decimal_network + val.numhosts - 1)
-                )
+                # NOTE: We cannot use the same algorithm as IPv4Obj.__contains__() b/c IPv6Obj has no broadcast
+                comparison_01 = (self.as_decimal_network <= val.as_decimal_network)
+                comparison_02 = (self.as_decimal_network + self.numhosts - 1) >= (val.as_decimal_network + val.numhosts - 1)
+                return comparison_01 and comparison_02
 
-        except (BaseException) as e:
-            raise ValueError(
-                "Could not check whether '{}' is contained in '{}': {}".format(
-                    val, self, e
-                )
-            )
+        except BaseException as eee:
+            raise ValueError(f"Could not check whether '{val}' is contained in '{self}': {eee}")
 
     # On IPv6Obj()
     def __hash__(self):
@@ -2575,13 +2541,9 @@ class DNSResponse(object):
 
     def __repr__(self):
         if not self.has_error:
-            return '<DNSResponse "{}" result_str="{}">'.format(
-                self.query_type, self.result_str
-            )
+            return f'<DNSResponse "{self.query_type}" result_str="{self.result_str}">'
         else:
-            return '<DNSResponse "{}" error="{}">'.format(
-                self.query_type, self.error_str
-            )
+            return f'<DNSResponse "{self.query_type}" error="{self.error_str}">'
 
 
 @logger.catch(reraise=True)
@@ -2923,7 +2885,7 @@ def check_valid_ipaddress(input_addr=None):
         except BaseException:
             raise ValueError(input_addr)
 
-    error = "FATAL: '{0}' is not a valid IPv4 or IPv6 address.".format(input_addr)
+    error = f"FATAL: '{input_addr}' is not a valid IPv4 or IPv6 address."
     assert (ipaddr_family == 4 or ipaddr_family == 6), error
     return (input_addr, ipaddr_family)
 
