@@ -1,5 +1,4 @@
 r""" test_CiscoConfParse.py - Parse, Query, Build, and Modify IOS-style configs
-
      Copyright (C) 2021-2023 David Michael Pennington
      Copyright (C) 2019-2021 David Michael Pennington at Cisco Systems / ThousandEyes
      Copyright (C) 2012-2019 David Michael Pennington at Samsung Data Services
@@ -24,68 +23,72 @@ r""" test_CiscoConfParse.py - Parse, Query, Build, and Modify IOS-style configs
 
 from operator import attrgetter
 from itertools import repeat
-from copy import copy, deepcopy
+from copy import deepcopy
 try:
     from unittest.mock import patch
 except ImportError:
     from unittest.mock import patch
-import platform
-import logging
 import sys
 import re
 import os
 
 THIS_TEST_PATH = os.path.dirname(os.path.abspath(__file__))
 
-from loguru import logger
 from passlib.hash import cisco_type7
 import pytest
 
-from ciscoconfparse.ciscoconfparse import CiscoConfParse, IOSCfgLine, IOSIntfLine
+from ciscoconfparse.ciscoconfparse import CiscoConfParse
 from ciscoconfparse.ciscoconfparse import IOSCfgLine, IOSIntfLine
 from ciscoconfparse.ciscoconfparse import parse_line_braces
 from ciscoconfparse.ciscoconfparse import CiscoPassword
 from ciscoconfparse.ciscoconfparse import HDiff
 from ciscoconfparse.models_junos import JunosCfgLine
-from ciscoconfparse.ccp_util import ccp_logger_control
-from ciscoconfparse.ccp_util import IPv4Obj, IPv6Obj
+from ciscoconfparse.ccp_util import IPv4Obj
 from ciscoconfparse.ccp_abc import BaseCfgLine
 
 from ciscoconfparse.errors import InvalidParameters
 
+
 def testParse_valid_config_blanklines_01(parse_n01_w_blanklines):
     """Test reading a config with blank lines"""
     assert len(parse_n01_w_blanklines.ioscfg) == 126
+
 
 def testParse_valid_filepath_01():
     """Test reading a cisco ios config-file on disk (without the config keyword); ref github issue #262."""
     parse = CiscoConfParse(f"{THIS_TEST_PATH}/fixtures/configs/sample_01.ios")
     assert len(parse.ioscfg) == 450
 
+
 def testParse_valid_filepath_02():
     """Test reading a cisco ios config-file on disk (from filename in the config parameter); ref github issue #262."""
     parse = CiscoConfParse(config=f"{THIS_TEST_PATH}/fixtures/configs/sample_01.ios")
     assert len(parse.ioscfg) == 450
+
 
 def testParse_valid_filepath_03():
     """Test reading an f5 config-file on disk (without the config keyword); ref github issue #262."""
     parse = CiscoConfParse(f"{THIS_TEST_PATH}/fixtures/configs/sample_01.f5", comment="#", syntax="junos")
     assert len(parse.ioscfg) == 16
 
+
 def testParse_valid_filepath_04():
     """Test reading an f5 config-file on disk (from filename in the config parameter); ref github issue #262."""
     parse = CiscoConfParse(config=f"{THIS_TEST_PATH}/fixtures/configs/sample_01.f5", comment="#", syntax="junos")
     assert len(parse.ioscfg) == 16
+
 
 def testParse_valid_filepath_05():
     """Test reading a junos config-file on disk (without the config keyword); ref github issue #262."""
     parse = CiscoConfParse(f"{THIS_TEST_PATH}/fixtures/configs/sample_01.junos", comment="#", syntax="junos")
     assert len(parse.ioscfg) == 79
 
+
 def testParse_valid_filepath_06():
     """Test reading a junos config-file on disk (from filename in the config parameter); ref github issue #262."""
     parse = CiscoConfParse(config=f"{THIS_TEST_PATH}/fixtures/configs/sample_01.junos", comment="#", syntax="junos")
     assert len(parse.ioscfg) == 79
+
 
 def testParse_syntax_ios_nofactory_01():
     """Ensure successful parse of IOS with no factory"""
@@ -98,6 +101,7 @@ def testParse_syntax_ios_nofactory_01():
     # No Factory ignores blank lines
     assert len(parse.objs) == 450
 
+
 def testParse_syntax_ios_factory_01():
     """Ensure successful parse of IOS with factory"""
     parse = CiscoConfParse(
@@ -109,6 +113,7 @@ def testParse_syntax_ios_factory_01():
     # Factory allows blank lines to exist... the banner has a blank line
     assert len(parse.objs) == 451
 
+
 def testParse_syntax_nxos_nofactory_01():
     """Ensure successful parse of NXOS with no factory"""
     parse = CiscoConfParse(
@@ -118,6 +123,7 @@ def testParse_syntax_nxos_nofactory_01():
         factory=False,
     )
     assert len(parse.objs) == 998
+
 
 def testParse_syntax_nxos_factory_01():
     """Ensure successful parse of NXOS with factory"""
@@ -129,6 +135,7 @@ def testParse_syntax_nxos_factory_01():
     )
     assert len(parse.objs) == 998
 
+
 def testParse_syntax_iosxr_nofactory_01():
     """Ensure successful parse of IOS XR with no factory"""
     parse = CiscoConfParse(
@@ -138,6 +145,7 @@ def testParse_syntax_iosxr_nofactory_01():
         factory=False,
     )
     assert len(parse.objs) == 468
+
 
 def testParse_syntax_iosxr_factory_01():
     """Ensure successful parse of IOS XR with factory"""
@@ -149,6 +157,7 @@ def testParse_syntax_iosxr_factory_01():
     )
     assert len(parse.objs) == 476
 
+
 def testParse_syntax_asa_nofactory_01():
     """Ensure successful parse of ASA with no factory"""
     parse = CiscoConfParse(
@@ -158,6 +167,7 @@ def testParse_syntax_asa_nofactory_01():
         factory=False,
     )
     assert len(parse.objs) == 422
+
 
 def testParse_syntax_asa_factory_01():
     """Ensure successful parse of ASA with factory"""
@@ -169,13 +179,16 @@ def testParse_syntax_asa_factory_01():
     )
     assert len(parse.objs) == 422
 
+
 def testParse_parse_line_braces_01():
     uut = parse_line_braces("ltm pool FOO {", comment_delimiter="#")
     assert uut == (0, 1, "ltm pool FOO ")
 
+
 def testParse_parse_line_braces_02():
     uut = parse_line_braces("}", comment_delimiter="#")
     assert uut == (-1, -1, "")
+
 
 def testParse_parse_syntax_f5_as_junos_nofactory_ioscfg_01():
     """Parse fixtures/configs/sample_01.f5 as `syntax='junos'`, `factory=False` and test rendering as Cisco-IOS"""
@@ -387,6 +400,7 @@ routing-options {
     assert uut.find_parent_objects("interfaces", "ge-0/0/1")[0].text == "interfaces"
     assert len(uut.find_parent_objects_wo_child("interfaces", "vlan", recurse=True)) == 0
 
+
 def testParse_invalid_filepath_01():
     """Test that ciscoconfparse raises an error if the filepath is invalid"""
     # REMOVED caplog arg
@@ -402,6 +416,7 @@ def testParse_invalid_filepath_01():
         # Normally logs to stdout... using logging.CRITICAL to hide errors...
         CiscoConfParse(bad_filename)
 
+
 def testParse_invalid_filepath_02():
     # FIXME
     bad_filename = "this is not a filename or list"
@@ -412,10 +427,12 @@ def testParse_invalid_filepath_02():
     with pytest.raises(FileNotFoundError, match=""):
         CiscoConfParse(bad_filename)
 
+
 def testParse_invalid_config_01():
     """test that we do not raise an error when parsing an empty config list"""
     parse = CiscoConfParse([])
     assert len(parse.objs) == 0
+
 
 def testValues_IOSCfgLine_01():
     """test that default factory=False config inserts IOSCfgLine objects"""
@@ -423,6 +440,7 @@ def testValues_IOSCfgLine_01():
     assert len(parse.objs) == 1
     assert isinstance(parse.objs[0], IOSCfgLine) is True
     assert parse.objs[0].linenum == 0
+
 
 def testValues_IOSCfgLine_02():
     """test that default factory=False config inserts a new IOSCfgLine object if a string is submitted"""
@@ -432,6 +450,7 @@ def testValues_IOSCfgLine_02():
     assert isinstance(parse.objs[1], IOSCfgLine) is True
     assert parse.objs[1].linenum == 1
 
+
 def testValues_IOSCfgLine_03():
     """test that default factory=False config inserts a new IOSCfgLine object if an int is submitted"""
     parse = CiscoConfParse(["1"], factory=False)
@@ -439,6 +458,7 @@ def testValues_IOSCfgLine_03():
     assert len(parse.objs) == 2
     assert isinstance(parse.objs[1], IOSCfgLine) is True
     assert parse.objs[1].linenum == 1
+
 
 def testValues_IOSCfgLine_04():
     """test that default factory=False config inserts a new IOSCfgLine object if a float is submitted"""
@@ -448,11 +468,13 @@ def testValues_IOSCfgLine_04():
     assert isinstance(parse.objs[1], IOSCfgLine) is True
     assert parse.objs[1].linenum == 1
 
+
 def testValues_IOSCfgLine_05():
     """test that an empty insert_after parameter is rejected"""
     parse = CiscoConfParse(["1"], factory=False)
     with pytest.raises(InvalidParameters):
         parse.insert_after("1")
+
 
 def testValues_IOSCfgLine_06():
     """test that an empty insert_before parameter is rejected"""
@@ -463,18 +485,18 @@ def testValues_IOSCfgLine_06():
 def testValues_IOSCfgLine_07():
     """test that a bool in the config list and factory=False is rejected with a InvalidParameters()"""
     with pytest.raises(InvalidParameters):
-        parse = CiscoConfParse([False], factory=False)
+        _ = CiscoConfParse([False], factory=False)
 
     with pytest.raises(InvalidParameters):
-        parse = CiscoConfParse([True], factory=False)
+        _ = CiscoConfParse([True], factory=False)
 
 def testValues_IOSCfgLine_08():
     """test that a bool in the config list and factory=True is rejected with a InvalidParameters()"""
     with pytest.raises(InvalidParameters):
-        parse = CiscoConfParse([False], factory=True)
+        _ = CiscoConfParse([False], factory=True)
 
 def testParse_f5_as_ios_00(parse_f01_ios):
-    assert len(parse_f01_ios.objs)==20
+    assert len(parse_f01_ios.objs) == 20
 
 def testParse_f5_as_ios_02(parse_f02_ios_01):
     """
@@ -559,75 +581,75 @@ def testParse_f5_as_ios_02(parse_f02_ios_01):
     ]
     # Close curly-braces should be assigned as children of the open curly-brace
     correct_result_linenum_dict = {
-        0: {'linenum': 1, 'parent_linenum': 1,},
-        1: {'linenum': 2, 'parent_linenum': 1,},
-        2: {'linenum': 3, 'parent_linenum': 1,},
-        3: {'linenum': 4, 'parent_linenum': 1,},
-        4: {'linenum': 5, 'parent_linenum': 1,},
-        5: {'linenum': 6, 'parent_linenum': 6,},
-        6: {'linenum': 7, 'parent_linenum': 6,},
-        7: {'linenum': 8, 'parent_linenum': 7,},
-        8: {'linenum': 9, 'parent_linenum': 8,},
-        9: {'linenum': 10, 'parent_linenum': 8,},
-        10: {'linenum': 11, 'parent_linenum': 7,},
-        11: {'linenum': 12, 'parent_linenum': 6,},
-        12: {'linenum': 13, 'parent_linenum': 13,},
-        13: {'linenum': 14, 'parent_linenum': 13,},
-        14: {'linenum': 15, 'parent_linenum': 14,},
-        15: {'linenum': 16, 'parent_linenum': 15,},
-        16: {'linenum': 17, 'parent_linenum': 15,},
-        17: {'linenum': 18, 'parent_linenum': 14,},
-        18: {'linenum': 19, 'parent_linenum': 13,},
-        19: {'linenum': 20, 'parent_linenum': 20,},
-        20: {'linenum': 21, 'parent_linenum': 20,},
-        21: {'linenum': 22, 'parent_linenum': 20,},
-        22: {'linenum': 23, 'parent_linenum': 23,},
-        23: {'linenum': 24, 'parent_linenum': 23,},
-        24: {'linenum': 25, 'parent_linenum': 23,},
-        25: {'linenum': 26, 'parent_linenum': 23,},
-        26: {'linenum': 27, 'parent_linenum': 23,},
-        27: {'linenum': 28, 'parent_linenum': 23,},
-        28: {'linenum': 29, 'parent_linenum': 28,},
-        29: {'linenum': 30, 'parent_linenum': 28,},
-        30: {'linenum': 31, 'parent_linenum': 28,},
-        31: {'linenum': 32, 'parent_linenum': 23,},
-        32: {'linenum': 33, 'parent_linenum': 32,},
-        33: {'linenum': 34, 'parent_linenum': 32,},
-        34: {'linenum': 35, 'parent_linenum': 23,},
-        35: {'linenum': 36, 'parent_linenum': 23,},
-        36: {'linenum': 37, 'parent_linenum': 36,},
-        37: {'linenum': 38, 'parent_linenum': 36,},
-        38: {'linenum': 39, 'parent_linenum': 23,},
-        39: {'linenum': 40, 'parent_linenum': 23,},
-        40: {'linenum': 41, 'parent_linenum': 23,},
-        41: {'linenum': 42, 'parent_linenum': 23,},
-        42: {'linenum': 43, 'parent_linenum': 43,},
-        43: {'linenum': 44, 'parent_linenum': 44,},
-        44: {'linenum': 45, 'parent_linenum': 44,},
-        45: {'linenum': 46, 'parent_linenum': 46,},
-        46: {'linenum': 47, 'parent_linenum': 47,},
-        47: {'linenum': 48, 'parent_linenum': 46,},
-        48: {'linenum': 49, 'parent_linenum': 49,},
-        49: {'linenum': 50, 'parent_linenum': 50,},
-        50: {'linenum': 51, 'parent_linenum': 49,},
-        51: {'linenum': 52, 'parent_linenum': 52,},
-        52: {'linenum': 53, 'parent_linenum': 53,},
-        53: {'linenum': 54, 'parent_linenum': 52,},
-        54: {'linenum': 55, 'parent_linenum': 55,},
-        55: {'linenum': 56, 'parent_linenum': 56,},
-        56: {'linenum': 57, 'parent_linenum': 57,},
-        57: {'linenum': 58, 'parent_linenum': 58,},
-        58: {'linenum': 59, 'parent_linenum': 55,},
-        59: {'linenum': 60, 'parent_linenum': 60,},
-        60: {'linenum': 61, 'parent_linenum': 61,},
-        61: {'linenum': 62, 'parent_linenum': 61,},
-        62: {'linenum': 63, 'parent_linenum': 62,},
-        63: {'linenum': 64, 'parent_linenum': 62,},
-        64: {'linenum': 65, 'parent_linenum': 61,},
-        65: {'linenum': 66, 'parent_linenum': 44,},
-        66: {'linenum': 67, 'parent_linenum': 67,},
+        0: {'linenum': 1, 'parent_linenum': 1},
+        1: {'linenum': 2, 'parent_linenum': 1},
+        2: {'linenum': 3, 'parent_linenum': 1},
+        3: {'linenum': 4, 'parent_linenum': 1},
+        4: {'linenum': 5, 'parent_linenum': 1},
+        5: {'linenum': 6, 'parent_linenum': 6},
+        6: {'linenum': 7, 'parent_linenum': 6},
+        7: {'linenum': 8, 'parent_linenum': 7},
+        8: {'linenum': 9, 'parent_linenum': 8},
+        9: {'linenum': 10, 'parent_linenum': 8},
+        10: {'linenum': 11, 'parent_linenum': 7},
+        11: {'linenum': 12, 'parent_linenum': 6},
+        12: {'linenum': 13, 'parent_linenum': 13},
+        13: {'linenum': 14, 'parent_linenum': 13},
+        14: {'linenum': 15, 'parent_linenum': 14},
+        15: {'linenum': 16, 'parent_linenum': 15},
+        16: {'linenum': 17, 'parent_linenum': 15},
+        17: {'linenum': 18, 'parent_linenum': 14},
+        18: {'linenum': 19, 'parent_linenum': 13},
+        19: {'linenum': 20, 'parent_linenum': 20},
+        20: {'linenum': 21, 'parent_linenum': 20},
+        21: {'linenum': 22, 'parent_linenum': 20},
+        22: {'linenum': 23, 'parent_linenum': 23},
+        23: {'linenum': 24, 'parent_linenum': 23},
+        24: {'linenum': 25, 'parent_linenum': 23},
+        25: {'linenum': 26, 'parent_linenum': 23},
+        26: {'linenum': 27, 'parent_linenum': 23},
+        27: {'linenum': 28, 'parent_linenum': 23},
+        28: {'linenum': 29, 'parent_linenum': 28},
+        29: {'linenum': 30, 'parent_linenum': 28},
+        30: {'linenum': 31, 'parent_linenum': 28},
+        31: {'linenum': 32, 'parent_linenum': 23},
+        32: {'linenum': 33, 'parent_linenum': 32},
+        33: {'linenum': 34, 'parent_linenum': 32},
+        34: {'linenum': 35, 'parent_linenum': 23},
+        35: {'linenum': 36, 'parent_linenum': 23},
+        36: {'linenum': 37, 'parent_linenum': 36},
+        37: {'linenum': 38, 'parent_linenum': 36},
+        38: {'linenum': 39, 'parent_linenum': 23},
+        39: {'linenum': 40, 'parent_linenum': 23},
+        40: {'linenum': 41, 'parent_linenum': 23},
+        41: {'linenum': 42, 'parent_linenum': 23},
+        42: {'linenum': 43, 'parent_linenum': 43},
+        43: {'linenum': 44, 'parent_linenum': 44},
+        44: {'linenum': 45, 'parent_linenum': 44},
+        45: {'linenum': 46, 'parent_linenum': 46},
+        46: {'linenum': 47, 'parent_linenum': 47},
+        47: {'linenum': 48, 'parent_linenum': 46},
+        48: {'linenum': 49, 'parent_linenum': 49},
+        49: {'linenum': 50, 'parent_linenum': 50},
+        50: {'linenum': 51, 'parent_linenum': 49},
+        51: {'linenum': 52, 'parent_linenum': 52},
+        52: {'linenum': 53, 'parent_linenum': 53},
+        53: {'linenum': 54, 'parent_linenum': 52},
+        54: {'linenum': 55, 'parent_linenum': 55},
+        55: {'linenum': 56, 'parent_linenum': 56},
+        56: {'linenum': 57, 'parent_linenum': 57},
+        57: {'linenum': 58, 'parent_linenum': 58},
+        58: {'linenum': 59, 'parent_linenum': 55},
+        59: {'linenum': 60, 'parent_linenum': 60},
+        60: {'linenum': 61, 'parent_linenum': 61},
+        61: {'linenum': 62, 'parent_linenum': 61},
+        62: {'linenum': 63, 'parent_linenum': 62},
+        63: {'linenum': 64, 'parent_linenum': 62},
+        64: {'linenum': 65, 'parent_linenum': 61},
+        65: {'linenum': 66, 'parent_linenum': 44},
+        66: {'linenum': 67, 'parent_linenum': 67},
     }
-    assert len(parse_f02_ios_01.objs)==67
+    assert len(parse_f02_ios_01.objs) == 67
     for dict_idx, obj in enumerate(parse_f02_ios_01.objs):
         assert dict_idx == obj.linenum
 
@@ -642,7 +664,7 @@ def testParse_f5_as_ios_02(parse_f02_ios_01):
 
 def testParse_f5_as_junos(parse_f01_junos_01):
     """Test parsing f5 config as junos syntax"""
-    assert len(parse_f01_junos_01.objs)==16
+    assert len(parse_f01_junos_01.objs) == 16
 
 def testParse_asa_as_ios(config_a02):
     """Test for Github issue #42 parse asa banner with ios syntax"""
@@ -1329,7 +1351,7 @@ def testValues_list_insert_before_01():
     ]
     confobjs = CiscoConfParse(c01, syntax="ios")
     confobjs.insert_before('b', 'a')
-    assert confobjs.ConfigObjs[0].text=='a'
+    assert confobjs.ConfigObjs[0].text == 'a'
 
 def testValues_list_insert_01():
     """test whether we can insert list elements"""
@@ -1342,10 +1364,10 @@ def testValues_list_insert_01():
     parse = CiscoConfParse(c01, syntax="ios")
     parse.insert_before('b', 'a')
     parse.insert_after('e', 'f')
-    assert parse.ConfigObjs[0].text=='a'
-    assert parse.ConfigObjs[-1].text=='f'
+    assert parse.ConfigObjs[0].text == 'a'
+    assert parse.ConfigObjs[-1].text == 'f'
 
-def testValues_list_insert_01():
+def testValues_list_insert_02():
     """test whether we can insert list elements"""
     c01 = [
         "b",
@@ -1359,13 +1381,13 @@ def testValues_list_insert_01():
     parse.commit()
 
     all_objs = parse.find_objects(r"^e")
-    assert len(all_objs)==1
+    assert len(all_objs) == 1
     assert all_objs[0].text == "e"
 
-    assert parse.ConfigObjs[0].text=='a'
-    assert parse.ConfigObjs[-1].text=='f'
+    assert parse.ConfigObjs[0].text == 'a'
+    assert parse.ConfigObjs[-1].text == 'f'
 
-def testValues_list_insert_02():
+def testValues_list_insert_03():
     """test whether we can insert child list elements"""
     c01 = ["b", "c", "d", "e",]
     parse = CiscoConfParse(c01, syntax="ios")
@@ -1376,9 +1398,9 @@ def testValues_list_insert_02():
     assert parse.ConfigObjs[-1].text == ' f'
 
     obj = parse.find_objects(r"^e")[0]
-    assert obj.all_children[0].text==' f'
+    assert obj.all_children[0].text == ' f'
 
-def testValues_list_insert_03():
+def testValues_list_insert_04():
     this_syntax = "ios"
     config = """interface GigabitEthernet0/6
      no shutdown
@@ -1389,14 +1411,14 @@ def testValues_list_insert_03():
     parse = CiscoConfParse(config.splitlines(), syntax=this_syntax)
     parse.insert_after(r'^interface\s+GigabitEthernet0/6\s*$', 'interface GigabitEthernet0/6.30')
     parse.commit()
-    assert parse.ConfigObjs[0].text=="interface GigabitEthernet0/6"
-    assert parse.ConfigObjs[1].text=="interface GigabitEthernet0/6.30"
-    assert parse.ConfigObjs[2].parent==parse.ConfigObjs[1]
-    assert parse.ConfigObjs[3].parent==parse.ConfigObjs[1]
-    assert parse.ConfigObjs[4].parent==parse.ConfigObjs[1]
-    assert parse.ConfigObjs[5].parent==parse.ConfigObjs[1]
+    assert parse.ConfigObjs[0].text == "interface GigabitEthernet0/6"
+    assert parse.ConfigObjs[1].text == "interface GigabitEthernet0/6.30"
+    assert parse.ConfigObjs[2].parent == parse.ConfigObjs[1]
+    assert parse.ConfigObjs[3].parent == parse.ConfigObjs[1]
+    assert parse.ConfigObjs[4].parent == parse.ConfigObjs[1]
+    assert parse.ConfigObjs[5].parent == parse.ConfigObjs[1]
 
-def testValues_list_insert_04():
+def testValues_list_insert_05():
     this_syntax = "nxos"
     config = """interface GigabitEthernet0/6
      no shutdown
@@ -1408,17 +1430,17 @@ def testValues_list_insert_04():
         config.splitlines(),
         syntax=this_syntax,
         ignore_blank_lines=False,
-        )
+    )
     parse.insert_after(r'^interface\s+GigabitEthernet0/6\s*$', 'interface GigabitEthernet0/6.30')
     parse.commit()
-    assert parse.ConfigObjs[0].text=="interface GigabitEthernet0/6"
-    assert parse.ConfigObjs[1].text=="interface GigabitEthernet0/6.30"
-    assert parse.ConfigObjs[2].parent==parse.ConfigObjs[1]
-    assert parse.ConfigObjs[3].parent==parse.ConfigObjs[1]
-    assert parse.ConfigObjs[4].parent==parse.ConfigObjs[1]
-    assert parse.ConfigObjs[5].parent==parse.ConfigObjs[1]
+    assert parse.ConfigObjs[0].text == "interface GigabitEthernet0/6"
+    assert parse.ConfigObjs[1].text == "interface GigabitEthernet0/6.30"
+    assert parse.ConfigObjs[2].parent == parse.ConfigObjs[1]
+    assert parse.ConfigObjs[3].parent == parse.ConfigObjs[1]
+    assert parse.ConfigObjs[4].parent == parse.ConfigObjs[1]
+    assert parse.ConfigObjs[5].parent == parse.ConfigObjs[1]
 
-def testValues_list_insert_05():
+def testValues_list_insert_06():
     this_syntax = "asa"
     config = """interface GigabitEthernet0/6
      no shutdown
@@ -1429,12 +1451,12 @@ def testValues_list_insert_05():
     parse = CiscoConfParse(config.splitlines(), syntax=this_syntax)
     parse.insert_after(r'^interface\s+GigabitEthernet0/6\s*$', 'interface GigabitEthernet0/6.30')
     parse.commit()
-    assert parse.ConfigObjs[0].text=="interface GigabitEthernet0/6"
-    assert parse.ConfigObjs[1].text=="interface GigabitEthernet0/6.30"
-    assert parse.ConfigObjs[2].parent==parse.ConfigObjs[1]
-    assert parse.ConfigObjs[3].parent==parse.ConfigObjs[1]
-    assert parse.ConfigObjs[4].parent==parse.ConfigObjs[1]
-    assert parse.ConfigObjs[5].parent==parse.ConfigObjs[1]
+    assert parse.ConfigObjs[0].text == "interface GigabitEthernet0/6"
+    assert parse.ConfigObjs[1].text == "interface GigabitEthernet0/6.30"
+    assert parse.ConfigObjs[2].parent == parse.ConfigObjs[1]
+    assert parse.ConfigObjs[3].parent == parse.ConfigObjs[1]
+    assert parse.ConfigObjs[4].parent == parse.ConfigObjs[1]
+    assert parse.ConfigObjs[5].parent == parse.ConfigObjs[1]
 
 def testValues_find_parents_w_child(parse_c01):
     c01_parents_w_child_power = [
@@ -1693,19 +1715,18 @@ def testValues_find_object_branches_04(parse_c01):
 def testValues_find_object_branches_05():
     """Basic test: find_object_branches() - Test that non-existent regex child levels are returned if allow_none=True (see Github Issue #178)"""
     test_data = ['thisis',
-        '    atest',
-        '        ofbranchsearch',
-        'thisis',
-        '    atest',
-        '        matchthis',
-        ]
+                 '    atest',
+                 '        ofbranchsearch',
+                 'thisis',
+                 '    atest',
+                 '        matchthis']
 
     parse = CiscoConfParse(test_data)
 
     branchspec = (r"^this", r"^\s+atest", r"^\s+matchthis")
     test_result = parse.find_object_branches(branchspec)
 
-    assert len(test_result)==2
+    assert len(test_result) == 2
     assert test_result[0][0].text.strip() == "thisis"
     assert test_result[0][1].text.strip() == "atest"
     assert test_result[0][2] is None
@@ -2091,10 +2112,7 @@ def testValues_sync_diff_04():
     ]
 
     linespec = r""
-    parse = CiscoConfParse(config_01,
-        syntax="nxos",
-        ignore_blank_lines=False,
-        )
+    parse = CiscoConfParse(config_01, syntax="nxos", ignore_blank_lines=False)
     test_result = parse.sync_diff(required_config, linespec, linespec)
     assert correct_result == test_result
 
@@ -2739,7 +2757,7 @@ base_hello {
     geneology = parse.find_objects(r"parameter_03")[0].geneology
 
     # test overall geneology list length
-    assert(len(geneology)==3)
+    assert len(geneology) == 3
 
     # For now, we are abusing IOSCfgLine() by using it in the **junos** parser
     # OLD VALUE ->  result_kindof_correct = IOSCfgLine
@@ -2749,13 +2767,12 @@ base_hello {
 
     # test individual geneology .text fields
     correct_result = 'base_hello'
-    assert(geneology[0].text.lstrip()==correct_result)
-
+    assert geneology[0].text.lstrip() == correct_result
     correct_result = 'that_thing'
-    assert(geneology[1].text.lstrip()==correct_result)
+    assert geneology[1].text.lstrip() == correct_result
 
     correct_result = 'parameter_03'
-    assert(geneology[2].text.lstrip()==correct_result)
+    assert geneology[2].text.lstrip() == correct_result
 
 
 def testValues_IOSCfgLine_geneology_text_junos():
@@ -2776,7 +2793,7 @@ base_hello {
     geneology_text = parse.find_objects(r"parameter_03")[0].geneology_text
 
     # test overall geneology_text list length
-    assert(len(geneology_text)==3)
+    assert len(geneology_text) == 3
 
     # FIXME - one day build JunosCfgLine()...
     # For now, we are abusing IOSCfgLine() by using it in the **junos** parser
@@ -2787,13 +2804,13 @@ base_hello {
 
     # test individual geneology .text fields
     correct_result = 'base_hello'
-    assert(geneology_text[0].lstrip()==correct_result)
+    assert geneology_text[0].lstrip() == correct_result
 
     correct_result = 'that_thing'
-    assert(geneology_text[1].lstrip()==correct_result)
+    assert geneology_text[1].lstrip() == correct_result
 
     correct_result = 'parameter_03'
-    assert(geneology_text[2].lstrip()==correct_result)
+    assert geneology_text[2].lstrip() == correct_result
 
 
 def testValues_IOSCfgLine_geneology_ios():
@@ -2812,7 +2829,7 @@ base_hello
     geneology = parse.find_objects(r"parameter_03")[0].geneology
 
     # test overall geneology list length
-    assert(len(geneology)==3)
+    assert len(geneology) == 3
 
     # FIXME - one day build JunosCfgLine()...
     # For now, we are abusing IOSCfgLine() by using it in the **junos** parser
@@ -2823,13 +2840,13 @@ base_hello
 
     # test individual geneology .text fields
     correct_result = 'base_hello'
-    assert(geneology[0].text.lstrip()==correct_result)
+    assert geneology[0].text.lstrip() == correct_result
 
     correct_result = 'that_thing'
-    assert(geneology[1].text.lstrip()==correct_result)
+    assert geneology[1].text.lstrip() == correct_result
 
     correct_result = 'parameter_03'
-    assert(geneology[2].text.lstrip()==correct_result)
+    assert geneology[2].text.lstrip() == correct_result
 
 
 def testValues_IOSCfgLine_geneology_text_ios():
@@ -2848,7 +2865,7 @@ base_hello
     geneology_text = parse.find_objects(r"parameter_03")[0].geneology_text
 
     # test overall geneology_text list length
-    assert(len(geneology_text)==3)
+    assert len(geneology_text) == 3
 
     correct_result = str
     assert isinstance(geneology_text[0], correct_result)
@@ -2857,13 +2874,13 @@ base_hello
 
     # test individual geneology .text fields
     correct_result = 'base_hello'
-    assert(geneology_text[0].lstrip()==correct_result)
+    assert geneology_text[0].lstrip() == correct_result
 
     correct_result = 'that_thing'
-    assert(geneology_text[1].lstrip()==correct_result)
+    assert geneology_text[1].lstrip() == correct_result
 
     correct_result = 'parameter_03'
-    assert(geneology_text[2].lstrip()==correct_result)
+    assert geneology_text[2].lstrip() == correct_result
 
 def testValues_syntax_ios_nofactory_find_objects(parse_c01):
     lines = [
@@ -2898,14 +2915,13 @@ def test_nxos_blank_line_01():
 feature lldp"""
 
     for test_syntax in ["nxos",]:
-        if test_syntax=="nxos":
+        if test_syntax == "nxos":
             ignore_blank_lines = False
         else:
             ignore_blank_lines = True
         parse = CiscoConfParse(config.splitlines(),
-           syntax=test_syntax,
-           ignore_blank_lines=ignore_blank_lines,
-           )
+                               syntax=test_syntax,
+                               ignore_blank_lines=ignore_blank_lines)
         ####################################################################
         # Legacy bug in NXOS parser...
         ####################################################################
@@ -2947,14 +2963,13 @@ time start 2017:06:01:17:42 repeat 0:8:0"""
 
     for test_syntax in ["nxos",]:
 
-        if test_syntax=="nxos":
+        if test_syntax == "nxos":
             ignore_blank_lines = False
         else:
             ignore_blank_lines = True
-        parse = CiscoConfParse(config.splitlines(),
-           syntax=test_syntax,
-           ignore_blank_lines=ignore_blank_lines,
-           )
+        _ = CiscoConfParse(config.splitlines(),
+                           syntax=test_syntax,
+                           ignore_blank_lines=ignore_blank_lines)
 
 def test_nxos_blank_line_03():
 
@@ -3175,19 +3190,15 @@ line vty 5 15
 !
 end""".splitlines()
 
-    parse = CiscoConfParse(
-      TEST_CONFIG,
-      syntax="ios",
-      ignore_blank_lines=True,
-    )
+    parse = CiscoConfParse(TEST_CONFIG, syntax="ios", ignore_blank_lines=True)
 
-    result_01 = parse.find_parents_w_child(parentspec="interface\s+Giga", childspec=" logging event link-status")
+    result_01 = parse.find_parents_w_child(parentspec=r"interface\s+Giga", childspec=" logging event link-status")
     assert len(result_01) == 1
 
-    result_02 = parse.find_parents_w_child(parentspec="interface\s+Giga", childspec=" logging event bundle-status")
+    result_02 = parse.find_parents_w_child(parentspec=r"interface\s+Giga", childspec=" logging event bundle-status")
     assert len(result_02) == 1
 
-    result_03 = parse.find_parents_w_child(parentspec="interface\s+Giga", childspec=" logging event spanning-tree")
+    result_03 = parse.find_parents_w_child(parentspec=r"interface\s+Giga", childspec=" logging event spanning-tree")
     assert len(result_03) == 1
 
 
@@ -3610,7 +3621,7 @@ def testValues_find_objects_factory_01(parse_c01_factory):
         correct_result = list()
 
         # deepcopy a unique mock for every val with itertools.repeat()
-        mockobjs = [deepcopy(ii) for ii in repeat(mockobj, len(vals))]
+        _ = [deepcopy(ii) for ii in repeat(mockobj, len(vals))]
         # correct_intf simulates an IOSCfgLine so we can test against it
         #########for idx, correct_intf in enumerate(mockobjs):
         for idx in range(0, len(vals)):
