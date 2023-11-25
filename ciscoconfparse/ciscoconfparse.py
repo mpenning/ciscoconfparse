@@ -3386,7 +3386,7 @@ class CiscoConfParse(object):
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
     @deprecated(
-        reason="req_cfgspec_all_diff() is obsolete; use HDiff() instead.  req_cfgspec_all_diff() will be removed",
+        reason="req_cfgspec_all_diff() is obsolete; use Diff() instead.  req_cfgspec_all_diff() will be removed",
         version="1.7.0",
     )
     def req_cfgspec_all_diff(self, cfgspec, ignore_ws=False):
@@ -3401,7 +3401,7 @@ class CiscoConfParse(object):
 
         .. warning::
 
-           `req_cfgspec_excl_diff()` and `req_cfgspec_all_diff()` will be deprecated / removed in the future.  `HDiff().unified_diffs()` or `HDiff().raw_diff_dicts()` can be used going forward; however, "some assembly will be required".
+           `req_cfgspec_excl_diff()` and `req_cfgspec_all_diff()` will be deprecated / removed in the future.  `Diff().diff()` should be used going forward; however, "some assembly will be required".
 
 
         Examples
@@ -3435,7 +3435,7 @@ class CiscoConfParse(object):
         skip_cfgspec = dict()
         retval = list()
         matches = self._find_line_OBJ("[a-zA-Z]")
-        ## Make a list of unnecessary cfgspec lines
+        # Make a list of unnecessary cfgspec lines
         for lineobj in matches:
             for reqline in cfgspec:
                 if ignore_ws:
@@ -3458,7 +3458,7 @@ class CiscoConfParse(object):
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
     @deprecated(
-        reason="req_cfgspec_excl_diff() is obsolete; use HDiff() instead.  req_cfgspec_excl_diff() will be removed",
+        reason="req_cfgspec_excl_diff() is obsolete; use Diff() instead.  req_cfgspec_excl_diff() will be removed",
         version="1.7.0",
     )
     def req_cfgspec_excl_diff(self, linespec, uncfgspec, cfgspec):
@@ -3474,7 +3474,7 @@ class CiscoConfParse(object):
 
         .. warning::
 
-           `req_cfgspec_excl_diff()` and `req_cfgspec_all_diff()` will be deprecated / removed in the future.  `HDiff().unified_diffs()` or `HDiff().raw_diff_dicts()` can be used going forward; however, "some assembly will be required".
+           `req_cfgspec_excl_diff()` and `req_cfgspec_all_diff()` will be deprecated / removed in the future.  `Diff().diff()` should be used going forward; however, "some assembly will be required".
 
         Examples
         --------
@@ -3648,6 +3648,10 @@ class CiscoConfParse(object):
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
+    @deprecated(
+        reason="sync_diff() is obsolete; use Diff() instead.  sync_diff() will be removed",
+        version="1.9.40",
+    )
     def sync_diff(
         self,
         cfgspec=None,
