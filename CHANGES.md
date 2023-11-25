@@ -4,6 +4,14 @@
 - Summary:
     - Insert something here
 
+## Version: 1.9.40
+
+- Summary:
+    - Add a new Diff() implementation based on `github.com/netdevops/hier_config`
+    - Add deprecation warning on `HDiff()`
+    - Remove useless logger parameter from `read_config_file()`
+    - Replace `AssertionError` with `RequirementFailure()` in python code
+
 ## Version: 1.9.39
 
 - Released: 2023-11-23
