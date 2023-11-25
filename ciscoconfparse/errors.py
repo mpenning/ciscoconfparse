@@ -36,6 +36,14 @@ class PythonOptimizeException(BaseError):
         self.msg = msg
 
 
+class RequirementFailure(BaseError):
+    """Raise this error instead of using assert foo in non-test code"""
+
+    def __init__(self, msg=""):
+        super().__init__(msg)
+        self.msg = msg
+
+
 class ListItemMissingAttribute(Exception):
     """Raise this error if a list() item is missing a required attribute."""
 
