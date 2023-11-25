@@ -72,6 +72,7 @@ from ciscoconfparse.errors import UnexpectedType
 from ciscoconfparse.errors import InvalidCiscoInterface
 from ciscoconfparse.errors import InvalidCiscoRange
 from ciscoconfparse.errors import DNSTimeoutError
+from ciscoconfparse.errors import RequirementFailure
 import ciscoconfparse
 
 # Maximum ipv4 as an integer
@@ -348,7 +349,8 @@ def configure_loguru(
     if not isinstance(action, str):
         raise ValueError
 
-    assert action in ('remove', 'add', 'enable', 'disable', '',)
+    if action not in ('remove', 'add', 'enable', 'disable', '',):
+        raise RequirementFailure()
     # assert isinstance(rotation, str)
     # assert isinstance(retention, str)
     # assert isinstance(compression, str)
@@ -511,7 +513,8 @@ def log_function_call(function=None, *args, **kwargs):
 
 
 def enforce_valid_types(var, var_types=None, error_str=None):
-    assert isinstance(var_types, tuple)
+    if not isinstance(var_types, tuple):
+        raise RequirementFailure()
     if not isinstance(var, var_types):
         raise ValueError(error_str)
 
@@ -519,8 +522,10 @@ def enforce_valid_types(var, var_types=None, error_str=None):
 @logger.catch(reraise=True)
 def fix_repeated_words(cmd="", word=""):
     """Fix repeated words in the beginning of commands... Example 'no no logging 1.2.3.4' will be returned as 'logging 1.2.3.4' (both 'no' words are removed)."""
-    assert isinstance(cmd, str) and len(cmd) > 0
-    assert isinstance(word, str) and len(word) > 0
+    if not (isinstance(cmd, str) and len(cmd) > 0):
+        raise RequirementFailure()
+    if not (isinstance(word, str) and len(word) > 0):
+        raise RequirementFailure()
     while True:
         # look at the command and fix the repeated words in it...
         rgx = rf"^(?P<indent>\s*){word.strip()}\s+{word.strip()}\s+(?P<remaining_cmd>\S.+)$"
@@ -618,7 +623,8 @@ class __ccp_re__(object):
 
     # do NOT wrap with @logger.catch(...)
     def s(self, target_str):
-        assert self.attempted_search is False
+        if self.attempted_search is not False:
+            raise RequirementFailure()
         if not isinstance(target_str, str):
             raise ValueError
 
@@ -780,7 +786,8 @@ def ip_factory(val="", stdlib=False, mode="auto_detect", debug=0):
     if not isinstance(val, (str, int)):
         raise ValueError
 
-    assert mode in {"auto_detect", "ipv4", "ipv6"}
+    if mode not in {"auto_detect", "ipv4", "ipv6"}:
+        raise RequirementFailure()
     if not isinstance(stdlib, bool):
         raise ValueError
 
@@ -1065,7 +1072,8 @@ class IPv4Obj(object):
             self.finished_parsing = True
 
         elif isinstance(v4input, int):
-            assert 0 <= v4input <= IPV4_MAXINT
+            if not (0 <= v4input <= IPV4_MAXINT):
+                raise RequirementFailure()
             self.ip_object = IPv4Address(v4input)
             self.network_object = IPv4Network(v4input, strict=False)
             self.finished_parsing = True
@@ -1104,14 +1112,16 @@ class IPv4Obj(object):
                 )
 
             error_msg = f"_ipv4_params_dict() couldn't parse '{arg}'"
-            assert mm is not None, error_msg
+            if mm is None:
+                raise RequirementFailure(error_msg)
 
             mm_result = mm.groupdict()
             addr = (
                 mm_result["v4addr_nomask"] or mm_result["v4addr_netmask"] or mm_result["v4addr_prefixlen"]
             )
-            ## Normalize if we get zero-padded strings, i.e. 172.001.001.001
-            assert re.search(r"^\d+\.\d+.\d+\.\d+", addr)
+            # Normalize if we get zero-padded strings, i.e. 172.001.001.001
+            if not re.search(r"^\d+\.\d+.\d+\.\d+", addr):
+                raise RequirementFailure()
             addr = ".".join([str(int(ii)) for ii in addr.split(".")])
 
             netmask = mm_result["netmask"]
@@ -1140,7 +1150,8 @@ class IPv4Obj(object):
         else:
             raise AddressValueError("IPv4Obj(arg='%s') is an unknown argument type" % (arg))
 
-        assert 0 <= masklen <= IPV4_MAX_PREFIXLEN
+        if not (0 <= masklen <= IPV4_MAX_PREFIXLEN):
+            raise RequirementFailure()
         params_dict = {
             'ipv4_addr': addr,
             'ip_version': 4,
@@ -1169,8 +1180,9 @@ class IPv4Obj(object):
             for obj in [self, val]:
                 for attr_name in ["as_decimal", "prefixlen"]:
                     try:
-                        assert getattr(obj, attr_name, None) is not None
-                    except AssertionError:
+                        if getattr(obj, attr_name, None) is None:
+                            raise RequirementFailure()
+                    except RequirementFailure:
                         return False
 
             # Compare objects numerically...
@@ -1200,8 +1212,9 @@ class IPv4Obj(object):
             for obj in [self, val]:
                 for attr_name in ["as_decimal", "as_decimal_network", "prefixlen"]:
                     try:
-                        assert getattr(obj, attr_name, None) is not None
-                    except (AssertionError):
+                        if getattr(obj, attr_name, None) is None:
+                            raise RequirementFailure()
+                    except (RequirementFailure):
                         error_str = f"Cannot compare {self} with '{type(obj)}'"
                         raise AssertionError(error_str)
 
@@ -1233,8 +1246,9 @@ class IPv4Obj(object):
             for obj in [self, val]:
                 for attr_name in ["as_decimal", "as_decimal_network", "prefixlen"]:
                     try:
-                        assert getattr(obj, attr_name, None) is not None
-                    except (AssertionError):
+                        if getattr(obj, attr_name, None) is None:
+                            raise RequirementFailure()
+                    except (RequirementFailure):
                         error_str = f"Cannot compare {self} with '{type(obj)}'"
                         raise AssertionError(error_str)
                     except BaseException:
@@ -1290,8 +1304,10 @@ class IPv4Obj(object):
 
         orig_prefixlen = self.prefixlen
         total = self.as_decimal + val
-        assert total <= IPV4_MAXINT, "Max IPv4 integer exceeded"
-        assert total >= 0, "Min IPv4 integer exceeded"
+        if total > IPV4_MAXINT:
+            raise RequirementFailure("Max IPv4 integer exceeded")
+        if total < 0:
+            raise RequirementFailure("Min IPv4 integer exceeded")
         retval = IPv4Obj(total)
         retval.prefixlen = orig_prefixlen
         return retval
@@ -1305,8 +1321,10 @@ class IPv4Obj(object):
 
         orig_prefixlen = self.prefixlen
         total = self.as_decimal - val
-        assert total < IPV4_MAXINT, "Max IPv4 integer exceeded"
-        assert total >= 0, "Min IPv4 integer exceeded"
+        if total >= IPV4_MAXINT:
+            raise RequirementFailure("Max IPv4 integer exceeded")
+        if total < 0:
+            raise RequirementFailure("Min IPv4 integer exceeded")
         retval = IPv4Obj(total)
         retval.prefixlen = orig_prefixlen
         return retval
@@ -1537,7 +1555,8 @@ class IPv4Obj(object):
     def network_offset(self):
         """Returns the integer difference between host number and network number.  This must be less than `numhosts`"""
         offset = self.as_decimal - self.as_decimal_network
-        assert offset <= self.numhosts
+        if offset > self.numhosts:
+            raise RequirementFailure()
         return offset
 
     # do NOT wrap with @logger.catch(...)
@@ -1837,7 +1856,8 @@ class IPv6Obj(object):
         if v6addr_prefixlen is None:
             self.empty = True
         elif isinstance(v6addr_prefixlen, str):
-            assert len(v6addr_prefixlen) <= IPV6_MAXSTR_LEN
+            if len(v6addr_prefixlen) > IPV6_MAXSTR_LEN:
+                raise RequirementFailure()
 
             tmp = re.split(r"\s+", v6addr_prefixlen.strip())
             if len(tmp) == 2:
@@ -1857,7 +1877,8 @@ class IPv6Obj(object):
                     break
             else:
                 _ipv6 = "::1"
-            assert _ipv6 is not None
+            if _ipv6 is None:
+                raise RequirementFailure()
 
             self.ip_object = IPv6Address(_ipv6)
             if isinstance(v6_groupdict["masklen"], str):
@@ -1870,7 +1891,8 @@ class IPv6Obj(object):
             self.network_object = IPv6Network(netstr, strict=False)
 
         elif isinstance(v6addr_prefixlen, int):
-            assert 0 <= v6addr_prefixlen <= IPV6_MAXINT
+            if not (0 <= v6addr_prefixlen <= IPV6_MAXINT):
+                raise RequirementFailure()
             self.ip_object = IPv6Address(v6addr_prefixlen)
             self.network_object = IPv6Network(v6addr_prefixlen, strict=False)
 
@@ -1901,9 +1923,7 @@ class IPv6Obj(object):
         try:
             for obj in [self, val]:
                 for attr_name in ["as_decimal", "prefixlen"]:
-                    try:
-                        assert getattr(obj, attr_name, None) is not None
-                    except AssertionError:
+                    if getattr(obj, attr_name, None) is None:
                         return False
 
             # Compare objects numerically...
@@ -1923,11 +1943,9 @@ class IPv6Obj(object):
         try:
             for obj in [self, val]:
                 for attr_name in ["as_decimal", "as_decimal_network", "prefixlen"]:
-                    try:
-                        assert getattr(obj, attr_name, None) is not None
-                    except (AssertionError):
+                    if getattr(obj, attr_name, None) is None:
                         error_str = f"Cannot compare {self} with '{type(obj)}'"
-                        raise AssertionError(error_str)
+                        raise RequirementFailure(error_str)
 
             val_prefixlen = int(getattr(val, "prefixlen"))
             self_prefixlen = int(getattr(self, "prefixlen"))
@@ -1955,11 +1973,9 @@ class IPv6Obj(object):
         try:
             for obj in [self, val]:
                 for attr_name in ["as_decimal", "prefixlen"]:
-                    try:
-                        assert getattr(obj, attr_name, None) is not None
-                    except AssertionError:
+                    if getattr(obj, attr_name, None) is None:
                         error_str = f"Cannot compare {self} with '{type(obj)}'"
-                        raise AssertionError(error_str)
+                        raise RequirementFailure(error_str)
 
             val_prefixlen = int(getattr(val, "prefixlen"))
             self_prefixlen = int(getattr(self, "prefixlen"))
@@ -2006,8 +2022,10 @@ class IPv6Obj(object):
 
         orig_prefixlen = self.prefixlen
         total = self.as_decimal + val
-        assert total <= IPV6_MAXINT, "Max IPv6 integer exceeded"
-        assert total >= 0, "Min IPv6 integer exceeded"
+        if total > IPV6_MAXINT:
+            raise RequirementFailure("Max IPv6 integer exceeded")
+        if total < 0:
+            raise RequirementFailure("Min IPv6 integer exceeded")
         retval = IPv6Obj(total)
         retval.prefixlen = orig_prefixlen
         return retval
@@ -2020,8 +2038,10 @@ class IPv6Obj(object):
 
         orig_prefixlen = self.prefixlen
         total = self.as_decimal - val
-        assert total < IPV6_MAXINT, "Max IPv6 integer exceeded"
-        assert total >= 0, "Min IPv6 integer exceeded"
+        if total >= IPV6_MAXINT:
+            raise RequirementFailure("Max IPv6 integer exceeded")
+        if total < 0:
+            raise RequirementFailure("Min IPv6 integer exceeded")
         retval = IPv6Obj(total)
         retval.prefixlen = orig_prefixlen
         return retval
@@ -2215,7 +2235,8 @@ class IPv6Obj(object):
     def network_offset(self):
         """Returns the integer difference between host number and network number.  This must be less than `numhosts`"""
         offset = self.as_decimal - self.as_decimal_network
-        assert offset <= self.numhosts
+        if offset > self.numhosts:
+            raise RequirementFailure()
         return offset
 
     # do NOT wrap with @logger.catch(...)
@@ -2449,28 +2470,33 @@ class L4Object(object):
         if "eq " in port_spec.strip():
             port_tmp = re.split(r"\s+", port_spec)[-1].strip()
             eq_port = int(ports.get(port_tmp, port_tmp))
-            assert 1 <= eq_port <= 65535
+            if not (1 <= eq_port <= 65535):
+                raise RequirementFailure()
             self.port_list = [eq_port]
         elif re.search(r"^\S+$", port_spec.strip()):
             # Technically, 'eq ' is optional...
             eq_port = int(ports.get(port_spec.strip(), port_spec.strip()))
-            assert 1 <= eq_port <= 65535
+            if not (1 <= eq_port <= 65535):
+                raise RequirementFailure()
             self.port_list = [eq_port]
         elif "range " in port_spec.strip():
             port_tmp = re.split(r"\s+", port_spec)[1:]
             low_port = int(ports.get(port_tmp[0], port_tmp[0]))
             high_port = int(ports.get(port_tmp[1], port_tmp[1]))
-            assert low_port <= high_port
+            if low_port > high_port:
+                raise RequirementFailure()
             self.port_list = sorted(range(low_port, high_port + 1))
         elif "lt " in port_spec.strip():
             port_tmp = re.split(r"\s+", port_spec)[-1]
             high_port = int(ports.get(port_tmp, port_tmp))
-            assert 65536 >= high_port >= 2
+            if not (2 <= high_port <= 65535):
+                raise RequirementFailure()
             self.port_list = sorted(range(1, high_port))
         elif "gt " in port_spec.strip():
             port_tmp = re.split(r"\s+", port_spec)[-1]
             low_port = int(ports.get(port_tmp, port_tmp))
-            assert 0 < low_port < 65535
+            if not (0 < low_port < 65535):
+                raise RequirementFailure()
             self.port_list = sorted(range(low_port + 1, 65536))
         elif "neq " in port_spec.strip():
             port_str = re.split(r"\s+", port_spec)[-1]
@@ -2581,10 +2607,14 @@ def dns_query(input_str="", query_type="", server="", timeout=2.0):
 
     valid_records = {"A", "AAAA", "AXFR", "CNAME", "MX", "NS", "PTR", "TXT"}
     query_type = query_type.upper()
-    assert query_type in valid_records
-    assert server != ""
-    assert float(timeout) > 0
-    assert input_str != ""
+    if query_type not in valid_records:
+        raise RequirementFailure()
+    if server == "":
+        raise RequirementFailure()
+    if float(timeout) <= 0:
+        raise RequirementFailure()
+    if input_str == "":
+        raise RequirementFailure()
     # input = input_str.strip()
     retval = set()
     rr = Resolver()
@@ -2886,7 +2916,8 @@ def check_valid_ipaddress(input_addr=None):
             raise ValueError(input_addr)
 
     error = f"FATAL: '{input_addr}' is not a valid IPv4 or IPv6 address."
-    assert (ipaddr_family == 4 or ipaddr_family == 6), error
+    if not (ipaddr_family == 4 or ipaddr_family == 6):
+        raise RequirementFailure(error)
     return (input_addr, ipaddr_family)
 
 
@@ -2901,7 +2932,8 @@ def reverse_dns_lookup(input_str, timeout=3.0, server="4.2.2.2", proto="udp"):
         raise ValueError
 
     addr, addr_family = check_valid_ipaddress(input_str)
-    assert addr_family == 4 or addr_family == 6
+    if not (addr_family == 4 or addr_family == 6):
+        raise RequirementFailure()
 
     if proto != "tcp" and proto != "udp":
         raise ValueError()
@@ -2910,7 +2942,8 @@ def reverse_dns_lookup(input_str, timeout=3.0, server="4.2.2.2", proto="udp"):
     if not isinstance(raw_result, set):
         raise ValueError
 
-    assert len(raw_result) >= 1
+    if len(raw_result) == 0:
+        raise RequirementFailure()
     tmp = raw_result.pop()
     if not isinstance(tmp, DNSResponse):
         raise ValueError
