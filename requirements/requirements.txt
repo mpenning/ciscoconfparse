@@ -6,5 +6,6 @@ toml > 0.10.1
 dnspython == 2.4.2
 hier_config == 2.2.3
 deprecated == 1.2.14
+hier_config == 2.2.2
 # virtualenv is required by tox
 virtualenv > 20.2
