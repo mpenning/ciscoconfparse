@@ -21,6 +21,21 @@ r""" test_CiscoConfParse.py - Parse, Query, Build, and Modify IOS-style configs
      mike [~at~] pennington [.dot.] net
 """
 
+from passlib.hash import cisco_type7
+import pytest
+
+from ciscoconfparse.ciscoconfparse import CiscoConfParse
+from ciscoconfparse.ciscoconfparse import IOSCfgLine, IOSIntfLine
+from ciscoconfparse.ciscoconfparse import parse_line_braces
+from ciscoconfparse.ciscoconfparse import CiscoPassword
+from ciscoconfparse.ciscoconfparse import HDiff
+from ciscoconfparse.ciscoconfparse import Diff
+from ciscoconfparse.models_junos import JunosCfgLine
+from ciscoconfparse.ccp_util import IPv4Obj
+from ciscoconfparse.ccp_abc import BaseCfgLine
+
+from ciscoconfparse.errors import InvalidParameters
+
 from operator import attrgetter
 from itertools import repeat
 from copy import deepcopy
@@ -33,20 +48,6 @@ import re
 import os
 
 THIS_TEST_PATH = os.path.dirname(os.path.abspath(__file__))
-
-from passlib.hash import cisco_type7
-import pytest
-
-from ciscoconfparse.ciscoconfparse import CiscoConfParse
-from ciscoconfparse.ciscoconfparse import IOSCfgLine, IOSIntfLine
-from ciscoconfparse.ciscoconfparse import parse_line_braces
-from ciscoconfparse.ciscoconfparse import CiscoPassword
-from ciscoconfparse.ciscoconfparse import HDiff
-from ciscoconfparse.models_junos import JunosCfgLine
-from ciscoconfparse.ccp_util import IPv4Obj
-from ciscoconfparse.ccp_abc import BaseCfgLine
-
-from ciscoconfparse.errors import InvalidParameters
 
 
 def testParse_valid_config_blanklines_01(parse_n01_w_blanklines):
@@ -218,6 +219,7 @@ def testParse_parse_syntax_f5_as_junos_nofactory_ioscfg_01():
     )
     uut = parse.ioscfg
     assert uut == result_correct_ioscfg
+
 
 def testParse_parse_syntax_junos_as_junos_nofactory_ioscfg_01():
     config = """## Last commit: 2015-06-28 13:00:59 CST by mpenning
@@ -482,6 +484,7 @@ def testValues_IOSCfgLine_06():
     with pytest.raises(InvalidParameters):
         parse.insert_before("1")
 
+
 def testValues_IOSCfgLine_07():
     """test that a bool in the config list and factory=False is rejected with a InvalidParameters()"""
     with pytest.raises(InvalidParameters):
@@ -490,13 +493,16 @@ def testValues_IOSCfgLine_07():
     with pytest.raises(InvalidParameters):
         _ = CiscoConfParse([True], factory=False)
 
+
 def testValues_IOSCfgLine_08():
     """test that a bool in the config list and factory=True is rejected with a InvalidParameters()"""
     with pytest.raises(InvalidParameters):
         _ = CiscoConfParse([False], factory=True)
 
+
 def testParse_f5_as_ios_00(parse_f01_ios):
     assert len(parse_f01_ios.objs) == 20
+
 
 def testParse_f5_as_ios_02(parse_f02_ios_01):
     """
@@ -662,9 +668,11 @@ def testParse_f5_as_ios_02(parse_f02_ios_01):
         assert correct_result_linenum_dict[dict_idx]['linenum'] == obj.linenum + 1
         assert correct_result_linenum_dict[dict_idx]['parent_linenum'] == obj.parent.linenum + 1
 
+
 def testParse_f5_as_junos(parse_f01_junos_01):
     """Test parsing f5 config as junos syntax"""
     assert len(parse_f01_junos_01.objs) == 16
+
 
 def testParse_asa_as_ios(config_a02):
     """Test for Github issue #42 parse asa banner with ios syntax"""
@@ -928,6 +936,7 @@ def testValues_banner_delete_02():
     #  the banner motd line...
     for obj in parse.find_objects("^interface"):
         assert len(obj.children) == 1
+
 
 def testValues_certificate_delete_01():
     """
@@ -1341,6 +1350,7 @@ def testValues_find_blocks(parse_c01):
 def testValues_list_before_01():
     """Ensure that CiscoConfParse() raises an error on parsing empty config lists."""
 
+
 def testValues_list_insert_before_01():
     """test whether we can insert list elements"""
     c01 = [
@@ -1352,6 +1362,7 @@ def testValues_list_insert_before_01():
     confobjs = CiscoConfParse(c01, syntax="ios")
     confobjs.insert_before('b', 'a')
     assert confobjs.ConfigObjs[0].text == 'a'
+
 
 def testValues_list_insert_01():
     """test whether we can insert list elements"""
@@ -1366,6 +1377,7 @@ def testValues_list_insert_01():
     parse.insert_after('e', 'f')
     assert parse.ConfigObjs[0].text == 'a'
     assert parse.ConfigObjs[-1].text == 'f'
+
 
 def testValues_list_insert_02():
     """test whether we can insert list elements"""
@@ -1387,6 +1399,7 @@ def testValues_list_insert_02():
     assert parse.ConfigObjs[0].text == 'a'
     assert parse.ConfigObjs[-1].text == 'f'
 
+
 def testValues_list_insert_03():
     """test whether we can insert child list elements"""
     c01 = ["b", "c", "d", "e",]
@@ -1399,6 +1412,7 @@ def testValues_list_insert_03():
 
     obj = parse.find_objects(r"^e")[0]
     assert obj.all_children[0].text == ' f'
+
 
 def testValues_list_insert_04():
     this_syntax = "ios"
@@ -1417,6 +1431,7 @@ def testValues_list_insert_04():
     assert parse.ConfigObjs[3].parent == parse.ConfigObjs[1]
     assert parse.ConfigObjs[4].parent == parse.ConfigObjs[1]
     assert parse.ConfigObjs[5].parent == parse.ConfigObjs[1]
+
 
 def testValues_list_insert_05():
     this_syntax = "nxos"
@@ -1440,6 +1455,7 @@ def testValues_list_insert_05():
     assert parse.ConfigObjs[4].parent == parse.ConfigObjs[1]
     assert parse.ConfigObjs[5].parent == parse.ConfigObjs[1]
 
+
 def testValues_list_insert_06():
     this_syntax = "asa"
     config = """interface GigabitEthernet0/6
@@ -1457,6 +1473,7 @@ def testValues_list_insert_06():
     assert parse.ConfigObjs[3].parent == parse.ConfigObjs[1]
     assert parse.ConfigObjs[4].parent == parse.ConfigObjs[1]
     assert parse.ConfigObjs[5].parent == parse.ConfigObjs[1]
+
 
 def testValues_find_parents_w_child(parse_c01):
     c01_parents_w_child_power = [
@@ -1712,6 +1729,7 @@ def testValues_find_object_branches_04(parse_c01):
     correct_result = [[None, None, None, None, None]]
     assert test_result == correct_result
 
+
 def testValues_find_object_branches_05():
     """Basic test: find_object_branches() - Test that non-existent regex child levels are returned if allow_none=True (see Github Issue #178)"""
     test_data = ['thisis',
@@ -1734,6 +1752,7 @@ def testValues_find_object_branches_05():
     assert test_result[1][1].text.strip() == "atest"
     assert test_result[1][2].text.strip() == "matchthis"
 
+
 def testValues_find_objects_w_parents(parse_c01):
     correct_result = [
         " switchport",
@@ -1751,6 +1770,7 @@ def testValues_find_objects_w_all_children(parse_c01):
         "^interface", ["switchport voice", "power inline"]
     )
     assert test_result == correct_result
+
 
 def testValues_delete_children_matching():
     config = [
@@ -1777,6 +1797,7 @@ def testValues_delete_children_matching():
     for obj in parse.find_objects(r'^interface'):
         obj.delete_children_matching('description')
     assert parse.ioscfg == correct_result
+
 
 def testValues_delete_lines_01():
     """Catch bugs similar to those fixed by https://github.com/mpenning/ciscoconfparse/pull/140"""
@@ -1995,8 +2016,8 @@ def testValues_replace_children_01(parse_c01):
 
 def testValues_ios_sync_diff_01(parse_c01):
     """Test whether sync_diff() returns the correct diff when modifying logging in parse_c01."""
-    ## test sync_diff as a drop-in replacement for req_cfgspec_excl_diff()
-    ##   This test mirrors testValues_req_cfgspec_excl_diff()
+    # test sync_diff as a drop-in replacement for req_cfgspec_excl_diff()
+    #   This test mirrors testValues_req_cfgspec_excl_diff()
     correct_result = [
         "no logging 1.1.3.17",
         "logging 1.1.3.4",
@@ -2010,11 +2031,8 @@ def testValues_ios_sync_diff_01(parse_c01):
     assert correct_result == test_result
 
 
-@pytest.mark.xfail(
-    sys.version_info[0] == 3, reason="difflib.SequenceMatcher is broken in Python3"
-)
-def testValues_ios_sync_diff_03():
-    ## config_01 is the starting point
+def testValues_Diff_01():
+    # config_01 is the starting point
     config_01 = [
         "!",
         "interface GigabitEthernet 1/5",
@@ -2042,33 +2060,30 @@ def testValues_ios_sync_diff_03():
 
     correct_result = [
         "interface GigabitEthernet 1/5",
-        " no ip address 1.1.1.2 255.255.255.0",
-        " no standby 5 ip 1.1.1.1",
-        " no standby 5 preempt",
-        "interface GigabitEthernet 1/5",
-        " switchport",
-        " switchport mode access",
-        " switchport access vlan 5",
-        " switchport nonegotiate",
+        "  no ip address 1.1.1.2 255.255.255.0",
+        "  no standby 5 ip 1.1.1.1",
+        "  no standby 5 preempt",
+        "  switchport",
+        "  switchport mode access",
+        "  switchport access vlan 5",
+        "  switchport nonegotiate",
         "interface Vlan5",
-        " no shutdown",
-        " ip address 1.1.1.2 255.255.255.0",
-        " standby 5 ip 1.1.1.1",
-        " standby 5 preempt",
+        "  ip address 1.1.1.2 255.255.255.0",
+        "  standby 5 ip 1.1.1.1",
+        "  standby 5 preempt",
+        "  no shutdown",
     ]
 
-    linespec = r""
-    parse = CiscoConfParse(config_01)
-    test_result = parse.sync_diff(required_config, linespec, linespec)
-    assert correct_result == test_result
+    uut = Diff(
+        old_config=config_01,
+        new_config=required_config,
+        syntax='ios')
+    assert uut.diff() == correct_result
 
 
-@pytest.mark.xfail(
-    sys.version_info[0] == 3, reason="difflib.SequenceMatcher is broken in Python3"
-)
-def testValues_sync_diff_04():
+def testValues_Diff_02():
     """Test diffs against double-spacing for children (such as NXOS)"""
-    ## config_01 is the starting point
+    # config_01 is the starting point
     config_01 = [
         "!",
         "interface GigabitEthernet 1/5",
@@ -2099,29 +2114,25 @@ def testValues_sync_diff_04():
         "  no ip address 1.1.1.2 255.255.255.0",
         "  no standby 5 ip 1.1.1.1",
         "  no standby 5 preempt",
-        "interface GigabitEthernet 1/5",
         "  switchport",
         "  switchport mode access",
         "  switchport access vlan 5",
         "  switchport nonegotiate",
         "interface Vlan5",
-        "  no shutdown",
         "  ip address 1.1.1.2 255.255.255.0",
         "  standby 5 ip 1.1.1.1",
         "  standby 5 preempt",
+        "  no shutdown",
     ]
 
-    linespec = r""
-    parse = CiscoConfParse(config_01, syntax="nxos", ignore_blank_lines=False)
-    test_result = parse.sync_diff(required_config, linespec, linespec)
-    assert correct_result == test_result
+    uut = Diff(
+        old_config=config_01,
+        new_config=required_config,
+        syntax='ios')
+    assert uut.diff() == correct_result
 
 
-@pytest.mark.xfail(
-    sys.version_info[0] == 3, reason="difflib.SequenceMatcher is broken in Python3"
-)
-def testValues_sync_diff_05():
-    ## config_01 is the starting point
+def testValues_Diff_03():
     config_01 = ["!", "vlan 51", " state active", "vlan 53", "!"]
 
     required_config = [
@@ -2138,24 +2149,22 @@ def testValues_sync_diff_05():
     correct_result = [
         "no vlan 53",
         "vlan 51",
-        " name SOME-VLAN",
+        "  name SOME-VLAN",
         "vlan 52",
-        " name BLAH",
-        " state active",
+        "  name BLAH",
+        "  state active",
     ]
 
-    linespec = r"vlan\s+\S+|name\s+\S+|state.+"
-    parse = CiscoConfParse(config_01)
-    test_result = parse.sync_diff(required_config, linespec, linespec)
-    assert correct_result == test_result
+    uut = Diff(
+        old_config=config_01,
+        new_config=required_config,
+        syntax='ios')
+    assert uut.diff() == correct_result
 
 
-@pytest.mark.xfail(
-    sys.version_info[0] == 3, reason="difflib.SequenceMatcher is broken in Python3"
-)
-def testValues_sync_diff_06():
+def testValues_Diff_04():
     """Test diffs against double-spacing for children (such as NXOS)"""
-    ## config_01 is the starting point
+    # config_01 is the starting point
     config_01 = [
         "!",
         "vlan 51",
@@ -2184,18 +2193,16 @@ def testValues_sync_diff_06():
         "  state active",
     ]
 
-    linespec = r"vlan\s+\S+|name\s+\S+|state.+"
-    parse = CiscoConfParse(config_01, syntax="nxos", ignore_blank_lines=False)
-    test_result = parse.sync_diff(required_config, linespec, linespec)
-    assert correct_result == test_result
+    uut = Diff(
+        old_config=config_01,
+        new_config=required_config,
+        syntax='ios')
+    assert uut.diff() == correct_result
 
 
-@pytest.mark.xfail(
-    sys.version_info[0] == 3, reason="difflib.SequenceMatcher is broken in Python3"
-)
-def testValues_sync_diff_07():
+def testValues_Diff_05():
     """Test diffs with remove_lines=False"""
-    ## config_01 is the starting point
+    # config_01 is the starting point
     config_01 = [
         "!",
         "vlan 51",
@@ -2217,27 +2224,25 @@ def testValues_sync_diff_07():
     ]
 
     correct_result = [
+        "no vlan 53",
+        "no vtp mode transparent",
         "vlan 51",
-        " name SOME-VLAN",
+        "  name SOME-VLAN",
         "vlan 52",
-        " name BLAH",
-        " state active",
+        "  name BLAH",
+        "  state active",
     ]
 
-    linespec = r"vlan\s+\S+|name\s+\S+|state.+"
-    parse = CiscoConfParse(config_01)
-    test_result = parse.sync_diff(
-        required_config, linespec, linespec, remove_lines=False
-    )
-    assert correct_result == test_result
+    uut = Diff(
+        old_config=config_01,
+        new_config=required_config,
+        syntax='ios')
+    assert uut.diff() == correct_result
 
 
-@pytest.mark.xfail(
-    sys.version_info[0] == 3, reason="difflib.SequenceMatcher is broken in Python3"
-)
-def testValues_sync_diff_08():
-    """Test diffs with explicit ignore_order=False"""
-    ## config_01 is the starting point
+def testValues_Diff_06():
+    """Test diffs with global command order mixed up"""
+    # config_01 is the starting point
     config_01 = [
         "!",
         "vlan 51",
@@ -2262,26 +2267,22 @@ def testValues_sync_diff_08():
     correct_result = [
         "no vlan 53",
         "vlan 52",
-        " name BLAH",
-        " state active",
+        "  name BLAH",
+        "  state active",
         "vlan 51",
-        " name SOME-VLAN",
+        "  name SOME-VLAN",
     ]
 
-    linespec = r"vlan\s+\S+|name\s+\S+|state.+|vtp"
-    parse = CiscoConfParse(config_01)
-    test_result = parse.sync_diff(
-        required_config, linespec, linespec, ignore_order=False
-    )
-    assert correct_result == test_result
+    uut = Diff(
+        old_config=config_01,
+        new_config=required_config,
+        syntax='ios')
+    assert uut.diff() == correct_result
 
 
-@pytest.mark.xfail(
-    sys.version_info[0] == 3, reason="difflib.SequenceMatcher is broken in Python3"
-)
-def testValues_sync_diff_09():
-    """Test diffs with explicit ignore_order=True"""
-    ## config_01 is the starting point
+def testValues_Diff_07():
+    """Test diffs with global command order mixed up"""
+    # config_01 is the starting point
     config_01 = [
         "!",
         "vlan 51",
@@ -2306,18 +2307,43 @@ def testValues_sync_diff_09():
     correct_result = [
         "no vlan 53",
         "vlan 51",
-        " name SOME-VLAN",
+        "  name SOME-VLAN",
         "vlan 52",
-        " name BLAH",
-        " state active",
+        "  name BLAH",
+        "  state active",
     ]
 
-    linespec = r"vlan\s+\S+|name\s+\S+|state.+|vtp"
-    parse = CiscoConfParse(config_01)
-    test_result = parse.sync_diff(
-        required_config, linespec, linespec, ignore_order=True
-    )
-    assert correct_result == test_result
+    uut = Diff(
+        old_config=config_01,
+        new_config=required_config,
+        syntax='ios')
+    assert uut.diff() == correct_result
+
+
+def testValues_Diff_08():
+    """Test Diff() output for matching input configurations"""
+    before_config = ["logging 1.1.3.4", "logging 1.1.3.5", "logging 1.1.3.6",]
+    after_config = ["logging 1.1.3.4", "logging 1.1.3.5", "logging 1.1.3.6",]
+    uut = Diff(
+        old_config=before_config,
+        new_config=after_config,
+        syntax='ios')
+    assert uut.diff() == []
+
+
+def testValues_Diff_09():
+    """Test Diff() output for different input global configurations"""
+    before_config = ["logging 1.1.3.4", "logging 1.1.3.5", "logging 1.1.3.6",]
+    after_config = ["logging 1.1.3.255", "logging 1.1.3.5", "logging 1.1.3.6",]
+
+    uut = Diff(
+        old_config=before_config,
+        new_config=after_config,
+        syntax='ios')
+    correct_result = ['no logging 1.1.3.4', 'logging 1.1.3.255']
+
+    assert uut.diff() == correct_result
+
 
 def testValues_HDiff_01():
     """Test HDiff(header=False) output for matching input configurations"""
@@ -2331,6 +2357,7 @@ def testValues_HDiff_01():
         " logging 1.1.3.6",
     ]
     assert test_result == correct_result
+
 
 @pytest.mark.xfail(
     sys.version_info[0] == 3, reason="HDiff() does not order diffs at the parent or child level."
@@ -2348,6 +2375,7 @@ def testValues_HDiff_02():
         " logging 1.1.3.6",
     ]
     assert test_result == correct_result
+
 
 @pytest.mark.xfail(
     sys.version_info[0] == 3, reason="HDiff() does not order diffs at the parent or child level."
@@ -2739,6 +2767,7 @@ def testValues_IOSCfgLine_all_parents(parse_c01):
         assert correct_result[idx].linenum == test_result[idx].linenum
         assert correct_result[idx].classname == test_result[idx].classname
 
+
 def testValues_IOSCfgLine_geneology_junos():
     config = """
 base_hello {
@@ -2882,6 +2911,7 @@ base_hello
     correct_result = 'parameter_03'
     assert geneology_text[2].lstrip() == correct_result
 
+
 def testValues_syntax_ios_nofactory_find_objects(parse_c01):
     lines = [
         ("interface Serial 1/0", 11),
@@ -2905,6 +2935,7 @@ def testValues_syntax_ios_nofactory_find_objects(parse_c01):
     uut = parse_c01.find_objects("^interface")
     assert uut == result_correct
 
+
 def test_nxos_blank_line_01():
     """
     Test blank line in NXOS parser. See github issue #248
@@ -2926,6 +2957,7 @@ feature lldp"""
         # Legacy bug in NXOS parser...
         ####################################################################
         assert len(parse.ioscfg) == 3
+
 
 def test_nxos_blank_line_02():
     """
@@ -2971,6 +3003,7 @@ time start 2017:06:01:17:42 repeat 0:8:0"""
                            syntax=test_syntax,
                            ignore_blank_lines=ignore_blank_lines)
 
+
 def test_nxos_blank_line_03():
 
     BASELINE = """interface Ethernet109/1/1
@@ -3015,6 +3048,7 @@ interface Ethernet109/1/4
         correct_result = BASELINE[idx]
         test_result = parse.objs[idx].text
         assert correct_result == test_result
+
 
 def test_nxos_blank_line_04():
     """Test that blank lines are ignored with `ignore_blank_lines=True`"""
@@ -3107,6 +3141,7 @@ interface Ethernet109/1/4
                 blank_count += 1
 
         assert blank_count == 4
+
 
 def test_ios_blank_line_01():
 
@@ -3640,6 +3675,7 @@ def testValues_find_objects_factory_01(parse_c01_factory):
             # Check line numbers
             assert correct_intf.linenum == test_intf.linenum
 
+
 def testValues_IOSIntfLine_find_objects_factory_01(parse_c01_factory):
     """test whether find_objects() returns correct IOSIntfLine objects and tests IOSIntfLine methods"""
     # mockobj pretends to be the IOSIntfLine object
@@ -3755,6 +3791,7 @@ def testValues_ConfigList_insert02(parse_c02):
 
     assert test_result == correct_result
 
+
 def test_BaseCfgLine_has_child_with(parse_c03):
     correct_result = [
         'interface GigabitEthernet4/1',
@@ -3769,6 +3806,7 @@ def test_BaseCfgLine_has_child_with(parse_c03):
             test_output.append(intf.text)
 
     assert test_output == correct_result
+
 
 def testValues_IOSCfgLine_ioscfg01(parse_c02):
     correct_result = [
