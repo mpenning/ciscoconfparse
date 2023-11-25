@@ -89,6 +89,7 @@ from ciscoconfparse.ccp_util import junos_unsupported
 from ciscoconfparse.ccp_util import configure_loguru
 
 from ciscoconfparse.errors import InvalidParameters
+from ciscoconfparse.errors import RequirementFailure
 
 
 # Not using ccp_re yet... still a work in progress
@@ -248,7 +249,6 @@ def initialize_globals():
 @logger.catch(reraise=True)
 def initialize_ciscoconfparse(read_only=False, debug=0):
     """Initialize ciscoconfparse global variables and configure logging."""
-
     globals_dict = initialize_globals()
     for key, value in globals_dict.items():
         # Example, this will set __version__ to content of 'value'
@@ -742,9 +742,9 @@ class CiscoConfParse(object):
         # tmp_lines = self._get_ccp_lines(config=config, logger=logger)
         if isinstance(config, (str, pathlib.Path,)):
             if ignore_blank_lines is True and factory is False:
-                tmp_lines = self.read_config_file(filepath=config, logger=logger, linesplit_rgx=r"\r*\n+")
+                tmp_lines = self.read_config_file(filepath=config, linesplit_rgx=r"\r*\n+")
             else:
-                tmp_lines = self.read_config_file(filepath=config, logger=logger, linesplit_rgx=r"\r*\n")
+                tmp_lines = self.read_config_file(filepath=config, linesplit_rgx=r"\r*\n")
         elif isinstance(config, Sequence):
             if ignore_blank_lines is True and factory is False:
                 tmp_lines = [ii for ii in config if len(ii) != 0]
@@ -830,11 +830,11 @@ class CiscoConfParse(object):
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
-    def read_config_file(self, filepath=None, logger=None, linesplit_rgx=r"\r*\n+"):
+    def read_config_file(self, filepath=None, linesplit_rgx=r"\r*\n+"):
         """Read the config lines from the filepath.  Return the list of text configuration commands or raise an error."""
 
-        assert logger is not None
-        assert self.finished_config_parse is False
+        if self.finished_config_parse is not False:
+            raise RequirementFailure()
 
         valid_path_variable = False
         if filepath is None:
@@ -904,7 +904,8 @@ class CiscoConfParse(object):
     def check_ccp_input_good(self, config=None, logger=None, linesplit_rgx=r"\r*\n+"):
         """The config parameter is a sequence of text config commands.  Return True or False based on whether the config can be parsed."""
 
-        assert self.finished_config_parse is False
+        if self.finished_config_parse is not False:
+            raise RequirementFailure()
 
         if isinstance(config, Sequence):
             # Here we assume that `config` is a list of text config lines...
@@ -1232,7 +1233,8 @@ class CiscoConfParse(object):
             # branchspec = (r"^interfaces", r"\s+(\S+)", r"\s+(unit\s+\d+)", r"family\s+(inet)", r"address\s+(\S+)")
             # for idx_matrix, row in enumerate(self.find_object_branches(branchspec)):
             for _, row in enumerate(branches):
-                assert isinstance(row, Sequence)
+                if not isinstance(row, Sequence):
+                    raise RequirementFailure()
 
                 # Before we check regex capture groups, allocate an "empty return_row"
                 #   of the correct length...
@@ -2779,8 +2781,11 @@ class CiscoConfParse(object):
             linespec=exist_val, exactmatch=exactmatch, ignore_ws=ignore_ws
         )
         for _obj in objs:
+
             exist_indent = len(_obj._text) - len(_obj._text.lstrip())
-            assert exist_indent == _obj.indent
+            if exist_indent != _obj.indent:
+                raise RequirementFailure()
+
             if new_val_indent >= 0:
                 # Forces an indent on ``new_val``...
                 self.ConfigObjs.insert_before(
@@ -2894,8 +2899,11 @@ class CiscoConfParse(object):
             linespec=exist_val, exactmatch=exactmatch, ignore_ws=ignore_ws
         )
         for _obj in objs:
+
             exist_indent = len(_obj._text) - len(_obj._text.lstrip())
-            assert exist_indent == _obj.indent
+            if exist_indent != _obj.indent:
+                raise RequirementFailure()
+
             if new_val_indent >= 0:
                 # Forces an indent on ``new_val``...
                 self.ConfigObjs.insert_after(
@@ -3899,10 +3907,10 @@ class Diff(object):
         ----------
         hostname : None
             An empty parameter, which seems to be optional for the diff backend
-        old_config : list
-            A list of text configuration statements representing the most-recent config. Default value: `None`
-        new_config : list
-            A list of text configuration statements representing the desired config. Default value: `None`
+        old_config : str
+            A string containing text configuration statements representing the most-recent config. Default value: `None`. If a filepath is provided, load the configuration from the file.
+        new_config : str
+            A string containing text configuration statements representing the desired config. Default value: `None`. If a filepath is provided, load the configuration from the file.
         syntax : str
             A string holding the configuration type.  Default: 'ios'.
 
@@ -3911,49 +3919,68 @@ class Diff(object):
         :class:`~ciscoconfparse.Diff()`
         """
 
+        ######################################################################
+        # Handle hostname
+        ######################################################################
         if hostname is not None:
             error = f"hostname='{hostname}' is not supported"
             logger.error(error)
 
+        ######################################################################
+        # Handle old_config
+        ######################################################################
         if old_config is None:
             old_config = []
-        elif isinstance(old_config, str):
+        elif isinstance(old_config, str) and len(old_config.splitlines()) == 1 and os.path.isfile(old_config):
+            # load the old config from a file as a string...
             old_config = open(old_config).read()
-        elif isinstance(old_config, list):
+        elif isinstance(old_config, str):
             pass
-        elif isinstance(old_config, tuple):
-            old_config = list(old_config)
+        elif isinstance(old_config, (list, tuple)):
+            old_config = os.linesep.join(old_config)
         else:
-            error = f"old_config {type(old_config)} must be a list"
+            error = f"old_config {type(old_config)} must be a network configuration in a string, or a filepath to the configuration"
             logger.error(error)
             raise ValueError(error)
 
+        ######################################################################
+        # Handle new_config
+        ######################################################################
         if new_config is None:
             new_config = []
+        elif isinstance(new_config, str) and len(new_config.splitlines()) == 1 and os.path.isfile(new_config):
+            # load the new config from a file as a list...
+            new_config = open(new_config).read().splitlines()
         elif isinstance(new_config, str):
-            new_config = open(new_config).read()
-        elif isinstance(new_config, list):
             pass
-        elif isinstance(new_config, tuple):
-            new_config = list(new_config)
+        elif isinstance(new_config, (list, tuple)):
+            new_config = os.linesep.join(new_config)
         else:
-            error = f"new_config {type(new_config)} must be a list"
+            error = f"new_config {type(new_config)} must be a network configuration in a string, or a filepath to the configuration"
             logger.error(error)
             raise ValueError(error)
 
+        ######################################################################
+        # Handle syntax
+        ######################################################################
         if syntax != 'ios':
             error = f"syntax='{syntax}' is not supported"
             logger.error(error)
             raise NotImplementedError(error)
 
-        if False:
-            ###################################################################
-            # For now, we will not use options_ios.yml... see
-            #     https://github.com/netdevops/hier_config/blob/master/tests/fixtures/options_ios.yml
-            ###################################################################
-            options = yaml.load(open('./options_ios.yml'), Loader=yaml.SafeLoader)
+        ###################################################################
+        # For now, we will not use options_ios.yml... see
+        #     https://github.com/netdevops/hier_config/blob/master/tests/fixtures/options_ios.yml
+        ###################################################################
+        # _ represents ios options as a dict... for now we use an empty
+        # dict below...
+        try:
+            _ = yaml.load(open('./options_ios.yml'), Loader=yaml.SafeLoader)
+        except FileNotFoundError:
+            pass
+        # For now, we use {} instead of `options_ios.yml`
+        self.host = hier_config.Host('example_hostname', 'ios', {})
 
-        self.host = hier_config.Host('example_hostname', 'ios', options={})
         # Old configuration
         self.host.load_running_config(old_config)
         # New configuration
@@ -4113,7 +4140,8 @@ class HDiff(object):
             ignore_blank_lines, (bool,), "ignore_blank_lines parameter must be a bool."
         )
         enforce_valid_types(debug, (int,), "debug parameter must be an int.")
-        assert syntax in set(ALL_VALID_SYNTAX)
+        if syntax not in set(ALL_VALID_SYNTAX):
+            raise RequirementFailure()
 
         # Initialize attributes...
         self.syntax = syntax
@@ -4171,8 +4199,11 @@ class HDiff(object):
     @logger.catch(reraise=True)
     def build_diff_obj_lists(self):
         """Assign the `diff_side` attribute to parse_before and parse_after *CfgLine() instances"""
-        assert isinstance(self.parse_before, CiscoConfParse)
-        assert isinstance(self.parse_after, CiscoConfParse)
+
+        if not isinstance(self.parse_before, CiscoConfParse):
+            raise RequirementFailure()
+        if not isinstance(self.parse_after, CiscoConfParse):
+            raise RequirementFailure()
 
         for before_obj in self.parse_before.objs:
             before_obj.diff_side = "before"
@@ -4200,7 +4231,8 @@ class HDiff(object):
         """
         Return a list of *CfgLine() objects which are relevant to the diff...
         """
-        assert isinstance(parse, CiscoConfParse)
+        if not isinstance(parse, CiscoConfParse):
+            raise RequirementFailure()
         if not isinstance(default_diff_word, str):
             raise ValueError
         retval = []
@@ -4223,14 +4255,16 @@ class HDiff(object):
     def build_ios_diffs(self):
         # Handle add / move / change. change is diff_word: remove + diff_word: add
         for after_obj in self.after_obj_list:
-            assert isinstance(after_obj, (BaseCfgLine,))
+            if not isinstance(after_obj, (BaseCfgLine,)):
+                raise RequirementFailure()
 
             # Ensure we start with after_obj.diff_word as default_word...
             # it's unknown at this time... NOTE - even though all
             # after_obj.diff_word values are changed in
             # self.find_in_before_obj_list() below, setting to a default state
             # is useful to catch any future bugs...
-            assert after_obj.diff_word == "unknown"
+            if after_obj.diff_word != "unknown":
+                raise RequirementFailure()
 
             # Check whether we keep the before object, or add a new after object...
             # before_list and after_obj may be rewritten / changed here...
@@ -4385,7 +4419,8 @@ class HDiff(object):
             if not isinstance(bobj, BaseCfgLine):
                 raise ValueError
 
-            assert bobj.diff_side == "before"
+            if bobj.diff_side != "before":
+                raise RequirementFailure()
 
             # FIXME - I am disabling this to prevent redundant rendering of before_obj and after_obj
             if bobj.diff_word == "keep" and bobj.diff_rendered is False:
@@ -4427,12 +4462,14 @@ class HDiff(object):
         for before_obj in before_obj_list:
             if not isinstance(before_obj, BaseCfgLine):
                 raise ValueError
-            assert before_obj.diff_side == "before"
+            if before_obj.diff_side != "before":
+                raise RequirementFailure()
 
         # Check after_obj...
         if not isinstance(after_obj, BaseCfgLine):
             raise ValueError
-        assert after_obj.diff_side == "after"
+        if after_obj.diff_side != "after":
+            raise RequirementFailure()
 
         after_id_list = after_obj.diff_id_list
         if debug > 0:
@@ -4512,10 +4549,12 @@ class HDiff(object):
         Print after_obj (aobj) diffs to stdout.  before_obj should not be
         handled here.
         """
-        assert aobj is not None
+        if aobj is None:
+            raise RequirementFailure()
         if not isinstance(aobj, BaseCfgLine):
             raise ValueError
-        assert aobj.diff_word in ["unchanged", "add"]
+        if aobj.diff_word not in ["unchanged", "add"]:
+            raise RequirementFailure()
 
         output = list()
 
@@ -4596,7 +4635,8 @@ class HDiff(object):
                 "compress_dict_diffs() will iterate over the `all_lines` variable."
             )
         for line_dict in all_lines:
-            assert isinstance(line_dict, dict)
+            if not isinstance(line_dict, dict):
+                raise RequirementFailure()
 
             # Unwrap keywords and values from the line_dict...
             diff_side = line_dict["diff_side"]
@@ -4714,7 +4754,8 @@ class HDiff(object):
 
             if line_dict["diff_word"] != "remove":
                 try:
-                    assert tuple(line_dict["diff_id_list"]) in lines.keys()
+                    if tuple(line_dict["diff_id_list"]) not in lines.keys():
+                        raise RequirementFailure()
                 except BaseException:
                     raise ValueError(line_dict)
 
@@ -4726,9 +4767,7 @@ class HDiff(object):
 
 
 class ConfigList(MutableSequence):
-    """
-    A custom list to hold :class:`~ccp_abc.BaseCfgLine` objects.  Most people will never need to use this class directly.
-    """
+    """A custom list to hold :class:`~ccp_abc.BaseCfgLine` objects.  Most people will never need to use this class directly."""
     CiscoConfParse = None
     ccp_ref = None
     comment_delimiter = None
@@ -4795,7 +4834,9 @@ class ConfigList(MutableSequence):
         # IMPORTANT This check MUST come near the top of ConfigList()...
         if not isinstance(initlist, Sequence):
             raise ValueError
-        assert syntax in ALL_VALID_SYNTAX
+
+        if syntax not in ALL_VALID_SYNTAX:
+            raise RequirementFailure()
 
         # NOTE a string is a invalid sequence... this guards against bad inputs
         if isinstance(initlist, str):
@@ -5473,7 +5514,6 @@ class ConfigList(MutableSequence):
                                     obj
                                 ),
                             )
-                        pass
                     elif bannerdelimit in obj.text.strip():
                         # Hit the bannerdelimit char... Exit banner parsing here...
                         if self.debug > 0:
@@ -5793,7 +5833,8 @@ class ConfigList(MutableSequence):
     @logger.catch(reraise=True)
     def names(self):
         """Return a dictionary of name to address mappings"""
-        assert self.syntax == "asa"
+        if self.syntax != "asa":
+            raise RequirementFailure()
 
         retval = {}
         name_rgx = self._RE_NAMES
@@ -5808,7 +5849,8 @@ class ConfigList(MutableSequence):
     @logger.catch(reraise=True)
     def object_group_network(self):
         """Return a dictionary of name to object-group network mappings"""
-        assert self.syntax == "asa"
+        if self.syntax != "asa":
+            raise RequirementFailure()
 
         retval = {}
         obj_rgx = self._RE_OBJNET
@@ -5822,7 +5864,8 @@ class ConfigList(MutableSequence):
     @logger.catch(reraise=True)
     def access_list(self):
         """Return a dictionary of ACL name to ACE (list) mappings"""
-        assert self.syntax == "asa"
+        if self.syntax != "asa":
+            raise RequirementFailure()
 
         retval = {}
         for obj in self.ccp_ref.find_objects(self._RE_OBJACL):
