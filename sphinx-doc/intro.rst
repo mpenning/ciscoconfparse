@@ -135,7 +135,8 @@ These are a few selected public mentions about CiscoConfParse; I usually try not
 |br|
 |br|
 
-- Have to audit 100 catalyst sw configs for misconfiguration/non-standard configs. Perfect job for CiscoConfParse; Jochen - l0b0 (@verbosemode) June 23, 2010
+.. raw:: html
+   <a style="background: grey;" href="">Have to audit 100 catalyst sw configs for misconfiguration/non-standard configs. Perfect job for CiscoConfParse; Jochen - l0b0 (@verbosemode) June 23, 2010</a>
 
 |br|
 |br|
