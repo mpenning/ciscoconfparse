@@ -28,16 +28,12 @@ build:
 	# Very Important... do not skip the backup step here...
 	mkdir -p $(GO_BIN_DIR)
 	make backup
-	-rm go.mod
-	go mod init deploy_docs
-	go mod tidy
 	-make fmt
 	make dep
 	make lint
 	go build $(GO_SOURCE_FILE)
 	strip deploy_docs
 	-make lint
-	#cd src && go vet .
 	############################################################################
 	#
 	# Replace this line with PLATFORM detection...
@@ -66,35 +62,20 @@ fmt:
 	go fmt $(GO_SOURCE_FILE)
 .PHONY: fmt
 
-install_linters:
-	@echo "$(COL_GREEN)>> installing linting tools$(COL_END)"
-	go install golang.org/x/tools/go/analysis/passes/shadow/cmd/shadow@latest
-	go install github.com/kisielk/errlint@latest
-	go install github.com/go-critic/go-critic/cmd/gocritic@latest
-	go install honnef.co/go/tools/cmd/staticlint@latest
-	go install golang.org/x/tools/cmd/goimports@latest
-	go install github.com/mgechev/revive
-.PHONY: install_linters
-
 lint:
 	@echo "$(COL_GREEN)>> checking / linting the project$(COL_END)"
-	@echo "$(COL_CYAN)>>     running go vet$(COL_END)"
-	go vet ./...
-	@echo "$(COL_CYAN)>>     running shadow$(COL_END)"
-	shadow $(GO_SOURCE_FILE)
-	@echo "$(COL_CYAN)>>     fixing suboptimal / unreferenced imports$(COL_END)"
-	goimports $(GO_SOURCE_FILE) > $(GO_SOURCE_FILE).imports
-	mv $(GO_SOURCE_FILE).imports $(GO_SOURCE_FILE)
-	@echo "$(COL_CYAN)>>     running gocritic$(COL_END)"
-	gocritic check -enableAll $(GO_SOURCE_FILE)
-	@echo "$(COL_CYAN)>>     running errcheck$(COL_END)"
-	errcheck -verbose $(GO_SOURCE_FILE)
+	revive -config revive_lint.toml .
 .PHONY: lint
 
 dep:
 	@echo "$(COL_GREEN)>> getting deploy_docs dependencies$(COL_END)"
-	go get github.com/melbahja/goph@latest
-	go get github.com/gleich/logoru@latest
+	@echo "$(COL_CYAN)>> delete old go files$(COL_END)"
+	-rm go.mod
+	-rm go.sum
+	@echo "$(COL_CYAN)>> create a new go.mod$(COL_END)"
+	go mod init github.com/mpenning/ciscoconfparse/dev_tools/deploy_docs
+	go mod tidy
+	go mod download
 .PHONY: dep
 
 backup:
