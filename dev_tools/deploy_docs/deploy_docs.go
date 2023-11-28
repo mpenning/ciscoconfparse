@@ -1,3 +1,4 @@
+// deploy_docs tool for deploying ciscoconfparse docs to pennington.net
 package main
 
 import (
@@ -13,13 +14,13 @@ import (
 
 // Declare all variables here...
 var (
-	dochost string = ""
+	dochost string
 )
 
 func main() {
 
 	// define CLI flags here... '--dochost' is saved as string variable -> dochost
-	flag.StringVar(&dochost, "dochost", "127.0.0.1", "host to upload docs to.")
+	flag.StringVar(&dochost, "dochost", "chestnut.he.net", "host to upload docs to.")
 	flag.Parse()
 
 	fmt.Printf("A script to upload CiscoConfParse docs to %s.\n", dochost)
