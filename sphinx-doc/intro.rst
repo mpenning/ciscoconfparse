@@ -123,29 +123,30 @@ These are a few selected public mentions about CiscoConfParse; I usually try not
 
 .. raw:: html
 
-   <a href="https://github.com/mpenning/ciscoconfparse/issues/13#issuecomment-71340177"><img src="https://raw.githubusercontent.com/mpenning/ciscoconfparse/master/sphinx-doc/_static/crackerjackmack.png" width="800" alt="CiscoConfParse Github issue #13"></a>
+   <a style="outline: 5px grey;" href="https://github.com/mpenning/ciscoconfparse/issues/13#issuecomment-71340177"><img src="https://raw.githubusercontent.com/mpenning/ciscoconfparse/master/sphinx-doc/_static/crackerjackmack.png" width="800" alt="CiscoConfParse Github issue #13"></a>
 
 |br|
 |br|
 
 .. raw:: html
 
-   <a href="http://www.reddit.com/r/Python/comments/2zxew5/interesting_dmca_notice_gplv3_license_violation/#cptgtl7"><img src="https://raw.githubusercontent.com/mpenning/ciscoconfparse/master/sphinx-doc/_static/reddit_20150328.png" width="500" alt="Reddit comment - 20150328"></a>
+   <a style="outline: 5px grey;" href="http://www.reddit.com/r/Python/comments/2zxew5/interesting_dmca_notice_gplv3_license_violation/#cptgtl7"><img src="https://raw.githubusercontent.com/mpenning/ciscoconfparse/master/sphinx-doc/_static/reddit_20150328.png" width="500" alt="Reddit comment - 20150328"></a>
 
 |br|
 |br|
 
-- Have to audit 100 catalyst sw configs for misconfiguration/non-standard configs. Perfect job for CiscoConfParse; Jochen - l0b0 (@verbosemode) June 23, 2010
+.. raw:: html
+   <a style="outline: 5px grey;" href="">Have to audit 100 catalyst sw configs for misconfiguration/non-standard configs. Perfect job for CiscoConfParse; Jochen - l0b0 (@verbosemode) June 23, 2010</a>
 
 |br|
 |br|
 
 .. raw:: html
 
-   <blockquote class="twitter-tweet" data-conversation="none" lang="en"><p><a href="https://twitter.com/fryguy_pa">@fryguy_pa</a> There is a Cisco config parsing library for python that does neat tricks for searching configs</p>&mdash; Bob McCouch (@BobMcCouch) <a href="https://twitter.com/BobMcCouch/status/294877521349079041">January 25, 2013</a></blockquote>
+   <blockquote style="outline: 5px grey;" class="twitter-tweet" data-conversation="none" lang="en"><p><a href="https://twitter.com/fryguy_pa">@fryguy_pa</a> There is a Cisco config parsing library for python that does neat tricks for searching configs</p>&mdash; Bob McCouch (@BobMcCouch) <a href="https://twitter.com/BobMcCouch/status/294877521349079041">January 25, 2013</a></blockquote>
    <script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
 
-   <blockquote class="twitter-tweet" data-conversation="none" lang="en"><p>.<a href="https://twitter.com/fryguy_pa">@fryguy_pa</a> Here it is: ciscoconf python library: <a href="http://t.co/oDCWRZer">http://t.co/oDCWRZer</a></p>&mdash; Bob McCouch (@BobMcCouch) <a href="https://twitter.com/BobMcCouch/status/294878103199698944">January 25, 2013</a></blockquote>
+   <blockquote style="outline: 5px grey;" class="twitter-tweet" data-conversation="none" lang="en"><p>.<a href="https://twitter.com/fryguy_pa">@fryguy_pa</a> Here it is: ciscoconf python library: <a href="http://t.co/oDCWRZer">http://t.co/oDCWRZer</a></p>&mdash; Bob McCouch (@BobMcCouch) <a href="https://twitter.com/BobMcCouch/status/294878103199698944">January 25, 2013</a></blockquote>
    <script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
 
 |br|
