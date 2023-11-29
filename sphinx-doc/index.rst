@@ -15,6 +15,7 @@ Welcome to ciscoconfparse's documentation!
    syntax_ios
    syntax_nxos
    syntax_iosxr
+   syntax_asa
    factory
    api
 
