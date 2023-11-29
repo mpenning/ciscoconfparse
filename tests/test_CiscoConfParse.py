@@ -469,20 +469,6 @@ def testValues_IOSCfgLine_04():
     assert parse.objs[1].linenum == 1
 
 
-def testValues_IOSCfgLine_05():
-    """test that an empty insert_after parameter is rejected"""
-    parse = CiscoConfParse(["1"], factory=False)
-    with pytest.raises(InvalidParameters):
-        parse.insert_after("1")
-
-
-def testValues_IOSCfgLine_06():
-    """test that an empty insert_before parameter is rejected"""
-    parse = CiscoConfParse(["1"], factory=False)
-    with pytest.raises(InvalidParameters):
-        parse.insert_before("1")
-
-
 def testValues_IOSCfgLine_07():
     """test that a bool in the config list and factory=False is rejected with a InvalidParameters()"""
     with pytest.raises(InvalidParameters):
@@ -1260,20 +1246,21 @@ def testValues_find_lines(parse_c01):
         assert correct_result == test_result
 
 
-def testValues_list_insert_before_01():
-    """test whether we can insert list elements"""
+def testValues_obj_insert_before_01():
+    """test whether we can insert before IOSCfgLine() elements"""
     c01 = [
         "b",
         "c",
         "d",
         "e",
     ]
-    confobjs = CiscoConfParse(c01, syntax="ios")
-    confobjs.insert_before('b', 'a')
-    assert confobjs.ConfigObjs[0].text == 'a'
+    parse = CiscoConfParse(c01, syntax="ios")
+    obj = parse.find_objects("b")[0]
+    obj.insert_before('a')
+    assert parse.ConfigObjs[0].text == 'a'
 
 
-def testValues_list_insert_01():
+def testValues_obj_insert_01():
     """test whether we can insert list elements"""
     c01 = [
         "b",
@@ -1282,14 +1269,14 @@ def testValues_list_insert_01():
         "e",
     ]
     parse = CiscoConfParse(c01, syntax="ios")
-    parse.insert_before('b', 'a')
-    parse.insert_after('e', 'f')
+    parse.find_objects('b')[0].insert_before('a')
+    parse.find_objects('e')[0].insert_after('f')
     assert parse.ConfigObjs[0].text == 'a'
     assert parse.ConfigObjs[-1].text == 'f'
 
 
-def testValues_list_insert_02():
-    """test whether we can insert list elements"""
+def testValues_obj_insert_02():
+    """test whether we can insert and find objects after the insert"""
     c01 = [
         "b",
         "c",
@@ -1297,8 +1284,8 @@ def testValues_list_insert_02():
         "e",
     ]
     parse = CiscoConfParse(c01, syntax="ios")
-    parse.insert_before('b', 'a')
-    parse.insert_after('e', 'f')
+    parse.find_objects('b')[0].insert_before('a')
+    parse.find_objects('e')[0].insert_after('f')
     parse.commit()
 
     all_objs = parse.find_objects(r"^e")
@@ -1309,13 +1296,13 @@ def testValues_list_insert_02():
     assert parse.ConfigObjs[-1].text == 'f'
 
 
-def testValues_list_insert_03():
-    """test whether we can insert child list elements"""
+def testValues_obj_insert_03():
+    """test whether we can insert a new child list element"""
     c01 = ["b", "c", "d", "e",]
     parse = CiscoConfParse(c01, syntax="ios")
 
-    # ' f' is the child of 'e'...
-    parse.insert_after('e', ' f')
+    # ' f' is the new child of 'e'...
+    parse.find_objects('e')[0].insert_after(' f')
     parse.commit()
     assert parse.ConfigObjs[-1].text == ' f'
 
@@ -1323,7 +1310,8 @@ def testValues_list_insert_03():
     assert obj.all_children[0].text == ' f'
 
 
-def testValues_list_insert_04():
+def testValues_obj_insert_04():
+    """Test whether a new interface can be inserted and all new children assigned to it instead of the original parent"""
     this_syntax = "ios"
     config = """interface GigabitEthernet0/6
      no shutdown
@@ -1332,7 +1320,8 @@ def testValues_list_insert_04():
      no ip address"""
 
     parse = CiscoConfParse(config.splitlines(), syntax=this_syntax)
-    parse.insert_after(r'^interface\s+GigabitEthernet0/6\s*$', 'interface GigabitEthernet0/6.30')
+    obj = parse.find_objects(r'^interface\s+GigabitEthernet0/6\s*$')[0]
+    obj.insert_after('interface GigabitEthernet0/6.30')
     parse.commit()
     assert parse.ConfigObjs[0].text == "interface GigabitEthernet0/6"
     assert parse.ConfigObjs[1].text == "interface GigabitEthernet0/6.30"
@@ -1342,8 +1331,8 @@ def testValues_list_insert_04():
     assert parse.ConfigObjs[5].parent == parse.ConfigObjs[1]
 
 
-def testValues_list_insert_05():
-    this_syntax = "nxos"
+def testValues_obj_insert_05():
+    """Test whether a new NXOS interface can be inserted and all new children assigned to it instead of the original parent"""
     config = """interface GigabitEthernet0/6
      no shutdown
      no nameif
@@ -1352,10 +1341,11 @@ def testValues_list_insert_05():
 
     parse = CiscoConfParse(
         config.splitlines(),
-        syntax=this_syntax,
+        syntax='nxos',
         ignore_blank_lines=False,
     )
-    parse.insert_after(r'^interface\s+GigabitEthernet0/6\s*$', 'interface GigabitEthernet0/6.30')
+    obj = parse.find_objects(r'^interface\s+GigabitEthernet0/6\s*$')[0]
+    obj.insert_after('interface GigabitEthernet0/6.30')
     parse.commit()
     assert parse.ConfigObjs[0].text == "interface GigabitEthernet0/6"
     assert parse.ConfigObjs[1].text == "interface GigabitEthernet0/6.30"
@@ -1366,6 +1356,7 @@ def testValues_list_insert_05():
 
 
 def testValues_list_insert_06():
+    """Test whether a new ASA interface can be inserted and all new children assigned to it instead of the original parent"""
     this_syntax = "asa"
     config = """interface GigabitEthernet0/6
      no shutdown
@@ -1374,7 +1365,8 @@ def testValues_list_insert_06():
      no ip address"""
 
     parse = CiscoConfParse(config.splitlines(), syntax=this_syntax)
-    parse.insert_after(r'^interface\s+GigabitEthernet0/6\s*$', 'interface GigabitEthernet0/6.30')
+    obj = parse.find_objects(r'^interface\s+GigabitEthernet0/6\s*$')[0]
+    obj.insert_after('interface GigabitEthernet0/6.30')
     parse.commit()
     assert parse.ConfigObjs[0].text == "interface GigabitEthernet0/6"
     assert parse.ConfigObjs[1].text == "interface GigabitEthernet0/6.30"
@@ -2671,22 +2663,22 @@ def testValues_find_objects_delete_01():
     assert correct_result == test_result
 
 
-def testValues_insert_after_atomic_02(parse_c01):
-    """We expect insert_after(atomic=True) to correctly parse children"""
+def testValues_obj_insert_after_atomic_01(parse_c01):
+    """We expect IOSCfgLine().insert_after() to correctly parse children"""
     ## See also -> testValues_insert_after_nonatomic_02()
     correct_result = [
-        "interface GigabitEthernet4/1",
         " shutdown",
         " switchport",
         " switchport access vlan 100",
         " switchport voice vlan 150",
         " power inline static max 7000",
     ]
-    linespec = "interface GigabitEthernet4/1"
-    parse_c01.insert_after(linespec, " shutdown", exactmatch=True, atomic=True)
-    test_result = parse_c01.find_children(linespec)
+    obj01 = parse_c01.find_objects("interface GigabitEthernet4/1")[0]
+    obj01.insert_after(" shutdown")
+    parse_c01.commit()
 
-    assert correct_result == test_result
+    obj02 = parse_c01.find_objects("interface GigabitEthernet4/1")[0]
+    assert correct_result == [ii.text for ii in obj02.children]
 
 
 def testValues_insert_after_atomic_factory_01(parse_c01_factory):
@@ -2700,9 +2692,10 @@ def testValues_insert_after_atomic_factory_01(parse_c01_factory):
         correct_result01.is_comment = True
 
     linespec = "interface GigabitEthernet4/1"
-    parse_c01_factory.insert_after(
-        linespec, " ! TODO: some note to self", exactmatch=True, atomic=True
-    )
+    obj = parse_c01_factory.find_objects(linespec)[0]
+    obj.insert_after(" ! TODO: some note to self")
+    parse_c01_factory.commit()
+
     test_result01 = parse_c01_factory.find_objects("TODO")[0]
     assert correct_result01.linenum == test_result01.linenum
     assert correct_result01.text == test_result01.text
@@ -2710,164 +2703,15 @@ def testValues_insert_after_atomic_factory_01(parse_c01_factory):
     assert correct_result01.is_comment == test_result01.is_comment
 
     correct_result02 = [
-        "interface GigabitEthernet4/1",
         " ! TODO: some note to self",
         " switchport",
         " switchport access vlan 100",
         " switchport voice vlan 150",
         " power inline static max 7000",
     ]
-    test_result02 = parse_c01_factory.find_children(linespec)
+    test_result02 = [ii.text for ii in parse_c01_factory.find_objects(linespec)[0].children]
     assert correct_result02 == test_result02
 
-
-def testValues_insert_after_atomic_01(parse_c01):
-    inputs = [
-        "interface GigabitEthernet4/1",
-        "interface GigabitEthernet4/2",
-        "interface GigabitEthernet4/3",
-        "interface GigabitEthernet4/4",
-        "interface GigabitEthernet4/5",
-        "interface GigabitEthernet4/6",
-        "interface GigabitEthernet4/7",
-        "interface GigabitEthernet4/8",
-    ]
-    for idx, linespec in enumerate(inputs):
-        test_result = parse_c01.insert_after(
-            linespec, " shutdown", exactmatch=True, atomic=False
-        )
-        correct_result = [inputs[idx]]
-        assert correct_result == test_result
-    parse_c01.commit()
-
-    ## Ensure we inserted the text at the right line number
-    ##   i.e. it should be immediately below the interface line
-    correct_result_dict = {
-        23: " shutdown",
-        30: " shutdown",
-        36: " shutdown",
-        40: " shutdown",
-        45: " shutdown",
-        50: " shutdown",
-        55: " shutdown",
-    }
-    for idx, correct_result in correct_result_dict.items():
-        assert parse_c01.ConfigObjs[idx].text == correct_result
-
-        # The parent line should be immediately above it
-        correct_parent = parse_c01.ConfigObjs[idx - 1]
-        assert parse_c01.ConfigObjs[idx].parent == correct_parent
-
-
-def testValues_insert_after_nonatomic_01(parse_c01):
-    inputs = [
-        "interface GigabitEthernet4/1",
-        "interface GigabitEthernet4/2",
-        "interface GigabitEthernet4/3",
-        "interface GigabitEthernet4/4",
-        "interface GigabitEthernet4/5",
-        "interface GigabitEthernet4/6",
-        "interface GigabitEthernet4/7",
-        "interface GigabitEthernet4/8",
-    ]
-    for idx, linespec in enumerate(inputs):
-        test_result = parse_c01.insert_after(
-            linespec, " shutdown", exactmatch=True, atomic=False
-        )
-        correct_result = [inputs[idx]]
-        assert correct_result == test_result
-    ## NOTE: We DO NOT commit here to test as a non-atomic change
-
-    ## Ensure we inserted the text at the right line number
-    ##   i.e. it should be immediately below the interface line
-    correct_result_dict = {
-        23: " shutdown",
-        30: " shutdown",
-        36: " shutdown",
-        40: " shutdown",
-        45: " shutdown",
-        50: " shutdown",
-        55: " shutdown",
-    }
-    for idx, correct_result in correct_result_dict.items():
-        assert parse_c01.ConfigObjs[idx].text == correct_result
-
-
-def testValues_insert_after_nonatomic_02(parse_c01):
-    """Negative test.  We expect insert_after(atomic=False) to miss any children added like this at some point in the future I might fix insert_after so it knows how to correctly parse children"""
-    correct_result = [
-        "interface GigabitEthernet4/1",
-        #' shutdown',   <--- Intentionally commented out
-        " switchport",
-        " switchport access vlan 100",
-        " switchport voice vlan 150",
-        " power inline static max 7000",
-    ]
-    linespec = "interface GigabitEthernet4/1"
-    parse_c01.insert_after(linespec, " shutdown", exactmatch=True, atomic=False)
-    test_result = parse_c01.find_children(linespec)
-    ## NOTE: We DO NOT commit here to test as a non-atomic change
-
-    # the interface should *not* be shutdown, because I made a non-atomic change
-    assert correct_result == test_result
-
-
-def testValues_insert_after_child_atomic_01(parse_c01):
-    # FIXME
-    """We expect insert_after_child(atomic=True) to correctly parse children"""
-    correct_result = [
-        "interface GigabitEthernet4/1",
-        " switchport",
-        " switchport access vlan 100",
-        " switchport voice vlan 150",
-        " power inline static max 7000",
-        " shutdown",
-    ]
-    linespec = "interface GigabitEthernet4/1"
-    parse_c01.insert_after_child(
-        linespec, "power", " shutdown", exactmatch=True, atomic=True
-    )
-    test_result = parse_c01.find_children(linespec)
-
-    assert correct_result == test_result
-
-
-def testValues_insert_before_nonatomic_01(parse_c01):
-    inputs = [
-        "interface GigabitEthernet4/1",
-        "interface GigabitEthernet4/2",
-        "interface GigabitEthernet4/3",
-        "interface GigabitEthernet4/4",
-        "interface GigabitEthernet4/5",
-        "interface GigabitEthernet4/6",
-        "interface GigabitEthernet4/7",
-        "interface GigabitEthernet4/8",
-    ]
-    for idx, linespec in enumerate(inputs):
-        test_result = parse_c01.insert_before(
-            linespec, "default " + linespec, exactmatch=True, atomic=False
-        )
-        correct_result = [inputs[idx]]
-        assert correct_result == test_result
-
-
-def testValues_insert_before_atomic_01(parse_c01):
-    inputs = [
-        "interface GigabitEthernet4/1",
-        "interface GigabitEthernet4/2",
-        "interface GigabitEthernet4/3",
-        "interface GigabitEthernet4/4",
-        "interface GigabitEthernet4/5",
-        "interface GigabitEthernet4/6",
-        "interface GigabitEthernet4/7",
-        "interface GigabitEthernet4/8",
-    ]
-    for idx, linespec in enumerate(inputs):
-        test_result = parse_c01.insert_before(
-            linespec, "default " + linespec, exactmatch=True, atomic=True
-        )
-        correct_result = [inputs[idx]]
-        assert correct_result == test_result
 
 
 c01_default_gigabitethernets = """policy-map QOS_1
@@ -2944,52 +2788,6 @@ of all tresspassers.
 alias exec showthang show ip route vrf THANG""".splitlines()
 
 
-def testValues_renumbering_insert_before_nonatomic_01(
-    parse_c01, c01_default_gigethernets
-):
-    """Ensure we renumber lines after insert_before(atomic=False)"""
-    inputs = [
-        "interface GigabitEthernet4/1",
-        "interface GigabitEthernet4/2",
-        "interface GigabitEthernet4/3",
-        "interface GigabitEthernet4/4",
-        "interface GigabitEthernet4/5",
-        "interface GigabitEthernet4/6",
-        "interface GigabitEthernet4/7",
-        "interface GigabitEthernet4/8",
-    ]
-    for idx, linespec in enumerate(inputs):
-        parse_c01.insert_before(
-            linespec, "default " + linespec, exactmatch=True, atomic=False
-        )
-    test_result = parse_c01.ioscfg
-    correct_result = c01_default_gigabitethernets
-    assert correct_result == test_result
-
-
-def testValues_renumbering_insert_before_nonatomic_02(
-    parse_c01, c01_default_gigethernets
-):
-    """Ensure we renumber lines after insert_before(atomic=False)"""
-    inputs = [
-        "interface GigabitEthernet4/1",
-        "interface GigabitEthernet4/2",
-        "interface GigabitEthernet4/3",
-        "interface GigabitEthernet4/4",
-        "interface GigabitEthernet4/5",
-        "interface GigabitEthernet4/6",
-        "interface GigabitEthernet4/7",
-        "interface GigabitEthernet4/8",
-    ]
-    for idx, linespec in enumerate(inputs):
-        parse_c01.insert_before(
-            linespec, "default " + linespec, exactmatch=True, atomic=True
-        )
-    test_result = parse_c01.ioscfg
-    correct_result = c01_default_gigabitethernets
-    assert correct_result == test_result
-
-
 def testValues_find_objects_factory_01(parse_c01_factory):
     """Test whether find_objects returns the correct objects"""
 
@@ -3063,10 +2861,9 @@ def testValues_IOSIntfLine_find_objects_factory_02(
 
         correct_result02 = c01_insert_serial_replace
 
-        # Insert a line above the IOSIntfLine object
-        parse_c01_factory.insert_before(
-            "interface Serial 1/0", "default interface Serial 1/0"
-        )
+        obj = parse_c01_factory.find_objects("interface Serial 1/0")[0]
+        obj.insert_before("default interface Serial 1/0")
+
         # Replace text in the IOSIntfLine object
         parse_c01_factory.replace_lines(
             "interface Serial 1/0", "interface Serial 2/0", exactmatch=False

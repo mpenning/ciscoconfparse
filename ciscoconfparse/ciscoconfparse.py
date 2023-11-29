@@ -3323,42 +3323,6 @@ class ConfigList(MutableSequence):
         return bool(matching_conftext)
 
     # This method is on ConfigList()
-    @ junos_unsupported
-    @ logger.catch(reraise=True)
-    def insert_before_deprecated(self, exist_val, new_val, atomic=False):
-        """
-        Insert new_val before all occurances of exist_val.
-
-        Parameters
-        ----------
-        exist_val : str
-            An existing text value.  This may match multiple configuration entries.
-        new_val : str
-            A new value to be inserted in the configuration.
-        atomic : bool
-            A boolean that controls whether the config is reparsed after the insertion (default False)
-
-        Returns
-        -------
-        list
-            An ios-style configuration list (indented by stop_width for each configuration level).
-
-        Examples
-        --------
-
-        >>> parse = CiscoConfParse(config=["a a", "b b", "c c", "b b"])
-        >>> # Insert 'g' before any occurance of 'b'
-        >>> retval = parse.insert_before("b b", "X X")
-        >>> parse.commit()
-        >>> parse.ioscfg
-        ... ["a a", "X X", "b b", "c c", "X X", "b b"]
-        >>>
-        """
-        raise NotImplementedError()
-
-    ##############################################################################
-
-    # This method is on ConfigList()
     @ logger.catch(reraise=True)
     def insert_before(self, exist_val=None, new_val=None, atomic=False):
         """
