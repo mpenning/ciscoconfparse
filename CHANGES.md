@@ -4,6 +4,18 @@
 - Summary:
     - Insert something here
 
+## Version: 1.9.44
+
+- Released: 2023-11-29
+- Summary:
+    - Documentation updates
+    - Remove `ciscoconfparse.find_blocks()`
+    - Remove `ciscoconfparse.find_children()`
+    - Remove `ciscoconfparse.find_all_children()`
+    - Remove `ciscoconfparse.insert_before()`
+    - Remove `ciscoconfparse.insert_after()`
+    - Remove `ciscoconfparse.insert_after_child()`
+
 ## Version: 1.9.43
 
 - Released: 2023-11-29
