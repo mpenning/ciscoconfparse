@@ -365,12 +365,14 @@ network engineering toolbox; others regard it as a form of artwork.
   - Where `S1313` is a False-positive that [SonarCloud](https://sonarcloud.io) flags in [CiscoConfParse](https://github.com/mpenning/ciscoconfparse/).
   - Those `#pragma warning` lines should be carefully-fenced to ensure that we don't disable a [SonarCloud](https://sonarcloud.io/) alert that is useful.
 
-The project\'s [test workflow][1] checks ciscoconfparse on Python versions 3.7 and higher, as well as a [pypy JIT][22] executable.
-
-Caveats:
+### Semantic Versioning and Conventional Commits
 
 - At this point, [CiscoConfParse][3] does NOT adhere to [Semantic Versioning][49]
 - Although we added [commitizen][48] as a dev dependency, we are NOT enforcing commit rules (such as [Conventional Commits][50]) yet.
+
+### Execute Unit tests
+
+The project\'s [test workflow][1] checks ciscoconfparse on Python versions 3.7 and higher, as well as a [pypy JIT][22] executable.
 
 If you already git cloned the repo and want to manually run tests either run with `make test` from the base directory, or manually run with [`pytest`][63] in a unix-like system...
 
@@ -379,6 +381,17 @@ $ cd tests
 $ pytest -vvs ./test_*py
 ...
 ```
+
+### Execute Miss Report
+
+If you already have have `pytest` and `pytest-cov` installed, run a test line miss report as shown below.
+
+```shell
+$ cd tests
+$ pytest --cov-report=term-missing --cov=ciscoconfparse ./
+...
+```
+
 
 ## Editing the Package
 

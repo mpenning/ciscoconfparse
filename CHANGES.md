@@ -4,8 +4,19 @@
 - Summary:
     - Insert something here
 
+## Version: 1.9.41
+
+- Released: 2023-11-29
+- Summary:
+    - Documentation updates
+    - Fix python ALE linter complaints
+    - Update `deploy_docs.go`
+    - Add new `Diff()` object
+    - Add `list()` inputs to `find_parent_objects()` and `find_child_objects()`  
+
 ## Version: 1.9.40
 
+- Released: 2023-11-25
 - Summary:
     - Add a new Diff() implementation based on `github.com/netdevops/hier_config`
     - Add deprecation warning on `HDiff()`
