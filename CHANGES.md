@@ -4,6 +4,19 @@
 - Summary:
     - Insert something here
 
+## Version: 1.9.42
+
+- Released: 2023-11-29
+- Summary:
+    - Documentation updates
+    - Remove `ciscoconfparse.sync_diff()`
+    - Remove `ciscoconfparse.req_cfgspec_all_diff()`
+    - Remove `ciscoconfparse.req_cfgspec_excl_diff()`
+    - Remove `ccp_util.dns_lookup()`
+    - Remove `ccp_util.dns6_lookup()`
+    - Remove `ccp_util.reverse_dns_lookup()`
+    - Remove `HDiff()`
+
 ## Version: 1.9.41
 
 - Released: 2023-11-29
