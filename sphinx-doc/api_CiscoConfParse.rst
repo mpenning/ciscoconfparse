@@ -8,6 +8,11 @@ ciscoconfparse.CiscoConfParse Object
    :undoc-members:
    :inherited-members:
 
+.. autoclass:: ciscoconfparse.Diff
+   :members:
+   :undoc-members:
+   :inherited-members:
+
 .. autoclass:: ciscoconfparse.HDiff
    :members:
    :undoc-members:
