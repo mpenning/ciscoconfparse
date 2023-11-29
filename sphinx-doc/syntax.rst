@@ -15,7 +15,7 @@ This configuration parse reads the configuration as ``ios`` syntax by default:
    >>>
 
 .. warning::
-   Only set ``factory=True`` if you know what  you are doing.  See
+   Only set ``factory=True`` if you know what you are doing.  See :ref:`factory`
 
 This configuration parse explicitly reads the configuration as ``asa`` syntax:
 
