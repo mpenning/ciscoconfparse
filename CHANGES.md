@@ -4,6 +4,15 @@
 - Summary:
     - Insert something here
 
+## Version: 1.9.43
+
+- Released: 2023-11-29
+- Summary:
+    - Documentation updates
+    - Remove `ciscoconfparse.find_parents_w_child()`
+    - Remove `ciscoconfparse.find_parents_wo_child()`
+    - Remove `ciscoconfparse.find_children_w_parents()`
+
 ## Version: 1.9.42
 
 - Released: 2023-11-29
