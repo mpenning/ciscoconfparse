@@ -2,6 +2,10 @@
 :class:`~ciscoconfparse.CiscoConfParse` Legacy Syntax
 =====================================================
 
+.. warning::
+   The methods covered in this section are only for documentation purposes.  As of version 1.9.43, they are offically removed from CiscoConfParse.
+
+
 This section will cover the legacy :class:`~ciscoconfparse.CiscoConfParse()`
 syntax; these were the original methods before version 1.0.0; legacy
 methods always returned text strings.  This makes them easier to learn, but
