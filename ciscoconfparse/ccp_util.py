@@ -2803,92 +2803,6 @@ def dns_query(input_str="", query_type="", server="", timeout=2.0):
 
 
 @logger.catch(reraise=True)
-@deprecated(reason="dns_lookup() is obsolete; use dns_query() instead.  dns_lookup() will be removed", version='1.7.0')
-def dns_lookup(input_str, timeout=3, server="", record_type="A"):
-    """Perform a simple DNS lookup, return results in a dictionary"""
-    if not isinstance(input_str, str):
-        raise ValueError
-
-    if not isinstance(timeout, (int, float)):
-        error = f"An integer is required for `timeout`; not {timeout} {type(timeout)}"
-        logger.error(error)
-        raise DNSTimeoutError(error)
-
-    if not isinstance(server, str):
-        error = f"An string is required for `server`; not {server} {type(server)}"
-        logger.error(error)
-        raise DNSTimeoutError(error)
-
-    if not isinstance(record_type, str):
-        error = f"An string is required for `record_type`; not {record_type} {type(record_type)}."
-        logger.error(error)
-        raise DNSTimeoutError(error)
-
-    rr = Resolver()
-    rr.timeout = float(timeout)
-    rr.lifetime = float(timeout)
-    if server != "":
-        rr.nameservers = [server]
-    # dns_session = rr.resolve(input_str, record_type)
-    dns_session = rr.query(input_str, record_type)
-    responses = list()
-    for rdata in dns_session:
-        responses.append(str(rdata))
-
-    """
-    from dns import resolver
-    rr = resolver.Resolver()
-    rr.nameservers = ['8.8.8.8']
-    rr.timeout = 2.0
-    foo = rr.resolve('cisco.com', 'A')
-    for rdata in foo:
-        print("ADDR", rdata)
-    """
-
-    try:
-        return {
-            "record_type": record_type,
-            "addrs": responses,
-            "error": "",
-            "name": input_str,
-        }
-    except DNSException as e:
-        return {
-            "record_type": record_type,
-            "addrs": [],
-            "error": repr(e),
-            "name": input_str,
-        }
-
-
-@logger.catch(reraise=True)
-@deprecated(reason="dns6_lookup() is obsolete; use dns_query() instead.  dns6_lookup() will be removed", version='1.7.0')
-def dns6_lookup(input_str, timeout=3, server=""):
-    """Perform a simple DNS lookup, return results in a dictionary"""
-    rr = Resolver()
-    rr.timeout = float(timeout)
-    rr.lifetime = float(timeout)
-    if server:
-        rr.nameservers = [server]
-    try:
-        records = rr.query(input_str, "AAAA")
-        return {
-            "addrs": [ii.address for ii in records],
-            "error": "",
-            "name": input_str,
-        }
-    except DNSException as e:
-        return {
-            "addrs": [],
-            "error": repr(e),
-            "name": input_str,
-        }
-
-
-_REVERSE_DNS_REGEX = re.compile(r"^\s*\d+\.\d+\.\d+\.\d+\s*$")
-
-
-@logger.catch(reraise=True)
 def check_valid_ipaddress(input_addr=None):
     """
     Accept an input string with an IPv4 or IPv6 address. If the address is
@@ -2919,40 +2833,6 @@ def check_valid_ipaddress(input_addr=None):
     if not (ipaddr_family == 4 or ipaddr_family == 6):
         raise RequirementFailure(error)
     return (input_addr, ipaddr_family)
-
-
-@logger.catch(reraise=True)
-@deprecated(reason="reverse_dns_lookup() is obsolete; use dns_query() instead.  reverse_dns_lookup() will be removed", version='1.7.0')
-def reverse_dns_lookup(input_str, timeout=3.0, server="4.2.2.2", proto="udp"):
-    """Perform a simple reverse DNS lookup on an IPv4 or IPv6 address; return results in a python dictionary"""
-    if not isinstance(proto, str) and (proto == "udp" or proto == "tcp"):
-        raise ValueError
-
-    if not isinstance(float(timeout), float) and float(timeout) > 0.0:
-        raise ValueError
-
-
-    addr, addr_family = check_valid_ipaddress(input_str)
-    assert addr_family == 4 or addr_family == 6
-
-    if proto != "tcp" and proto != "udp":
-        raise ValueError()
-
-    raw_result = dns_query(input_str, query_type="PTR", server=server, timeout=timeout)
-    if not isinstance(raw_result, set):
-        raise ValueError
-
-    assert len(raw_result) >= 1
-    tmp = raw_result.pop()
-    if not isinstance(tmp, DNSResponse):
-        raise ValueError
-
-
-    if tmp.has_error is True:
-        retval = {'addrs': [input_str], 'error': str(tmp.error_str), 'name': tmp.result_str}
-    else:
-        retval = {'addrs': [input_str], 'error': '', 'name': tmp.result_str}
-    return retval
 
 
 class CiscoIOSInterface(object):

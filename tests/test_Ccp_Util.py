@@ -44,7 +44,7 @@ from ciscoconfparse.ccp_util import CiscoRange
 from ciscoconfparse.ccp_util import CiscoIOSInterface, CiscoIOSXRInterface
 from ciscoconfparse.ccp_util import _RGX_IPV4ADDR, _RGX_IPV6ADDR
 from ciscoconfparse.ccp_util import IPv6Obj, IPv4Obj, L4Object, ip_factory
-from ciscoconfparse.ccp_util import dns_lookup, reverse_dns_lookup, collapse_addresses
+from ciscoconfparse.ccp_util import collapse_addresses
 import sys
 
 sys.path.insert(0, "..")
@@ -638,34 +638,6 @@ def test_collapse_addresses_02():
     collapsed_list = sorted(collapse_addresses(net_list))
     assert collapsed_list[0].network_address == IPv4Obj('192.0.0.0/26').ip
     assert collapsed_list[1].network_address == IPv4Obj('192.0.2.128/25').ip
-
-
-def test_dns_lookup():
-    # Use my hostname to test...
-    test_hostname = "pennington.net"
-    result_correct_address = "65.19.187.2"
-    result_correct = {"addrs": [result_correct_address], "name": test_hostname, "error": "", "record_type": "A"}
-    try:
-        test_result = dns_lookup(test_hostname, timeout=0.45)
-    except Exception as eee:
-        error = f"Skipping test_dns_lookup due to Exception: {eee}"
-        logger.warning(error)
-        pytest.skip(error)
-
-    if test_result["error"] != "":
-        assert dns_lookup(test_hostname) == result_correct
-    else:
-        pytest.skip(test_result["error"])
-
-
-def test_reverse_dns_lookup():
-
-    #result_correct = {"addrs": ["127.0.0.1"], "name": "localhost.", "error": ""}
-    try:
-        test_result = reverse_dns_lookup("127.0.0.1", timeout=0.1)
-        assert test_result["error"] == ""
-    except Exception:
-        pytest.skip(test_result["error"])
 
 
 def test_CiscoIOSInterface_01():

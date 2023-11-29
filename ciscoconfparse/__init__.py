@@ -48,10 +48,7 @@ from ciscoconfparse.ccp_util import collapse_addresses
 from ciscoconfparse.ccp_util import L4Object
 from ciscoconfparse.ccp_util import DNSResponse
 from ciscoconfparse.ccp_util import dns_query
-from ciscoconfparse.ccp_util import dns_lookup
-from ciscoconfparse.ccp_util import dns6_lookup
 from ciscoconfparse.ccp_util import check_valid_ipaddress
-from ciscoconfparse.ccp_util import reverse_dns_lookup
 
 from dns.resolver import Resolver
 from dns.exception import DNSException
