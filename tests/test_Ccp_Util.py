@@ -36,21 +36,21 @@ r""" test_Ccp_Util.py - Parse, Query, Build, and Modify IOS-style configs
 #pragma warning disable S6395
 
 
+import ipaddress
+from ipaddress import IPv4Network, IPv6Network, IPv4Address, IPv6Address
+from loguru import logger
+import pytest
+from ciscoconfparse.ccp_util import CiscoRange
+from ciscoconfparse.ccp_util import CiscoIOSInterface, CiscoIOSXRInterface
+from ciscoconfparse.ccp_util import _RGX_IPV4ADDR, _RGX_IPV6ADDR
+from ciscoconfparse.ccp_util import IPv6Obj, IPv4Obj, L4Object, ip_factory
+from ciscoconfparse.ccp_util import dns_lookup, reverse_dns_lookup, collapse_addresses
 import sys
-import os
 
 sys.path.insert(0, "..")
 
-from ciscoconfparse.ccp_util import dns_lookup, reverse_dns_lookup, collapse_addresses
-from ciscoconfparse.ccp_util import IPv6Obj, IPv4Obj, L4Object, ip_factory
-from ciscoconfparse.ccp_util import _RGX_IPV4ADDR, _RGX_IPV6ADDR
-from ciscoconfparse.ccp_util import CiscoIOSInterface, CiscoIOSXRInterface
-from ciscoconfparse.ccp_util import CiscoRange
-import pytest
 
-from loguru import logger
-from ipaddress import IPv4Network, IPv6Network, IPv4Address, IPv6Address
-import ipaddress
+
 
 @pytest.mark.parametrize(
     "addr", ["192.0.2.1", "4.2.2.2", "10.255.255.255", "127.0.0.1",]
@@ -138,13 +138,13 @@ def testL4Object_asa_range01():
 def testL4Object_asa_lt01():
     pp = L4Object(protocol="tcp", port_spec="lt echo", syntax="asa")
     assert pp.protocol == "tcp"
-    assert pp.port_list ==sorted(range(1, 7))
+    assert pp.port_list == sorted(range(1, 7))
 
 
 def testL4Object_asa_gt01():
     pp = L4Object(protocol="tcp", port_spec="gt 65534", syntax="asa")
     assert pp.protocol == "tcp"
-    assert pp.port_list ==[65535]
+    assert pp.port_list == [65535]
 
 
 @pytest.mark.xfail(
@@ -236,16 +236,19 @@ def testIPv4Obj_set_masklen01():
         assert test_object.prefixlen == result_correct_masklen
         assert test_object.prefixlength == result_correct_masklen
 
+
 def testIPv4Obj_network_offset():
     test_object = IPv4Obj("192.0.2.28/24")
     assert test_object.masklength == 24
     assert test_object.network_offset == 28
+
 
 def testIPv4Obj_set_network_offset():
     test_object = IPv4Obj("192.0.2.28/24")
     # Change the last octet to be 200...
     test_object.network_offset = 200
     assert test_object == IPv4Obj("192.0.2.200/24")
+
 
 def testIPv4Obj_attributes_01():
     ## Ensure that attributes are accessible and pass the smell test
@@ -289,18 +292,18 @@ def test_ip_factory_inputs_01():
         # Test format...
         #    (<dict with test inputs>, result_correct)
         ({'val': '1.1.1.1/16', 'stdlib': False}, IPv4Obj("1.1.1.1/16")),
-        ({'val': '1.1.1.1/16', 'stdlib': True},  IPv4Network("1.1.1.1/16", strict=False)),
+        ({'val': '1.1.1.1/16', 'stdlib': True}, IPv4Network("1.1.1.1/16", strict=False)),
         ({'val': '1.1.1.1/32', 'stdlib': False}, IPv4Obj("1.1.1.1/32")),
-        ({'val': '1.1.1.1/32', 'stdlib': True},  IPv4Address("1.1.1.1")),
+        ({'val': '1.1.1.1/32', 'stdlib': True}, IPv4Address("1.1.1.1")),
         ({'val': '2b00:cd80:14:10::1/64', 'stdlib': False}, IPv6Obj("2b00:cd80:14:10::1/64")),
         ({'val': '2b00:cd80:14:10::1/64', 'stdlib': True}, IPv6Network("2b00:cd80:14:10::/64", strict=True)),
         ({'val': '::1/64', 'stdlib': False}, IPv6Obj("::1/64")),
-        ({'val': '::1/64', 'stdlib': True},  IPv6Network("::0/64")),
+        ({'val': '::1/64', 'stdlib': True}, IPv6Network("::0/64")),
         ({'val': '::1/128', 'stdlib': False}, IPv6Obj("::1/128")),
-        ({'val': '::1/128', 'stdlib': True},  IPv6Address("::1")),
-        )
+        ({'val': '::1/128', 'stdlib': True}, IPv6Address("::1")),
+    )
     for test_args, result_correct in test_params:
-        assert ip_factory(**test_args)==result_correct
+        assert ip_factory(**test_args) == result_correct
 
 
 def test_ip_factory_inputs_02():
@@ -354,6 +357,7 @@ def test_ip_factory_inputs_02():
     with pytest.raises(ipaddress.AddressValueError):
         ip_factory("FE80:AAAA::DEAD:BEEEEEEEEEEF", stdlib=False, mode="auto_detect")
 
+
 def testIPv6Obj_attributes_01():
     ## Ensure that attributes are accessible and pass the smell test
     test_object = IPv6Obj("2001::dead:beef/64")
@@ -398,15 +402,18 @@ def testIPv6Obj_attributes_01():
     for attribute, result_correct in results_correct:
 
         assert getattr(test_object, attribute) == result_correct
- 
+
+
 def testIPv6Obj_network_offset_01():
     test_object = IPv6Obj("2001::dead:beef/64")
     assert test_object.network_offset == 3735928559
+
 
 def testIPv6Obj_set_network_offset_01():
     test_object = IPv6Obj("2001::dead:beef/64")
     test_object.network_offset = 200
     assert test_object == IPv6Obj("2001::c8/64")
+
 
 def testIPv4Obj_sort_01():
     """Simple IPv4Obj sorting test"""
@@ -597,35 +604,40 @@ def testIPv6Obj_lt_01():
     """Simple less_than test"""
     assert IPv6Obj("::1") < IPv6Obj("::2")
 
+
 def testIPv6Obj_IPv4_embedded_in_IPv6_01():
     """Test IPv6Obj with an IPv4 address (192.168.1.254) embedded in an IPv6 address"""
     assert IPv6Obj("::192.168.1.254") == IPv6Obj("::c0a8:1fe")
+
 
 def testIPv6Obj_IPv4_embedded_in_IPv6_02():
     """Test IPv6Obj with an IPv4 address (192.0.2.33) embedded in an IPv6 address"""
     assert IPv6Obj("2001:db8:122:344::192.0.2.33") == IPv6Obj("2001:db8:122:344::c000:221")
 
+
 def testIPv6Obj_IPv4_embedded_in_IPv6_03():
     """Test IPv6Obj with an RFC 6052 NAT64 prefix (64:ff9b::) using IPv4 address (10.20.0.1) embedded in an IPv6 address"""
     assert IPv6Obj("64:ff9b::192.0.2.33") == IPv6Obj("64:ff9b::c000:221")
+
 
 def testIPv6Obj_IPv4_embedded_in_IPv6_04():
     """Test IPv6Obj with an IPv4 address (192.0.2.4) embedded in an IPv6 address"""
     assert IPv6Obj("::ffff:192.0.2.4") == IPv6Obj("::ffff:c000:204")
 
+
 def test_collapse_addresses_01():
 
     net_collapsed = ipaddress.collapse_addresses([IPv4Network('192.0.0.0/22'), IPv4Network('192.0.2.128/25')])
     for idx, entry in enumerate(net_collapsed):
-        if idx==0:
+        if idx == 0:
             assert entry == IPv4Network("192.0.0.0/22")
 
 
 def test_collapse_addresses_02():
     net_list = [IPv4Obj('192.0.2.128/25'), IPv4Obj('192.0.0.0/26')]
     collapsed_list = sorted(collapse_addresses(net_list))
-    assert collapsed_list[0].network_address==IPv4Obj('192.0.0.0/26').ip
-    assert collapsed_list[1].network_address==IPv4Obj('192.0.2.128/25').ip
+    assert collapsed_list[0].network_address == IPv4Obj('192.0.0.0/26').ip
+    assert collapsed_list[1].network_address == IPv4Obj('192.0.2.128/25').ip
 
 
 def test_dns_lookup():
@@ -655,6 +667,7 @@ def test_reverse_dns_lookup():
     except Exception:
         pytest.skip(test_result["error"])
 
+
 def test_CiscoIOSInterface_01():
     """Check that a single number is parsed correctly"""
     uut = CiscoIOSInterface("Ethernet1")
@@ -665,6 +678,7 @@ def test_CiscoIOSInterface_01():
     assert uut.subinterface is None
     assert uut.channel is None
     assert uut.interface_class is None
+
 
 def test_CiscoIOSInterface_02():
     """Check that a card and port is parsed correctly"""
@@ -677,6 +691,7 @@ def test_CiscoIOSInterface_02():
     assert uut.channel is None
     assert uut.interface_class is None
 
+
 def test_CiscoIOSInterface_03():
     """Check that a card and large port-number is parsed correctly"""
     uut = CiscoIOSInterface("Ethernet1/4242")
@@ -687,6 +702,7 @@ def test_CiscoIOSInterface_03():
     assert uut.subinterface is None
     assert uut.channel is None
     assert uut.interface_class is None
+
 
 def test_CiscoIOSInterface_04():
     """Check that a card, port and subinterface is parsed correctly"""
@@ -699,6 +715,7 @@ def test_CiscoIOSInterface_04():
     assert uut.channel is None
     assert uut.interface_class is None
 
+
 def test_CiscoIOSInterface_05():
     """Check that a card, slot, port  is parsed correctly"""
     uut = CiscoIOSInterface("Ethernet1/3/42")
@@ -709,6 +726,7 @@ def test_CiscoIOSInterface_05():
     assert uut.subinterface is None
     assert uut.channel is None
     assert uut.interface_class is None
+
 
 def test_CiscoIOSInterface_06():
     """Check that a card, slot, port and subinterface  is parsed correctly"""
@@ -721,6 +739,7 @@ def test_CiscoIOSInterface_06():
     assert uut.channel is None
     assert uut.interface_class is None
 
+
 def test_CiscoIOSInterface_07():
     """Check that a card, slot, port, subinterface, and channel is parsed correctly"""
     uut = CiscoIOSInterface("Ethernet1/3/42.5:9")
@@ -731,6 +750,7 @@ def test_CiscoIOSInterface_07():
     assert uut.subinterface == 5
     assert uut.channel == 9
     assert uut.interface_class is None
+
 
 def test_CiscoIOSInterface_08():
     """Check that a card, slot, port, subinterface, and channel is parsed correctly from a dict"""
@@ -754,6 +774,7 @@ def test_CiscoIOSInterface_08():
     assert uut.digit_separator == "/"
     assert uut.interface_class is None
 
+
 def test_CiscoIOSInterface_09():
     """Check that a port is parsed correctly from a dict"""
     uut = CiscoIOSInterface(
@@ -764,7 +785,7 @@ def test_CiscoIOSInterface_09():
             'port': 1,
             'digit_separator': None,
             'subinterface': None,
-            'channel':None,
+            'channel': None,
             'interface_class': None,
         })
     assert uut.prefix == "Ethernet"
@@ -776,6 +797,7 @@ def test_CiscoIOSInterface_09():
     assert uut.digit_separator is None
     assert uut.interface_class is None
 
+
 def test_CiscoIOSInterface_10():
     """Check that a card, slot, port, subinterface, and channel is parsed correctly"""
     uut = CiscoIOSInterface("Serial1/3/42.5:9 multipoint")
@@ -786,6 +808,7 @@ def test_CiscoIOSInterface_10():
     assert uut.subinterface == 5
     assert uut.channel == 9
     assert uut.interface_class == "multipoint"
+
 
 def test_CiscoRange_01():
     """Basic vlan range test"""
@@ -826,7 +849,7 @@ def test_CiscoRange_06():
     """Basic slot range test"""
     result_correct = {"1/1", "1/2", "1/3", "1/4", "1/5"}
     uut_str = "1/1-3,4,5"
-    # the CiscoRange() result_type None is a CiscoIOSInterface() type with a 
+    # the CiscoRange() result_type None is a CiscoIOSInterface() type with a
     #     port attribute...
     assert CiscoRange(uut_str, result_type=CiscoIOSInterface).as_set(result_type=str) == result_correct
     assert CiscoRange(uut_str).iterate_attribute == "port"
@@ -894,11 +917,13 @@ def test_CiscoRange_15():
     uut_str = "Eth 2/1/1,2,3-5"
     assert CiscoRange(uut_str).as_set(result_type=str) == result_correct
 
+
 def test_CiscoRange_16():
     """Basic interface port range test"""
     result_correct = {"Eth7", "Eth8", "Eth9"}
     uut_str = "Eth 7-9"
     assert CiscoRange(uut_str).as_set(result_type=str) == result_correct
+
 
 def test_CiscoRange_17():
     """Basic interface slot and port range test"""
@@ -906,11 +931,13 @@ def test_CiscoRange_17():
     uut_str = "Eth 1/7-9"
     assert CiscoRange(uut_str).as_set(result_type=str) == result_correct
 
+
 def test_CiscoRange_18():
     """Basic interface slot, card, and port range test"""
     result_correct = {"Eth1/2/7", "Eth1/2/8", "Eth1/2/9"}
     uut_str = "Eth 1/2/7-9"
     assert CiscoRange(uut_str).as_set(result_type=str) == result_correct
+
 
 def test_CiscoRange_19():
     """Basic interface slot, card, port, and subinterface range test"""
@@ -918,17 +945,20 @@ def test_CiscoRange_19():
     uut_str = "Eth 1/2/3.7-9"
     assert CiscoRange(uut_str).as_set(result_type=str) == result_correct
 
+
 def test_CiscoRange_20():
     """Basic interface slot, card, port, subinterface and channel range test"""
     result_correct = {"Eth1/2/3.4:7", "Eth1/2/3.4:8", "Eth1/2/3.4:9"}
     uut_str = "Eth 1/2/3.4:7-9"
     assert CiscoRange(uut_str).as_set(result_type=str) == result_correct
 
+
 def test_CiscoRange_21():
     """Basic interface slot, card, port, subinterface, channel and interface_class range test"""
     result_correct = {"Eth1/2/3.4:7 multipoint", "Eth1/2/3.4:8 multipoint", "Eth1/2/3.4:9 multipoint"}
     uut_str = "Eth 1/2/3.4:7-9 multipoint"
     assert CiscoRange(uut_str).as_set(result_type=str) == result_correct
+
 
 def test_CiscoRange_22():
     """Parse a string with a common prefix on all of the CiscoRange() inputs"""
@@ -955,6 +985,7 @@ def test_CiscoRange_23():
     # CiscoRange(text="foo", result_type=None) returns CiscoIOSInterface() instances...
     assert CiscoRange(uut_str, result_type=None).as_set(result_type=None) == result_correct
 
+
 def test_CiscoRange_24():
     """Check that the exact results are correct for CiscoRange().as_list() with a redundant input ('Eth1/1')"""
     result_correct = [
@@ -969,10 +1000,12 @@ def test_CiscoRange_24():
     # CiscoRange(text="foo", result_type=None) returns CiscoIOSInterface() instances...
     assert CiscoRange(uut_str, result_type=None).as_list(result_type=None) == result_correct
 
+
 def test_CiscoRange_compressed_str_01():
     """compressed_str test with a very basic set of vlan numbers"""
     uut_str = "1,2,911"
     assert CiscoRange(uut_str, result_type=int).as_compressed_str() == "1,2,911"
+
 
 def test_CiscoRange_compressed_str_02():
     """compressed_str test with vlan number ranges"""
@@ -985,6 +1018,7 @@ def test_CiscoRange_contains_01():
     uut_str = "Ethernet1/1-20"
     # Ethernet1/5 is in CiscoRange("Ethernet1/1-20")...
     assert CiscoIOSInterface("Ethernet1/5") in CiscoRange(uut_str)
+
 
 def test_CiscoRange_contains_02():
     """Check that the exact results are correct that a CiscoRange() does not contain an input"""
