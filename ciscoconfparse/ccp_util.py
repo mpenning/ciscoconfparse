@@ -2931,9 +2931,9 @@ def reverse_dns_lookup(input_str, timeout=3.0, server="4.2.2.2", proto="udp"):
     if not isinstance(float(timeout), float) and float(timeout) > 0.0:
         raise ValueError
 
+
     addr, addr_family = check_valid_ipaddress(input_str)
-    if not (addr_family == 4 or addr_family == 6):
-        raise RequirementFailure()
+    assert addr_family == 4 or addr_family == 6
 
     if proto != "tcp" and proto != "udp":
         raise ValueError()
@@ -2942,11 +2942,11 @@ def reverse_dns_lookup(input_str, timeout=3.0, server="4.2.2.2", proto="udp"):
     if not isinstance(raw_result, set):
         raise ValueError
 
-    if len(raw_result) == 0:
-        raise RequirementFailure()
+    assert len(raw_result) >= 1
     tmp = raw_result.pop()
     if not isinstance(tmp, DNSResponse):
         raise ValueError
+
 
     if tmp.has_error is True:
         retval = {'addrs': [input_str], 'error': str(tmp.error_str), 'name': tmp.result_str}
