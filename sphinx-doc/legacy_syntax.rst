@@ -3,16 +3,14 @@
 =====================================================
 
 .. warning::
-   The methods covered in this section are only for documentation purposes.  As of version 1.9.43, they are offically removed from CiscoConfParse.
+   The methods covered in this section are only for documentation purposes.  As of version 1.9.43, they are offically removed from CiscoConfParse.  Refer to the :ref:`tutorial` for the latest API information.
 
 
 This section will cover the legacy :class:`~ciscoconfparse.CiscoConfParse()`
 syntax; these were the original methods before version 1.0.0; legacy
 methods always returned text strings.  This makes them easier to learn, but
-harder to write complex scripts with.  There is nothing wrong with continuing to use these methods; however, you will probably find that your scripts are more
-efficient if you use the newer methods that manipulate
-:class:`~models_cisco.IOSCfgLine()` objects, which were introduced in
-version 1.0.0.
+harder to write complex scripts with.  There is nothing wrong with continuing to use these methods; however, they have been removed as of CiscoConfParse version 1.9.43.
+
 
 Baseline configuration
 ----------------------
