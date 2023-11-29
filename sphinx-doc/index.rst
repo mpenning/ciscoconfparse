@@ -12,6 +12,9 @@ Welcome to ciscoconfparse's documentation!
    legacy_syntax
    syntax_factory_intro
    syntax
+   syntax_ios
+   syntax_nxos
+   syntax_iosxr
    factory
    api
 
