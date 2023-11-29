@@ -11,6 +11,7 @@
     - Documentation updates
     - Fix python ALE linter complaints
     - Update `deploy_docs.go`
+    - Add new `hier_config` as a dependency
     - Add new `Diff()` object
     - Add `list()` inputs to `find_parent_objects()` and `find_child_objects()`  
 
