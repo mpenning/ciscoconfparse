@@ -878,10 +878,9 @@ class BaseCfgLine(metaclass=ABCMeta):
     # On BaseCfgLine()
     @junos_unsupported
     @logger.catch(reraise=True)
-    def append_to_family(
-        self, insertstr, indent=-1, auto_indent_width=1, auto_indent=False
-    ):
-        """Append an :class:`~models_cisco.IOSCfgLine` object with ``insertstr``
+    def append_to_family(self, insertstr, indent=-1, auto_indent_width=1, auto_indent=False):
+        """
+        Append an :class:`~models_cisco.IOSCfgLine` object with ``insertstr``
         as a child at the top of the current configuration family.
 
         ``insertstr`` is inserted at the top of the family to ensure there are no
@@ -894,6 +893,9 @@ class BaseCfgLine(metaclass=ABCMeta):
         If auto_indent is True, add ``insertstr`` with the correct left-indent
         level automatically.
 
+        Call :func:`~ciscoconfparse.CiscoConfParse.commit` if inserting something other
+        than a text configuration string.
+
         Parameters
         ----------
         insertstr : str
@@ -904,15 +906,18 @@ class BaseCfgLine(metaclass=ABCMeta):
             Amount of whitespace to automatically indent
         auto_indent : bool
             Automatically indent the child to ``auto_indent_width``
+
         Returns
         -------
         str
             The text matched by the regular expression group; if there is no match, None is returned.
+
         Examples
         --------
-        This example illustrates how you can use
-        :func:`~ccp_abc.append_to_family` to add a
+
+        This example illustrates how you can use :func:`~ccp_abc.append_to_family` to add a
         ``carrier-delay`` to each interface.
+
         .. code-block:: python
            :emphasize-lines: 14
            >>> from ciscoconfparse import CiscoConfParse

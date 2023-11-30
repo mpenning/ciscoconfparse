@@ -1202,50 +1202,6 @@ end"""
             assert correct_result == test_result
 
 
-def testValues_find_lines(parse_c01):
-    c01_intf = ["interface Serial 1/0"]
-    c01_find_gige_no_exactmatch = [
-        "interface GigabitEthernet4/1",
-        "interface GigabitEthernet4/2",
-        "interface GigabitEthernet4/3",
-        "interface GigabitEthernet4/4",
-        "interface GigabitEthernet4/5",
-        "interface GigabitEthernet4/6",
-        "interface GigabitEthernet4/7",
-        "interface GigabitEthernet4/8",
-    ]
-    find_lines_Values = (
-        # Ensure exact matches work regardless of the exactmatch boolean
-        ({"linespec": "interface Serial 1/0", "exactmatch": False}, c01_intf),
-        ({"linespec": "interface Serial 1/0", "exactmatch": True}, c01_intf),
-        # Ensure we can find string matches inside an interface config block
-        ({"linespec": "encapsulation", "exactmatch": False}, [" encapsulation ppp"]),
-        # Ensure exactmatch=False catches beginning phrases in the config
-        (
-            {"linespec": "interface GigabitEthernet4/", "exactmatch": False},
-            c01_find_gige_no_exactmatch,
-        ),
-        # Ensure exactmatch=False catches single words in the config
-        (
-            {"linespec": "igabitEthernet", "exactmatch": False},
-            c01_find_gige_no_exactmatch,
-        ),
-        # Negative test: matches are Case-Sensitive
-        ({"linespec": "GigaBitEtherNeT", "exactmatch": False}, []),
-        # Negative test for exactmatch=True
-        ({"linespec": "interface GigabitEthernet4/", "exactmatch": True}, []),
-        # Negative test for exactmatch=True and ignore_ws=False
-        (
-            {"linespec": "interface Serial1/0", "exactmatch": True, "ignore_ws": False},
-            [],
-        ),
-    )
-
-    for args, correct_result in find_lines_Values:
-        test_result = parse_c01.find_lines(**args)
-        assert correct_result == test_result
-
-
 def testValues_obj_insert_before_01():
     """test whether we can insert before IOSCfgLine() elements"""
     c01 = [
@@ -2161,25 +2117,23 @@ def testValues_Diff_09():
 
 
 def testValues_ignore_ws():
-    ## test find_lines with ignore_ws flag
     config = ["set snmp community read-only     myreadonlystring"]
     correct_result = config
-    cfg = CiscoConfParse(config)
-    test_result = cfg.find_lines(
+    parse = CiscoConfParse(config)
+    uut = parse.find_objects(
         "set snmp community read-only myreadonlystring", ignore_ws=True
     )
-    assert correct_result == test_result
+    assert correct_result == [ii.text for ii in uut]
 
 
 def testValues_negative_ignore_ws():
-    """test find_lines WITHOUT ignore_ws"""
     config = ["set snmp community read-only     myreadonlystring"]
     correct_result = list()
-    cfg = CiscoConfParse(config)
-    test_result = cfg.find_lines(
+    parse = CiscoConfParse(config)
+    uut = parse.find_objects(
         "set snmp community read-only myreadonlystring", ignore_ws=False
     )
-    assert correct_result == test_result
+    assert correct_result == uut
 
 
 def testValues_IOSCfgLine_all_parents(parse_c01):

@@ -949,6 +949,7 @@ class CiscoConfParse(object):
     @property
     @logger.catch(reraise=True)
     def text(self):
+        """Return a list containing all text configuration statements; it is an alias for ``CiscoConfParse().ioscfg``."""
         return self.ioscfg
 
     # This method is on CiscoConfParse()
@@ -987,7 +988,7 @@ class CiscoConfParse(object):
 
         Warnings
         --------
-        If you modify a configuration after parsing it with :class:`~ciscoconfparse.CiscoConfParse`, you *must* call :func:`~ciscoconfparse.CiscoConfParse.commit` or :func:`~ciscoconfparse.CiscoConfParse.atomic` before searching the configuration again with methods such as :func:`~ciscoconfparse.CiscoConfParse.find_objects` or :func:`~ciscoconfparse.CiscoConfParse.find_lines`.  Failure to call :func:`~ciscoconfparse.CiscoConfParse.commit` or :func:`~ciscoconfparse.CiscoConfParse.atomic` on config modifications could lead to unexpected search results.
+        If you modify a configuration after parsing it with :class:`~ciscoconfparse.CiscoConfParse`, you *must* call :func:`~ciscoconfparse.CiscoConfParse.commit` or :func:`~ciscoconfparse.CiscoConfParse.atomic` before searching the configuration again with methods such as :func:`~ciscoconfparse.CiscoConfParse.find_objects`.  Failure to call :func:`~ciscoconfparse.CiscoConfParse.commit` or :func:`~ciscoconfparse.CiscoConfParse.atomic` on config modifications could lead to unexpected search results.
 
         See Also
         --------
@@ -1003,7 +1004,7 @@ class CiscoConfParse(object):
 
         Warnings
         --------
-        If you modify a configuration after parsing it with :class:`~ciscoconfparse.CiscoConfParse`, you *must* call :func:`~ciscoconfparse.CiscoConfParse.commit` or :func:`~ciscoconfparse.CiscoConfParse.atomic` before searching the configuration again with methods such as :func:`~ciscoconfparse.CiscoConfParse.find_objects` or :func:`~ciscoconfparse.CiscoConfParse.find_lines`.  Failure to call :func:`~ciscoconfparse.CiscoConfParse.commit` or :func:`~ciscoconfparse.CiscoConfParse.atomic` on config modifications could lead to unexpected search results.
+        If you modify a configuration after parsing it with :class:`~ciscoconfparse.CiscoConfParse`, you *must* call :func:`~ciscoconfparse.CiscoConfParse.commit` or :func:`~ciscoconfparse.CiscoConfParse.atomic` before searching the configuration again with methods such as :func:`~ciscoconfparse.CiscoConfParse.find_objects`.  Failure to call :func:`~ciscoconfparse.CiscoConfParse.commit` or :func:`~ciscoconfparse.CiscoConfParse.atomic` on config modifications could lead to unexpected search results.
 
         See Also
         --------
@@ -1422,7 +1423,7 @@ class CiscoConfParse(object):
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
     def find_objects(self, linespec, exactmatch=False, ignore_ws=False):
-        """Find all :class:`~models_cisco.IOSCfgLine` objects whose text matches ``linespec`` and return the :class:`~models_cisco.IOSCfgLine` objects in a python list.  :func:`~ciscoconfparse.CiscoConfParse.find_objects` is similar to :func:`~ciscoconfparse.CiscoConfParse.find_lines`; however, the former returns a list of :class:`~models_cisco.IOSCfgLine` objects, while the latter returns a list of text configuration statements.  Going forward, I strongly encourage people to start using :func:`~ciscoconfparse.CiscoConfParse.find_objects` instead of :func:`~ciscoconfparse.CiscoConfParse.find_lines`.
+        """Find all :class:`~models_cisco.IOSCfgLine` objects whose text matches ``linespec`` and return the :class:`~models_cisco.IOSCfgLine` objects in a python list.
 
         Parameters
         ----------
@@ -1440,9 +1441,8 @@ class CiscoConfParse(object):
 
         Examples
         --------
-        This example illustrates the difference between
-        :func:`~ciscoconfparse.CiscoConfParse.find_objects` and
-        :func:`~ciscoconfparse.CiscoConfParse.find_lines`.
+        This example illustrates the use of :func:`~ciscoconfparse.CiscoConfParse.find_objects`
+
         >>> from ciscoconfparse import CiscoConfParse
         >>> config = [
         ...     '!',
@@ -1458,9 +1458,6 @@ class CiscoConfParse(object):
         >>> parse.find_objects(r'^interface')
         [<IOSCfgLine # 1 'interface Serial1/0'>, <IOSCfgLine # 4 'interface Serial1/1'>]
         >>>
-        >>> parse.find_lines(r'^interface')
-        ['interface Serial1/0', 'interface Serial1/1']
-        >>>
 
         """
         if self.debug > 0:
@@ -1471,37 +1468,6 @@ class CiscoConfParse(object):
         if ignore_ws:
             linespec = build_space_tolerant_regex(linespec)
         return self._find_line_OBJ(linespec, exactmatch)
-
-    # This method is on CiscoConfParse()
-    @logger.catch(reraise=True)
-    def find_lines(self, linespec, exactmatch=False, ignore_ws=False):
-        """This method is the equivalent of a simple configuration grep (Case-sensitive).
-
-        Parameters
-        ----------
-        linespec : str
-            Text regular expression for the line to be matched
-        exactmatch : bool
-            Defaults to False.  When set True, this option requires ``linespec`` match the whole configuration line, instead of a portion of the configuration line.
-        ignore_ws : bool
-            boolean that controls whether whitespace is ignored.  Default is False.
-
-        Returns
-        -------
-        list
-            A list of matching configuration lines
-        """
-        if ignore_ws:
-            linespec = build_space_tolerant_regex(linespec)
-
-        if exactmatch is False:
-            # Return the lines in self.ioscfg, which match linespec
-            return list(filter(re.compile(linespec).search, self.ioscfg))
-        else:
-            # Return the lines in self.ioscfg, which match (exactly) linespec
-            return list(
-                filter(re.compile("^%s$" % linespec).search, self.ioscfg),
-            )
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
@@ -4289,9 +4255,7 @@ def parse_global_options():
     )
     (opts, args) = pp.parse_args()
 
-    if opts.method == "find_lines":
-        diff = CiscoConfParse(config=opts.config).find_lines(opts.arg1)
-    elif opts.method == "find_children":
+    if opts.method == "find_children":
         diff = CiscoConfParse(config=opts.config).find_children(opts.arg1)
     elif opts.method == "find_all_children":
         diff = CiscoConfParse(config=opts.config).find_all_children(opts.arg1)
@@ -4318,7 +4282,6 @@ def parse_global_options():
         exit(1)
     elif opts.method == "help":
         print("Valid methods and their arguments:")
-        print("   find_lines:             arg1=linespec")
         print("   find_children:          arg1=linespec")
         print("   find_all_children:      arg1=linespec")
         print("   find_blocks:            arg1=linespec")
