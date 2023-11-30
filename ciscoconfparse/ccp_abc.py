@@ -909,7 +909,7 @@ class BaseCfgLine(metaclass=ABCMeta):
            !
            >>>
         """
-        ## Build the string to insert with proper indentation...
+        # Build the string to insert with proper indentation...
         if auto_indent:
             insertstr = (" " * (self.indent + auto_indent_width)) + insertstr.lstrip()
         elif indent > 0:
@@ -917,8 +917,8 @@ class BaseCfgLine(metaclass=ABCMeta):
         else:
             insertstr = insertstr.lstrip()
 
-        ## BaseCfgLine.append_to_family(), insert a single line after this
-        ##  object's children
+        # BaseCfgLine.append_to_family(), insert a single line after this
+        #  object's children
         try:
             last_child = self.all_children[-1]
             retval = self.confobj.insert_after(last_child, insertstr, atomic=False)
@@ -926,6 +926,21 @@ class BaseCfgLine(metaclass=ABCMeta):
             # The object has no children
             retval = self.confobj.insert_after(self, insertstr, atomic=False)
         return retval
+
+    @logger.catch(reraise=True)
+    def rstrip(self):
+        """Implement rstrip() on the BaseCfgLine().text"""
+        self._text = self._text.rstrip()
+
+    @logger.catch(reraise=True)
+    def lstrip(self):
+        """Implement lstrip() on the BaseCfgLine().text"""
+        self._text = self._text.lstrip()
+
+    @logger.catch(reraise=True)
+    def strip(self):
+        """Implement strip() on the BaseCfgLine().text"""
+        self._text = self._text.strip()
 
     # On BaseCfgLine()
     @junos_unsupported
