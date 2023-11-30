@@ -4,6 +4,13 @@
 - Summary:
     - Insert something here
 
+## Version: 1.9.45
+
+- Released: 2023-11-29
+- Summary:
+    - Documentation updates
+    - Remove `ccp_abc.BaseCfgLine()._objects_to_uncfg()`
+
 ## Version: 1.9.44
 
 - Released: 2023-11-29

@@ -353,6 +353,7 @@ network engineering toolbox; others regard it as a form of artwork.
 - [passlib](https://github.com/glic3rinu/passlib)
 - [toml](https://github.com/uiri/toml)
 - [dnspython](https://github.com/rthalley/dnspython)
+- [hier_config](https://github.com/netdevops/hier_config)
 - [loguru](https://github.com/Delgan/loguru)
 - [deprecated](https://github.com/tantale/deprecated)
 
@@ -382,11 +383,15 @@ $ pytest -vvs ./test_*py
 ...
 ```
 
-### Execute Miss Report
+### Execute Test Coverage Line-Miss Report
 
 If you already have have `pytest` and `pytest-cov` installed, run a test line miss report as shown below.
 
 ```shell
+$ # Install the latest ciscoconfparse
+$ # (assuming the latest code is on pypi)
+$ pip install -U ciscoconfparse
+$ pip install -U pytest-cov
 $ cd tests
 $ pytest --cov-report=term-missing --cov=ciscoconfparse ./
 ...
