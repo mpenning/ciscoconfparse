@@ -177,6 +177,7 @@ def testVal_BaseCfgLine_has_child_with_01():
 def testVal_BaseCfgLine_has_child_with_02():
     """Test BaseCfgLine().has_child_with()"""
     parse = CiscoConfParse(
+        # A fake double-indent on 'no ip proxy-arp'
         ["interface Ethernet0/0",
             " ip address 192.0.2.1 255.255.255.0",
             "  no ip proxy-arp",]
@@ -189,6 +190,7 @@ def testVal_BaseCfgLine_has_child_with_02():
 def testVal_BaseCfgLine_has_child_with_03():
     """Test BaseCfgLine().has_child_with()"""
     parse = CiscoConfParse(
+        # A fake double-indent on 'no ip proxy-arp'
         ["interface Ethernet0/0",
             " ip address 192.0.2.1 255.255.255.0",
             "  no ip proxy-arp",]
@@ -201,6 +203,7 @@ def testVal_BaseCfgLine_has_child_with_03():
 def testVal_BaseCfgLine_insert_before_01():
     """Test BaseCfgLine().insert_before()"""
     parse = CiscoConfParse(
+        # A fake double-indent on 'no ip proxy-arp'
         ["interface Ethernet0/0",
             " ip address 192.0.2.1 255.255.255.0",
             "  no ip proxy-arp",]
@@ -215,6 +218,7 @@ def testVal_BaseCfgLine_insert_before_01():
 def testVal_BaseCfgLine_insert_before_02():
     """Test BaseCfgLine().insert_before()"""
     parse = CiscoConfParse(
+        # A fake double-indent on 'no ip proxy-arp'
         ["interface Ethernet0/0",
             " ip address 192.0.2.1 255.255.255.0",
             "  no ip proxy-arp",]
@@ -229,6 +233,7 @@ def testVal_BaseCfgLine_insert_before_02():
 def testVal_BaseCfgLine_insert_before_03():
     """Test BaseCfgLine().insert_before() raises TypeError"""
     parse = CiscoConfParse(
+        # A fake double-indent on 'no ip proxy-arp'
         ["interface Ethernet0/0",
             " ip address 192.0.2.1 255.255.255.0",
             "  no ip proxy-arp",]
@@ -241,6 +246,7 @@ def testVal_BaseCfgLine_insert_before_03():
 def testVal_BaseCfgLine_insert_after_01():
     """Test BaseCfgLine().insert_after()"""
     parse = CiscoConfParse(
+        # A fake double-indent on 'no ip proxy-arp'
         ["interface Ethernet0/0",
             " ip address 192.0.2.1 255.255.255.0",
             "  no ip proxy-arp",]
@@ -255,6 +261,7 @@ def testVal_BaseCfgLine_insert_after_01():
 def testVal_BaseCfgLine_insert_after_02():
     """Test BaseCfgLine().insert_after()"""
     parse = CiscoConfParse(
+        # A fake double-indent on 'no ip proxy-arp'
         ["interface Ethernet0/0",
             " ip address 192.0.2.1 255.255.255.0",
             "  no ip proxy-arp",]
@@ -269,6 +276,7 @@ def testVal_BaseCfgLine_insert_after_02():
 def testVal_BaseCfgLine_insert_after_03():
     """Test BaseCfgLine().insert_after() raises TypeError"""
     parse = CiscoConfParse(
+        # A fake double-indent on 'no ip proxy-arp'
         ["interface Ethernet0/0",
             " ip address 192.0.2.1 255.255.255.0",
             "  no ip proxy-arp",]
@@ -281,36 +289,42 @@ def testVal_BaseCfgLine_insert_after_03():
 def testVal_BaseCfgLine_append_to_family_01():
     """Test BaseCfgLine().append_to_family()"""
     parse = CiscoConfParse(
+        # A fake double-indent on 'no ip proxy-arp'
         ["interface Ethernet0/0",
             " ip address 192.0.2.1 255.255.255.0",
             "  no ip proxy-arp",]
     )
     obj = parse.find_objects('interface')[0]
     obj.append_to_family(' description This or that')
-    parse.commit()
-    uut = parse.objs[-1]
-    assert uut.text == " description This or that"
-    assert parse.objs[0].children[-1].text == " description This or that"
+    assert parse.text == [
+        'interface Ethernet0/0',
+        ' description This or that',
+        ' ip address 192.0.2.1 255.255.255.0',
+        '  no ip proxy-arp',
+    ]
 
 
 def testVal_BaseCfgLine_append_to_family_02():
     """Test BaseCfgLine().append_to_family() with a BaseCfgLine()"""
     parse = CiscoConfParse(
+        # A fake double-indent on 'no ip proxy-arp'
         ["interface Ethernet0/0",
             " ip address 192.0.2.1 255.255.255.0",
             "  no ip proxy-arp",]
     )
     obj = parse.find_objects('interface')[0]
     obj.append_to_family(BaseCfgLine(line=' description This or that'))
+    # commit is required if appending a BaseCfgLine()
     parse.commit()
-    uut = parse.objs[-1]
+    uut = parse.objs[1]
     assert uut.text == " description This or that"
-    assert parse.objs[0].children[-1].text == " description This or that"
+    assert parse.objs[0].children[0].text == " description This or that"
 
 
 def testVal_BaseCfgLine_append_to_family_03():
     """Test BaseCfgLine().append_to_family(auto_indent=False)"""
     parse = CiscoConfParse(
+        # A fake double-indent on 'no ip proxy-arp'
         ["interface Ethernet0/0",
             " ip address 192.0.2.1 255.255.255.0",
             "  no ip proxy-arp",]
@@ -318,14 +332,76 @@ def testVal_BaseCfgLine_append_to_family_03():
     obj = parse.find_objects('interface')[0]
     obj.append_to_family('description This or that', auto_indent=False)
     parse.commit()
-    uut = parse.objs[-1]
+    uut = parse.objs[1]
     assert uut.text == "description This or that"
-    # This test should be a != because we did not indent...
-    assert parse.objs[0].children[-1].text != "description This or that"
+    # Now the children should be empty; this is a new parent line
+    assert len(uut.children) == 1
+    assert uut.children[0].text == " ip address 192.0.2.1 255.255.255.0"
+    assert len(uut.all_children) == 2
+    assert uut.all_children[1].text == "  no ip proxy-arp"
 
-    # Now the children belong to the description line...
+
+def testVal_BaseCfgLine_append_to_family_04():
+    """Test BaseCfgLine().append_to_family(auto_indent=True) and last line is a grandchild"""
+    parse = CiscoConfParse(
+        # A fake double-indent on 'no ip proxy-arp'
+        ["interface Ethernet0/0",
+            " ip address 192.0.2.1 255.255.255.0",
+            "  no ip proxy-arp",]
+    )
+    obj = parse.find_objects('interface')[0]
+    obj.append_to_family('description This or that', auto_indent=True)
+    parse.commit()
+    uut = parse.objs[1]
+    # Test that auto_indent worked
+    assert uut.text == ' description This or that'
     assert uut.children == []
-    assert uut.children[-1].text != " no ip proxy-arp"
+    # Ensure this is the first line in the family
+    assert parse.objs[0].children[0].text == ' description This or that'
+
+
+def testVal_BaseCfgLine_append_to_family_05():
+    """Test BaseCfgLine().append_to_family(auto_indent=True) and last line is a grandchild."""
+    parse = CiscoConfParse(
+        # A fake double-indent on 'no ip proxy-arp'
+        ["interface Ethernet0/0",
+            " ip address 192.0.2.1 255.255.255.0",
+            "  no ip proxy-arp",]
+    )
+    obj = parse.find_objects('interface')[0]
+    obj.append_to_family('description This or that', auto_indent=True)
+    parse.commit()
+    uut = parse.objs[1]
+    assert uut.children == []
+    # Ensure the line is single indented after insert
+    # below a grandchild
+    assert uut.text == ' description This or that'
+    # Ensure this is the last line in the family
+    assert parse.objs[0].children[0].text == ' description This or that'
+    assert parse.objs[0].all_children[-1].text == '  no ip proxy-arp'
+
+
+def testVal_BaseCfgLine_append_to_family_06():
+    """Test BaseCfgLine().append_to_family(auto_indent=True) appending a great-grandchild of Ethernet0/0 (below '  no ip proxy-arp')."""
+    parse = CiscoConfParse(
+        # A fake double-indent on 'no ip proxy-arp'
+        ["interface Ethernet0/0",
+            " ip address 192.0.2.1 255.255.255.0",
+            "  no ip proxy-arp",]
+    )
+    obj = parse.find_objects('proxy-arp')[0]
+    obj.append_to_family('a fake great-grandchild of interface Ethernet0/0', auto_indent=True)
+    parse.commit()
+    uut = parse.objs[-1]
+    assert uut.children == []
+    # Ensure the line is correctly indented after insert
+    # below a grandchild
+    assert uut.text == '   a fake great-grandchild of interface Ethernet0/0'
+    # Ensure that the number of direct children is still correct
+    assert len(parse.objs[0].children) == 1
+    # Ensure this is the last line in the family
+    assert parse.objs[0].all_children[-2].text == '  no ip proxy-arp'
+    assert parse.objs[0].all_children[-1].text == '   a fake great-grandchild of interface Ethernet0/0'
 
 
 def testVal_BaseCfgLine_verbose_01():

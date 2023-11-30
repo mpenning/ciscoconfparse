@@ -948,6 +948,12 @@ class CiscoConfParse(object):
     # This method is on CiscoConfParse()
     @property
     @logger.catch(reraise=True)
+    def text(self):
+        return self.ioscfg
+
+    # This method is on CiscoConfParse()
+    @property
+    @logger.catch(reraise=True)
     def ioscfg(self):
         """Return a list containing all text configuration statements."""
         # I keep ioscfg to emulate legacy ciscoconfparse behavior
@@ -3290,7 +3296,14 @@ class ConfigList(MutableSequence):
     # This method is on ConfigList()
     @ logger.catch(reraise=True)
     def index(self, val, *args):
-        return self._list.index(val, *args)
+        try:
+            return self._list.index(val, *args)
+        except ValueError:
+            error = f"{val} is not in this ConfigList()"
+            logger.error(error)
+            raise ValueError(error)
+        except BaseException as eee:
+            raise eee
 
     # This method is on ConfigList()
     @ logger.catch(reraise=True)
@@ -3550,7 +3563,7 @@ class ConfigList(MutableSequence):
             #self._bootstrap_from_text()
             self._list = self.bootstrap_obj_init_ng(self.ioscfg)
         else:
-            ## Just renumber lines...
+            # Just renumber lines...
             self.reassign_linenums()
 
     # This method is on ConfigList()
@@ -3558,10 +3571,16 @@ class ConfigList(MutableSequence):
     @ logger.catch(reraise=True)
     def insert(self, ii, val):
         if not isinstance(ii, int):
-            raise ValueError
+            error = f"The ConfigList() index must be an integer, but ConfigList().insert() got {type(ii)}"
+            logger.critical(error)
+            raise ValueError(error)
+
+        # Get the configuration line text if val is a BaseCfgLine() instance
+        if isinstance(val, BaseCfgLine):
+            val = val.text
 
         # Coerce a string into the appropriate object
-        if getattr(val, "capitalize", False):
+        if isinstance(val, str):
             if self.factory:
                 obj = config_line_factory(
                     text=val,
@@ -3576,18 +3595,18 @@ class ConfigList(MutableSequence):
                 )
 
             else:
-                err_txt = 'insert() cannot insert "{}"'.format(val)
-                logger.error(err_txt)
-                raise ValueError(err_txt)
+                error = f'''insert() cannot insert {type(val)} "{val}" with factory={self.factory}'''
+                logger.critical(error)
+                raise ValueError(error)
         else:
-            err_txt = 'insert() cannot insert "{}"'.format(val)
-            logger.error(err_txt)
-            raise ValueError(err_txt)
+            error = f'''insert() cannot insert {type(val)} "{val}"'''
+            logger.critical(error)
+            raise TypeError(error)
 
-        ## Insert something at index ii
+        # Insert the object at index ii
         self._list.insert(ii, obj)
 
-        ## Just renumber lines...
+        # Just renumber lines...
         self.reassign_linenums()
 
     # This method is on ConfigList()

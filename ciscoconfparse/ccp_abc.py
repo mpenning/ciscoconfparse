@@ -41,7 +41,7 @@ class BaseCfgLine(metaclass=ABCMeta):
     parent = None
     child_indent = 0
     is_comment = None
-    children = []
+    _children = []
     indent = 0  # assign indent in the self.text setter method
     confobj = None  # Reference to the list object which owns it
     blank_line_keep = False  # CiscoConfParse() uses blank_line_keep
@@ -72,11 +72,11 @@ class BaseCfgLine(metaclass=ABCMeta):
         self.comment_delimiter = comment_delimiter
         self._uncfgtext_to_be_deprecated = ""
         self._text = DEFAULT_TEXT
+        self._children = []
         self.linenum = -1
         self.parent = self  # by default, assign parent as itself
         self.child_indent = 0
         self.is_comment = None
-        self.children = []
         self.indent = 0  # assign indent in the self.text setter method
         self.confobj = None  # Reference to the list object which owns it
         self.blank_line_keep = False  # CiscoConfParse() uses blank_line_keep
@@ -171,6 +171,27 @@ class BaseCfgLine(metaclass=ABCMeta):
         if self.linenum < val.linenum:
             return True
         return False
+
+    @property
+    @logger.catch(reraise=True)
+    def children(self):
+        if isinstance(self._children, list):
+            return self._children
+        else:
+            error = f"Fatal: {type(self._children)} found as BaseCfgLine().children; it should be a list."
+            logger.critical(error)
+            raise NotImplementedError(error)
+
+    @children.setter
+    @logger.catch(reraise=True)
+    def children(self, arg):
+        if isinstance(arg, list):
+            self._children = arg
+            return self._children
+        else:
+            error = f"{type(arg)} cannot be assigned to BaseCfgLine().children"
+            logger.critical(error)
+            raise NotImplementedError(error)
 
     # On BaseCfgLine()
     @property
@@ -397,6 +418,10 @@ class BaseCfgLine(metaclass=ABCMeta):
     @logger.catch(reraise=True)
     def text(self, newtext=None):
         """Set self.text, self.indent, self.line_id (and all comments' self.parent)"""
+        # Convert a config line to a string if this is a BaseCfgLine()...
+        if isinstance(newtext, BaseCfgLine):
+            newtext = newtext.text
+
         # FIXME - children do not associate correctly if this is used as-is...
         if not isinstance(newtext, str):
             error = f"text=`{newtext}` is an invalid config line"
@@ -852,11 +877,23 @@ class BaseCfgLine(metaclass=ABCMeta):
 
     # On BaseCfgLine()
     @junos_unsupported
+    @logger.catch(reraise=True)
     def append_to_family(
         self, insertstr, indent=-1, auto_indent_width=1, auto_indent=False
     ):
         """Append an :class:`~models_cisco.IOSCfgLine` object with ``insertstr``
-        as a child at the bottom of the current configuration family.
+        as a child at the top of the current configuration family.
+
+        ``insertstr`` is inserted at the top of the family to ensure there are no
+        unintended object relationships created during the change.  As an example,
+        it is possible that the last child is a grandchild (instead of a child) and
+        a simple append after that grandchild is risky to always get ``insertstr``
+        indent level correct.  However, we always know the correct indent for a
+        child of this object.
+
+        If auto_indent is True, add ``insertstr`` with the correct left-indent
+        level automatically.
+
         Parameters
         ----------
         insertstr : str
@@ -909,38 +946,103 @@ class BaseCfgLine(metaclass=ABCMeta):
            !
            >>>
         """
+
+        if auto_indent is True and indent > 0:
+            error = "indent and auto_indent are not supported together."
+            logger.error(error)
+            raise NotImplementedError(error)
+
+        if self.confobj is None:
+            error = "Cannot insert on a None BaseCfgLine().confobj"
+            logger.critical(error)
+            raise NotImplementedError(error)
+
+        insertstr_parent_indent = self.indent
+
         # Build the string to insert with proper indentation...
         if auto_indent:
-            insertstr = (" " * (self.indent + auto_indent_width)) + insertstr.lstrip()
+            insertstr = (" " * (insertstr_parent_indent + auto_indent_width)) + insertstr.lstrip()
         elif indent > 0:
             insertstr = (" " * (self.indent + indent)) + insertstr.lstrip()
         else:
-            insertstr = insertstr.lstrip()
+            # do not modify insertstr
+            pass
 
         # BaseCfgLine.append_to_family(), insert a single line after this
-        #  object's children
-        try:
-            last_child = self.all_children[-1]
-            retval = self.confobj.insert_after(last_child, insertstr, atomic=False)
-        except IndexError:
-            # The object has no children
-            retval = self.confobj.insert_after(self, insertstr, atomic=False)
-        return retval
+        #  object...
+        this_obj = type(self)
+        newobj = this_obj(line=insertstr)
+        newobj_parent = self.find_parent_for(insertstr)
+        if isinstance(newobj_parent, BaseCfgLine):
+            try:
+                # find index of the new parent and return...
+                _idx = self.confobj.ConfigObjs.index(newobj_parent) - 1
+                retval = self.confobj.ConfigObjs.insert(_idx, newobj)
+                return retval
+            except BaseException as eee:
+                raise eee
+        else:
+            retval = self.confobj.ConfigObjs.insert(self.linenum + 1, newobj)
+            return retval
+            error = f"""Cannot append to family since this line has no parent with a lower indent: '''{insertstr}'''"""
+            logger.critical(error)
+            raise NotImplementedError(error)
 
+    # On BaseCfgLine()
+    @junos_unsupported
+    @logger.catch(reraise=True)
+    def find_parent_for(self, val):
+        """Search all children of this object and return the most appropriate parent object for the indent associated with ``val``"""
+        if isinstance(val, str):
+            pass
+        elif isinstance(val, BaseCfgLine):
+            pass
+        else:
+            error = f"val must be a str or instance of BaseCfgLine(); however, BaseCfgLine().find_parent_for() got {type(val)}"
+            logger.critical(error)
+            raise NotImplementedError(error)
+
+        indent_dict = {}
+        for obj in sorted(self.all_children):
+            indent_dict[obj.indent] = obj
+        indent_dict[self.indent] = self
+
+        try:
+            val_indent = len(val) - len(val.lstrip())
+            if isinstance(val_indent, int):
+                for obj_indent in sorted(indent_dict.keys(), reverse=False):
+                    if obj_indent > val_indent:
+                        return indent_dict[obj_indent]
+            else:
+                error = f"Could not find indent for {val}"
+                logger.critical(error)
+                raise TypeError(error)
+        except Exception as eee:
+            logger.critical(str(eee))
+            raise eee
+
+        return self
+
+    # On BaseCfgLine()
     @logger.catch(reraise=True)
     def rstrip(self):
-        """Implement rstrip() on the BaseCfgLine().text"""
+        """Implement rstrip() on the BaseCfgLine().text; manually call CiscoConfParse().commit() after the rstrip()"""
         self._text = self._text.rstrip()
+        return self._text
 
+    # On BaseCfgLine()
     @logger.catch(reraise=True)
     def lstrip(self):
-        """Implement lstrip() on the BaseCfgLine().text"""
+        """Implement lstrip() on the BaseCfgLine().text; manually call CiscoConfParse().commit() after the lstrip()"""
         self._text = self._text.lstrip()
+        return self._text
 
+    # On BaseCfgLine()
     @logger.catch(reraise=True)
     def strip(self):
-        """Implement strip() on the BaseCfgLine().text"""
+        """Implement strip() on the BaseCfgLine().text; manually call CiscoConfParse().commit() after the strip()"""
         self._text = self._text.strip()
+        return self._text
 
     # On BaseCfgLine()
     @junos_unsupported
