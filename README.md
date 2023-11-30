@@ -379,7 +379,7 @@ If you already git cloned the repo and want to manually run tests either run wit
 
 ```shell
 $ cd tests
-$ pytest -vvs ./test_*py
+$ pytest ./test*py
 ...
 ```
 
