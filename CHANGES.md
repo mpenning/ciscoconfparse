@@ -6,10 +6,10 @@
 
 ## Version: 1.9.45
 
-- Released: 2023-11-29
+- Released: 2023-11-30
 - Summary:
     - Documentation updates
-    - Remove `ccp_abc.BaseCfgLine()._objects_to_uncfg()`
+    - Add more tests
 
 ## Version: 1.9.44
 
