@@ -209,10 +209,24 @@ def testVal_BaseCfgLine_insert_before_01():
     obj.insert_before('hostname Foo')
     parse.commit()
     uut = parse.find_objects('hostname')[0]
-    assert isinstance(uut, BaseCfgLine) is True
+    assert isinstance(uut, IOSCfgLine) is True
 
 
 def testVal_BaseCfgLine_insert_before_02():
+    """Test BaseCfgLine().insert_before()"""
+    parse = CiscoConfParse(
+        ["interface Ethernet0/0",
+            " ip address 192.0.2.1 255.255.255.0",
+            "  no ip proxy-arp",]
+    )
+    obj = parse.find_objects('interface')[0]
+    obj.insert_before(BaseCfgLine(line='hostname Foo'))
+    parse.commit()
+    uut = parse.find_objects('hostname')[0]
+    assert isinstance(uut, IOSCfgLine) is True
+
+
+def testVal_BaseCfgLine_insert_before_03():
     """Test BaseCfgLine().insert_before() raises TypeError"""
     parse = CiscoConfParse(
         ["interface Ethernet0/0",
@@ -235,10 +249,24 @@ def testVal_BaseCfgLine_insert_after_01():
     obj.insert_after(' description This or that')
     parse.commit()
     uut = parse.find_objects('description')[0]
-    assert isinstance(uut, BaseCfgLine) is True
+    assert isinstance(uut, IOSCfgLine) is True
 
 
 def testVal_BaseCfgLine_insert_after_02():
+    """Test BaseCfgLine().insert_after()"""
+    parse = CiscoConfParse(
+        ["interface Ethernet0/0",
+            " ip address 192.0.2.1 255.255.255.0",
+            "  no ip proxy-arp",]
+    )
+    obj = parse.find_objects('interface')[0]
+    obj.insert_after(BaseCfgLine(line=' description This or that'))
+    parse.commit()
+    uut = parse.find_objects('description')[0]
+    assert isinstance(uut, IOSCfgLine) is True
+
+
+def testVal_BaseCfgLine_insert_after_03():
     """Test BaseCfgLine().insert_after() raises TypeError"""
     parse = CiscoConfParse(
         ["interface Ethernet0/0",
@@ -248,6 +276,56 @@ def testVal_BaseCfgLine_insert_after_02():
     obj = parse.find_objects('interface')[0]
     with pytest.raises(NotImplementedError):
         obj.insert_after(None)
+
+
+def testVal_BaseCfgLine_append_to_family_01():
+    """Test BaseCfgLine().append_to_family()"""
+    parse = CiscoConfParse(
+        ["interface Ethernet0/0",
+            " ip address 192.0.2.1 255.255.255.0",
+            "  no ip proxy-arp",]
+    )
+    obj = parse.find_objects('interface')[0]
+    obj.append_to_family(' description This or that')
+    parse.commit()
+    uut = parse.objs[-1]
+    assert uut.text == " description This or that"
+    assert parse.objs[0].children[-1].text == " description This or that"
+
+
+def testVal_BaseCfgLine_append_to_family_02():
+    """Test BaseCfgLine().append_to_family() with a BaseCfgLine()"""
+    parse = CiscoConfParse(
+        ["interface Ethernet0/0",
+            " ip address 192.0.2.1 255.255.255.0",
+            "  no ip proxy-arp",]
+    )
+    obj = parse.find_objects('interface')[0]
+    obj.append_to_family(BaseCfgLine(line=' description This or that'))
+    parse.commit()
+    uut = parse.objs[-1]
+    assert uut.text == " description This or that"
+    assert parse.objs[0].children[-1].text == " description This or that"
+
+
+def testVal_BaseCfgLine_append_to_family_03():
+    """Test BaseCfgLine().append_to_family(auto_indent=False)"""
+    parse = CiscoConfParse(
+        ["interface Ethernet0/0",
+            " ip address 192.0.2.1 255.255.255.0",
+            "  no ip proxy-arp",]
+    )
+    obj = parse.find_objects('interface')[0]
+    obj.append_to_family('description This or that', auto_indent=False)
+    parse.commit()
+    uut = parse.objs[-1]
+    assert uut.text == "description This or that"
+    # This test should be a != because we did not indent...
+    assert parse.objs[0].children[-1].text != "description This or that"
+
+    # Now the children belong to the description line...
+    assert uut.children == []
+    assert uut.children[-1].text != " no ip proxy-arp"
 
 
 def testVal_BaseCfgLine_verbose_01():

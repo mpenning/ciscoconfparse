@@ -914,6 +914,9 @@ class BaseCfgLine(metaclass=ABCMeta):
             insertstr = (" " * (self.indent + auto_indent_width)) + insertstr.lstrip()
         elif indent > 0:
             insertstr = (" " * (self.indent + indent)) + insertstr.lstrip()
+        else:
+            insertstr = insertstr.lstrip()
+
         ## BaseCfgLine.append_to_family(), insert a single line after this
         ##  object's children
         try:
