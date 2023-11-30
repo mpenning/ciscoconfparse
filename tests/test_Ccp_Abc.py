@@ -162,6 +162,56 @@ def testVal_BaseCfgLine_family_endpoint_01():
     assert obj01.family_endpoint == 3
 
 
+def testVal_BaseCfgLine_has_child_with_01():
+    """Test BaseCfgLine().has_child_with()"""
+    parse = CiscoConfParse(
+        ["interface Ethernet0/0",
+            " ip address 192.0.2.1 255.255.255.0",
+            " no ip proxy-arp",]
+    )
+    obj = parse.find_objects('interface')[0]
+    uut = obj.has_child_with('proxy-arp', all_children=False)
+    assert uut is True
+
+
+def testVal_BaseCfgLine_has_child_with_02():
+    """Test BaseCfgLine().has_child_with()"""
+    parse = CiscoConfParse(
+        ["interface Ethernet0/0",
+            " ip address 192.0.2.1 255.255.255.0",
+            "  no ip proxy-arp",]
+    )
+    obj = parse.find_objects('interface')[0]
+    uut = obj.has_child_with('proxy-arp', all_children=False)
+    assert uut is False
+
+
+def testVal_BaseCfgLine_has_child_with_03():
+    """Test BaseCfgLine().has_child_with()"""
+    parse = CiscoConfParse(
+        ["interface Ethernet0/0",
+            " ip address 192.0.2.1 255.255.255.0",
+            "  no ip proxy-arp",]
+    )
+    obj = parse.find_objects('interface')[0]
+    uut = obj.has_child_with('proxy-arp', all_children=True)
+    assert uut is True
+
+
+def testVal_BaseCfgLine_insert_before_01():
+    """Test BaseCfgLine().insert_before()"""
+    parse = CiscoConfParse(
+        ["interface Ethernet0/0",
+            " ip address 192.0.2.1 255.255.255.0",
+            "  no ip proxy-arp",]
+    )
+    obj = parse.find_objects('interface')[0]
+    obj.insert_before('hostname Foo')
+    parse.commit()
+    uut = parse.find_objects('hostname')[0]
+    assert isinstance(uut, BaseCfgLine) is True
+
+
 def testVal_BaseCfgLine_verbose_01():
     """Test BaseCfgLine().verbose"""
     obj01 = BaseCfgLine(all_lines=None, line="interface Ethernet0/0")

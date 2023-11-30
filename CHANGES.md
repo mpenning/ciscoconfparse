@@ -4,6 +4,13 @@
 - Summary:
     - Insert something here
 
+## Version: 1.9.46
+
+- Released: 2023-11-30
+- Summary:
+    - Remove `inspect` from some methods
+    - Add more tests
+
 ## Version: 1.9.45
 
 - Released: 2023-11-30

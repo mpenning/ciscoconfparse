@@ -20,7 +20,6 @@ r""" ccp_abc.py - Parse, Query, Build, and Modify IOS-style configurations
 
 from abc import ABCMeta
 import warnings
-import inspect
 import re
 
 from ciscoconfparse.errors import InvalidTypecast, InvalidParameters
@@ -32,6 +31,8 @@ DEFAULT_TEXT = "__undefined__"
 #
 # -------------  Config Line ABC
 #
+
+
 class BaseCfgLine(metaclass=ABCMeta):
     comment_delimiter = None
     _uncfgtext_to_be_deprecated = ""
@@ -797,14 +798,14 @@ class BaseCfgLine(metaclass=ABCMeta):
         Usage:
         confobj.insert_before('! insert text before this confobj')
         """
+        # Fail if insertstr is not the correct object type...
+        #   only strings and *CfgLine() are allowed...
+        error = "Cannot insert object type - %s" % type(insertstr)
+        if not isinstance(insertstr, str) and not isinstance(insertstr, "BaseCfgLine"):
+            logger.error(error)
+            raise NotImplementedError(error)
+
         retval = None
-        calling_fn_index = 1
-        calling_filename = inspect.stack()[calling_fn_index].filename
-        calling_function = inspect.stack()[calling_fn_index].function
-        calling_lineno = inspect.stack()[calling_fn_index].lineno
-        error = "FATAL CALL: in {} line {} {}(insertstr='{}')".format(
-            calling_filename, calling_lineno, calling_function, insertstr
-        )
         if isinstance(insertstr, str) is True:
             retval = self.confobj.insert_before(exist_val=self.text, new_val=insertstr, atomic=False)
 
@@ -825,16 +826,12 @@ class BaseCfgLine(metaclass=ABCMeta):
 
         # Fail if insertstr is not the correct object type...
         #   only strings and *CfgLine() are allowed...
+        error = "Cannot insert object type - %s" % type(insertstr)
         if not isinstance(insertstr, str) and not isinstance(insertstr, "BaseCfgLine"):
-            error = "Cannot insert object type - %s" % type(insertstr)
             logger.error(error)
             raise NotImplementedError(error)
 
         retval = None
-        calling_fn_index = 1
-        calling_filename = inspect.stack()[calling_fn_index].filename
-        calling_function = inspect.stack()[calling_fn_index].function
-        calling_lineno = inspect.stack()[calling_fn_index].lineno
         if self.confobj.debug >= 1:
             logger.debug("Inserting '{}' after '{}'".format(insertstr, self))
 
@@ -847,9 +844,6 @@ class BaseCfgLine(metaclass=ABCMeta):
             retval = self.confobj.insert_after(exist_val=self.text, new_val=insertstr.text, atomic=False)
 
         else:
-            error = "FATAL CALL: in {} line {} {}(insertstr='{}')".format(
-                calling_filename, calling_lineno, calling_function, insertstr
-            )
             logger.error(error)
             raise ValueError(error)
 
