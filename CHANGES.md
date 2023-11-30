@@ -4,6 +4,13 @@
 - Summary:
     - Insert something here
 
+## Version: 1.9.48
+
+- Released: 2023-11-30
+- Summary:
+    - Update documentation
+    - Remove `CiscoConfParse().find_lines()`
+
 ## Version: 1.9.47
 
 - Released: 2023-11-30
