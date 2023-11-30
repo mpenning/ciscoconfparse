@@ -801,7 +801,7 @@ class BaseCfgLine(metaclass=ABCMeta):
         # Fail if insertstr is not the correct object type...
         #   only strings and *CfgLine() are allowed...
         error = "Cannot insert object type - %s" % type(insertstr)
-        if not isinstance(insertstr, str) and not isinstance(insertstr, "BaseCfgLine"):
+        if not isinstance(insertstr, str) and not isinstance(insertstr, BaseCfgLine):
             logger.error(error)
             raise NotImplementedError(error)
 
@@ -827,7 +827,7 @@ class BaseCfgLine(metaclass=ABCMeta):
         # Fail if insertstr is not the correct object type...
         #   only strings and *CfgLine() are allowed...
         error = "Cannot insert object type - %s" % type(insertstr)
-        if not isinstance(insertstr, str) and not isinstance(insertstr, "BaseCfgLine"):
+        if not isinstance(insertstr, str) and not isinstance(insertstr, BaseCfgLine):
             logger.error(error)
             raise NotImplementedError(error)
 
@@ -839,7 +839,7 @@ class BaseCfgLine(metaclass=ABCMeta):
             # Handle insertion of a plain-text line
             retval = self.confobj.insert_after(exist_val=self.text, new_val=insertstr, atomic=False)
 
-        elif isinstance(insertstr, "BaseCfgLine"):
+        elif isinstance(insertstr, BaseCfgLine):
             # Handle insertion of a configuration line obj such as IOSCfgLine()
             retval = self.confobj.insert_after(exist_val=self.text, new_val=insertstr.text, atomic=False)
 

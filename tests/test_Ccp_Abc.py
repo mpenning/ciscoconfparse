@@ -212,6 +212,44 @@ def testVal_BaseCfgLine_insert_before_01():
     assert isinstance(uut, BaseCfgLine) is True
 
 
+def testVal_BaseCfgLine_insert_before_02():
+    """Test BaseCfgLine().insert_before() raises TypeError"""
+    parse = CiscoConfParse(
+        ["interface Ethernet0/0",
+            " ip address 192.0.2.1 255.255.255.0",
+            "  no ip proxy-arp",]
+    )
+    obj = parse.find_objects('interface')[0]
+    with pytest.raises(NotImplementedError):
+        obj.insert_before(None)
+
+
+def testVal_BaseCfgLine_insert_after_01():
+    """Test BaseCfgLine().insert_after()"""
+    parse = CiscoConfParse(
+        ["interface Ethernet0/0",
+            " ip address 192.0.2.1 255.255.255.0",
+            "  no ip proxy-arp",]
+    )
+    obj = parse.find_objects('interface')[0]
+    obj.insert_after(' description This or that')
+    parse.commit()
+    uut = parse.find_objects('description')[0]
+    assert isinstance(uut, BaseCfgLine) is True
+
+
+def testVal_BaseCfgLine_insert_after_02():
+    """Test BaseCfgLine().insert_after() raises TypeError"""
+    parse = CiscoConfParse(
+        ["interface Ethernet0/0",
+            " ip address 192.0.2.1 255.255.255.0",
+            "  no ip proxy-arp",]
+    )
+    obj = parse.find_objects('interface')[0]
+    with pytest.raises(NotImplementedError):
+        obj.insert_after(None)
+
+
 def testVal_BaseCfgLine_verbose_01():
     """Test BaseCfgLine().verbose"""
     obj01 = BaseCfgLine(all_lines=None, line="interface Ethernet0/0")
