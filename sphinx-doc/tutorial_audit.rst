@@ -64,13 +64,6 @@ Next, we build this script to read and change the config:
    ## Parse the config
    parse = CiscoConfParse('short.conf')
 
-   # Ensure that 'end' at the bottom of configs doesn't break append() below...
-   try:
-       parse.find_object("^end")[0].delete()
-       parse.commit()
-   except IndexError():
-       pass
-
    ## Add a new switchport at the bottom of the config...
    parse.append_line('interface FastEthernet0/4')
    parse.append_line(' switchport')
