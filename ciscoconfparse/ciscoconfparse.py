@@ -28,8 +28,6 @@ mike [~at~] pennington [.dot.] net
 """
 
 from collections.abc import MutableSequence, Sequence
-from functools import partial
-from operator import is_not
 import inspect
 import pathlib
 import locale
@@ -1012,6 +1010,56 @@ class CiscoConfParse(object):
         """
         self.atomic()  # atomic() calls self.ConfigObjs.bootstrap_obj_init_ng
 
+    @logger.catch(reraise=True)
+    def _list_matching_children(
+        self,
+        parent_obj,
+        childspec,
+        regex_flags,
+        allow_none=True,
+        debug=0,
+    ):
+        # I'm not using parent_obj.re_search_children() because
+        # re_search_children() doesn't return None for no match...
+
+        # As of version 1.6.16, allow_none must always be True...
+        if allow_none is not True:
+            raise ValueError("allow_none parameter must always be True.")
+
+        if debug > 1:
+            msg = f"""Calling _list_matching_children(
+parent_obj={parent_obj},
+childspec='{childspec}',
+regex_flags='{regex_flags}',
+allow_none={allow_none},
+debug={debug},
+)"""
+            logger.info(msg)
+
+        # Get the child objects from parent objects
+        if parent_obj is None:
+            children = self._find_line_OBJ(
+                linespec=childspec,
+                exactmatch=False,
+            )
+        else:
+            children = parent_obj.children
+
+        # Find all child objects which match childspec...
+        segment_list = [
+            cobj
+            for cobj in children
+            if re.search(childspec, cobj.text, regex_flags)
+        ]
+        # Return [None] if no children matched...
+        if len(segment_list) == 0:
+            segment_list = [None]
+
+        if debug > 1:
+            logger.info(f"    _list_matching_children() returns segment_list={segment_list}")
+        print("FOO", segment_list)
+        return segment_list
+
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
     def find_object_branches(
@@ -1020,11 +1068,12 @@ class CiscoConfParse(object):
         regex_flags=0,
         allow_none=True,
         regex_groups=False,
+        empty_branches=False,
         debug=0,
     ):
         r"""Iterate over a tuple of regular expressions in `branchspec` and return matching objects in a list of lists (consider it similar to a table of matching config objects). `branchspec` expects to start at some ancestor and walk through the nested object hierarchy (with no limit on depth).
 
-        Previous CiscoConfParse() methods only handled a single parent regex and single child regex (such as :func:`~ciscoconfparse.CiscoConfParse.find_parents_w_child`).
+        Previous CiscoConfParse() methods only handled a single parent regex and single child regex (such as :func:`~ciscoconfparse.CiscoConfParse.find_objects`).
 
         Transcend past one-level of parent-child relationship parsing to include multiple nested 'branches' of a single family (i.e. parents, children, grand-children, great-grand-children, etc).  The result of handling longer regex chains is that it flattens what would otherwise be nested loops in your scripts; this makes parsing heavily-nested configuratations like Juniper, Palo-Alto, and F5 much simpler.  Of course, there are plenty of applications for "flatter" config formats like IOS.
 
@@ -1044,6 +1093,8 @@ class CiscoConfParse(object):
             Chained regular expression flags, such as `re.IGNORECASE|re.MULTILINE`
         regex_groups : bool (default False)
             If True, return a tuple of re.Match groups instead of the matching configuration objects.
+        empty_branches : bool (default False)
+            If True, return a list of None statements if there is no match; before version 1.9.49, this defaulted True.
         debug : int
             Set debug > 0 for debug messages
 
@@ -1118,11 +1169,10 @@ class CiscoConfParse(object):
             logger.warning(warning)
             allow_none = True
 
-        if isinstance(branchspec, tuple):
-            if debug > 1:
-                message = f"{self.__class__.__name__}().find_object_branches(branchspec='{branchspec}') was called"
-                logger.info(message)
+        if isinstance(branchspec, list):
+            branchspec = tuple(branchspec)
 
+        if isinstance(branchspec, tuple):
             if branchspec == ():
                 error = "find_object_branches(): branchspec must not be empty"
                 logger.error(error)
@@ -1133,76 +1183,13 @@ class CiscoConfParse(object):
             logger.error(error)
             raise ValueError(error)
 
-        @logger.catch(reraise=True)
-        def list_matching_children(
-            parent_obj,
-            childspec,
-            regex_flags,
-            allow_none=True,
-            debug=0,
-        ):
-            # I'm not using parent_obj.re_search_children() because
-            # re_search_children() doesn't return None for no match...
-
-            # FIXME: Insert debugging here...
-            # print("PARENT "+str(parent_obj))
-
-            # As of version 1.6.16, allow_none must always be True...
-            if allow_none is not True:
-                raise ValueError("allow_none parameter must always be True.")
-
-            if debug > 1:
-                msg = """Calling list_matching_children(
-    parent_obj=%s,
-    childspec=%s,
-    regex_flags=%s,
-    allow_none=%s,
-    debug=%s,
-    )""" % (
-                    parent_obj,
-                    childspec,
-                    regex_flags,
-                    allow_none,
-                    debug,
-                )
-                logger.info(msg)
-
-            # Get the child objects from parent objects
-            if parent_obj is None:
-                children = self._find_line_OBJ(
-                    linespec=childspec,
-                    exactmatch=False,
-                )
-            else:
-                children = parent_obj.children
-
-            # Find all child objects which match childspec...
-            segment_list = [
-                cobj
-                for cobj in children
-                if re.search(childspec, cobj.text, regex_flags)
-            ]
-            # Return [None] if no children matched...
-            if len(segment_list) == 0:
-                segment_list = [None]
-
-            # FIXME: Insert debugging here...
-            # print("    SEGMENTS "+str(segment_list))
-            if debug > 1:
-                logger.info(
-                    "    list_matching_children() returns segment_list=%s"
-                    % segment_list,
-                )
-            return segment_list
-
         branches = []
         # iterate over the regular expressions in branchspec
         for idx, childspec in enumerate(branchspec):
             # FIXME: Insert debugging here...
-            # print("CHILDSPEC "+childspec)
             if idx == 0:
                 # Get matching 'root' objects from the config
-                next_kids = list_matching_children(
+                next_kids = self._list_matching_children(
                     parent_obj=None,
                     childspec=childspec,
                     regex_flags=regex_flags,
@@ -1218,7 +1205,7 @@ class CiscoConfParse(object):
                     # Extend existing branches into the new_branches
                     if branch[-1] is not None:
                         # Find children to extend the family branch...
-                        next_kids = list_matching_children(
+                        next_kids = self._list_matching_children(
                             parent_obj=branch[-1],
                             childspec=childspec,
                             regex_flags=regex_flags,
@@ -1228,8 +1215,6 @@ class CiscoConfParse(object):
 
                         for kid in next_kids:
                             # Fork off a new branch and add each matching kid...
-                            # Use copy.copy() for a "shallow copy" of branch:
-                            #    https://realpython.com/copying-python-objects/
                             tmp = copy.copy(branch)
                             tmp.append(kid)
                             new_branches.append(tmp)
@@ -1284,7 +1269,22 @@ class CiscoConfParse(object):
 
         # We could have lost or created an extra branch if these aren't the
         # same length
-        return branches
+        retval = list()
+        if bool(empty_branches) is False:
+            for branch in branches:
+                ###############################################################
+                # discard the branch if it contains None (element that did
+                # not match)
+                ###############################################################
+                if not all(branch):
+                    continue
+                retval.append(branch)
+        else:
+            retval = branches
+        return retval
+
+    def delete(self):
+        pass
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
@@ -1938,7 +1938,7 @@ class CiscoConfParse(object):
             ##################################################################
             # Catch unsupported parentspec type here
             ##################################################################
-            error = f"find_parents_objects_wo_child() `parentspec` does not support a {type(parentspec)}"
+            error = f"find_parent_objects_wo_child() `parentspec` does not support a {type(parentspec)}"
             logger.error(error)
             raise InvalidParameters(error)
         if isinstance(childspec, BaseCfgLine):
@@ -2160,49 +2160,7 @@ class CiscoConfParse(object):
 
     # This method is on CiscoConfParse()
     @ logger.catch(reraise=True)
-    def find_lineage(self, linespec, exactmatch=False):
-        """
-        Iterate through to the oldest ancestor of this object, and return
-        a list of all ancestors / children in the direct line.  Cousins or
-        aunts / uncles are *not* returned.  Note, all children
-        of this object are returned.
-
-        Parameters
-        ----------
-        linespec : str
-            Text regular expression for the line to be matched
-        exactmatch : bool
-            Defaults to False; when True, this option requires ``linespec`` the whole line (not merely a portion of the line)
-
-        Returns
-        -------
-        list
-            A list of matching objects
-        """
-        tmp = self.find_objects(linespec, exactmatch=exactmatch)
-        if len(tmp) > 1:
-            err_txt = "linespec must be unique"
-            logger.error(err_txt)
-            raise ValueError(err_txt)
-
-        return [obj.text for obj in tmp[0].lineage]
-
-    # This method is on CiscoConfParse()
-    @ logger.catch(reraise=True)
-    def has_line_with(self, linespec):
-        """Return True if `linespec` is contained in the configuration."""
-        # https://stackoverflow.com/a/16097112/667301
-        matching_conftext = list(
-            filter(
-                partial(is_not, None),
-                [re.search(linespec, ii) for ii in self.ioscfg],
-            ),
-        )
-        return bool(matching_conftext)
-
-    # This method is on CiscoConfParse()
-    @ logger.catch(reraise=True)
-    def delete_lines(self, linespec, exactmatch=False, ignore_ws=False):
+    def delete_objects(self, linespec, exactmatch=False, ignore_ws=False):
         """Find all :class:`~models_cisco.IOSCfgLine` objects whose text
         matches linespec, and delete the object"""
         objs = self.find_objects(linespec, exactmatch, ignore_ws)
@@ -2214,46 +2172,7 @@ class CiscoConfParse(object):
 
     # This method is on CiscoConfParse()
     @ logger.catch(reraise=True)
-    def prepend_line(self, linespec):
-        """Unconditionally insert an :class:`~models_cisco.IOSCfgLine` object
-        for ``linespec`` (a text line) at the top of the configuration"""
-        self.ConfigObjs.insert(0, linespec)
-        return self.ConfigObjs[0]
-
-    # This method is on CiscoConfParse()
-    @ logger.catch(reraise=True)
-    def append_line(self, linespec):
-        """Unconditionally insert ``linespec`` (a text line) at the end of the
-        configuration
-
-        Parameters
-        ----------
-        linespec : str
-            Text IOS configuration line
-
-        Returns
-        -------
-        The parsed :class:`~models_cisco.IOSCfgLine` object instance
-
-        """
-        if isinstance(linespec, str) and linespec.strip() == "" and self.ignore_blank_lines is True:
-            error = "Cannot insert a blank line if `ignore_blank_lines` is True"
-            logger.error(error)
-            raise InvalidParameters(error)
-        elif isinstance(linespec, (int, str, float)):
-            self.ConfigObjs.append(IOSCfgLine(str(linespec)))
-        elif isinstance(linespec, IOSCfgLine):
-            self.ConfigObjs.append(linespec)
-        else:
-            error = f"Cannot append {type(linespec)}"
-            logger.critical(error)
-            raise InvalidParameters(error)
-        self.atomic()
-        return self.ConfigObjs[-1]
-
-    # This method is on CiscoConfParse()
-    @ logger.catch(reraise=True)
-    def replace_lines(
+    def replace_objects(
         self,
         linespec,
         replacestr,
@@ -2312,7 +2231,7 @@ class CiscoConfParse(object):
              service-policy EXTERNAL_CBWFQ
            !
 
-        We do this by calling `replace_lines(linespec='EXTERNAL_CBWFQ',
+        We do this by calling `replace_objects(linespec='EXTERNAL_CBWFQ',
         replacestr='EXTERNAL_QOS', excludespec='description')`...
 
         .. code-block:: python
@@ -2340,19 +2259,20 @@ class CiscoConfParse(object):
            ...           '!',
            ...     ]
            >>> p = CiscoConfParse(config=config)
-           >>> p.replace_lines('EXTERNAL_CBWFQ', 'EXTERNAL_QOS', 'description')
+           >>> p.replace_objects('EXTERNAL_CBWFQ', 'EXTERNAL_QOS', 'description')
            ['policy-map EXTERNAL_QOS', '  service-policy EXTERNAL_QOS']
            >>>
-           >>> # Now when we call `p.find_blocks('policy-map EXTERNAL_QOS')`, we get the
+           >>> # Now when we call `p.find_objects('policy-map EXTERNAL_QOS')`, we get the
            >>> # changed configuration, which has the replacements except on the
            >>> # policy-map's description.
-           >>> p.find_blocks('EXTERNAL_QOS')
+           >>> objs = p.find_objects('EXTERNAL_QOS')[0]
+           >>> [ii.text for ii in objs]
            ['policy-map EXTERNAL_QOS', ' description implement an EXTERNAL_CBWFQ policy', ' class IP_PREC_HIGH', ' class IP_PREC_MEDIUM', ' class class-default', 'policy-map SHAPE_HEIR', ' class ALL', '  shape average 630000', '  service-policy EXTERNAL_QOS']
            >>>
 
         """
         retval = list()
-        ## Since we are replacing text, we *must* operate on ConfigObjs
+        # Since we are replacing text, we *must* operate on ConfigObjs
         if excludespec:
             excludespec_re = re.compile(excludespec)
 
@@ -2360,7 +2280,8 @@ class CiscoConfParse(object):
             if excludespec and excludespec_re.search(obj.text):
                 # Exclude replacements on lines which match excludespec
                 continue
-            retval.append(obj.re_sub(linespec, replacestr))
+            obj.re_sub(linespec, replacestr)
+            retval.append(obj)
 
         if self.factory and atomic:
             self.ConfigObjs._list = self.ConfigObjs.bootstrap_obj_init_ng(self.ioscfg)
@@ -2621,115 +2542,6 @@ class CiscoConfParse(object):
             return default
         else:
             return result_type(default)
-
-    # This method is on CiscoConfParse()
-    @ logger.catch(reraise=True)
-    def _sequence_nonparent_lines(self, a_nonparent_objs, b_nonparent_objs):
-        """Assume a_nonparent_objs is the existing config sequence, and
-        b_nonparent_objs is the *desired* config sequence
-
-        This method walks b_nonparent_objs, and orders a_nonparent_objs
-        the same way (as much as possible)
-
-        This method returns:
-
-        - The reordered list of a_nonparent_objs
-        - The reordered list of a_nonparent_lines
-        - The reordered list of a_nonparent_linenums
-        """
-        a_parse = CiscoConfParse(config=[])  # A *new* parse for reordered a lines
-        a_lines = list()
-        a_linenums = list()
-
-        ## Mark all a objects as not done
-        for aobj in a_nonparent_objs:
-            aobj.done = False
-
-        for bobj in b_nonparent_objs:
-            for aobj in a_nonparent_objs:
-                if aobj.text == bobj.text:
-                    aobj.done = True
-                    a_parse.append_line(aobj.text)
-
-        # Add any missing a_parent_objs + their children...
-        for aobj in a_nonparent_objs:
-            if aobj.done is False:
-                aobj.done = True
-                a_parse.append_line(aobj.text)
-
-        a_parse.commit()
-
-        a_nonparents_reordered = a_parse.ConfigObjs
-        for aobj in a_nonparents_reordered:
-            a_lines.append(aobj.text)
-            a_linenums.append(aobj.linenum)
-
-        return a_parse, a_lines, a_linenums
-
-    # This method is on CiscoConfParse()
-    @ logger.catch(reraise=True)
-    def _sequence_parent_lines(self, a_parent_objs, b_parent_objs):
-        """Assume a_parent_objs is the existing config sequence, and
-        b_parent_objs is the *desired* config sequence
-
-        This method walks b_parent_objs, and orders a_parent_objs
-        the same way (as much as possible)
-
-        This method returns:
-
-        - The reordered list of a_parent_objs
-        - The reordered list of a_parent_lines
-        - The reordered list of a_parent_linenums
-        """
-        a_parse = CiscoConfParse(config=[])  # A *new* parse for reordered a lines
-        a_lines = list()
-        a_linenums = list()
-
-        ## Mark all a objects as not done
-        for aobj in a_parent_objs:
-            aobj.done = False
-            for child in aobj.all_children:
-                child.done = False
-
-        ## Walk the b objects by parent, then child and reorder a objects
-        for bobj in b_parent_objs:
-            for aobj in a_parent_objs:
-                if aobj.text == bobj.text:
-                    aobj.done = True
-                    a_parse.append_line(aobj.text)
-
-                    # Append *matching* children to this aobj in the same order
-                    for bchild in bobj.all_children:
-                        for achild in aobj.all_children:
-                            if achild.done:
-                                continue
-                            elif achild.geneology_text == bchild.geneology_text:
-                                achild.done = True
-                                a_parse.append_line(achild.text)
-
-                    # Append *missing* children to this aobj...
-                    for achild in aobj.all_children:
-                        if achild.done is False:
-                            achild.done = True
-                            a_parse.append_line(achild.text)
-
-        # Add any missing a_parent_objs + their children...
-        for aobj in a_parent_objs:
-            if aobj.done is False:
-                aobj.done = True
-                a_parse.append_line(aobj.text)
-                for achild in aobj.all_children:
-                    achild.done = True
-                    a_parse.append_line(achild.text)
-
-        a_parse.commit()
-
-        a_parents_reordered = a_parse.ConfigObjs
-        for aobj in a_parents_reordered:
-            a_lines.append(aobj.text)
-            a_linenums.append(aobj.linenum)
-
-        return a_parse, a_lines, a_linenums
 
     # This method is on CiscoConfParse()
     @ logger.catch(reraise=True)
@@ -3288,18 +3100,6 @@ class ConfigList(MutableSequence):
             self._list.extend(other._list)
         else:
             self._list.extend(other)
-
-    # This method is on ConfigList()
-    @ logger.catch(reraise=True)
-    def has_line_with(self, linespec):
-        # https://stackoverflow.com/a/16097112/667301
-        matching_conftext = list(
-            filter(
-                partial(is_not, None),
-                [re.search(linespec, ii.text) for ii in self._list],
-            ),
-        )
-        return bool(matching_conftext)
 
     # This method is on ConfigList()
     @ logger.catch(reraise=True)
@@ -4255,40 +4055,12 @@ def parse_global_options():
     )
     (opts, args) = pp.parse_args()
 
-    if opts.method == "find_children":
-        diff = CiscoConfParse(config=opts.config).find_children(opts.arg1)
-    elif opts.method == "find_all_children":
-        diff = CiscoConfParse(config=opts.config).find_all_children(opts.arg1)
-    elif opts.method == "find_blocks":
-        diff = CiscoConfParse(config=opts.config).find_blocks(opts.arg1)
-    elif opts.method == "find_parents_wo_child":
-        diff = CiscoConfParse(config=opts.config).find_parents_wo_child(
-            opts.arg1,
-            opts.arg2,
-        )
-    elif opts.method == "req_cfgspec_excl_diff":
-        diff = CiscoConfParse(config=opts.config).req_cfgspec_excl_diff(
-            opts.arg1,
-            opts.arg2,
-            opts.arg3.split(","),
-        )
-    elif opts.method == "req_cfgspec_all_diff":
-        diff = CiscoConfParse(config=opts.config).req_cfgspec_all_diff(
-            opts.arg1.split(","),
-        )
-    elif opts.method == "decrypt":
+    if opts.method == "decrypt":
         pp = CiscoPassword()
         print(pp.decrypt(opts.arg1))
         exit(1)
     elif opts.method == "help":
         print("Valid methods and their arguments:")
-        print("   find_children:          arg1=linespec")
-        print("   find_all_children:      arg1=linespec")
-        print("   find_blocks:            arg1=linespec")
-        print("   find_parents_w_child:   arg1=parentspec  arg2=childspec")
-        print("   find_parents_wo_child:  arg1=parentspec  arg2=childspec")
-        print("   req_cfgspec_excl_diff:  arg1=linespec    arg2=uncfgspec   arg3=cfgspec")
-        print("   req_cfgspec_all_diff:   arg1=cfgspec")
         print("   decrypt:                arg1=encrypted_passwd")
         exit(1)
     else:
