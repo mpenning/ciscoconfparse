@@ -4,6 +4,16 @@
 - Summary:
     - Insert something here
 
+## Version: 1.9.49
+
+- Released: 2023-11-30
+- Summary:
+    - Update documentation
+    - Add `empty_branches` parameter to `CiscoConfParse().find_object_branches()`
+      - BREAKING CHANGE: `empty_branches` defaults False, which will remove an empty branch from the results.
+      - `empty_branches=False` is a change from previous `find_object_branches()` defaults; to restore original behavior, call with `empty_branches=True`.
+    - Add more tests
+
 ## Version: 1.9.48
 
 - Released: 2023-11-30
