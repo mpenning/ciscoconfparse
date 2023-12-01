@@ -442,33 +442,6 @@ def testValues_IOSCfgLine_01():
     assert parse.objs[0].linenum == 0
 
 
-def testValues_IOSCfgLine_02():
-    """test that default factory=False config inserts a new IOSCfgLine object if a string is submitted"""
-    parse = CiscoConfParse(["1"], factory=False)
-    parse.append_line("2")
-    assert len(parse.objs) == 2
-    assert isinstance(parse.objs[1], IOSCfgLine) is True
-    assert parse.objs[1].linenum == 1
-
-
-def testValues_IOSCfgLine_03():
-    """test that default factory=False config inserts a new IOSCfgLine object if an int is submitted"""
-    parse = CiscoConfParse(["1"], factory=False)
-    parse.append_line(2)
-    assert len(parse.objs) == 2
-    assert isinstance(parse.objs[1], IOSCfgLine) is True
-    assert parse.objs[1].linenum == 1
-
-
-def testValues_IOSCfgLine_04():
-    """test that default factory=False config inserts a new IOSCfgLine object if a float is submitted"""
-    parse = CiscoConfParse(["1"], factory=False)
-    parse.append_line(2.0)
-    assert len(parse.objs) == 2
-    assert isinstance(parse.objs[1], IOSCfgLine) is True
-    assert parse.objs[1].linenum == 1
-
-
 def testValues_IOSCfgLine_07():
     """test that a bool in the config list and factory=False is rejected with a InvalidParameters()"""
     with pytest.raises(InvalidParameters):
@@ -1361,7 +1334,11 @@ def testValues_find_object_branches_01():
     ]
     parse = CiscoConfParse(config, syntax="junos", comment="#")
     branchspec = (r"^ltm\spool\s+(\S+)", r"(members)", r"(\S+?):(\d+)", r"state\s(up|down)")
-    test_result = parse.find_object_branches(branchspec=branchspec, regex_groups=True)
+    test_result = parse.find_object_branches(
+        branchspec=branchspec,
+        regex_groups=True,
+        empty_branches=True
+    )
 
     assert len(test_result) == 3
 
@@ -1416,7 +1393,7 @@ def testValues_find_object_branches_02():
     # Test negative lookahead matching in the first regex term... Dont match
     # 'ltm pool BAR'...
     branchspec = (r"ltm\spool\s(?!BAR)", r"members", r"\S+?:\d+", r"state\sup")
-    test_result = parse.find_object_branches(branchspec=branchspec)
+    test_result = parse.find_object_branches(branchspec=branchspec, empty_branches=True)
 
     assert len(test_result) == 2
 
@@ -1444,7 +1421,7 @@ def testValues_find_object_branches_03(parse_c01):
         r"^interface",
         r"switchport",
     )
-    test_result = parse_c01.find_object_branches(branchspec=branchspec)
+    test_result = parse_c01.find_object_branches(branchspec=branchspec, empty_branches=True)
 
     assert len(test_result) == 19
 
@@ -1513,7 +1490,7 @@ def testValues_find_object_branches_04(parse_c01):
     # negative testing to ensure we get the right matches for NO regex
     # matches...
     branchspec = (r"this", r"dont", "match", "at", "all")
-    test_result = parse_c01.find_object_branches(branchspec=branchspec)
+    test_result = parse_c01.find_object_branches(branchspec=branchspec, empty_branches=True)
     correct_result = [[None, None, None, None, None]]
     assert test_result == correct_result
 
@@ -1530,7 +1507,7 @@ def testValues_find_object_branches_05():
     parse = CiscoConfParse(test_data)
 
     branchspec = (r"^this", r"^\s+atest", r"^\s+matchthis")
-    test_result = parse.find_object_branches(branchspec)
+    test_result = parse.find_object_branches(branchspec, empty_branches=True)
 
     assert len(test_result) == 2
     assert test_result[0][0].text.strip() == "thisis"
@@ -1539,6 +1516,98 @@ def testValues_find_object_branches_05():
     assert test_result[1][0].text.strip() == "thisis"
     assert test_result[1][1].text.strip() == "atest"
     assert test_result[1][2].text.strip() == "matchthis"
+
+
+def testValues_find_object_branches_06():
+    """Basic test: find_object_branches() - Test with empty_branches=False and no match"""
+
+    config = [
+        'ltm pool FOO',
+        '  members',
+        '    breakfast.localdomain:8443',
+        '      address 192.0.2.5',
+        '      session monitor-enabled',
+        '      state up',
+        '    lunch.localdomain:8443',
+        '      address 192.0.2.6',
+        '      session monitor-enabled',
+        '      state down',
+        'ltm pool BAR',
+        '  members',
+        '    dinner.localdomain:8443',
+        '      address 192.0.2.7',
+        '      session monitor-enabled',
+        '      state down',
+    ]
+
+    retval = list()
+    parse = CiscoConfParse(config)
+    branches = parse.find_object_branches([r'pool', r'members', r'snack', 'address|session'])
+    for branch in branches:
+        retval.append([ii.text for ii in branch])
+    assert retval == []
+
+
+def testValues_find_object_branches_07():
+    """Basic test: find_object_branches() - Test with empty_branches=False and match on a regex or-condition"""
+
+    config = [
+        'ltm pool FOO',
+        '  members',
+        '    breakfast.localdomain:8443',
+        '      address 192.0.2.5',
+        '      session monitor-enabled',
+        '      state up',
+        '    lunch.localdomain:8443',
+        '      address 192.0.2.6',
+        '      session monitor-enabled',
+        '      state down',
+        'ltm pool BAR',
+        '  members',
+        '    dinner.localdomain:8443',
+        '      address 192.0.2.7',
+        '      session monitor-enabled',
+        '      state down',
+    ]
+
+    retval = list()
+    parse = CiscoConfParse(config)
+    branches = parse.find_object_branches([r'pool', r'members', r'lunch', 'address|session'])
+    for branch in branches:
+        retval.append([ii.text for ii in branch])
+    assert retval[0] == ['ltm pool FOO', '  members', '    lunch.localdomain:8443', '      address 192.0.2.6']
+    assert retval[1] == ['ltm pool FOO', '  members', '    lunch.localdomain:8443', '      session monitor-enabled']
+
+
+def testValues_find_object_branches_08():
+    """Basic test: find_object_branches() - Test with empty_branches=False and match on a regex or-condition"""
+
+    config = [
+        'ltm pool FOO',
+        '  members',
+        '    breakfast.localdomain:8443',
+        '      address 192.0.2.5',
+        '      session monitor-enabled',
+        '      state up',
+        '    lunch.localdomain:8443',
+        '      address 192.0.2.6',
+        '      session monitor-enabled',
+        '      state down',
+        'ltm pool BAR',
+        '  members',
+        '    dinner.localdomain:8443',
+        '      address 192.0.2.7',
+        '      session monitor-enabled',
+        '      state down',
+    ]
+
+    retval = list()
+    parse = CiscoConfParse(config)
+    branches = parse.find_object_branches([r'pool', r'', r'lunch', 'address|session'])
+    for branch in branches:
+        retval.append([ii.text for ii in branch])
+    assert retval[0] == ['ltm pool FOO', '  members', '    lunch.localdomain:8443', '      address 192.0.2.6']
+    assert retval[1] == ['ltm pool FOO', '  members', '    lunch.localdomain:8443', '      session monitor-enabled']
 
 
 def testValues_find_objects_w_parents(parse_c01):
@@ -1587,7 +1656,7 @@ def testValues_delete_children_matching():
     assert parse.ioscfg == correct_result
 
 
-def testValues_delete_lines_01():
+def testValues_delete_objects_01():
     """Catch bugs similar to those fixed by https://github.com/mpenning/ciscoconfparse/pull/140"""
     config = [
         "interface FastEthernet0/2",
@@ -1611,11 +1680,11 @@ def testValues_delete_lines_01():
     ]
 
     parse = CiscoConfParse(config, syntax="ios")
-    parse.delete_lines("port-security")  # Delete lines from config
+    parse.delete_objects("port-security")  # Delete lines from config
     assert parse.ioscfg == correct_result
 
 
-def testValues_delete_lines_02():
+def testValues_delete_objects_02():
     """Catch bugs similar to those fixed by https://github.com/mpenning/ciscoconfparse/pull/140"""
     config = [
         "interface FastEthernet0/2",
@@ -1639,11 +1708,11 @@ def testValues_delete_lines_02():
     ]
 
     parse = CiscoConfParse(config, syntax="ios")
-    parse.delete_lines("port-security")  # Delete lines from config
+    parse.delete_objects("port-security")  # Delete lines from config
     assert parse.ioscfg == correct_result
 
 
-def testValues_delete_lines_03():
+def testValues_delete_objects_03():
     """Catch bugs similar to those fixed by https://github.com/mpenning/ciscoconfparse/pull/140"""
     config = [
         "! port-security",
@@ -1681,11 +1750,11 @@ def testValues_delete_lines_03():
     ]
 
     parse = CiscoConfParse(config, syntax="ios")
-    parse.delete_lines("port-security")  # Delete lines from config
+    parse.delete_objects("port-security")  # Delete lines from config
     assert parse.ioscfg == correct_result
 
 
-def testValues_replace_lines_01(parse_c01):
+def testValues_replace_objects_01(parse_c01):
     c01_replace_gige_no_exactmatch = [
         "interface GigabitEthernet8/1",
         "interface GigabitEthernet8/2",
@@ -1714,11 +1783,11 @@ def testValues_replace_lines_01(parse_c01):
     )
     # We have to parse multiple times because of replacements
     for args, correct_result in replace_lines_Values01:
-        test_result = parse_c01.replace_lines(**args)
+        test_result = [ii.text for ii in parse_c01.replace_objects(**args)]
         assert correct_result == test_result
 
 
-def testValues_replace_lines_02(parse_c01):
+def testValues_replace_objects_02(parse_c01):
     c01_replace_gige_exclude = [
         "interface GigabitEthernet8/1",
         "interface GigabitEthernet8/2",
@@ -1748,11 +1817,11 @@ def testValues_replace_lines_02(parse_c01):
         ),
     )
     for args, correct_result in replace_lines_Values02:
-        test_result = parse_c01.replace_lines(**args)
+        test_result = [ii.text for ii in parse_c01.replace_objects(**args)]
         assert correct_result == test_result
 
 
-def testValues_replace_lines_03(parse_c01):
+def testValues_replace_objects_03(parse_c01):
     """Ensure we can use a compiled regexp in excludespec"""
     c01_replace_gige_exclude = [
         "interface GigabitEthernet8/1",
@@ -1774,7 +1843,7 @@ def testValues_replace_lines_03(parse_c01):
         ),
     )
     for args, correct_result in replace_lines_Values03:
-        test_result = parse_c01.replace_lines(**args)
+        test_result = [ii.text for ii in parse_c01.replace_objects(**args)]
         assert correct_result == test_result
 
 
@@ -2547,17 +2616,17 @@ interface GigabitEthernet0/1
         parse = CiscoConfParse(config.splitlines(), syntax=test_syntax)
 
         param_true = "access"
-        ccp_test_value = parse.has_line_with(param_true)
+        ccp_test_value = any(parse.find_objects(param_true))
         assert ccp_test_value is True
 
-        objs_test_value = parse.ConfigObjs.has_line_with(param_true)
+        objs_test_value = any(parse.find_objects(param_true))
         assert objs_test_value is True
 
         param_false = "NONONONONONONONONONONONONONONONONONONO"
-        ccp_test_value = parse.has_line_with(param_false)
+        ccp_test_value = any(parse.find_objects(param_false))
         assert ccp_test_value is False
 
-        objs_test_value = parse.ConfigObjs.has_line_with(param_false)
+        objs_test_value = any(parse.ConfigObjs.find_objects(param_false))
         assert objs_test_value is False
 
 
@@ -2819,7 +2888,7 @@ def testValues_IOSIntfLine_find_objects_factory_02(
         obj.insert_before("default interface Serial 1/0")
 
         # Replace text in the IOSIntfLine object
-        parse_c01_factory.replace_lines(
+        parse_c01_factory.replace_objects(
             "interface Serial 1/0", "interface Serial 2/0", exactmatch=False
         )
 
