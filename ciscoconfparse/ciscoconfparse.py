@@ -693,8 +693,8 @@ class CiscoConfParse(object):
         # Log a warning if parsing with `ignore_blank_lines=True` and
         #     `factory=False`, which is the default parsing config...
         ######################################################################
-        if ignore_blank_lines is True and factory is False:
-            logger.info("As of version 1.9.17 and later, `ignore_blank_lines=True` is only honored when `factory=True`")
+        if ignore_blank_lines is True and factory is True:
+            logger.info("As of version 1.9.17 and later, `ignore_blank_lines=True` is only honored when `factory=False`")
 
         ######################################################################
         # Reconfigure loguru if read_only is True
@@ -1011,7 +1011,7 @@ class CiscoConfParse(object):
         self.atomic()  # atomic() calls self.ConfigObjs.bootstrap_obj_init_ng
 
     @logger.catch(reraise=True)
-    def _list_matching_children(
+    def _find_child_object_branches(
         self,
         parent_obj,
         childspec,
@@ -1027,7 +1027,7 @@ class CiscoConfParse(object):
             raise ValueError("allow_none parameter must always be True.")
 
         if debug > 1:
-            msg = f"""Calling _list_matching_children(
+            msg = f"""Calling _find_child_object_branches(
 parent_obj={parent_obj},
 childspec='{childspec}',
 regex_flags='{regex_flags}',
@@ -1056,8 +1056,7 @@ debug={debug},
             segment_list = [None]
 
         if debug > 1:
-            logger.info(f"    _list_matching_children() returns segment_list={segment_list}")
-        print("FOO", segment_list)
+            logger.info(f"    _find_child_object_branches() returns segment_list={segment_list}")
         return segment_list
 
     # This method is on CiscoConfParse()
@@ -1189,7 +1188,7 @@ debug={debug},
             # FIXME: Insert debugging here...
             if idx == 0:
                 # Get matching 'root' objects from the config
-                next_kids = self._list_matching_children(
+                next_kids = self._find_child_object_branches(
                     parent_obj=None,
                     childspec=childspec,
                     regex_flags=regex_flags,
@@ -1205,7 +1204,7 @@ debug={debug},
                     # Extend existing branches into the new_branches
                     if branch[-1] is not None:
                         # Find children to extend the family branch...
-                        next_kids = self._list_matching_children(
+                        next_kids = self._find_child_object_branches(
                             parent_obj=branch[-1],
                             childspec=childspec,
                             regex_flags=regex_flags,
@@ -1350,75 +1349,6 @@ debug={debug},
 
         return retval
 
-    # This method is on CiscoConfParse()
-    @logger.catch(reraise=True)
-    def find_objects_dna(self, dnaspec, exactmatch=False):
-        """Find all :class:`~models_cisco.IOSCfgLine` objects whose text matches ``dnaspec`` and return the :class:`~models_cisco.IOSCfgLine` objects in a python list.
-
-        Notes
-        -----
-        :func:`~ciscoconfparse.CiscoConfParse.find_objects_dna` requires the configuration to be parsed with factory=True.
-
-        Parameters
-        ----------
-        dnaspec : str
-            A string or python regular expression, which should be matched.  This argument will be used to match dna attribute of the object
-        exactmatch : bool
-            Defaults to False.  When set True, this option requires ``dnaspec`` match the whole configuration line, instead of a portion of the configuration line.
-
-        Returns
-        -------
-        list
-            A list of matching :class:`~ciscoconfparse.IOSCfgLine` objects
-
-        Examples
-        --------
-        >>> from ciscoconfparse import CiscoConfParse
-        >>> config = [
-        ...     '!',
-        ...     'hostname MyRouterHostname',
-        ...     '!',
-        ...     ]
-        >>> parse = CiscoConfParse(config=config, factory=True, syntax='ios')
-        >>>
-        >>> obj_list = parse.find_objects_dna(r'Hostname')
-        >>> obj_list
-        [<IOSHostnameLine # 1 'MyRouterHostname'>]
-        >>>
-        >>> # The IOSHostnameLine object has a hostname attribute
-        >>> obj_list[0].hostname
-        'MyRouterHostname'
-        """
-        if self.debug > 1:
-            method_name = inspect.currentframe().f_code.co_name
-            message = f"METHOD {self.__class__.__name__}().{method_name}(dnaspec='{dnaspec}') was called"
-            logger.info(message)
-
-        if self.ConfigObjs is None:
-            # ConfigObjs should be a list, tuple or Sequence
-            err_text = (
-                "CiscoConfParse().ConfigObjs should be a list of "
-                "config lines, but it's not initialized."
-            )
-            logger.error(err_text)
-            raise ValueError(err_text)
-
-        if self.factory is False:
-            err_text = "find_objects_dna() must be called with 'factory=True'"
-            logger.error(err_text)
-            raise ValueError(err_text)
-
-        if exactmatch is False:
-            # Return objects whose text attribute matches linespec
-            linespec_re = re.compile(dnaspec)
-
-        elif exactmatch is True:
-            # Return objects whose text attribute matches linespec exactly
-            linespec_re = re.compile("^{}$".format(dnaspec))
-
-        return list(
-            filter(lambda obj: linespec_re.search(obj.dna), self.ConfigObjs),
-        )
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
@@ -1471,14 +1401,62 @@ debug={debug},
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
-    def find_objects_w_child(self, parentspec, childspec, ignore_ws=False, recurse=False):
-        """
-        Return a list of parent :class:`~models_cisco.IOSCfgLine` objects,
-        which matched the ``parentspec`` and whose children match ``childspec``.
-        Only the parent :class:`~models_cisco.IOSCfgLine` objects will be
-        returned.
+    def find_objects_w_missing_children(
+        self,
+        parentspec,
+        childspec,
+        ignore_ws=False,
+    ):
+        """Return a list of parent :class:`~models_cisco.IOSCfgLine` objects,
+        which matched the ``parentspec`` and whose children do not match
+        all elements in ``childspec``.  Only the parent
+        :class:`~models_cisco.IOSCfgLine` objects will be returned.
 
-        This is an alias for :func:`~ciscoconfparse.CiscoConfParse.find_parent_objects`
+        Parameters
+        ----------
+        parentspec : str
+            Text regular expression for the :class:`~models_cisco.IOSCfgLine` object to be matched; this must match the parent's line
+        childspec : list
+            A list of text regular expressions to be matched among the children
+        ignore_ws : bool
+            boolean that controls whether whitespace is ignored
+
+        Returns
+        -------
+        list
+            A list of matching parent :class:`~models_cisco.IOSCfgLine` objects"""
+
+        enforce_valid_types(
+            childspec,
+            (Sequence,),
+            "childspec parameter must be an instance of collections.abc.Sequence().",
+        )
+
+        retval = []
+        if ignore_ws is True:
+            parentspec = build_space_tolerant_regex(parentspec)
+            if isinstance(childspec, Sequence):
+                childspec = [build_space_tolerant_regex(ii) for ii in childspec]
+
+            else:
+                err_txt = "Cannot call build_space_tolerant_regex()" " on childspec"
+                raise ValueError(err_txt)
+
+        for parentobj in self.find_objects(parentspec):
+            results = set()
+            for child_cfg in childspec:
+                results.add(bool(parentobj.re_search_children(child_cfg)))
+            if False in results:
+                retval.append(parentobj)
+            else:
+                continue
+
+        return retval
+
+    # This method is on CiscoConfParse()
+    @logger.catch(reraise=True)
+    def find_objects_wo_child(self, parentspec, childspec, ignore_ws=False, recurse=False):
+        r"""Return a list of parent :class:`~models_cisco.IOSCfgLine` objects, which matched the ``parentspec`` and whose children did not match ``childspec``.  Only the parent :class:`~models_cisco.IOSCfgLine` objects will be returned.  For simplicity, this method only finds oldest_ancestors without immediate children that match.
 
         Parameters
         ----------
@@ -1488,15 +1466,13 @@ debug={debug},
             Text regular expression for the line to be matched; this must match the child's line
         ignore_ws : bool
             boolean that controls whether whitespace is ignored
-        recurse : bool
-            Set True if you want to search all children (children, grand children, great grand children, etc...)
 
         Returns
         -------
         list
-            A list of matching parent :class:`~models_cisco.IOSCfgLine` objects
+            A list of matching parent configuration lines
         """
-        return self.find_parent_objects(parentspec, childspec, ignore_ws=ignore_ws, recurse=recurse, escape_chars=False)
+        return self.find_parent_objects_wo_child(parentspec, childspec, ignore_ws=ignore_ws, recurse=recurse)
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
@@ -1652,205 +1628,7 @@ debug={debug},
         )
 
     # This method is on CiscoConfParse()
-    @ logger.catch(reraise=True)
-    def find_objects_w_all_children(
-        self,
-        parentspec,
-        childspec,
-        ignore_ws=False,
-        recurse=False,
-    ):
-        """Return a list of parent :class:`~models_cisco.IOSCfgLine` objects,
-        which matched the ``parentspec`` and whose children match all elements
-        in ``childspec``.  Only the parent :class:`~models_cisco.IOSCfgLine`
-        objects will be returned.
-
-        Parameters
-        ----------
-        parentspec : str
-            Text regular expression for the :class:`~models_cisco.IOSCfgLine` object to be matched; this must match the parent's line
-        childspec : list
-            A list of text regular expressions to be matched among the children
-        ignore_ws : bool
-            boolean that controls whether whitespace is ignored
-        recurse : bool
-            Set True if you want to search all children (children, grand children, great grand children, etc...)
-
-        Returns
-        -------
-        list
-            A list of matching parent :class:`~models_cisco.IOSCfgLine` objects
-
-        Examples
-        --------
-        This example uses :func:`~ciscoconfparse.find_objects_w_child()` to
-        find all ports that are members of access vlan 300 in following
-        config...
-
-        .. code::
-
-           !
-           interface FastEthernet0/1
-            switchport access vlan 532
-            spanning-tree vlan 532 cost 3
-           !
-           interface FastEthernet0/2
-            switchport access vlan 300
-            spanning-tree portfast
-           !
-           interface FastEthernet0/2
-            duplex full
-            speed 100
-            switchport access vlan 300
-            spanning-tree portfast
-           !
-
-        The following interfaces should be returned:
-
-        .. code::
-
-           interface FastEthernet0/2
-           interface FastEthernet0/3
-
-        We do this by quering `find_objects_w_all_children()`; we set our
-        parent as `^interface` and set the childspec as
-        ['switchport access vlan 300', 'spanning-tree portfast'].
-
-        .. code-block:: python
-           :emphasize-lines: 19
-
-           >>> from ciscoconfparse import CiscoConfParse
-           >>> config = ['!',
-           ...           'interface FastEthernet0/1',
-           ...           ' switchport access vlan 532',
-           ...           ' spanning-tree vlan 532 cost 3',
-           ...           '!',
-           ...           'interface FastEthernet0/2',
-           ...           ' switchport access vlan 300',
-           ...           ' spanning-tree portfast',
-           ...           '!',
-           ...           'interface FastEthernet0/3',
-           ...           ' duplex full',
-           ...           ' speed 100',
-           ...           ' switchport access vlan 300',
-           ...           ' spanning-tree portfast',
-           ...           '!',
-           ...     ]
-           >>> p = CiscoConfParse(config=config)
-           >>> p.find_objects_w_all_children('^interface',
-           ...     ['switchport access vlan 300', 'spanning-tree portfast'])
-           ...
-           [<IOSCfgLine # 5 'interface FastEthernet0/2'>, <IOSCfgLine # 9 'interface FastEthernet0/3'>]
-           >>>
-        """
-
-        # childspec must be an instance of collections.abc.Sequence()
-        enforce_valid_types(
-            childspec,
-            (Sequence,),
-            "childspec parameter must be an instance of collections.abc.Sequence().",
-        )
-
-        retval = []
-        if ignore_ws is True:
-            parentspec = build_space_tolerant_regex(parentspec)
-            # childspec = map(build_space_tolerant_regex, childspec)
-            childspec = [build_space_tolerant_regex(ii) for ii in childspec]
-
-        for parentobj in self.find_objects(parentspec):
-            results = set()
-            for child_cfg in childspec:
-                results.add(
-                    bool(
-                        parentobj.re_search_children(
-                            child_cfg,
-                            recurse=recurse,
-                        ),
-                    ),
-                )
-            if False in results:
-                continue
-            retval.append(parentobj)
-
-        return retval
-
-    # This method is on CiscoConfParse()
-    @ logger.catch(reraise=True)
-    def find_objects_w_missing_children(
-        self,
-        parentspec,
-        childspec,
-        ignore_ws=False,
-    ):
-        """Return a list of parent :class:`~models_cisco.IOSCfgLine` objects,
-        which matched the ``parentspec`` and whose children do not match
-        all elements in ``childspec``.  Only the parent
-        :class:`~models_cisco.IOSCfgLine` objects will be returned.
-
-        Parameters
-        ----------
-        parentspec : str
-            Text regular expression for the :class:`~models_cisco.IOSCfgLine` object to be matched; this must match the parent's line
-        childspec : list
-            A list of text regular expressions to be matched among the children
-        ignore_ws : bool
-            boolean that controls whether whitespace is ignored
-
-        Returns
-        -------
-        list
-            A list of matching parent :class:`~models_cisco.IOSCfgLine` objects"""
-
-        enforce_valid_types(
-            childspec,
-            (Sequence,),
-            "childspec parameter must be an instance of collections.abc.Sequence().",
-        )
-
-        retval = []
-        if ignore_ws is True:
-            parentspec = build_space_tolerant_regex(parentspec)
-            if isinstance(childspec, Sequence):
-                childspec = [build_space_tolerant_regex(ii) for ii in childspec]
-
-            else:
-                err_txt = "Cannot call build_space_tolerant_regex()" " on childspec"
-                raise ValueError(err_txt)
-
-        for parentobj in self.find_objects(parentspec):
-            results = set()
-            for child_cfg in childspec:
-                results.add(bool(parentobj.re_search_children(child_cfg)))
-            if False in results:
-                retval.append(parentobj)
-            else:
-                continue
-
-        return retval
-
-    # This method is on CiscoConfParse()
-    @ logger.catch(reraise=True)
-    def find_objects_wo_child(self, parentspec, childspec, ignore_ws=False, recurse=False):
-        r"""Return a list of parent :class:`~models_cisco.IOSCfgLine` objects, which matched the ``parentspec`` and whose children did not match ``childspec``.  Only the parent :class:`~models_cisco.IOSCfgLine` objects will be returned.  For simplicity, this method only finds oldest_ancestors without immediate children that match.
-
-        Parameters
-        ----------
-        parentspec : str
-            Text regular expression for the :class:`~models_cisco.IOSCfgLine` object to be matched; this must match the parent's line
-        childspec : str
-            Text regular expression for the line to be matched; this must match the child's line
-        ignore_ws : bool
-            boolean that controls whether whitespace is ignored
-
-        Returns
-        -------
-        list
-            A list of matching parent configuration lines
-        """
-        return self.find_parent_objects_wo_child(parentspec, childspec, ignore_ws=ignore_ws, recurse=recurse)
-
-    # This method is on CiscoConfParse()
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def find_parent_objects_wo_child(self, parentspec, childspec, ignore_ws=False, recurse=False, escape_chars=False):
         r"""Return a list of parent :class:`~models_cisco.IOSCfgLine` objects, which matched the ``parentspec`` and whose children did not match ``childspec``.  Only the parent :class:`~models_cisco.IOSCfgLine` objects will be returned.  For simplicity, this method only finds oldest_ancestors without immediate children that match.
 
@@ -1963,7 +1741,7 @@ debug={debug},
 
 
     # This method is on CiscoConfParse()
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def find_objects_w_parents(self, parentspec, childspec, ignore_ws=False):
         r"""Parse through the children of all parents matching parentspec,
         and return a list of child objects, which matched the childspec.
@@ -1987,7 +1765,7 @@ debug={debug},
         return self.find_child_objects(parentspec, childspec, ignore_ws=ignore_ws, recurse=False)
 
     # This method is on CiscoConfParse()
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def find_child_objects(
             self,
             parentspec,
@@ -2159,7 +1937,7 @@ debug={debug},
         return sorted(retval)
 
     # This method is on CiscoConfParse()
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def delete_objects(self, linespec, exactmatch=False, ignore_ws=False):
         """Find all :class:`~models_cisco.IOSCfgLine` objects whose text
         matches linespec, and delete the object"""
@@ -2171,7 +1949,7 @@ debug={debug},
             obj.delete()
 
     # This method is on CiscoConfParse()
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def replace_objects(
         self,
         linespec,
@@ -2289,129 +2067,7 @@ debug={debug},
         return retval
 
     # This method is on CiscoConfParse()
-    @ logger.catch(reraise=True)
-    def replace_children(
-        self,
-        parentspec,
-        childspec,
-        replacestr,
-        excludespec=None,
-        exactmatch=False,
-        atomic=False,
-    ):
-        r"""Replace lines matching `childspec` within the `parentspec`'s
-        immediate children.
-
-        Parameters
-        ----------
-        parentspec : str
-            Text IOS configuration line
-        childspec : str
-            Text IOS configuration line, or regular expression
-        replacestr : str
-            Text IOS configuration, which should replace text matching ``childspec``.
-        excludespec : str
-            A regular expression, which indicates ``childspec`` lines which *must* be skipped.  If ``excludespec`` is None, no lines will be excluded.
-        exactmatch : bool
-            Defaults to False.  When set True, this option requires ``linespec`` match the whole configuration line, instead of a portion of the configuration line.
-
-        Returns
-        -------
-        list
-            A list of changed :class:`~models_cisco.IOSCfgLine` instances.
-
-        Examples
-        --------
-        `replace_children()` just searches through a parent's child lines and
-        replaces anything matching `childspec` with `replacestr`.  This method
-        is one of my favorites for quick and dirty standardization efforts if
-        you *know* the commands are already there (just set inconsistently).
-
-        One very common use case is rewriting all vlan access numbers in a
-        configuration.  The following example sets
-        `storm-control broadcast level 0.5` on all GigabitEthernet ports.
-
-        .. code-block:: python
-           :emphasize-lines: 13
-
-           >>> from ciscoconfparse import CiscoConfParse
-           >>> config = ['!',
-           ...           'interface GigabitEthernet1/1',
-           ...           ' description {I have a broken storm-control config}',
-           ...           ' switchport',
-           ...           ' switchport mode access',
-           ...           ' switchport access vlan 50',
-           ...           ' switchport nonegotiate',
-           ...           ' storm-control broadcast level 0.2',
-           ...           '!'
-           ...     ]
-           >>> p = CiscoConfParse(config=config)
-           >>> p.replace_children(r'^interface\sGigabit', r'broadcast\slevel\s\S+', 'broadcast level 0.5')
-           [' storm-control broadcast level 0.5']
-           >>>
-
-        One thing to remember about the last example, you *cannot* use a
-        regular expression in `replacestr`; just use a normal python string.
-        """
-        retval = list()
-        ## Since we are replacing text, we *must* operate on ConfigObjs
-        childspec_re = re.compile(childspec)
-        if excludespec:
-            excludespec_re = re.compile(excludespec)
-        for pobj in self._find_line_OBJ(parentspec, exactmatch=exactmatch):
-            if excludespec and excludespec_re.search(pobj.text):
-                # Exclude replacements on pobj lines which match excludespec
-                continue
-            for cobj in pobj.children:
-                if excludespec and excludespec_re.search(cobj.text):
-                    # Exclude replacements on pobj lines which match excludespec
-                    continue
-                elif childspec_re.search(cobj.text):
-                    retval.append(cobj.re_sub(childspec, replacestr))
-                else:
-                    pass
-
-        if self.factory and atomic:
-            self.ConfigObjs._list = self.ConfigObjs.bootstrap_obj_init_ng(self.ioscfg)
-        return retval
-
-    # This method is on CiscoConfParse()
-    @ logger.catch(reraise=True)
-    def replace_all_children(
-        self,
-        parentspec,
-        childspec,
-        replacestr,
-        excludespec=None,
-        exactmatch=False,
-        atomic=False,
-    ):
-        """Replace lines matching `childspec` within all children (recursive) of lines whilch match `parentspec`"""
-        retval = list()
-        ## Since we are replacing text, we *must* operate on ConfigObjs
-        childspec_re = re.compile(childspec)
-        if excludespec:
-            excludespec_re = re.compile(excludespec)
-        for pobj in self._find_line_OBJ(parentspec, exactmatch=exactmatch):
-            if excludespec and excludespec_re.search(pobj.text):
-                # Exclude replacements on pobj lines which match excludespec
-                continue
-            for cobj in self._find_all_child_OBJ(pobj):
-                if excludespec and excludespec_re.search(cobj.text):
-                    # Exclude replacements on pobj lines which match excludespec
-                    continue
-                elif childspec_re.search(cobj.text):
-                    retval.append(cobj.re_sub(childspec, replacestr))
-                else:
-                    pass
-
-        if self.factory and atomic:
-            self.ConfigObjs._list = self.ConfigObjs.bootstrap_obj_init_ng(self.ioscfg)
-
-        return retval
-
-    # This method is on CiscoConfParse()
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def re_search_children(self, regexspec, recurse=False):
         """Use ``regexspec`` to search for root parents in the config with text matching regex.  If `recurse` is False, only root parent objects are returned.  A list of matching objects is returned.
 
@@ -2439,7 +2095,7 @@ debug={debug},
             return [obj for obj in self.find_objects(regexspec)]
 
     # This method is on CiscoConfParse()
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def re_match_iter_typed(
         self,
         regexspec,
@@ -2544,7 +2200,7 @@ debug={debug},
             return result_type(default)
 
     # This method is on CiscoConfParse()
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def save_as(self, filepath):
         """Save a text copy of the configuration at ``filepath``; this
         method uses the OperatingSystem's native line separators (such as
@@ -2562,7 +2218,7 @@ debug={debug},
     ###  or iterable of objects instead of the configuration text itself.
 
     # This method is on CiscoConfParse()
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def _find_line_OBJ(self, linespec, exactmatch=False):
         """SEMI-PRIVATE: Find objects whose text matches the linespec"""
 
@@ -2589,7 +2245,7 @@ debug={debug},
         )
 
     # This method is on CiscoConfParse()
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def _find_sibling_OBJ(self, lineobject):
         """SEMI-PRIVATE: Takes a singe object and returns a list of sibling
         objects"""
@@ -2597,7 +2253,7 @@ debug={debug},
         return siblings
 
     # This method is on CiscoConfParse()
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def _find_all_child_OBJ(self, lineobject):
         """SEMI-PRIVATE: Takes a single object and returns a list of
         decendants in all 'children' / 'grandchildren' / etc... after it.
@@ -2612,7 +2268,7 @@ debug={debug},
         return retval
 
     # This method is on CiscoConfParse()
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def _unique_OBJ(self, objectlist):
         """SEMI-PRIVATE: Returns a list of unique objects (i.e. with no
         duplicates).
@@ -2624,7 +2280,7 @@ debug={debug},
         return sorted(retval)
 
     # This method is on CiscoConfParse()
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def _objects_to_uncfg(self, objectlist, unconflist):
         # Used by req_cfgspec_excl_diff()
         retval = []
@@ -2641,7 +2297,7 @@ debug={debug},
 
 class Diff(object):
 
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def __init__(self, hostname=None, old_config=None, new_config=None, syntax='ios'):
         """
         Initialize Diff().
@@ -2729,7 +2385,7 @@ class Diff(object):
         # New configuration
         self.host.load_generated_config(new_config)
 
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def diff(self):
         """
         diff() returns the list of required configuration statements to go from the old_config to the new_config
@@ -2740,7 +2396,7 @@ class Diff(object):
             retval.append(obj.cisco_style_text())
         return retval
 
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def rollback(self):
         """
         rollback() returns the list of required configuration statements to rollback from the new_config to the old_config
@@ -2764,7 +2420,7 @@ class ConfigList(MutableSequence):
     debug = None
     _list = []
 
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def __init__(
         self,
         initlist=None,
@@ -2878,7 +2534,7 @@ class ConfigList(MutableSequence):
             self._network_cache = {}
 
     # This method is on ConfigList()
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def __repr__(self):
         return """<ConfigList, syntax='{}', comment='{}', conf={}>""".format(
             self.syntax,
@@ -2886,47 +2542,47 @@ class ConfigList(MutableSequence):
             self._list,
         )
 
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def __iter__(self):
         return iter(self._list)
 
     # This method is on ConfigList()
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def __lt__(self, other):
         return self._list < self.__cast(other)
 
     # This method is on ConfigList()
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def __le__(self, other):
         return self._list < self.__cast(other)
 
     # This method is on ConfigList()
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def __eq__(self, other):
         return self._list == self.__cast(other)
 
     # This method is on ConfigList()
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def __gt__(self, other):
         return self._list > self.__cast(other)
 
     # This method is on ConfigList()
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def __ge__(self, other):
         return self._list >= self.__cast(other)
 
     # This method is on ConfigList()
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def __cast(self, other):
         return other._list if isinstance(other, ConfigList) else other
 
     # This method is on ConfigList()
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def __len__(self):
         return len(self._list)
 
     # This method is on ConfigList()
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def __getitem__(self, ii):
         if isinstance(ii, slice):
             return self.__class__(self._list[ii])
@@ -2934,19 +2590,19 @@ class ConfigList(MutableSequence):
             return self._list[ii]
 
     # This method is on ConfigList()
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def __setitem__(self, ii, val):
         self._list[ii] = val
 
     # This method is on ConfigList()
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def __delitem__(self, ii):
         del self._list[ii]
         #self._bootstrap_from_text()
         self._list = self.bootstrap_obj_init_ng(self.ioscfg, debug=self.debug)
 
     # This method is on ConfigList()
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def __add__(self, other):
         if isinstance(other, ConfigList):
             return self.__class__(self._list + other._list)
@@ -2955,7 +2611,7 @@ class ConfigList(MutableSequence):
         return self.__class__(self._list + list(other))
 
     # This method is on ConfigList()
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def __radd__(self, other):
         if isinstance(other, ConfigList):
             return self.__class__(other._list + self._list)
@@ -2964,7 +2620,7 @@ class ConfigList(MutableSequence):
         return self.__class__(list(other) + self._list)
 
     # This method is on ConfigList()
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def __iadd__(self, other):
         if isinstance(other, ConfigList):
             self._list += other._list
@@ -2975,19 +2631,19 @@ class ConfigList(MutableSequence):
         return self
 
     # This method is on ConfigList()
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def __mul__(self, val):
         return self.__class__(self._list * val)
 
     __rmul__ = __mul__
 
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def __imul__(self, val):
         self._list *= val
         return self
 
     # This method is on ConfigList()
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def __copy__(self):
         inst = self.__class__.__new__(self.__class__)
         inst.__dict__.update(self.__dict__)
@@ -2996,25 +2652,25 @@ class ConfigList(MutableSequence):
         return inst
 
     # This method is on ConfigList()
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def __str__(self):
         return self.__repr__()
 
     # This method is on ConfigList()
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def __enter__(self):
         # Add support for with statements...
         # FIXME: *with* statements dont work
         yield from self._list
 
     # This method is on ConfigList()
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def __exit__(self, *args, **kwargs):
         # FIXME: *with* statements dont work
         self._list[0].confobj.CiscoConfParse.atomic()
 
     # This method is on ConfigList()
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def __getattribute__(self, arg):
         """Call arg on ConfigList() object, and if that fails, call arg from the ccp_ref attribute"""
         # Try a method call on ASAConfigList()
@@ -3039,7 +2695,7 @@ class ConfigList(MutableSequence):
 
     # This method is on ConfigList()
     @ junos_unsupported
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def append(self, val):
         if self.debug >= 1:
             logger.debug("    ConfigList().append(val={}) was called.".format(val))
@@ -3047,32 +2703,32 @@ class ConfigList(MutableSequence):
         self._list.append(val)
 
     # This method is on ConfigList()
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def pop(self, ii=-1):
         return self._list.pop(ii)
 
     # This method is on ConfigList()
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def remove(self, val):
         self._list.remove(val)
 
     # This method is on ConfigList()
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def clear(self):
         self._list.clear()
 
     # This method is on ConfigList()
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def copy(self):
         return self.__class__(self)
 
     # This method is on ConfigList()
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def count(self, val):
         return self._list.count(val)
 
     # This method is on ConfigList()
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def index(self, val, *args):
         try:
             return self._list.index(val, *args)
@@ -3084,17 +2740,17 @@ class ConfigList(MutableSequence):
             raise eee
 
     # This method is on ConfigList()
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def reverse(self):
         self._list.reverse()
 
     # This method is on ConfigList()
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def sort(self, _unknown_arg, *args, **kwds):
         self._list.sort(*args, **kwds)
 
     # This method is on ConfigList()
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def extend(self, other):
         if isinstance(other, ConfigList):
             self._list.extend(other._list)
@@ -3102,7 +2758,7 @@ class ConfigList(MutableSequence):
             self._list.extend(other)
 
     # This method is on ConfigList()
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def insert_before(self, exist_val=None, new_val=None, atomic=False):
         """
         Insert new_val before all occurances of exist_val.
@@ -3214,7 +2870,7 @@ class ConfigList(MutableSequence):
 
     # This method is on ConfigList()
     @ junos_unsupported
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def insert_after(self, exist_val=None, new_val=None, atomic=False, new_val_indent=-1):
         """
         Insert new_val after all occurances of exist_val.
@@ -3334,7 +2990,7 @@ class ConfigList(MutableSequence):
 
     # This method is on ConfigList()
     @ junos_unsupported
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def insert(self, ii, val):
         if not isinstance(ii, int):
             error = f"The ConfigList() index must be an integer, but ConfigList().insert() got {type(ii)}"
@@ -3376,7 +3032,7 @@ class ConfigList(MutableSequence):
         self.reassign_linenums()
 
     # This method is on ConfigList()
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def config_hierarchy(self):
         """Walk this configuration and return the following tuple
         at each parent 'level': (list_of_parent_sibling_objs, list_of_nonparent_sibling_objs)
@@ -3396,7 +3052,7 @@ class ConfigList(MutableSequence):
         return parent_siblings, nonparent_siblings
 
     # This method is on ConfigList()
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def _banner_mark_regex(self, regex):
         """
         Use the regex input parameter to identify all banner parent
@@ -3497,7 +3153,7 @@ class ConfigList(MutableSequence):
                     break
 
     # This method is on ConfigList()
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def _macro_mark_children(self, macro_parent_idx_list):
         """
         Set the blank_line_keep attribute for all banner parent / child objs.
@@ -3525,7 +3181,7 @@ class ConfigList(MutableSequence):
                     finished = True
 
     # This method is on ConfigList()
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def _maintain_bootstrap_parent_cache(self, parents_cache, indent, max_indent, is_config_line):
         ## Parent cache:
         ## Maintain indent vs max_indent in a family and
@@ -3549,7 +3205,7 @@ class ConfigList(MutableSequence):
 
         return parents_cache, parent
 
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def _build_bootstrap_parent_child(self, retval, parents_cache, parent, idx, indent, obj, debug,):
         candidate_parent = None
         candidate_parent_idx = None
@@ -3586,7 +3242,7 @@ class ConfigList(MutableSequence):
         return retval, parents_cache, parent
 
     # This method is on ConfigList()
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def bootstrap_obj_init_ng(self, text_list=None, debug=0):
         """
         Accept a text list, and format into a list of *CfgLine() objects.
@@ -3684,7 +3340,7 @@ class ConfigList(MutableSequence):
         return retval
 
     # This method is on ConfigList()
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def _build_banner_re_ios(self):
         """Return a banner regexp for IOS (and at this point, NXOS)."""
         banner_str = {
@@ -3704,7 +3360,7 @@ class ConfigList(MutableSequence):
         return banner_re
 
     # This method is on ConfigList()
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def _add_child_to_parent(self, _list, idx, indent, parentobj, childobj):
         ## parentobj could be None when trying to add a child that should not
         ##    have a parent
@@ -3743,21 +3399,21 @@ class ConfigList(MutableSequence):
             pass
 
     # This method is on ConfigList()
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def iter_with_comments(self, begin_index=0):
         for idx, obj in enumerate(self._list):
             if idx >= begin_index:
                 yield obj
 
     # This method is on ConfigList()
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def iter_no_comments(self, begin_index=0):
         for idx, obj in enumerate(self._list):
             if (idx >= begin_index) and (not obj.is_comment):
                 yield obj
 
     # This method is on ConfigList()
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def reassign_linenums(self):
         # Call this after any insertion or deletion
         for idx, obj in enumerate(self._list):
@@ -3765,13 +3421,13 @@ class ConfigList(MutableSequence):
 
     # This method is on ConfigList()
     @ property
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def all_parents(self):
         return [obj for obj in self._list if obj.has_children]
 
     # This method is on ConfigList()
     @ property
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def last_index(self):
         return self.__len__() - 1
 
@@ -3781,7 +3437,7 @@ class ConfigList(MutableSequence):
 
     # This method was on ASAConfigList(); now tentatively on ConfigList()
     @ property
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def names(self):
         """Return a dictionary of name to address mappings"""
         if self.syntax != "asa":
@@ -3797,7 +3453,7 @@ class ConfigList(MutableSequence):
 
     # This method was on ASAConfigList(); now tentatively on ConfigList()
     @ property
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def object_group_network(self):
         """Return a dictionary of name to object-group network mappings"""
         if self.syntax != "asa":
@@ -3812,7 +3468,7 @@ class ConfigList(MutableSequence):
 
     # This method was on ASAConfigList(); now tentatively on ConfigList()
     @ property
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def access_list(self):
         """Return a dictionary of ACL name to ACE (list) mappings"""
         if self.syntax != "asa":
@@ -3837,23 +3493,23 @@ class ConfigList(MutableSequence):
 class DiffObject(object):
     """This object should be used at every level of hierarchy"""
 
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def __init__(self, level, nonparents, parents):
         self.level = level
         self.nonparents = nonparents
         self.parents = parents
 
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def __repr__(self):
         return "<DiffObject level: {}>".format(self.level)
 
 
 class CiscoPassword(object):
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def __init__(self, ep=""):
         self.ep = ep
 
-    @ logger.catch(reraise=True)
+    @logger.catch(reraise=True)
     def decrypt(self, ep=""):
         """Cisco Type 7 password decryption.  Converted from perl code that was
         written by jbash [~at~] cisco.com; enhancements suggested by
@@ -3939,7 +3595,7 @@ class CiscoPassword(object):
         return dp
 
 
-@ logger.catch(reraise=True)
+@logger.catch(reraise=True)
 def config_line_factory(all_lines=None, line=None, comment_delimiter="!", syntax="ios", debug=0):
     """A factory method to assign a custom BaseCfgLine() subclass based on `all_lines`, `line`, `comment_delimiter`, and `syntax` parameters."""
     # Complicted & Buggy

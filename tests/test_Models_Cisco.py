@@ -1,16 +1,15 @@
 #!/usr/bin/env python
 
+from loguru import logger
+import pytest
+from ciscoconfparse.ciscoconfparse import CiscoConfParse
+from ciscoconfparse.errors import DynamicAddressException
+from ciscoconfparse.ccp_util import IPv4Obj, CiscoRange, CiscoIOSInterface
 import sys
-import os
 
 sys.path.insert(0, "..")
 
-from ciscoconfparse.ccp_util import IPv4Obj, CiscoRange, CiscoIOSInterface
-from ciscoconfparse.errors import DynamicAddressException
-from ciscoconfparse.ciscoconfparse import CiscoConfParse
-import pytest
 
-from loguru import logger
 
 r""" test_Models_Cisco.py - Parse, Query, Build, and Modify IOS-style configs
 
@@ -67,10 +66,14 @@ def testVal_IOSHostnameLine_dna(line):
 
 def testValues_IOSIntfLine(parse_c01_factory):
     """Test to check IOSIntfLine values"""
-    obj = parse_c01_factory.find_objects_dna("IOSIntf")[0]
-    assert obj.name == "Serial 1/0"
-    assert obj.ipv4_addr == "1.1.1.1"
-    assert obj.ipv4_netmask == "255.255.255.252"
+
+    objs = parse_c01_factory.find_objects("")
+    for obj in objs:
+        if obj.dna == "IOSIntfLine":
+            assert obj.name == "Serial 1/0"
+            assert obj.ipv4_addr == "1.1.1.1"
+            assert obj.ipv4_netmask == "255.255.255.252"
+            break
 
 
 def testVal_IOSCfgLine_is_intf():
@@ -342,7 +345,7 @@ def testVal_IOSIntfLine_trunk_vlan_allowed_05():
     ]
     cfg = CiscoConfParse(lines, factory=True)
     intf_obj = cfg.find_objects("^interface")[0]
-    assert intf_obj.trunk_vlans_allowed.as_set(result_type=int) == {911,}
+    assert intf_obj.trunk_vlans_allowed.as_set(result_type=int) == {911, }
 
 
 def testVal_IOSIntfLine_trunk_vlan_allowed_06():
@@ -358,7 +361,7 @@ def testVal_IOSIntfLine_trunk_vlan_allowed_06():
     ]
     cfg = CiscoConfParse(lines, factory=True)
     intf_obj = cfg.find_objects("^interface")[0]
-    assert intf_obj.trunk_vlans_allowed.as_set(result_type=int) == {2,3,4,5,17,18,19}
+    assert intf_obj.trunk_vlans_allowed.as_set(result_type=int) == {2, 3, 4, 5, 17, 18, 19}
 
 
 def testVal_IOSIntfLine_trunk_vlan_allowed_07():
@@ -885,6 +888,7 @@ def testVal_IOSIntfLine_description_01(parse_c03_factory):
         test_result[intf_obj.text] = intf_obj.description
     assert test_result == result_correct
 
+
 def testVal_IOSIntfLine_description_02():
     gh269_conf = [
         "!",
@@ -1053,6 +1057,7 @@ def testVal_IOSIntfLine_has_mpls(parse_c03_factory):
         test_result[intf_obj.text] = intf_obj.has_mpls
     assert test_result == result_correct
 
+
 def testVal_IOSIntfLine_ipv4_addr_object01(parse_c03_factory):
     cfg = parse_c03_factory
     result_correct = {
@@ -1106,6 +1111,7 @@ def testVal_IOSIntfLine_ip_network_object01():
     # DynamicAddressException() here but had to stop due to infinite
     # error recursion here...
     assert cfg.find_objects("^interface")[0].ipv4_addr_object == IPv4Obj()
+
 
 def testVal_IOSIntfLine_has_autonegotiation(parse_c03_factory):
     cfg = parse_c03_factory
@@ -1627,6 +1633,7 @@ def testVal_IOSRouteLine_02():
     assert obj.admin_distance == 1
     assert obj.tag == ""
 
+
 def testVal_IOSRouteLine_03():
     line = "ip route vrf mgmtVrf 8.0.0.0 192.0.0.0 172.16.1.254 254"
     cfg = CiscoConfParse([line], factory=True)
@@ -1666,6 +1673,7 @@ def testVal_IOSRouteLine_04():
     assert obj.admin_distance == 254
     assert obj.tag == ""
 
+
 def testVal_IOSRouteLine_05():
     line = "ip route vrf mgmtVrf 1.0.0.0 255.0.0.0 172.16.1.254 global 254 track 35"
     cfg = CiscoConfParse([line], factory=True)
@@ -1685,6 +1693,7 @@ def testVal_IOSRouteLine_05():
     assert obj.admin_distance == 254
     assert obj.tag == ""
 
+
 def testVal_IOSRouteLine_06():
     line = "ip route vrf mgmtVrf 192.168.0.0 255.255.0.0 FastEthernet0/0 172.16.1.254 global 254 track 35"
     cfg = CiscoConfParse([line], factory=True)
@@ -1703,6 +1712,7 @@ def testVal_IOSRouteLine_06():
     assert obj.global_next_hop is True
     assert obj.admin_distance == 254
     assert obj.tag == ""
+
 
 def testVal_IOSRouteLine_07():
     line = "ip route vrf mgmtVrf 2.0.0.0 255.255.128.0 FastEthernet0/0 254 track 35"
@@ -1765,6 +1775,7 @@ def testVal_IOSRouteLine_09():
     assert obj.admin_distance == 254
     assert obj.tag == "20"
 
+
 def testVal_IOSRouteLine_10():
     line = "ipv6 route ::/0 2001:DEAD:BEEF::1"
     cfg = CiscoConfParse([line], factory=True)
@@ -1784,6 +1795,7 @@ def testVal_IOSRouteLine_10():
     assert obj.admin_distance == 1
     assert obj.tag == ""
 
+
 def testVal_IOSRouteLine_11():
     line = "ipv6 route 2001:DEAD::/32 Serial 1/0 201"
     cfg = CiscoConfParse([line], factory=True)
@@ -1802,6 +1814,7 @@ def testVal_IOSRouteLine_11():
     #assert obj.global_next_hop is True  # IPv6 doesnt support a global next-hop
     assert obj.admin_distance == 201
     assert obj.tag == ""
+
 
 def testVal_IOSRouteLine_12():
     line = "ipv6 route 2001::/16 Tunnel0 2002::1 multicast"
@@ -1826,6 +1839,7 @@ def testVal_IOSRouteLine_12():
 ### ------ IPv4 secondary addresses
 ###
 
+
 def testVal_IOSIntfLine_ip_secondary01():
     """Test that a single secondary IPv4 address is detected"""
     config = """!
@@ -1838,6 +1852,7 @@ interface Vlan21
     cfg = CiscoConfParse(config.splitlines(), factory=True)
     intf_obj = cfg.find_objects("^interface")[0]
     assert intf_obj.has_ip_secondary is True
+
 
 def testVal_IOSIntfLine_ip_secondary02():
     """Test that a multiple secondary IPv4 addresses are detected"""
@@ -1852,6 +1867,7 @@ interface Vlan21
     cfg = CiscoConfParse(config.splitlines(), factory=True)
     intf_obj = cfg.find_objects("^interface")[0]
     assert intf_obj.has_ip_secondary is True
+
 
 def testVal_IOSIntfLine_ip_secondary03():
     """Test that a missing secondary IPv4 addresses are detected"""
@@ -1979,4 +1995,3 @@ def testVal_IOSAaaGroupServerLine_02():
     assert set(["192.0.2.10", "192.0.2.11"]) == obj.server_private
     assert "VRF_001" == obj.vrf
     assert "FastEthernet0/48" == obj.source_interface
-

@@ -644,7 +644,11 @@ def testParse_asa_as_asa(config_a02):
 
 def testValues_find_objects_dna(parse_c01_factory):
     """Test to find an object by its dna"""
-    obj = parse_c01_factory.find_objects_dna("IOSIntf")[0]
+    objs = []
+    for _obj in parse_c01_factory.find_objects(""):
+        if _obj.dna == "IOSIntfLine":
+            objs.append(_obj)
+    obj = objs[0]
     assert isinstance(obj, IOSIntfLine)
 
 
@@ -1616,17 +1620,18 @@ def testValues_find_objects_w_parents(parse_c01):
         " switchport access vlan 100",
         " switchport voice vlan 150",
     ]
-    ## test find_children_w_parents
+    # test find_children_w_parents
     test_result = [ii.text for ii in parse_c01.find_objects_w_parents("interface GigabitEthernet4/1", "switchport")]
     assert correct_result == test_result
 
 
 def testValues_find_objects_w_all_children(parse_c01):
-    correct_result = parse_c01.find_objects(r"^interface GigabitEthernet4/[12]")
-    test_result = parse_c01.find_objects_w_all_children(
-        "^interface", ["switchport voice", "power inline"]
+    """Find the parent interface objects which have 'switchport voice' or 'power inline'"""
+    correct_result = parse_c01.find_objects(r"^interface GigabitEthernet4/[123]")
+    uut = parse_c01.find_parent_objects(
+        ["^interface", "switchport voice|power inline"]
     )
-    assert test_result == correct_result
+    assert uut == correct_result
 
 
 def testValues_delete_children_matching():
@@ -1849,26 +1854,18 @@ def testValues_replace_objects_03(parse_c01):
 
 def testValues_replace_children_01(parse_c01):
     """Test child line replacement"""
-    c01_replace_children = [
+
+    correct_result = [
         " power inline static max 30000",
         " power inline static max 30000",
     ]
-    replace_children_Values = (
-        (
-            {
-                "parentspec": "GigabitEthernet4/",
-                "childspec": "max 7000",
-                "excludespec": re.compile(r"/4|/5|/6"),
-                "replacestr": "max 30000",
-                "exactmatch": False,
-            },
-            c01_replace_children,
-        ),
-    )
-    # We have to parse multiple times because of replacements
-    for args, correct_result in replace_children_Values:
-        test_result = parse_c01.replace_children(**args)
-        assert correct_result == test_result
+
+    uut = list()
+    for obj in parse_c01.find_child_objects("GigabitEthernet4/", "power inline static max 7000"):
+        obj.re_sub("max 7000", "max 30000")
+        uut.append(obj.text)
+
+    assert uut == correct_result
 
 
 def testValues_Diff_01():

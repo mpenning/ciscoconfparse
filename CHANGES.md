@@ -4,6 +4,21 @@
 - Summary:
     - Insert something here
 
+## Version: 1.9.50
+
+- Released: 2023-12-01
+- Summary:
+    - Modify logging to only warn about `ignore_blank_lines=True` if `factory=True`.
+    - Rename `CiscoConfParse()._list_matching_children()` to `CiscoConfParse()._find_child_object_branches()`
+    - Remove `CiscoConfParse().find_objects_dna()`
+    - Remove `CiscoConfParse().find_objects_w_all_children()`
+    - Remove `CiscoConfParse().find_objects_w_child()`
+    - Remove `CiscoConfParse().find_parent_objects()`
+    - Remove `CiscoConfParse().replace_all_children()`
+    - Remove `CiscoConfParse().replace_children()`
+    - Replace `@ logger.catch()` wrappers without a space before `logger.catch()`
+    - Modify tests to work with the changes above (four tests)
+
 ## Version: 1.9.49
 
 - Released: 2023-11-30
@@ -12,6 +27,13 @@
     - Add `empty_branches` parameter to `CiscoConfParse().find_object_branches()`
       - BREAKING CHANGE: `empty_branches` defaults False, which will remove an empty branch from the results.
       - `empty_branches=False` is a change from previous `find_object_branches()` defaults; to restore original behavior, call with `empty_branches=True`.
+    - Rename `CiscoConfParse().delete_lines()` to `CiscoConfParse().delete_objects()`
+    - Rename `CiscoConfParse().replace_lines()` to `CiscoConfParse().replace_objects()`
+    - Remove `CiscoConfParse().find_lineage()`
+    - Remove `CiscoConfParse().has_line_with()`
+    - Remove `CiscoConfParse().append_line()`
+    - Remove `CiscoConfParse()._sequence_nonparent_lines()`
+    - Remove `CiscoConfParse()._sequence_parent_lines()`
     - Add more tests
 
 ## Version: 1.9.48
