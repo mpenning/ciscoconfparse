@@ -24,7 +24,7 @@ You should upgrade; here's why, [ciscoconfparse2][64]:
 - Adds an `auto_commit` keyword, which defaults True
 - Documents much more of the API
 - Intentionally requires a different import statement to minimize confusion between the original and [ciscoconfparse2][17]
-- Vast improvements to Cisco IOS diffs
+- Brings vast improvements to Cisco IOS diffs
 
 There is one key point above; [ciscoconfparse2][64] removes old APIs and thus introduces breaking changes to old scripts.  That said,
 [ciscoconfparse2][64] is worth the upgrade if you are involved in non-trivial [ciscoconfparse][17] development.
