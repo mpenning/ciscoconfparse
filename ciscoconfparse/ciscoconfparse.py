@@ -748,11 +748,17 @@ class CiscoConfParse(object):
         # tmp_lines = self._get_ccp_lines(config=config, logger=logger)
         if isinstance(config, (str, pathlib.Path,)):
             if ignore_blank_lines is True and factory is False:
+                ###############################################################
+                # ignore blank lines under this condition
+                ###############################################################
                 tmp_lines = self.read_config_file(filepath=config, linesplit_rgx=r"\r*\n+")
             else:
                 tmp_lines = self.read_config_file(filepath=config, linesplit_rgx=r"\r*\n")
         elif isinstance(config, Sequence):
             if ignore_blank_lines is True and factory is False:
+                ###############################################################
+                # ignore blank lines under this condition
+                ###############################################################
                 tmp_lines = [ii for ii in config if len(ii) != 0]
             else:
                 tmp_lines = config
@@ -784,6 +790,13 @@ class CiscoConfParse(object):
 
         # IMPORTANT this MUST not be a lie :-)...
         self.finished_config_parse = True
+
+    # This method is on CiscoConfParse()
+    @property
+    @logger.catch(reraise=True)
+    def config(self):
+        """``config`` is an alias for ``ConfigObjs``"""
+        return self.ConfigObjs
 
     # This method is on CiscoConfParse()
     @logger.catch(reraise=True)
@@ -1868,8 +1881,9 @@ debug={debug},
             _parentspec_len = len(parentspec)
             if _parentspec_len > 1:
                 _results = set()
-                _parentspec = parentspec[0]
-                for _idx, _childspec in enumerate(parentspec[1:]):
+                for _idx, _ in enumerate(parentspec[0:-1]):
+                    _parentspec = parentspec[_idx]
+                    _childspec = parentspec[_idx + 1]
                     _values = self.find_child_objects(
                         _parentspec,
                         _childspec,
@@ -2693,14 +2707,36 @@ class ConfigList(MutableSequence):
             logger.warning(message)
             return ccp_method
 
+    @property
+    @logger.catch(reraise=True)
+    def as_text(self):
+        """Return the configuration as a list of text lines"""
+        return [ii.text for ii in self._list]
+
     # This method is on ConfigList()
-    @ junos_unsupported
+    @junos_unsupported
     @logger.catch(reraise=True)
     def append(self, val):
         if self.debug >= 1:
             logger.debug("    ConfigList().append(val={}) was called.".format(val))
 
-        self._list.append(val)
+        if bool(self.factory) is False:
+            obj = CFGLINE[self.syntax](
+                all_lines=self.as_text,
+                line=val,
+                comment_delimiter=self.comment_delimiter,
+            )
+        else:
+            obj = config_line_factory(
+                all_lines=self.as_text,
+                line=val,
+                comment_delimiter=self.comment_delimiter,
+                syntax=self.syntax,
+            )
+
+        self._list.append(obj)
+        # Rebuild object relationships after appending...
+        self._list = self.bootstrap_obj_init_ng(self.as_text, debug=self.debug)
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
@@ -2710,7 +2746,19 @@ class ConfigList(MutableSequence):
     # This method is on ConfigList()
     @logger.catch(reraise=True)
     def remove(self, val):
-        self._list.remove(val)
+
+        if isinstance(val, str):
+            idx = self.as_text.index(val)
+        else:
+            idx = self._list.index(val)
+
+        # Remove all child objects...
+        for obj in self._list[idx].all_children:
+            self._list.remove(obj)
+        # Remove the parent...
+        self._list.pop(idx)
+        # Rebuild the family relationships
+        self._list = self.bootstrap_obj_init_ng(self.as_text, debug=self.debug)
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
@@ -2756,6 +2804,8 @@ class ConfigList(MutableSequence):
             self._list.extend(other._list)
         else:
             self._list.extend(other)
+
+        self._list = self.bootstrap_obj_init_ng(self.as_text, debug=self.debug)
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)
@@ -3028,8 +3078,7 @@ class ConfigList(MutableSequence):
         # Insert the object at index ii
         self._list.insert(ii, obj)
 
-        # Just renumber lines...
-        self.reassign_linenums()
+        self._list = self.bootstrap_obj_init_ng(self.as_text, debug=self.debug)
 
     # This method is on ConfigList()
     @logger.catch(reraise=True)

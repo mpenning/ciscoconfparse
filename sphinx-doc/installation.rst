@@ -46,7 +46,6 @@ disk... and run from the unix shell.
 .. code-block:: python
 
    #!/usr/bin/env python
-
    print("Hello world")
 
 Using Python in Windows
@@ -84,9 +83,9 @@ You can check your python version with the ``-V`` switch...
 
 .. code-block:: none
 
-   [mpenning@Mudslide ~]$ python -V
+   [mpenning@Mudslide ~]# python -V
    Python 3.10.13
-   [mpenning@Mudslide ~]$
+   [mpenning@Mudslide ~]#
 
 The best way to get ciscoconfparse is with pip_ or setuptools_.
 
@@ -102,7 +101,7 @@ Alternatively you can install with pip_: ::
 If you have a specific version of ciscoconfparse in mind, you can specify that
 at the command-line ::
 
-      pip install ciscoconfparse==1.9.48
+      pip install ciscoconfparse==1.9.41
 
 
 Install with setuptools
@@ -116,7 +115,7 @@ If you don't have pip_, you can use setuptools_...  ::
 If you have a specific version of ciscoconfparse in mind, you can specify that
 at the command-line ::
 
-      easy_install -U ciscoconfparse==1.9.48
+      easy_install -U ciscoconfparse==1.9.41
 
 Install from the source
 ~~~~~~~~~~~~~~~~~~~~~~~

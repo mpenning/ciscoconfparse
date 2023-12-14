@@ -6,10 +6,12 @@ from cProfile import run
 import sys
 import os
 
+
 THIS_DIR = os.path.dirname(__file__)
 # sys.path.insert(0, os.path.join(os.path.abspath(THIS_DIR), "../ciscoconfparse/"))
 sys.path.insert(0, "..")
 
+from loguru import logger
 from ciscoconfparse import CiscoConfParse
 
 def parse_cli_args(sys_argv1):
@@ -53,7 +55,8 @@ def parse_cli_args(sys_argv1):
     args = parser.parse_args()
     return args
 
-if __name__=="__main__":
+
+if __name__ == "__main__":
     args = parse_cli_args(sys.argv[1:])
     if any([args.small, args.acls, args.vlans]):
         time.sleep(0.25)
@@ -66,6 +69,6 @@ if __name__=="__main__":
                 "CiscoConfParse('fixtures/configs/sample_06.ios', syntax='ios', factory=True)", sort=2
             )
     else:
-        error = f"Could not find a valid argument in {args}"
-        logger.error(error)
+        error = "CLI arguments are required; use -h for help"
+        logger.critical(error)
         raise ValueError(error)

@@ -6,6 +6,41 @@
 
 [![Snyk Package Health][37]][38]
 
+# Important: ciscoconfparse2
+
+As of December 14, 2023 [ciscoconfparse2][64] is released; this is
+equivalent to version 2.0 of `ciscoconfparse`, but [ciscoconfparse2][64] is
+a different [PYPI project][65].
+
+You should upgrade; here's why, [ciscoconfparse2][64]:
+
+- Streamlines the API towards a simpler user interface.
+- Removes legacy and flawed methods from the original (this could be a breaking change for old scripts).
+- Defaults `ignore_blank_lines=False` (this could be a breaking change for old scripts).
+- Adds string methods to `BaseCfgLine()` objects
+- Is better at handling multiple-child-level configurations (such as IOS XR and JunOS)
+- Can search for parents and children using an *arbitrary list of ancestors*
+- Adds the concept of change commits; this is a config-modification safety feature that [ciscoconfparse][64] lacks
+- Adds an `auto_commit` keyword, which defaults True
+- Documents much more of the API
+- Intentionally requires a different import statement to minimize confusion between the original and [ciscoconfparse2][17]
+- Vast improvements to Cisco IOS diffs
+
+There is one key point above; [ciscoconfparse2][64] removes old APIs and thus introduces breaking changes to old scripts.  That said,
+[ciscoconfparse2][64] is worth the upgrade if you are involved in non-trivial [ciscoconfparse][17] development.
+
+After heavy work on the new `CiscoConfParse()`, these APIs remain:
+
+- [`CiscoConfParse().find_objects()`](http://www.pennington.net/py/ciscoconfparse2/api_CiscoConfParse.html#ciscoconfparse2.CiscoConfParse.find_objects)
+- [`CiscoConfParse().find_parent_objects()`](http://www.pennington.net/py/ciscoconfparse2/api_CiscoConfParse.html#ciscoconfparse2.CiscoConfParse.find_parent_objects)
+- [`CiscoConfParse().find_parent_objects_wo_child()`](http://www.pennington.net/py/ciscoconfparse2/api_CiscoConfParse.html#ciscoconfparse2.CiscoConfParse.find_parent_objects_wo_child)
+- [`CiscoConfParse().find_child_objects()`](http://www.pennington.net/py/ciscoconfparse2/api_CiscoConfParse.html#ciscoconfparse2.CiscoConfParse.find_child_objects)
+- [`CiscoConfParse().find_object_branches()`](http://www.pennington.net/py/ciscoconfparse2/api_CiscoConfParse.html#ciscoconfparse2.CiscoConfParse.find_object_branches)
+- [`CiscoConfParse().save_as()`](http://www.pennington.net/py/ciscoconfparse2/api_CiscoConfParse.html#ciscoconfparse2.CiscoConfParse.save_as)
+- [`CiscoConfParse().commit()`](http://www.pennington.net/py/ciscoconfparse2/api_CiscoConfParse.html#ciscoconfparse2.CiscoConfParse.commit)
+- [`Diff()`](http://www.pennington.net/py/ciscoconfparse2/api_CiscoConfParse.html#ciscoconfparse2.Diff)
+
+Install with: `pip install ciscoconfparse2`.
 
 ## Introduction: What is ciscoconfparse?
 
@@ -555,3 +590,5 @@ The following are featured [CiscoConfParse](https://github.com/mpenning/ciscocon
   [61]: https://sonarcloud.io/api/project_badges/measure?project=mpenning_ciscoconfparse&metric=sqale_index
   [62]: https://sonarcloud.io/summary/new_code?id=mpenning_ciscoconfparse
   [63]: https://docs.pytest.org/en/
+  [64]: https://github.com/mpenning/ciscoconfparse2
+  [65]: https://pypi.python.org/pypi/ciscoconfparse2/

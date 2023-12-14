@@ -111,7 +111,6 @@ This example:
    Config text: interface Serial1/0
    >>>
    >>> quit()
-   [mpenning@tsunami ~]$
 
 In the example, ``obj.text`` refers to the :class:`~models_cisco.IOSCfgLine`
 ``text`` attribute, which retrieves the text of the original IOS configuration

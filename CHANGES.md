@@ -4,6 +4,13 @@
 - Summary:
     - Insert something here
 
+## Version: 1.9.51
+
+- Released: 2023-12-01
+- Summary:
+    - Modify `ConfigList().append()` to use `BaseCfgLine()` instances
+    - Fix manual `indent` in `ccp_abc.BaseCfgLine().append_to_family()`
+
 ## Version: 1.9.50
 
 - Released: 2023-12-01

@@ -15,25 +15,25 @@ Assume that you start with the following Cisco IOS configuration saved as ``shor
 
 .. code-block:: none
 
-    ! Filename: short.conf
-    !
-    interface FastEthernet0/1
-     switchport mode access
-     switchport access vlan 532
-    !
-    interface FastEthernet0/2
-     switchport mode trunk
-     switchport trunk allowed 300,532
-     switchport nonegotiate
-     switchport port-security maximum 2
-     switchport port-security violation restrict
-     switchport port-security
-    !
-    interface FastEthernet0/3
-     switchport mode access
-     switchport access vlan 300
-    !
-    end
+   ! Filename: short.conf
+   !
+   interface FastEthernet0/1
+    switchport mode access
+    switchport access vlan 532
+   !
+   interface FastEthernet0/2
+    switchport mode trunk
+    switchport trunk allowed 300,532
+    switchport nonegotiate
+    switchport port-security maximum 2
+    switchport port-security violation restrict
+    switchport port-security
+   !
+   interface FastEthernet0/3
+    switchport mode access
+    switchport access vlan 300
+   !
+   end
 
 Next, we build this script to read and change the config:
 
@@ -96,33 +96,33 @@ After the script runs, the new configuration (``short.conf.new``) looks like thi
 
 .. code-block:: python
 
-    service timestamps log datetime msec localtime show-timezone
-    service timestamps debug datetime msec localtime show-timezone
-    !
-    interface FastEthernet0/1
-     switchport mode access
-     switchport access vlan 532
-     storm-control broadcast level 0.4 0.3
-     storm-control action trap
-    !
-    interface FastEthernet0/2
-     switchport mode trunk
-     switchport trunk allowed 300,532
-     switchport nonegotiate
-    !
-    interface FastEthernet0/3
-     switchport mode access
-     switchport access vlan 300
-     storm-control broadcast level 0.4 0.3
-     storm-control action trap
-    !
-    interface FastEthernet0/4
-     switchport
-     switchport mode access
-     storm-control broadcast level 0.4 0.3
-     storm-control action trap
-    !
-    end
+   service timestamps log datetime msec localtime show-timezone
+   service timestamps debug datetime msec localtime show-timezone
+   !
+   interface FastEthernet0/1
+    switchport mode access
+    switchport access vlan 532
+    storm-control broadcast level 0.4 0.3
+    storm-control action trap
+   !
+   interface FastEthernet0/2
+    switchport mode trunk
+    switchport trunk allowed 300,532
+    switchport nonegotiate
+   !
+   interface FastEthernet0/3
+    switchport mode access
+    switchport access vlan 300
+    storm-control broadcast level 0.4 0.3
+    storm-control action trap
+   !
+   interface FastEthernet0/4
+    switchport
+    switchport mode access
+    storm-control broadcast level 0.4 0.3
+    storm-control action trap
+   !
+   end
 
 The script:
 

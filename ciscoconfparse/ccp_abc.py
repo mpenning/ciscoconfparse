@@ -968,7 +968,7 @@ class BaseCfgLine(metaclass=ABCMeta):
         if auto_indent:
             insertstr = (" " * (insertstr_parent_indent + auto_indent_width)) + insertstr.lstrip()
         elif indent > 0:
-            insertstr = (" " * (self.indent + indent)) + insertstr.lstrip()
+            insertstr = (" " * indent) + insertstr.lstrip()
         else:
             # do not modify insertstr
             pass
