@@ -158,11 +158,14 @@ pygments_style = "tango"
 # The theme to use for HTML and HTML Help pages.  Major themes that come with
 # Sphinx are currently 'default' and 'sphinxdoc'.
 html_theme = "sphinx_rtd_theme"
+html_static_path = ['_static']
+html_logo = "ciscoconfparse_logo_bw_01.png"
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 html_theme_options = {
+    "logo_only": True,
     "display_version": True,
     "style_nav_header_background": "light_blue",
 }
