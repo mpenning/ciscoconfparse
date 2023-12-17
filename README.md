@@ -1,3 +1,5 @@
+[![logo][66]][66]
+
 # ciscoconfparse
 
 [![git commits][41]][42] [![Version][2]][3] [![Downloads][6]][7] [![License][8]][9]
@@ -592,3 +594,4 @@ The following are featured [CiscoConfParse](https://github.com/mpenning/ciscocon
   [63]: https://docs.pytest.org/en/
   [64]: https://github.com/mpenning/ciscoconfparse2
   [65]: https://pypi.python.org/pypi/ciscoconfparse2/
+  [66]: https://raw.githubusercontent.com/mpenning/ciscoconfparse2/main/sphinx-doc/_static/ciscoconfparse_logo_bw_01.png
