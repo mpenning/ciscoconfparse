@@ -47,8 +47,8 @@ clean:
 
 html:
 	make clean
-	cp _static/ciscoconfparse_logo_bw_01.png _build/html/_static/
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
+	cp _static/ciscoconfparse_logo_bw_01.png $(BUILDDIR)/html/_static/
 	cd $(BUILDDIR)/html; tar cvfz $(USERHOME)/ccp.tar.gz *
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
