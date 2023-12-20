@@ -159,7 +159,7 @@ pygments_style = "tango"
 # Sphinx are currently 'default' and 'sphinxdoc'.
 html_theme = "sphinx_rtd_theme"
 html_static_path = ['_static']
-html_logo = "ciscoconfparse_logo_bw_01.png"
+html_logo = "ccp_logo_bw_w400px.png"
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
