@@ -492,6 +492,7 @@ The following are featured [CiscoConfParse](https://github.com/mpenning/ciscocon
 - [nipper-ng](https://github.com/arpitn30/nipper-ng): a network security analyzer
 - [pynipper-ng](https://github.com/syn-4ck/pynipper-ng): a network security analyzer
 - [build_fabric](https://github.com/sjhloco/build_fabric): Build a declarative Cisco NXOS leaf and spine fabric using Ansible
+- [cisco-sketcher](https://github.com/cisco-open/network-sketcher): Cisco Systems automated network diagram tool
 - [junos-ansible](https://github.com/yzguy/junos-ansible)
 - [faddr](https://github.com/kido5217/faddr)
 - [NetOpsNornir](https://github.com/wangcongxing/NetOpsNornir/)
