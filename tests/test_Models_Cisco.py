@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 from loguru import logger
 import pytest
 from ciscoconfparse.ciscoconfparse import CiscoConfParse
