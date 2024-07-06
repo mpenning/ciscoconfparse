@@ -6,6 +6,23 @@
 
 [![Snyk Package Health][37]][38]
 
+# Important: ciscoconfparse2
+
+As of December 14, 2023 [ciscoconfparse2][64] is released; this is equivalent to version 2.0 of [ciscoconfparse][17], but [ciscoconfparse2][64] is a different PYPI project.
+
+You should upgrade; here's why, [ciscoconfparse2][64]:
+
+
+
+- It supports all major network vendor text configuration files (Arista, Cisco, F5, Juniper, Palo Alto)
+- It supports searching across any number of configuration levels ([ciscoconfparse][17] only supports two config levels : a parent and child)
+- It adds a [string methods](http://www.pennington.net/py/ciscoconfparse2/tutorial_get_config_values.html#string-methods) so you don't need to use regex matching if you don't want to
+- It adds a [CLI command](http://www.pennington.net/py/ciscoconfparse2/cli.html)
+- Revamped documentation
+- It simplifies the user interface and fixes broken [ciscoconfparse][17] default parameters (this could require changing old scripts using the original API)
+- It intentionally uses a new python import to minimize confusion between itself and the original
+
+
 
 ## Introduction: What is ciscoconfparse?
 
@@ -550,3 +567,4 @@ The following are featured [CiscoConfParse](https://github.com/mpenning/ciscocon
   [61]: https://sonarcloud.io/api/project_badges/measure?project=mpenning_ciscoconfparse&metric=sqale_index
   [62]: https://sonarcloud.io/summary/new_code?id=mpenning_ciscoconfparse
   [63]: https://docs.pytest.org/en/
+  [64]: https://github.com/mpenning/ciscoconfparse2
