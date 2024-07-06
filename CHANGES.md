@@ -4,6 +4,13 @@
 - Summary:
     - Insert something here
 
+## Version: 1.9.51
+
+- Released: 2024-07-05
+- Summary:
+    - Update README with information about ciscoconfparse2
+    - `git reset` changes between version 1.9.41 and 1.9.50 since those have not been released on PYPI
+
 ## Version: 1.9.41
 
 - Released: 2023-11-29
