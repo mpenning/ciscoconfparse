@@ -8,11 +8,11 @@
 
 # Important: ciscoconfparse2
 
+**ciscoconfparse is End of Life**
+
 As of December 14, 2023 [ciscoconfparse2][64] is released; this is equivalent to version 2.0 of [ciscoconfparse][17], but [ciscoconfparse2][64] is a different PYPI project.
 
 You should upgrade; here's why, [ciscoconfparse2][64]:
-
-
 
 - It supports all major network vendor text configuration files (Arista, Cisco, F5, Juniper, Palo Alto)
 - It supports searching across any number of configuration levels ([ciscoconfparse][17] only supports two config levels : a parent and child)
@@ -22,6 +22,7 @@ You should upgrade; here's why, [ciscoconfparse2][64]:
 - It simplifies the user interface and fixes broken [ciscoconfparse][17] default parameters (this could require changing old scripts using the original API)
 - It intentionally uses a new python import to minimize confusion between itself and the original
 
+*NOTE [ciscoconfparse2][64] deprecates many legacy [ciscoconfparse][17] APIs; overall this is a good thing because [ciscoconfparse2][64] is easier to use.  As such, test your code before using [ciscoconfparse2][64] as a drop-in replacement.*
 
 
 ## Introduction: What is ciscoconfparse?
